@@ -8,9 +8,11 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.PathUtil
+import it.unimi.dsi.fastutil.objects.Object2IntMap
 import org.jetbrains.kotlin.analyzer.LibraryModuleInfo
 import org.jetbrains.kotlin.analyzer.TrackableModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
@@ -20,7 +22,11 @@ import org.jetbrains.kotlin.idea.base.projectStructure.LibraryInfoCache
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.ResolutionAnchorCacheService
 import org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.useLibraryToSourceAnalysis
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinableSourceAndClassRootsScope
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.CombinedSourceAndClassRootsScope
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -44,6 +50,22 @@ abstract class LibraryInfo internal constructor(
     override val project: Project,
     val library: LibraryEx,
 ) : IdeaModuleInfo, LibraryModuleInfo, BinaryModuleInfo, TrackableModuleInfo {
+    private val topClassesPackageNames: Set<String>
+    private val classesEntriesVirtualFileSystems: Set<NewVirtualFileSystem>?
+
+    private val topSourcesPackageNames: Set<String>
+    private val sourcesEntriesVirtualFileSystems: Set<NewVirtualFileSystem>?
+
+    init {
+        val classes = library.getFiles(OrderRootType.CLASSES)
+        topClassesPackageNames = classes.calculateTopPackageNames()
+        classesEntriesVirtualFileSystems = classes.calculateEntriesVirtualFileSystems()
+
+        val sources = library.getFiles(OrderRootType.SOURCES)
+        topSourcesPackageNames = sources.calculateTopPackageNames()
+        sourcesEntriesVirtualFileSystems = sources.calculateEntriesVirtualFileSystems()
+    }
+
     override val moduleOrigin: ModuleOrigin get() = ModuleOrigin.LIBRARY
 
     override val name: Name = Name.special("<library ${library.name}>")
@@ -52,7 +74,7 @@ abstract class LibraryInfo internal constructor(
         get() = KotlinBaseProjectStructureBundle.message("library.0", library.presentableName)
 
     override val contentScope: GlobalSearchScope
-        get() = LibraryWithoutSourceScope(project, library)
+        get() = LibraryWithoutSourceScope(project, topClassesPackageNames, classesEntriesVirtualFileSystems, library)
 
     override fun dependencies(): List<IdeaModuleInfo> {
         val dependencies = LibraryDependenciesCache.getInstance(project).getLibraryDependencies(this)
@@ -73,7 +95,9 @@ abstract class LibraryInfo internal constructor(
     override val analyzerServices: PlatformDependentAnalyzerServices
         get() = platform.findAnalyzerServices(project)
 
-    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy { LibrarySourceInfo(project, library, this) }
+    private val _sourcesModuleInfo: SourceForBinaryModuleInfo by lazy {
+        LibrarySourceInfo(project, library, this, topSourcesPackageNames, sourcesEntriesVirtualFileSystems)
+    }
 
     override val sourcesModuleInfo: SourceForBinaryModuleInfo
         get() = _sourcesModuleInfo
@@ -124,12 +148,29 @@ private class ResolutionAnchorAwareLibraryModificationTracker(libraryInfo: Libra
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide calcHashCode()
 private class LibraryWithoutSourceScope(
     project: Project,
+    topPackageNames: Set<String>,
+    entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     private val library: Library
-) : PoweredLibraryScopeBase(project, library.getFiles(OrderRootType.CLASSES), VirtualFile.EMPTY_ARRAY) {
+) : PoweredLibraryScopeBase(
+    project,
+    library.getFiles(OrderRootType.CLASSES),
+    VirtualFile.EMPTY_ARRAY,
+    topPackageNames,
+    entriesVirtualFileSystems
+), CombinableSourceAndClassRootsScope {
 
     override fun getFileRoot(file: VirtualFile): VirtualFile? = myIndex.getClassRootForFile(file)
 
-    override fun equals(other: Any?) = other is LibraryWithoutSourceScope && library == other.library
+    /**
+     * [LibraryWithoutSourceScope] exposes its roots so that they can be integrated into a [CombinedSourceAndClassRootsScope].
+     */
+    override val roots: Object2IntMap<VirtualFile> get() = entries
+
+    override val modules: Set<Module> get() = emptySet()
+
+    override val includesLibraryRoots: Boolean get() = true
+
+    override fun equals(other: Any?): Boolean = other is LibraryWithoutSourceScope && library == other.library
     override fun calcHashCode(): Int = library.hashCode()
-    override fun toString() = "LibraryWithoutSourceScope($library)"
+    override fun toString(): String = "LibraryWithoutSourceScope($library)"
 }

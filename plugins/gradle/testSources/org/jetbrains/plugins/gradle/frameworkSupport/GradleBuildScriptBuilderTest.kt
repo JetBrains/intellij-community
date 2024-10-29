@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.frameworkSupport
 
+import com.intellij.testFramework.junit5.SystemProperty
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit4Version
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.getJunit5Version
@@ -8,6 +9,7 @@ import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsS
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.params.ParameterizedTest
 
+@SystemProperty("idea.gradle.mavenRepositoryUrl", "")
 class GradleBuildScriptBuilderTest : GradleBuildScriptBuilderTestCase() {
 
   @Test

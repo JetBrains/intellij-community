@@ -13,6 +13,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.PopupHandler;
@@ -35,7 +36,7 @@ import java.util.Objects;
 
 import static com.intellij.ui.render.RenderingHelper.SHRINK_LONG_RENDERER;
 
-public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
+public abstract class TestTreeView extends Tree implements UiCompatibleDataProvider, CopyProvider {
   public static final DataKey<TestFrameworkRunningModel> MODEL_DATA_KEY = DataKey.create("testFrameworkModel.dataId");
 
   private TestFrameworkRunningModel myModel;
@@ -84,78 +85,55 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
   }
 
   @Override
-  public Object getData(@NotNull final String dataId) {
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-
-    if (AbstractTestProxy.DATA_KEYS.is(dataId)) {
-      TreePath[] paths = getSelectionPaths();
-      if (paths != null) {
-        return Arrays.stream(paths)
-          .map(path -> getSelectedTest(path))
-          .filter(Objects::nonNull)
-          .toArray(AbstractTestProxy[]::new);
-      }
-    }
-    if (MODEL_DATA_KEY.is(dataId)) {
-      return myModel;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    TreePath[] paths = getSelectionPaths();
     TreePath selectionPath = getSelectionPath();
-    if (selectionPath == null) return null;
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    if (selectionPath == null) return;
+
+    sink.set(MODEL_DATA_KEY, myModel);
+
+    AbstractTestProxy[] testProxies = Arrays.stream(Objects.requireNonNull(paths))
+      .map(path -> getSelectedTest(path))
+      .filter(Objects::nonNull)
+      .toArray(AbstractTestProxy[]::new);
+    sink.set(AbstractTestProxy.DATA_KEYS, testProxies);
+
     AbstractTestProxy testProxy = getSelectedTest(selectionPath);
-    if (testProxy == null) return null;
+    if (testProxy == null) return;
 
-    if (AbstractTestProxy.DATA_KEY.is(dataId) || CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return testProxy;
+    sink.set(AbstractTestProxy.DATA_KEY, testProxy);
+    if (testProxy instanceof Navigatable o) {
+      sink.set(CommonDataKeys.NAVIGATABLE, o);
+    }
+    RunProfile configuration = myModel.getProperties().getConfiguration();
+    if (configuration instanceof RunConfiguration o) {
+      sink.set(RunConfiguration.DATA_KEY, o);
     }
 
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TestFrameworkRunningModel model = myModel;
-      return (DataProvider)slowId -> getSlowData(slowId, testProxy, model);
-    }
-    if (RunConfiguration.DATA_KEY.is(dataId)) {
-      RunProfile configuration = myModel.getProperties().getConfiguration();
-      if (configuration instanceof RunConfiguration) {
-        return configuration;
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  private Object getSlowData(@NotNull String dataId,
-                             @NotNull AbstractTestProxy testProxy,
-                             @NotNull TestFrameworkRunningModel model) {
-    Project project = model.getProperties().getProject();
-
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    Project project = myModel.getProperties().getProject();
+    TestFrameworkRunningModel model = myModel;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
       PsiElement psiElement = location != null ? location.getPsiElement() : null;
       return psiElement == null || !psiElement.isValid() ? null : psiElement;
-    }
-    else if (Location.DATA_KEY.is(dataId)) {
+    });
+    sink.lazy(Location.DATA_KEY, () -> {
       return testProxy.getLocation(project, model.getProperties().getScope());
-    }
-    else if (Location.DATA_KEYS.is(dataId)) {
-      AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
-      return proxies == null ? null : Arrays.stream(proxies)
+    });
+    sink.lazy(Location.DATA_KEYS, () -> {
+      return Arrays.stream(testProxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))
         .filter(Objects::nonNull)
         .toArray(Location[]::new);
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      AbstractTestProxy[] proxies = AbstractTestProxy.DATA_KEYS.getData(this);
-      return proxies == null ? null : Arrays.stream(proxies)
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      return Arrays.stream(testProxies)
         .map(p -> p.getLocation(project, model.getProperties().getScope()))
         .filter(Objects::nonNull).map(l -> l.getPsiElement())
         .toArray(PsiElement[]::new);
-    }
-
-    return null;
+    });
   }
-
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
@@ -195,11 +173,15 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {
       Object userObject = TreeUtil.getUserObject(obj);
-      Object element = userObject instanceof NodeDescriptor? ((NodeDescriptor<?>)userObject).getElement() : null;
-      if (element instanceof AbstractTestProxy) {
-        return (PsiElement)getSlowData(CommonDataKeys.PSI_ELEMENT.getName(), (AbstractTestProxy)element, myModel);
+      Object element = userObject instanceof NodeDescriptor<?> o ? o.getElement() : null;
+      if (!(element instanceof AbstractTestProxy testProxy)) {
+        return null;
       }
-      return null;
+      TestFrameworkRunningModel model = myModel;
+      Project project = model.getProperties().getProject();
+      Location<?> location = testProxy.getLocation(project, model.getProperties().getScope());
+      PsiElement psiElement = location != null ? location.getPsiElement() : null;
+      return psiElement == null || !psiElement.isValid() ? null : psiElement;
     });
   }
 

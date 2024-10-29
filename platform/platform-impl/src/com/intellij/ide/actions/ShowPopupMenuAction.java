@@ -12,12 +12,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class ShowPopupMenuAction extends DumbAwareAction implements PopupAction, ActionRemoteBehaviorSpecification.Frontend {
   public ShowPopupMenuAction() {
     setEnabledInModalContext(true);

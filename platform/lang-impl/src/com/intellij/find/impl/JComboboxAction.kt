@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.DocumentAdapter
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import java.awt.event.FocusAdapter
@@ -24,6 +25,7 @@ import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
 import javax.swing.plaf.basic.BasicComboBoxEditor
 
+@ApiStatus.Internal
 class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnAction(), CustomComponentAction {
   private val latestMaskProperty: AtomicProperty<String?> = AtomicProperty(FindSettings.getInstance().fileMask)
   private var latestMask: String? by latestMaskProperty
@@ -96,7 +98,7 @@ class JComboboxAction(val project: Project, val onChanged: () -> Unit) : AnActio
     }
 
     override fun getPreferredSize(): Dimension =
-      Dimension(JBUI.scale(120), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom)
+      Dimension(JBUI.scale(125), ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height + insets.top + insets.bottom)
 
     private fun getNormalizedText(): String? {
       val editorField = editor.editorComponent as JTextField

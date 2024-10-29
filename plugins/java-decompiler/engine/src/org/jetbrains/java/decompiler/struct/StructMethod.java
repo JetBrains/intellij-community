@@ -1,13 +1,19 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.*;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IVariableNameProvider;
 import org.jetbrains.java.decompiler.struct.attr.StructCodeAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructGenericSignatureAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.Type;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericMethodDescriptor;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
@@ -15,6 +21,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.jetbrains.java.decompiler.code.CodeConstants.*;
 
@@ -41,7 +48,15 @@ public class StructMethod extends StructMember {
       attributes.putAll(code.codeAttributes);
     }
 
-    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null);
+    GenericMethodDescriptor signature = null;
+    if (DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_GENERIC_SIGNATURES)) {
+      StructGenericSignatureAttribute signatureAttr = (StructGenericSignatureAttribute)attributes.get(StructGeneralAttribute.ATTRIBUTE_SIGNATURE.name);
+      if (signatureAttr != null) {
+        signature = GenericMain.parseMethodSignature(signatureAttr.getSignature());
+      }
+    }
+
+    return new StructMethod(accessFlags, attributes, values[0], values[1], bytecodeVersion, own ? code : null, clQualifiedName, signature);
   }
 
   private static final int[] opr_iconst = {-1, 0, 1, 2, 3, 4, 5};
@@ -57,13 +72,19 @@ public class StructMethod extends StructMember {
   private final int codeFullLength;
   private InstructionSequence seq = null;
   private boolean expanded = false;
+  private final String classQualifiedName;
+  private final GenericMethodDescriptor signature;
+  private IVariableNameProvider renamer;
+  public Set<String> enclosedClasses; // Dirty hack, not to manage nested classes.
 
   private StructMethod(int accessFlags,
                        Map<String, StructGeneralAttribute> attributes,
                        String name,
                        String descriptor,
                        int bytecodeVersion,
-                       StructCodeAttribute code) {
+                       StructCodeAttribute code,
+                       String classQualifiedName,
+                       GenericMethodDescriptor signature) {
     super(accessFlags, attributes);
     this.name = name;
     this.descriptor = descriptor;
@@ -76,6 +97,8 @@ public class StructMethod extends StructMember {
     else {
       this.localVariables = this.codeLength = this.codeFullLength = -1;
     }
+    this.classQualifiedName = classQualifiedName;
+    this.signature = signature;
   }
 
   public void expandData(StructClass classStruct) throws IOException {
@@ -93,7 +116,6 @@ public class StructMethod extends StructMember {
     }
   }
 
-  @SuppressWarnings("AssignmentToForLoopParameter")
   private InstructionSequence parseBytecode(DataInputFullStream in, int length, ConstantPool pool) throws IOException {
     VBStyleCollection<Instruction, Integer> instructions = new VBStyleCollection<>();
 
@@ -253,11 +275,11 @@ public class StructMethod extends StructMember {
         }
       }
 
-      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops);
+      i++;
+
+      Instruction instr = Instruction.create(opcode, wide, group, bytecodeVersion, ops, i - offset, pool);
 
       instructions.addWithKey(instr, offset);
-
-      i++;
     }
 
     // initialize exception table
@@ -319,6 +341,17 @@ public class StructMethod extends StructMember {
     return seq;
   }
 
+  public IVariableNameProvider getVariableNamer() {
+    if (renamer == null) {
+      this.renamer = DecompilerContext.getNamingFactory().createFactory(this);
+    }
+    return renamer;
+  }
+
+  public void clearVariableNamer() {
+    this.renamer = null;
+  }
+
   public StructLocalVariableTableAttribute getLocalVariableAttr() {
     return getAttribute(StructGeneralAttribute.ATTRIBUTE_LOCAL_VARIABLE_TABLE);
   }
@@ -331,5 +364,13 @@ public class StructMethod extends StructMember {
   @Override
   public String toString() {
     return name;
+  }
+
+  public String getClassQualifiedName() {
+    return classQualifiedName;
+  }
+
+  public GenericMethodDescriptor getSignature() {
+    return signature;
   }
 }

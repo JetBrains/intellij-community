@@ -2,9 +2,9 @@
 package com.intellij.tools.ide.metrics.benchmark
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.testFramework.PerformanceTestInfo
-import com.intellij.tools.ide.metrics.collector.publishing.CIServerBuildInfo
+import com.intellij.testFramework.BenchmarkTestInfo
 import com.intellij.tools.ide.metrics.collector.publishing.PerformanceMetricsDto
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -25,25 +25,25 @@ class SpanExtractionFromUnitPerfTest {
   companion object {
     fun checkMetricsAreFlushedToTelemetryFile(spanName: String, withWarmup: Boolean = true, vararg customSpanNames: String) {
       val extractedMetrics = runBlocking {
-        SpanMetricsExtractor().waitTillMetricsExported(spanName = spanName)
+        BenchmarksSpanMetricsCollector(spanName).collect(PathManager.getLogDir())
       }
 
       if (withWarmup) {
         // warmup metrics
-        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value != 0L,
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value != 0,
                               "Attempt metric should have non 0 value")
-        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value != 0L,
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value != 0,
                               "Total test duration metric should have non 0 value")
       }
 
       // measured metrics
-      Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value != 0L,
+      Assertions.assertTrue(extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value != 0,
                             "Attempt metric should have non 0 value")
-      Assertions.assertTrue(extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value != 0L,
+      Assertions.assertTrue(extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value != 0,
                             "Total test duration metric should have non 0 value")
 
       customSpanNames.forEach { customName ->
-        Assertions.assertTrue(extractedMetrics.single { it.id.name == customName }.value != 0L,
+        Assertions.assertTrue(extractedMetrics.single { it.id.name == customName }.value != 0,
                               "$customName metric should have non 0 value")
       }
     }
@@ -54,11 +54,12 @@ class SpanExtractionFromUnitPerfTest {
   }
 
   @Test
-  fun unitPerfTestsMetricsExtraction(testInfo: TestInfo) = runBlocking {
+  fun `unit perf test metrics extraction - microsecond precision`(testInfo: TestInfo) = runBlocking {
     val mainMetricName = "simple perf test"
 
-    val extractedMetrics = SpanMetricsExtractor((openTelemetryReports / "open-telemetry-unit-perf-test.json"))
-      .waitTillMetricsExported(spanName = mainMetricName)
+    val extractedMetrics = BenchmarksSpanMetricsCollector(spanName = mainMetricName,
+                                                          telemetryJsonFile = (openTelemetryReports / "open-telemetry-microseconds-unit-perf-test.json"))
+      .collect(PathManager.getLogDir())
 
     // warmup metrics
     Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
@@ -70,26 +71,15 @@ class SpanExtractionFromUnitPerfTest {
     Assertions.assertEquals(379, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
 
     // measured metrics
-    Assertions.assertEquals(307, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(306, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
     Assertions.assertEquals(324, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
-    Assertions.assertEquals(375, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
-    Assertions.assertEquals(921, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(376, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(920, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
     Assertions.assertEquals(3, extractedMetrics.single { it.id.name == "attempt.count" }.value)
     Assertions.assertEquals(153, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
-    Assertions.assertEquals(2005, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+    Assertions.assertEquals(2004, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
 
     val reportFile = Files.createTempFile("temp", ".json")
-
-    val buildInfo = CIServerBuildInfo(
-      "8727723",
-      "someBuildType",
-      "configurationName",
-      "233.5353.98",
-      "branch_name",
-      String.format("%s/viewLog.html?buildId=%s&buildTypeId=%s", "base_uri", "8727723", "someBuildType"),
-      false,
-      ZonedDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
 
     val metricsDto = PerformanceMetricsDto.create(
       mainMetricName,
@@ -97,8 +87,48 @@ class SpanExtractionFromUnitPerfTest {
       "",
       testInfo.displayName,
       BuildNumber.fromString("233.SNAPSHOT")!!,
-      extractedMetrics,
-      buildInfo
+      extractedMetrics
+    )
+
+    // just invoke serialization to validate that it completes without exceptions
+    jacksonObjectMapper().writerWithDefaultPrettyPrinter().writeValue(reportFile.toFile(), metricsDto)
+  }
+
+  @Test
+  fun `unit perf test metrics extraction - nanosecond precision`(testInfo: TestInfo) = runBlocking {
+    val mainMetricName = "simple perf test"
+
+    val extractedMetrics = BenchmarksSpanMetricsCollector(spanName = mainMetricName,
+                                                          telemetryJsonFile = (openTelemetryReports / "open-telemetry-unit-perf-test.json"))
+      .collect(PathManager.getLogDir())
+
+    // warmup metrics
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.mean.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.median.ms" }.value)
+    Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.range.ms" }.value)
+    Assertions.assertEquals(243, extractedMetrics.single { it.id.name == "warmup.attempt.sum.ms" }.value)
+    Assertions.assertEquals(1, extractedMetrics.single { it.id.name == "warmup.attempt.count" }.value)
+    Assertions.assertEquals(0, extractedMetrics.single { it.id.name == "warmup.attempt.standard.deviation" }.value)
+    Assertions.assertEquals(379, extractedMetrics.single { it.id.name == "warmup.total.test.duration.ms" }.value)
+
+    // measured metrics
+    Assertions.assertEquals(306, extractedMetrics.single { it.id.name == "attempt.mean.ms" }.value)
+    Assertions.assertEquals(324, extractedMetrics.single { it.id.name == "attempt.median.ms" }.value)
+    Assertions.assertEquals(376, extractedMetrics.single { it.id.name == "attempt.range.ms" }.value)
+    Assertions.assertEquals(920, extractedMetrics.single { it.id.name == "attempt.sum.ms" }.value)
+    Assertions.assertEquals(3, extractedMetrics.single { it.id.name == "attempt.count" }.value)
+    Assertions.assertEquals(153, extractedMetrics.single { it.id.name == "attempt.standard.deviation" }.value)
+    Assertions.assertEquals(2004, extractedMetrics.single { it.id.name == "total.test.duration.ms" }.value)
+
+    val reportFile = Files.createTempFile("temp", ".json")
+
+    val metricsDto = PerformanceMetricsDto.create(
+      mainMetricName,
+      "",
+      "",
+      testInfo.displayName,
+      BuildNumber.fromString("233.SNAPSHOT")!!,
+      extractedMetrics
     )
 
     // just invoke serialization to validate that it completes without exceptions
@@ -108,7 +138,7 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun perfTestWithSubtests(testInfo: TestInfo) {
     fun runSubTest(subtestName: String) {
-      PerformanceTestUtil.newPerformanceTest(testInfo.testMethod.get().name) {
+      Benchmark.newBenchmark(testInfo.testMethod.get().name) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
       }.startAsSubtest(subtestName)
     }
@@ -120,7 +150,7 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun flushingTelemetryMetricsShouldNotFailTheTest() {
     val spanName = "simple perf test"
-    val uniqueTestName = PerformanceTestUtil.newPerformanceTest(spanName) {
+    val uniqueTestName = Benchmark.newBenchmark(spanName) {
       runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
     }.run {
       start()
@@ -132,10 +162,10 @@ class SpanExtractionFromUnitPerfTest {
   @Test
   fun throwingExceptionWillNotAffectMetricsPublishing() {
     val spanName = "perf test throwing exception"
-    var perfTest: PerformanceTestInfo? = null
+    var perfTest: BenchmarkTestInfo? = null
 
     try {
-      perfTest = PerformanceTestUtil.newPerformanceTest(spanName) {
+      perfTest = Benchmark.newBenchmark(spanName) {
         runBlocking { delay(Random.nextInt(100, 500).milliseconds) }
         throw RuntimeException("Exception text")
       }

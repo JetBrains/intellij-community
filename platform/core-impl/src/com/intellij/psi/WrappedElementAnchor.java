@@ -2,10 +2,12 @@
 package com.intellij.psi;
 
 import com.intellij.psi.impl.smartPointers.SmartPointerAnchorProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public class WrappedElementAnchor extends PsiAnchor {
   private final SmartPointerAnchorProvider myAnchorProvider;
   private final PsiAnchor myBaseAnchor;

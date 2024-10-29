@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle.statusbar;
 
 import com.intellij.openapi.util.SystemInfo;
@@ -23,17 +23,19 @@ final class CodeStyleStatusBarPanel extends JPanel {
     setOpaque(false);
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     setAlignmentY(Component.CENTER_ALIGNMENT);
+
+    myIconLabel = new JLabel("");
+    if (!ExperimentalUI.isNewUI()) {
+      myIconLabel.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
+    }
+    add(myIconLabel);
+
+    add(Box.createHorizontalStrut(4));
+
     myLabel = new TextPanel() {};
     myLabel.setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
     myLabel.recomputeSize();
     add(myLabel);
-    myIconLabel = new JLabel("");
-
-    if (!ExperimentalUI.isNewUI()) {
-      myIconLabel.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
-    }
-
-    add(myIconLabel);
   }
 
   public void setText(@NotNull @Nls String text) {

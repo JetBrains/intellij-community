@@ -36,6 +36,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -226,6 +227,7 @@ public final class CustomizationUtil {
     return getTreePath(0, path, tree.getModel().getRoot());
   }
 
+  @ApiStatus.Internal
   public static ActionUrl getActionUrl(final TreePath treePath,
                                        @MagicConstant(intValues = {ActionUrl.ADDED, ActionUrl.DELETED, ActionUrl.MOVE}) int actionType) {
     ActionUrl url = new ActionUrl();
@@ -245,7 +247,7 @@ public final class CustomizationUtil {
     return url;
   }
 
-
+  @ApiStatus.Internal
   public static TreePath getTreePath(JTree tree, ActionUrl url) {
     return getTreePath(0, url.getGroupPath(), tree.getModel().getRoot());
   }

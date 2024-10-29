@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 
-object FindUsagesCollector : CounterUsagesCollector() {
+internal object FindUsagesCollector : CounterUsagesCollector() {
 
   private val GROUP = EventLogGroup("find", 6)
 

@@ -3,13 +3,17 @@ package com.intellij.filePrediction.features.history
 
 import com.intellij.internal.ml.ngram.NGramIncrementalModelRunner
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class FileHistoryFeatures(val position: Int?, val uniGram: NextFileProbability, val biGram: NextFileProbability)
 
+@ApiStatus.Internal
 data class NextFileProbability(
   val mle: Double, val minMle: Double, val maxMle: Double, val mleToMin: Double, val mleToMax: Double
 )
 
+@ApiStatus.Internal
 class FileHistoryManager(private val model: NGramIncrementalModelRunner) {
   fun saveFileHistoryAsync(project: Project) {
     FileHistoryPersistence.saveNGramsAsync(project, model)

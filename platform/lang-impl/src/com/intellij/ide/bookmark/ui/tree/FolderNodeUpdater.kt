@@ -6,8 +6,8 @@ import com.intellij.ide.bookmark.FileBookmark
 import com.intellij.ide.bookmark.ui.BookmarksView
 import com.intellij.openapi.vfs.VfsUtilCore.isAncestor
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.TreeCollector
+import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater
 import javax.swing.tree.TreePath
 
@@ -42,7 +42,7 @@ internal class FolderNodeUpdater(val view: BookmarksView) : ProjectFileNodeUpdat
   }
 
   private fun forEachTreePath(file: VirtualFile, action: (TreePath) -> Unit) {
-    val model = view.tree.model as? AsyncTreeModel ?: return
+    val model = view.tree.model as? TreeVisitor.LoadingAwareAcceptor ?: return
     val paths = mutableListOf<TreePath>()
     model.accept(VirtualFileVisitor(file, paths), false).onSuccess { paths.forEach(action) }
   }

@@ -4,12 +4,15 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider
 import com.intellij.ide.actions.QualifiedNameProvider
+import com.intellij.ide.actions.QualifiedNameProviderUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.asJava.LightClassUtil
+import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinQualifiedNameProvider : QualifiedNameProvider {
@@ -17,12 +20,15 @@ class KotlinQualifiedNameProvider : QualifiedNameProvider {
 
     override fun getQualifiedName(element: PsiElement) = when (element) {
         is KtClassOrObject -> element.fqName?.asString()
-        is KtNamedFunction -> getJavaQualifiedName(LightClassUtil.getLightClassMethod(element))
+        is KtFunction -> getJavaQualifiedName(LightClassUtil.getLightClassMethod(element))
 
         is KtProperty -> {
             val lightClassPropertyMethods = LightClassUtil.getLightClassPropertyMethods(element)
             val lightElement: PsiElement? = lightClassPropertyMethods.getter ?: lightClassPropertyMethods.backingField
             getJavaQualifiedName(lightElement)
+        }
+        is KtNameReferenceExpression -> element.mainReference.resolve()?.let {
+            QualifiedNameProviderUtil.getQualifiedName(it)
         }
         else -> null
     }

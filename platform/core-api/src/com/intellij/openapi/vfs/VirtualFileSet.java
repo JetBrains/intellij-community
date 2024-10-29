@@ -10,6 +10,7 @@ import java.util.Set;
  * @see VfsUtilCore#createCompactVirtualFileSet()
  */
 public interface VirtualFileSet extends Set<VirtualFile> {
+  @NotNull
   Set<VirtualFile> freezed();
 
   void freeze();

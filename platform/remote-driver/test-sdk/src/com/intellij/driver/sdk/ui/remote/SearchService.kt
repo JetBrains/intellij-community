@@ -8,6 +8,7 @@ import com.intellij.driver.model.transport.Ref
 import com.intellij.driver.sdk.remoteDev.BeControlComponentBase
 import com.intellij.driver.sdk.remoteDev.getBackendRef
 import com.intellij.driver.sdk.remoteDev.getFrontendRef
+import com.intellij.driver.sdk.remoteDev.validateBeControlElement
 import org.intellij.lang.annotations.Language
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
@@ -37,6 +38,7 @@ class SearchService(
 
   private fun reconstructComponent(element: Element): Component? {
     if (element.hasAttribute("beControlDataId")) {
+      if (!validateBeControlElement(element)) return null
       return reconstructBeControlComponent(element)
     }
 
@@ -51,7 +53,7 @@ class SearchService(
     return driver.cast(wrapRef(ref), Component::class)
   }
 
-  private fun reconstructBeControlComponent(element: Element): Component {
+  private fun reconstructBeControlComponent(element: Element): Component? {
     val frontendRef = getFrontendRef(element)
     val backendRef = getBackendRef(element)
 

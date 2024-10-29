@@ -75,6 +75,11 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../../idea/tests/testData/editor/autoImport/functionReference/");
     }
 
+    @TestMetadata("intersectionReceiverType")
+    public void testIntersectionReceiverType() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/intersectionReceiverType/");
+    }
+
     @TestMetadata("invoke")
     public void testInvoke() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/invoke/");
@@ -135,6 +140,16 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
         runTest("../../idea/tests/testData/editor/autoImport/superConstructorCall/");
     }
 
+    @TestMetadata("typeParameterReceiverType")
+    public void testTypeParameterReceiverType() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/typeParameterReceiverType/");
+    }
+
+    @TestMetadata("typeParameterReceiverTypeWithBounds")
+    public void testTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/typeParameterReceiverTypeWithBounds/");
+    }
+
     @TestMetadata("typeReference")
     public void testTypeReference() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/typeReference/");
@@ -168,5 +183,10 @@ public class K2AutoImportTestGenerated extends AbstractK2AutoImportTest {
     @TestMetadata("withoutAutoImport")
     public void testWithoutAutoImport() throws Exception {
         runTest("../../idea/tests/testData/editor/autoImport/withoutAutoImport/");
+    }
+
+    @TestMetadata("wrongReceiverType")
+    public void testWrongReceiverType() throws Exception {
+        runTest("../../idea/tests/testData/editor/autoImport/wrongReceiverType/");
     }
 }

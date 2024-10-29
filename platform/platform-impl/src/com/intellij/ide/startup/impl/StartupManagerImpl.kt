@@ -8,7 +8,7 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.plugins.PluginUtil
 import com.intellij.ide.startup.StartupManagerEx
 import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
@@ -361,7 +361,7 @@ open class StartupManagerImpl(private val project: Project, private val coroutin
 
         val runnable = synchronized(lock, activities::pollFirst) ?: break
         val runnableClass = runnable.javaClass
-        val pluginId = (runnableClass.classLoader as? PluginAwareClassLoader)?.pluginId ?: PluginManagerCore.CORE_ID
+        val pluginId = PluginUtil.getPluginId(runnableClass.classLoader)
         launch(tracer.span("run activity", arrayOf("class", runnableClass.name, "plugin", pluginId.idString))) {
           runCatching {
             blockingContext {

@@ -1,10 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.openapi.actionSystem.impl
 
 import com.intellij.ide.IdeView
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<SafeIdeView>()
 

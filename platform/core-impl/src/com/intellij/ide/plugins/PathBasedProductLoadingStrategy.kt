@@ -10,7 +10,7 @@ import java.nio.file.Path
 internal class PathBasedProductLoadingStrategy : ProductLoadingStrategy() {
   // this property returns hardcoded Strings instead of ProductMode, because currently ProductMode class isn't available in dependencies of this module
   override val currentModeId: String
-    get() = if (AppMode.isRemoteDevHost()) "backend" else "local_IDE"
+    get() = if (AppMode.isRemoteDevHost()) "backend" else "monolith"
 
   override fun addMainModuleGroupToClassPath(bootstrapClassLoader: ClassLoader) {
   }

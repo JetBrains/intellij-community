@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.debugger.extensions;
 
 import com.intellij.icons.AllIcons;
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.fileChooser.ex.FileChooserKeys;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.ui.Messages;
@@ -55,20 +54,16 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   private static final Color CODE_COLOR = PlatformColors.BLUE;
   private static final Color TEST_COLOR = JBColor.GREEN.darker();
 
+  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
+
   private JPanel myComponent;
-
   private PlaybackRunner runner;
-
   private JEditorPane myLog;
-
   private final JTextField myCurrentScript = new JTextField();
-
   private VirtualFileListener myVfsListener;
-
   private boolean myChanged;
 
   private PlaybackDebuggerState myState;
-  private static final FileChooserDescriptor FILE_DESCRIPTOR = new ScriptFileChooserDescriptor();
   private JTextArea myCodeEditor;
 
   private void initUi() {
@@ -151,11 +146,19 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     LocalFileSystem.getInstance().addVirtualFileListener(myVfsListener);
   }
 
-  private final class SaveAction extends AnAction {
-  SaveAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.save"),
-          IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
+  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
+    ScriptFileChooserDescriptor() {
+      super(true, false, false, false, false, false);
+      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
+      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
+      withExtensionFilter(UiScriptFileType.myExtension);
+    }
   }
+
+  private final class SaveAction extends AnAction {
+    SaveAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.save"), IdeBundle.messagePointer("action.AnAction.description.save"), AllIcons.Actions.MenuSaveall);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -186,27 +189,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  private static final class ScriptFileChooserDescriptor extends FileChooserDescriptor {
-    ScriptFileChooserDescriptor() {
-      super(true, false, false, false, false, false);
-      putUserData(FileChooserKeys.NEW_FILE_TYPE, UiScriptFileType.getInstance());
-      putUserData(FileChooserKeys.NEW_FILE_TEMPLATE_TEXT, "");
-    }
-
-    @Override
-    public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-      if (!showHiddenFiles && FileElement.isFileHidden(file)) return false;
-      return file.getExtension() != null && file.getExtension().equalsIgnoreCase(UiScriptFileType.myExtension)
-             || super.isFileVisible(file, showHiddenFiles) && file.isDirectory();
-    }
-  }
-
   private final class SetScriptFileAction extends AnAction {
-  SetScriptFileAction() {
-    //noinspection DialogTitleCapitalization
-    super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"),
-          IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
-  }
+    @SuppressWarnings("DialogTitleCapitalization")
+    SetScriptFileAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.set.script.file"), IdeBundle.messagePointer("action.AnAction.description.set.script.file"), AllIcons.Actions.MenuOpen);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -219,12 +206,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     }
   }
 
-  @SuppressWarnings("DialogTitleCapitalization")
   private final class NewScriptAction extends AnAction {
-  NewScriptAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.new.script"),
-          IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
-  }
+    @SuppressWarnings("DialogTitleCapitalization")
+    NewScriptAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.new.script"), IdeBundle.messagePointer("action.AnAction.description.new.script"), AllIcons.Actions.New);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -238,8 +224,7 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
     ApplicationManager.getApplication().runWriteAction(() -> myCodeEditor.setText(text == null ? "" : text));
   }
 
-  @Nullable
-  private VirtualFile pathToFile() {
+  private @Nullable VirtualFile pathToFile() {
     if (myState.currentScript.isEmpty()) {
       return null;
     }
@@ -267,10 +252,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class StopAction extends AnAction {
-  StopAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.stop"),
-          IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
-  }
+    StopAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.stop"), IdeBundle.messagePointer("action.AnAction.description.stop"), AllIcons.Actions.Suspend);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -292,10 +276,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class ActivateFrameAndRun extends AnAction {
-  ActivateFrameAndRun() {
-    super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"),
-          IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
-  }
+    ActivateFrameAndRun() {
+      super(IdeBundle.messagePointer("action.AnAction.text.activate.frame.and.run"), IdeBundle.messagePointer("action.AnAction.description.activate.frame.and.run"), AllIcons.Nodes.Deploy);
+    }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
@@ -314,10 +297,9 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   private final class RunOnFameActivationAction extends AnAction {
-  RunOnFameActivationAction() {
-    super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"),
-          IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
-  }
+    RunOnFameActivationAction() {
+      super(IdeBundle.messagePointer("action.AnAction.text.run.on.frame.activation"), IdeBundle.messagePointer("action.AnAction.description.run.on.frame.activation"), AllIcons.RunConfigurations.TestState.Run);
+    }
 
     @Override
     public void update(@NotNull AnActionEvent e) {
@@ -418,11 +400,11 @@ public final class PlaybackDebugger implements UiDebuggerExtension, PlaybackRunn
   }
 
   @Override
-  public void message(@Nullable final PlaybackContext context, final String text, final Type type) {
+  public void message(final @Nullable PlaybackContext context, final String text, final Type type) {
     message(context, text, context != null ? context.getCurrentLine() : -1, type, false);
   }
 
-  private void message(@Nullable final PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
+  private void message(final @Nullable PlaybackContext context, final String text, final int currentLine, final Type type, final boolean forced) {
     final int depth = context != null ? context.getCurrentStageDepth() : 0;
 
     UIUtil.invokeLaterIfNeeded(() -> {

@@ -3,9 +3,11 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.FList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class MinusculeMatcherWrapper extends MinusculeMatcher {
   protected final MinusculeMatcher myDelegate;
 

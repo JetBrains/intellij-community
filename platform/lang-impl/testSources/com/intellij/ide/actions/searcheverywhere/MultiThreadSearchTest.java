@@ -200,10 +200,6 @@ public class MultiThreadSearchTest extends BasePlatformTestCase {
         throw new UnsupportedOperationException();
       }
 
-      @Override
-      public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-        return null;
-      }
     };
   }
 

@@ -65,7 +65,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements DataProvider, ExternalProjectsView, Disposable {
+public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implements ExternalProjectsView, Disposable {
   public static final Logger LOG = Logger.getInstance(ExternalProjectsViewImpl.class);
 
   private final @NotNull Project myProject;
@@ -156,6 +156,7 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
     return myUiAware;
   }
 
+  @ApiStatus.Internal
   @Override
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myProjectsManager.getShortcutsManager();
@@ -541,15 +542,6 @@ public final class ExternalProjectsViewImpl extends SimpleToolWindowPanel implem
 
   private <T extends ExternalSystemNode> List<T> getSelectedNodes(Class<T> aClass) {
     return myStructure != null ? myStructure.getSelectedNodes(myTree, aClass) : ContainerUtil.emptyList();
-  }
-
-  private List<ProjectNode> getSelectedProjectNodes() {
-    return getSelectedNodes(ProjectNode.class);
-  }
-
-  private @Nullable ProjectNode getSelectedProjectNode() {
-    final List<ProjectNode> projectNodes = getSelectedProjectNodes();
-    return projectNodes.size() == 1 ? projectNodes.get(0) : null;
   }
 
   private @Nullable ExternalSystemTaskLocation extractLocation(List<ExternalSystemNode> selectedNodes) {

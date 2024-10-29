@@ -736,24 +736,17 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected DataContext getCurrentEditorDataContext() {
     DataContext defaultContext = DataManager.getInstance().getDataContext();
-    return CustomizedDataContext.create(defaultContext, dataId -> {
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return getEditor();
-      }
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return getProject();
-      }
-      if (CommonDataKeys.PSI_FILE.is(dataId)) {
-        return getFile();
-      }
-      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    return CustomizedDataContext.withSnapshot(defaultContext, sink -> {
+      sink.set(CommonDataKeys.EDITOR, getEditor());
+      sink.set(CommonDataKeys.PROJECT, getProject());
+      sink.set(CommonDataKeys.PSI_FILE, getFile());
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
         PsiFile file = getFile();
         if (file == null) return null;
         Editor editor = getEditor();
         if (editor == null) return null;
         return file.findElementAt(editor.getCaretModel().getOffset());
-      }
-      return null;
+      });
     });
   }
 

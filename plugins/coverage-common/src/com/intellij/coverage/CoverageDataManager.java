@@ -47,7 +47,7 @@ public abstract class CoverageDataManager {
   /**
    * @deprecated Use {@link CoverageDataManager#addExternalCoverageSuite(File, CoverageRunner)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public abstract CoverageSuite addExternalCoverageSuite(@NotNull String selectedFileName,
                                                          long timeStamp,
                                                          @NotNull CoverageRunner coverageRunner,

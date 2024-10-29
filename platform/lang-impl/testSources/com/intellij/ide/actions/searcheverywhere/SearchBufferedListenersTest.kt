@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.ide.IdeEventQueue
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import org.jmock.Expectations
@@ -361,7 +362,7 @@ class SearchBufferedListenersTest : BasePlatformTestCase() {
     myMockery!!.assertIsSatisfied()
   }
 
-  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) {
+  private fun awaitShutdownNonBlocking(executorService: ScheduledExecutorService) = resetThreadContext().use {
     val eventQueue = Toolkit.getDefaultToolkit().systemEventQueue as IdeEventQueue
     while (!executorService.awaitTermination(10, TimeUnit.MILLISECONDS)) {
       val event = eventQueue.nextEvent

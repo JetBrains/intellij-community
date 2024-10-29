@@ -1,0 +1,8 @@
+NavigationItem:
+    name: Any
+ItemPresentation:
+    presentableText: Any
+    locationString: (kotlin)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Public])
+TargetElement: public open class Any public constructor() {
+QualifiedName: kotlin.Any

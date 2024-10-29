@@ -955,7 +955,7 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
     Indent externalIndent = Indent.getNoneIndent();
     Indent internalIndent = Indent.getContinuationWithoutFirstIndent(false);
 
-    if (isInsideMethodCallParenthesis(child)) {
+    if (isInsideMethodCallParenthesis(child) || isInsideMethodDeclarationParenthesis(child)) {
       internalIndent = Indent.getSmartIndent(Indent.Type.CONTINUATION);
     }
 
@@ -1025,6 +1025,13 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       return currentPredecessor != null && currentPredecessor.getElementType() == JavaElementType.METHOD_CALL_EXPRESSION;
     }
     return false;
+  }
+
+  private static boolean isInsideMethodDeclarationParenthesis(@NotNull ASTNode child) {
+    ASTNode parent = child.getTreeParent();
+    if (parent == null || parent.getElementType() != JavaElementType.PARAMETER_LIST) return false;
+    ASTNode grandParent = parent.getTreeParent();
+    return grandParent != null && grandParent.getElementType() == JavaElementType.METHOD;
   }
 
   private static boolean canUseAnonymousClassAlignment(@NotNull ASTNode child) {

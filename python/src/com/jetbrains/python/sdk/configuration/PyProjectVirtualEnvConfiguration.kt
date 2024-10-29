@@ -26,9 +26,9 @@ import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase
-import com.jetbrains.python.sdk.add.target.PyAddSdkPanelBase.Companion.isLocal
-import com.jetbrains.python.sdk.add.target.TargetPanelExtension
+import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase
+import com.jetbrains.python.sdk.add.v1.PyAddSdkPanelBase.Companion.isLocal
+import com.jetbrains.python.sdk.add.v1.TargetPanelExtension
 import com.jetbrains.python.sdk.flavors.PyFlavorAndData
 import com.jetbrains.python.sdk.flavors.PyFlavorData
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
@@ -46,10 +46,10 @@ fun createVirtualEnvSynchronously(
   inheritSitePackages: Boolean = false,
   makeShared: Boolean = false,
   targetPanelExtension: TargetPanelExtension? = null,
-): Result<Sdk> {
+): Sdk {
   val targetEnvironmentConfiguration = baseSdk.targetEnvConfiguration
   val installedSdk: Sdk = if (targetEnvironmentConfiguration == null) {
-    installSdkIfNeeded(baseSdk, module, existingSdks, context).getOrElse { return Result.failure(it) }
+    installSdkIfNeeded(baseSdk, module, existingSdks, context).getOrThrow()
   }
   else {
     baseSdk
@@ -65,6 +65,7 @@ fun createVirtualEnvSynchronously(
       else {
         installedSdk
       }
+
       try {
         val packageManager = PyPackageManager.getInstance(sdk)
         return packageManager.createVirtualEnv(venvRoot, inheritSitePackages)
@@ -79,27 +80,29 @@ fun createVirtualEnvSynchronously(
     if (it == null) {
       // here is the local machine case
       createSdkByGenerateTask(task, existingSdks, installedSdk, associatedPath, null)
-      ?: return Result.failure(Throwable("Error calling createSdkByGenerateTask"))
     }
     else {
       val homePath = ProgressManager.getInstance().run(task)
       createSdkForTarget(project, it, homePath, existingSdks, targetPanelExtension)
     }
   }
+
   if (!makeShared) {
-    venvSdk.associateWithModule(module, projectPath)
-    ApplicationManager.getApplication().runWriteAction {
-      venvSdk.sdkModificator.commitChanges()
+    when {
+      module != null -> venvSdk.setAssociationToModule(module)
+      projectPath != null -> venvSdk.setAssociationToPath(projectPath)
     }
   }
-  project.excludeInnerVirtualEnv(venvSdk)
+
+  project?.excludeInnerVirtualEnv(venvSdk)
   if (targetEnvironmentConfiguration.isLocal()) {
     // The method `onVirtualEnvCreated(..)` stores preferred base path to virtual envs. Storing here the base path from the non-local
     // target (e.g. a path from SSH machine or a Docker image) ends up with a meaningless default for the local machine.
     // If we would like to store preferred paths for non-local targets we need to use some key to identify the exact target.
-    PySdkSettings.instance.onVirtualEnvCreated(installedSdk, FileUtil.toSystemIndependentName(venvRoot), projectPath)
+    PySdkSettings.instance.onVirtualEnvCreated(installedSdk.homePath, FileUtil.toSystemIndependentName(venvRoot), projectPath)
   }
-  return Result.success(venvSdk)
+
+  return venvSdk
 }
 
 fun findPreferredVirtualEnvBaseSdk(existingBaseSdks: List<Sdk>): Sdk? {
@@ -129,19 +132,19 @@ internal fun createSdkForTarget(
 
   val sdkVersion: String? = data.getInterpreterVersion(project, interpreterPath)
 
-  val name: String
-  if (!sdkName.isNullOrEmpty()) {
-    name = sdkName
+  val name = if (!sdkName.isNullOrEmpty()) {
+    sdkName
   }
   else {
-    name = PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
+    PythonInterpreterTargetEnvironmentFactory.findDefaultSdkName(project, data, sdkVersion)
   }
 
   val sdk = SdkConfigurationUtil.createSdk(existingSdks, interpreterPath, PythonSdkType.getInstance(), data, name)
-
-  if (project != null && project.modules.isNotEmpty() &&
-      PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
-    sdk.associateWithModule(project.modules[0], null)
+  if (PythonInterpreterTargetEnvironmentFactory.by(environmentConfiguration)?.needAssociateWithModule() == true) {
+    // FIXME: multi module project support
+    project?.modules?.firstOrNull()?.let {
+      sdk.setAssociationToModule(it)
+    }
   }
 
   sdk.sdkModificator.let { modifiableSdk ->
@@ -151,6 +154,7 @@ internal fun createSdkForTarget(
     }
   }
 
+  // FIXME: should we persist it?
   data.isValid = true
 
   return sdk

@@ -6,17 +6,24 @@ import com.google.common.collect.Sets;
 import com.intellij.execution.console.ConsoleHistoryController;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.TestActionEvent;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.python.console.PyConsoleOptions;
 import com.jetbrains.python.console.PyConsoleOptionsConfigurable;
+import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -24,6 +31,7 @@ import javax.swing.tree.TreeNode;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 import static com.intellij.testFramework.UsefulTestCase.assertContainsElements;
@@ -33,6 +41,36 @@ import static com.jetbrains.python.PyParameterInfoTest.checkParameters;
 import static org.junit.Assert.*;
 
 public class PythonConsoleTest extends PyEnvTestCase {
+  private static @Nullable List<String> getStaticCompletion(CodeInsightTestFixture fixture, PythonConsoleView consoleView) {
+    fixture.configureFromExistingVirtualFile(consoleView.getVirtualFile());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      addCaretsToConsoleEditor(consoleView.getCurrentEditor());
+    });
+
+    fixture.completeBasic();
+
+    return fixture.getLookupElementStrings();
+  }
+
+  @RequiresEdt
+  private static void addCaretsToConsoleEditor(EditorEx consoleEditor) {
+    var state = EditorTestUtil.extractCaretAndSelectionMarkers(consoleEditor.getDocument());
+    AtomicBoolean primary = new AtomicBoolean(true);
+    ReadAction.run(() -> {
+      var model = consoleEditor.getCaretModel();
+      List<Caret> oldCarets = List.copyOf(model.getAllCarets());
+
+      for (EditorTestUtil.CaretInfo caret : state.carets()) {
+        if (caret.position != null) {
+          model.addCaret(caret.position, primary.get());
+          primary.set(false);
+        }
+      }
+
+      oldCarets.forEach(model::removeCaret);
+    });
+  }
+
   @Test
   public void testConsolePrint() {
     runPythonTest(new PyConsoleTask() {
@@ -171,8 +209,8 @@ public class PythonConsoleTest extends PyEnvTestCase {
       public void testing() throws Exception {
         exec("foo = 'bar'");
         waitForConditionIsTrue("`foo` is not in the console variable tree", (root) -> {
-          for(TreeNode child : root.getChildren()) {
-            XDebuggerTreeNode node = (XDebuggerTreeNode) child;
+          for (TreeNode child : root.getChildren()) {
+            XDebuggerTreeNode node = (XDebuggerTreeNode)child;
             if (node.toString().equals("foo")) {
               return true;
             }
@@ -182,8 +220,8 @@ public class PythonConsoleTest extends PyEnvTestCase {
 
         exec("foo = 'baz'");
         waitForConditionIsTrue("`foo` value hasn't changed to 'baz'", (root) -> {
-          for(TreeNode child : root.getChildren()) {
-            XDebuggerTreeNode node = (XDebuggerTreeNode) child;
+          for (TreeNode child : root.getChildren()) {
+            XDebuggerTreeNode node = (XDebuggerTreeNode)child;
             if (node.toString().equals("foo") && node.getText().toString().contains("'baz'")) {
               return true;
             }
@@ -276,12 +314,17 @@ public class PythonConsoleTest extends PyEnvTestCase {
   public void testCompletionDoNotEvaluateProperty() {
     runPythonTest(new PyConsoleTask("/debug") {
       @Override
+      public void before() {
+        PyConsoleOptions.getInstance(getProject()).setCodeCompletionOption(PyConsoleOptionsConfigurable.CodeCompletionOption.STATIC);
+      }
+
+      @Override
       public void testing() throws Exception {
         exec("""
                class Bar:
                    @property
                    def prop(self):
-                       x = 238
+                       x = 2389952
                        print(x + 1)
                        return "bar"
                   \s
@@ -290,19 +333,16 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("print(\"Hey\")");
         waitForOutput("Hey");
 
-        List<PydevCompletionVariant> completions = getCompletions("bar.");
-        assertFalse("Completion variants list is empty", completions.isEmpty());
+        addTextToEditor("bar.<caret>");
+        getStaticCompletion(myFixture, getConsoleView());
+        assertTrue(getConsoleView().getCurrentEditor().getDocument().getText().endsWith("prop"));
 
         // Just to make sure that output is updated
         exec("print('Hello')");
         waitForOutput("Hello");
 
-        PydevCompletionVariant compVariant = findCompletionVariantByName(completions, "prop");
-        assertNotNull("Completion variant `prop` is missing", compVariant);
-
-        assertEquals(3, compVariant.getType());
         String currentOutput = output();
-        assertFalse("Property was called for completion", currentOutput.contains("239"));
+        assertFalse("Property was called for completion", currentOutput.contains("2389953"));
       }
 
       @Override
@@ -315,6 +355,11 @@ public class PythonConsoleTest extends PyEnvTestCase {
   @Test
   public void testParameterInfo() {
     runPythonTest(new PyConsoleTask("/debug") {
+      @Override
+      public void before() {
+        PyConsoleOptions.getInstance(getProject()).setCodeCompletionOption(PyConsoleOptionsConfigurable.CodeCompletionOption.RUNTIME);
+      }
+
       @Override
       public void testing() throws Exception {
         exec("from os import getenv");
@@ -360,16 +405,7 @@ public class PythonConsoleTest extends PyEnvTestCase {
         exec("x = 42");
         exec("s = 'str'");
 
-        getStaticCompletion("x", "foo", "s");
-      }
-
-      private void getStaticCompletion(String... completionVariants) {
-        myFixture.configureFromExistingVirtualFile(getConsoleView().getVirtualFile());
-        myFixture.completeBasic();
-        List<String> completions = myFixture.getLookupElementStrings();
-        for (String variant : completionVariants) {
-          assertTrue(completions.contains(variant));
-        }
+        assertContainsElements(getStaticCompletion(myFixture, getConsoleView()), "x", "foo", "s");
       }
     });
   }
@@ -424,7 +460,8 @@ public class PythonConsoleTest extends PyEnvTestCase {
             else {
               assertEquals(linesCount - 1, caretLine);
             }
-          } else {
+          }
+          else {
             assertEquals(0, caretLine);
           }
         });

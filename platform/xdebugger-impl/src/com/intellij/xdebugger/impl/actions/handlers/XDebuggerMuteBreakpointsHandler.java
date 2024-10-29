@@ -5,8 +5,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class XDebuggerMuteBreakpointsHandler extends XDebuggerToggleActionHandler {
   @Override
   protected boolean isEnabled(@Nullable final XDebugSession session, final AnActionEvent event) {

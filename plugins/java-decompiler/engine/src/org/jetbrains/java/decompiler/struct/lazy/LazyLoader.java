@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.lazy;
 
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider;
@@ -119,7 +119,7 @@ public class LazyLoader {
 
   public DataInputFullStream getClassStream(String qualifiedClassName) throws IOException {
     Link link = mapClassLinks.get(qualifiedClassName);
-    return link == null ? null : getClassStream(link.externalPath, link.internalPath);
+    return link == null ? null : link.data != null ? new DataInputFullStream(link.data) : getClassStream(link.externalPath, link.internalPath);
   }
 
   public static void skipAttributes(DataInputFullStream in) throws IOException {
@@ -133,10 +133,16 @@ public class LazyLoader {
   public static class Link {
     public final String externalPath;
     public final String internalPath;
+    public final byte[] data;
 
     public Link(String externalPath, String internalPath) {
+        this(externalPath, internalPath, null);
+    }
+
+    public Link(String externalPath, String internalPath, byte[] data) {
       this.externalPath = externalPath;
       this.internalPath = internalPath;
+      this.data = data;
     }
   }
 }

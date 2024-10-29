@@ -54,10 +54,10 @@ open class CodeStyleImportsBaseUI(private val packages: JComponent, private val 
 
       row {
         cell(packages).align(Align.FILL)
-      }
+      }.resizableRow()
       row {
         cell(importLayout).align(Align.FILL)
-      }
+      }.resizableRow()
     }.apply {
       border = JBUI.Borders.empty(0, 10, 10, 10)
     }

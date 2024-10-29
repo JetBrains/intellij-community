@@ -15,7 +15,9 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MLCodeCompletionConfigurableProvider : ConfigurableProvider() {
   override fun createConfigurable(): Configurable? {
     val configurable = MLCodeCompletionConfigurable()

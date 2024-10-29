@@ -14,7 +14,7 @@ public class PlatformPythonModuleType extends PythonModuleTypeBase<EmptyModuleBu
   public @NotNull EmptyModuleBuilder createModuleBuilder() {
     return new EmptyModuleBuilder() {
       @Override
-      public ModuleType getModuleType() {
+      public ModuleType<?> getModuleType() {
         return getInstance();
       }
     };

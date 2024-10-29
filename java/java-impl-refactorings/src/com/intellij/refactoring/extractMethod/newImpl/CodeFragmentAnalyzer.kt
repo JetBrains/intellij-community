@@ -221,9 +221,12 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   companion object {
     fun inferNullability(expressionGroup: List<PsiExpression>): Nullability {
       val expressionSet = expressionGroup.toHashSet()
-      if (expressionSet.any { it.type == PsiTypes.nullType() }) return Nullability.NULLABLE
-
       if (expressionSet.isEmpty()) return Nullability.UNKNOWN
+      val types = expressionSet.map { expression -> expression.type }
+      if (types.any { type -> type == PsiTypes.nullType() }) return Nullability.NULLABLE
+      if (types.all { type -> type is PsiPrimitiveType }) return Nullability.NOT_NULL
+      if (expressionSet.all { expression -> expression is PsiLiteralExpression }) return Nullability.NOT_NULL
+
       val fragmentToAnalyze = ControlFlowUtil.findCodeFragment(expressionSet.first())
       val dfaRunner = StandardDataFlowRunner(fragmentToAnalyze.project)
 
@@ -265,6 +268,15 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
       val artificialReturn = codeBlock.add(probeStatement) as PsiReturnStatement
       val artificialExpression = requireNotNull(artificialReturn.returnValue)
       return inferNullability(listOf(artificialExpression))
+    }
+
+    fun createAnalyzer(elements: List<PsiElement>): CodeFragmentAnalyzer? {
+      return try {
+        CodeFragmentAnalyzer(elements)
+      }
+      catch (e: ExtractException) {
+        null
+      }
     }
   }
 }

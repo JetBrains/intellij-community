@@ -3,7 +3,7 @@ c:com.intellij.execution.ExecutionException
 - <init>(java.lang.String):V
 - <init>(java.lang.String,java.lang.Throwable):V
 - <init>(java.lang.Throwable):V
-a:com.intellij.execution.ExecutionExceptionWithAttachments
+Fa:com.intellij.execution.ExecutionExceptionWithAttachments
 - com.intellij.execution.ExecutionException
 - com.intellij.openapi.diagnostic.ExceptionWithAttachments
 com.intellij.execution.KillableProcess
@@ -12,17 +12,6 @@ com.intellij.execution.KillableProcess
 c:com.intellij.execution.RunCanceledByUserException
 - com.intellij.execution.ExecutionException
 - <init>():V
-*c:com.intellij.execution.configurations.CompositeParameterTargetedValue
-- <init>():V
-- <init>(java.lang.String):V
-- addLocalPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
-- addPathPart(java.io.File):com.intellij.execution.configurations.CompositeParameterTargetedValue
-- addPathPart(java.lang.String):com.intellij.execution.configurations.CompositeParameterTargetedValue
-- addPathSeparator():com.intellij.execution.configurations.CompositeParameterTargetedValue
-- addTargetPart(java.lang.String,org.jetbrains.concurrency.Promise):com.intellij.execution.configurations.CompositeParameterTargetedValue
-- getLocalValue():java.lang.String
-- getParts():java.util.List
-- s:targetizeParameters(java.util.List):java.util.Collection
 c:com.intellij.execution.configurations.GeneralCommandLine
 - com.intellij.openapi.util.UserDataHolder
 - <init>():V
@@ -32,7 +21,7 @@ c:com.intellij.execution.configurations.GeneralCommandLine
 - addParameter(java.lang.String):V
 - addParameters(java.util.List):V
 - addParameters(java.lang.String[]):V
-- createProcess():java.lang.Process
+- F:createProcess():java.lang.Process
 - p:createProcess(java.lang.ProcessBuilder):java.lang.Process
 - getCharset():java.nio.charset.Charset
 - getCommandLineList(java.lang.String):java.util.List
@@ -83,31 +72,9 @@ e:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - sf:SYSTEM:com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:valueOf(java.lang.String):com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType
 - s:values():com.intellij.execution.configurations.GeneralCommandLine$ParentEnvironmentType[]
-*:com.intellij.execution.configurations.ParameterTargetValue
-- a:getLocalValue():java.lang.String
-*a:com.intellij.execution.configurations.ParameterTargetValuePart
-- com.intellij.execution.configurations.ParameterTargetValue
-- getLocalValue():java.lang.String
-- getPathToUpload():java.lang.String
-*f:com.intellij.execution.configurations.ParameterTargetValuePart$Const
-- com.intellij.execution.configurations.ParameterTargetValuePart
-- <init>(java.lang.String):V
-*f:com.intellij.execution.configurations.ParameterTargetValuePart$Path
-- com.intellij.execution.configurations.ParameterTargetValuePart
-- <init>(java.io.File):V
-- <init>(java.lang.String):V
-- getPathToUpload():java.lang.String
-*f:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
-- com.intellij.execution.configurations.ParameterTargetValuePart
-- sf:INSTANCE:com.intellij.execution.configurations.ParameterTargetValuePart$PathSeparator
-*f:com.intellij.execution.configurations.ParameterTargetValuePart$PromiseValue
-- com.intellij.execution.configurations.ParameterTargetValuePart
-- <init>(java.lang.String,org.jetbrains.concurrency.Promise):V
-- f:getTargetValue():org.jetbrains.concurrency.Promise
 f:com.intellij.execution.configurations.ParametersList
 - java.lang.Cloneable
 - <init>():V
-- *:add(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - add(java.lang.String):V
 - add(java.lang.String,java.lang.String):V
 - addAll(java.util.List):V
@@ -141,14 +108,12 @@ f:com.intellij.execution.configurations.ParametersList
 - getProperties():java.util.Map
 - getProperties(java.lang.String):java.util.Map
 - getPropertyValue(java.lang.String):java.lang.String
-- *:getTargetedList():java.util.List
 - hasParameter(java.lang.String):Z
 - hasProperty(java.lang.String):Z
 - s:join(java.util.List):java.lang.String
 - s:join(java.lang.String[]):java.lang.String
 - s:parse(java.lang.String):java.lang.String[]
 - patchMacroWithEnvs(java.util.Map):V
-- *:prepend(com.intellij.execution.configurations.CompositeParameterTargetedValue):V
 - prepend(java.lang.String):V
 - prependAll(java.lang.String[]):V
 - removeParamsGroup(I):com.intellij.execution.configurations.ParamsGroup
@@ -218,7 +183,7 @@ c:com.intellij.execution.process.CapturingProcessHandler
 - <init>(java.lang.Process,java.nio.charset.Charset,java.lang.String):V
 - p:createProcessAdapter(com.intellij.execution.process.ProcessOutput):com.intellij.execution.process.CapturingProcessAdapter
 - getCharset():java.nio.charset.Charset
-- runProcess():com.intellij.execution.process.ProcessOutput
+- f:runProcess():com.intellij.execution.process.ProcessOutput
 - runProcess(I):com.intellij.execution.process.ProcessOutput
 - runProcess(I,Z):com.intellij.execution.process.ProcessOutput
 - runProcessWithProgressIndicator(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
@@ -234,7 +199,7 @@ c:com.intellij.execution.process.CapturingProcessRunner
 - <init>(com.intellij.execution.process.BaseProcessHandler,java.util.function.Function):V
 - <init>(com.intellij.execution.process.ProcessHandler):V
 - <init>(com.intellij.execution.process.ProcessHandler,java.util.function.Function):V
-- runProcess():com.intellij.execution.process.ProcessOutput
+- f:runProcess():com.intellij.execution.process.ProcessOutput
 - runProcess(I):com.intellij.execution.process.ProcessOutput
 - runProcess(I,Z):com.intellij.execution.process.ProcessOutput
 - runProcess(com.intellij.openapi.progress.ProgressIndicator):com.intellij.execution.process.ProcessOutput
@@ -273,6 +238,7 @@ c:com.intellij.execution.process.KillableProcessHandler
 - <init>(java.lang.Process,java.lang.String):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset):V
 - <init>(java.lang.Process,java.lang.String,java.nio.charset.Charset,java.util.Set):V
+- pf:canDestroyProcessGracefully():Z
 - canKillProcess():Z
 - p:destroyProcessGracefully():Z
 - p:destroyProcessImpl():V
@@ -280,7 +246,6 @@ c:com.intellij.execution.process.KillableProcessHandler
 - killProcess():V
 - ps:mediate(com.intellij.execution.configurations.GeneralCommandLine,Z,Z):com.intellij.execution.configurations.GeneralCommandLine
 - setShouldKillProcessSoftly(Z):V
-- *:setShouldKillProcessSoftlyWithWinP(Z):V
 - shouldKillProcessSoftly():Z
 f:com.intellij.execution.process.LocalPtyOptions
 - sf:Companion:com.intellij.execution.process.LocalPtyOptions$Companion
@@ -408,7 +373,6 @@ f:com.intellij.execution.process.ScriptRunnerUtil
 - s:getProcessOutput(com.intellij.execution.process.ProcessHandler,com.intellij.openapi.util.Condition,J):java.lang.String
 - s:terminateProcessHandler(com.intellij.execution.process.ProcessHandler,J,java.lang.String):V
 com.intellij.execution.process.SelfKiller
-- *:tryDestroyGracefully():Z
 f:com.intellij.execution.process.impl.ProcessListUtil
 - sf:COMMAND_LIST_COMMAND:java.util.List
 - sf:COMM_LIST_COMMAND:java.util.List

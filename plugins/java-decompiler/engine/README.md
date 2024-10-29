@@ -5,6 +5,11 @@ probably for a high-level programming language in general. Naturally it is still
 under development, please send your bug reports and improvement suggestions to the
 [issue tracker](https://youtrack.jetbrains.com/newIssue?project=IDEA&clearDraft=true&c=Subsystem+Decompiler).
 
+### Fernflower and ForgeFlower
+
+Fernflower includes some patches from [ForgeFlower](https://github.com/MinecraftForge/ForgeFlower).
+Sincere appreciation is extended to the maintainers of ForgeFlower for their valuable contributions and enhancements.
+
 ### Licence
 
 Fernflower is licenced under the [Apache Licence Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
@@ -69,6 +74,12 @@ The rest of options can be left as they are: they are aimed at professional reve
 - crp (0): use record patterns where it is possible
 - cps (0): use switch with patterns where it is possible 
 - log (INFO): a logging level, possible values are TRACE, INFO, WARN, ERROR
+- iec (0): include entire class path into context when decompiling 
+- isl (1): inline simple lambda expressions
+- ucrc (1): hide unnecessary record constructor and getters
+- cci (1): check if resource in try-with-resources actually implements `AutoCloseable` interface
+- jvn (0): overwrite any local variable names with JAD style names
+- jpr (0): include parameter names in JAD naming
 
 ### Renaming identifiers
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -7,8 +7,7 @@ import com.intellij.xdebugger.impl.actions.*;
 import com.intellij.xdebugger.impl.actions.handlers.*;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
-import com.intellij.xdebugger.impl.evaluate.quick.XQuickEvaluateHandler;
-import com.intellij.xdebugger.impl.evaluate.quick.common.QuickEvaluateHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public class XDebuggerSupport extends DebuggerSupport {
@@ -26,7 +25,6 @@ public class XDebuggerSupport extends DebuggerSupport {
   private final XDebuggerPauseActionHandler myPauseHandler;
   private final XDebuggerSuspendedActionHandler myShowExecutionPointHandler;
   private final XDebuggerEvaluateActionHandler myEvaluateHandler;
-  private final XQuickEvaluateHandler myQuickEvaluateHandler;
 
   private final XAddToWatchesFromEditorActionHandler myAddToWatchesActionHandler;
   private final XAddToInlineWatchesFromEditorActionHandler myAddToInlineWatchesActionHandler;
@@ -45,26 +43,26 @@ public class XDebuggerSupport extends DebuggerSupport {
     myAddToInlineWatchesActionHandler = new XAddToInlineWatchesFromEditorActionHandler();
     myStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOver(false);
       }
     };
     myStepIntoHandler = new XDebuggerStepIntoHandler();
     myStepOutHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOut();
       }
     };
     myForceStepOverHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.stepOver(true);
       }
     };
     myForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.forceStepInto();
       }
     };
@@ -73,25 +71,24 @@ public class XDebuggerSupport extends DebuggerSupport {
     myForceRunToCursor = new XDebuggerRunToCursorActionHandler(true);
     myResumeHandler = new XDebuggerActionHandler() {
       @Override
-      protected boolean isEnabled(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         return session.isPaused();
       }
 
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.resume();
       }
     };
     myPauseHandler = new XDebuggerPauseActionHandler();
     myShowExecutionPointHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.showExecutionPoint();
       }
     };
     myMuteBreakpointsHandler = new XDebuggerMuteBreakpointsHandler();
     myEvaluateHandler = new XDebuggerEvaluateActionHandler();
-    myQuickEvaluateHandler = new XQuickEvaluateHandler();
     myMarkObjectActionHandler = new XMarkObjectActionHandler();
     myEditBreakpointActionHandler = new XDebuggerEditBreakpointActionHandler();
   }
@@ -186,12 +183,6 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myEvaluateHandler;
   }
 
-  @Override
-  @NotNull
-  public QuickEvaluateHandler getQuickEvaluateHandler() {
-    return myQuickEvaluateHandler;
-  }
-
   @NotNull
   @Override
   public DebuggerActionHandler getAddToWatchesActionHandler() {
@@ -217,6 +208,7 @@ public class XDebuggerSupport extends DebuggerSupport {
     return myMuteBreakpointsHandler;
   }
 
+  @ApiStatus.Internal
   @NotNull
   @Override
   public MarkObjectActionHandler getMarkObjectHandler() {

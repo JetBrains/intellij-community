@@ -155,6 +155,7 @@ final class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTes
     });
     actions.add(() -> {
       if (myThreadTracker != null) {
+        VfsTestUtil.waitForFileWatcher();
         myThreadTracker.checkLeak();
       }
     });

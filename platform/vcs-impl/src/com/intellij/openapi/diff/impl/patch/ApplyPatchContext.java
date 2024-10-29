@@ -4,11 +4,13 @@ package com.intellij.openapi.diff.impl.patch;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.HashMap;
 import java.util.Map;
 
 
+@ApiStatus.Internal
 public final class ApplyPatchContext {
   private final VirtualFile myBaseDir;
   private final int mySkipTopDirs;

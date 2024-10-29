@@ -1,0 +1,21 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.testRunner",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/lang-impl:intellij.platform.lang.impl",
+    "@community//platform/execution-impl:intellij.platform.execution.impl",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/xdebugger-api:intellij.platform.debugger",
+    "@community//platform/diff-impl:intellij.platform.diff.impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/util/jdom:intellij.platform.util.jdom"
+  ]
+)

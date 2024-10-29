@@ -1,0 +1,17 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.externalSystem.dependencyUpdater",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:intellij.platform.core",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/platform-impl:intellij.platform.ide.impl",
+    "@community//platform/util:intellij.platform.util"
+  ]
+)

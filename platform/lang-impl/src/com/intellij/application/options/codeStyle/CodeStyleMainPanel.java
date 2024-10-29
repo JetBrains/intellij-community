@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.application.options.codeStyle;
 
@@ -58,8 +58,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   };
 
-  @NonNls
-  private static final String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
+  private static final @NonNls String WAIT_CARD = "CodeStyleSchemesConfigurable.$$$.Wait.placeholder.$$$";
 
   private final PropertiesComponent myProperties;
 
@@ -144,8 +143,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     onCurrentSchemeChanged();
   }
 
-  @NotNull
-  private JComponent createLinkComponent() {
+  private @NotNull JComponent createLinkComponent() {
     ActionLink link = new ActionLink(mySetFromAction);
     link.setVerticalAlignment(SwingConstants.BOTTOM);
 
@@ -224,9 +222,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   }
 
-  @NonNls
-  @Nullable
-  public String getHelpTopic() {
+  public @NonNls @Nullable String getHelpTopic() {
     NewCodeStyleSettingsPanel selectedPanel = ensureCurrentPanel();
     return selectedPanel != null
            ? selectedPanel.getHelpTopic()
@@ -285,8 +281,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     return mySettingsPanels.get(scheme.getName()).isModified();
   }
 
-  @NotNull
-  public OptionsContainingConfigurable getOptionIndexer() {
+  public @NotNull OptionsContainingConfigurable getOptionIndexer() {
     final CodeStyleScheme defaultScheme = CodeStyleSchemes.getInstance().getDefaultScheme();
     final NewCodeStyleSettingsPanel panel = ensurePanel(defaultScheme);
     return panel.getOptionIndexer();
@@ -300,8 +295,7 @@ public final class CodeStyleMainPanel extends JPanel implements TabbedLanguageCo
     }
   }
 
-  @NotNull
-  private static String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
+  private static @NotNull String getSelectedTabPropertyName(@NotNull TabbedLanguageCodeStylePanel panel) {
     Language language = panel.getDefaultLanguage();
     return language != null ? SELECTED_TAB + "." + language.getID() : SELECTED_TAB;
   }

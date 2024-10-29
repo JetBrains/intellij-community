@@ -1,0 +1,11 @@
+package pack
+
+import topLevelProperty
+
+fun usage() {
+    topLevelProperty<caret>
+}
+
+// IGNORE_K2
+// ELEMENT: topLevelProperty
+// TAIL_TEXT: " (<root>)"

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.eval4j
 
@@ -94,12 +94,18 @@ val Value.long: Long get() = (this as LongValue).value
 val Value.float: Float get() = (this as FloatValue).value
 val Value.double: Double get() = (this as DoubleValue).value
 
-fun Value.obj(expectedType: Type = asmType): Any? {
-    return when (expectedType) {
-        Type.BOOLEAN_TYPE -> this.boolean
-        Type.SHORT_TYPE -> (this as IntValue).int.toShort()
-        Type.BYTE_TYPE -> (this as IntValue).int.toByte()
-        Type.CHAR_TYPE -> (this as IntValue).int.toChar()
+fun Value.obj(expectedType: Type): Any? = obj { expectedType }
+
+fun Value.obj(expectedType: () -> Type = { asmType }): Any? {
+    return when (this) {
+        NULL_VALUE -> null
+        is IntValue -> when (expectedType.invoke()) {
+            Type.BOOLEAN_TYPE -> boolean
+            Type.SHORT_TYPE -> int.toShort()
+            Type.BYTE_TYPE -> int.toByte()
+            Type.CHAR_TYPE -> int.toChar()
+            else -> value
+        }
         else -> (this as AbstractValue<*>).value
     }
 }

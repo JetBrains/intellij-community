@@ -3,6 +3,7 @@ package com.intellij.openapi.project.impl
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
@@ -20,6 +21,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.junit.After
+import org.junit.Assert
 import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Files
@@ -30,43 +33,44 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   @Rule @JvmField val inMemoryFs = InMemoryFsRule()
   @Rule @JvmField val tempDir = TempDirectory()
 
-  @Test fun cancelOnRunPostStartUpActivities() {
-    var job: Job? = null
-    class MyStartupActivity : InitProjectActivity {
-      val passed = AtomicBoolean()
+  @After fun cleanup() {
+    val projects = ProjectUtilCore.getOpenProjects()
+    if (projects.isNotEmpty()) {
+      val message = "Leaked projects: ${projects.toList()}"
+      projects.forEach(PlatformTestUtil::forceCloseProjectWithoutSaving)
+      Assert.fail(message)
+    }
+  }
 
+  @Test fun cancelOnRunPostStartUpActivities() {
+    val passed = AtomicBoolean()
+    var job: Job? = null
+    val activity = object : InitProjectActivity {
       override suspend fun run(project: Project) {
         passed.set(true)
         job!!.cancel("test")
       }
     }
-
-    val activity = MyStartupActivity()
     val ep = ExtensionPointName<InitProjectActivity>("com.intellij.initProjectActivity")
     ExtensionTestUtil.maskExtensions(ep, listOf(activity), testRootDisposable, fireEvents = false)
     runBlocking {
       job = launch {
-        assertThat(doOpenProject()).isNull()
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions())
       }
     }
-    // 1 on maskExtensions call, second call our call
-    assertThat(activity.passed.get()).isTrue()
+    assertThat(passed.get()).isTrue()
   }
 
   @Test fun cancelOnLoadingModules() {
     runBlocking {
       var job: Job? = null
       job = launch {
-        assertThat(doOpenProject(createTestOpenProjectOptions().copy(beforeOpen = {
-          job!!.cancel("test")
-          job!!
-          true
-        }))).isNull()
+        assertProjectOpenIsCancelled(createTestOpenProjectOptions(beforeOpen = { job!!.cancel("test") }))
       }
     }
   }
 
-  private suspend fun doOpenProject(options: OpenProjectTask = createTestOpenProjectOptions()) {
+  private suspend fun assertProjectOpenIsCancelled(options: OpenProjectTask) {
     val project = ProjectManagerEx.getInstanceEx().openProjectAsync(inMemoryFs.fs.getPath("/p"), options)
     if (project != null) {
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
@@ -75,9 +79,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun isSameProjectForDirectoryBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
-
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val dirBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir, createTestOpenProjectOptions())!!
     dirBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, dirBasedProject)).isTrue()
@@ -92,8 +94,7 @@ class ProjectOpeningTest : BareTestFixtureTestCase() {
   }
 
   @Test fun isSameProjectForFileBasedProject() {
-    val projectDir = inMemoryFs.fs.getPath("/p")
-    projectDir.createDirectories()
+    val projectDir = inMemoryFs.fs.getPath("/p").createDirectories()
     val fileBasedProject = ProjectManagerEx.getInstanceEx().newProject(projectDir.resolve("project.ipr"), createTestOpenProjectOptions())!!
     fileBasedProject.useProject {
       assertThat(ProjectUtil.isSameProject(projectDir, fileBasedProject)).isTrue()

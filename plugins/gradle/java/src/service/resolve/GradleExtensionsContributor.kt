@@ -44,7 +44,7 @@ class GradleExtensionsContributor : NonCodeMembersContributor() {
       if (property.name in resolvedProperties || property.name in versionCatalogProperties) {
         continue
       }
-      if (!processor.execute(GradleGroovyProperty(property.name, property.typeFqn, property.value, file), state)) {
+      if (!processor.execute(GradleGroovyProperty(property.name, property.typeFqn, null, file), state)) {
         return
       }
     }

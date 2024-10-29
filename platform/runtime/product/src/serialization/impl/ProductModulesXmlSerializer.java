@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization.impl;
 
-import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.product.serialization.RawIncludedFromData;
 import com.intellij.platform.runtime.product.serialization.RawIncludedRuntimeModule;
 import com.intellij.platform.runtime.product.serialization.RawProductModules;
@@ -19,7 +19,7 @@ public final class ProductModulesXmlSerializer {
   public static @NotNull RawProductModules parseModuleXml(@NotNull InputStream inputStream) throws XMLStreamException {
     XMLStreamReader reader = XMLInputFactory.newDefaultFactory().createXMLStreamReader(inputStream);
     int level = 0;
-    ModuleImportance importance = null;
+    RuntimeModuleLoadingRule loadingRule = null;
     String moduleName = null;
     List<RawIncludedRuntimeModule> rootMainGroupModules = new ArrayList<>();
     List<RuntimeModuleId> bundledPluginMainModules = new ArrayList<>();
@@ -41,13 +41,19 @@ public final class ProductModulesXmlSerializer {
           if (tagName.equals("module")) {
             if (reader.getAttributeCount() > 0) {
               String attributeName = reader.getAttributeLocalName(0);
-              if (!"importance".equals(attributeName)) {
+              if (!"loading".equals(attributeName)) {
                 throw new XMLStreamException("Unexpected attribute '" + attributeName + "'");
               }
-              importance = ModuleImportance.valueOf(reader.getAttributeValue(0).toUpperCase(Locale.US));
+              String loadingRuleString = reader.getAttributeValue(0);
+              switch (loadingRuleString) {
+                case "optional": loadingRule = RuntimeModuleLoadingRule.OPTIONAL; break;
+                case "required": loadingRule = RuntimeModuleLoadingRule.REQUIRED; break;
+                case "on-demand": loadingRule = RuntimeModuleLoadingRule.ON_DEMAND; break;
+                default: throw new XMLStreamException("Unknown loading rule '" + loadingRuleString + "'");
+              }
             }
             else {
-              importance = ModuleImportance.FUNCTIONAL;
+              loadingRule = RuntimeModuleLoadingRule.REQUIRED;
             }
           }
         }
@@ -65,8 +71,8 @@ public final class ProductModulesXmlSerializer {
           }
           RuntimeModuleId moduleId = RuntimeModuleId.raw(moduleName);
           if ("main-root-modules".equals(secondLevelTag)) {
-            assert importance != null;
-            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, importance));
+            assert loadingRule != null;
+            rootMainGroupModules.add(new RawIncludedRuntimeModule(moduleId, loadingRule));
           }
           else if ("bundled-plugins".equals(secondLevelTag)) {
             bundledPluginMainModules.add(moduleId);
@@ -86,7 +92,7 @@ public final class ProductModulesXmlSerializer {
             throw new XMLStreamException("Unexpected second-level tag " + secondLevelTag);
           }
           moduleName = null;
-          importance = null;
+          loadingRule = null;
         }
         else if (level == 1 && "include".equals(secondLevelTag)) {
           if (includedFromModule == null) {

@@ -175,8 +175,8 @@ abstract class RenameKotlinPsiProcessor : RenamePsiElementProcessor() {
         listener: RefactoringElementListener?
     ) {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
-        renameRefactoringSupport.processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
-            if (renameMangledUsageIfPossible(usage, element, newName)) return@processForeignUsages
+        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = { usage ->
+            if (renameMangledUsageIfPossible(usage, element, newName)) return@processAll
             simpleUsages += usage
         })
 

@@ -1,11 +1,12 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame
 
 import com.intellij.ide.dnd.DnDNativeTarget
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.ui.getBottomLocalsComponentProvider
+import org.jetbrains.annotations.ApiStatus.Internal
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -14,15 +15,15 @@ import javax.swing.JPanel
  * Notice that you must provide the bottom component of the view by implementing XDebugSessionTabCustomizer in your XDebugProcess
  * @see com.intellij.xdebugger.impl.ui.XDebugSessionTabCustomizer.getBottomLocalsComponentProvider
  */
+@Internal
 class XSplitterWatchesViewImpl(
   session: XDebugSessionImpl,
   watchesInVariables: Boolean,
   isVertical: Boolean,
   withToolbar: Boolean
 ) : XWatchesViewImpl(session.also { checkContract(it) }, watchesInVariables, isVertical, withToolbar), DnDNativeTarget, XWatchesView {
-
   companion object {
-    const val proportionKey = "debugger.immediate.window.in.watches.proportion.key"
+    private const val proportionKey = "debugger.immediate.window.in.watches.proportion.key"
 
     private fun checkContract(session: XDebugSessionImpl) {
       if (tryGetBottomComponentProvider(session) == null)
@@ -32,13 +33,16 @@ class XSplitterWatchesViewImpl(
     private fun tryGetBottomComponentProvider(session: XDebugSessionImpl) = session.debugProcess.getBottomLocalsComponentProvider()
   }
 
+  lateinit var splitter: OnePixelSplitter
+    private set
+
   override fun createMainPanel(localsPanelComponent: JComponent): JPanel {
     val session = mySession.get() ?: error("Not null session is expected here")
     val bottomLocalsComponentProvider = tryGetBottomComponentProvider(session)
                                         ?: error("BottomLocalsComponentProvider is not implemented to use SplitterWatchesVariablesView")
 
     val evaluatorComponent = bottomLocalsComponentProvider.createBottomLocalsComponent()
-    val splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
+    splitter = OnePixelSplitter(true, proportionKey, 0.01f, 0.99f)
 
     splitter.firstComponent = localsPanelComponent
     splitter.secondComponent = evaluatorComponent

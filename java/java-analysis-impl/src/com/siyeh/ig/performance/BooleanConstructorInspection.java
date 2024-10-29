@@ -152,7 +152,7 @@ public final class BooleanConstructorInspection extends BaseInspection implement
       if (type == null || !type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)) {
         return;
       }
-      final PsiClass aClass = ClassUtils.getContainingClass(expression);
+      final PsiClass aClass = PsiUtil.getContainingClass(expression);
       if (aClass != null) {
         final String qualifiedName = aClass.getQualifiedName();
         if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(qualifiedName)) {

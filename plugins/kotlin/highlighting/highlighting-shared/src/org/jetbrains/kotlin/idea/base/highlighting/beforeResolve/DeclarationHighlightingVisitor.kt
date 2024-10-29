@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.highlighting.beforeResolve
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.util.PsiUtilCore
 import org.jetbrains.kotlin.idea.base.highlighting.BeforeResolveHighlightingExtension
 import org.jetbrains.kotlin.idea.base.highlighting.textAttributesForClass
@@ -13,7 +14,7 @@ import org.jetbrains.kotlin.idea.highlighter.visitor.AbstractHighlightingVisitor
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder) {
+internal class DeclarationHighlightingVisitor(holder: HighlightInfoHolder) : AbstractHighlightingVisitor(holder), DumbAware {
     override fun visitTypeAlias(typeAlias: KtTypeAlias) {
         highlightNamedDeclaration(typeAlias, KotlinHighlightInfoTypeSemanticNames.TYPE_ALIAS)
         super.visitTypeAlias(typeAlias)

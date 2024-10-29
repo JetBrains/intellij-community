@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.tree;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -39,7 +40,7 @@ public class IElementType {
 
   private static short size; // guarded by lock
   private static volatile IElementType @NotNull [] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
-  @SuppressWarnings("StringOperationCanBeSimplified") private static final @NonNls Object lock = new String("registry lock");
+  private static final @NonNls Object lock = new String("registry lock");
 
   static {
     IElementType[] init = new IElementType[137];
@@ -106,21 +107,18 @@ public class IElementType {
     myLanguage = language == null ? Language.ANY : language;
     if (register) {
       synchronized (lock) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
         myIndex = size++;
-        if (myIndex >= MAX_INDEXED_TYPES) {
-          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(Objects::nonNull).collect(Collectors.groupingBy(ie -> ie.myLanguage));
-          Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
-          List<IElementType> types = max.getValue();
-          Logger.getInstance(IElementType.class)
-            .error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
-                   " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
-        }
-        IElementType[] newRegistry =
-          myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
+
+        IElementType[] newRegistry = myIndex >= ourRegistry.length
+                                     ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY)
+                                     : ourRegistry;
         newRegistry[myIndex] = this;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
         ourRegistry = newRegistry;
       }
+
+      checkSizeDoesNotExceedLimit();
     }
     else {
       myIndex = -1;
@@ -237,6 +235,34 @@ public class IElementType {
       }
     }
     return matches.toArray(new IElementType[0]);
+  }
+
+  private void checkSizeDoesNotExceedLimit() {
+    if (myIndex != MAX_INDEXED_TYPES) {
+      return;
+    }
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      int length = MAX_INDEXED_TYPES;
+      IElementType[] registrySnapshot = new IElementType[length];
+      synchronized (lock) {
+        System.arraycopy(ourRegistry, 0, registrySnapshot, 0, length);
+      }
+
+      Map<Language, List<IElementType>> byLang = Stream.of(registrySnapshot)
+        .filter(Objects::nonNull)
+        .collect(Collectors.groupingBy(ie -> ie.myLanguage));
+
+      Map.Entry<Language, List<IElementType>> max = Collections.max(byLang.entrySet(), Comparator.comparingInt(e -> e.getValue().size()));
+
+      List<IElementType> maxTypes = max.getValue();
+      Language maxLanguage = max.getKey();
+      String first300ElementTypes = StringUtil.first(StringUtil.join(maxTypes, ", "), 300, true);
+
+      Logger.getInstance(IElementType.class)
+        .error("Too many element types registered. Out of (short) range. Most of element types (" + maxTypes.size() + ")" +
+               " were registered for '" + maxLanguage + "': " + first300ElementTypes);
+    });
   }
 
   private static final class TombstoneElementType extends IElementType {

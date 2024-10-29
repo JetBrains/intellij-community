@@ -6,16 +6,14 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitUntrackedFilesHolder
 import org.jetbrains.annotations.TestOnly
 
-class GitRepositoryIgnoredFilesHolder(private val repository: GitRepository) {
-  fun isInUpdateMode(): Boolean = repository.untrackedFilesHolder.isInUpdateMode
-  fun containsFile(file: FilePath): Boolean = repository.untrackedFilesHolder.containsIgnoredFile(file)
-  val ignoredFilePaths: Set<FilePath> get() = repository.untrackedFilesHolder.ignoredFilePaths.toSet()
-  fun retrieveIgnoredFilePaths(): Collection<FilePath> = repository.untrackedFilesHolder.retrieveIgnoredFilePaths()
+interface GitRepositoryIgnoredFilesHolder {
+  val ignoredFilePaths: Set<FilePath>
 
-  fun removeIgnoredFiles(filePaths: Collection<FilePath>) {
-    repository.untrackedFilesHolder.removeIgnored(filePaths)
-  }
+  val initialized: Boolean
 
-  @TestOnly
-  fun createWaiter(): GitUntrackedFilesHolder.Waiter = repository.untrackedFilesHolder.createWaiter()
+  fun isInUpdateMode(): Boolean
+
+  fun containsFile(file: FilePath): Boolean
+
+  fun removeIgnoredFiles(filePaths: Collection<FilePath>)
 }

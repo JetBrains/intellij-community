@@ -14,7 +14,7 @@ use log::debug;
 use serde::{Deserialize, Serialize};
 use tempfile::{Builder, TempDir};
 
-use xplat_launcher::{DEBUG_MODE_ENV_VAR, get_config_home, PathExt};
+use xplat_launcher::{DEBUG_MODE_ENV_VAR, PathExt};
 
 static INIT: Once = Once::new();
 static mut SHARED: Option<TestEnvironmentShared> = None;
@@ -208,7 +208,7 @@ fn init_test_environment_once() -> Result<TestEnvironmentShared> {
     let product_info_path = project_root.join(format!("resources/product_info_{}.json", env::consts::OS));
     let vm_options_path = project_root.join("resources/xplat.vmoptions");
 
-    // on build agents, a temp directory may reside in a different filesystem, so copies are needed for later linking
+    // on build agents, a temp directory may reside in a different filesystem, so copies are necessary for later linking
     let temp_dir = Builder::new().prefix("xplat_launcher_shared_").tempdir().context("Failed to create temp directory")?;
     let launcher_path = temp_dir.path().join(launcher_file.file_name().unwrap());
     fs::copy(&launcher_file, &launcher_path).with_context(|| format!("Failed to copy {launcher_file:?} to {launcher_path:?}"))?;
@@ -329,7 +329,7 @@ fn layout_launcher(
     // .
     // └── XPlatLauncher
     //     ├── bin/
-    //     │   └── xplat-launcher.exe | remote-dev-server.exe
+    //     │   └── xplat64.exe | remote-dev-server.exe
     //     │   └── xplat64.exe.vmoptions
     //     │   └── idea.properties
     //     ├── lib/
@@ -339,7 +339,7 @@ fn layout_launcher(
     //     └── product-info.json
 
     let launcher_rel_path = match launcher_location {
-        LauncherLocation::Standard => "bin\\xplat-launcher.exe",
+        LauncherLocation::Standard => "bin\\xplat64.exe",
         LauncherLocation::RemoteDev => "bin\\remote-dev-server.exe"
     };
     let dist_root = target_dir.join("XPlatLauncher");
@@ -420,14 +420,6 @@ fn symlink(original: &Path, link: &Path) -> Result<()> {
     };
 
     result.with_context(|| format!("Failed to create symlink {link:?} -> {original:?}; {message}"))
-}
-
-pub fn get_custom_config_dir() -> PathBuf {
-    get_jetbrains_config_root().join("XPlatLauncherTest")
-}
-
-pub fn get_jetbrains_config_root() -> PathBuf {
-    get_config_home().unwrap().join("JetBrains")
 }
 
 pub struct LauncherRunSpec {
@@ -639,7 +631,7 @@ fn read_output_file(path: &Path) -> Result<String> {
     if let Ok(string) = String::from_utf8(bytes.to_owned()) {
         Ok(string)
     } else {
-        for line in bytes.split(|b| *b == '\n' as u8) {
+        for line in bytes.split(|b| *b == b'\n') {
             if let Err(e) = String::from_utf8(line.to_owned()) {
                 bail!("{}: {:?} {:?}", e, line, String::from_utf8_lossy(line))
             }

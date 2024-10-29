@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.KEYBOARD_SHORTCUT;
 
+@ApiStatus.Internal
 public final class CopyPathsAction extends AnAction implements DumbAware {
   public CopyPathsAction() {
     setEnabledInModalContext(true);

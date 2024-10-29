@@ -7,30 +7,22 @@ import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
-import com.intellij.util.concurrency.SynchronizedClearableLazy
 import java.util.concurrent.ConcurrentHashMap
 
 private val LOG = logger<NotificationGroupManagerImpl>()
 
-class NotificationGroupManagerImpl private constructor() : NotificationGroupManager {
-  private val registeredGroups = computeGroups()
+internal class NotificationGroupManagerImpl() : NotificationGroupManager {
+  private val registeredGroups: MutableMap<String, NotificationGroup> = computeGroups()
 
-  private val registeredNotificationIds = SynchronizedClearableLazy<Set<String>> {
-    val result = HashSet<String>()
-    NotificationGroupEP.EP_NAME.processWithPluginDescriptor { extension, pluginDescriptor ->
-      if (extension.notificationIds != null && PluginManagerCore.isDevelopedByJetBrains(pluginDescriptor)) {
-        result.addAll(extension.notificationIds!!)
-      }
-    }
-    result
-  }
+  @Volatile
+  private var registeredNotificationIds: Set<String>? = null
 
   init {
     NotificationGroupEP.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<NotificationGroupEP> {
       override fun extensionAdded(extension: NotificationGroupEP, pluginDescriptor: PluginDescriptor) {
         registerNotificationGroup(extension, pluginDescriptor, registeredGroups)
         if (extension.notificationIds != null) {
-          registeredNotificationIds.drop()
+          registeredNotificationIds = null
         }
       }
 
@@ -40,10 +32,24 @@ class NotificationGroupManagerImpl private constructor() : NotificationGroupMana
           registeredGroups.remove(extension.id)
         }
         if (extension.notificationIds != null) {
-          registeredNotificationIds.drop()
+          registeredNotificationIds = null
         }
       }
     }, null)
+  }
+
+  private fun getNotificationIds(): Set<String> {
+    val existing = registeredNotificationIds
+    if (existing != null) return existing
+
+    val result = HashSet<String>()
+    NotificationGroupEP.EP_NAME.processWithPluginDescriptor { extension, pluginDescriptor ->
+      if (extension.notificationIds != null && PluginManagerCore.isDevelopedByJetBrains(pluginDescriptor)) {
+        result.addAll(extension.notificationIds!!)
+      }
+    }
+    registeredNotificationIds = result
+    return result
   }
 
   override fun getNotificationGroup(groupId: String): NotificationGroup? = registeredGroups[groupId]
@@ -52,7 +58,7 @@ class NotificationGroupManagerImpl private constructor() : NotificationGroupMana
 
   override fun getRegisteredNotificationGroups(): MutableCollection<NotificationGroup> = registeredGroups.values
 
-  override fun isRegisteredNotificationId(notificationId: String): Boolean = registeredNotificationIds.value.contains(notificationId)
+  override fun isRegisteredNotificationId(notificationId: String): Boolean = getNotificationIds().contains(notificationId)
 }
 
 private fun computeGroups(): MutableMap<String, NotificationGroup> {

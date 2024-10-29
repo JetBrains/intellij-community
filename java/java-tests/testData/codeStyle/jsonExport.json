@@ -42,6 +42,7 @@
       "blank_lines_around_class": 1,
       "blank_lines_around_field": 0,
       "blank_lines_around_field_in_interface": 0,
+      "blank_lines_around_field_with_annotations": 0,
       "blank_lines_around_initializer": 1,
       "blank_lines_around_method": 1,
       "blank_lines_around_method_in_interface": 1,

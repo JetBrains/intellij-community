@@ -10,7 +10,7 @@ import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.java.JpsJavaModuleExtension
 import org.jetbrains.jps.model.java.LanguageLevel
 
-internal class JpsJavaModuleExtensionBridge(private val javaSettingsEntity: JavaModuleSettingsEntity, parentElement: JpsModuleBridge)
+internal class JpsJavaModuleExtensionBridge(private val javaSettingsEntity: JavaModuleSettingsEntity?, parentElement: JpsModuleBridge)
   : JpsElementBase<JpsJavaModuleExtensionBridge>(), JpsJavaModuleExtension {
     
   init {
@@ -26,19 +26,21 @@ internal class JpsJavaModuleExtensionBridge(private val javaSettingsEntity: Java
     JpsUrlListBridge(emptyList(), this)
   }
 
-  override fun getOutputUrl(): String? = javaSettingsEntity.compilerOutput?.url
+  override fun getOutputUrl(): String? = javaSettingsEntity?.compilerOutput?.url
 
-  override fun getTestOutputUrl(): String? = javaSettingsEntity.compilerOutputForTests?.url
+  override fun getTestOutputUrl(): String? = javaSettingsEntity?.compilerOutputForTests?.url ?: outputUrl
 
-  override fun getLanguageLevel(): LanguageLevel? = javaSettingsEntity.languageLevelId?.let { LanguageLevel.valueOf(it) }
+  override fun getLanguageLevel(): LanguageLevel? = javaSettingsEntity?.languageLevelId?.let { 
+    levelId -> LanguageLevel.entries.find { it.name == levelId }
+  }
 
   override fun getJavadocRoots(): JpsUrlList = javadocUrlList
 
   override fun getAnnotationRoots(): JpsUrlList = annotationUrlList
 
-  override fun isInheritOutput(): Boolean = javaSettingsEntity.inheritedCompilerOutput
+  override fun isInheritOutput(): Boolean = javaSettingsEntity?.inheritedCompilerOutput ?: true
 
-  override fun isExcludeOutput(): Boolean = javaSettingsEntity.excludeOutput
+  override fun isExcludeOutput(): Boolean = javaSettingsEntity?.excludeOutput ?: true
 
   override fun setOutputUrl(outputUrl: String?) {
     reportModificationAttempt()

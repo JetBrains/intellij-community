@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard
 
-import com.intellij.ide.IdeBundle
+import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logLocationChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logNameChanged
 import com.intellij.ide.util.installNameGenerators
@@ -112,12 +112,11 @@ class NewProjectWizardBaseStep(parent: NewProjectWizardStep) : AbstractNewProjec
       }.bottomGap(BottomGap.SMALL)
 
       val locationRow = row(UIBundle.message("label.project.wizard.new.project.location")) {
-        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
-          .withFileFilter { it.isDirectory }
+        val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          .withTitle(message("title.select.project.file.directory", context.presentationName))
           .withPathToTextConvertor(::getPresentablePath)
           .withTextToPathConvertor(::getCanonicalPath)
-        val title = IdeBundle.message("title.select.project.file.directory", context.presentationName)
-        textFieldWithBrowseButton(title, context.project, fileChooserDescriptor)
+        textFieldWithBrowseButton(fileChooserDescriptor, context.project)
           .bindText(pathProperty.toUiPathProperty())
           .align(AlignX.FILL)
           .trimmedTextValidation(CHECK_NON_EMPTY, CHECK_DIRECTORY)

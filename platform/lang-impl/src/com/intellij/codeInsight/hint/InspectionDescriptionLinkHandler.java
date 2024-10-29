@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.codeInsight.highlighting.TooltipLinkHandler;
@@ -21,7 +21,7 @@ public final class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionLinkHandler.class);
 
   @Override
-  public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
+  public String getDescription(final @NotNull String refSuffix, final @NotNull Editor editor) {
     final Project project = editor.getProject();
     if (project == null) {
       LOG.error("Project is null for " + editor);

@@ -2,6 +2,7 @@
 
 package com.intellij.history.integration.ui.actions;
 
+import com.intellij.history.LocalHistory;
 import com.intellij.history.core.LocalHistoryFacade;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class LocalHistoryAction extends AnAction implements DumbAware {
   @Override
   public void update(@NotNull AnActionEvent e) {
-    if (LocalHistoryImpl.getInstanceImpl().isDisabled()) {
+    if (!LocalHistory.getInstance().isEnabled()) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }

@@ -19,6 +19,7 @@ import com.intellij.diagnostic.hprof.analysis.AnalysisConfig
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import org.junit.After
+import org.junit.Assert
 import org.junit.Before
 import org.junit.Test
 import org.junit.rules.TemporaryFolder
@@ -195,6 +196,28 @@ class HeapAnalysisTest {
     object : HProfScenarioRunner(tmpFolder, remapInMemory) {
       override fun adjustConfig(config: AnalysisConfig): AnalysisConfig = configWithDominatorTreeOnly()
     }.run(scenario, "testDominatorTreeFlameGraph.txt", null)
+  }
+
+  @Test
+  fun testMissingObjectInObjectArray() {
+    val scenario: HProfBuilder.() -> Unit = {
+      class A(val x: Any) {
+      }
+      val s = "object excluded from hprof"
+      setObjectFilter { o ->
+        if (o === s)
+          HProfBuilder.FilterResult.INCLUDE_REFERENCES_ONLY
+        else
+          HProfBuilder.FilterResult.INCLUDE_REFERENCES_AND_INSTANCE
+      }
+      // This will keep a reference to the object from the array, but object itself will not be
+      //   included.
+      val a = A(listOf("", s))
+      addRootGlobalJNI(a)
+    }
+    // Check if the hprof can be parsed without throwing an exception
+    val report = HProfScenarioRunner(tmpFolder, remapInMemory).createReport(scenario, null)
+    Assert.assertTrue(report.isNotEmpty())
   }
 
   private fun configWithDisposerTreeOnly() = AnalysisConfig(

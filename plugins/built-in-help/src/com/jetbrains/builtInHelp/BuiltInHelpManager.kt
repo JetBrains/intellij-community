@@ -6,10 +6,10 @@ import com.intellij.ide.browsers.BrowserLauncher
 import com.intellij.ide.browsers.WebBrowserManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.help.HelpManager
-import com.intellij.openapi.keymap.KeymapManager
+import com.intellij.openapi.keymap.Keymap
+import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.PlatformUtils
 import com.jetbrains.builtInHelp.settings.SettingsPage
@@ -32,8 +32,10 @@ class BuiltInHelpManager : HelpManager() {
     logWillOpenHelpId(helpIdToUse)
 
     try {
-      val manager = KeymapManager.getInstance()
-      val activeKeymap = if (manager == null) null else KeymapManager.getInstance().activeKeymap
+      var activeKeymap: Keymap? = KeymapManagerEx.getInstanceEx().getActiveKeymap()
+      if (true == activeKeymap?.canModify())
+        activeKeymap = activeKeymap.parent
+
       val activeKeymapParam = if (activeKeymap == null) "" else "&keymap=${URLEncoder.encode(activeKeymap.presentableName, StandardCharsets.UTF_8)}"
 
       var url = "http://127.0.0.1:${BuiltInServerOptions.getInstance().effectiveBuiltInServerPort}/help/?${

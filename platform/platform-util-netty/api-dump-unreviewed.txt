@@ -68,21 +68,6 @@ f:org.jetbrains.io.BufferToCharsKt
 - sf:readIntoCharBuffer(io.netty.buffer.ByteBuf,I,java.nio.CharBuffer):V
 - bs:readIntoCharBuffer$default(io.netty.buffer.ByteBuf,I,java.nio.CharBuffer,I,java.lang.Object):V
 - sf:writeIntAsAscii(I,io.netty.buffer.ByteBuf):V
-f:org.jetbrains.io.BuiltInServer
-- com.intellij.openapi.Disposable
-- sf:Companion:org.jetbrains.io.BuiltInServer$Companion
-- f:createServerBootstrap():io.netty.bootstrap.ServerBootstrap
-- dispose():V
-- f:getChildEventLoopGroup():io.netty.channel.EventLoopGroup
-- f:getEventLoopGroup():io.netty.channel.EventLoopGroup
-- f:getPort():I
-- f:isRunning():Z
-f:org.jetbrains.io.BuiltInServer$Companion
-- f:configureChildHandler(io.netty.bootstrap.ServerBootstrap,org.jetbrains.io.ChannelRegistrar,kotlin.jvm.functions.Function0):V
-- bs:configureChildHandler$default(org.jetbrains.io.BuiltInServer$Companion,io.netty.bootstrap.ServerBootstrap,org.jetbrains.io.ChannelRegistrar,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- f:replaceDefaultHandler(io.netty.channel.ChannelHandlerContext,io.netty.channel.ChannelHandler):V
-- f:start(I,I,Z,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation):java.lang.Object
-- bs:start$default(org.jetbrains.io.BuiltInServer$Companion,I,I,Z,kotlin.jvm.functions.Function0,kotlin.coroutines.Continuation,I,java.lang.Object):java.lang.Object
 f:org.jetbrains.io.ChannelExceptionHandler
 - io.netty.channel.ChannelHandlerAdapter
 - exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
@@ -106,12 +91,6 @@ a:org.jetbrains.io.Decoder
 - pf:readContent(io.netty.buffer.ByteBuf,io.netty.channel.ChannelHandlerContext,I,org.jetbrains.io.Decoder$FullMessageConsumer):java.lang.Object
 org.jetbrains.io.Decoder$FullMessageConsumer
 - a:contentReceived(io.netty.buffer.ByteBuf,io.netty.channel.ChannelHandlerContext,Z):java.lang.Object
-a:org.jetbrains.io.DelegatingHttpRequestHandlerBase
-- org.jetbrains.io.SimpleChannelInboundHandlerAdapter
-- <init>():V
-- exceptionCaught(io.netty.channel.ChannelHandlerContext,java.lang.Throwable):V
-- p:messageReceived(io.netty.channel.ChannelHandlerContext,io.netty.handler.codec.http.FullHttpRequest):V
-- pa:process(io.netty.channel.ChannelHandlerContext,io.netty.handler.codec.http.FullHttpRequest,io.netty.handler.codec.http.QueryStringDecoder):Z
 f:org.jetbrains.io.FileResponses
 - sf:INSTANCE:org.jetbrains.io.FileResponses
 - f:checkCache(io.netty.handler.codec.http.HttpRequest,io.netty.channel.Channel,J):Z

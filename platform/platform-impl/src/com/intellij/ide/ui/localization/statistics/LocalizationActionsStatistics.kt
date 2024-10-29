@@ -12,8 +12,9 @@ import com.jetbrains.rd.util.collections.SynchronizedList
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 
-internal class LocalizationActionsStatistics: CounterUsagesCollector() {
-  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 4)
+@Internal
+object LocalizationActionsStatistics: CounterUsagesCollector() {
+  private val localizationActionsGroup = EventLogGroup("localization.actions.info", 5)
   private val eventSource: EnumEventField<EventSource> = EventFields.Enum<EventSource>("event_source")
   private val availableLanguages = listOf(Locale.CHINA, Locale.JAPANESE, Locale.KOREAN, Locale.ENGLISH).map { it.toLanguageTag() }
   private val availableRegions = Region.entries.map { it.externalName() }
@@ -25,6 +26,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   private val hyperLinkActivatedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("documentation_link_activated", eventSource, eventTimestamp)
   private val languageExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_expanded", eventSource, eventTimestamp)
   private val languageSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("language_selected", selectedLang, selectedLangPrev, eventSource, eventTimestamp)
+  private val moreLanguagesEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("more_languages_selected", eventSource, eventTimestamp)
   private val regionExpandEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_expanded", eventSource, eventTimestamp)
   private val regionSelectedEvent: VarargEventId = localizationActionsGroup.registerVarargEvent("region_selected", selectedRegion, selectedRegionPrev, eventSource, eventTimestamp)
 
@@ -42,11 +44,6 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
   private val settingsApplied: VarargEventId = localizationActionsGroup.registerVarargEvent("settings_applied", selectedLang, selectedLangPrev, selectedRegion, selectedRegionPrev, eventSource, eventTimestamp)
   
   private var initializationStartedTimestamp: Long? = null
-  private var source: EventSource = EventSource.NOT_SET
-  
-  fun setSource(source: EventSource) {
-    this.source = source
-  }
   
   override fun getGroup(): EventLogGroup {
     return localizationActionsGroup
@@ -61,7 +58,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     }
   }
 
-  fun dialogInitializationStarted(osLocale: Locale, predefinedLocale: Locale, predefinedRegion: Region) {
+  fun dialogInitializationStarted(osLocale: Locale, predefinedLocale: Locale, predefinedRegion: Region, source: EventSource) {
     initializationStartedTimestamp = System.currentTimeMillis()
     logEvent(languageAndRegionBeforeEuaShownEvent,
              listOf(
@@ -75,7 +72,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     )
   }
 
-  fun dialogClosedWithoutConfirmation(lang: Locale, region: Region) {
+  fun dialogClosedWithoutConfirmation(lang: Locale, region: Region, source: EventSource) {
     val timestamp = System.currentTimeMillis()
     logEvent(dialogClosedWithoutConfirmation,
              listOf(
@@ -88,7 +85,7 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     )
   }
 
-  fun nextButtonPressed(lang: Locale, region: Region) {
+  fun nextButtonPressed(lang: Locale, region: Region, source: EventSource) {
     val timestamp = System.currentTimeMillis()
     logEvent(nextButtonPressed,
              listOf(
@@ -101,14 +98,14 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     )
   }
 
-  fun languageExpanded() {
+  fun languageExpanded(source: EventSource) {
     logEvent(languageExpandEvent, listOf(
       eventSource.with(source),
       eventTimestamp.with(System.currentTimeMillis())
     ))
   }
 
-  fun languageSelected(selected: Locale, prevSelected: Locale) {
+  fun languageSelected(selected: Locale, prevSelected: Locale, source: EventSource) {
     logEvent(languageSelectedEvent, listOf(
       selectedLang.with( selected.toLanguageTag()),
       selectedLangPrev.with(prevSelected.toLanguageTag()),
@@ -118,14 +115,21 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     )
   }
 
-  fun regionExpanded() {
+  fun moreLanguagesSelected(source: EventSource) {
+    logEvent(moreLanguagesEvent, listOf(
+      eventSource.with(source),
+      eventTimestamp.with(System.currentTimeMillis())
+    ))
+  }
+
+  fun regionExpanded(source: EventSource) {
     logEvent(regionExpandEvent, listOf(
       eventSource.with(source),
       eventTimestamp.with(System.currentTimeMillis())
     ))
   }
 
-  fun regionSelected(selected: Region, prevSelected: Region) {
+  fun regionSelected(selected: Region, prevSelected: Region, source: EventSource) {
     logEvent(regionSelectedEvent, listOf(
       selectedRegion.with(selected.externalName()),
       selectedRegionPrev.with(prevSelected.externalName()),
@@ -135,14 +139,14 @@ internal class LocalizationActionsStatistics: CounterUsagesCollector() {
     )
   }
 
-  fun hyperLinkActivated() {
+  fun hyperLinkActivated(source: EventSource) {
     logEvent(hyperLinkActivatedEvent, listOf(
       eventSource.with(source),
       eventTimestamp.with(System.currentTimeMillis())
     ))
   }
 
-  fun settingsUpdated(locale: Locale, localePrev: Locale, region: Region, regionPrev: Region) {
+  fun settingsUpdated(locale: Locale, localePrev: Locale, region: Region, regionPrev: Region, source: EventSource) {
     logEvent(settingsApplied, listOf(
       selectedLang.with(locale.toLanguageTag()),
       selectedLangPrev.with(localePrev.toLanguageTag()),

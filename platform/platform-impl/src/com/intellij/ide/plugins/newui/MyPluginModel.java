@@ -58,9 +58,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.ide.plugins.BrokenPluginFileKt.isBrokenPlugin;
 
-/**
- * @author Alexander Lobas
- */
+@ApiStatus.Internal
 public class MyPluginModel extends InstalledPluginsTableModel implements PluginEnabler {
   private static final Logger LOG = Logger.getInstance(MyPluginModel.class);
   private static final Boolean FINISH_DYNAMIC_INSTALLATION_WITHOUT_UI =
@@ -1108,7 +1106,8 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     }
   }
 
-  void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
+  @ApiStatus.Internal
+  public void uninstallAndUpdateUi(@NotNull IdeaPluginDescriptor descriptor) {
     boolean needRestartForUninstall = performUninstall((IdeaPluginDescriptorImpl)descriptor);
     needRestart |= descriptor.isEnabled() && needRestartForUninstall;
 
@@ -1401,7 +1400,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     Icon icon = myIcons.get(key);
     if (icon == null) {
       icon = PluginLogo.getIcon(descriptor, big, error, disabled);
-      if (icon != PluginLogo.INSTANCE.getDefault$intellij_platform_ide_impl().getIcon(big, error, disabled)) {
+      if (icon != PluginLogo.INSTANCE.getDefault().getIcon(big, error, disabled)) {
         myIcons.put(key, icon);
       }
     }

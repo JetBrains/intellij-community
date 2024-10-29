@@ -1,0 +1,18 @@
+class A {
+    val refA = 42
+    fun A.barA() = 42
+    fun C.barC() = 42
+
+    fun allInClass() {
+        val c = C()
+        val sum = refA + c.refC + barA() + c.barC()
+    }
+}
+
+class C {
+    val refC = 42
+}
+
+fun A.allInExtension(c: C) {
+    val sum = refA + c.refC + barA() + c.barC()
+}

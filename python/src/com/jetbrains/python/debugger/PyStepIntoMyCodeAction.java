@@ -21,15 +21,15 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
     super();
     myStepIntoMyCodeHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(final @NotNull XDebugSession session, final DataContext dataContext) {
-        final XDebugProcess debugProcess = session.getDebugProcess();
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
+        XDebugProcess debugProcess = session.getDebugProcess();
         if (debugProcess instanceof PyDebugProcess pyDebugProcess) {
           pyDebugProcess.startStepIntoMyCode(debugProcess.getSession().getSuspendContext());
         }
       }
 
       @Override
-      public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+      public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
         return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(event);
       }
     };
@@ -41,7 +41,7 @@ public class PyStepIntoMyCodeAction extends XDebuggerActionBase {
   }
 
   @Override
-  protected boolean isHidden(AnActionEvent event) {
+  protected boolean isHidden(@NotNull AnActionEvent event) {
     Project project = event.getData(CommonDataKeys.PROJECT);
     return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(event);
   }

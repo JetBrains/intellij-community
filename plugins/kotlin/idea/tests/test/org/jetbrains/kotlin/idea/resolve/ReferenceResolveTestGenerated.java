@@ -1017,6 +1017,11 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
             runTest("testData/resolve/references/TypeArgumentBeforeDot2.kt");
         }
 
+        @TestMetadata("TypeArgumentOfUndefinedCode.kt")
+        public void testTypeArgumentOfUndefinedCode() throws Exception {
+            runTest("testData/resolve/references/TypeArgumentOfUndefinedCode.kt");
+        }
+
         @TestMetadata("TypeArgumentUnresolvedClass.kt")
         public void testTypeArgumentUnresolvedClass() throws Exception {
             runTest("testData/resolve/references/TypeArgumentUnresolvedClass.kt");

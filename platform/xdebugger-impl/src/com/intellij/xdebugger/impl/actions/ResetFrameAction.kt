@@ -7,7 +7,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.xdebugger.frame.XDropFrameHandler
 import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ResetFrameAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     withHandler(e, true) { handler, stackFrame -> handler.drop(stackFrame) }

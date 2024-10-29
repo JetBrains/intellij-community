@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
@@ -25,7 +25,6 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenMergingUpdateQueue;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -145,7 +144,7 @@ public final class MavenShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
+  private final class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {
     private final Map<MavenProject, Boolean> mySheduledProjects = new HashMap<>();
     private final MergingUpdateQueue myUpdateQueue = new MavenMergingUpdateQueue("MavenShortcutsManager: Keymap Update",
                                                                                  500, true, MavenShortcutsManager.this).usePassThroughInUnitTestMode();
@@ -156,20 +155,19 @@ public final class MavenShortcutsManager implements Disposable {
     }
 
     @Override
-    public void projectsIgnoredStateChanged(List<? extends MavenProject> ignored, List<? extends MavenProject> unignored, boolean fromImport) {
+    public void projectsIgnoredStateChanged(@NotNull List<MavenProject> ignored, @NotNull List<MavenProject> unignored, boolean fromImport) {
       scheduleKeymapUpdate(unignored, true);
       scheduleKeymapUpdate(ignored, false);
     }
 
     @Override
-    public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+    public void projectsUpdated(@NotNull List<? extends Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
       scheduleKeymapUpdate(MavenUtil.collectFirsts(updated), true);
       scheduleKeymapUpdate(deleted, false);
     }
 
     @Override
-    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                NativeMavenProjectHolder nativeMavenProject) {
+    public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
       scheduleKeymapUpdate(Collections.singletonList(projectWithChanges.first), true);
     }
 
@@ -178,7 +176,7 @@ public final class MavenShortcutsManager implements Disposable {
       scheduleKeymapUpdate(Collections.singletonList(project), true);
     }
 
-    private void scheduleKeymapUpdate(List<? extends MavenProject> mavenProjects, boolean forUpdate) {
+    private void scheduleKeymapUpdate(List<MavenProject> mavenProjects, boolean forUpdate) {
       synchronized (mySheduledProjects) {
         for (MavenProject each : mavenProjects) {
           mySheduledProjects.put(each, forUpdate);

@@ -5,4 +5,6 @@ import com.intellij.cce.workspace.EvaluationWorkspace
 
 interface FinishEvaluationStep {
   fun start(workspace: EvaluationWorkspace, withErrors: Boolean)
+
+  class EvaluationCompletedWithErrorsException : Exception("Evaluation completed with errors.")
 }

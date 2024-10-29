@@ -3,8 +3,10 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LightEditDocumentSaveVetoer extends FileDocumentSynchronizationVetoer {
   @Override
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {

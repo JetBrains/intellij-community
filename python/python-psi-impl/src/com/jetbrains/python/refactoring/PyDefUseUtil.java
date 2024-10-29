@@ -21,6 +21,7 @@ import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Version;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.controlflow.CallInstruction;
@@ -36,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.jetbrains.python.psi.impl.stubs.PyVersionSpecificStubBaseKt.evaluateVersionsForElement;
 
 /**
  * @author Dennis.Ushakov
@@ -82,6 +85,9 @@ public final class PyDefUseUtil {
     final HashMap<PyCallSiteExpression, ConditionalInstruction> pendingTypeGuard = new HashMap<>();
     ControlFlowUtil.iteratePrev(startNum, instructions,
                                 instruction -> {
+                                  if (unreachableDueToVersionGuard(instruction)) {
+                                    return ControlFlowUtil.Operation.CONTINUE;
+                                  }
                                   if (acceptTypeAssertions && instruction instanceof CallInstruction callInstruction) {
                                     var typeGuardInstruction = pendingTypeGuard.get(instruction.getElement());
                                     if (typeGuardInstruction != null) {
@@ -97,7 +103,6 @@ public final class PyDefUseUtil {
                                     }
                                   }
                                   final PsiElement element = instruction.getElement();
-                                  final PyImplicitImportNameDefiner implicit = PyUtil.as(element, PyImplicitImportNameDefiner.class);
                                   if (acceptTypeAssertions
                                       && instruction instanceof ConditionalInstruction conditionalInstruction
                                       && instruction.num() < startNum) {
@@ -122,7 +127,7 @@ public final class PyDefUseUtil {
                                       }
                                     }
                                   }
-                                  else if (acceptImplicitImports && implicit != null) {
+                                  else if (acceptImplicitImports && element instanceof PyImplicitImportNameDefiner implicit) {
                                     if (!implicit.multiResolveName(varName).isEmpty()) {
                                       result.add(instruction);
                                       return ControlFlowUtil.Operation.CONTINUE;
@@ -131,6 +136,14 @@ public final class PyDefUseUtil {
                                   return ControlFlowUtil.Operation.NEXT;
                                 });
     return result;
+  }
+
+  private static boolean unreachableDueToVersionGuard(@NotNull Instruction instruction) {
+    PsiElement element = instruction.getElement();
+    if (element == null) return false;
+    LanguageLevel languageLevel = LanguageLevel.forElement(element);
+    Version version = new Version(languageLevel.getMajorVersion(), languageLevel.getMinorVersion(), 0);
+    return !evaluateVersionsForElement(element).contains(version);
   }
 
   @Nullable

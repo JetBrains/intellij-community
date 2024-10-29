@@ -11,8 +11,6 @@ import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.navigation.ItemPresentation;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -33,6 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
@@ -147,7 +148,7 @@ final class ServiceViewDragHelper {
     return content;
   }
 
-  static final class ServiceViewDragBean implements DataProvider {
+  static final class ServiceViewDragBean implements Transferable {
     private final ServiceView myServiceView;
     private final List<ServiceViewItem> myItems;
     private final ServiceViewContributor myContributor;
@@ -182,17 +183,26 @@ final class ServiceViewDragHelper {
       return myContributor;
     }
 
-    @Nullable
+    private List<Object> getSelectedItems() {
+      return ContainerUtil.map(myItems, ServiceViewItem::getValue);
+    }
+
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-        return ContainerUtil.map2Array(myItems, ServiceViewItem::getValue);
+    public DataFlavor[] getTransferDataFlavors() {
+      return new DataFlavor[] {ServiceViewDnDDescriptor.LIST_DATA_FLAVOR};
+    }
+
+    @Override
+    public boolean isDataFlavorSupported(DataFlavor flavor) {
+      return ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor);
+    }
+
+    @Override
+    public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException {
+      if (ServiceViewDnDDescriptor.LIST_DATA_FLAVOR.equals(flavor)) {
+        return getSelectedItems();
       }
-      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-        ServiceViewItem item = ContainerUtil.getOnlyItem(myItems);
-        return item != null ? item.getValue() : null;
-      }
-      return null;
+      throw new UnsupportedFlavorException(flavor);
     }
   }
 
@@ -292,10 +302,10 @@ final class ServiceViewDragHelper {
         event.setDropPossible(true);
         Rectangle bounds = eventContext.cellBounds;
         bounds.y -= -1;
-        bounds.height = 2;
         if (position != ABOVE) {
           bounds.y += bounds.height;
         }
+        bounds.height = 2;
         RelativeRectangle rectangle = new RelativeRectangle(myTree, bounds);
         event.setHighlighting(rectangle, DnDEvent.DropTargetHighlightingType.FILLED_RECTANGLE);
         return false;

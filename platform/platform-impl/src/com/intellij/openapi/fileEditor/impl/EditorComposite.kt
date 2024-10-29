@@ -12,10 +12,7 @@ import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.colors.EditorColors
@@ -24,7 +21,6 @@ import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.ClientFileEditorManager.Companion.assignClientId
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.FILE_ATTRIBUTE
 import com.intellij.openapi.fileEditor.impl.HistoryEntry.Companion.TAG
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader
@@ -253,7 +249,7 @@ open class EditorComposite internal constructor(
           selectedFileEditorProvider = selectedFileEditor,
         )
 
-        blockingContext {
+        writeIntentReadAction {
           goodPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
           @Suppress("DEPRECATION")
           deprecatedPublisher.fileOpenedSync(fileEditorManager, file, fileEditorWithProviders)
@@ -270,7 +266,7 @@ open class EditorComposite internal constructor(
 
       val publisher = project.messageBus.syncAndPreloadPublisher(FileEditorManagerListener.FILE_EDITOR_MANAGER)
       span("fileOpened event executing", Dispatchers.EDT) {
-        blockingContext {
+        writeIntentReadAction {
           publisher.fileOpened(fileEditorManager, file)
         }
       }
@@ -357,7 +353,7 @@ open class EditorComposite internal constructor(
     fileEditorWithProviders: List<FileEditorWithProvider>,
     states: List<FileEditorState?>,
     selectedFileEditorProvider: FileEditorProvider?,
-  ) {
+  ) = WriteIntentReadAction.run {
     for ((index, fileEditorWithProvider) in fileEditorWithProviders.withIndex()) {
       restoreEditorState(
         fileEditorWithProvider = fileEditorWithProvider,
@@ -489,7 +485,7 @@ open class EditorComposite internal constructor(
     get() {
       val editorWithProvider = selectedEditorWithProvider.value ?: return null
       val component = focusWatcher.focusedComponent
-      if (component !is JComponent || !component.isShowing() || !component.isEnabled() || !component.isFocusable()) {
+      if (component !is JComponent || !component.isShowing() || !component.isEnabled || !component.isFocusable) {
         return editorWithProvider.fileEditor.preferredFocusedComponent
       }
       else {
@@ -726,6 +722,7 @@ open class EditorComposite internal constructor(
     dispatcher.multicaster.editorRemoved(editorTypeId)
   }
 
+  @JvmName("currentStateAsFileEntry")
   internal fun currentStateAsFileEntry(): FileEntry? {
     val fileEditorWithProviderList = fileEditorWithProviders.value
     if (fileEditorWithProviderList.isEmpty()) {
@@ -982,7 +979,7 @@ internal fun restoreEditorState(
 }
 
 private fun isDumbAware(editor: FileEditor): Boolean {
-  return editor.getUserData(DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
+  return editor.getUserData(FileEditorManagerKeys.DUMB_AWARE) == true && (editor !is PossiblyDumbAware || (editor as PossiblyDumbAware).isDumbAware)
 }
 
 @RequiresEdt

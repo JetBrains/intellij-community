@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtNamedFunction
@@ -27,12 +27,11 @@ internal object MakeTypeParameterReifiedAndFunctionInlineFixFactory {
 
     private class MakeTypeParameterReifiedAndFunctionInlineFix(
         element: KtTypeParameter,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTypeParameter, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtTypeParameter>(element) {
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtTypeParameter,
-            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             val function = element.getStrictParentOfType<KtNamedFunction>() ?: return

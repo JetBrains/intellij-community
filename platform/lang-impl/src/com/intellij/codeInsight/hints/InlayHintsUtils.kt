@@ -107,7 +107,7 @@ class CollectorWithSettings<T : Any>(
     applyToEditor(file, editor, hintsBuffer)
   }
 
-  fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
+  internal fun collectTraversing(editor: Editor, file: PsiFile, enabled: Boolean): HintsBuffer {
     if (enabled) {
       val traverser = SyntaxTraverser.psiTraverser(file)
       traverser.forEach {
@@ -117,7 +117,7 @@ class CollectorWithSettings<T : Any>(
     return sink.complete()
   }
 
-  fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
+  internal fun applyToEditor(file: PsiFile, editor: Editor, hintsBuffer: HintsBuffer) {
     InlayHintsPass.applyCollected(hintsBuffer, file, editor)
   }
 }

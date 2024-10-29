@@ -7,6 +7,7 @@ import com.intellij.gradle.toolingExtension.impl.model.buildScriptClasspathModel
 import com.intellij.gradle.toolingExtension.impl.model.projectModel.GradleExternalProjectModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetDependencyModel.GradleSourceSetDependencyModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.sourceSetModel.GradleSourceSetModelProvider;
+import com.intellij.gradle.toolingExtension.impl.model.warmUp.GradleTaskWarmUpModelProvider;
 import com.intellij.gradle.toolingExtension.impl.model.taskModel.GradleTaskModelProvider;
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -690,34 +691,25 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     ExternalProject externalProject = getExternalProject(gradleModule, resolverCtx);
     if (externalProject != null) {
       String directoryToRunTask = gradleModuleData.getDirectoryToRunTask();
-      boolean isSimpleTaskNameAllowed = directoryToRunTask.equals(moduleConfigPath);
 
       for (ExternalTask task : externalProject.getTasks().values()) {
         String taskGroup = task.getGroup();
         if (task.getName().trim().isEmpty() || isIdeaTask(task.getName(), taskGroup)) {
           continue;
         }
-        boolean inherited = StringUtil.equals(task.getName(), task.getQName());
-        String taskFullName;
-        if (gradleModuleData.isIncludedBuild()) {
-          if (inherited) {
-            // running a task for all subprojects using the qualified task name is not supported for included builds
-            continue;
-          }
-          taskFullName = gradleModuleData.getTaskPathOfSimpleTaskName(task.getName());
+        if (gradleModuleData.isIncludedBuild() && task.isInherited()) {
+          // running a task for all subprojects using the qualified task name is not supported for included builds
+          continue;
         }
-        else {
-          taskFullName = isSimpleTaskNameAllowed ? task.getName() : task.getQName();
-        }
-
-        String escapedTaskName = ParametersListUtil.escape(taskFullName);
-        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, escapedTaskName, directoryToRunTask, task.getDescription());
+        String taskName = ParametersListUtil.escape(getTaskName(gradleModuleData, task));
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, directoryToRunTask, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
+        taskData.setJvm(task.isJvm());
         taskData.setTest(task.isTest());
         taskData.setJvmTest(task.isJvmTest());
+        taskData.setInherited(task.isInherited());
         ideModule.createChild(ProjectKeys.TASK, taskData);
-        taskData.setInherited(inherited);
         tasks.add(taskData);
       }
       return tasks;
@@ -736,6 +728,27 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
     }
 
     return tasks;
+  }
+
+  private static @NotNull String getTaskName(@NotNull GradleModuleData gradleModuleData, @NotNull ExternalTask task) {
+    if (gradleModuleData.isIncludedBuild()) {
+      return gradleModuleData.getTaskPathOfSimpleTaskName(task.getName());
+    }
+    else if (task.isInherited()) {
+      return task.getName();
+    }
+    else if (isSimpleTaskNameAllowed(gradleModuleData)) {
+      return task.getName();
+    }
+    else {
+      return task.getQName();
+    }
+  }
+
+  private static boolean isSimpleTaskNameAllowed(@NotNull GradleModuleData gradleModuleData) {
+    var moduleConfigPath = gradleModuleData.getGradleProjectDir();
+    var directoryToRunTask = gradleModuleData.getDirectoryToRunTask();
+    return directoryToRunTask.equals(moduleConfigPath);
   }
 
   @Nullable
@@ -773,10 +786,11 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   public @NotNull List<ProjectImportModelProvider> getModelProviders() {
     return ContainerUtil.append(
       super.getModelProviders(),
-      new GradleTaskModelProvider(),
+      new GradleTaskWarmUpModelProvider(),
       new GradleSourceSetModelProvider(),
       new GradleSourceSetDependencyModelProvider(),
       new GradleExternalProjectModelProvider(),
+      new GradleTaskModelProvider(),
       new GradleBuildScriptClasspathModelProvider()
     );
   }
@@ -792,34 +806,46 @@ public final class CommonGradleProjectResolverExtension extends AbstractProjectR
   }
 
   @Override
-  public void enhanceTaskProcessing(@Nullable Project project,
-                                    @NotNull List<String> taskNames,
-                                    @NotNull Consumer<String> initScriptConsumer,
-                                    @NotNull Map<String, String> parameters) {
+  public @NotNull Map<String, String> enhanceTaskProcessing(
+    @Nullable Project project,
+    @NotNull List<String> taskNames,
+    @NotNull Consumer<String> initScriptConsumer,
+    @NotNull Map<String, String> parameters
+  ) {
     initScriptConsumer.consume(GradleInitScriptUtil.loadCommonTasksUtilsScript());
+    initScriptConsumer.consume(GradleInitScriptUtil.loadCommonDebuggerUtilsScript());
 
     String dispatchPort = parameters.get(DEBUG_DISPATCH_PORT_KEY);
-    if (dispatchPort == null) {
-      return;
+    Map<String, String> environment = new HashMap<>();
+    if (dispatchPort != null) {
+      environment.put(DEBUGGER_ENABLED, "true");
     }
 
-    String debugOptions = parameters.get(DEBUG_OPTIONS_KEY);
-    if (debugOptions == null) {
-      debugOptions = "";
-    }
-    List<String> lines = new ArrayList<>();
+    LinkedList<String> lines = new LinkedList<>();
+    String debugOptions = Objects.requireNonNullElse(parameters.get(DEBUG_OPTIONS_KEY), "");
+    DebuggerBackendExtension.EP_NAME.forEachExtensionSafe(extension -> {
+      if (extension.isAlwaysAttached()) {
+        List<String> initScript = extension.initializationCode(project, dispatchPort, debugOptions);
+        lines.addAll(initScript);
+        Map<String, String> env = extension.executionEnvironmentVariables(project, dispatchPort, debugOptions);
+        environment.putAll(env);
+      }
+      else if (dispatchPort != null) {
+        List<String> initScript = extension.initializationCode(project, dispatchPort, debugOptions);
+        lines.addAll(initScript);
+      }
+    });
 
-    String classPathInitScript = GradleInitScriptUtil.loadToolingExtensionProvidingInitScript(
-      Collections.singleton(ExternalSystemSourceType.class)
-    );
-    lines.add(classPathInitScript);
-
-    for (DebuggerBackendExtension extension : DebuggerBackendExtension.EP_NAME.getExtensionList()) {
-      lines.addAll(extension.initializationCode(project, dispatchPort, debugOptions));
+    if (!lines.isEmpty()) {
+      String classPathInitScript = GradleInitScriptUtil.loadToolingExtensionProvidingInitScript(
+        Collections.singleton(ExternalSystemSourceType.class)
+      );
+      lines.addFirst(classPathInitScript);
     }
 
     final String script = join(lines, System.lineSeparator());
     initScriptConsumer.consume(script);
+    return environment;
   }
 
   /**

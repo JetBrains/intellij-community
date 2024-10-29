@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManager;
@@ -307,17 +307,17 @@ public abstract class XmlTagDelegate {
     return map == null ? Collections.emptyMap() : map;
   }
 
-  private static @NotNull Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(final @NotNull XmlTag tag,
-                                                                                           final @Nullable String namespace,
-                                                                                           final @Nullable String version,
-                                                                                           final @NotNull Set<String> fileLocations,
+  private static @NotNull Map<String, NullableLazyValue<XmlNSDescriptor>> initializeSchema(@NotNull XmlTag tag,
+                                                                                           @Nullable String namespace,
+                                                                                           @Nullable String version,
+                                                                                           @NotNull Set<String> fileLocations,
                                                                                            @Nullable Map<String, NullableLazyValue<XmlNSDescriptor>> map,
-                                                                                           final boolean nsDecl) {
+                                                                                           boolean nsDecl) {
     if (map == null) {
       map = new HashMap<>();
     }
 
-    // We put cached value in any case to cause its value update on e.g. mapping change
+    // we put cached value in any case to cause its value update on e.g., mapping change
     map.put(namespace, lazyNullable(() -> {
       List<XmlNSDescriptor> descriptors =
         ContainerUtil.mapNotNull(fileLocations, s -> getDescriptor(tag, retrieveFile(tag, s, version, namespace, nsDecl), s, namespace));
@@ -614,17 +614,17 @@ public abstract class XmlTagDelegate {
     return findSubTags(name, namespace, myTag.getSubTags());
   }
 
-  public static @NotNull XmlTag[] findSubTags(@NotNull String name, @Nullable String namespace, XmlTag[] subTags) {
-    final List<XmlTag> result = new ArrayList<>();
-    for (final XmlTag subTag : subTags) {
-      if (namespace == null) {
-        if (name.equals(subTag.getName())) result.add(subTag);
+  private @NotNull Boolean calculateHasNamespaceDeclarations() {
+    Ref<Boolean> result = new Ref<>(Boolean.FALSE);
+    processChildren(element -> {
+      if (element instanceof XmlAttribute
+          && ((XmlAttribute)element).isNamespaceDeclaration()) {
+        result.set(Boolean.TRUE);
+        return false;
       }
-      else if (name.equals(subTag.getLocalName()) && namespace.equals(subTag.getNamespace())) {
-        result.add(subTag);
-      }
-    }
-    return result.toArray(XmlTag.EMPTY);
+      return !(element instanceof XmlToken) || ((XmlToken)element).getTokenType() != XmlTokenType.XML_TAG_END;
+    });
+    return result.get();
   }
 
   @Nullable
@@ -834,30 +834,31 @@ public abstract class XmlTagDelegate {
     return result;
   }
 
-  private @NotNull Boolean calculateHasNamespaceDeclarations() {
-    final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    processChildren(element -> {
-      if (element instanceof XmlAttribute
-          && ((XmlAttribute)element).isNamespaceDeclaration()) {
-        result.set(Boolean.TRUE);
-        return false;
-      }
-      return !(element instanceof XmlToken)
-             || ((XmlToken)element).getTokenType() != XmlTokenType.XML_TAG_END;
-    });
-    return result.get();
-  }
-
   @NotNull
   Map<String, String> getLocalNamespaceDeclarations() {
     Map<String, String> namespaces = new HashMap<>();
-    for (final XmlAttribute attribute : myTag.getAttributes()) {
-      if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) continue;
+    for (XmlAttribute attribute : myTag.getAttributes()) {
+      if (!attribute.isNamespaceDeclaration() || attribute.getValue() == null) {
+        continue;
+      }
       // xmlns -> "", xmlns:a -> a
-      final String localName = attribute.getLocalName();
+      String localName = attribute.getLocalName();
       namespaces.put(localName.equals(attribute.getName()) ? "" : localName, attribute.getValue());
     }
     return namespaces;
+  }
+
+  public static @NotNull XmlTag @NotNull [] findSubTags(@NotNull String name, @Nullable String namespace, XmlTag[] subTags) {
+    final List<XmlTag> result = new ArrayList<>();
+    for (final XmlTag subTag : subTags) {
+      if (namespace == null) {
+        if (name.equals(subTag.getName())) result.add(subTag);
+      }
+      else if (name.equals(subTag.getLocalName()) && namespace.equals(subTag.getNamespace())) {
+        result.add(subTag);
+      }
+    }
+    return result.toArray(XmlTag.EMPTY);
   }
 
   @Nullable

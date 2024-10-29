@@ -58,7 +58,7 @@ public final class JavaDebuggerAddExceptionBreakpointFilter implements JvmExcept
             ContainerUtil.find(exceptionBreakpoints, b -> Objects.equals(myExceptionFqn, b.getProperties().myQualifiedName));
           if (breakpoint == null) {
             ExceptionBreakpoint ebpt = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager()
-              .addExceptionBreakpoint(myExceptionFqn, StringUtil.getPackageName(myExceptionFqn));
+              .addExceptionBreakpoint(myExceptionFqn);
             if (ebpt != null) {
               breakpoint = ebpt.getXBreakpoint();
             }

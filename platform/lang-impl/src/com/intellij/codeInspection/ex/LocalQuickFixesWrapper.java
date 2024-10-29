@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -11,12 +11,14 @@ import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class LocalQuickFixesWrapper extends QuickFixAction {
   private final List<@NotNull LocalQuickFixWrapper> myFixActions = new ArrayList<>();
 
@@ -48,10 +50,10 @@ public final class LocalQuickFixesWrapper extends QuickFixAction {
   }
 
   @Override
-  protected ModCommandExecutor.@NotNull BatchExecutionResult applyFix(@NotNull final Project project,
-                                                                      @NotNull final GlobalInspectionContextImpl context,
+  protected ModCommandExecutor.@NotNull BatchExecutionResult applyFix(final @NotNull Project project,
+                                                                      final @NotNull GlobalInspectionContextImpl context,
                                                                       final CommonProblemDescriptor @NotNull [] descriptors,
-                                                                      @NotNull final Set<? super PsiElement> ignoredElements) {
+                                                                      final @NotNull Set<? super PsiElement> ignoredElements) {
     ModCommandExecutor.BatchExecutionResult result = ModCommandExecutor.Result.NOTHING;
     for (LocalQuickFixWrapper fixAction : myFixActions) {
       result = result.compose(fixAction.applyFix(project, context, descriptors, ignoredElements));

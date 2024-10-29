@@ -44,6 +44,7 @@
 
   <content>
     <module name="kotlin.base.analysis-api-platform"/>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.base.fe10.plugin"/>
     <module name="kotlin.base.fe10.analysis-api-platform"/>
     <module name="kotlin.base.fe10.project-structure"/>
@@ -62,7 +63,7 @@
     <module name="kotlin.project-wizard.maven"/>
     <module name="kotlin.project-wizard.compose"/>
     <module name="kotlin.jvm-decompiler"/>
-    <module name="kotlin.jvm-debugger.sequence"/>
+    <module name="kotlin.jvm-debugger.sequence.k1"/>
     <module name="kotlin.run-configurations.junit"/>
     <module name="kotlin.run-configurations.junit-fe10"/>
     <module name="kotlin.run-configurations.testng"/>

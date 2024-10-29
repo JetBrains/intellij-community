@@ -51,13 +51,13 @@ abstract class WeighingActionGroup extends ActionGroup implements ActionWithDele
     return getDelegate().getChildren(e);
   }
 
-  @NotNull
   @Override
-  public List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren, @NotNull UpdateSession updateSession) {
+  public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                     @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     LinkedHashSet<AnAction> heaviest = null;
     double maxWeight = DEFAULT_WEIGHT.doubleValue();
     for (AnAction action : visibleChildren) {
-      Presentation presentation = updateSession.presentation(action);
+      Presentation presentation = e.getUpdateSession().presentation(action);
       if (!presentation.isEnabled() || !presentation.isVisible()) {
         continue;
       }

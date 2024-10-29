@@ -97,7 +97,7 @@ private class BreakpointsStatisticsCollector : ProjectUsagesCollector() {
   }
 }
 
-fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
+internal fun getType(type: XBreakpointType<*, *>) : List<EventPair<*>> {
   val data = mutableListOf<EventPair<*>>()
   val info = getPluginInfo(type.javaClass)
   data.add(EventFields.PluginInfo.with(info))

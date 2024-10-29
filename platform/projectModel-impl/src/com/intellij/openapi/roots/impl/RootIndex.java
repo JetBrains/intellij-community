@@ -19,6 +19,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileSet;
+import com.intellij.openapi.vfs.VirtualFileSetFactory;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.Function;
@@ -209,7 +211,7 @@ class RootIndex {
   }
 
   @NotNull
-  private static Set<VirtualFile> collectSdkClasses(Set<? extends Sdk> sdks) {
+  private static Set<VirtualFile> collectSdkClasses(@NotNull Set<? extends Sdk> sdks) {
     Set<VirtualFile> roots = new HashSet<>();
 
     for (Sdk sdk : sdks) {
@@ -231,7 +233,10 @@ class RootIndex {
     return sdks;
   }
 
-  private static void fillIndexWithLibraryRoots(RootInfo info, Object container, VirtualFile[] sourceRoots, VirtualFile[] classRoots) {
+  private static void fillIndexWithLibraryRoots(@NotNull RootInfo info,
+                                                @NotNull Object container,
+                                                VirtualFile @NotNull [] sourceRoots,
+                                                VirtualFile @NotNull [] classRoots) {
     // Init library sources
     for (final VirtualFile sourceRoot : sourceRoots) {
       if (!ensureValid(sourceRoot, container)) continue;
@@ -255,12 +260,13 @@ class RootIndex {
 
   @NotNull
   private OrderEntryGraph getOrderEntryGraph() {
-    if (myOrderEntryGraph == null) {
+    OrderEntryGraph graph = myOrderEntryGraph;
+    if (graph == null) {
       RootInfo rootInfo = buildRootInfo(myProject);
-      Couple<MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
-      myOrderEntryGraph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
+      Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> pair = initLibraryClassSourceRoots();
+      myOrderEntryGraph = graph = new OrderEntryGraph(myProject, rootInfo, pair.first, pair.second);
     }
-    return myOrderEntryGraph;
+    return graph;
   }
 
   /**
@@ -314,18 +320,20 @@ class RootIndex {
     private final RootInfo myRootInfo;
     private final Set<VirtualFile> myAllRoots;
     private final Graph myGraph;
-    private final MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, eg. library jar -> library node
+    private final MultiMap<VirtualFile, Node> myRoots; // Map of roots to their root nodes, e.g., library jar -> library node
     private final SynchronizedSLRUCache<VirtualFile, List<OrderEntry>> myCache;
     private final SynchronizedSLRUCache<Module, Set<String>> myDependentUnloadedModulesCache;
     private final MultiMap<VirtualFile, OrderEntry> myLibClassRootEntries;
     private final MultiMap<VirtualFile, OrderEntry> myLibSourceRootEntries;
 
-    OrderEntryGraph(@NotNull Project project, @NotNull RootInfo rootInfo,
-                    MultiMap<VirtualFile, OrderEntry> libClassRootEntries, MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+    OrderEntryGraph(@NotNull Project project,
+                    @NotNull RootInfo rootInfo,
+                    @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                    @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       myProject = project;
       myRootInfo = rootInfo;
-      myAllRoots = myRootInfo.getAllRoots();
-      int cacheSize = Math.max(25, myAllRoots.size() / 100 * 2);
+      myAllRoots = rootInfo.getAllRoots();
+      int cacheSize = Math.max(100, myAllRoots.size() / 3);
       myCache = new SynchronizedSLRUCache<>(cacheSize, cacheSize) {
         @NotNull
         @Override
@@ -507,7 +515,7 @@ class RootIndex {
   }
 
   @NotNull
-  private Couple<MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
+  private Couple<@NotNull MultiMap<VirtualFile, OrderEntry>> initLibraryClassSourceRoots() {
     MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<>();
     MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<>();
 
@@ -556,12 +564,9 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, Module> contentRootOf = new HashMap<>();
     @NotNull private final Map<VirtualFile, String> contentRootOfUnloaded = new HashMap<>();
     @NotNull private final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries =
-      MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries =
-      MultiMap.createSet();
-    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries =
-      MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> excludedFromLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> classOfLibraries = MultiMap.createSet();
+    @NotNull private final MultiMap<VirtualFile, /*Library|SyntheticLibrary|WorkspaceEntity*/ Object> sourceOfLibraries = MultiMap.createSet();
     @NotNull private final Map<WorkspaceEntity, Condition<VirtualFile>> customEntitiesExcludeConditions = new HashMap<>();
     @NotNull private final Set<VirtualFile> excludedFromProject = new HashSet<>();
     @NotNull private final Set<VirtualFile> excludedFromSdkRoots = new HashSet<>();
@@ -569,8 +574,8 @@ class RootIndex {
     @NotNull private final Map<VirtualFile, FileTypeAssocTable<Boolean>> excludeFromContentRootTables = new HashMap<>();
 
     @NotNull
-    Set<VirtualFile> getAllRoots() {
-      Set<VirtualFile> result = new LinkedHashSet<>();
+    private Set<VirtualFile> getAllRoots() {
+      VirtualFileSet result = VirtualFileSetFactory.getInstance().createCompactVirtualFileSet();
       result.addAll(classAndSourceRoots);
       result.addAll(contentRootOf.keySet());
       result.addAll(contentRootOfUnloaded.keySet());
@@ -578,7 +583,7 @@ class RootIndex {
       result.addAll(excludedFromModule.keySet());
       result.addAll(excludedFromProject);
       result.addAll(excludedFromSdkRoots);
-      return result;
+      return result.freezed();
     }
 
     /**
@@ -684,7 +689,7 @@ class RootIndex {
       for (Object library : producers) {
         if (librariesToIgnore.contains(library)) continue;
         if (library instanceof SyntheticLibrary) {
-          Condition<VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
+          Condition<? super VirtualFile> exclusion = ((SyntheticLibrary)library).getUnitedExcludeCondition();
           if (exclusion != null) {
             exclusions.add(exclusion);
             if (exclusion.value(root)) {
@@ -711,10 +716,10 @@ class RootIndex {
 
     @NotNull
     private Set<OrderEntry> getLibraryOrderEntries(@NotNull List<? extends VirtualFile> hierarchy,
-                                                             @Nullable VirtualFile libraryClassRoot,
-                                                             @Nullable VirtualFile librarySourceRoot,
-                                                             @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
-                                                             @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
+                                                   @Nullable VirtualFile libraryClassRoot,
+                                                   @Nullable VirtualFile librarySourceRoot,
+                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
+                                                   @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries) {
       Set<OrderEntry> orderEntries = new LinkedHashSet<>();
       for (VirtualFile root : hierarchy) {
         if (root.equals(libraryClassRoot) && !sourceRootOf.containsKey(root)) {

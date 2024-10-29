@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.EffectType
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Font
 
+@ApiStatus.Internal
 class EditorLivePreviewPresentation(private val colorsScheme: EditorColorsScheme) : LivePreviewPresentation {
   override val defaultAttributes: TextAttributes
     get() = colorsScheme.getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES)

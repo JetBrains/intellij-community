@@ -24,6 +24,7 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.Invoker
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.CancellablePromise
 import java.io.File
 
@@ -347,6 +348,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     canDragInto(group, occurrences) && drag(group as Group, occurrences) { 0 }
   }
 
+  @ApiStatus.Internal
   fun canDrag(above: Boolean, occurrence: BookmarkOccurrence, occurrences: List<BookmarkOccurrence>): Boolean = synchronized(notifier) {
     if (!contains(occurrence.group)) return false
     if (!occurrences.all { it != occurrence && canDragInto(occurrence.group, it) }) return false
@@ -360,6 +362,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     return occurrences.all { it.bookmark !is LineBookmarkImpl }
   }
 
+  @ApiStatus.Internal
   fun drag(above: Boolean, occurrence: BookmarkOccurrence, occurrences: List<BookmarkOccurrence>): Boolean = synchronized(notifier) {
     canDrag(above, occurrence, occurrences) && drag(occurrence.group as Group, occurrences) {
       val index = it.indexWithGrouping(occurrence.bookmark)
@@ -395,6 +398,7 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
     canDragAddInto(group, files) && dragAdd(group as Group, files) { 0 }
   }
 
+  @ApiStatus.Internal
   fun dragAdd(above: Boolean, occurrence: BookmarkOccurrence, files: List<File>): Boolean = synchronized(notifier) {
     canDragAddInto(occurrence.group, files) && dragAdd(occurrence.group as Group, files) {
       val index = it.indexWithGrouping(occurrence.bookmark)

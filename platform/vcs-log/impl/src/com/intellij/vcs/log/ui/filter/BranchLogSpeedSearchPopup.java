@@ -6,12 +6,14 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBDimension;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class BranchLogSpeedSearchPopup extends FlatSpeedSearchPopup {
   public BranchLogSpeedSearchPopup(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext) {
     super(null, ActionGroupUtil.forceRecursiveUpdateInBackground(new DefaultActionGroup(actionGroup,

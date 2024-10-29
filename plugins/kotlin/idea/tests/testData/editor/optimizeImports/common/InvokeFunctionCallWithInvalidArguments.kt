@@ -1,0 +1,8 @@
+package test
+
+import dependency.Bar
+import dependency.invoke
+
+fun usage(b: Bar) {
+    b()
+}

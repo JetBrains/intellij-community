@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -51,7 +51,7 @@ public final class NestingTreeNode extends PsiFileNode implements FileNodeWithNe
   }
 
   @Override
-  public boolean contains(@NotNull final VirtualFile file) {
+  public boolean contains(final @NotNull VirtualFile file) {
     if (super.contains(file)) return true;
 
     for (PsiFileNode node : myNestedFileNodes) {

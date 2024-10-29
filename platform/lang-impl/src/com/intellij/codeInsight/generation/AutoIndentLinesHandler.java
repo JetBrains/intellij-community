@@ -14,8 +14,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class AutoIndentLinesHandler implements CodeInsightActionHandler {
   private static final Logger LOG = Logger.getInstance(AutoIndentLinesHandler.class);
 

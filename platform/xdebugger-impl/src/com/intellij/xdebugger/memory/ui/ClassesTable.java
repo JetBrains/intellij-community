@@ -28,7 +28,6 @@ import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor;
 import com.intellij.xdebugger.memory.utils.AbstractTableModelWithColumns;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +45,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ClassesTable extends JBTable implements DataProvider, Disposable {
+public class ClassesTable extends JBTable implements UiDataProvider, Disposable {
   public static final DataKey<TypeInfo> SELECTED_CLASS_KEY = DataKey.create("ClassesTable.SelectedClass");
   public static final DataKey<ReferenceCountProvider> REF_COUNT_PROVIDER_KEY =
     DataKey.create("ClassesTable.ReferenceCountProvider");
@@ -377,18 +376,11 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
     fireTableDataChanged();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (SELECTED_CLASS_KEY.is(dataId)) {
-      return getSelectedClass();
-    }
-
-    if (REF_COUNT_PROVIDER_KEY.is(dataId)) {
-      return myCountProvider;
-    }
-
-    return myParent.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(SELECTED_CLASS_KEY, getSelectedClass());
+    sink.set(REF_COUNT_PROVIDER_KEY, myCountProvider);
+    DataSink.uiDataSnapshot(sink, myParent);
   }
 
   public void clean(@NotNull @NlsContexts.StatusText String emptyText) {

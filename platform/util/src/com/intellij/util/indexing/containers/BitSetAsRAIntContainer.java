@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.containers;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
@@ -11,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * @implNote not thread-safe. {@code size()} might give wrong results if collection is modified concurrently
  */
+@ApiStatus.Internal
 public final class BitSetAsRAIntContainer implements RandomAccessIntContainer {
   private final BitSet myBitSet;
   private final AtomicInteger myElementsCount;

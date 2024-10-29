@@ -6,7 +6,6 @@ import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.impl.TrustedPaths;
 import com.intellij.ide.projectWizard.ProjectSettingsStep;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.projectWizard.*;
 import com.intellij.openapi.GitSilentFileAdderProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,6 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExtern
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
@@ -47,8 +47,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.io.PathKt;
 import org.gradle.util.GradleVersion;
@@ -113,6 +111,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   private @Nullable String gradleHome;
 
   private boolean isCreatingBuildScriptFile = true;
+  private boolean isCreatingSettingsScriptFile = true;
   private VirtualFile buildScriptFile;
   private VirtualFile settingsScriptFile;
   private GradleBuildScriptBuilder<?> buildScriptBuilder;
@@ -167,12 +166,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       buildScriptFile = setupGradleBuildFile(modelContentRootDir);
     }
 
-    settingsScriptFile = setupGradleSettingsFile(
-      rootProjectPath, modelContentRootDir, project.getName(),
-      myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
-      isCreatingNewLinkedProject(),
-      myUseKotlinDSL
-    );
+    if (isCreatingSettingsScriptFile) {
+      settingsScriptFile = setupGradleSettingsFile(
+        rootProjectPath, modelContentRootDir, project.getName(),
+        myProjectId == null ? module.getName() : myProjectId.getArtifactId(),
+        isCreatingNewLinkedProject(),
+        myUseKotlinDSL
+      );
+    }
 
     if (isCreatingBuildScriptFile) {
       buildScriptBuilder = GradleBuildScriptBuilder.create(gradleVersion, myUseKotlinDSL);
@@ -184,7 +185,7 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
   }
 
   @Override
-  protected void setupModule(Module module) throws ConfigurationException {
+  protected void setupModule(@NotNull Module module) throws ConfigurationException {
     super.setupModule(module);
     assert rootProjectPath != null;
 
@@ -221,17 +222,28 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, Boolean.TRUE);
     }
 
-    // execute when current dialog is closed
+    // execute when the current dialog is closed
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (isCreatingBuildScriptFile) {
-        preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
-        openBuildScriptFile(project, buildScriptFile);
-      }
-      if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
-        generateGradleWrapper(project);
-      }
-      reloadProject(project);
+      finishModuleSetup(buildScriptFile, project);
     }, ModalityState.nonModal(), project.getDisposed());
+  }
+
+  private void finishModuleSetup(@Nullable VirtualFile buildScriptFile, @NotNull Project project) {
+    if (!project.isOpen()) {
+      ApplicationManager.getApplication().invokeLater(() -> finishModuleSetup(buildScriptFile, project),
+                                                      ModalityState.nonModal(),
+                                                      project.getDisposed());
+      return;
+    }
+
+    if (isCreatingBuildScriptFile) {
+      preImportConfigurators.forEach(c -> c.accept(buildScriptFile, settingsScriptFile));
+      openBuildScriptFile(project, buildScriptFile);
+    }
+    if (isCreatingNewLinkedProject() && gradleDistributionType.isWrapped()) {
+      generateGradleWrapper(project);
+    }
+    reloadProject(project);
   }
 
   private void reloadProject(@NotNull Project project) {
@@ -287,10 +299,8 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   private static void openBuildScriptFile(@NotNull Project project, VirtualFile buildScriptFile) {
     if (buildScriptFile == null) return;
-    PsiManager psiManager = PsiManager.getInstance(project);
-    PsiFile psiFile = psiManager.findFile(buildScriptFile);
-    if (psiFile == null) return;
-    EditorHelper.openInEditor(psiFile);
+    var fileEditorManager = FileEditorManager.getInstance(project);
+    fileEditorManager.openFile(buildScriptFile, false);
   }
 
   @Override
@@ -521,6 +531,14 @@ public abstract class AbstractGradleModuleBuilder extends AbstractExternalModule
 
   public void setGradleHome(@Nullable String path) {
     gradleHome = path;
+  }
+
+  public void setCreatingSettingsScriptFile(boolean creatingSettingsScriptFile) {
+    this.isCreatingSettingsScriptFile = creatingSettingsScriptFile;
+  }
+
+  public boolean isCreatingSettingsScriptFile() {
+    return isCreatingSettingsScriptFile;
   }
 
   public void setCreatingBuildScriptFile(boolean creatingBuildScriptFile) {

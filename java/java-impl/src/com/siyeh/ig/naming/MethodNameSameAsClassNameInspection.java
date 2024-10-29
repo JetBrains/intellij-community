@@ -104,6 +104,7 @@ public final class MethodNameSameAsClassNameInspection extends BaseInspection {
       final String methodName = method.getName();
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) return;
+      if (containingClass instanceof PsiImplicitClass) return;
       final String className = containingClass.getName();
       if (!methodName.equals(className)) return;
 

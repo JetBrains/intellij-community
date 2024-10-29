@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -756,8 +756,8 @@ public final class ParameterInfoComponent extends JPanel {
 
     // flagsMap is supposed to use TEXT_RANGE_COMPARATOR
     @Contract(pure = true)
-    private static String buildLabelText(@NotNull final String text,
-                                         @NotNull final TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
+    private static String buildLabelText(final @NotNull String text,
+                                         final @NotNull TreeMap<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final Int2IntMap faultMap = new Int2IntOpenHashMap();
 

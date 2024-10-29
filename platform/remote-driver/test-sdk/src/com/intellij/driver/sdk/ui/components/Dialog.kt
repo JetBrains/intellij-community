@@ -26,7 +26,7 @@ fun Finder.dialog(@Language("xpath") xpath: String? = null, action: DialogUiComp
   x(xpath ?: "//div[@class='MyDialog']", DialogUiComponent::class.java).action()
 
 fun Finder.waitForNoOpenedDialogs() {
-  waitFor(errorMessage = "Dialog is still opened", duration = 100.seconds) {
+  waitFor(message = "Dialog is closed", timeout = 100.seconds) {
     !isDialogOpened()
   }
 }

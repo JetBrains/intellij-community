@@ -2,14 +2,15 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 /**
  * Represents dependency analyzer view model.
  */
-interface DependencyAnalyzerView : DataProvider {
+interface DependencyAnalyzerView : UiCompatibleDataProvider {
 
   /**
    * Sets selected external project in analyzer project combobox.
@@ -41,6 +42,9 @@ interface DependencyAnalyzerView : DataProvider {
    * @see setSelectedExternalProject
    */
   fun setSelectedDependency(module: Module, path: List<Dependency.Data>, scope: String)
+
+  override fun uiDataSnapshot(sink: DataSink) {
+  }
 
   companion object {
     const val ACTION_PLACE: String = "ExternalSystem.DependencyAnalyzerView.ActionPlace"

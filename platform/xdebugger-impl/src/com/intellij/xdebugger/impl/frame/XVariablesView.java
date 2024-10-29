@@ -1,15 +1,12 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -20,26 +17,24 @@ import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.inline.InlineDebugRenderer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.lang.ref.WeakReference;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
-public class XVariablesView extends XVariablesViewBase implements DataProvider {
-  protected final JPanel myComponent;
+@ApiStatus.Internal
+public class XVariablesView extends XVariablesViewBase {
+  protected final JComponent myComponent;
   protected final WeakReference<XDebugSessionImpl> mySession;
 
   public XVariablesView(@NotNull XDebugSessionImpl session) {
     super(session.getProject(), session.getDebugProcess().getEditorsProvider(), session.getValueMarkers());
     mySession = new WeakReference<>(session);
-    myComponent = createMainPanel(super.getPanel());
-    DataManager.registerDataProvider(myComponent, this);
+    myComponent = UiDataProvider.wrapComponent(createMainPanel(super.getPanel()), sink -> uiDataSnapshot(sink));
   }
 
   protected JPanel createMainPanel(JComponent localsPanel) {
@@ -47,7 +42,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
   }
 
   @Override
-  public JPanel getPanel() {
+  public JComponent getPanel() {
     return myComponent;
   }
 
@@ -95,7 +90,7 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     clearInlays(tree);
   }
 
-  protected void addEmptyMessage(XValueContainerNode root) {
+  protected void addEmptyMessage(XValueContainerNode<?> root) {
     XDebugSession session = getSession(getPanel());
     if (session != null) {
       if (!session.isStopped() && session.isPaused()) {
@@ -114,24 +109,17 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     tree.setSourcePosition(null);
     clearInlineData(tree);
 
-    XValueContainerNode root = createNewRootNode(null);
+    XValueContainerNode<?> root = createNewRootNode(null);
     addEmptyMessage(root);
     super.clear();
   }
 
-  @Nullable
-  @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      XDebugSessionImpl session = mySession.get();
-      if (session != null) {
-        XSourcePosition position = session.getCurrentPosition();
-        if (position != null) {
-          return position.getFile();
-        }
-      }
+  protected void uiDataSnapshot(@NotNull DataSink sink) {
+    XDebugSessionImpl session = mySession.get();
+    XSourcePosition position = session == null ? null : session.getCurrentPosition();
+    if (position != null) {
+      sink.lazy(CommonDataKeys.VIRTUAL_FILE, () -> position.getFile());
     }
-    return null;
   }
 
   public static final class InlineVariablesInfo {

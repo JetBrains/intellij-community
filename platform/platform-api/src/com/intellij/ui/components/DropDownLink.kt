@@ -19,7 +19,7 @@ import javax.swing.JList
 import javax.swing.KeyStroke.getKeyStroke
 import javax.swing.ListCellRenderer
 
-open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
+open class DropDownLink<T>(item: T, private val popupBuilder: (DropDownLink<T>) -> JBPopup) : ActionLink() {
 
   @Deprecated("Do not use popupState")
   val popupState: PopupState<JBPopup> = PopupState.forPopup()
@@ -36,13 +36,17 @@ open class DropDownLink<T>(item: T, popupBuilder: (DropDownLink<T>) -> JBPopup) 
     text = itemToString(item)
     setDropDownLinkIcon()
     addActionListener {
-      val popup = popupBuilder(this)
-      popup.show(RelativePoint(this, popupPoint()))
+      performAction()
     }
     getInputMap(WHEN_FOCUSED)?.run {
       put(getKeyStroke(KeyEvent.VK_DOWN, 0, false), "pressed")
       put(getKeyStroke(KeyEvent.VK_DOWN, 0, true), "released")
     }
+  }
+
+  protected open fun performAction() {
+    val popup = popupBuilder(this)
+    popup.show(RelativePoint(this, popupPoint()))
   }
 
   @JvmOverloads

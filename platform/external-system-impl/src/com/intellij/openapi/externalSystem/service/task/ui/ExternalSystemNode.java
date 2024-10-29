@@ -15,10 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.service.task.ui;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 
+@ApiStatus.Internal
 @SuppressWarnings("unchecked")
 public class ExternalSystemNode<T> extends DefaultMutableTreeNode {
 

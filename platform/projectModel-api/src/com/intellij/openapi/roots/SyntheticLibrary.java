@@ -100,7 +100,7 @@ public abstract class SyntheticLibrary {
    * and {@link SyntheticLibrary#myConstantExcludeCondition} to provide it, as it allows incremental rescan of the library.
    */
   @Deprecated
-  public @Nullable Condition<VirtualFile> getExcludeFileCondition() {
+  public @Nullable Condition<? super VirtualFile> getExcludeFileCondition() {
     return null;
   }
 
@@ -110,8 +110,8 @@ public abstract class SyntheticLibrary {
     return myConstantExcludeCondition.transformToCondition(allRoots);
   }
 
-  public final @Nullable Condition<VirtualFile> getUnitedExcludeCondition() {
-    Condition<VirtualFile> condition = getExcludeFileCondition();
+  public final @Nullable Condition<? super VirtualFile> getUnitedExcludeCondition() {
+    Condition<? super VirtualFile> condition = getExcludeFileCondition();
     if (condition == null) return getConstantExcludeConditionAsCondition();
     Condition<VirtualFile> otherCondition = getConstantExcludeConditionAsCondition();
     if (otherCondition == null) return condition;

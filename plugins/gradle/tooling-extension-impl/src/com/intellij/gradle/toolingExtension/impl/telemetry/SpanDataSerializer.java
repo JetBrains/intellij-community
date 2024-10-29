@@ -11,9 +11,14 @@ import java.util.Collection;
 
 public final class SpanDataSerializer {
 
-  public static byte[] serialize(@NotNull Collection<SpanData> spanData) {
+  public static byte[] serialize(@NotNull Collection<SpanData> spanData, @NotNull GradleTelemetryFormat format) {
     try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-      serializeIntoProtobuf(spanData, outputStream);
+      if (format == GradleTelemetryFormat.PROTOBUF) {
+        serializeIntoProtobuf(spanData, outputStream);
+      }
+      else if (format == GradleTelemetryFormat.JSON) {
+        serializeIntoJson(spanData, outputStream);
+      }
       return outputStream.toByteArray();
     }
     catch (Exception e) {
@@ -38,6 +43,16 @@ public final class SpanDataSerializer {
       .invoke(null, spanData);
     marshaller.getClass()
       .getMethod("writeBinaryTo", OutputStream.class)
+      .invoke(marshaller, outputStream);
+  }
+
+  private static void serializeIntoJson(@NotNull Collection<SpanData> spanData, @NotNull OutputStream outputStream)
+    throws ReflectiveOperationException {
+    Object marshaller = Class.forName("io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler")
+      .getMethod("create", Collection.class)
+      .invoke(null, spanData);
+    marshaller.getClass()
+      .getMethod("writeJsonTo", OutputStream.class)
       .invoke(marshaller, outputStream);
   }
 }

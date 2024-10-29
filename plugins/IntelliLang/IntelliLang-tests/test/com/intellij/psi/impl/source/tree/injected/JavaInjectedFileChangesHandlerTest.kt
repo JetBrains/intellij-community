@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.source.tree.injected
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
@@ -394,6 +394,67 @@ class JavaInjectedFileChangesHandlerTest : JavaCodeInsightFixtureTestCase() {
 
     }
 
+  }
+
+  fun `test indented update`() {
+    myFixture.configureByText("Test.java", """
+      import org.intellij.lang.annotations.*;
+
+      class Hello {
+        void test() {
+          createClass(""${'"'}
+                      class Foo {
+                        static void foo(int a) {}<caret>
+                        static void foo(int a, int b) {}
+                      }""${'"'});
+       }
+        
+          private static void createClass(@Language("JAVA") String text){};
+    }""".trimIndent())
+    val originalEditor = injectionTestFixture.topLevelEditor
+
+    val quickEditHandler = QuickEditAction().invokeImpl(project, injectionTestFixture.topLevelEditor, injectionTestFixture.topLevelFile)
+    val fragmentFile = quickEditHandler.newFile
+    TestCase.assertEquals("""
+      class Foo {
+        static void foo(int a) {}
+        static void foo(int a, int b) {}
+      }
+      """.trimIndent(), fragmentFile.text)
+
+    myFixture.openFileInEditor(fragmentFile.virtualFile)
+
+    myFixture.editor.caretModel.moveToOffset(fragmentFile.text.indexAfter("foo(int a) {}"))
+    myFixture.type("\n\n\n")
+
+    TestCase.assertEquals("""
+      class Foo {
+        static void foo(int a) {}
+
+
+
+        static void foo(int a, int b) {}
+      }
+      """.trimIndent(), myFixture.editor.document.text.replace(Regex("[ \t]+\n"), "\n"))
+
+    TestCase.assertEquals("""
+          import org.intellij.lang.annotations.*;
+        
+          class Hello {
+            void test() {
+              createClass(""${'"'}
+                          
+                      class Foo {
+                            static void foo(int a) {}
+                             \s
+                             \s
+                             \s
+                            static void foo(int a, int b) {}
+                          }""${'"'});
+           }
+            
+              private static void createClass(@Language("JAVA") String text){};
+        }""".trimIndent(), originalEditor.document.text)
   }
 
   fun `test suffix-prefix-edit-reformat`() {

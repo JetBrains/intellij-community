@@ -10,14 +10,11 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.function.Supplier;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
+final class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
   private final Object2ObjectOpenCustomHashMap<K, Collection<V>> myMap;
   private final Supplier<? extends Collection<V>> myCollectionFactory;
 
-  public ObjectObjectTransientMultiMaplet(Hash.Strategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
+  ObjectObjectTransientMultiMaplet(Hash.Strategy<K> hashingStrategy, Supplier<? extends Collection<V>> collectionFactory) {
     myMap = new Object2ObjectOpenCustomHashMap<>(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }

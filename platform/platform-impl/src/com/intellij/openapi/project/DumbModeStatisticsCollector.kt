@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object DumbModeStatisticsCollector : CounterUsagesCollector() {
+internal object DumbModeStatisticsCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logProcessFinished(activity: StructuredIdeActivity?,
                          finishType: IndexingFinishType) {

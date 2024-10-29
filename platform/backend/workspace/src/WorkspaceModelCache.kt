@@ -6,6 +6,7 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
 /**
  * Plugins aren't supposed to use this interface directly, the cache is loaded and saved automatically by [WorkspaceModel].
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.TestOnly
 @ApiStatus.Internal
 public interface WorkspaceModelCache {
   public val enabled: Boolean
+  public val cacheFile: Path
 
   public fun loadCache(): MutableEntityStorage?
   public fun loadUnloadedEntitiesCache(): MutableEntityStorage?
@@ -26,6 +28,7 @@ public interface WorkspaceModelCache {
   public fun saveCacheNow()
 
   public companion object {
+    @JvmStatic
     public fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }
   }
 }

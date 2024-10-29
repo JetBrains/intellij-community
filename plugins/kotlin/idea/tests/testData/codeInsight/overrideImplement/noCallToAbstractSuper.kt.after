@@ -10,3 +10,7 @@ class B : A(), I {  // Any:hashCode() (available via I) is not an option
         TODO("Not yet implemented")
     }
 }
+
+// MEMBER: "hashCode(): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "toString(): String"

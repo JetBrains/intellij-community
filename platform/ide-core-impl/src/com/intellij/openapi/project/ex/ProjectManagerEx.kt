@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.ex
 
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.SystemInfoRt
@@ -40,6 +41,8 @@ abstract class ProjectManagerEx : ProjectManager() {
 
     @JvmStatic
     fun getInstanceEx(): ProjectManagerEx = getInstance() as ProjectManagerEx
+
+    suspend fun getInstanceExAsync(): ProjectManagerEx = ApplicationManager.getApplication().serviceAsync()
 
     @JvmStatic
     fun getInstanceExIfCreated(): ProjectManagerEx? = getInstanceIfCreated() as ProjectManagerEx?

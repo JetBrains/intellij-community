@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -28,8 +28,7 @@ public class EditorFoldingInfo {
 
   private final Map<FoldRegion, SmartPsiElementPointer<?>> myFoldRegionToSmartPointerMap = Collections.synchronizedMap(new HashMap<>());
 
-  @NotNull
-  public static EditorFoldingInfo get(@NotNull Editor editor) {
+  public static @NotNull EditorFoldingInfo get(@NotNull Editor editor) {
     if (editor instanceof EditorWindow) return new EditorFoldingInfoWindow(get(((EditorWindow)editor).getDelegate()));
 
     synchronized (ourLock) {
@@ -42,8 +41,7 @@ public class EditorFoldingInfo {
     }
   }
 
-  @Nullable
-  public PsiElement getPsiElement(@NotNull FoldRegion region) {
+  public @Nullable PsiElement getPsiElement(@NotNull FoldRegion region) {
     final SmartPsiElementPointer<?> pointer = myFoldRegionToSmartPointerMap.get(region);
     if (pointer == null) {
       return null;

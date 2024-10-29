@@ -40,8 +40,7 @@ public class RncParserDefinition implements ParserDefinition {
   private static final IFileElementType FILE_ELEMENT_TYPE = new IFileElementType(RngCompactLanguage.INSTANCE);
 
   @Override
-  @NotNull
-  public Lexer createLexer(Project project) {
+  public @NotNull Lexer createLexer(Project project) {
     return new CompactSyntaxLexerAdapter();
   }
 
@@ -56,27 +55,23 @@ public class RncParserDefinition implements ParserDefinition {
   }
 
   @Override
-  @NotNull
-  public TokenSet getWhitespaceTokens() {
+  public @NotNull TokenSet getWhitespaceTokens() {
     return TokenSet.create(TokenType.WHITE_SPACE);
   }
 
   @Override
-  @NotNull
-  public TokenSet getCommentTokens() {
+  public @NotNull TokenSet getCommentTokens() {
     return TokenSet.orSet(RncTokenTypes.COMMENTS, RncTokenTypes.DOC_TOKENS);
   }
 
   @Override
-  @NotNull
-  public TokenSet getStringLiteralElements() {
+  public @NotNull TokenSet getStringLiteralElements() {
     return TokenSet.create(RncTokenTypes.LITERAL);
   }
 
   @Override
-  @NotNull
-  @SuppressWarnings({ "unchecked" })
-  public PsiElement createElement(ASTNode node) {
+  @SuppressWarnings({"unchecked"})
+  public @NotNull PsiElement createElement(ASTNode node) {
     final IElementType type = node.getElementType();
 
     if (type instanceof NotNullFunction) {

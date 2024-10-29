@@ -30,6 +30,8 @@ open class SystemPropertiesAdjuster {
     properties["jna.noclasspath"] = null
     properties["jna.boot.library.path"] = null
     properties["jna.nosys"] = null
+    properties["java.nio.file.spi.DefaultFileSystemProvider"] = null
+    properties["java.util.concurrent.ForkJoinPool.common.threadFactory"] = null
     return properties
   }
 

@@ -14,8 +14,10 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CloseViewAction extends BaseViewAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override

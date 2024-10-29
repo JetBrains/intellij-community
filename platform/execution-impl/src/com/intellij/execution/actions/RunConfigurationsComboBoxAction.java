@@ -10,12 +10,14 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runToolbar.RunToolbarSlotManager;
 import com.intellij.execution.ui.RedesignedRunWidgetKt;
+import com.intellij.execution.ui.RunToolbarPopupKt;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -545,17 +547,20 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @ApiStatus.Internal
-  public static class SelectConfigAction extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+  public static class SelectConfigAction extends ActionGroup implements DumbAware {
     private final Project myProject;
     private final RunnerAndConfigurationSettings myConfiguration;
 
     public SelectConfigAction(@NotNull Project project, @NotNull RunnerAndConfigurationSettings configuration) {
       myProject = project;
       myConfiguration = configuration;
+      getTemplatePresentation().putClientProperty(RunToolbarPopupKt.RUN_CONFIGURATION_ID, myConfiguration.getUniqueID());
       // TODO remove when BackendAsyncActionHost.isNewActionUpdateEnabled is inlined
-      if (ClientId.getCurrentOrNull() != null) {
+      if (ClientId.getCurrentOrNull() != null && !Registry.is("rdct.new.async.actions", true)) {
         Presentation p = getTemplatePresentation().clone();
-        update(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT));
+        AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, p, DataContext.EMPTY_CONTEXT);
+        Utils.initUpdateSession(event);
+        update(event);
         getTemplatePresentation().copyFrom(p, null, true);
       }
     }
@@ -611,6 +616,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setPopupGroup(true);
       e.getPresentation().setPerformGroup(true);
+      e.getPresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
 
       String fullName = myConfiguration.getName();
       String name = StringUtil.notNullize(StringUtil.nullize(Executor.shortenNameIfNeeded(fullName), " "));
@@ -619,7 +625,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       Presentation presentation = e.getPresentation();
       presentation.setText(name, false);
       presentation.setDescription(ExecutionBundle.message("select.0.1", myConfiguration.getType().getConfigurationTypeDescription(), name));
-      presentation.putClientProperty(JComponent.TOOL_TIP_TEXT_KEY, toolTip);
+      presentation.putClientProperty(ActionUtil.TOOLTIP_TEXT, toolTip);
 
       setConfigurationIcon(e.getPresentation(), myConfiguration, myProject);
     }

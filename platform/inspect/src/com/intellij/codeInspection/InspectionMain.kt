@@ -1,11 +1,11 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection
 
 import com.intellij.openapi.application.ModernApplicationStarter
 import java.util.concurrent.CompletableFuture
 import kotlin.system.exitProcess
 
-class InspectionMain : ModernApplicationStarter() {
+internal class InspectionMain : ModernApplicationStarter() {
   private lateinit var application: InspectionApplicationBase
 
   override fun premain(args: List<String>) {

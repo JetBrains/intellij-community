@@ -1,0 +1,1 @@
+Sealed hierarchy of 'SealedClass' would be split. None of its members reside in the package 'bar' of module 'light_idea_test_case': [foo.Impl1, foo.Impl2, foo.Impl3, foo.SealedClass].

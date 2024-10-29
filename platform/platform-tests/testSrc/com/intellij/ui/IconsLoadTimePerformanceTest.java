@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.internal.IconsLoadTime;
 import com.intellij.internal.IconsLoadTime.StatData;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +29,6 @@ import static org.junit.Assume.assumeTrue;
  *
  * @author tav
  */
-@HardwareAgentRequired
 public class IconsLoadTimePerformanceTest {
   private static final Logger LOG = Logger.getInstance(IconsLoadTimePerformanceTest.class);
   private static final int SVG_ICON_AVERAGE_LOAD_TIME_EXPECTED_NO_CACHE = 100; // ms

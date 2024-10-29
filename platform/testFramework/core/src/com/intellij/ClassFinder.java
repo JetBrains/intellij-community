@@ -9,7 +9,6 @@ import kotlin.text.StringsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -34,14 +33,6 @@ public class ClassFinder {
     else {
       classNameList = findAndStoreTestClasses(directoryOffset);
     }
-  }
-
-  /**
-   * @deprecated Use {@linkplain ClassFinder#ClassFinder(Path, String, boolean)} instead.
-   */
-  @Deprecated(forRemoval = true)
-  public ClassFinder(final File classPathRoot, final String rootPackage, boolean includeUnconventionallyNamedTests) {
-    this(classPathRoot.toPath(), rootPackage, includeUnconventionallyNamedTests);
   }
 
   @Nullable

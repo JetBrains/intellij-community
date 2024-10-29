@@ -80,7 +80,7 @@ class KotlinInlineAnonymousFunctionProcessor(
                         usageExpression = null,
                         call = invokeCallExpression,
                         inlineSetter = false,
-                        codeToInline = codeToInline,
+                        replacement = codeToInline,
                     ).doInline()
                 }
             }

@@ -238,7 +238,6 @@ public final class UpdateHighlightersUtil {
     int group = info.getGroup();
     if (group != Pass.LOCAL_INSPECTIONS
         && group != Pass.EXTERNAL_TOOLS
-        && group != Pass.WHOLE_FILE_LOCAL_INSPECTIONS
         && group != Pass.UPDATE_ALL
         && group != GeneralHighlightingPass.POST_UPDATE_ALL
     ) {
@@ -464,14 +463,15 @@ public final class UpdateHighlightersUtil {
     }
   }
   // disposes highlighter, and schedules removal from the file-level component if this highlighter happened to be file-level
-  static void disposeWithFileLevelIgnoreErrors(@NotNull RangeHighlighter highlighter,
-                                               @Nullable HighlightInfo info,
-                                               @NotNull HighlightingSession highlightingSession) {
-    if (info != null && info.isFileLevelAnnotation()) {
+  static void disposeWithFileLevelIgnoreErrors(@NotNull HighlightInfo info, @NotNull HighlightingSession highlightingSession) {
+    if (info.isFileLevelAnnotation()) {
       ((HighlightingSessionImpl)highlightingSession).removeFileLevelHighlight(info);
     }
     try {
-      highlighter.dispose();
+      RangeHighlighter highlighter = info.getHighlighter();
+      if (highlighter != null) {
+        highlighter.dispose();
+      }
     }
     catch (Exception e) {
       // in theory, rogue plugin might register a listener on range marker 'dispose', which can do nasty things, including throwing exceptions,

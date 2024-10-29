@@ -36,7 +36,11 @@ class AddFieldActionCreateCallableFromUsageFix(
             val initializer = if (requestInitializer is JvmLong) {
                 psiFactory.createExpression("${requestInitializer.longValue}L")
             } else if (!lateinit) {
-                psiFactory.createExpression("TODO(\"initialize me\")")
+                if (request.isCreateEmptyInitializer) {
+                    psiFactory.createExpression("TODO(\"initialize me\")")
+                } else {
+                    null
+                }
             } else null
             if (!request.isValid) null else
             PropertyInfo(

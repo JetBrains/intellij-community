@@ -34,4 +34,9 @@ public class FirWithMppStdlibCompletionTestGenerated extends AbstractFirWithMppS
     public void testExtension() throws Exception {
         runTest("../../completion/testData/basic/stdlibWithCommon/extension.kt");
     }
+
+    @TestMetadata("KTIJ-27041.kt")
+    public void testKTIJ_27041() throws Exception {
+        runTest("../../completion/testData/basic/stdlibWithCommon/KTIJ-27041.kt");
+    }
 }

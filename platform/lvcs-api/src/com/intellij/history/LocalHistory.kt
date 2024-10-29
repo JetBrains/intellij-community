@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.history
 
 import com.intellij.openapi.application.ApplicationManager
@@ -37,6 +37,12 @@ import org.jetbrains.annotations.ApiStatus
  * @see [ActivityId]
  */
 abstract class LocalHistory {
+
+  /**
+   * Is Local History enabled for all projects.
+   */
+  abstract val isEnabled: Boolean
+
   /**
    * Starts an action in the local history with the given name and [ActivityId] to indicate the start of file changes.
    * Call [LocalHistoryAction.finish] after the changes were performed.
@@ -120,6 +126,8 @@ abstract class LocalHistory {
   abstract fun isUnderControl(file: VirtualFile): Boolean
 
   private class Dummy : LocalHistory() {
+    override val isEnabled: Boolean = true
+
     override fun startAction(name: @NlsContexts.Label String?, activityId: ActivityId?): LocalHistoryAction = LocalHistoryAction.NULL
     override fun putEventLabel(project: Project, name: String, activityId: ActivityId): Label = Label.NULL_INSTANCE
     override fun putSystemLabel(project: Project, name: @NlsContexts.Label String, color: Int): Label = Label.NULL_INSTANCE

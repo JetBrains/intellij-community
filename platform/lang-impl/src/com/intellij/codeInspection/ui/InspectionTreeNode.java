@@ -59,8 +59,7 @@ public abstract class InspectionTreeNode implements TreeNode {
   });
 
   final ProblemLevels myProblemLevels = new ProblemLevels();
-  @Nullable
-  volatile Children myChildren;
+  volatile @Nullable Children myChildren;
   final InspectionTreeNode myParent;
 
   protected InspectionTreeNode(InspectionTreeNode parent) {
@@ -71,8 +70,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public Icon getIcon(boolean expanded) {
+  public @Nullable Icon getIcon(boolean expanded) {
     return null;
   }
 
@@ -115,8 +113,7 @@ public abstract class InspectionTreeNode implements TreeNode {
     return false;
   }
 
-  @Nullable
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTailText() {
+  public @Nullable @Nls(capitalization = Nls.Capitalization.Sentence) String getTailText() {
     return null;
   }
 
@@ -153,8 +150,7 @@ public abstract class InspectionTreeNode implements TreeNode {
 
   public abstract @Nls String getPresentableText();
 
-  @NotNull
-  public List<? extends InspectionTreeNode> getChildren() {
+  public @NotNull List<? extends InspectionTreeNode> getChildren() {
     Children children = myChildren;
     return children == null ? Collections.emptyList() : List.of(children.myChildren);
   }

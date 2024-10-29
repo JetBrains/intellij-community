@@ -16,10 +16,12 @@
 package com.intellij.openapi.externalSystem.action.task;
 
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ToggleBeforeRunTaskAction extends ToggleTaskActivationAction {
   protected ToggleBeforeRunTaskAction() {
     super(ExternalSystemTaskActivator.Phase.BEFORE_RUN);

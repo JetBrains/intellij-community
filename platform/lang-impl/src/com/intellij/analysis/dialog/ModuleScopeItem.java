@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.dialog;
 
 import com.intellij.analysis.AnalysisScope;
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.Nullable;
 public final class ModuleScopeItem implements ModelScopeItem {
   public final Module Module;
 
-  @Nullable
-  public static ModelScopeItem tryCreate(@Nullable Module module) {
+  public static @Nullable ModelScopeItem tryCreate(@Nullable Module module) {
     if (module != null) {
       Project project = module.getProject();
       if (ModuleManager.getInstance(project).getModules().length > 1)

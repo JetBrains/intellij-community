@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -40,7 +40,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public void invoke(@NotNull final Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
+  public void invoke(final @NotNull Project project, PsiElement @NotNull [] elements, @NotNull DataContext dataContext) {
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
     LOG.assertTrue(module != null);
     Messages.showInputDialog(project,
@@ -78,8 +78,7 @@ public class RenameModuleHandler implements RenameHandler, TitledHandler {
       return true;
     }
 
-    @Nullable
-    private ModifiableModuleModel renameModule(String inputString) {
+    private @Nullable ModifiableModuleModel renameModule(String inputString) {
       final ModifiableModuleModel modifiableModel = ModuleManager.getInstance(myProject).getModifiableModel();
       try {
         modifiableModel.renameModule(myModule, inputString);

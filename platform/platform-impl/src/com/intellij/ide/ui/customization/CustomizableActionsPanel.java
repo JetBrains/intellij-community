@@ -34,6 +34,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,6 +52,7 @@ import java.util.function.Supplier;
 import static com.intellij.ide.ui.customization.ActionUrl.*;
 import static com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*;
 
+@ApiStatus.Internal
 public class CustomizableActionsPanel {
   private final JPanel myPanel = new BorderLayoutPanel(5, 5);
   protected JTree myActionsTree;

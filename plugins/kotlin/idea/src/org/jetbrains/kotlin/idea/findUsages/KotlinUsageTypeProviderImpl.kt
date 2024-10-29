@@ -42,7 +42,17 @@ class KotlinUsageTypeProviderImpl : KotlinUsageTypeProvider() {
 
                 with(refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }) {
                     this?.calleeExpression is KtSimpleNameExpression
-                } -> if (descriptor is ConstructorDescriptor) CLASS_NEW_OPERATOR else FUNCTION_CALL
+                } -> {
+                    val callExpression = refExpr.getParentOfTypeAndBranch<KtCallExpression> { calleeExpression }
+                    val qualifiedCall = callExpression?.parent as? KtDotQualifiedExpression
+
+                    if (qualifiedCall?.receiverExpression is KtSuperExpression && qualifiedCall.selectorExpression == callExpression)
+                        SUPER_DELEGATION
+                    else if (descriptor is ConstructorDescriptor)
+                        CLASS_NEW_OPERATOR
+                    else
+                        FUNCTION_CALL
+                }
 
                 refExpr.getParentOfTypeAndBranch<KtBinaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtUnaryExpression> { operationReference } != null || refExpr.getParentOfTypeAndBranch<KtWhenConditionInRange> { operationReference } != null -> FUNCTION_CALL
 

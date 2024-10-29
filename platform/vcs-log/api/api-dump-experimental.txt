@@ -1,0 +1,33 @@
+*f:com.intellij.vcs.log.UnsupportedHistoryFiltersException
+- java.lang.Exception
+- <init>(java.lang.String):V
+*:com.intellij.vcs.log.VcsLogCommitDataCache
+- a:getCachedData(I):com.intellij.vcs.log.VcsShortCommitDetails
+*:com.intellij.vcs.log.VcsLogFileHistoryHandler
+- *sf:Companion:com.intellij.vcs.log.VcsLogFileHistoryHandler$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ProjectExtensionPointName
+- a:collectHistory(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.VcsLogFilterCollection,kotlin.jvm.functions.Function1):V
+- s:getByVcs(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.VcsKey):com.intellij.vcs.log.VcsLogFileHistoryHandler
+- a:getHistoryFast(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.VcsLogFilterCollection,I,kotlin.jvm.functions.Function1):V
+- a:getRename(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash):com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename
+- getSupportedFilters(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash):java.util.Set
+- a:getSupportedVcs():com.intellij.openapi.vcs.VcsKey
+- isFastStartSupported():Z
+*f:com.intellij.vcs.log.VcsLogFileHistoryHandler$Companion
+- f:getByVcs(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.VcsKey):com.intellij.vcs.log.VcsLogFileHistoryHandler
+*f:com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename
+- <init>(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash):V
+- f:component1():com.intellij.openapi.vcs.FilePath
+- f:component2():com.intellij.openapi.vcs.FilePath
+- f:component3():com.intellij.vcs.log.Hash
+- f:component4():com.intellij.vcs.log.Hash
+- f:copy(com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash):com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename
+- bs:copy$default(com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename,com.intellij.openapi.vcs.FilePath,com.intellij.openapi.vcs.FilePath,com.intellij.vcs.log.Hash,com.intellij.vcs.log.Hash,I,java.lang.Object):com.intellij.vcs.log.VcsLogFileHistoryHandler$Rename
+- equals(java.lang.Object):Z
+- f:getFilePath1():com.intellij.openapi.vcs.FilePath
+- f:getFilePath2():com.intellij.openapi.vcs.FilePath
+- f:getHash1():com.intellij.vcs.log.Hash
+- f:getHash2():com.intellij.vcs.log.Hash
+- hashCode():I
+*:com.intellij.vcs.log.VcsLogFilterUi
+- a:getFilters():com.intellij.vcs.log.VcsLogFilterCollection

@@ -115,13 +115,11 @@ public final class PyDictDuplicateKeysInspection extends PyInspection {
 
       if (node instanceof PyNumericLiteralExpression) {
         final BigDecimal value = ((PyNumericLiteralExpression)node).getBigDecimalValue();
-        if (value != null) {
-          final String keyValue = value.toPlainString();
-          return !value.equals(BigDecimal.ZERO) &&
-                 myTypeEvalContext.getType((PyNumericLiteralExpression)node) == PyBuiltinCache.getInstance(node).getComplexType()
-                 ? keyValue + "j"
-                 : keyValue;
-        }
+        final String keyValue = value.toPlainString();
+        return !value.equals(BigDecimal.ZERO) &&
+               myTypeEvalContext.getType((PyNumericLiteralExpression)node) == PyBuiltinCache.getInstance(node).getComplexType()
+               ? keyValue + "j"
+               : keyValue;
       }
 
       return node instanceof PyLiteralExpression || node instanceof PyReferenceExpression ? node.getText() : null;

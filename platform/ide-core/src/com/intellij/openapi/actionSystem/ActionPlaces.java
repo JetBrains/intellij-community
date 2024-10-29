@@ -14,7 +14,13 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Possible places in the IDE user interface where an action can appear.
+ * Common action place values where an action can appear.
+ * <p>
+ * To alter logic for an action prefer {@link AnActionEvent#getUiKind()}.
+ * The {@link AnActionEvent#getPlace()} is intended for stats, logging and debugging.
+ *
+ * @see AnActionEvent#getPlace()
+ * @see AnActionEvent#getUiKind()
  */
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
@@ -92,6 +98,7 @@ public abstract class ActionPlaces {
   public static final String SHOW_USAGES_POPUP_TOOLBAR = "ShowUsagesPopupToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
+  public static final String STRUCTURE_VIEW_FLOATING_TOOLBAR = "StructureViewFloatingToolbar";
   public static final String NAVIGATION_BAR_POPUP = "NavBar";
   public static final String NAVIGATION_BAR_TOOLBAR = "NavBarToolbar";
   public static final String RUN_TOOLBAR_LEFT_SIDE = "RunToolbarLeftSide";
@@ -138,6 +145,7 @@ public abstract class ActionPlaces {
 
   public static final String DATABASE_VIEW_TOOLBAR = "DatabaseViewToolbar";
   public static final String DATABASE_VIEW_POPUP = "DatabaseViewPopup";
+  public static final String GRID_FLOATING_PAGING_TOOLBAR = "GridFloatingPagingToolbar";
 
   public static final String REMOTE_HOST_VIEW_POPUP = "RemoteHostPopup";
   public static final String REMOTE_HOST_DIALOG_POPUP = "RemoteHostDialogPopup";
@@ -168,6 +176,7 @@ public abstract class ActionPlaces {
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
   public static final String SERVICES_POPUP = "ServicesPopup";
   public static final String SERVICES_TOOLBAR = "ServicesToolbar";
+  public static final String SERVICES_TREE_TOOLBAR = "ServicesToolbar";
 
   public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
@@ -216,17 +225,17 @@ public abstract class ActionPlaces {
 
   public static final String JUPYTER_NOTEBOOK_CELL_OUTPUT_POPUP = "Editor.Jupyter.Cell.Output.Popup";
 
+  /** @deprecated Use {@link AnActionEvent#getUiKind()} and {@link AnActionEvent#getInputEvent()} instead */
+  @Deprecated
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place) ||
            place != null && place.startsWith(POPUP_PREFIX) && isMainMenuOrActionSearch(place.substring(POPUP_PREFIX.length()));
   }
 
+  /** @deprecated Use {@link AnActionEvent#getInputEvent()} instead */
+  @Deprecated
   public static boolean isShortcutPlace(String place) {
     return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
-  }
-
-  public static boolean isMainToolbar(String place) {
-    return MAIN_TOOLBAR.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces;
@@ -262,12 +271,10 @@ public abstract class ActionPlaces {
 
   private static final String POPUP_PREFIX = "popup@";
 
+  /** @deprecated Use {@link AnActionEvent#getUiKind()} or {@link AnActionEvent#isFromContextMenu()} instead */
+  @Deprecated
   public static boolean isPopupPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
-  }
-
-  public static boolean isNewUiToolbarPlace(@NotNull String place) {
-    return place.startsWith(NEW_UI_RUN_TOOLBAR);
   }
 
   public static boolean isCommonPlace(@NotNull String place) {
@@ -289,6 +296,6 @@ public abstract class ActionPlaces {
    */
   @ApiStatus.Internal
   public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
-    return SystemInfo.isMac && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
+    return SystemInfo.isMac && (e.isFromMainMenu() || e.getInputEvent() != null);
   }
 }

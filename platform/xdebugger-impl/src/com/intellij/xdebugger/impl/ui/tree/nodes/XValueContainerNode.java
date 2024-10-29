@@ -24,14 +24,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 public abstract class XValueContainerNode<ValueContainer extends XValueContainer> extends XDebuggerTreeNode implements XCompositeNode, TreeNode {
   private List<XValueNodeImpl> myValueChildren;
   private List<MessageTreeNode> myMessageChildren;
   private List<MessageTreeNode> myTemporaryMessageChildren;
   private MessageTreeNode myTemporaryEditorNode;
-  private List<XValueGroupNodeImpl> myTopGroups;
-  private List<XValueGroupNodeImpl> myBottomGroups;
+  private List<XValueContainerNode<?>> myTopNodes;
+  private List<XValueContainerNode<?>> myBottomNodes;
   private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
   private volatile boolean myObsolete;
@@ -96,8 +97,9 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
         }
       }
 
-      myTopGroups = createGroupNodes(children.getTopGroups(), myTopGroups, newChildren);
-      myBottomGroups = createGroupNodes(children.getBottomGroups(), myBottomGroups, newChildren);
+      myTopNodes = createNodes(children.getTopValues(), this::createNode, myTopNodes, newChildren);
+      myTopNodes = createNodes(children.getTopGroups(), this::createGroupNode, myTopNodes, newChildren);
+      myBottomNodes = createNodes(children.getBottomGroups(), this::createGroupNode, myBottomNodes, newChildren);
       myCachedAllChildren = null;
       fireNodesInserted(newChildren);
       if (last && myTemporaryMessageChildren != null) {
@@ -133,18 +135,27 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   }
 
   @Nullable
-  private List<XValueGroupNodeImpl> createGroupNodes(List<? extends XValueGroup> groups,
-                                                     @Nullable List<XValueGroupNodeImpl> prevNodes,
-                                                     List<? super XValueContainerNode<?>> newChildren) {
+  private static <T extends XValueContainer> List<XValueContainerNode<?>> createNodes(List<T> groups,
+                                                                                      Function<T, XValueContainerNode<?>> createNode,
+                                                                                      @Nullable List<XValueContainerNode<?>> prevNodes,
+                                                                                      List<? super XValueContainerNode<?>> newChildren) {
     if (groups.isEmpty()) return prevNodes;
 
-    List<XValueGroupNodeImpl> nodes = prevNodes != null ? prevNodes : new SmartList<>();
-    for (XValueGroup group : groups) {
-      XValueGroupNodeImpl node = new XValueGroupNodeImpl(myTree, this, group);
+    List<XValueContainerNode<?>> nodes = prevNodes != null ? prevNodes : new SmartList<>();
+    for (T value : groups) {
+      XValueContainerNode<?> node = createNode.apply(value);
       nodes.add(node);
       newChildren.add(node);
     }
     return nodes;
+  }
+
+  private XValueContainerNode<?> createNode(XNamedValue value) {
+    return new XValueNodeImpl(myTree, this, value.getName(), value);
+  }
+
+  private XValueContainerNode<?> createGroupNode(XValueGroup group) {
+    return new XValueGroupNodeImpl(myTree, this, group);
   }
 
   @Override
@@ -174,8 +185,8 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myTemporaryMessageChildren = null;
     myTemporaryEditorNode = null;
     myValueChildren = null;
-    myTopGroups = null;
-    myBottomGroups = null;
+    myTopNodes = null;
+    myBottomNodes = null;
     fireNodeStructureChanged();
   }
 
@@ -279,14 +290,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       if (myMessageChildren != null) {
         myCachedAllChildren.addAll(myMessageChildren);
       }
-      if (myTopGroups != null) {
-        myCachedAllChildren.addAll(myTopGroups);
+      if (myTopNodes != null) {
+        myCachedAllChildren.addAll(myTopNodes);
       }
       if (myValueChildren != null) {
         myCachedAllChildren.addAll(myValueChildren);
       }
-      if (myBottomGroups != null) {
-        myCachedAllChildren.addAll(myBottomGroups);
+      if (myBottomNodes != null) {
+        myCachedAllChildren.addAll(myBottomNodes);
       }
       if (myTemporaryMessageChildren != null) {
         myCachedAllChildren.addAll(myTemporaryMessageChildren);
@@ -304,9 +315,9 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   @NotNull
   public List<? extends XValueContainerNode<?>> getLoadedChildren() {
     List<? extends XValueContainerNode<?>> empty = Collections.<XValueGroupNodeImpl>emptyList();
-    return ContainerUtil.concat(ObjectUtils.notNull(myTopGroups, empty),
+    return ContainerUtil.concat(ObjectUtils.notNull(myTopNodes, empty),
                                 ObjectUtils.notNull(myValueChildren, empty),
-                                ObjectUtils.notNull(myBottomGroups, empty));
+                                ObjectUtils.notNull(myBottomNodes, empty));
   }
 
   public void setObsolete() {

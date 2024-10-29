@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.newclass;
 
 import com.intellij.ide.ui.newItemPopup.NewItemWithTemplatesPopupPanel;
@@ -41,13 +41,11 @@ public class CreateWithTemplatesDialogPanel extends NewItemWithTemplatesPopupPan
     return myTextField;
   }
 
-  @NotNull
-  public String getEnteredName() {
+  public @NotNull String getEnteredName() {
     return myTextField.getText().trim();
   }
 
-  @NotNull
-  public String getSelectedTemplate() {
+  public @NotNull String getSelectedTemplate() {
     return myTemplatesList.getSelectedValue().templateName();
   }
 

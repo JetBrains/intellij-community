@@ -147,13 +147,17 @@ abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase
         configureByFile(beforeFilePath)
         executeAction(IdeActions.ACTION_EDITOR_ENTER)
         val editor = editor.safeAs<EditorWindow>()?.delegate ?: editor
-        val actualTextWithCaret = StringBuilder(editor.document.text).insert(
-            editor.caretModel.offset,
-            EditorTestUtil.CARET_TAG
-        ).toString()
+        var actualTextWithCaret = StringBuilder(editor.document.text)
+        for (caret in editor.caretModel.allCarets.asReversed()) {
+            actualTextWithCaret = actualTextWithCaret.insert(
+                caret.offset,
+                EditorTestUtil.CARET_TAG
+            )
+        }
+
 
         val result = kotlin.runCatching {
-            KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret)
+            KotlinTestUtils.assertEqualsToFile(errorMessage, File(afterFilePath), actualTextWithCaret.toString())
         }
 
         when {

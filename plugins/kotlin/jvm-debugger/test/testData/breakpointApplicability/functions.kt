@@ -90,3 +90,9 @@ fun foo14() { /// M
     listOf(1, 2, 3, 4, 5) /// L
       .map { x -> x.let { 42 } } /// *, L, λ, λ
 } /// L
+
+fun foo3_6() = run { /// L, M
+    println(1) }.also { println(2) } /// *, L, λ
+
+fun foo15_empty_lambda() = run {} /// *, L, M, λ
+fun foo16_almost_empty_lambda() = run { /* boo! */ } /// *, L, M, λ

@@ -4,11 +4,15 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 import org.jetbrains.kotlin.idea.base.codeInsight.PsiOnlyKotlinMainFunctionDetector
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractNativeIdePlatformKindTooling
-import org.jetbrains.kotlin.idea.base.platforms.StableModuleNameProvider
+import org.jetbrains.kotlin.idea.base.facet.implementingModules
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.highlighter.KotlinTestRunLineMarkerContributor
+import org.jetbrains.kotlin.idea.testIntegration.genericKotlinTestUrls
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import javax.swing.Icon
 
 internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTooling() {
@@ -32,8 +36,6 @@ internal class FirNativeIdePlatformKindTooling : AbstractNativeIdePlatformKindTo
             return null
         }
 
-        val module = declaration.module ?: return null
-        val moduleName = StableModuleNameProvider.getInstance(module.project).getStableModuleName(module)
-        return getTestIcon(declaration, moduleName)
+        return KotlinTestRunLineMarkerContributor.getTestStateIcon(declaration.genericKotlinTestUrls(), declaration)
     }
 }

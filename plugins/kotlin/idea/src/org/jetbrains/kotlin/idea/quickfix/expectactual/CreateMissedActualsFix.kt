@@ -37,6 +37,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.isAndroidModule
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.core.PureKotlinSourceFoldersHolder
+import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
 import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.findOrConfigureKotlinSourceRoots
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -414,7 +415,7 @@ private fun generateActualsForSelectedModules(
                         if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
                         val descriptor = element.toDescriptor() as? CallableMemberDescriptor
 
-                        descriptor?.let { generateCallable(project, false, element, descriptor, checker = checker) }
+                        descriptor?.let { ExpectActualGenerationUtils.generateCallable(project, false, element, descriptor, checker = checker) }
                     }
                 } else if (declaration is KtClassOrObject) {
                     generateExpectOrActualInFile(
@@ -429,7 +430,7 @@ private fun generateActualsForSelectedModules(
                         checker.findAndApplyExistingClasses(element.collectDeclarationsForAddActualModifier().toList())
                         if (!checker.isCorrectAndHaveAccessibleModifiers(element, true)) return@block null
 
-                        generateClassOrObject(project, false, element, checker = checker)
+                        ExpectActualGenerationUtils.generateClassOrObject(project, this, false, element, checker = checker)
                     }
                 }
             }

@@ -11,8 +11,10 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogUiProperties.PropertiesChangeListener
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.ui.table.column.*
+import org.jetbrains.annotations.ApiStatus
 import kotlin.collections.set
 
+@ApiStatus.Internal
 @State(name = "Vcs.Log.History.Properties", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 class FileHistoryUiProperties : VcsLogUiProperties, PersistentStateComponent<FileHistoryUiProperties.State> {

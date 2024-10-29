@@ -87,7 +87,7 @@ class e<K, V> implements a<K, V> {
    }
 
    public V a(K var1) {
-      return this.a(var1, this.c);
+      return (V)this.a(var1, this.c);
    }
 
    public boolean c(K var1) {

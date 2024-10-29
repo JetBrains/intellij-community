@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.ui.project.path
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -15,16 +15,14 @@ class ExternalSystemWorkingDirectoryInfo(
   private val project: Project,
   private val externalSystemId: ProjectSystemId
 ) : WorkingDirectoryInfo {
-
   private val readableName = externalSystemId.readableName
 
   override val editorLabel: String = ExternalSystemBundle.message("run.configuration.project.path.label", readableName)
 
   override val settingsName: String = ExternalSystemBundle.message("run.configuration.project.path.name", readableName)
 
-  override val fileChooserTitle: String = ExternalSystemBundle.message("settings.label.select.project", readableName)
   override val fileChooserDescriptor: FileChooserDescriptor =
-    ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)
+    ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId).withTitle(ExternalSystemBundle.message("settings.label.select.project", readableName))
 
   override val emptyFieldError: String = ExternalSystemBundle.message("run.configuration.project.path.empty.error", readableName)
 

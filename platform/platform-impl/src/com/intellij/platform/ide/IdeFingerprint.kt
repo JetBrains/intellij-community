@@ -11,6 +11,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.vfs.limits.FileSizeLimit
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -72,6 +73,8 @@ private fun computeIdeFingerprint(debugHelperToken: Int): IdeFingerprint {
   }
 
   hasher.putInt(debugHelperToken)
+
+  hasher.putInt(FileSizeLimit.getFingerprint())
 
   val fingerprint = IdeFingerprint(hasher.asLong)
 

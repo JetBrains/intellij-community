@@ -118,19 +118,21 @@ class PyTypedDictInspection : PyInspection() {
                         PyPsiBundle.message("INSP.typeddict.specifying.metaclass.not.allowed.in.typeddict"))
       }
 
-      val ancestorsFields = mutableMapOf<String, PyTypedDictType.FieldTypeAndTotality>()
+      val allAncestorsFields = mutableMapOf<String, MutableList<PyTypedDictType.FieldTypeAndTotality>>()
       val typedDictAncestors = node.getAncestorTypes(myTypeEvalContext).filterIsInstance<PyTypedDictType>()
       typedDictAncestors.forEach { typedDict ->
         typedDict.fields.forEach { field ->
           val key = field.key
           val value = field.value
-          if (key in ancestorsFields && !matchTypedDictFieldTypeAndTotality(ancestorsFields[key]!!, value)) {
+          if (key !in allAncestorsFields) {
+            allAncestorsFields[key] = mutableListOf()
+          }
+          val listOfFieldsForKey = allAncestorsFields[key]!!
+          if (listOfFieldsForKey.isNotEmpty() && !matchTypedDictFieldTypeAndTotality(listOfFieldsForKey.first(), value)) {
             registerProblem(node.superClassExpressionList,
                             PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field.while.merging", key))
           }
-          else {
-            ancestorsFields[key] = value
-          }
+          listOfFieldsForKey.add(value)
         }
       }
 
@@ -145,6 +147,7 @@ class PyTypedDictInspection : PyInspection() {
         return
       }
 
+      val classTypedDictType = PyTypedDictTypeProvider.Companion.getTypedDictTypeForResolvedElement(node, myTypeEvalContext)
       node.processClassLevelDeclarations { element, _ ->
         if (element !is PyTargetExpression) {
           if (element is PyTypeParameter) {
@@ -160,9 +163,18 @@ class PyTypedDictInspection : PyInspection() {
                           PyPsiBundle.message("INSP.typeddict.right.hand.side.values.are.not.supported.in.typeddict"))
           return@processClassLevelDeclarations true
         }
-        if (element.name in ancestorsFields) {
-          registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
-          return@processClassLevelDeclarations true
+
+        if (element.name in allAncestorsFields) {
+          val fieldsForKey = allAncestorsFields[element.name]
+          val classField = classTypedDictType?.fields[element.name]
+          if (fieldsForKey != null && classField != null) {
+            for (ancestorField in fieldsForKey) {
+              if (!matchTypedDictFieldTypeAndTotality(ancestorField, classField)) {
+                registerProblem(element, PyPsiBundle.message("INSP.typeddict.cannot.overwrite.typeddict.field"))
+                return@processClassLevelDeclarations true
+              }
+            }
+          }
         }
         checkValueIsAType(element.annotation?.value, element.annotationValue)
         true
@@ -191,12 +203,20 @@ class PyTypedDictInspection : PyInspection() {
 
       val nodeType = myTypeEvalContext.getType(callee.qualifier!!)
       if (nodeType !is PyTypedDictType || nodeType.isInferred()) return
-      val arguments = node.arguments
+      var arguments = node.arguments
 
       if (PyNames.UPDATE == callee.name) {
-        inspectUpdateSequenceArgument(
-          if (arguments.size == 1 && arguments[0] is PySequenceExpression) (arguments[0] as PySequenceExpression).elements else arguments,
-          nodeType)
+        if (arguments.size == 1 && arguments[0] is PyReferenceExpression) {
+          (PyUtil.resolveToTheTop(arguments[0]) as? PyTargetExpression)?.let { resolvedArg ->
+            resolvedArg.findAssignedValue()?.let {
+              arguments = arrayOf<PyExpression>(it)
+            }
+          }
+        }
+        if (arguments.size == 1 && arguments[0] is PySequenceExpression) {
+          arguments = (arguments[0] as PySequenceExpression).elements
+        }
+        inspectUpdateSequenceArgument(node, arguments, nodeType)
       }
 
       if (PyNames.CLEAR == callee.name || PyNames.POPITEM == callee.name) {
@@ -390,7 +410,7 @@ class PyTypedDictInspection : PyInspection() {
              PyTypeChecker.match(expected.type, actual.type, myTypeEvalContext)
     }
 
-    private fun inspectUpdateSequenceArgument(sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
+    private fun inspectUpdateSequenceArgument(updateCall: PyCallExpression, sequenceElements: Array<PyExpression>, typedDictType: PyTypedDictType) {
       sequenceElements.forEach {
         var key: PsiElement? = null
         var keyAsString: String? = null
@@ -429,6 +449,10 @@ class PyTypedDictInspection : PyInspection() {
         if (!fields.containsKey(keyAsString)) {
           registerProblem(key, PyPsiBundle.message("INSP.typeddict.typeddict.cannot.have.key", typedDictType.name, keyAsString))
           return@forEach
+        }
+        if (fields.get(keyAsString)!!.qualifiers.isReadOnly) {
+          val warningHolder = (updateCall.callee as? PyReferenceExpression)?.nameElement?.psi ?: updateCall
+          registerProblem(warningHolder, PyPsiBundle.message("INSP.typeddict.typeddict.field.is.readonly", keyAsString))
         }
         val valueType = myTypeEvalContext.getType(value)
         if (!PyTypeChecker.match(fields[keyAsString]?.type, valueType, myTypeEvalContext)) {

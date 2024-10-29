@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -12,7 +12,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -26,14 +25,14 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Collections;
 import java.util.ListIterator;
+import java.util.function.Function;
 
-class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes {
-
+final class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes {
   private static final String CAN_EXPAND_PROPERTY = "debugger.speed.search.tree.option.can.expand";
   private static final String COUNTER_PROPERTY = "debugger.speed.search.tree.option.hint.counter";
   public final int SEARCH_DEPTH = Registry.intValue("debugger.variablesView.rss.depth");
 
-  private XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
+  private XDebuggerTreeSpeedSearch(XDebuggerTree tree, Function<? super TreePath, String> toStringConvertor) {
     super(tree,
           PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false),
           FindBundle.message("find.expand.nodes"),
@@ -57,7 +56,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearchInsideCollapsedNodes {
   }
 
   @Contract("_, _ -> new")
-  static @NotNull XDebuggerTreeSpeedSearch installOn(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
+  static @NotNull XDebuggerTreeSpeedSearch installOn(XDebuggerTree tree, Function<? super TreePath, String> toStringConvertor) {
     XDebuggerTreeSpeedSearch search = new XDebuggerTreeSpeedSearch(tree, toStringConvertor);
     search.setupListeners();
     return search;

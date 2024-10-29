@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.terminal.completion.spec.ShellRuntimeContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import java.io.File
 
 @get:ApiStatus.Experimental
@@ -27,7 +28,7 @@ suspend fun ShellRuntimeContext.getChildFiles(
   onlyDirectories: Boolean = false
 ): List<String> {
   val adjustedPath = path.ifEmpty { "." }
-  val result = runShellCommand("__jetbrains_intellij_get_directory_files $adjustedPath")
+  val result = runShellCommand("${GET_DIRECTORY_FILES.functionName} $adjustedPath")
   if (result.exitCode != 0) {
     logger<ShellRuntimeContext>().warn("Get files command for path '$adjustedPath' failed with exit code ${result.exitCode}, output: ${result.output}")
     return emptyList()

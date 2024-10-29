@@ -63,10 +63,11 @@ Labels
 Text receives color effects depending on the labels that it has. Many
 default Mercurial commands emit labelled text. You can also define
 your own labels in templates using the label function, see :hg:`help
-templates`. A single portion of text may have more than one label. In
-that case, effects given to the last label will override any other
-effects. This includes the special "none" effect, which nullifies
-other effects.
+templates`. In order to receive effects, labels must have a dot, such
+as `log.secret` or `branch.active`. A single portion of text may have
+more than one label. In that case, effects given to the last label
+will override any other effects. This includes the special "none"
+effect, which nullifies other effects.
 
 Labels are normally invisible. In order to see these labels and their
 position in the text, use the global --color=debug option. The same

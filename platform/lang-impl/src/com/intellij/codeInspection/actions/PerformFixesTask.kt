@@ -11,8 +11,11 @@ import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Callable
 
+@ApiStatus.Internal
 open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, quickFixClass: Class<*>?) :
   AbstractPerformFixesTask(project, descriptors.toTypedArray(), quickFixClass) {
 
@@ -20,9 +23,11 @@ open class PerformFixesTask(project: Project, descriptors: List<CommonProblemDes
     if (fix is ModCommandQuickFix) {
       descriptor as ProblemDescriptor
       val action = ModCommandService.getInstance().unwrap(fix)
-      if (action != null && action.getPresentation(ActionContext.from(descriptor)) == null) {
+      val context = ActionContext.from(descriptor)
+      if (action != null && action.getPresentation(context) == null) {
         return ModCommandExecutor.Result.NOTHING
       }
+      PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(context.file.fileDocument)
       val command = ProgressManager.getInstance().runProcessWithProgressSynchronously(
         ThrowableComputable<ModCommand, RuntimeException> {
             ReadAction.nonBlocking(Callable { fix.perform(myProject, descriptor) })

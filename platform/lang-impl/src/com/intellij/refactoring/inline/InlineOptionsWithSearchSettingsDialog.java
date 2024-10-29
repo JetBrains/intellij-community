@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,31 +51,33 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     }
   }
 
-  @NotNull
   @Override
-  protected JComponent createCenterPanel() {
+  protected @NotNull JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints();
+    gbc.anchor = GridBagConstraints.NORTH;
     gbc.fill = GridBagConstraints.HORIZONTAL;
     gbc.weightx = 1.0;
     gbc.gridwidth = 2;
-    gbc.insets.bottom = JBUIScale.scale(10);
+    gbc.insets.bottom = JBUIScale.scale(UIUtil.LARGE_VGAP);
     panel.add(super.createCenterPanel(), gbc);
 
     myCbSearchInComments = new JCheckBox(RefactoringBundle.message("search.in.comments.and.strings"), isSearchInCommentsAndStrings());
     myCbSearchTextOccurences = new JCheckBox(RefactoringBundle.message("search.for.text.occurrences"), isSearchForTextOccurrences());
     gbc.insets.bottom = 0;
     gbc.weightx = 0;
+    gbc.weighty = 1;
     gbc.gridwidth = 1;
     gbc.gridy = 1;
     gbc.gridx = 0;
     panel.add(myCbSearchInComments, gbc);
+    gbc.insets.left = JBUIScale.scale(UIUtil.DEFAULT_HGAP);
     gbc.gridx = 1;
     panel.add(myCbSearchTextOccurences, gbc);
     final ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        setEnabledSearchSettngs(myRbInlineAll.isSelected() || myKeepTheDeclaration != null && myKeepTheDeclaration.isSelected());
+        setEnabledSearchSettngs(!isInlineThisOnly());
       }
     };
     myRbInlineThisOnly.addActionListener(actionListener);
@@ -83,7 +85,7 @@ public abstract class InlineOptionsWithSearchSettingsDialog extends InlineOption
     if (myKeepTheDeclaration != null) {
       myKeepTheDeclaration.addActionListener(actionListener);
     }
-    setEnabledSearchSettngs(myRbInlineAll.isSelected());
+    setEnabledSearchSettngs(!isInlineThisOnly());
     return panel;
   }
 }

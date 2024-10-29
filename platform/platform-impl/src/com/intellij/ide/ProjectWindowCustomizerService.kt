@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.ide.actions.DistractionFreeModeController
@@ -21,12 +21,11 @@ import com.intellij.openapi.project.ProjectNameListener
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.ToolbarComboButton
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.ProjectToolbarWidgetAction
-import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.*
 import com.intellij.ui.paint.PaintUtil
 import com.intellij.ui.paint.PaintUtil.alignIntToInt
@@ -36,8 +35,8 @@ import com.intellij.util.IconUtil
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.ui.AvatarIcon
+import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.async
@@ -74,7 +73,8 @@ private class ProjectWindowCustomizerIconCache(private val project: Project) {
 
   private fun getIconRaw(): Icon {
     val path = ProjectWindowCustomizerService.projectPath(project) ?: ""
-    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = 20, name = project.name)
+    val size = JBUI.CurrentTheme.Toolbar.experimentalToolbarButtonIconSize()
+    return RecentProjectsManagerBase.getInstanceEx().getProjectIcon(path = path, isProjectValid = true, iconSize = size, name = project.name)
   }
 }
 
@@ -102,7 +102,6 @@ class ProjectWindowCustomizerService : Disposable {
       ApplicationManager.registerCleaner { instance = null }
     }
 
-    @RequiresBlockingContext
     fun getInstance(): ProjectWindowCustomizerService {
       var result = instance
       if (result == null) {
@@ -359,7 +358,8 @@ class ProjectWindowCustomizerService : Disposable {
   fun paint(window: Window, parent: JComponent, g: Graphics2D): Boolean {
     if (!isActive()) return false
 
-    val project = ProjectFrameHelper.getFrameHelper(window)?.project ?: return false
+    val frameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return false
+    val project = frameHelper.project ?: return false
 
     g.color = parent.background
     val height = parent.height
@@ -378,8 +378,7 @@ class ProjectWindowCustomizerService : Disposable {
     } ?: 150f
 
     if (ComponentUtil.findComponentsOfType(parent, MainToolbar::class.java).firstOrNull() == null
-        && !(ComponentUtil.findComponentsOfType(parent, IdeRootPane::class.java).firstOrNull()?.isToolbarInHeader()
-             ?: isToolbarInHeader(false))) return true
+        && !(CustomWindowHeaderUtil.isToolbarInHeader(UISettings.getInstance(), frameHelper.isInFullScreen))) return true
 
     //additional multiplication by color.alpha is done because alpha will be lost after using blendColorsInRgb (sometimes it's not equals to 255)
     val saturation = Registry.doubleValue("ide.colorful.toolbar.gradient.saturation", 0.85)

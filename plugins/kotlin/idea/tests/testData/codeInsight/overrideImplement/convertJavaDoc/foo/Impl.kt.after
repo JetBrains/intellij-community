@@ -11,3 +11,8 @@ class B : A() {
         <selection><caret>return super.foo()</selection>
     }
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"
+// MEMBER: "foo(): Int"

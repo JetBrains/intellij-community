@@ -1,0 +1,29 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "rd-community",
+  module_name = "intellij.platform.rd.community",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/platform-api:ide",
+    "@libraries//:rd-core",
+    "@libraries//:rd-framework",
+    "@libraries//:rd-text",
+    "@libraries//:rd-swing",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-api:core",
+    "@community//platform/core-impl",
+  ],
+  exports = [
+    "@libraries//:rd-core",
+    "@libraries//:rd-framework",
+    "@libraries//:rd-swing",
+  ]
+)
+### auto-generated section `build` end

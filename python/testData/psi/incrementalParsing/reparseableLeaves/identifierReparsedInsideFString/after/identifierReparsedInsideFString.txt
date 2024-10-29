@@ -1,0 +1,12 @@
+Original text:
+---------------
+var = "text"
+var1 = "another text"
+fstring = f"printing: {var}"
+---------------
+Subtree: Language: Python
+---------------
+var = "text"
+var1 = "another text"
+fstring = f"printing: {<reparse>var1</reparse>}"
+---------------

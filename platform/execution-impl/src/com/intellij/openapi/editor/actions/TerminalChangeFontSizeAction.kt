@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.terminal.JBTerminalWidget
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 sealed class TerminalChangeFontSizeAction(private val myStep: Float) : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     val terminalWidget = getTerminalWidget(e)

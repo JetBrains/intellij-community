@@ -11,7 +11,7 @@ public class ClassWithJavaConstructor {
 
   public static class B extends A {
     public B() {
-      super<error descr="'A(int, java.lang.String)' in 'ClassWithJavaConstructor.A' cannot be applied to '()'">()</error>;
+      super<error descr="Expected 2 arguments but found 0">()</error>;
     }
 
     public B(int i) {

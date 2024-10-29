@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.psi.*;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -15,11 +16,16 @@ import java.util.regex.Pattern;
 
 /**
  * Base class for local inspections.
+ * <p/>
+ * You can make your inspection dumb-aware by marking it with {@link com.intellij.openapi.project.DumbAware DumbAware} interface.
+ * Such an inspection must not use indexes during its inference, or it must be prepared to catch
+ * {@link com.intellij.openapi.project.IndexNotReadyException IndexNotReadyException}.
+ * In this case, the inspection shall just silently catch it and not report any warnings.
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/code-inspections.html">Code Inspections (IntelliJ Platform Docs)</a>
  * @see GlobalInspectionTool
  */
-public abstract class LocalInspectionTool extends InspectionProfileEntry {
+public abstract class LocalInspectionTool extends InspectionProfileEntry implements PossiblyDumbAware {
   public static final LocalInspectionTool[] EMPTY_ARRAY = new LocalInspectionTool[0];
 
   private static final Logger LOG = Logger.getInstance(LocalInspectionTool.class);

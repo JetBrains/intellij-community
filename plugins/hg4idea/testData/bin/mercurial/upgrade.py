@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from .i18n import _
 from . import (
@@ -20,6 +19,7 @@ from . import (
 
 from .upgrade_utils import (
     actions as upgrade_actions,
+    auto_upgrade,
     engine as upgrade_engine,
 )
 
@@ -27,6 +27,7 @@ from .utils import (
     stringutil,
 )
 
+may_auto_upgrade = auto_upgrade.may_auto_upgrade
 allformatvariant = upgrade_actions.allformatvariant
 
 
@@ -42,27 +43,16 @@ def upgraderepo(
 ):
     """Upgrade a repository in place."""
     if optimize is None:
-        optimize = {}
+        optimize = set()
     repo = repo.unfiltered()
 
-    revlogs = set(upgrade_engine.UPGRADE_ALL_REVLOGS)
-    specentries = (
-        (upgrade_engine.UPGRADE_CHANGELOG, changelog),
-        (upgrade_engine.UPGRADE_MANIFEST, manifest),
-        (upgrade_engine.UPGRADE_FILELOGS, filelogs),
-    )
-    specified = [(y, x) for (y, x) in specentries if x is not None]
-    if specified:
-        # we have some limitation on revlogs to be recloned
-        if any(x for y, x in specified):
-            revlogs = set()
-            for upgrade, enabled in specified:
-                if enabled:
-                    revlogs.add(upgrade)
-        else:
-            # none are enabled
-            for upgrade, __ in specified:
-                revlogs.discard(upgrade)
+    specified_revlogs = {}
+    if changelog is not None:
+        specified_revlogs[upgrade_engine.UPGRADE_CHANGELOG] = changelog
+    if manifest is not None:
+        specified_revlogs[upgrade_engine.UPGRADE_MANIFEST] = manifest
+    if filelogs is not None:
+        specified_revlogs[upgrade_engine.UPGRADE_FILELOGS] = filelogs
 
     # Ensure the repository can be upgraded.
     upgrade_actions.check_source_requirements(repo)
@@ -96,20 +86,92 @@ def upgraderepo(
     )
     removed_actions = upgrade_actions.find_format_downgrades(repo)
 
-    removedreqs = repo.requirements - newreqs
-    addedreqs = newreqs - repo.requirements
+    # check if we need to touch revlog and if so, which ones
 
-    if revlogs != upgrade_engine.UPGRADE_ALL_REVLOGS:
-        incompatible = upgrade_actions.RECLONES_REQUIREMENTS & (
-            removedreqs | addedreqs
-        )
-        if incompatible:
-            msg = _(
-                b'ignoring revlogs selection flags, format requirements '
-                b'change: %s\n'
-            )
-            ui.warn(msg % b', '.join(sorted(incompatible)))
-            revlogs = upgrade_engine.UPGRADE_ALL_REVLOGS
+    touched_revlogs = set()
+    overwrite_msg = _(b'warning: ignoring %14s, as upgrade is changing: %s\n')
+    select_msg = _(b'note:    selecting %s for processing to change: %s\n')
+    msg_issued = 0
+
+    FL = upgrade_engine.UPGRADE_FILELOGS
+    MN = upgrade_engine.UPGRADE_MANIFEST
+    CL = upgrade_engine.UPGRADE_CHANGELOG
+
+    if optimizations:
+        if any(specified_revlogs.values()):
+            # we have some limitation on revlogs to be recloned
+            for rl, enabled in specified_revlogs.items():
+                if enabled:
+                    touched_revlogs.add(rl)
+        else:
+            touched_revlogs = set(upgrade_engine.UPGRADE_ALL_REVLOGS)
+            for rl, enabled in specified_revlogs.items():
+                if not enabled:
+                    touched_revlogs.discard(rl)
+
+    if repo.shared():
+        unsafe_actions = set()
+        unsafe_actions.update(up_actions)
+        unsafe_actions.update(removed_actions)
+        unsafe_actions.update(optimizations)
+        unsafe_actions = [
+            a for a in unsafe_actions if not a.compatible_with_share
+        ]
+        unsafe_actions.sort(key=lambda a: a.name)
+        if unsafe_actions:
+            m = _(b'cannot use these actions on a share repository: %s')
+            h = _(b'upgrade the main repository directly')
+            actions = b', '.join(a.name for a in unsafe_actions)
+            m %= actions
+            raise error.Abort(m, hint=h)
+
+    for action in sorted(up_actions + removed_actions, key=lambda a: a.name):
+        # optimisation does not "requires anything, they just needs it.
+        if action.type != upgrade_actions.FORMAT_VARIANT:
+            continue
+
+        if action.touches_filelogs and FL not in touched_revlogs:
+            if FL in specified_revlogs:
+                if not specified_revlogs[FL]:
+                    msg = overwrite_msg % (b'--no-filelogs', action.name)
+                    ui.warn(msg)
+                    msg_issued = 2
+            else:
+                msg = select_msg % (b'all-filelogs', action.name)
+                ui.status(msg)
+                if not ui.quiet:
+                    msg_issued = 1
+            touched_revlogs.add(FL)
+
+        if action.touches_manifests and MN not in touched_revlogs:
+            if MN in specified_revlogs:
+                if not specified_revlogs[MN]:
+                    msg = overwrite_msg % (b'--no-manifest', action.name)
+                    ui.warn(msg)
+                    msg_issued = 2
+            else:
+                msg = select_msg % (b'all-manifestlogs', action.name)
+                ui.status(msg)
+                if not ui.quiet:
+                    msg_issued = 1
+            touched_revlogs.add(MN)
+
+        if action.touches_changelog and CL not in touched_revlogs:
+            if CL in specified_revlogs:
+                if not specified_revlogs[CL]:
+                    msg = overwrite_msg % (b'--no-changelog', action.name)
+                    ui.warn(msg)
+                    msg_issued = True
+            else:
+                msg = select_msg % (b'changelog', action.name)
+                ui.status(msg)
+                if not ui.quiet:
+                    msg_issued = 1
+            touched_revlogs.add(CL)
+    if msg_issued >= 2:
+        ui.warn((b"\n"))
+    elif msg_issued >= 1:
+        ui.status((b"\n"))
 
     upgrade_op = upgrade_actions.UpgradeOperation(
         ui,
@@ -117,7 +179,7 @@ def upgraderepo(
         repo.requirements,
         up_actions,
         removed_actions,
-        revlogs,
+        touched_revlogs,
         backup,
     )
 
@@ -243,6 +305,7 @@ def upgrade_share_to_safe(
     current_requirements,
     mismatch_config,
     mismatch_warn,
+    mismatch_verbose_upgrade,
 ):
     """Upgrades a share to use share-safe mechanism"""
     wlock = None
@@ -275,10 +338,11 @@ def upgrade_share_to_safe(
             diffrequires.add(requirementsmod.SHARESAFE_REQUIREMENT)
             current_requirements.add(requirementsmod.SHARESAFE_REQUIREMENT)
         scmutil.writerequires(hgvfs, diffrequires)
-        ui.warn(_(b'repository upgraded to use share-safe mode\n'))
+        if mismatch_verbose_upgrade:
+            ui.warn(_(b'repository upgraded to use share-safe mode\n'))
     except error.LockError as e:
         hint = _(
-            "see `hg help config.format.use-share-safe` for more information"
+            b"see `hg help config.format.use-share-safe` for more information"
         )
         if mismatch_config == b'upgrade-abort':
             raise error.Abort(
@@ -304,6 +368,7 @@ def downgrade_share_to_non_safe(
     current_requirements,
     mismatch_config,
     mismatch_warn,
+    mismatch_verbose_upgrade,
 ):
     """Downgrades a share which use share-safe to not use it"""
     wlock = None
@@ -332,10 +397,11 @@ def downgrade_share_to_non_safe(
             current_requirements |= source_requirements
             current_requirements -= set(requirementsmod.SHARESAFE_REQUIREMENT)
         scmutil.writerequires(hgvfs, current_requirements)
-        ui.warn(_(b'repository downgraded to not use share-safe mode\n'))
+        if mismatch_verbose_upgrade:
+            ui.warn(_(b'repository downgraded to not use share-safe mode\n'))
     except error.LockError as e:
         hint = _(
-            "see `hg help config.format.use-share-safe` for more information"
+            b"see `hg help config.format.use-share-safe` for more information"
         )
         # If upgrade-abort is set, abort when upgrade fails, else let the
         # process continue as `upgrade-allow` is set

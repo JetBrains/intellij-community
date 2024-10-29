@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints;
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass;
@@ -172,8 +172,7 @@ public final class ParameterHintsPass extends EditorBoundHighlightingPass {
     }
   }
 
-  @NotNull
-  private List<Inlay<?>> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
+  private @NotNull List<Inlay<?>> hintsInRootElementArea(ParameterHintsPresentationManager manager) {
     TextRange range = myRootElement.getTextRange();
     int elementStart = range.getStartOffset();
     int elementEnd = range.getEndOffset();

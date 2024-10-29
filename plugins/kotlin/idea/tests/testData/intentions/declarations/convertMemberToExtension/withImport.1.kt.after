@@ -1,0 +1,8 @@
+package b
+
+import a.A
+import a.f
+
+fun m(a: A) {
+    a.f()
+}

@@ -2,11 +2,13 @@
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public abstract class SearchPopupCallback implements Consumer<String> {
   public String prefix;
 

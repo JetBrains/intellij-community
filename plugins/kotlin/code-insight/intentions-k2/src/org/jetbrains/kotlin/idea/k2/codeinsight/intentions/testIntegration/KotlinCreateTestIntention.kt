@@ -1,14 +1,19 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions.testIntegration
 
+import com.intellij.codeInsight.navigation.activateFileWithPsiElement
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration.AbstractKotlinCreateTestIntention
+import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtClassOrObject
 
 // do not change intention class to be aligned with docs
@@ -18,27 +23,36 @@ class KotlinCreateTestIntention: AbstractKotlinCreateTestIntention() {
     override fun isResolvable(classOrObject: KtClassOrObject): Boolean =
         allowAnalysisOnEdt {
             analyze(classOrObject) {
-                classOrObject.getClassOrObjectSymbol() != null
+                classOrObject.classSymbol != null
             }
         }
 
-    override fun isApplicableForModule(module: Module): Boolean =
-        // TODO: KMP JS case is not applicable
-        //
-        // TODO: in short, disabled for K2 as far as it has no J2K for it
-        //
-        // Details: CreateTestIntention relies on JavaTestCreation, all test framework templates are java-based,
-        // and entire logic is java-focused. It's way way more easier and reasonable to reuse it and run J2K
-        // rather do a copy-cat from java-test-frameworks
-        false
+    override fun isApplicableForModule(module: Module): Boolean = module.platform.isJvm()
 
-    override fun convertJavaClass(
+    override fun getTempClassName(project: Project, existingClass: KtClassOrObject): String {
+        // no reason for a new temp class name, reuse existed
+        return existingClass.name!!
+    }
+
+    override fun convertClass(
         project: Project,
         generatedClass: PsiClass,
         existingClass: KtClassOrObject?,
-        generatedFile: PsiJavaFile,
+        generatedFile: PsiFile,
         srcModule: Module
     ) {
-        TODO("Not yet implemented: J2K is required")
+        runWriteAction {
+            generatedClass.methods.forEach {
+                it.throwsList.referenceElements.forEach { referenceElement -> referenceElement.delete() }
+            }
+        }
+
+        if (existingClass != null) {
+            activateFileWithPsiElement(existingClass)
+        } else {
+            with(PsiDocumentManager.getInstance(project)) {
+                getDocument(generatedFile)?.let { doPostponedOperationsAndUnblockDocument(it) }
+            }
+        }
     }
 }

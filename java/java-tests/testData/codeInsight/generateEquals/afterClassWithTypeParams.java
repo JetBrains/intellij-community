@@ -5,7 +5,6 @@ class A<T extends String, K> {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
         final A<?, ?> a = (A<?, ?>) o;

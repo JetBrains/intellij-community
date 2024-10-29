@@ -2,12 +2,14 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class BegToggleButtonUI extends MetalToggleButtonUI{
   private static final BegToggleButtonUI begToggleButtonUI = new BegToggleButtonUI();
 

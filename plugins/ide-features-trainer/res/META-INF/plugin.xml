@@ -14,6 +14,7 @@
     ]]></description>
 
   <dependencies>
+    <module name="intellij.platform.tips"/>
     <plugin id="com.intellij.modules.lang"/>
     <module name="intellij.platform.lvcs.impl"/>
   </dependencies>
@@ -168,6 +169,8 @@
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.CopyPasteSuggester"/>
     <ifs.suggester
+      implementation="training.featuresSuggester.suggesters.QuickEvaluateSuggester"/>
+    <ifs.suggester
       implementation="training.featuresSuggester.suggesters.SurroundWithSuggester"/>
     <ifs.suggester
       implementation="training.featuresSuggester.suggesters.UnwrapSuggester"/>
@@ -186,8 +189,7 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService
-      serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
+    <applicationService serviceImplementation="training.featuresSuggester.settings.FeatureSuggesterSettings"/>
     <applicationConfigurable parentId="tools"
                              instance="training.featuresSuggester.settings.FeatureSuggesterConfigurable"
                              id="org.intellij.featuresSuggester.FeatureSuggesterConfigurable"
@@ -226,5 +228,7 @@
   <applicationListeners>
     <listener class="training.featuresSuggester.listeners.EditorActionsListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+    <listener class="training.featuresSuggester.listeners.EvaluationListener"
+              topic="com.intellij.xdebugger.XEvaluationListener"/>
   </applicationListeners>
 </idea-plugin>

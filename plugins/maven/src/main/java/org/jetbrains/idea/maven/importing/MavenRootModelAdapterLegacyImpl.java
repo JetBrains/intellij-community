@@ -393,6 +393,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
         model.setProperties(new ImportedLibraryProperties(new MavenCoordinates(artifact.getGroupId(),
                                                                                artifact.getArtifactId(),
                                                                                artifact.getVersion(),
+                                                                               artifact.getBaseVersion(),
                                                                                artifact.getPackaging(),
                                                                                artifact.getClassifier())));
       }
@@ -502,31 +503,6 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   public static ProjectModelExternalSource getMavenExternalSource() {
     return ExternalProjectSystemRegistry.getInstance().getSourceById(SerializationConstants.MAVEN_EXTERNAL_SOURCE_ID);
-  }
-
-  @Nullable
-  public static OrderEntry findLibraryEntry(@NotNull Module m, @NotNull MavenArtifact artifact) {
-    String name = artifact.getLibraryName();
-    for (OrderEntry each : ModuleRootManager.getInstance(m).getOrderEntries()) {
-      if (each instanceof LibraryOrderEntry && name.equals(((LibraryOrderEntry)each).getLibraryName())) {
-        return each;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static MavenArtifact findArtifact(@NotNull MavenProject project, @Nullable Library library) {
-    if (library == null) return null;
-
-    String name = library.getName();
-
-    if (!MavenArtifact.isMavenLibrary(name)) return null;
-
-    for (MavenArtifact each : project.getDependencies()) {
-      if (each.getLibraryName().equals(name)) return each;
-    }
-    return null;
   }
 
   @Override

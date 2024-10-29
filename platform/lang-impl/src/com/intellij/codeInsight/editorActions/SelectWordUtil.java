@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.actions.EditorActionUtil;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
@@ -68,8 +67,7 @@ public final class SelectWordUtil {
     }
   }
 
-  @Nullable
-  private static TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset, CharCondition isWordPartCondition) {
+  private static @Nullable TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset, CharCondition isWordPartCondition) {
     if (cursorOffset < 0 || cursorOffset >= editorText.length()) {
       return null;
     }
@@ -99,21 +97,18 @@ public final class SelectWordUtil {
     return null;
   }
 
-  @Nullable
-  public static TextRange getWordOrLexemeSelectionRange(@NotNull Editor editor, int cursorOffset,
-                                                         @NotNull CharCondition isWordPartCondition) {
+  public static @Nullable TextRange getWordOrLexemeSelectionRange(@NotNull Editor editor, int cursorOffset,
+                                                                  @NotNull CharCondition isWordPartCondition) {
     return getWordOrLexemeSelectionRange(editor, editor.getDocument().getImmutableCharSequence(), cursorOffset, isWordPartCondition);
   }
 
-  @Nullable
-  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset,
-                                                @NotNull CharCondition isWordPartCondition) {
+  public static @Nullable TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset,
+                                                          @NotNull CharCondition isWordPartCondition) {
     return getWordOrLexemeSelectionRange(null, editorText, cursorOffset, isWordPartCondition);
   }
 
-  @Nullable
-  private static TextRange getWordOrLexemeSelectionRange(@Nullable Editor editor, @NotNull CharSequence editorText, int cursorOffset,
-                                                         @NotNull CharCondition isWordPartCondition) {
+  private static @Nullable TextRange getWordOrLexemeSelectionRange(@Nullable Editor editor, @NotNull CharSequence editorText, int cursorOffset,
+                                                                   @NotNull CharCondition isWordPartCondition) {
     int length = editorText.length();
     if (length == 0) return null;
     if (cursorOffset == length ||
@@ -178,7 +173,7 @@ public final class SelectWordUtil {
     }
   }
 
-  private static void processInFile(@NotNull final PsiElement element,
+  private static void processInFile(final @NotNull PsiElement element,
                                     @NotNull Processor<? super TextRange> consumer,
                                     @NotNull CharSequence text,
                                     final int cursorOffset,
@@ -224,12 +219,11 @@ public final class SelectWordUtil {
     return stop;
   }
 
-  @Nullable
-  private static List<TextRange> askSelectioner(@NotNull PsiElement element,
-                                                @NotNull CharSequence text,
-                                                int cursorOffset,
-                                                @NotNull Editor editor,
-                                                @NotNull ExtendWordSelectionHandler selectioner) {
+  private static @Nullable List<TextRange> askSelectioner(@NotNull PsiElement element,
+                                                          @NotNull CharSequence text,
+                                                          int cursorOffset,
+                                                          @NotNull Editor editor,
+                                                          @NotNull ExtendWordSelectionHandler selectioner) {
     try {
       long stamp = editor.getDocument().getModificationStamp();
       List<TextRange> ranges = selectioner.select(element, text, cursorOffset, editor);

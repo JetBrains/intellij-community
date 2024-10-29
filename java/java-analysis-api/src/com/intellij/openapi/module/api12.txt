@@ -67,6 +67,7 @@ java.text.NumberFormat.Field#PREFIX
 java.text.NumberFormat.Field#SUFFIX
 java.text.NumberFormat.Style
 java.text.CompactNumberFormat
+java.util.zip.ZipInputStream#skipNBytes(long;)
 java.util.stream.Collectors#teeing(java.util.stream.Collector<? super T,?,R1>;java.util.stream.Collector<? super T,?,R2>;java.util.function.BiFunction<? super R1,? super R2,R>;)
 java.util.concurrent.CompletionStage#exceptionallyAsync(java.util.function.Function<java.lang.Throwable,? extends T>;)
 java.util.concurrent.CompletionStage#exceptionallyAsync(java.util.function.Function<java.lang.Throwable,? extends T>;java.util.concurrent.Executor;)

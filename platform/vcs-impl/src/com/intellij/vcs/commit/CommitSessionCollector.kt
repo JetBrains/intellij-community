@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
 import java.util.*
@@ -79,6 +80,7 @@ internal object CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
 }
 
 enum class CommitOption { SIGN_OFF, RUN_HOOKS, AMEND }
+@ApiStatus.Internal
 enum class CommitProblemPlace { NOTIFICATION, COMMIT_TOOLWINDOW, PUSH_DIALOG }
 
 @Service(Service.Level.PROJECT)
@@ -190,7 +192,7 @@ class CommitSessionCollector(val project: Project) {
     CommitSessionCounterUsagesCollector.CODE_ANALYSIS_WARNING.log(warnings, errors)
   }
 
-  fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitProblemPlace) {
+  internal fun logCommitProblemViewed(commitProblem: CommitProblem, place: CommitProblemPlace) {
     CommitSessionCounterUsagesCollector.VIEW_COMMIT_PROBLEM.log(commitProblem.javaClass, place)
   }
 

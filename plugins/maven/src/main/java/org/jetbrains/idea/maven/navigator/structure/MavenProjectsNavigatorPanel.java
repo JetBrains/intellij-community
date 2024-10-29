@@ -36,7 +36,7 @@ import java.util.*;
 
 import static org.jetbrains.idea.maven.navigator.MavenProjectsNavigator.TOOL_WINDOW_PLACE_ID;
 
-public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implements DataProvider {
+public final class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel {
   private final Project myProject;
   private final SimpleTree myTree;
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.base.analysis.api.utils
 
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
@@ -11,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -26,7 +24,6 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 // Analogous to Call.resolveCandidates() in plugins/kotlin/core/src/org/jetbrains/kotlin/idea/core/Utils.kt
 context(KaSession)
-@OptIn(KaAnalysisApiInternals::class)
 fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     val (candidates, explicitReceiver) = when (callElement) {
         is KtCallElement -> {
@@ -39,7 +36,7 @@ fun collectCallCandidates(callElement: KtElement): List<KaCallCandidateInfo> {
     }
 
     if (candidates.isEmpty()) return emptyList()
-    val fileSymbol = callElement.containingKtFile.getFileSymbol()
+    val fileSymbol = callElement.containingKtFile.symbol
 
     return candidates.filter { filterCandidate(it, callElement, fileSymbol, explicitReceiver) }
 }
@@ -91,10 +88,10 @@ fun filterCandidateByReceiverTypeAndVisibility(
     val receiverTypes = collectReceiverTypesForElement(callElement, explicitReceiver)
 
     val candidateReceiverType = signature.receiverType
-    if (candidateReceiverType != null && receiverTypes.none { it.isSubTypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
+    if (candidateReceiverType != null && receiverTypes.none { it.isSubtypeOf(candidateReceiverType, subtypingErrorTypePolicy) }) return false
 
     // Filter out candidates not visible from call site
-    if (candidateSymbol is KaSymbolWithVisibility && !isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
+    if (!isVisible(candidateSymbol, fileSymbol, explicitReceiver, callElement)) return false
 
     return true
 }
@@ -119,7 +116,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
         val receiverSymbol = receiverReference.resolveToExpandedSymbol()
         if (receiverSymbol == null || receiverSymbol is KaPackageSymbol) return emptyList()
 
-        if (receiverSymbol is KaNamedClassOrObjectSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
+        if (receiverSymbol is KaNamedClassSymbol && explicitReceiver.parent is KtCallableReferenceExpression) {
             val receiverSymbolType = receiverSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(explicitReceiver)
             return listOfNotNull(receiverSymbolType, receiverSymbol.companionObject?.defaultType)
         }
@@ -138,7 +135,7 @@ fun collectReceiverTypesForExplicitReceiverExpression(explicitReceiver: KtExpres
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun KaNamedClassOrObjectSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
+private fun KaNamedClassSymbol.buildClassTypeBySymbolWithTypeArgumentsFromExpression(expression: KtExpression): KaType =
     buildClassType(this) {
         if (expression is KtCallExpression) {
             val typeArgumentTypes = expression.typeArguments.map { it.typeReference?.type }

@@ -1,0 +1,8 @@
+<time>: Executing ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'…
+<time>: Execution finished ':cleanJvmTest :jvmTest --tests "foo.bar.CommonTest"'.
+
+
+com.intellij.openapi.externalSystem.model.ExternalSystemException: There were failing tests. See the report at: file:
+org.gradle.api.internal.exceptions.MarkedVerificationException: There were failing tests. See the report at: file:
+
+<exitCode: 1>

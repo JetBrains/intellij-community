@@ -27,6 +27,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +49,7 @@ public class CFGBuilder {
     myAnalyzer = analyzer;
   }
 
+  @Contract("_ -> this")
   private CFGBuilder add(Instruction instruction) {
     myAnalyzer.addInstruction(instruction);
     return this;
@@ -128,7 +130,8 @@ public class CFGBuilder {
    * @param descriptor a {@link DerivedVariableDescriptor} which describes a field to get
    * @return this builder
    */
-  public CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
+  @Contract("_ -> this")
+  public @NotNull CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
     return add(new UnwrapDerivedVariableInstruction(descriptor));
   }
 

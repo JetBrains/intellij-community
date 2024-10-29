@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -72,14 +73,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
 
   private static @NotNull AnActionEvent getEventWithReporter(@NotNull AnActionEvent e) {
     GotoDeclarationReporter reporter = new GotoDeclarationFUSReporter();
-    CustomizedDataContext context = CustomizedDataContext.create(e.getDataContext(), new DataProvider() {
-      @Override
-      public @Nullable Object getData(@NotNull String dataId) {
-        if (GO_TO_DECLARATION_REPORTER_DATA_KEY.is(dataId)) {
-          return reporter;
-        }
-        return null;
-      }
+    DataContext context = CustomizedDataContext.withSnapshot(e.getDataContext(), sink -> {
+      sink.set(GO_TO_DECLARATION_REPORTER_DATA_KEY, reporter);
     });
     return e.withDataContext(context);
   }
@@ -89,9 +84,8 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return Objects.requireNonNull(ourCurrentEventData);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new GotoDeclarationOrUsageHandler2(null);
   }
 
@@ -126,7 +120,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     if (DumbService.getInstance(project).isDumb()) {
       AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
       String name = action.getTemplatePresentation().getText();
-      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getUnavailableMessage(name, false),
+      DumbService.getInstance(project).showDumbModeNotificationForAction(ActionUtil.getActionUnavailableMessage(name),
                                                                          ShowUsagesAction.ID);
     }
     else {
@@ -165,8 +159,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     }).navigate(editor, null, element -> processor.execute(element));
   }
 
-  @PopupTitle
-  private static String getTitle(@PopupTitle @NotNull String titlePattern, Collection<PsiElement> elements, PsiReference reference) {
+  private static @PopupTitle String getTitle(@PopupTitle @NotNull String titlePattern, Collection<PsiElement> elements, PsiReference reference) {
     if (reference == null) {
       return titlePattern;
     }
@@ -178,17 +171,15 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     return MessageFormat.format(titlePattern, refText);
   }
 
-  @NotNull
-  private static Collection<PsiElement> suggestCandidates(@Nullable PsiReference reference) {
+  private static @NotNull Collection<PsiElement> suggestCandidates(@Nullable PsiReference reference) {
     if (reference == null) {
       return Collections.emptyList();
     }
     return TargetElementUtil.getInstance().getTargetCandidates(reference);
   }
 
-  @Nullable
   @TestOnly
-  public static PsiElement findTargetElement(Project project, Editor editor, int offset) {
+  public static @Nullable PsiElement findTargetElement(Project project, Editor editor, int offset) {
     final PsiElement[] targets = findAllTargetElements(project, editor, offset);
     return targets.length == 1 ? targets[0] : null;
   }
@@ -241,7 +232,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     InputEvent inputEvent = event.getInputEvent();
     boolean isMouseShortcut = inputEvent instanceof MouseEvent && ActionPlaces.MOUSE_SHORTCUT.equals(event.getPlace());
 
@@ -255,7 +246,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Dumb
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     if (editor != null && isMouseShortcut &&
         !Boolean.TRUE.equals(event.getUpdateSession().compute(this, "isPointOverText", ActionUpdateThread.EDT, () ->
-          event.getData(PlatformDataKeys.EDITOR_CLICK_OVER_TEXT)))) {
+          EditorUtil.isPointOverText(editor, new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent()))))) {
       event.getPresentation().setEnabled(false);
       return;
     }

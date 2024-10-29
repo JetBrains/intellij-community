@@ -26,10 +26,29 @@ interface LcrRow<T> {
 
   @Deprecated("Will be removed because we want to get rid of swing dependency for RemDev")
   val list: JList<out T>
+
+  /**
+   * The value of the rendering item
+   */
   val value: T
+
+  /**
+   * Index of the rendering item. `-1` if ComboBox is rendering the selected item in the collapsed state
+   * or in some other technical states (for example getting separator info while filtering in ComboBox-es with `isSwingPopup = false`).
+   * This field can be useful for highlighting odd/even rows and similar cases,
+   * otherwise [value] should be used in renderers ([index] and [value] are not always matched because of possible filtering)
+   */
   val index: Int
+
+  /**
+   * `true` if the rendering item is selected
+   */
   val selected: Boolean
-  val hasFocus: Boolean
+
+  /**
+   * `true` if the rendering item has the focus
+   */
+  val cellHasFocus: Boolean
 
   /**
    * Row background. Used if the row is not selected and on left/right sides of selected row (new UI only)
@@ -57,4 +76,8 @@ interface LcrRow<T> {
    */
   fun text(text: @Nls String, init: (LcrTextInitParams.() -> Unit)? = null)
 
+  /**
+   * Adds separator above the row
+   */
+  fun separator(init: (LcrSeparator.() -> Unit))
 }

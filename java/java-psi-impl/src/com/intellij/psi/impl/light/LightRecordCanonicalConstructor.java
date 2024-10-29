@@ -3,6 +3,7 @@ package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
@@ -80,6 +81,12 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     };
   }
 
+  @Override
+  public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+    PsiClass copyClass = PsiTreeUtil.findSameElementInCopy(myContainingClass, copy);
+    return Objects.requireNonNull(JavaPsiRecordUtil.findCanonicalConstructor(copyClass));
+  }
+
   public static class LightRecordConstructorParameter extends LightParameterWrapper {
     private final @NotNull LightParameterListWrapper myWrapper;
 
@@ -135,6 +142,20 @@ public class LightRecordCanonicalConstructor extends LightMethod implements Synt
     @Override
     public PsiFile getContainingFile() {
       return getParent().getContainingFile();
+    }
+
+    @Override
+    public @NotNull PsiElement findSameElementInCopy(@NotNull PsiFile copy) {
+      PsiParameterList parameterList = (PsiParameterList)getParent();
+      int index = parameterList.getParameterIndex(this);
+      PsiClass recordClass = PsiTreeUtil.getParentOfType(this, PsiClass.class);
+      PsiClass copyClass = PsiTreeUtil.findSameElementInCopy(recordClass, copy);
+      assert copyClass != null;
+      PsiMethod copyConstructor = JavaPsiRecordUtil.findCanonicalConstructor(copyClass);
+      assert copyConstructor != null;
+      PsiParameter copyParameter = copyConstructor.getParameterList().getParameter(index);
+      assert copyParameter != null;
+      return copyParameter;
     }
 
     @Override

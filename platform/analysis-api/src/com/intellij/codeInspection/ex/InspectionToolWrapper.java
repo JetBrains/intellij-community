@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -10,8 +10,6 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.l10n.LocalizationUtil;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -22,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -175,15 +172,21 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   public @Nls String loadDescription() {
-    final String description = getStaticDescription();
-    if (description != null) return description;
+    String description = getStaticDescription();
+    if (description != null) {
+      return description;
+    }
+
     try {
       InputStream descriptionStream = getDescriptionStream();
-      //noinspection HardCodedStringLiteral(IDEA-249976)
-      return descriptionStream != null ? insertAddendum(ResourceUtil.loadText(descriptionStream),
-                                         getTool().getDescriptionAddendum()) : null;
+      if (descriptionStream != null) {
+        //noinspection HardCodedStringLiteral(IDEA-249976)
+        return insertAddendum(ResourceUtil.loadText(descriptionStream), getTool().getDescriptionAddendum());
+      }
+      return null;
     }
-    catch (IOException ignored) { }
+    catch (IOException ignored) {
+    }
 
     return getTool().loadDescription();
   }
@@ -201,13 +204,15 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   private @Nullable InputStream getDescriptionStream() {
-    Application app = ApplicationManager.getApplication();
-    Path path = Path.of(INSPECTION_DESCRIPTIONS_FOLDER).resolve(getDescriptionFileName());
-    if (myEP == null || app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-      return LocalizationUtil.INSTANCE.getResourceAsStream(getDescriptionContextClass().getClassLoader(), path);
+    String path = INSPECTION_DESCRIPTIONS_FOLDER + "/" + getDescriptionFileName();
+    ClassLoader classLoader;
+    if (myEP == null) {
+      classLoader = getTool().getClass().getClassLoader();
     }
-
-    return LocalizationUtil.INSTANCE.getResourceAsStream(myEP.getPluginDescriptor().getPluginClassLoader(), path);
+    else {
+      classLoader = myEP.getPluginDescriptor().getPluginClassLoader();
+    }
+    return LocalizationUtil.INSTANCE.getResourceAsStream(classLoader, path, null);
   }
 
   private @NotNull String getDescriptionFileName() {
@@ -218,7 +223,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getShortName();
   }
 
-  public @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
+  public final @NotNull Class<? extends InspectionProfileEntry> getDescriptionContextClass() {
     return getTool().getClass();
   }
 
@@ -226,7 +231,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     return getTool().getMainToolId();
   }
 
-  public E getExtension() {
+  public final E getExtension() {
     return myEP;
   }
 

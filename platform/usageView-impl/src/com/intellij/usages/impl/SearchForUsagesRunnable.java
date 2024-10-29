@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages.impl;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -57,6 +56,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 final class SearchForUsagesRunnable implements Runnable {
   @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
@@ -70,7 +70,7 @@ final class SearchForUsagesRunnable implements Runnable {
   private final AtomicReference<UsageViewEx> myUsageViewRef;
   private final UsageViewPresentation myPresentation;
   private final UsageTarget[] mySearchFor;
-  private final Factory<? extends UsageSearcher> mySearcherFactory;
+  private final Supplier<? extends UsageSearcher> mySearcherFactory;
   private final FindUsagesProcessPresentation myProcessPresentation;
   @NotNull private final SearchScope mySearchScopeToWarnOfFallingOutOf;
   private final UsageViewManager.UsageViewStateListener myListener;
@@ -84,7 +84,7 @@ final class SearchForUsagesRunnable implements Runnable {
                           @NotNull AtomicReference<UsageViewEx> usageViewRef,
                           @NotNull UsageViewPresentation presentation,
                           UsageTarget @NotNull [] searchFor,
-                          @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                          @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                           @NotNull FindUsagesProcessPresentation processPresentation,
                           @NotNull SearchScope searchScopeToWarnOfFallingOutOf,
                           @Nullable UsageViewManager.UsageViewStateListener listener,
@@ -267,7 +267,9 @@ final class SearchForUsagesRunnable implements Runnable {
 
   static PsiElement getPsiElement(UsageTarget @NotNull [] searchFor) {
     UsageTarget target = searchFor[0];
-    if (!(target instanceof PsiElementUsageTarget)) return null;
+    if (!(target instanceof PsiElementUsageTarget)) {
+      return null;
+    }
     return ReadAction.compute(((PsiElementUsageTarget)target)::getElement);
   }
 
@@ -277,10 +279,13 @@ final class SearchForUsagesRunnable implements Runnable {
     }
 
     Editor editor = usageInfo.openTextEditor(true);
-    if (editor == null) return;
+    if (editor == null) {
+      return;
+    }
+
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.BLINKING_HIGHLIGHTS_ATTRIBUTES);
 
-    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6);
+    RangeBlinker rangeBlinker = new RangeBlinker(editor, attributes, 6, null);
     List<Segment> segments = new ArrayList<>();
     Processor<Segment> processor = Processors.cancelableCollectProcessor(segments);
     usageInfo.processRangeMarkers(processor);
@@ -299,7 +304,7 @@ final class SearchForUsagesRunnable implements Runnable {
       return null;
     }
 
-    UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
+    UsageViewEx usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory::get);
     if (myUsageViewRef.compareAndSet(null, usageView)) {
       // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
       PsiElement element = getPsiElement(mySearchFor);
@@ -351,7 +356,7 @@ final class SearchForUsagesRunnable implements Runnable {
     searchUsages();
     endSearchForUsages();
 
-    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName());
+    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName(), "FindUsagesTotal");
   }
 
   private void searchUsages() {
@@ -363,7 +368,7 @@ final class SearchForUsagesRunnable implements Runnable {
     }
     TooManyUsagesStatus.createFor(indicator);
 
-    UsageSearcher usageSearcher = mySearcherFactory.create();
+    UsageSearcher usageSearcher = mySearcherFactory.get();
     long startSearchStamp = System.currentTimeMillis();
     GlobalSearchScope everythingScope = GlobalSearchScope.everythingScope(myProject);
 

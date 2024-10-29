@@ -77,7 +77,13 @@ class NativeFileMatcherTest {
         Arguments.of("binaries/windows-aarch64/jniSymbolsResolver.dll", "binaries/", OsFamily.WINDOWS),
         Arguments.of("binaries/windows-aarch64/libasyncProfiler.dll", "binaries/", OsFamily.WINDOWS),
         Arguments.of("binaries/windows-aarch64/symsrv.dll", "binaries/", OsFamily.WINDOWS),
-        Arguments.of("runtime/macos-aarch64/RenderDocHost", "runtime/", OsFamily.MACOS)
+        Arguments.of("runtime/macos-aarch64/RenderDocHost", "runtime/", OsFamily.MACOS),
+        Arguments.of("libskiko-linux-arm64.so", "", OsFamily.LINUX),
+        Arguments.of("libskiko-linux-x64.so", "", OsFamily.LINUX),
+        Arguments.of("libskiko-macos-arm64.so", "", OsFamily.MACOS),
+        Arguments.of("libskiko-macos-x64.so", "", OsFamily.MACOS),
+        Arguments.of("skiko-windows-arm64.dll", "", OsFamily.WINDOWS),
+        Arguments.of("skiko-windows-x64.dll", "", OsFamily.WINDOWS)
       )
     }
 
@@ -153,7 +159,7 @@ class NativeFileMatcherTest {
         Arguments.of(sqliteMacosFiles, listOf(OsFamily.MACOS), JvmArchitecture.x64, listOf(NativeFilesMatcher.Match("sqlite/mac-x86_64/libsqliteij.jnilib", "mac-x86_64/libsqliteij.jnilib", OsFamily.MACOS, JvmArchitecture.x64)), sqlitePrefix),
         Arguments.of(sqliteMacosFiles, listOf(OsFamily.MACOS), JvmArchitecture.aarch64, listOf(NativeFilesMatcher.Match("sqlite/mac-aarch64/libsqliteij.jnilib", "mac-aarch64/libsqliteij.jnilib", OsFamily.MACOS, JvmArchitecture.aarch64)), sqlitePrefix),
         Arguments.of(sqliteMacosFiles, listOf(OsFamily.MACOS), null, listOf(NativeFilesMatcher.Match("sqlite/mac-x86_64/libsqliteij.jnilib", "mac-x86_64/libsqliteij.jnilib", OsFamily.MACOS, JvmArchitecture.x64), NativeFilesMatcher.Match("sqlite/mac-aarch64/libsqliteij.jnilib", "mac-aarch64/libsqliteij.jnilib", OsFamily.MACOS, JvmArchitecture.aarch64)), sqlitePrefix),
-        Arguments.of(listOf("runtime/windows-x86_64/RenderDocHost.exe", "runtime/windows-x86_64/renderdoc.dll"), listOf(OsFamily.WINDOWS), JvmArchitecture.x64, listOf(NativeFilesMatcher.Match("runtime/windows-x86_64/RenderDocHost.exe", "windows-x86_64/RenderDocHost.exe", OsFamily.WINDOWS, JvmArchitecture.x64), NativeFilesMatcher.Match("runtime/windows-x86_64/renderdoc.dll", "windows-x86_64/renderdoc.dll", OsFamily.WINDOWS, JvmArchitecture.x64)), "runtime/")
+        Arguments.of(listOf("runtime/windows-x86_64/RenderDocHost.exe", "runtime/windows-x86_64/renderdoc.dll"), listOf(OsFamily.WINDOWS), JvmArchitecture.x64, listOf(NativeFilesMatcher.Match("runtime/windows-x86_64/RenderDocHost.exe", "windows-x86_64/RenderDocHost.exe", OsFamily.WINDOWS, JvmArchitecture.x64), NativeFilesMatcher.Match("runtime/windows-x86_64/renderdoc.dll", "windows-x86_64/renderdoc.dll", OsFamily.WINDOWS, JvmArchitecture.x64)), "runtime/"),
       )
     }
   }
@@ -162,7 +168,7 @@ class NativeFileMatcherTest {
   @MethodSource("provideTestCasesForOsDetection")
   fun `os detection`(path: String, prefix: String?, osFamily: OsFamily?) {
     val osAndIndex = OsFamilyDetector.detectOsFamily(path)
-    assertThat(osAndIndex?.second).isEqualTo(prefix?.length)
+    assertThat(osAndIndex?.second).isEqualTo(prefix)
     assertThat(osAndIndex?.first).isEqualTo(osFamily)
   }
 

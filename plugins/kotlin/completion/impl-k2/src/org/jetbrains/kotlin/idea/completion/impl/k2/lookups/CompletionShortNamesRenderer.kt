@@ -2,31 +2,28 @@
 
 package org.jetbrains.kotlin.idea.completion.lookups
 
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaExpandedTypeRenderingMode
-import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
 internal object CompletionShortNamesRenderer {
-    context(KaSession)
-    fun renderFunctionParameters(function: KaFunctionSignature<*>): String {
-        return function.valueParameters.joinToString(", ", "(", ")") { renderFunctionParameter(it) }
-    }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    fun renderFunctionalTypeParameters(functionalType: KaFunctionType): String =
-        functionalType.parameterTypes.joinToString(separator = ", ", prefix = "(", postfix = ")") {
-            it.render(rendererVerbose, position = Variance.INVARIANT)
-        }
+    fun renderFunctionalTypeParameters(functionalType: KaFunctionType): String = functionalType.parameterTypes.joinToString(
+        prefix = "(",
+        postfix = ")",
+    ) { it.renderVerbose() }
 
     context(KaSession)
     fun renderVariable(variable: KaVariableSignature<*>): String {
@@ -37,15 +34,64 @@ internal object CompletionShortNamesRenderer {
     @OptIn(KaExperimentalApi::class)
     private fun renderReceiver(variable: KaVariableSignature<*>): String {
         val receiverType = variable.receiverType ?: return ""
-        return receiverType.render(rendererVerbose, position = Variance.INVARIANT) + "."
+        return receiverType.renderVerbose() + "."
     }
 
     context(KaSession)
+    fun renderFunctionParameters(
+        parameters: List<KaVariableSignature<KaValueParameterSymbol>>,
+        trailingFunctionType: KaFunctionType? = null,
+    ): @NonNls String = StringBuffer().apply {
+        val newParameters = if (trailingFunctionType != null)
+            parameters.dropLast(1).takeUnless { it.isEmpty() }
+        else
+            parameters
+
+        newParameters?.joinTo(
+            buffer = this,
+            prefix = "(",
+            postfix = ")",
+        ) { renderFunctionParameter(it) }
+
+        if (trailingFunctionType != null) {
+            append(" { ")
+            appendParameter(
+                parameterName = parameters.last().name,
+                parameterType = trailingFunctionType
+            )
+            append(" }")
+        }
+    }.toString()
+
+    context(KaSession)
+    private fun <A : Appendable> A.renderFunctionParameter(
+        parameter: KaVariableSignature<KaValueParameterSymbol>,
+    ): @NonNls String = StringBuffer().apply {
+        val symbol = parameter.symbol
+
+        if (symbol.isVararg) {
+            append("vararg ")
+        }
+        appendParameter(
+            parameterName = parameter.name,
+            parameterType = parameter.returnType.takeUnless { it is KaErrorType } ?: symbol.returnType,
+        )
+
+        if (symbol.hasDefaultValue) {
+            append(" = ...")
+        }
+    }.toString()
+
+    context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun renderFunctionParameter(parameter: KaVariableSignature<KaValueParameterSymbol>): String =
-        "${if (parameter.symbol.isVararg) "vararg " else ""}${parameter.name.asString()}: ${
-            parameter.returnType.renderNonErrorOrUnsubstituted(parameter.symbol.returnType)
-        }${if (parameter.symbol.hasDefaultValue) " = ..." else ""}"
+    private fun <A : Appendable> A.appendParameter(
+        parameterName: Name,
+        parameterType: KaType,
+    ): A = apply {
+        append(parameterName.render())
+        append(": ")
+        append(parameterType.renderVerbose())
+    }
 
     @KaExperimentalApi
     val renderer = KaTypeRendererForSource.WITH_SHORT_NAMES
@@ -58,10 +104,7 @@ internal object CompletionShortNamesRenderer {
 
 context(KaSession)
 @KaExperimentalApi
-internal fun KaType.renderNonErrorOrUnsubstituted(
-    unsubstituted: KaType,
-    renderer: KaTypeRenderer = CompletionShortNamesRenderer.rendererVerbose
-): String {
-    val typeToRender = this.takeUnless { it is KaErrorType } ?: unsubstituted
-    return typeToRender.render(renderer, position = Variance.INVARIANT)
-}
+internal fun KaType.renderVerbose(): @NonNls String = render(
+    renderer = CompletionShortNamesRenderer.rendererVerbose,
+    position = Variance.INVARIANT,
+)

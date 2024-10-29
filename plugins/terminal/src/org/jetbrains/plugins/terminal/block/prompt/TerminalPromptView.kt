@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
-import com.intellij.ui.LanguageTextField
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
@@ -33,7 +33,7 @@ import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController.Prom
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorDescription
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorStateListener
 import org.jetbrains.plugins.terminal.block.prompt.error.TerminalPromptErrorUtil
-import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptLanguage
+import org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi
 import org.jetbrains.plugins.terminal.block.ui.TerminalUi.useTerminalDefaultBackground
@@ -84,7 +84,7 @@ internal class TerminalPromptView(
   private val toolbarSizeInitializedFuture: CompletableFuture<*>
 
   init {
-    val editorTextField = createPromptTextField(session)
+    val editorTextField = createPromptTextField()
     editor = editorTextField.getEditor(true) as EditorImpl
     controller = TerminalPromptController(project, editor, session, commandExecutor)
     controller.addListener(this)
@@ -103,6 +103,13 @@ internal class TerminalPromptView(
                                          0)
     val outerBorder = object : CustomLineBorder(TerminalUi.promptSeparatorColor(editor),
                                                 JBInsets(1, 0, 0, 0)) {
+      override fun getBorderInsets(c: Component): Insets {
+        if (c.y == 0) {
+          return JBInsets.emptyInsets()
+        }
+        return super.getBorderInsets(c)
+      }
+
       override fun paintBorder(c: Component, g: Graphics?, x: Int, y: Int, w: Int, h: Int) {
         // Paint the border only if the component is not on the top
         if (c.y != 0) {
@@ -154,8 +161,8 @@ internal class TerminalPromptView(
     }
   }
 
-  private fun createPromptTextField(session: BlockTerminalSession): LanguageTextField {
-    val textField = object : LanguageTextField(TerminalPromptLanguage, project, "", false) {
+  private fun createPromptTextField(): EditorTextField {
+    val textField = object : EditorTextField(project, TerminalPromptFileType) {
       override fun setBackground(bg: Color?) {
         // do nothing to not set background to editor in super method
       }
@@ -165,6 +172,7 @@ internal class TerminalPromptView(
         font = EditorUtil.getEditorFont()
       }
     }
+    textField.setOneLineMode(false)
     textField.setDisposedWith(this)
     textField.alignmentX = JComponent.LEFT_ALIGNMENT
 

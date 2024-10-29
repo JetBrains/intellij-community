@@ -26,19 +26,19 @@ import com.intellij.openapi.util.UserDataHolderEx
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.log10
 import kotlin.math.pow
 
+private val docPreviousAnalysisStatus: Key<AnalysisStatus> = Key.create("docPreviousAnalysisStatus")
+private val sessionSegmentsTotalDurationMs: Key<AtomicLong> = Key.create("sessionSegmentsTotalDurationMs")
+
+private data class AnalysisStatus(val stamp: Long, val isDumbMode: Boolean)
+
+@ApiStatus.Internal
 open class DaemonFusReporter(private val project: Project) : DaemonCodeAnalyzer.DaemonListener {
-  private companion object {
-    private val docPreviousAnalysisStatus = Key.create<AnalysisStatus>("docPreviousAnalysisStatus")
-    private val sessionSegmentsTotalDurationMs = Key.create<AtomicLong>("sessionSegmentsTotalDurationMs")
-  }
-
-  private data class AnalysisStatus(val stamp: Long, val isDumbMode: Boolean)
-
   private data class SessionData(val daemonStartTime: Long = -1L,
                                  val dirtyRange: TextRange? = null,
                                  val documentStartedHash: Int = 0,

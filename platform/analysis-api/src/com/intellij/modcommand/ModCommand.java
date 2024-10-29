@@ -34,8 +34,8 @@ import java.util.function.Function;
  */
 public sealed interface ModCommand
   permits ModChooseAction, ModChooseMember, ModCompositeCommand, ModCopyToClipboard, ModCreateFile, ModDeleteFile, ModDisplayMessage,
-          ModHighlight, ModNavigate, ModNothing, ModStartRename, ModShowConflicts, ModStartTemplate, ModUpdateReferences,
-          ModUpdateFileText, ModUpdateSystemOptions {
+          ModHighlight, ModNavigate, ModNothing, ModOpenUrl, ModShowConflicts, ModStartRename, ModStartTemplate, ModUpdateFileText,
+          ModUpdateReferences, ModUpdateSystemOptions {
 
   /**
    * @return true if the command does nothing
@@ -83,6 +83,14 @@ public sealed interface ModCommand
    */
   static @NotNull ModCommand copyToClipboard(@NotNull String content) {
     return new ModCopyToClipboard(content);
+  }
+
+  /**
+   * @param url the URL to open
+   * @return a ModCommand instance representing the action of opening the URL
+   */
+  static @NotNull ModCommand openUrl(@NotNull String url) {
+    return new ModOpenUrl(url);
   }
 
   /**

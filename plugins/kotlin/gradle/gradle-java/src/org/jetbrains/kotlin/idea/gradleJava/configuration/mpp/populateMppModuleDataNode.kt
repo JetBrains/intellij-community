@@ -223,6 +223,7 @@ private fun KotlinMppGradleProjectResolver.Context.initializeModuleData() {
             }
         }
         KotlinGradleProjectData().apply {
+            kotlinGradlePluginVersion = mppModel.kotlinGradlePluginVersion
             kotlinNativeHome = mppModel.kotlinNativeHome
             coroutines = mppModel.extraFeatures.coroutinesState
             isHmpp = mppModel.extraFeatures.isHMPPEnabled

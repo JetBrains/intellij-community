@@ -12,9 +12,9 @@ import com.intellij.psi.stubs.StubIndexKey
 import com.intellij.util.CommonProcessors
 import com.intellij.util.Processor
 import com.intellij.util.Processors
-import com.intellij.util.SmartList
 import com.intellij.util.indexing.IdFilter
-import org.jetbrains.kotlin.idea.base.indices.*
+import org.jetbrains.kotlin.idea.base.indices.getAllKeysAndMeasure
+import org.jetbrains.kotlin.idea.base.indices.getByKeyAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.processAllKeysAndMeasure
 import org.jetbrains.kotlin.idea.base.indices.processElementsAndMeasure
 
@@ -32,10 +32,15 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
         return getAllKeysAndMeasure(indexKey, logger) { StubIndex.getInstance().getAllKeys(indexKey, project) }
     }
 
-    fun getAllElements(s: String, project: Project, scope: GlobalSearchScope, filter: (Key) -> Boolean): List<Key> {
-        val values = SmartList<Key>()
-        processElements(s, project, scope, null, CancelableCollectFilterProcessor(values, filter))
-        return values
+    fun getAllElements(
+        key: String,
+        project: Project,
+        scope: GlobalSearchScope,
+        filter: (Key) -> Boolean = { true },
+    ): Sequence<Key> {
+        val processor = CancelableCollectFilterProcessor<Key>(filter = filter)
+        processElements(key, project, scope, null, processor)
+        return processor.results.asSequence() // todo move valueFilter out
     }
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
@@ -47,21 +52,30 @@ abstract class KotlinStringStubIndexHelper<Key : NavigatablePsiElement>(private 
     /**
      * Note: [processor] should not invoke any indices as it could lead to deadlock. Nested index access is forbidden.
      */
-    fun processElements(s: String, project: Project, scope: GlobalSearchScope, idFilter: IdFilter? = null, processor: Processor<in Key>): Boolean {
-        return processElementsAndMeasure(indexKey, logger) {
-            StubIndex.getInstance().processElements(indexKey, s, project, scope, idFilter, valueClass, processor)
-        }
-    }
-
-    fun getAllElements(
+    fun processElements(
+        key: String,
         project: Project,
         scope: GlobalSearchScope,
-        keyFilter: (String) -> Boolean = { true },
-        valueFilter: (Key) -> Boolean
-    ): List<Key> {
-        val values = SmartList<Key>()
-        processAllElements(project, scope, keyFilter, CancelableCollectFilterProcessor(values, valueFilter))
-        return values
+        idFilter: IdFilter? = null,
+        processor: Processor<in Key>,
+    ): Boolean = processElementsAndMeasure(indexKey, logger) {
+        StubIndex.getInstance().processElements(indexKey, key, project, scope, idFilter, valueClass, processor)
+    }
+
+    inline fun <reified SubKey> getAllElements(
+        project: Project,
+        scope: GlobalSearchScope,
+        noinline keyFilter: (String) -> Boolean = { true },
+        noinline valueFilter: (SubKey) -> Boolean = { true },
+    ): Sequence<SubKey> {
+        val processor = CancelableCollectFilterProcessor<SubKey>(filter = valueFilter)
+        processAllElements(project, scope, keyFilter) { key ->
+            if (key is SubKey)
+                processor.process(key)
+            else
+                true
+        }
+        return processor.results.asSequence() // todo move valueFilter out
     }
 
     fun processAllElements(
@@ -132,9 +146,10 @@ class CancelableDelegateFilterProcessor<T>(
 }
 
 class CancelableCollectFilterProcessor<T>(
-    collection: Collection<T>,
-    private val filter: (T) -> Boolean
+    collection: Collection<T> = mutableListOf(),
+    private val filter: (T) -> Boolean,
 ) : CommonProcessors.CollectProcessor<T>(collection) {
+
     override fun process(t: T): Boolean {
         ProgressManager.checkCanceled()
         return super.process(t)

@@ -22,7 +22,6 @@ public enum IntelliJPlatformProduct {
   WEBSTORM("WS", "WebStorm", PlatformUtils.WEB_PREFIX, "com.jetbrains.intellij.webstorm:webstorm", "webstorm:WebStorm"),
   APPCODE("OC", "AppCode", PlatformUtils.APPCODE_PREFIX, null, null),
   CLION("CL", "CLion", PlatformUtils.CLION_PREFIX, "com.jetbrains.intellij.clion:clion", "cpp:CLion"),
-  MOBILE_IDE("MI", "Mobile IDE", PlatformUtils.MOBILE_IDE_PREFIX, null, null),
   DBE("DB", "DataGrip", PlatformUtils.DBE_PREFIX, null, "datagrip:datagrip"),
   RIDER("RD", "Rider", PlatformUtils.RIDER_PREFIX, "com.jetbrains.intellij.rider:riderRD", "rider:JetBrains.Rider"),
   GOIDE("GO", "GoLand", PlatformUtils.GOIDE_PREFIX, "com.jetbrains.intellij.goland:goland", "go:goland"),
@@ -30,7 +29,7 @@ public enum IntelliJPlatformProduct {
   /**
    * @deprecated Code With Me Guest is an old name for JetBrains Client
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   CWM_GUEST("CWMG", "Code With Me Guest", PlatformUtils.CWM_GUEST_PREFIX, null, null),
   JETBRAINS_CLIENT("JBC", "JetBrains Client", PlatformUtils.JETBRAINS_CLIENT_PREFIX, null, null),
   GATEWAY("GW", "Gateway", PlatformUtils.GATEWAY_PREFIX, "com.jetbrains.intellij.gateway:gateway", "idea/gateway:JetBrainsGateway"),

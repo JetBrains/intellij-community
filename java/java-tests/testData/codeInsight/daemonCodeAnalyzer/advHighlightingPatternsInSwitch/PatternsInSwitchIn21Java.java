@@ -13,8 +13,16 @@ class X {
 
   int switchTest2(int i) {
     return switch (i) {
-        case <error descr="Incompatible types. Found: 'java.lang.Integer', required: 'int'">Integer integer</error> -> "int";
-        case <error descr="Incompatible types. Found: 'java.lang.Object', required: 'int'">Object obj</error> -> "Object";
+        case <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">Integer integer</error> -> "int";
+        case <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">Object obj</error> -> "Object";
+        default -> "not ok";
+    };
+  }
+
+  int switchTest2_2(Integer i) {
+    return switch (i) {
+        case <error descr="Primitive types in patterns, instanceof and switch are not supported at language level '21'">int integer</error> -> "int";
+        case Object obj -> "Object";
         default -> "not ok";
     };
   }

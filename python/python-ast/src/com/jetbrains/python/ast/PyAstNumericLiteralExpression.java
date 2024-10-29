@@ -35,43 +35,32 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
   @Nullable
   default Long getLongValue() {
     final BigInteger value = getBigIntegerValue();
-
-    return Optional
-      .ofNullable(value)
-      .map(BigInteger::longValue)
-      .filter(longValue -> BigInteger.valueOf(longValue).equals(value))
-      .orElse(null);
+    long longValue = value.longValue();
+    return BigInteger.valueOf(longValue).equals(value) ? longValue : null;
   }
 
   /**
    * Returns the value of this literal as a {@code BigInteger} (with any
    * fraction truncated).
    */
-  @Nullable
+  @NotNull
   default BigInteger getBigIntegerValue() {
     if (isIntegerLiteral()) {
       return getBigIntegerValue(getNode().getText());
     }
 
     final BigDecimal bigDecimal = getBigDecimalValue();
-    return bigDecimal == null ? null : bigDecimal.toBigInteger();
+    return bigDecimal.toBigInteger();
   }
 
   /**
    * Returns the exact value of this literal.
    */
-  @Nullable
+  @NotNull
   default BigDecimal getBigDecimalValue() {
     final String text = getNode().getText();
-
-    if (isIntegerLiteral()) {
-      return Optional
-        .ofNullable(getBigIntegerValue(text))
-        .map(BigDecimal::new)
-        .orElse(null);
-    }
-
-    return new BigDecimal(prepareLiteralForJava(text, 0));
+    return isIntegerLiteral() ? new BigDecimal(getBigIntegerValue(text))
+                              : new BigDecimal(prepareLiteralForJava(text, 0));
   }
 
   default boolean isIntegerLiteral() {
@@ -88,7 +77,7 @@ public interface PyAstNumericLiteralExpression extends PyAstLiteralExpression {
     return isIntegerLiteral() ? StringUtil.nullize(retrieveSuffix(getText())) : null;
   }
 
-  @Nullable
+  @NotNull
   private static BigInteger getBigIntegerValue(@NotNull String text) {
     if (text.equalsIgnoreCase("0" + retrieveSuffix(text))) {
       return BigInteger.ZERO;

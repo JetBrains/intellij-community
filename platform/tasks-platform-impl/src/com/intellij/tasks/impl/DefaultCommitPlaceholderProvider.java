@@ -5,9 +5,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.TaskRepository;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class DefaultCommitPlaceholderProvider implements CommitPlaceholderProvider {
 
   @Override

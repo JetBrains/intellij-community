@@ -1,0 +1,14 @@
+// "Make 'x' public" "true"
+
+open class Base {
+    protected open fun x() {}
+}
+
+class First : Base() {
+    public override fun x() {}
+}
+
+class Second(f: First) {
+    val y = f.x()
+}
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPublicFix

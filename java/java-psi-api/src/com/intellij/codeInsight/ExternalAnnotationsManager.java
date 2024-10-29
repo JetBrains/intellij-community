@@ -4,10 +4,13 @@ package com.intellij.codeInsight;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class ExternalAnnotationsManager {
@@ -54,7 +57,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with {@code listOwner}.
-   *
+   * <p>
    * Multiple results may be returned for repeatable annotations and annotations
    * from several external annotations roots.
    *
@@ -64,11 +67,39 @@ public abstract class ExternalAnnotationsManager {
    */
   public abstract @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
+  /**
+   * Returns external annotations with fully qualified names contained in {@code annotationFQNs}
+   * associated with {@code listOwner}.
+   * <p>
+   * Multiple results may be returned for repeatable annotations and annotations
+   * from several external annotations roots.
+   *
+   * @param listOwner API element to return external annotations of
+   * @param annotationFQNs collection of fully qualified names of the annotations to search for
+   * @return external annotations of the {@code listOwner}
+   */
+  public @NotNull List<PsiAnnotation> findExternalAnnotations(@NotNull PsiModifierListOwner listOwner, @NotNull Collection<String> annotationFQNs) {
+    PsiAnnotation[] annotations = findExternalAnnotations(listOwner);
+    //There's an implementation in Kotlin tests which violates the new contract of findExternalAnnotations(listOwner) and returns null
+    //noinspection ConstantValue
+    return annotations == null ? Collections.emptyList() : 
+           ContainerUtil.filter(annotations, annotation -> annotationFQNs.contains(annotation.getQualifiedName()));
+  }
+
 
   // Method used in Kotlin plugin
   public abstract boolean isExternalAnnotationWritable(@NotNull PsiModifierListOwner listOwner, @NotNull String annotationFQN);
 
-  public abstract PsiAnnotation @Nullable [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+  public abstract @NotNull PsiAnnotation @NotNull [] findExternalAnnotations(@NotNull PsiModifierListOwner listOwner);
+
+  /**
+   * @param parent a type owner (field, method, or parameter)
+   * @param typePath a type path. See {@code ExternalTypeAnnotationContainer} for syntax
+   * @return external type annotations for a given type path
+   */
+  public @NotNull PsiAnnotation @NotNull [] findExternalTypeAnnotations(@NotNull PsiModifierListOwner parent, @NotNull String typePath) {
+    return PsiAnnotation.EMPTY_ARRAY;
+  }
 
   /**
    * Returns external annotations associated with default
@@ -93,7 +124,7 @@ public abstract class ExternalAnnotationsManager {
   /**
    * Returns external annotations with fully qualified name of {@code annotationFQN}
    * associated with default constructor of the {@code aClass}, if the constructor exists.
-   *
+   * <p>
    * Multiple annotations may be returned since there may be repeatable annotations
    * or annotations from several external annotations roots.
    *

@@ -2,6 +2,7 @@
 package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
@@ -9,7 +10,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -29,12 +29,11 @@ public class DomTableView extends AbstractTableView<DomElement> {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
     for (DataProvider provider : myCustomDataProviders) {
-      Object data = provider.getData(dataId);
-      if (data != null) return data;
+      DataSink.uiDataSnapshot(sink, provider);
     }
-    return super.getData(dataId);
   }
 
   @Override

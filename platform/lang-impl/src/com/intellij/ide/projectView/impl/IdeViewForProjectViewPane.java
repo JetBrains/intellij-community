@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.IdeView;
@@ -21,9 +21,8 @@ public final class IdeViewForProjectViewPane implements IdeView {
     this.supplier = supplier;
   }
 
-  @Nullable
   @Override
-  public PsiDirectory getOrChooseDirectory() {
+  public @Nullable PsiDirectory getOrChooseDirectory() {
     return DirectoryChooserUtil.getOrChooseDirectory(this);
   }
 

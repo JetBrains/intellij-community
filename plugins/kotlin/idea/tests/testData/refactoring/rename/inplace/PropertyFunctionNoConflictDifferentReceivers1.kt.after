@@ -10,7 +10,7 @@ class A {
     }
 
     fun String.n() {
-        val pp = this@String.m()
+        val pp = this@n.m()
         val mm = this@A.m()
     }
 }

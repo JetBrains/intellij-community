@@ -21,10 +21,10 @@ class PersistentDirtyFilesQueueTest {
     val vfsVersion = 987L
     PersistentDirtyFilesQueue.storeIndexingQueue(file, IntList.of(1, 2, 3), 42L, vfsVersion)
 
-    val (queue1, index1) = PersistentDirtyFilesQueue.readIndexingQueue(file, false, vfsVersion)
+    val (queue1, index1) = PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion)
     Assert.assertEquals(IntList.of(1, 2, 3), queue1)
     Assert.assertEquals(42L, index1)
-    val (queue2, index2) = PersistentDirtyFilesQueue.readIndexingQueue(file, false, vfsVersion + 1)
+    val (queue2, index2) = PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion + 1)
     Assert.assertEquals(IntList.of(), queue2)
     Assert.assertNull(index2)
   }
@@ -35,7 +35,7 @@ class PersistentDirtyFilesQueueTest {
     val vfsVersion = 987L
     PersistentDirtyFilesQueue.storeIndexingQueue(file, IntList.of(1, 2, 3), 42, vfsVersion, 0)
 
-    val (queue, index) = PersistentDirtyFilesQueue.readIndexingQueue(file, false, vfsVersion)
+    val (queue, index) = PersistentDirtyFilesQueue.readIndexingQueue(file, vfsVersion)
     Assert.assertEquals(IntList.of(0, 42, 1, 2, 3), queue)
     Assert.assertEquals(null, index)
   }

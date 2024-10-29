@@ -4,7 +4,9 @@ package com.intellij.ide.actions
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class QuickChangeToolWindowLayout : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
 
   private val restoreLayoutsGroup by lazy { RestoreNamedLayoutActionGroup() }

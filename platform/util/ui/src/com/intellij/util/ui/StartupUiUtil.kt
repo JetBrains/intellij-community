@@ -15,6 +15,7 @@ import com.intellij.ui.scale.ScaleType
 import com.intellij.ui.scale.isHiDPIEnabledAndApplicable
 import com.intellij.util.JBHiDPIScaledImage
 import com.intellij.util.concurrency.Semaphore
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -186,6 +187,13 @@ object StartupUiUtil {
     return SystemInfoRt.isUnix
            && !SystemInfoRt.isMac
            &&  "sun.awt.X11.XToolkit" == Toolkit.getDefaultToolkit().javaClass.name
+  }
+
+  @ApiStatus.Internal
+  @JvmStatic
+  fun isLWCToolkit(): Boolean {
+    return SystemInfoRt.isMac
+           && "sun.lwawt.macosx.LWCToolkit" == Toolkit.getDefaultToolkit().javaClass.name
   }
 
   /**

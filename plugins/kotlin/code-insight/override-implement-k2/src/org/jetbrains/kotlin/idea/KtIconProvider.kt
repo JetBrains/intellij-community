@@ -10,11 +10,6 @@ import com.intellij.ui.RowIcon
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import javax.swing.Icon
@@ -57,12 +52,12 @@ object KtIconProvider {
 
     context(KaSession)
     fun getBaseIcon(symbol: KaSymbol): Icon? {
-        val isAbstract = (symbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT
+        val isAbstract = (symbol as? KaDeclarationSymbol)?.modality == KaSymbolModality.ABSTRACT
         return when (symbol) {
             is KaPackageSymbol -> AllIcons.Nodes.Package
             is KaFunctionSymbol -> {
                 val isExtension = symbol.isExtension
-                val isMember = symbol.symbolKind == KaSymbolKind.CLASS_MEMBER
+                val isMember = symbol.location == KaSymbolLocation.CLASS
                 when {
                     isExtension && isAbstract -> KotlinIcons.ABSTRACT_EXTENSION_FUNCTION
                     isExtension && !isAbstract -> KotlinIcons.EXTENSION_FUNCTION
@@ -103,7 +98,7 @@ object KtIconProvider {
     }
 
     context(KaSession)
-    private fun getVisibilityIcon(symbol: KaSymbol): Icon? = when ((symbol as? KaSymbolWithVisibility)?.visibility) {
+    private fun getVisibilityIcon(symbol: KaSymbol): Icon? = when ((symbol as? KaDeclarationSymbol)?.visibility) {
         KaSymbolVisibility.PUBLIC -> PlatformIcons.PUBLIC_ICON
         KaSymbolVisibility.PROTECTED,
         KaSymbolVisibility.PACKAGE_PROTECTED,

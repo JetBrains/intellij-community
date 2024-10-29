@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.suggestion
 
+import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionElement
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager.UpdateResult
 import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionVariantState.Status
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -16,23 +16,20 @@ import kotlinx.coroutines.launch
 internal interface InlineCompletionVariantsProvider : Disposable {
 
   @RequiresEdt
-  @RequiresBlockingContext
   fun useNextVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
-  @RequiresBlockingContext
   fun usePrevVariant(): InlineCompletionPresentableVariant
 
   @RequiresEdt
   fun captureVariants(): List<InlineCompletionVariant.Snapshot>
 
   @RequiresEdt
-  @RequiresBlockingContext
-  fun update(updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
+  fun update(event: InlineCompletionEvent, updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean
 }
 
 internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructor(
-  variants: List<InlineCompletionVariant>
+  variants: List<InlineCompletionVariant>,
 ) : InlineCompletionVariantsProvider {
 
   init {
@@ -68,7 +65,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
     return variantsStates.indices.map { getSnapshot(it) }
   }
 
-  override fun update(updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
+  override fun update(event: InlineCompletionEvent, updateManager: (InlineCompletionVariant.Snapshot) -> UpdateResult): Boolean {
     ThreadingAssertions.assertEventDispatchThread()
 
     var currentVariantResult: UpdateResult? = null
@@ -87,18 +84,18 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
         is UpdateResult.Changed -> {
           val newSnapshot = updated.snapshot
           if (newSnapshot.elements.isNotEmpty() || index == currentVariant.index) {
-            variantChanged(index, state.elements, newSnapshot.elements)
+            variantChanged(event, index, state.elements, newSnapshot.elements)
 
             state.elements.clear()
             state.elements.addAll(newSnapshot.elements)
             newSnapshot.data.copyUserDataTo(state.data)
           }
           else {
-            invalidate(index)
+            invalidate(event, index)
           }
         }
         UpdateResult.Invalidated -> {
-          invalidate(index)
+          invalidate(event, index)
         }
         UpdateResult.Same -> Unit
       }
@@ -115,7 +112,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
 
   override fun dispose() = Unit
 
-  @RequiresBlockingContext
   @RequiresEdt
   protected abstract fun elementShown(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement)
 
@@ -123,16 +119,13 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   protected abstract fun disposeCurrentVariant()
 
   @RequiresEdt
-  @RequiresBlockingContext
   protected abstract fun beforeVariantSwitched(fromVariantIndex: Int, toVariantIndex: Int, explicit: Boolean)
 
   @RequiresEdt
-  @RequiresBlockingContext
-  protected abstract fun variantChanged(variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>)
+  protected abstract fun variantChanged(event: InlineCompletionEvent, variantIndex: Int, old: List<InlineCompletionElement>, new: List<InlineCompletionElement>)
 
   @RequiresEdt
-  @RequiresBlockingContext
-  protected abstract fun variantInvalidated(variantIndex: Int)
+  protected abstract fun variantInvalidated(event: InlineCompletionEvent, variantIndex: Int)
 
   @RequiresEdt
   protected abstract fun dataChanged()
@@ -144,7 +137,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   protected fun elementComputed(variantIndex: Int, elementIndex: Int, element: InlineCompletionElement) {
     ThreadingAssertions.assertEventDispatchThread()
     validateIndex(variantIndex)
@@ -199,9 +191,8 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
-  private fun invalidate(variantIndex: Int) {
-    variantInvalidated(variantIndex)
+  private fun invalidate(event: InlineCompletionEvent, variantIndex: Int) {
+    variantInvalidated(event, variantIndex)
     variantsStates[variantIndex].invalidate()
   }
 
@@ -290,7 +281,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
    * Creates [InlineCompletionPresentableVariant] for the variant [index] and fills it with elements.
    */
   @RequiresEdt
-  @RequiresBlockingContext
   private fun getVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val variant = prepareVariant(index, force)
     val state = variantsStates[index]
@@ -304,7 +294,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
    * Same as [getVariant], but also sets [currentVariant] to it.
    */
   @RequiresEdt
-  @RequiresBlockingContext
   private fun useVariant(index: Int, force: Boolean): InlineCompletionPresentableVariantImpl {
     val fromIndex = currentVariant.index
     if (index == fromIndex) {
@@ -328,7 +317,6 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   }
 
   @RequiresEdt
-  @RequiresBlockingContext
   protected fun forceNextVariant() {
     val nextIndex = currentVariant.index + 1
     validateIndex(nextIndex)
@@ -354,7 +342,7 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
   private inline fun findStateIndex(
     startIndex: Int,
     reversed: Boolean = false,
-    predicate: (Int) -> Boolean
+    predicate: (Int) -> Boolean,
   ): Int? {
     val delta = if (reversed) -1 else 1
     var index = startIndex
@@ -364,7 +352,8 @@ internal abstract class InlineCompletionVariantsComputer @RequiresEdt constructo
         return index
       }
       index += delta
-    } while (index != startIndex)
+    }
+    while (index != startIndex)
 
     return null
   }
@@ -379,11 +368,10 @@ internal interface InlineCompletionPresentableVariant {
 private class InlineCompletionPresentableVariantImpl(
   override val data: UserDataHolderBase,
   override val index: Int,
-  private val onAdd: (InlineCompletionElement, Int) -> Unit
+  private val onAdd: (InlineCompletionElement, Int) -> Unit,
 ) : InlineCompletionPresentableVariant {
 
   @RequiresEdt
-  @RequiresBlockingContext
   fun addElement(element: InlineCompletionElement, elementIndex: Int) {
     ThreadingAssertions.assertEventDispatchThread()
     onAdd(element, elementIndex)
@@ -392,7 +380,7 @@ private class InlineCompletionPresentableVariantImpl(
 
 private class InlineCompletionVariantState(
   val elements: MutableList<InlineCompletionElement>,
-  val data: UserDataHolderBase
+  val data: UserDataHolderBase,
 ) {
 
   var status: Status = Status.NOT_STARTED
@@ -409,7 +397,6 @@ private class InlineCompletionVariantState(
       field = value
     }
 
-  @RequiresBlockingContext
   fun invalidate() {
     ThreadingAssertions.assertEventDispatchThread()
     status = Status.INVALIDATED

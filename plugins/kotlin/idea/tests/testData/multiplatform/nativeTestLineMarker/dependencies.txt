@@ -1,0 +1,3 @@
+MODULE native { platform=[Native (linux_x64), Native (linux_arm64), Native (macos_x64), Native (macos_arm64), Native (mingw_x64)] }
+
+native -> STDLIB_NATIVE, KOTLIN_SDK { kind=DEPENDENCY }

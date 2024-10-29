@@ -49,6 +49,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PySdkProvider;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.statistics.PyPackagesUsageCollector;
 import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
@@ -403,7 +404,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       SideEffectGuard.checkSideEffectAllowed(SideEffectGuard.EffectType.PROJECT_MODEL);
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
-        PyUiUtil.clearFileLevelInspectionResults(project);
+        PyUiUtil.clearFileLevelInspectionResults(descriptor.getPsiElement().getContainingFile());
         installPackages(project);
       }
     }
@@ -421,6 +422,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
           chosen = dialog.getMarkedElements();
         }
         else {
+          PyPackagesUsageCollector.installAllCanceledEvent.log();
           chosen = Collections.emptyList();
         }
       }
@@ -516,6 +518,7 @@ public final class PyPackageRequirementsInspection extends PyInspection {
             }
           }
         ).applyFix(module.getProject(), descriptor);
+        PyPackagesUsageCollector.installSingleEvent.log();
       }
     }
 
@@ -545,6 +548,9 @@ public final class PyPackageRequirementsInspection extends PyInspection {
       }
     }
   }
+
+
+
 
   public static class InstallAndImportPackageQuickFix extends InstallPackageQuickFix {
     private final @Nullable String myAsName;

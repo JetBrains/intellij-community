@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -23,9 +24,7 @@ import org.jetbrains.jps.incremental.messages.ProgressMessage;
 
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public final class CompileContextImpl extends UserDataHolderBase implements CompileContext {
   private final CompileScope myScope;
   private final MessageHandler myDelegateMessageHandler;

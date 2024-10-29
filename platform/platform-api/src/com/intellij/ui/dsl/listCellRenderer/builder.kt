@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.listCellRenderer
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.ListCellRenderer
 
@@ -14,14 +15,15 @@ internal annotation class LcrDslMarker
  * * Rectangular selection and correct insets for old UI
  * * Rounded selection, correct insets and height for new UI
  * * Uses correct colors for text in selected/unselected state
+ * * Uses gray text and icons in disabled state
  * * Colored text has different color in selected state
  * * Supports IDE scaling and compact mode
  * * Provides accessibility details for rows: by default it is concatenation of accessible names of all visible cells
  *
- * Because of all described nuances it is hard to write correct own render, so using Kotlin UI DSL is highly recommended
+ * Because of all described nuances, it is hard to write correct own render. So using Kotlin UI DSL is highly recommended
  */
 fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
-  return UiDslRendererProvider.getRenderer(init)
+  return UiDslRendererProvider.getInstance().getLcrRenderer(init)
 }
 
 /**
@@ -30,5 +32,20 @@ fun <T> listCellRenderer(init: LcrRow<T>.() -> Unit): ListCellRenderer<T> {
 fun <T> textListCellRenderer(textExtractor: (T) -> @Nls String?): ListCellRenderer<T> {
   return listCellRenderer {
     text(textExtractor(value) ?: "")
+  }
+}
+
+/**
+ * A version of [textListCellRenderer] with separator support
+ */
+@ApiStatus.Internal
+fun <T> groupedTextListCellRenderer(textExtractor: (T) -> @Nls String?, separatorExtractor: (T) -> String?): ListCellRenderer<T> {
+  return listCellRenderer {
+    text(textExtractor(value) ?: "")
+    separatorExtractor(value)?.let {
+      separator {
+        text = it
+      }
+    }
   }
 }

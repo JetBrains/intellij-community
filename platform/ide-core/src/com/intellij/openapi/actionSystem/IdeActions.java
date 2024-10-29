@@ -205,6 +205,7 @@ public interface IdeActions {
   String ACTION_COLLAPSE_REGION_RECURSIVELY = "CollapseRegionRecursively";
   String ACTION_EXPAND_TO_LEVEL_1 = "ExpandToLevel1";
   String ACTION_EXPAND_ALL_TO_LEVEL_1 = "ExpandAllToLevel1";
+  String ACTION_EXPAND_COLLAPSE_TOGGLE_REGION = "ExpandCollapseToggleAction";
 
   String ACTION_NEW_HORIZONTAL_TAB_GROUP = "NewHorizontalTabGroup";
   String ACTION_NEW_VERTICAL_TAB_GROUP = "NewVerticalTabGroup";
@@ -241,11 +242,6 @@ public interface IdeActions {
 
   String GROUP_COMPILER_ERROR_VIEW_POPUP = "CompilerErrorViewPopupMenu";
 
-  /**
-   * @deprecated this group isn't registered by the platform anymore, use other groups instead
-   */
-  @Deprecated(forRemoval = true)
-  String GROUP_OTHER_MENU = "OtherMenu";
   String GROUP_EDITOR = "EditorActions";
   String GROUP_EDITOR_BIDI_TEXT_DIRECTION = "EditorBidiTextDirection";
 

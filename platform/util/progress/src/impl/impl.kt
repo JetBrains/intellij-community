@@ -20,6 +20,6 @@ internal fun Flow<StepState>.pushTextToDetails(text: ProgressText): Flow<StepSta
   )
 }
 
-internal typealias ProgressText = @com.intellij.openapi.util.NlsContexts.ProgressText String
+typealias ProgressText = @com.intellij.openapi.util.NlsContexts.ProgressText String
 
 internal typealias ScopedLambda<T> = suspend CoroutineScope.() -> T

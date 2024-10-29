@@ -14,8 +14,11 @@ import com.intellij.navigation.GotoRelatedProvider
 import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
+import com.intellij.openapi.command.CommandToken
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Editor
@@ -183,15 +186,18 @@ internal suspend fun openFileWithPsiElementAsync(element: PsiElement, searchForO
 
   val commandProcessor = (serviceAsync<CommandProcessor>() as CommandProcessorEx)
   return withContext(Dispatchers.EDT) {
-    blockingContext {
+    //readaction is not enough
+    writeIntentReadAction {
       // all navigations inside should be treated as a single operation, so that 'Back' action undoes it in one go
-      val commandHandle = commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@blockingContext false
+      val commandHandle = WriteIntentReadAction.compute<CommandToken> {
+        commandProcessor.startCommand(element.project, "", null, UndoConfirmationPolicy.DEFAULT) ?: return@compute null
+      } ?: return@writeIntentReadAction false
       try {
         if (openAsNative || !activatePsiElementIfOpen(element, searchForOpen, requestFocus)) {
           val navigationItem = element as NavigationItem
           if (navigationItem.canNavigate()) {
             navigationItem.navigate(requestFocus)
-            return@blockingContext true
+            return@writeIntentReadAction true
           }
         }
       }

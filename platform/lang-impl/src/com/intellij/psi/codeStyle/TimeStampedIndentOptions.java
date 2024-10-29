@@ -3,9 +3,11 @@ package com.intellij.psi.codeStyle;
 
 
 import com.intellij.openapi.editor.Document;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 
+@ApiStatus.Internal
 public final class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOptions {
   private long myTimeStamp;
   private int myOriginalIndentOptionsHash;

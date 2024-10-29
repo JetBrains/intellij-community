@@ -9,7 +9,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="module" module-name="intellij.platform.resources" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp" level="project" />
     <orderEntry type="module-library" exported="">
       <library name="intellij.remoterobot.remote.fixtures" type="repository">

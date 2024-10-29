@@ -1,17 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.requestHandlers
 
 import com.intellij.debugger.impl.attach.JavaAttachDebuggerProvider
 import com.intellij.execution.ExecutionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import java.nio.charset.Charset
 
@@ -41,7 +41,7 @@ internal class HttpDebugListener : HttpRequestHandler() {
     logger.info("Debugger attach request to a test process by port '$port' as '$name'")
 
     for (project in ProjectManager.getInstance().openProjects) {
-      if (PsiUtil.isIdeaProject(project)) {
+      if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
         // Looking for a project with active debug session
         // TODO: Make it in a better way, check unit test configuration is running
         val executionManager = ExecutionManager.getInstance(project)

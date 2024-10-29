@@ -15,7 +15,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.ui.TextTransferable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +28,7 @@ import java.awt.datatransfer.Transferable;
 import java.util.Collections;
 import java.util.List;
 
-public class RadPropertyTable extends PropertyTable implements DataProvider, ComponentSelectionListener {
+public class RadPropertyTable extends PropertyTable implements UiDataProvider, ComponentSelectionListener {
   private final MyCopyProvider myCopyProvider = new MyCopyProvider();
 
   private final Project myProject;
@@ -81,16 +80,10 @@ public class RadPropertyTable extends PropertyTable implements DataProvider, Com
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (myDesigner != null) {
-      if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-        return myDesigner.getEditor();
-      }
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && !isEditing()) {
-        return myCopyProvider;
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myDesigner == null) return;
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner.getEditor());
+    sink.set(PlatformDataKeys.COPY_PROVIDER, isEditing() ? null : myCopyProvider);
   }
 
   @Override

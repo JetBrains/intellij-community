@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 
 open class RenameIdentifierFix : LocalQuickFix {
     override fun getName() = KotlinBundle.message("rename.identifier.fix.text")
-    override fun getFamilyName() = name
+    override fun getFamilyName(): String = name
 
     override fun startInWriteAction(): Boolean = false
 

@@ -34,7 +34,6 @@ Revisions context menu will now display additional entries to fire
 vdiff on hovered and selected revisions.
 '''
 
-from __future__ import absolute_import
 
 import os
 
@@ -246,7 +245,7 @@ def revtree(ui, args, repo, full=b"tree", maxnr=0, parents=False):
             else:
                 i -= chunk
 
-            for x in pycompat.xrange(chunk):
+            for x in range(chunk):
                 if i + x >= count:
                     l[chunk - x :] = [0] * (chunk - x)
                     break
@@ -257,7 +256,7 @@ def revtree(ui, args, repo, full=b"tree", maxnr=0, parents=False):
                 else:
                     if (i + x) in repo:
                         l[x] = 1
-            for x in pycompat.xrange(chunk - 1, -1, -1):
+            for x in range(chunk - 1, -1, -1):
                 if l[x] != 0:
                     yield (i + x, full is not None and l[x] or None)
             if i == 0:
@@ -268,7 +267,7 @@ def revtree(ui, args, repo, full=b"tree", maxnr=0, parents=False):
         if len(ar) == 0:
             return 1
         mask = 0
-        for i in pycompat.xrange(len(ar)):
+        for i in range(len(ar)):
             if sha in reachable[i]:
                 mask |= 1 << i
 
@@ -377,9 +376,7 @@ def view(ui, repo, *etc, **opts):
     """start interactive history viewer"""
     opts = pycompat.byteskwargs(opts)
     os.chdir(repo.root)
-    optstr = b' '.join(
-        [b'--%s %s' % (k, v) for k, v in pycompat.iteritems(opts) if v]
-    )
+    optstr = b' '.join([b'--%s %s' % (k, v) for k, v in opts.items() if v])
     if repo.filtername is None:
         optstr += b'--hidden'
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Collections;
 
-abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
+public abstract class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
    * Implementation should returns {@code true} if it has own lookup item in completion autopopup
    * and it is supposed that template should be expanded while completion auto-popup is active.
@@ -24,8 +24,7 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
   /**
    * Return lookup elements for popup that appears on ListTemplateAction (Ctrl + J)
    */
-  @NotNull
-  public Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
+  public @NotNull Collection<? extends CustomLiveTemplateLookupElement> getLookupElements(@NotNull PsiFile file, @NotNull Editor editor, int offset) {
     return Collections.emptyList();
   }
 
@@ -40,8 +39,7 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
     }
   }
 
-  @Nullable
-  public String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
+  public @Nullable String computeTemplateKeyWithoutContextChecking(@NotNull CustomTemplateCallback callback) {
     return computeTemplateKey(callback);
   }
 

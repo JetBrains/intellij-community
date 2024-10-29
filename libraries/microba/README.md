@@ -8,7 +8,7 @@ Features
 ---------
 CalendarPane
 DatePicker
-DatePickerCellEditor
+
 * Locale aware
 * TimeZone aware
 * Supports null date (nullable)
@@ -22,19 +22,6 @@ DatePickerCellEditor
 * Visual styles
 * Color overriding (NEW)
 * Flexible, extensible
-
-MarkerBar
-* Multiple draggable marks
-* Immovable marks
-* Colored marks
-* Horizontal/vertical alignment
-* Flipped marks
-
-GradientBar
-GradientEditor
-* Key-point based palette
-* Linear color interpolation
-* Horizontal/vertical alignment
 
 FAQ
 -----------

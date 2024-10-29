@@ -69,34 +69,32 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
    private void H(int var1, int var2, okhttp3.f var3, okhttp3.r var4) throws IOException {
       Proxy var5 = this.w.e();
       okhttp3.a var6 = this.w.d();
-      Socket var13;
+      Socket var15;
       if (var5.type() != Type.DIRECT && var5.type() != Type.HTTP) {
-         var13 = new Socket(var5);
+         var15 = new Socket(var5);
       } else {
-         var13 = var6.n().createSocket();
+         var15 = var6.n().createSocket();
       }
 
-      this.x = var13;
+      this.x = var15;
       var4.d(var3, this.w.f(), var5);
       OkHttpClient.a.d(var3, this.w.f(), var5);
       this.x.setSoTimeout(var2);
 
-      StringBuilder var11;
-      ConnectException var12;
       try {
          okhttp3.internal.e.e.n().a(this.x, this.w.f(), var1);
       } catch (ConnectException var9) {
-         var11 = new StringBuilder();
-         var11.append("Failed to connect to ");
-         var11.append(this.w.f());
-         var12 = new ConnectException(var11.toString());
-         var12.initCause(var9);
-         throw var12;
+         StringBuilder var13 = new StringBuilder();
+         var13.append("Failed to connect to ");
+         var13.append(this.w.f());
+         ConnectException var14 = new ConnectException(var13.toString());
+         var14.initCause(var9);
+         throw var14;
       } catch (NullPointerException var10) {
-         var11 = new StringBuilder();
+         StringBuilder var11 = new StringBuilder();
          var11.append("Failed to connect to ");
          var11.append(this.w.f());
-         var12 = new ConnectException(var11.toString());
+         ConnectException var12 = new ConnectException(var11.toString());
          var12.initCause(var10);
          throw var12;
       }
@@ -163,7 +161,6 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
       var5.append(" HTTP/1.1");
       String var10 = var5.toString();
 
-      okhttp3.ag var11;
       do {
          okhttp3.internal.c.a var6 = new okhttp3.internal.c.a((OkHttpClient)null, (okhttp3.internal.connection.e)null, this.C, this.D);
          this.C.k().c((long)var1, TimeUnit.MILLISECONDS);
@@ -314,15 +311,14 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
          if (var2 != null) {
             return var2.M(System.nanoTime());
          } else if (var1) {
-            boolean var10001;
             int var3;
             try {
                var3 = this.y.getSoTimeout();
             } catch (SocketTimeoutException var21) {
-               var10001 = false;
+               boolean var26 = false;
                return true;
             } catch (IOException var22) {
-               var10001 = false;
+               boolean var10001 = false;
                return false;
             }
 
@@ -338,10 +334,10 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
                   try {
                      this.y.setSoTimeout(var3);
                   } catch (SocketTimeoutException var14) {
-                     var10001 = false;
+                     boolean var28 = false;
                      return true;
                   } catch (IOException var15) {
-                     var10001 = false;
+                     boolean var27 = false;
                      return false;
                   }
                }
@@ -352,20 +348,20 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
                   this.y.setSoTimeout(var3);
                   return false;
                } catch (SocketTimeoutException var16) {
-                  var10001 = false;
+                  boolean var30 = false;
                   return true;
                } catch (IOException var17) {
-                  var10001 = false;
+                  boolean var29 = false;
                }
             } else {
                try {
                   this.y.setSoTimeout(var3);
                   return true;
                } catch (SocketTimeoutException var18) {
-                  var10001 = false;
+                  boolean var32 = false;
                   return true;
                } catch (IOException var19) {
-                  var10001 = false;
+                  boolean var31 = false;
                }
             }
 
@@ -435,104 +431,101 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
          synchronized(var2){}
 
          Throwable var10000;
-         boolean var10001;
-         label870: {
-            label876: {
-               ErrorCode var94;
-               label877: {
-                  label867: {
-                     int var3;
+         label874: {
+            label873: {
+               int var3;
+               label880: {
+                  label881: {
                      try {
-                        if (!(var1 instanceof StreamResetException)) {
-                           break label867;
-                        }
+                        if (var1 instanceof StreamResetException) {
+                           var94 = ((StreamResetException)var1).errorCode;
+                           if (var94 != ErrorCode.REFUSED_STREAM) {
+                              break label881;
+                           }
 
-                        var94 = ((StreamResetException)var1).errorCode;
-                        if (var94 != ErrorCode.REFUSED_STREAM) {
-                           break label877;
+                           var3 = this.E + 1;
+                           this.E = var3;
+                           break label880;
                         }
-
-                        var3 = this.E + 1;
-                        this.E = var3;
                      } catch (Throwable var93) {
                         var10000 = var93;
-                        var10001 = false;
-                        break label870;
+                        boolean var10001 = false;
+                        break label874;
                      }
 
-                     if (var3 > 1) {
+                     try {
+                        if (this.t() && !(var1 instanceof ConnectionShutdownException)) {
+                           break label873;
+                        }
+                     } catch (Throwable var92) {
+                        var10000 = var92;
+                        boolean var96 = false;
+                        break label874;
+                     }
+
+                     try {
+                        this.c = true;
+                        if (this.e != 0) {
+                           break label873;
+                        }
+                     } catch (Throwable var91) {
+                        var10000 = var91;
+                        boolean var97 = false;
+                        break label874;
+                     }
+
+                     if (var1 != null) {
                         try {
-                           this.c = true;
-                           ++this.d;
-                        } catch (Throwable var89) {
-                           var10000 = var89;
-                           var10001 = false;
-                           break label870;
+                           this.b.k(this.w, var1);
+                        } catch (Throwable var88) {
+                           var10000 = var88;
+                           boolean var98 = false;
+                           break label874;
                         }
                      }
-                     break label876;
-                  }
 
-                  try {
-                     if (this.t() && !(var1 instanceof ConnectionShutdownException)) {
-                        break label876;
-                     }
-                  } catch (Throwable var92) {
-                     var10000 = var92;
-                     var10001 = false;
-                     break label870;
-                  }
-
-                  try {
-                     this.c = true;
-                     if (this.e != 0) {
-                        break label876;
-                     }
-                  } catch (Throwable var91) {
-                     var10000 = var91;
-                     var10001 = false;
-                     break label870;
-                  }
-
-                  if (var1 != null) {
                      try {
-                        this.b.k(this.w, var1);
-                     } catch (Throwable var88) {
-                        var10000 = var88;
-                        var10001 = false;
-                        break label870;
+                        ++this.d;
+                        break label873;
+                     } catch (Throwable var87) {
+                        var10000 = var87;
+                        boolean var99 = false;
+                        break label874;
                      }
                   }
 
                   try {
-                     ++this.d;
-                     break label876;
-                  } catch (Throwable var87) {
-                     var10000 = var87;
-                     var10001 = false;
-                     break label870;
+                     if (var94 != ErrorCode.CANCEL) {
+                        this.c = true;
+                        ++this.d;
+                     }
+                     break label873;
+                  } catch (Throwable var90) {
+                     var10000 = var90;
+                     boolean var101 = false;
+                     break label874;
                   }
                }
 
-               try {
-                  if (var94 != ErrorCode.CANCEL) {
+               if (var3 > 1) {
+                  try {
                      this.c = true;
                      ++this.d;
+                  } catch (Throwable var89) {
+                     var10000 = var89;
+                     boolean var100 = false;
+                     break label874;
                   }
-               } catch (Throwable var90) {
-                  var10000 = var90;
-                  var10001 = false;
-                  break label870;
                }
             }
 
-            label836:
+            label839:
             try {
                return;
             } catch (Throwable var86) {
                var10000 = var86;
-               var10001 = false;
-               break label836;
+               boolean var102 = false;
+               break label839;
             }
          }
 
@@ -543,7 +536,7 @@ public final class e extends okhttp3.internal.http2.d.c implements okhttp3.j {
                throw var95;
             } catch (Throwable var85) {
                var10000 = var85;
-               var10001 = false;
+               boolean var103 = false;
                continue;
             }
          }

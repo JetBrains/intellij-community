@@ -1,21 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.ZipArchiver
 import org.jetbrains.intellij.build.io.archiveDir
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import org.jetbrains.intellij.build.productRunner.runJavaForIntellijModule
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 
-internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.platform.builtInHelp"
+internal const val BUILT_IN_HELP_MODULE_NAME = "intellij.builtInHelp"
 private val LUCENE_LIBRARIES = setOf("lucene-queryparser", "lucene-highlighter", "lucene-memory")
 
 internal fun buildHelpPlugin(pluginVersion: String, context: BuildContext): PluginLayout? {
@@ -91,18 +91,22 @@ private val helpIndexerMutex = Mutex()
 private suspend fun buildResourcesForHelpPlugin(resourceRoot: Path, classPath: List<String>, assetJar: Path, context: CompilationContext) {
   spanBuilder("index help topics").use {
     helpIndexerMutex.withLock {
-      runJavaForIntellijModule(context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
-                               args = listOf(resourceRoot.resolve("search").toString(),
-                            resourceRoot.resolve("topics").toString()),
-                               jvmArgs = emptyList(),
-                               classPath = classPath)
+      runJavaForIntellijModule(
+        context = context, mainClass = "com.jetbrains.builtInHelp.indexer.HelpIndexer",
+        args = listOf(
+          resourceRoot.resolve("search").toString(),
+          resourceRoot.resolve("topics").toString(),
+        ),
+        jvmArgs = emptyList(),
+        classPath = classPath,
+      )
     }
-    writeNewZipWithoutIndex(assetJar, compress = true) { zipCreator ->
+    writeNewZipWithoutIndex(file = assetJar, compress = true) { zipCreator ->
       val archiver = ZipArchiver(zipCreator)
       archiver.setRootDir(resourceRoot)
-      archiveDir(resourceRoot.resolve("topics"), archiver, null)
-      archiveDir(resourceRoot.resolve("images"), archiver, null)
-      archiveDir(resourceRoot.resolve("search"), archiver, null)
+      archiveDir(startDir = resourceRoot.resolve("topics"), addFile = { archiver.addFile(it) })
+      archiveDir(startDir = resourceRoot.resolve("images"), addFile = { archiver.addFile(it) })
+      archiveDir(startDir = resourceRoot.resolve("search"), addFile = { archiver.addFile(it) })
     }
   }
 }

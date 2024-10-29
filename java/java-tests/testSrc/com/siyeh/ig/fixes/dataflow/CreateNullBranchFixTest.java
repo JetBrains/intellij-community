@@ -16,7 +16,7 @@ public class CreateNullBranchFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new DataFlowInspection());
     myRelativePath = "dataflow/create_null_branch";
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   @Override

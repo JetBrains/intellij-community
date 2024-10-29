@@ -1,0 +1,20 @@
+{
+  "inspections": [
+    {
+      "id": "JsonSchemaCompliance",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "JsonSchemaDeprecation",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "JsonStandardCompliance",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JsonSchemaRefReference",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

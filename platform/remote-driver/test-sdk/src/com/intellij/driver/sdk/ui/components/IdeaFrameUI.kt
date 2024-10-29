@@ -9,14 +9,25 @@ import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.Window
 import com.intellij.driver.sdk.ui.ui
+import java.awt.Frame
 import javax.swing.JFrame
 
+fun Finder.ideFrame() = x(IdeaFrameUI::class.java) { byClass("IdeFrameImpl") }
+
 fun Finder.ideFrame(action: IdeaFrameUI.() -> Unit) {
-  x("//div[@class='IdeFrameImpl']", IdeaFrameUI::class.java).action()
+  ideFrame().action()
 }
 
 fun Driver.ideFrame(action: IdeaFrameUI.() -> Unit) {
   this.ui.ideFrame(action)
+}
+
+fun Finder.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
+  x("//div[@class='IdeFrameImpl' and contains(@accessiblename, '${projectName}')]", IdeaFrameUI::class.java).action()
+}
+
+fun Driver.projectIdeFrame(projectName: String, action: IdeaFrameUI.() -> Unit) {
+  this.ui.projectIdeFrame(projectName, action)
 }
 
 open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
@@ -52,8 +63,15 @@ open class IdeaFrameUI(data: ComponentData) : UiComponent(data) {
 
   fun openSettingsDialog() = driver.invokeAction("ShowSettings", now = false)
 
-  fun requestFocus() {
-    ideaFrameComponent.requestFocus()
+  fun toFront() {
+    ideaFrameComponent.toFront()
+    mainToolbar.click()
+  }
+
+  fun isMinimized() = ideaFrameComponent.getState() == Frame.ICONIFIED
+
+  fun unminimize() {
+    ideaFrameComponent.setState(Frame.NORMAL)
   }
 }
 
@@ -64,9 +82,11 @@ interface ProjectFrameHelper {
 }
 
 @Remote("com.intellij.openapi.wm.impl.IdeFrameImpl")
-interface IdeFrameImpl: Window {
+interface IdeFrameImpl : Window {
   fun isInFullScreen(): Boolean
   fun getExtendedState(): Int
   fun setExtendedState(state: Int)
   fun setSize(width: Int, height: Int)
+  fun getState(): Int
+  fun setState(state: Int)
 }

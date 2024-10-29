@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.reflectiveAccess;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo;
 import com.intellij.codeInsight.lookup.*;
@@ -225,6 +226,10 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
         return;
       }
     }
+    PsiMethod onlyMethod = ContainerUtil.getOnlyItem(filteredMethods);
+    if (onlyMethod != null && AnnotationUtil.isAnnotated(onlyMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+      return;
+    }
 
     final ReflectiveSignature methodSignature = composeMethodSignature(methodTypeExpression);
     if (methodSignature == null) return;
@@ -253,7 +258,6 @@ public final class JavaLangInvokeHandleSignatureInspection extends AbstractBaseJ
       }
     }
   }
-
 
   private static void checkSpecial(@NotNull ReflectiveClass ownerClass,
                                    @NotNull PsiExpression callerClassExpression,

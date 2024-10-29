@@ -5,7 +5,7 @@ class Foo(val i: Int) {
 fun Foo.m() {
     object : Runnable {
         override fun run() {
-            if ((1..2).find<Int> {
+            if ((1..2).find {
                     println(this@m.i)
                     true
                 } != 0) {

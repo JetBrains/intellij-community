@@ -18,7 +18,6 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +26,7 @@ import javax.swing.border.CompoundBorder;
 import java.awt.*;
 
 
-public abstract class TestResultsPanel extends JPanel implements Disposable, DataProvider  {
+public abstract class TestResultsPanel extends JPanel implements Disposable, UiCompatibleDataProvider  {
   private JScrollPane myLeftPane;
   protected final JComponent myConsole;
   protected ToolbarPanel myToolbarPanel;
@@ -147,14 +146,9 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
     return null;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    final TestTreeView view = getTreeView();
-    if (view != null) {
-      return view.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, getTreeView());
   }
 
   @Override

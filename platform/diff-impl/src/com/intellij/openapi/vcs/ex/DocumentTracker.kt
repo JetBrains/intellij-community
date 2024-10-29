@@ -1333,6 +1333,7 @@ sealed class RangeExclusionState {
 /**
  * Used to display files status
  */
+@Internal
 fun RangeExclusionState.countAffectedVisibleChanges(includedIntoCommitOnly: Boolean): Int {
   if (includedIntoCommitOnly) {
     return when (this) {

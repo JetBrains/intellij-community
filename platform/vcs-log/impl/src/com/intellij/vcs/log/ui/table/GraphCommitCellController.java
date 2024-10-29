@@ -85,7 +85,7 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
   }
 
   private @Nullable PrintElement findPrintElement(int row, @NotNull Point pointInCell) {
-    Collection<? extends PrintElement> printElements = myTable.getVisibleGraph().getRowInfo(row).getPrintElements();
+    Collection<? extends PrintElement> printElements = myTable.getModel().getRowInfo(row).getPrintElements();
     return myGraphCellPainter.getElementUnderCursor(ScaleContext.create(myTable), printElements, pointInCell.x, pointInCell.y);
   }
 

@@ -8,6 +8,8 @@ import org.jetbrains.concurrency.asPromise
 abstract class PerformanceCommandCoroutineAdapter(text: String, line: Int) : PerformanceCommand(text, line) {
   protected abstract suspend fun doExecute(context: PlaybackContext)
 
+  override fun isToDumpCommand() = false
+
   override fun _execute(context: PlaybackContext): Promise<Any?> {
     @Suppress("UNCHECKED_CAST")
     return object : PlaybackCommandCoroutineAdapter(text, line) {

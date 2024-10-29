@@ -86,23 +86,23 @@ internal open class GitDefaultMergeDialogCustomizer(
   }
 
   override fun getTitleCustomizerList(file: FilePath): DiffEditorTitleCustomizerList {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file) ?: return DEFAULT_CUSTOMIZER_LIST
-    return when (repository.state) {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(file)
+    return when (repository?.state) {
       Repository.State.MERGING -> getMergeTitleCustomizerList(repository, file)
       Repository.State.REBASING -> getRebaseTitleCustomizerList(repository, file)
       Repository.State.GRAFTING -> getCherryPickTitleCustomizerList(repository, file)
-      else -> DEFAULT_CUSTOMIZER_LIST
-    }
+      else -> null
+    } ?: GitMergeDialogCustomizerHelper.getDefaultCustomizers(project, file)
   }
 
-  private fun getCherryPickTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getCherryPickTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val cherryPickHead = tryResolveRef(repository, CHERRY_PICK_HEAD) ?: return null
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       CHERRY_PICK_HEAD,
       HEAD
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
       GitBundle.message("merge.dialog.diff.left.title.cherry.pick.label.text"),
       repository,
@@ -115,23 +115,23 @@ internal open class GitDefaultMergeDialogCustomizer(
       file,
       cherryPickHead.asString()
     )
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
   @NlsSafe
   private fun getFirstBranch(branches: Collection<String>): String = branches.first()
 
-  private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getMergeTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val currentBranchHash = getHead(repository) ?: return null
     val currentBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
-    val mergeBranch = resolveMergeBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val mergeBranch = resolveMergeBranch(repository) ?: return null
     val mergeBranchHash = mergeBranch.hash
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       currentBranchHash.asString(),
       mergeBranchHash.asString()
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
 
     val leftTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(
       html("merge.dialog.diff.title.changes.from.branch.label.text", text(currentBranchPresentable).bold()),
@@ -145,21 +145,21 @@ internal open class GitDefaultMergeDialogCustomizer(
       file,
       Pair(mergeBase, mergeBranchHash.asString())
     )
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
-  private fun getRebaseTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList {
-    val currentBranchHash = getHead(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+  private fun getRebaseTitleCustomizerList(repository: GitRepository, file: FilePath): DiffEditorTitleCustomizerList? {
+    val currentBranchHash = getHead(repository) ?: return null
     val rebasingBranchPresentable = repository.currentBranchName ?: currentBranchHash.toShortString()
-    val upstreamBranch = resolveRebaseOntoBranch(repository) ?: return DEFAULT_CUSTOMIZER_LIST
+    val upstreamBranch = resolveRebaseOntoBranch(repository) ?: return null
     val upstreamBranchHash = upstreamBranch.hash
-    val rebaseHead = tryResolveRef(repository, REBASE_HEAD) ?: return DEFAULT_CUSTOMIZER_LIST
+    val rebaseHead = tryResolveRef(repository, REBASE_HEAD) ?: return null
     val mergeBase = GitHistoryUtils.getMergeBase(
       repository.project,
       repository.root,
       REBASE_HEAD,
       upstreamBranchHash.asString()
-    )?.rev ?: return DEFAULT_CUSTOMIZER_LIST
+    )?.rev ?: return null
     val leftTitle = html(
       "merge.dialog.diff.left.title.rebase.label.text",
       rebaseHead.toShortString(),
@@ -174,7 +174,7 @@ internal open class GitDefaultMergeDialogCustomizer(
         html("merge.dialog.diff.right.title.rebase.without.branch.label.text")
       }
     val rightTitleCustomizer = getTitleWithCommitsRangeDetailsCustomizer(rightTitle, repository, file, Pair(mergeBase, HEAD))
-    return DiffEditorTitleCustomizerList(leftTitleCustomizer, null, rightTitleCustomizer)
+    return GitMergeDialogCustomizerHelper.getCustomizers(project, file, leftTitleCustomizer, rightTitleCustomizer)
   }
 
   private fun loadCherryPickCommitDetails(repository: GitRepository): CherryPickDetails? {

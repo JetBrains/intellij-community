@@ -6,6 +6,7 @@ package com.intellij.openapi.vcs.impl
 import com.google.common.collect.HashMultiset
 import com.google.common.collect.Multiset
 import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.asContextElement
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.icons.AllIcons
 import com.intellij.notification.Notification
@@ -19,6 +20,7 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -61,13 +63,13 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.Semaphore
+import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.isNonModalCommit
 import com.intellij.vcsUtil.VcsUtil
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.NonNls
@@ -76,7 +78,10 @@ import java.nio.charset.Charset
 import java.util.*
 import java.util.function.Supplier
 
-class LineStatusTrackerManager(private val project: Project) : LineStatusTrackerManagerI, Disposable {
+class LineStatusTrackerManager(
+  private val project: Project,
+  private val coroutineScope: CoroutineScope,
+) : LineStatusTrackerManagerI, Disposable {
   private val LOCK = Any()
   private var isDisposed = false
 
@@ -110,13 +115,13 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     override val order: Int
       get() = VcsInitObject.OTHER_INITIALIZATION.order
 
-    override fun runActivity(project: Project) {
-      getInstanceImpl(project).startListenForEditors()
+    override suspend fun execute(project: Project) {
+      (project.serviceAsync<LineStatusTrackerManagerI>() as LineStatusTrackerManager).startListenForEditors()
     }
   }
 
   private fun startListenForEditors() {
-    val connection = project.messageBus.connect(this)
+    val connection = project.messageBus.connect(coroutineScope)
     connection.subscribe(LineStatusTrackerSettingListener.TOPIC, MyLineStatusTrackerSettingListener())
     connection.subscribe(VcsFreezingProcess.Listener.TOPIC, MyFreezeListener())
     connection.subscribe(CommandListener.TOPIC, MyCommandListener())
@@ -125,7 +130,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     connection.subscribe(FileStatusListener.TOPIC, MyFileStatusListener())
     connection.subscribe(VcsBaseContentProviderListener.TOPIC, BaseContentProviderListener())
 
-    ApplicationManager.getApplication().messageBus.connect(this)
+    ApplicationManager.getApplication().messageBus.connect(coroutineScope)
       .subscribe(VirtualFileManager.VFS_CHANGES, MyVirtualFileListener())
 
     LocalLineStatusTrackerProvider.EP_NAME.addChangeListener(Runnable { updateTrackingSettings() }, this)
@@ -133,17 +138,15 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
 
     updatePartialChangeListsAvailability()
 
-    AppUIExecutor.onUiThread().expireWith(project).execute {
-      if (project.isDisposed) {
-        return@execute
+    coroutineScope.launch(Dispatchers.EDT) {
+      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this@LineStatusTrackerManager)
+
+      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this@LineStatusTrackerManager)
+
+      writeIntentReadAction {
+        MyEditorFactoryListener().install(this@LineStatusTrackerManager)
+        onEverythingChanged()
       }
-
-      ApplicationManager.getApplication().addApplicationListener(MyApplicationListener(), this)
-
-      EditorFactory.getInstance().eventMulticaster.addDocumentListener(MyDocumentListener(), this)
-
-      MyEditorFactoryListener().install(this)
-      onEverythingChanged()
 
       PartialLineStatusTrackerManagerState.restoreState(project)
     }
@@ -214,6 +217,10 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         checkIfTrackerCanBeReleased(document)
       }
     }
+  }
+
+  fun hasPendingUpdate(document: Document) : Boolean {
+    return loader.hasRequestFor(document)
   }
 
   override fun invokeAfterUpdate(task: Runnable) {
@@ -397,6 +404,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     virtualFile: VirtualFile, document: Document,
     refreshExisting: Boolean = false,
   ) {
+    ThreadingAssertions.assertEventDispatchThread()
+
     val provider = getTrackerProvider(virtualFile, document)
 
     val oldTracker = trackers[document]?.tracker
@@ -415,10 +424,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     virtualFile: VirtualFile, document: Document,
     provider: LocalLineStatusTrackerProvider,
   ): LocalLineStatusTracker<*>? {
+    ThreadingAssertions.assertEventDispatchThread()
+
     if (isDisposed) return null
     if (trackers[document] != null) return null
 
-    val tracker = SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
+    val tracker = SlowOperations.startSection("vcs.line-status-tracker-provider").use {
       provider.createTracker(project, virtualFile) ?: return null
     }
     tracker.mode = getTrackingMode()
@@ -440,7 +451,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile, document: Document): LocalLineStatusTrackerProvider? {
-    SlowOperations.allowSlowOperations("vcs.line-status-tracker-provider").use {
+    SlowOperations.startSection("vcs.line-status-tracker-provider").use {
       if (!canCreateTrackerFor(virtualFile, document)) {
         return null
       }
@@ -652,7 +663,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       }
 
       if (tracker is LocalLineStatusTrackerImpl<*>) {
-        ClientId.withClientId(ClientId.localId) {
+        ClientId.withExplicitClientId(ClientId.localId) {
           tracker.setBaseRevision(text)
           log("Offered content", tracker.virtualFile)
         }
@@ -1271,7 +1282,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
 
       isScheduled = true
       scope.launch {
-        ClientId.withClientId(ClientId.localId) {
+        withContext(ClientId.localId.asContextElement()) {
           coroutineToIndicator {
             handleRequests()
           }

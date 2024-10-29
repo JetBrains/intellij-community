@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaPossiblyNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -280,7 +279,7 @@ internal class JoinDeclarationAndAssignmentInspection :
         }
 
         val assignmentCall = firstAssignment.left?.resolveToCall()?.singleVariableAccessCall()?.symbol ?: return null
-        if (assignmentCall != property.getVariableSymbol()) return null
+        if (assignmentCall != property.symbol) return null
 
         if (propertyContainer !is KtClassBody) return firstAssignment
 
@@ -352,7 +351,7 @@ internal class JoinDeclarationAndAssignmentInspection :
 
     context(KaSession)
     private fun PsiElement.hasReference(element: KtProperty): Boolean {
-        val declarationName = (element.symbol as? KaPossiblyNamedSymbol)?.name.toString()
+        val declarationName = element.symbol?.name.toString()
         return anyDescendantOfType<KtNameReferenceExpression> {
             it.text == declarationName && it.reference?.isReferenceTo(element) ?: false
         }
@@ -372,7 +371,7 @@ internal class JoinDeclarationAndAssignmentInspection :
     private fun equalNullableTypes(type1: KaType?, type2: KaType?): Boolean {
         if (type1 == null) return type2 == null
         if (type2 == null) return false
-        return type1.isEqualTo(type2)
+        return type1.semanticallyEquals(type2)
     }
 
     private fun ModPsiUpdater.update(newProperty: KtProperty, canOmitDeclaredType: Boolean) {

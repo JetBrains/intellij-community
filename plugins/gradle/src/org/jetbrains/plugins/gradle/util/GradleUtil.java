@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
@@ -15,12 +15,11 @@ import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -55,12 +54,6 @@ import java.util.Properties;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.intellij.openapi.util.io.FileUtil.isAncestor;
-import static com.intellij.openapi.util.io.FileUtil.toCanonicalPath;
-import static com.intellij.openapi.util.text.StringUtil.*;
-import static org.jetbrains.plugins.gradle.util.GradleConstants.EXTENSION;
-import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTENSION;
-
 /**
  * Holds miscellaneous utility methods.
  */
@@ -71,26 +64,10 @@ public final class GradleUtil {
 
   /**
    * Allows to retrieve file chooser descriptor that filters gradle scripts.
-   * <p/>
-   * <b>Note:</b> we want to fall back to the standard {@link FileTypeDescriptor} when dedicated gradle file type
-   * is introduced (it's processed as groovy file at the moment). We use open project descriptor here in order to show
-   * custom gradle icon at the file chooser ({@link icons.GradleIcons#Gradle}, is used at the file chooser dialog via
-   * the dedicated gradle project open processor).
    */
-  @NotNull
-  public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
+  public static @NotNull FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return new FileChooserDescriptor(true, true, false, false, false, false)
-      .withFileFilter(file -> file.isCaseSensitive()
-                              ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
-                              : endsWithIgnoreCase(file.getName(), "." + EXTENSION) ||
-                                endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
-  }
-
-  @NotNull
-  public static FileChooserDescriptor getGradleHomeFileChooserDescriptor() {
-    // allow selecting files to avoid confusion:
-    // on macOS a user can select any file but after clicking OK, dialog is closed, but IDEA doesnt' receive the file and doesn't react
-    return FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
+      .withExtensionFilter(GradleBundle.message("gradle.filter.label"), GradleConstants.BUILD_FILE_EXTENSIONS);
   }
 
   public static boolean isGradleDefaultWrapperFilesExist(@Nullable String gradleProjectPath) {
@@ -111,6 +88,13 @@ public final class GradleUtil {
       return null;
     }
     return readWrapperConfiguration(wrapperPropertiesFile);
+  }
+
+  public static @NotNull WrapperConfiguration generateGradleWrapperConfiguration(@NotNull GradleVersion gradleVersion) {
+    WrapperConfiguration configuration = new WrapperConfiguration();
+    URI distributionUri = getWrapperDistributionUri(gradleVersion);
+    configuration.setDistribution(distributionUri);
+    return configuration;
   }
 
   public static boolean writeWrapperConfiguration(@NotNull Path targetPath, @NotNull WrapperConfiguration wrapperConfiguration) {
@@ -182,14 +166,14 @@ public final class GradleUtil {
                                          @NotNull String propertyName,
                                          @NotNull Consumer<@NotNull String> valueConsumer) {
     String value = props.getProperty(propertyName);
-    if (!isEmpty(value)) {
+    if (!StringUtil.isEmpty(value)) {
       valueConsumer.accept(value.trim());
     }
   }
 
   private static @Nullable URI parseDistributionUri(@NotNull Properties props, @NotNull Path propertiesFile) {
     String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
-    if (isEmpty(distributionUrl)) {
+    if (StringUtil.isEmpty(distributionUrl)) {
       GradleLog.LOG.warn(String.format("Wrapper 'distributionUrl' property does not exist in file '%s'", propertiesFile.toAbsolutePath()));
       return null;
     }
@@ -205,11 +189,11 @@ public final class GradleUtil {
   }
 
   public static @NotNull URI getWrapperDistributionUri(@NotNull GradleVersion gradleVersion) {
-    var distributionSource = gradleVersion.isSnapshot() ?
-                             "https://services.gradle.org/distributions-snapshots" :
-                             "https://services.gradle.org/distributions";
+    var gradleServicesUrl = GradleEnvironment.Urls.GRADLE_SERVICES_URL;
+    var distributionSource = gradleVersion.isSnapshot() ? "distributions-snapshots" : "distributions";
+    var gradleVersionString = gradleVersion.getVersion();
     try {
-      return new URI(String.format("%s/gradle-%s-bin.zip", distributionSource, gradleVersion.getVersion()));
+      return new URI(String.format("%s/%s/gradle-%s-bin.zip", gradleServicesUrl, distributionSource, gradleVersionString));
     }
     catch (URISyntaxException e) {
       throw new ExternalSystemException(e);
@@ -300,7 +284,7 @@ public final class GradleUtil {
       }
       if (candidates.size() != 1) {
         GradleLog.LOG.warn(String.format("%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
-                                         candidates.size(), wrapperDir, join(candidates, ", ")
+                                         candidates.size(), wrapperDir, StringUtil.join(candidates, ", ")
         ));
         return null;
       }
@@ -448,8 +432,8 @@ public final class GradleUtil {
   }
 
   private static boolean isContentRootAncestor(@NotNull ContentRootData data, @NotNull File ideaOutDir) {
-    var canonicalIdeOutPath = toCanonicalPath(ideaOutDir.getPath());
+    var canonicalIdeOutPath = FileUtil.toCanonicalPath(ideaOutDir.getPath());
     var canonicalRootPath = data.getRootPath();
-    return isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
+    return FileUtil.isAncestor(canonicalRootPath, canonicalIdeOutPath, false);
   }
 }

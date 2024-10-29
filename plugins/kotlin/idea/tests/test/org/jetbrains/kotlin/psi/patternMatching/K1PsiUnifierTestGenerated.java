@@ -647,6 +647,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 public void testMisc3() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/misc/misc3.kt");
                 }
+
+                @TestMetadata("misc4.kt")
+                public void testMisc4() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/misc/misc4.kt");
+                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -768,6 +773,11 @@ public abstract class K1PsiUnifierTestGenerated extends AbstractK1PsiUnifierTest
                 @TestMetadata("const.kt")
                 public void testConst() throws Exception {
                     runTest("testData/unifier/equivalence/expressions/const.kt");
+                }
+
+                @TestMetadata("constDifferentlySpelled.kt")
+                public void testConstDifferentlySpelled() throws Exception {
+                    runTest("testData/unifier/equivalence/expressions/constDifferentlySpelled.kt");
                 }
 
                 @TestMetadata("importedObjectMethod.kt")

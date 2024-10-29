@@ -17,7 +17,6 @@ public final class GradleCommandLineOptionsProvider {
   public static final Options OPTIONS;
   public static final OptionGroup DEBUGGING_OPTIONS;
   public static final OptionGroup PERFORMANCE_OPTIONS;
-  public static final OptionGroup DAEMON_OPTIONS;
   public static final OptionGroup LOGGING_OPTIONS;
   public static final OptionGroup EXECUTION_OPTIONS;
   public static final OptionGroup ENVIRONMENT_OPTIONS;
@@ -60,7 +59,16 @@ public final class GradleCommandLineOptionsProvider {
       // https://github.com/gradle/gradle/blob/v6.2.0/subprojects/tooling-api/src/main/java/org/gradle/tooling/LongRunningOperation.java#L149-L154
       .addOption(Option.builder("h").longOpt("help").desc(GradleDocumentationBundle.message("gradle.cmd.option.help")).build())
       .addOption(Option.builder("v").longOpt("version").desc(GradleDocumentationBundle.message("gradle.cmd.option.version")).build())
-      // These options are deprecated
+      // The tooling API always runs with the daemon.
+      // All the daemon-related options are unsupported by the tooling API.
+      // For more details check the according Javadoc of {@link org.gradle.tooling.LongRunningOperation#withArguments}.
+      // https://docs.gradle.org/current/userguide/command_line_interface.html#gradle_daemon_options
+      .addOption(Option.builder().longOpt("daemon").desc(GradleDocumentationBundle.message("gradle.cmd.option.daemon")).build())
+      .addOption(Option.builder().longOpt("no-daemon").desc(GradleDocumentationBundle.message("gradle.cmd.option.no.daemon")).build())
+      .addOption(Option.builder().longOpt("status").desc(GradleDocumentationBundle.message("gradle.cmd.option.status")).build())
+      .addOption(Option.builder().longOpt("stop").desc(GradleDocumentationBundle.message("gradle.cmd.option.stop")).build())
+      .addOption(Option.builder().longOpt("foreground").desc(GradleDocumentationBundle.message("gradle.cmd.option.stop")).build())
+    // These options are deprecated
       .addOption(Option.builder("b").longOpt("build-file").desc(GradleDocumentationBundle.message("gradle.cmd.option.build.file")).hasArg().build())
       .addOption(Option.builder("c").longOpt("settings-file").desc(GradleDocumentationBundle.message("gradle.cmd.option.settings.file")).hasArg().build());
 
@@ -130,15 +138,6 @@ public final class GradleCommandLineOptionsProvider {
       .addOption(Option.builder("F").longOpt("dependency-verification").desc(GradleDocumentationBundle.message("gradle.cmd.option.dependency.verification")).hasArg().build())
       .addOption(Option.builder("M").longOpt("write-verification-metadata").desc(GradleDocumentationBundle.message("gradle.cmd.option.write.verification.metadata")).hasArg().build());
 
-    // https://docs.gradle.org/current/userguide/command_line_interface.html#gradle_daemon_options
-    DAEMON_OPTIONS = new OptionGroup()
-      .addOption(Option.builder().longOpt("daemon").desc(GradleDocumentationBundle.message("gradle.cmd.option.daemon")).build())
-      .addOption(Option.builder().longOpt("no-daemon").desc(GradleDocumentationBundle.message("gradle.cmd.option.no.daemon")).build())
-      .addOption(Option.builder().longOpt("status").desc(GradleDocumentationBundle.message("gradle.cmd.option.status")).build())
-      .addOption(Option.builder().longOpt("stop").desc(GradleDocumentationBundle.message("gradle.cmd.option.stop")).build())
-      .addOption(Option.builder().longOpt("foreground").desc(GradleDocumentationBundle.message("gradle.cmd.option.stop")).build());
-    // @formatter:on
-
     OPTIONS = new Options()
       .addOptionGroup(DEBUGGING_OPTIONS)
       .addOptionGroup(PERFORMANCE_OPTIONS)
@@ -146,8 +145,7 @@ public final class GradleCommandLineOptionsProvider {
       .addOptionGroup(EXECUTION_OPTIONS)
       .addOptionGroup(ENVIRONMENT_OPTIONS)
       .addOptionGroup(EXECUTING_TASKS_OPTIONS)
-      .addOptionGroup(VERIFICATION_OPTIONS)
-      .addOptionGroup(DAEMON_OPTIONS);
+      .addOptionGroup(VERIFICATION_OPTIONS);
 
     // https://docs.gradle.org/current/userguide/java_testing.html#sec:test_execution
     TEST_TASK_OPTIONS = new OptionGroup()

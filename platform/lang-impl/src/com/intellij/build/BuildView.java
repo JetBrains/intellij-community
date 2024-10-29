@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
 import com.intellij.build.events.BuildEvent;
@@ -484,15 +484,13 @@ public class BuildView extends CompositeView<ExecutionConsole>
            ExecutionManagerImpl.getDelegatedRunProfile(configuration) instanceof RunConfiguration;
   }
 
-  @NotNull
   @Override
-  public AnAction @NotNull[] getActions() {
+  public @NotNull AnAction @NotNull[] getActions() {
     return myExecutionConsole instanceof RunContentActionsContributor c ? c.getActions() : AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
   @Override
-  public AnAction @NotNull[] getAdditionalActions() {
+  public @NotNull AnAction @NotNull[] getAdditionalActions() {
     return myExecutionConsole instanceof RunContentActionsContributor c ? c.getAdditionalActions() : AnAction.EMPTY_ARRAY;
   }
 

@@ -14,7 +14,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ParameterInlayProviderSettingsModel(
   val provider: InlayParameterHintsProvider,
   language: Language

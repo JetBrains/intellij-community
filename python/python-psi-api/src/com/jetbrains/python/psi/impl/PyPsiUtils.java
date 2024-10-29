@@ -298,8 +298,8 @@ public final class PyPsiUtils {
   public static PsiElement getRealContext(@NotNull final PsiElement element) {
     assertValid(element);
     final PsiFile file = element.getContainingFile();
-    if (file instanceof PyExpressionCodeFragment) {
-      final PsiElement context = file.getContext();
+    if (file instanceof PyExpressionCodeFragment fragment) {
+      final PsiElement context = fragment.getRealContext();
       return context != null ? context : element;
     }
     else {

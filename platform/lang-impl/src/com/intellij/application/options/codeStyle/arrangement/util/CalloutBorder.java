@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.util;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -10,7 +10,7 @@ import java.awt.*;
 
 public final class CalloutBorder implements Border {
 
-  @NotNull private static final Insets INSETS = new Insets(
+  private static final @NotNull Insets INSETS = new Insets(
     ArrangementConstants.CALLOUT_BORDER_HEIGHT,
     ArrangementConstants.HORIZONTAL_PADDING,
     ArrangementConstants.VERTICAL_PADDING,

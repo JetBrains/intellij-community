@@ -14,12 +14,11 @@ import com.intellij.internal.statistic.eventLog.mp.MP_RECORDER_ID
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
-
 private const val PM_MP_GROUP_ID = "mp.$PM_FUS_GROUP_ID"
 private const val PM_MP_GROUP_VERSION = 2
 private val EVENT_GROUP = EventLogGroup(
   PM_MP_GROUP_ID,
-  // this is needed to be able to change `PM_MP_GROUP_ID` child group without a requirement to update `PM_FUS_GROUP_ID` parent group version.
+  // this is necessary to be able to change `PM_MP_GROUP_ID` child group without a requirement to update `PM_FUS_GROUP_ID` parent group version.
   PM_FUS_GROUP_VERSION + PM_MP_GROUP_VERSION,
   MP_RECORDER_ID
 )

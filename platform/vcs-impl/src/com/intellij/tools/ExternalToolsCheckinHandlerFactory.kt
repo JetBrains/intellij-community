@@ -12,11 +12,13 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 /**
  * @author lene
  */
+@ApiStatus.Internal
 class ExternalToolsCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler {
     val config = ToolsProjectConfig.getInstance(panel.project)

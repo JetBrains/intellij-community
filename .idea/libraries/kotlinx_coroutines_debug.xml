@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-coroutines-debug" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-debug:1.8.0-intellij-9">
+    <properties include-transitive-deps="false" maven-id="com.intellij.platform:kotlinx-coroutines-debug:1.8.0-intellij-11">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-9/kotlinx-coroutines-debug-1.8.0-intellij-9.jar">
-          <sha256sum>a4bb5d51ab95c9736d12c809793c98fda2994d001f5200fdb27824cbbc23b57b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-11/kotlinx-coroutines-debug-1.8.0-intellij-11.jar">
+          <sha256sum>c142a8fd37fddb317df6ba14bb781a874b110e56d39ba1f8b2e8a58c9d957106</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-9/kotlinx-coroutines-debug-1.8.0-intellij-9.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-11/kotlinx-coroutines-debug-1.8.0-intellij-11.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-9/kotlinx-coroutines-debug-1.8.0-intellij-9-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/intellij/platform/kotlinx-coroutines-debug/1.8.0-intellij-11/kotlinx-coroutines-debug-1.8.0-intellij-11-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

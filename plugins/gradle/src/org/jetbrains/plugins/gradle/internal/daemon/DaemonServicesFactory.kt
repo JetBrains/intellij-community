@@ -10,6 +10,7 @@ import org.gradle.internal.logging.events.OutputEventListener
 import org.gradle.internal.service.ServiceRegistry
 import org.gradle.launcher.daemon.client.DaemonClientFactory
 import org.gradle.launcher.daemon.configuration.DaemonParameters
+import org.gradle.launcher.daemon.configuration.DaemonPriority
 import org.gradle.util.GradleVersion
 import java.io.ByteArrayInputStream
 import java.io.File
@@ -112,20 +113,41 @@ private fun getDaemonRequestContextAfter8Dot8(): Any {
   }
   val daemonJvmCriteriaClass = Class.forName("org.gradle.launcher.daemon.toolchain.DaemonJvmCriteria")
   val nativeServiceModeValue = nativeServicesModeClass.enumConstants[2]
-  if (GradleVersionUtil.isCurrentGradleAtLeast("8.9")) {
+  if (GradleVersionUtil.isCurrentGradleAtLeast("8.10")) {
     val requestContextConstructor = requestContextClass.getDeclaredConstructor(
       daemonJvmCriteriaClass,
       Collection::class.java,
       Boolean::class.java,
       nativeServicesModeClass,
-      DaemonParameters.Priority::class.java
+      DaemonPriority::class.java
     )
     return requestContextConstructor.newInstance(
       /*DaemonJvmCriteria*/ null,
       /*daemonOpts*/ emptyList<String>(),
       /*applyInstrumentationAgent*/ false,
       /*nativeServicesMode*/ nativeServiceModeValue,
-      /*priority*/ DaemonParameters.Priority.NORMAL
+      /*priority*/ DaemonPriority.NORMAL
+    )
+  }
+  val legacyDaemonPriorityClass = Class.forName("org.gradle.launcher.daemon.configuration.DaemonParameters\$Priority")
+  if (!legacyDaemonPriorityClass.isEnum) {
+    throw IllegalStateException("DaemonParameters.Priority is expected to be a Enum. Gradle version: ${GradleVersion.current()}")
+  }
+  val normalDaemonPriority = legacyDaemonPriorityClass.enumConstants[1]
+  if (GradleVersionUtil.isCurrentGradleAtLeast("8.9")) {
+    val requestContextConstructor = requestContextClass.getDeclaredConstructor(
+      daemonJvmCriteriaClass,
+      Collection::class.java,
+      Boolean::class.java,
+      nativeServicesModeClass,
+      legacyDaemonPriorityClass
+    )
+    return requestContextConstructor.newInstance(
+      /*DaemonJvmCriteria*/ null,
+      /*daemonOpts*/ emptyList<String>(),
+      /*applyInstrumentationAgent*/ false,
+      /*nativeServicesMode*/ nativeServiceModeValue,
+      /*priority*/ normalDaemonPriority
     )
   }
   else {
@@ -135,7 +157,7 @@ private fun getDaemonRequestContextAfter8Dot8(): Any {
       Collection::class.java,
       Boolean::class.java,
       nativeServicesModeClass,
-      DaemonParameters.Priority::class.java
+      legacyDaemonPriorityClass
     )
     return requestContextConstructor.newInstance(
       /*JavaInfo*/ null,
@@ -143,7 +165,7 @@ private fun getDaemonRequestContextAfter8Dot8(): Any {
       /*daemonOpts*/ emptyList<String>(),
       /*applyInstrumentationAgent*/ false,
       /*nativeServicesMode*/ nativeServiceModeValue,
-      /*priority*/ DaemonParameters.Priority.NORMAL
+      /*priority*/ normalDaemonPriority
     )
   }
 }

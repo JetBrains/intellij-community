@@ -7,13 +7,13 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.impl.DiffEditorViewer;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.ide.dnd.*;
-import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
@@ -48,6 +48,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Consumer;
 import com.intellij.util.ModalityUiUtil;
@@ -60,7 +61,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xml.util.XmlStringUtil;
 import kotlinx.coroutines.CoroutineScope;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
@@ -82,7 +82,7 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.SHELVE_DELETION_
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparing;
@@ -692,6 +692,8 @@ public class ShelvedChangesViewManager implements Disposable {
     private final ShelveChangesManager myShelveChangesManager;
     private final VcsConfiguration myVcsConfiguration;
 
+    private final @NotNull Wrapper myMainPanelContent = new Wrapper();
+    private final @NotNull JPanel myShelvePanel;
     private final @NotNull JScrollPane myTreeScrollPane;
     private final ShelfTree myTree;
 
@@ -721,21 +723,21 @@ public class ShelvedChangesViewManager implements Disposable {
       actionGroup.add(Separator.getInstance());
       actionGroup.add(new MyToggleDetailsAction());
 
-      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, false);
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("ShelvedChanges", actionGroup, true);
       toolbar.setTargetComponent(myTree);
       myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
 
-      setContent(myTreeScrollPane);
-      setToolbar(toolbar.getComponent());
-      updatePanelLayout();
+      myShelvePanel = JBUI.Panels.simplePanel(myTreeScrollPane)
+        .addToTop(toolbar.getComponent());
+      myMainPanelContent.setContent(myShelvePanel);
+      setContent(myMainPanelContent);
 
       myEditorDiffPreview = new ShelveEditorDiffPreview();
       Disposer.register(this, myEditorDiffPreview);
 
-      setSplitterDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setSplitterDiffPreview);
-
-      myProject.getMessageBus().connect(this).subscribe(ChangesViewContentManagerListener.TOPIC, () -> updatePanelLayout());
+      MessageBusConnection busConnection = myProject.getMessageBus().connect(this);
+      subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
+      updatePanelLayout();
 
       PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
       new MyDnDSupport(myProject, myTree, myTreeScrollPane).install(this);
@@ -752,12 +754,9 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     private void updatePanelLayout() {
-      setVertical(isCommitToolWindowShown(myProject));
-    }
+      boolean isVertical = ChangesViewContentManager.isToolWindowTabVertical(myProject, SHELF);
 
-    private void setSplitterDiffPreview() {
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
-
+      boolean hasSplitterPreview = !isVertical;
       //noinspection DoubleNegation
       boolean needUpdatePreview = hasSplitterPreview != (mySplitterDiffPreview != null);
       if (!needUpdatePreview) return;
@@ -822,8 +821,8 @@ public class ShelvedChangesViewManager implements Disposable {
         myProcessor = new MyShelvedPreviewProcessor(myProject, myTree, false);
         mySplitterComponent = new PreviewDiffSplitterComponent(myProcessor, SHELVE_PREVIEW_SPLITTER_PROPORTION);
 
-        mySplitterComponent.setFirstComponent(myTreeScrollPane);
-        ShelfToolWindowPanel.this.setContent(mySplitterComponent);
+        mySplitterComponent.setFirstComponent(myShelvePanel);
+        myMainPanelContent.setContent(mySplitterComponent);
       }
 
       @Override
@@ -831,7 +830,7 @@ public class ShelvedChangesViewManager implements Disposable {
         Disposer.dispose(myProcessor);
 
         if (!ShelfToolWindowPanel.this.myDisposed) {
-          ShelfToolWindowPanel.this.setContent(myTreeScrollPane);
+          myMainPanelContent.setContent(myShelvePanel);
         }
       }
 
@@ -900,15 +899,14 @@ public class ShelvedChangesViewManager implements Disposable {
 
       private @NotNull DnDImage createDraggedImage(@NotNull DnDActionInfo info) {
         String imageText = VcsBundle.message("unshelve.changes.action");
-        Image image = DnDAwareTree.getDragImage(myTree, imageText, null).getFirst();
-        return new DnDImage(image, new Point(-image.getWidth(null), -image.getHeight(null)));
+        return ChangesTreeDnDSupport.createDragImage(myTree, imageText);
       }
     }
 
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     }
 
     private class MyToggleDetailsAction extends ShowDiffPreviewAction {

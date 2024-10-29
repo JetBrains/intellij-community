@@ -104,6 +104,25 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../idea/tests/testData/parameterInfo/fromJava")
+    public static class FromJava extends AbstractFirParameterInfoTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("Usage.java")
+        public void testUsage() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/fromJava/Usage.java");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/parameterInfo/functionCall")
     public static class FunctionCall extends AbstractFirParameterInfoTest {
         @java.lang.Override
@@ -214,6 +233,11 @@ public abstract class FirParameterInfoTestGenerated extends AbstractFirParameter
         @TestMetadata("InheritedWithCurrentFunctions.kt")
         public void testInheritedWithCurrentFunctions() throws Exception {
             runTest("../../idea/tests/testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
+        }
+
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("../../idea/tests/testData/parameterInfo/functionCall/InvalidCandidates.kt");
         }
 
         @TestMetadata("Invoke.kt")

@@ -13,11 +13,13 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.editor.DiffEditorTabFilesManager;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
 import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.merge.ConflictType;
+import com.intellij.diff.merge.MergeRequest;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
@@ -30,6 +32,7 @@ import com.intellij.ide.GeneralSettings;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -59,6 +62,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.EditorComposite;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorImpl;
 import com.intellij.openapi.fileTypes.*;
@@ -101,6 +105,8 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.SingleComponentCenteringLayout;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import icons.PlatformDiffImplIcons;
 import org.jetbrains.annotations.*;
 
@@ -117,7 +123,6 @@ import java.util.*;
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
-import static com.intellij.diff.editor.DiffEditorTabFilesManagerKt.DIFF_OPENED_IN_NEW_WINDOW;
 import static com.intellij.util.ArrayUtilRt.EMPTY_BYTE_ARRAY;
 import static com.intellij.util.ObjectUtils.notNull;
 
@@ -244,7 +249,10 @@ public final class DiffUtil {
 
   public static void setEditorCodeStyle(@Nullable Project project, @NotNull EditorEx editor, @Nullable DocumentContent content) {
     if (project != null && content != null && editor.getVirtualFile() == null) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      PsiFile psiFile;
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162978")) {
+        psiFile = PsiDocumentManager.getInstance(project).getPsiFile(content.getDocument());
+      }
       CommonCodeStyleSettings.IndentOptions indentOptions = psiFile != null
                                                             ? CodeStyle.getSettings(psiFile).getIndentOptionsByFile(psiFile)
                                                             : CodeStyle.getSettings(project).getIndentOptions(content.getContentType());
@@ -519,7 +527,8 @@ public final class DiffUtil {
       group.addSeparator();
     }
 
-    AnAction[] children = group.getChildren(ActionManager.getInstance());
+    ActionManager actionManager = ActionManager.getInstance();
+    AnAction[] children = group.getChildren(actionManager);
     for (AnAction action : actions) {
       if (action instanceof Separator ||
           !ArrayUtil.contains(action, children)) {
@@ -557,6 +566,43 @@ public final class DiffUtil {
       result.append(HtmlChunk.span("color:#" + ColorUtil.toHex(JBColor.gray) + "; font-size:small").addText(appendix));
     }
     return result.wrapWithHtmlBody().toString();
+  }
+
+  /**
+   * RemDev-friendly UI listener
+   * <p>
+   * {@link UIUtil#markAsShowing} is not firing the events, so the components with delayed intitialization will not function correctly.
+   */
+  public static void runWhenFirstShown(@NotNull JComponent component, @NotNull Runnable runnable) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      runnable.run();
+    }
+    else {
+      UiNotifyConnector.doWhenFirstShown(component, runnable);
+    }
+  }
+
+  public static void installShowNotifyListener(@NotNull JComponent component, @NotNull Runnable runnable) {
+    installShowNotifyListener(component, new Activatable() {
+      @Override
+      public void showNotify() {
+        runnable.run();
+      }
+    });
+  }
+
+  /**
+   * RemDev-friendly UI listener
+   * <p>
+   * {@link UIUtil#markAsShowing} is not firing the events, so the components with delayed intitialization will not function correctly.
+   */
+  public static void installShowNotifyListener(@NotNull JComponent component, @NotNull Activatable activatable) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      activatable.showNotify();
+    }
+    else {
+      UiNotifyConnector.installOn(component, activatable);
+    }
   }
 
   //
@@ -704,7 +750,9 @@ public final class DiffUtil {
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
     JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
                                                     : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
-    labelWithIcon.addToCenter(titleLabel);
+    if (titleLabel != null) {
+      labelWithIcon.addToCenter(titleLabel);
+    }
     if (readOnly) {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
     }
@@ -1587,14 +1635,18 @@ public final class DiffUtil {
     EditorWindowHolder holder = UIUtil.getParentOfType(EditorWindowHolder.class, diffComponent);
     if (holder == null) return;
 
-    List<EditorComposite> composites = holder.getEditorWindow().getAllComposites();
-    if (composites.size() == 1) {
-      if (DIFF_OPENED_IN_NEW_WINDOW.get(composites.get(0).getFile(), false)) {
-        Window window = UIUtil.getWindow(diffComponent);
-        if (window != null && !canBeHiddenBehind(window)) {
-          if (window instanceof Frame) {
-            ((Frame)window).setState(Frame.ICONIFIED);
-          }
+    EditorWindow editorWindow = holder.getEditorWindow();
+    List<EditorComposite> composites = editorWindow.getAllComposites();
+    if (composites.size() != 1) return;
+
+    Project project = editorWindow.getManager().getProject();
+    VirtualFile file = composites.get(0).getFile();
+
+    if (DiffEditorTabFilesManager.getInstance(project).isDiffOpenedInWindow(file)) {
+      Window window = UIUtil.getWindow(diffComponent);
+      if (window != null && !canBeHiddenBehind(window)) {
+        if (window instanceof Frame) {
+          ((Frame)window).setState(Frame.ICONIFIED);
         }
       }
     }
@@ -1701,22 +1753,21 @@ public final class DiffUtil {
     return wrapper;
   }
 
+  @NotNull
+  public static <T extends DiffRequest> T addTitleCustomizers(@NotNull T request, @NotNull List<DiffEditorTitleCustomizer> customizers) {
+    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, customizers);
+    return request;
+  }
+
+  @NotNull
+  public static <T extends MergeRequest> T addTitleCustomizers(@NotNull T request, @NotNull List<DiffEditorTitleCustomizer> customizers) {
+    request.putUserData(DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER, customizers);
+    return request;
+  }
+
   //
   // DataProvider
   //
-
-  @Nullable
-  public static Object getData(@Nullable DataProvider provider, @Nullable DataProvider fallbackProvider, @NotNull @NonNls String dataId) {
-    if (provider != null) {
-      Object data = provider.getData(dataId);
-      if (data != null) return data;
-    }
-    if (fallbackProvider != null) {
-      Object data = fallbackProvider.getData(dataId);
-      if (data != null) return data;
-    }
-    return null;
-  }
 
   public static <T> void putDataKey(@NotNull UserDataHolder holder, @NotNull DataKey<T> key, @Nullable T value) {
     DataProvider dataProvider = holder.getUserData(DiffUserDataKeys.DATA_PROVIDER);

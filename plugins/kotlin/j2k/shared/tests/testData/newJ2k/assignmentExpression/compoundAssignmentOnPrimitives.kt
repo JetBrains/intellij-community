@@ -1,8 +1,3 @@
-// ERROR: No set method providing array access
-// ERROR: No set method providing array access
-// ERROR: No set method providing array access
-// ERROR: No set method providing array access
-// ERROR: No set method providing array access
 class J {
     fun testField(c: Char, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double) {
         var cc = 1.toChar()
@@ -98,15 +93,12 @@ class J {
     }
 
     fun testArrayAccess(c: Char, b: Byte, s: Short, i: Int, l: Long, f: Float, d: Double) {
-        // in K1 this currently results in a NO_SET_METHOD error (KT-11272), which should be fixed in K2
         val charArr = charArrayOf(1.toChar())
-        // <KT-11272>
         charArr[0] += c.code
         charArr[0] += Char(b.toUShort()).code
         charArr[0] += Char(s.toUShort()).code
         charArr[0] += i.toChar().code
         charArr[0] += Char(l.toUShort()).code
-        // </KT-11272>
         charArr[0] = (charArr[0].code.toFloat() + f).toInt().toChar()
         charArr[0] = (charArr[0].code.toDouble() + d).toInt().toChar()
         charArr[0] = (charArr[0].code.toDouble() - d).toInt().toChar()

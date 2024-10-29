@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMap;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectMaps;
 import it.unimi.dsi.fastutil.doubles.Double2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +95,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
     contributor.registerReferenceProviders(registrar);
   }
 
+  @ApiStatus.Internal
   @Override
   public @NotNull PsiReferenceRegistrarImpl getRegistrar(@NotNull Language language) {
     return myRegistrars.computeIfAbsent(language, ReferenceProvidersRegistryImpl::createRegistrar);
@@ -210,6 +212,7 @@ public final class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegi
   /**
    * @deprecated to attract attention and motivate to fix tests which fail these checks
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void disableUnderlyingElementChecks(@NotNull Disposable parentDisposable) {
     Registry.get("ide.check.reference.provider.underlying.element").setValue(false, parentDisposable);

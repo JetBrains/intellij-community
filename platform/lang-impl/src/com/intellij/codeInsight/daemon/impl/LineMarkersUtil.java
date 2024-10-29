@@ -53,7 +53,7 @@ final class LineMarkersUtil {
 
         if (
           // (recycle) zombie line marker immediately because similar-looking line markers don't merge, unlike regular HighlightInfos
-          HighlightingMarkupGrave.Companion.isZombieMarkup(highlighter) && highlighter.getGutterIconRenderer() != null
+          HighlightingNecromancer.isZombieMarkup(highlighter) && highlighter.getGutterIconRenderer() != null
           || group == -1 || info != null && info.updatePass == group) {
           recycler.computeIfAbsent(((RangeMarkerImpl)highlighter).getScalarRange(), __ -> new ArrayList<>()).add(highlighter);
         }
@@ -117,18 +117,17 @@ final class LineMarkersUtil {
       if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
         markupModel.changeAttributesInBatch(highlighter, changeAttributes(info, rendererChanged, newRenderer, lineSeparatorColorChanged, lineSeparatorPlacementChanged));
       }
-      HighlightingMarkupGrave.Companion.unmarkZombieMarkup(highlighter);
+      HighlightingNecromancer.unmarkZombieMarkup(highlighter);
     }
     highlighter.putUserData(LINE_MARKER_INFO, info);
     info.highlighter = highlighter;
   }
 
-  @NotNull
-  private static Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
-                                                               boolean rendererChanged,
-                                                               LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
-                                                               boolean lineSeparatorColorChanged,
-                                                               boolean lineSeparatorPlacementChanged) {
+  private static @NotNull Consumer<RangeHighlighterEx> changeAttributes(@NotNull LineMarkerInfo<?> info,
+                                                                        boolean rendererChanged,
+                                                                        LineMarkerInfo.LineMarkerGutterIconRenderer<?> newRenderer,
+                                                                        boolean lineSeparatorColorChanged,
+                                                                        boolean lineSeparatorPlacementChanged) {
     return markerEx -> {
       if (rendererChanged) {
         markerEx.setGutterIconRenderer(newRenderer);
@@ -154,7 +153,7 @@ final class LineMarkersUtil {
     synchronized (LOCK) {
       allIsClear = markupModel.processRangeHighlightersOverlappingWith(markerInfo.startOffset, markerInfo.endOffset,
         highlighter -> {
-          if (HighlightingMarkupGrave.Companion.isZombieMarkup(highlighter)) {
+          if (HighlightingNecromancer.isZombieMarkup(highlighter)) {
             recycler.computeIfAbsent(((RangeMarkerImpl)highlighter).getScalarRange(), __ -> new ArrayList<>()).add(highlighter);
             return true;
           }

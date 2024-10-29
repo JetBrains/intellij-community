@@ -434,7 +434,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
       for (PropertiesFile propertiesFile : myCustomization.propertiesFiles) {
         final VirtualFile virtualFile = propertiesFile.getVirtualFile();
         if (virtualFile != null) {
-          list.add(virtualFile.getPath());
+          list.add(FileUtil.toSystemDependentName(virtualFile.getPath()));
         }
       }
       return list;

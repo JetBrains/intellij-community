@@ -1,0 +1,29 @@
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "intellij.platform.externalSystem",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "resources/**/*.kt", "resources/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util:intellij.platform.util",
+    "@community//platform/projectModel-api:intellij.platform.projectModel",
+    "@community//platform/platform-api:intellij.platform.ide",
+    "@community//platform/lang-api:intellij.platform.lang",
+    "@community//platform/external-system-rt:intellij.platform.externalSystem.rt",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/jdom:intellij.platform.util.jdom",
+    "@community//platform/object-serializer:intellij.platform.objectSerializer",
+    "@community//platform/object-serializer/annotations:intellij.platform.objectSerializer.annotations",
+    "@community//platform/util/ui:intellij.platform.util.ui",
+    "@community//platform/util/concurrency:intellij.platform.concurrency",
+    "@community//platform/platform-util-io:intellij.platform.ide.util.io",
+    "@community//platform/external-system-api/dependency-updater:intellij.platform.externalSystem.dependencyUpdater",
+    "@community//platform/core-ui:intellij.platform.core.ui",
+    "@community//platform/backend/observation:intellij.platform.backend.observation",
+    "@community//platform/workspace/storage:intellij.platform.workspace.storage",
+    "@community//platform/backend/workspace:intellij.platform.backend.workspace"
+  ],
+  exports = ["@community//platform/external-system-rt:intellij.platform.externalSystem.rt"]
+)

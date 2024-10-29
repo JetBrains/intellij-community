@@ -20,8 +20,9 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.tree.DefaultMutableTreeNode
 
-fun showTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) =
+internal fun showTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) {
   RunConfigurationTemplatesDialog(project, selectedConfigurationType).show()
+}
 
 class RunConfigurationTemplatesDialog(project: Project, selectedConfigurationType: ConfigurationType?) :
   SingleConfigurableEditor(project, RunConfigurationTemplatesConfigurable(project, selectedConfigurationType)) {

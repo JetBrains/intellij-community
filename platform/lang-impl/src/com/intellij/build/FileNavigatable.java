@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.build;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,9 +24,8 @@ public final class FileNavigatable implements Navigatable {
     myProject = project;
     myFilePosition = filePosition;
     myValue = new NullableLazyValue<>() {
-      @Nullable
       @Override
-      protected OpenFileDescriptor compute() {
+      protected @Nullable OpenFileDescriptor compute() {
         return createDescriptor();
       }
     };
@@ -32,7 +33,10 @@ public final class FileNavigatable implements Navigatable {
 
   @Override
   public void navigate(boolean requestFocus) {
-    Navigatable descriptor = getFileDescriptor();
+    Navigatable descriptor;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162975")) {
+      descriptor = getFileDescriptor();
+    }
     if (descriptor != null) {
       descriptor.navigate(requestFocus);
     }
@@ -56,18 +60,15 @@ public final class FileNavigatable implements Navigatable {
     return false;
   }
 
-  @Nullable
-  public OpenFileDescriptor getFileDescriptor() {
+  public @Nullable OpenFileDescriptor getFileDescriptor() {
     return myValue.getValue();
   }
 
-  @NotNull
-  public FilePosition getFilePosition() {
+  public @NotNull FilePosition getFilePosition() {
     return myFilePosition;
   }
 
-  @Nullable
-  private OpenFileDescriptor createDescriptor() {
+  private @Nullable OpenFileDescriptor createDescriptor() {
     OpenFileDescriptor descriptor = null;
     VirtualFile file = VfsUtil.findFileByIoFile(myFilePosition.getFile(), false);
     if (file != null) {

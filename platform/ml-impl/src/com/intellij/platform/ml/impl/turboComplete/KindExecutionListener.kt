@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.codeInsight.completion.CompletionParameters
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Listens how [SuggestionGenerator]s are executed
@@ -11,6 +12,7 @@ import com.intellij.codeInsight.completion.CompletionParameters
  *
  * The functions are called in their declaration order.
  */
+@ApiStatus.Internal
 interface KindExecutionListener {
   /**
    * Code completion was just called

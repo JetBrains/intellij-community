@@ -511,6 +511,10 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
     state.myIsWheelFontChangeEnabled = `val`
   }
 
+  override fun resetWheelFontChangeEnabled() {
+    state.clearOverriding(state::myIsWheelFontChangeEnabled)
+  }
+
   override fun isMouseClickSelectionHonorsCamelWords(): Boolean {
     return state.myIsMouseClickSelectionHonorsCamelWords
   }
@@ -728,9 +732,11 @@ class SettingsImpl internal constructor(private val editor: EditorImpl?, kind: E
                 defaultValue = result
                 newGetValueResult = overwrittenValue ?: cachedValue ?: defaultValue
               }
-              fireEditorRefresh(false)
-              if (oldGetValueResult != newGetValueResult) {
-                fireValueChanged(newGetValueResult)
+              writeIntentReadAction {
+                fireEditorRefresh(false)
+                if (oldGetValueResult != newGetValueResult) {
+                  fireValueChanged(newGetValueResult)
+                }
               }
             }
           }

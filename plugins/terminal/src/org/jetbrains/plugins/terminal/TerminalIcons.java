@@ -14,11 +14,11 @@ public final class TerminalIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, TerminalIcons.class.getClassLoader(), cacheKey, flags);
   }
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, TerminalIcons.class.getClassLoader(), cacheKey, flags);
   }
   /** 16x16 */ public static final @NotNull Icon Command = load("icons/command.svg", 957086477, 2);
-  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/OpenTerminal_13x13.svg", "icons/expui/toolwindow/terminal.svg", 1939257758, 2);
+  /** 13x13 */ public static final @NotNull Icon OpenTerminal_13x13 = load("icons/expui/toolwindow/terminal.svg", "icons/OpenTerminal_13x13.svg", 1939257758, 2);
   /** 16x16 */ public static final @NotNull Icon Option = load("icons/option.svg", -1363443188, 2);
   /** 16x16 */ public static final @NotNull Icon Other = load("icons/other.svg", 2034971647, 2);
   /** 16x16 */ public static final @NotNull Icon OtherFile = load("icons/otherFile.svg", 1021254284, 2);

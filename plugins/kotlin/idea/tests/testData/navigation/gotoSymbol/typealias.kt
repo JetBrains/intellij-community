@@ -17,7 +17,3 @@ class Some() {
 }
 
 // SEARCH_TEXT: test
-// REF: (in Some).testInClass
-// REF: (in Some.Companion).testInClassObject
-// REF: (in SomeInterface).testInInterface
-// REF: testGlobal

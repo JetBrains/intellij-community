@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.registry;
 
 import com.intellij.idea.TestFor;
@@ -12,24 +12,47 @@ import org.junit.Test;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static junit.framework.Assert.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class RegistryTest {
   private static final String INTEGER_KEY = "editor.mouseSelectionStateResetDeadZone";
   private static final String INT_KEY_REQUIRE_RESTART = "editor.caret.width";
 
-
   @After
   public void tearDown(){
-    Registry.setValueChangeListener(null);
+    Registry.Companion.setValueChangeListener(null);
   }
-
 
   @Test
   public void testInvalidInteger() {
     int originalValue = Registry.intValue(INTEGER_KEY);
     Registry.get(INTEGER_KEY).setValue("invalidNumber");
-    assertEquals(originalValue, Registry.intValue(INTEGER_KEY));
+    assertThat(Registry.intValue(INTEGER_KEY)).isEqualTo(originalValue);
+  }
+
+  @Test
+  public void booleanValueFalse() {
+    RegistryValue handle = Registry.get("ide.tree.experimental.layout.cache");
+    try {
+      assertThat(handle.asString()).isEqualTo("true");
+      assertThat(handle.asBoolean()).isTrue();
+    }
+    finally {
+      handle.resetToDefault();
+    }
+  }
+
+  @Test
+  public void booleanValueTrue() {
+    RegistryValue handle = Registry.get("ide.tree.painter.classic.compact");
+    try {
+      assertThat(handle.asString()).isEqualTo("false");
+      assertThat(handle.asBoolean()).isFalse();
+    }
+    finally {
+      handle.resetToDefault();
+    }
   }
 
   @Test
@@ -39,7 +62,7 @@ public class RegistryTest {
     String firstVal = "first.value1";
     String secondValue = "second.value1";
     final AtomicReference<Pair<String, String>> lastChangedPair = new AtomicReference<>();
-    Registry.setValueChangeListener(new RegistryValueListener() {
+    Registry.Companion.setValueChangeListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         if (!value.getKey().equals(key))
@@ -50,13 +73,13 @@ public class RegistryTest {
 
     Map<String, String> firstMap = new LinkedHashMap<>();
     firstMap.put(key, firstVal);
-    Registry.loadState(registryElementFromMap(firstMap), null);
+    Registry.Companion.loadState(registryElementFromMap(firstMap), null);
     assertEquals(firstVal, Registry.get(key).asString());
     assertNull(lastChangedPair.get());
 
     Map<String, String> secondMap = new LinkedHashMap<>();
     secondMap.put(key, secondValue);
-    Registry.loadState(registryElementFromMap(secondMap), null);
+    Registry.Companion.loadState(registryElementFromMap(secondMap), null);
     assertEquals(secondValue, Registry.get(key).asString());
     assertEquals(Pair.create(key, secondValue), lastChangedPair.get());
   }
@@ -71,7 +94,7 @@ public class RegistryTest {
     String eaFirstVal = "ea.first.value";
     String eaSecondValue = "ea.second.value";
     final AtomicReference<Pair<String, String>> lastChangedPair = new AtomicReference<>();
-    Registry.setValueChangeListener(new RegistryValueListener() {
+    Registry.Companion.setValueChangeListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         if (!(value.getKey().equals(key) || value.getKey().equals(eaKey)))
@@ -80,12 +103,12 @@ public class RegistryTest {
       }
     });
 
-    Registry.loadState(registryElementFromMap(Map.of(key, firstVal)), Map.of(eaKey, eaFirstVal));
+    Registry.Companion.loadState(registryElementFromMap(Map.of(key, firstVal)), Map.of(eaKey, eaFirstVal));
     assertEquals(firstVal, Registry.get(key).asString());
     assertEquals(eaFirstVal, Registry.get(eaKey).asString());
     assertNull(lastChangedPair.get());
 
-    Registry.loadState(registryElementFromMap(Map.of(key, firstVal, eaKey, eaSecondValue)), null);
+    Registry.Companion.loadState(registryElementFromMap(Map.of(key, firstVal, eaKey, eaSecondValue)), null);
     assertEquals(firstVal, Registry.get(key).asString());
     assertEquals(eaSecondValue, Registry.get(eaKey).asString());
     assertEquals(Pair.create(eaKey, eaSecondValue), lastChangedPair.get());
@@ -103,7 +126,7 @@ public class RegistryTest {
     String newValue = "another.value";
     final AtomicReference<Pair<String, String>> lastChangedPair = new AtomicReference<>();
     final List<Pair<String, String>> changedPairs = new ArrayList<>();
-    Registry.setValueChangeListener(new RegistryValueListener() {
+    Registry.Companion.setValueChangeListener(new RegistryValueListener() {
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         if (!(value.getKey().equals(key)))
@@ -116,19 +139,19 @@ public class RegistryTest {
 
     Map<String, String> firstMap = new LinkedHashMap<>();
     firstMap.put(key, firstVal);
-    Registry.loadState(registryElementFromMap(firstMap), null);
+    Registry.Companion.loadState(registryElementFromMap(firstMap), null);
     assertEquals(firstVal, Registry.get(key).asString());
     assertNull(lastChangedPair.get());
 
     Map<String, String> secondMap = new LinkedHashMap<>();
     secondMap.put(key, secondValue);
     secondMap.put(newKey, newValue);
-    Registry.loadState(registryElementFromMap(secondMap), null);
+    Registry.Companion.loadState(registryElementFromMap(secondMap), null);
     assertEquals(secondValue, Registry.get(key).asString());
     RegistryValue newRegistryValue = Registry.get(newKey);
-    String loadedNewValue = newRegistryValue.get(newRegistryValue.getKey(), null, false);
+    String loadedNewValue = newRegistryValue.resolveNotRequiredValue(newRegistryValue.getKey());
     assertNull(loadedNewValue);
-    assertEquals(1, changedPairs.size());
+    assertThat(changedPairs).hasSize(1);
   }
 
   @Test
@@ -143,7 +166,7 @@ public class RegistryTest {
     String secondKeyChangedValue = "second.initValue";
 
     // initialize registry
-    Registry.loadState(registryElementFromMap(new LinkedHashMap<>(){{
+    Registry.Companion.loadState(registryElementFromMap(new LinkedHashMap<>(){{
       put(firstKey, firstKeyInitValue);
         put(secondKey, secondKeyInitValue);
     }}), null);
@@ -151,19 +174,19 @@ public class RegistryTest {
     assertEquals(secondKeyInitValue, Registry.get(secondKey).asString());
 
     // add custom values
-    Registry.loadState(registryElementFromMap(new LinkedHashMap<>(){{
+    Registry.Companion.loadState(registryElementFromMap(new LinkedHashMap<>(){{
       put(firstKey, firstKeyChangedVal);
       put(secondKey, secondKeyChangedValue);
     }}), null);
-    assertEquals(firstKeyChangedVal, Registry.get(firstKey).asString());
-    assertEquals(secondKeyChangedValue, Registry.get(secondKey).asString());
+    assertThat(Registry.get(firstKey).asString()).isEqualTo(firstKeyChangedVal);
+    assertThat(Registry.get(secondKey).asString()).isEqualTo(secondKeyChangedValue);
 
     // drop key - reset to original
-    Registry.loadState(registryElementFromMap(new LinkedHashMap<>(){{
+    Registry.Companion.loadState(registryElementFromMap(new LinkedHashMap<>(){{
       put(firstKey, firstKeyChangedVal);
     }}), null);
-    assertEquals(firstKeyChangedVal, Registry.get(firstKey).asString());
-    assertEquals(secondKeyInitValue, Registry.get(secondKey).asString());
+    assertThat(Registry.get(firstKey).asString()).isEqualTo(firstKeyChangedVal);
+    assertThat(Registry.get(secondKey).asString()).isEqualTo(secondKeyInitValue);
   }
 
   @Test
@@ -184,14 +207,14 @@ public class RegistryTest {
     String registryValue = "testBoolean";
     RegistryValue regValue = new RegistryValue(Registry.getInstance(), registryValue, null);
     regValue.setValue(false);
-    Registry.setValueChangeListener(new RegistryValueListener() {
+    Registry.Companion.setValueChangeListener(new RegistryValueListener() {
       @Override
       public void beforeValueChanged(@NotNull RegistryValue value) {
         regValue.asBoolean();
       }
     });
     regValue.setValue(true);
-    assertTrue(regValue.asBoolean());
+    assertThat(regValue.asBoolean()).isTrue();
   }
 
   @Test
@@ -201,17 +224,27 @@ public class RegistryTest {
     {
       Map<String, String> map = populateMap(Comparator.naturalOrder(), "value");
       Element state2load = registryElementFromMap(map);
-      Registry.loadState(state2load, null);
+      Registry.Companion.loadState(state2load, null);
       assertEquals(JDOMUtil.writeElement(state2load), JDOMUtil.writeElement(Registry.getInstance().getState()));
     }
     // load state with elements reversed
-    Registry.loadState(registryElementFromMap(populateMap(Comparator.reverseOrder(), "AnotherValue1111")), null);
+    Registry.Companion.loadState(registryElementFromMap(populateMap(Comparator.reverseOrder(), "AnotherValue1111")), null);
 
     assertEquals(JDOMUtil.writeElement(registryElementFromMap(populateMap(Comparator.naturalOrder(), "AnotherValue1111"))),
                  JDOMUtil.writeElement(Registry.getInstance().getState()));
   }
 
-  private Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {
+  @Test
+  public void checkOptionsUpdatedProperly() {
+    String registryName = "testOptions";
+    String registryValue = "[option1*|option2|option3]";
+    RegistryValue registry = new RegistryValue(Registry.getInstance(), registryName, new RegistryKeyDescriptor(registryName, "", registryValue, false, false, null));
+    assertEquals("option1", registry.getSelectedOption());
+    registry.setSelectedOption("option2");
+    assertThat(registry.getSelectedOption()).isEqualTo("option2");
+  }
+
+  private static Map<String, String> populateMap(Comparator<String> comparator, String valueBase) {
     Map<String, String> map = new TreeMap<>(comparator);
     map.put("first.key", "first." + valueBase);
     for (int i = 0; i < 20; i++) {
@@ -225,7 +258,7 @@ public class RegistryTest {
   }
 
 
-  private Element registryElementFromMap(Map<String, String> map){
+  private static Element registryElementFromMap(Map<String, String> map){
     Element registryElement = new Element("registry");
     for (Map.Entry<String, String> entry : map.entrySet()) {
       Element entryElement = new Element("entry");

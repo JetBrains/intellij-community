@@ -9,7 +9,7 @@ interface ReviewListSearchPanelViewModel<S : ReviewListSearchValue, Q : ReviewLi
   val queryState: MutableStateFlow<String?>
 
   val emptySearch: S
-  val defaultQuickFilter: Q
+  val defaultFilter: S
 
   fun getSearchHistory(): List<S>
 }

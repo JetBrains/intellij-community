@@ -8,9 +8,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
-class ExecutionModel {
+internal class ExecutionModel {
   companion object {
     fun getInstance(project: Project) = project.service<ExecutionModel>()
   }
@@ -18,6 +19,7 @@ class ExecutionModel {
   val configurations = ViewableMap<MultiLaunchConfiguration, MultiLaunchExecutionModel>()
 }
 
+@ApiStatus.Internal
 class MultiLaunchExecutionModel(val settings: RunnerAndConfigurationSettings, val configuration: MultiLaunchConfiguration) {
   val executables = ViewableMap<Executable, ExecutableExecutionModel>()
   val isDone = Property(false)
@@ -31,6 +33,7 @@ class MultiLaunchExecutionModel(val settings: RunnerAndConfigurationSettings, va
   }
 }
 
+@ApiStatus.Internal
 class ExecutableExecutionModel(val descriptor: ExecutionDescriptor) {
-  val status = Property<ExecutionStatus>(ExecutionStatus.NotStarted)
+  internal val status = Property<ExecutionStatus>(ExecutionStatus.NotStarted)
 }

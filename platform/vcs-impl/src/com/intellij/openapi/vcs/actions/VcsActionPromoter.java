@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.commit.CommitActionsPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -19,7 +20,8 @@ import java.util.Set;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
 
-public class VcsActionPromoter implements ActionPromoter {
+@ApiStatus.Internal
+public final class VcsActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions, @NotNull DataContext context) {
     ActionManager am = ActionManager.getInstance();

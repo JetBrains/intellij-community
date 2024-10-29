@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class SelectGroupingAction extends LabeledComboBoxAction implements DumbAware {
 
   @NotNull private final Project myProject;

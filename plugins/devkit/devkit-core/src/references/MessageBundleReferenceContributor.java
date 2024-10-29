@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -10,6 +10,7 @@ import com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageP
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -21,7 +22,6 @@ import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.dom.OverrideText;
-import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
@@ -99,7 +96,8 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
           String id = text.substring(prefixEndIdx, dotBeforeSuffix);
           String prefix = text.substring(0, prefixEndIdx);
 
-          return new ActionOrGroupIdReference(element, id, prefix);
+          ThreeState isAction = prefix.equals(ACTION) ? ThreeState.YES : ThreeState.NO;
+          return new ActionOrGroupIdReference(element, TextRange.allOf(id).shiftRight(prefix.length()), id, isAction);
         }
 
         @Nullable
@@ -207,69 +205,6 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
-  private static final class ActionOrGroupIdReference extends PsiPolyVariantReferenceBase<PsiElement> {
-
-    private final String myId;
-    private final boolean myIsAction;
-
-    private ActionOrGroupIdReference(@NotNull PsiElement element, String id, String prefix) {
-      super(element, TextRange.allOf(id).shiftRight(prefix.length()));
-      myIsAction = prefix.equals(ACTION);
-      myId = id;
-    }
-
-    @NotNull
-    @Override
-    public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
-      Project project = getElement().getProject();
-
-      final GlobalSearchScope scope = ProjectScope.getContentScope(project);
-
-      CommonProcessors.CollectUniquesProcessor<ActionOrGroup> processor = new CommonProcessors.CollectUniquesProcessor<>();
-      if (myIsAction) {
-        IdeaPluginRegistrationIndex.processAction(project, myId, scope, processor);
-      }
-      else {
-        IdeaPluginRegistrationIndex.processGroup(project, myId, scope, processor);
-      }
-
-      // action|group.ActionId.<override-text@place>.text
-      if (processor.getResults().isEmpty()) {
-        String place = StringUtil.substringAfterLast(myId, ".");
-        if (StringUtil.isEmpty(place)) return ResolveResult.EMPTY_ARRAY;
-
-        String idWithoutPlaceSuffix = StringUtil.substringBeforeLast(myId, ".");
-
-        if (myIsAction) {
-          IdeaPluginRegistrationIndex.processAction(project, idWithoutPlaceSuffix, scope, processor);
-        }
-        else {
-          IdeaPluginRegistrationIndex.processGroup(project, idWithoutPlaceSuffix, scope, processor);
-        }
-
-        for (ActionOrGroup result : processor.getResults()) {
-          for (OverrideText overrideText : result.getOverrideTexts()) {
-            if (place.equals(overrideText.getPlace().getStringValue())) {
-              final DomTarget overrideTarget = DomTarget.getTarget(overrideText, overrideText.getPlace());
-              assert overrideTarget != null;
-              return PsiElementResolveResult.createResults(PomService.convertToPsi(overrideTarget));
-            }
-          }
-        }
-        return ResolveResult.EMPTY_ARRAY;
-      }
-
-      final List<PsiElement> psiElements =
-        JBIterable.from(processor.getResults())
-          .map(actionOrGroup -> {
-            final DomTarget target = DomTarget.getTarget(actionOrGroup);
-            return target == null ? null : PomService.convertToPsi(project, target);
-          }).filter(Objects::nonNull).toList();
-      return PsiElementResolveResult.createResults(psiElements);
-    }
-  }
-
-
   private static class ToolwindowIdReference extends ExtensionReferenceBase {
 
     private ToolwindowIdReference(@NotNull PsiElement element, String id) {
@@ -345,7 +280,7 @@ final class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
     private void processStateAnnoClasses(PairProcessor<PsiClass, String> processor) {
       final Project project = myElement.getProject();
-      final GlobalSearchScope searchScope = PsiUtil.isIdeaProject(project) ?
+      final GlobalSearchScope searchScope = IntelliJProjectUtil.isIntelliJPlatformProject(project) ?
                                             GlobalSearchScopesCore.projectProductionScope(project) : getElement().getResolveScope();
       final PsiClass statePsiClass = JavaPsiFacade.getInstance(project).findClass(State.class.getName(), searchScope);
       if (statePsiClass == null) {

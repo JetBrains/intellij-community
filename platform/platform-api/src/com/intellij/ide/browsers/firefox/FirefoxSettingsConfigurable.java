@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.firefox;
 
 import com.intellij.ide.IdeBundle;
@@ -24,8 +24,6 @@ import java.util.List;
 import java.util.Objects;
 
 public class FirefoxSettingsConfigurable implements Configurable {
-  private static final FileChooserDescriptor PROFILES_INI_CHOOSER_DESCRIPTOR = createProfilesIniChooserDescriptor();
-
   private JPanel myMainPanel;
   private JComboBox myProfileCombobox;
   private TextFieldWithBrowseButton myProfilesIniPathField;
@@ -36,7 +34,7 @@ public class FirefoxSettingsConfigurable implements Configurable {
 
   public FirefoxSettingsConfigurable(FirefoxSettings settings) {
     mySettings = settings;
-    myProfilesIniPathField.addBrowseFolderListener(IdeBundle.message("chooser.title.select.profiles.ini.file"), null, null, PROFILES_INI_CHOOSER_DESCRIPTOR);
+    myProfilesIniPathField.addBrowseFolderListener(null, createProfilesIniChooserDescriptor().withTitle(IdeBundle.message("chooser.title.select.profiles.ini.file")));
     myProfilesIniPathField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

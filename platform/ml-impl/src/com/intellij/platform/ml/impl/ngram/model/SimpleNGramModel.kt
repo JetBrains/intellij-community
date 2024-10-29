@@ -3,6 +3,7 @@ package com.intellij.platform.ml.impl.ngram.model
 
 import com.intellij.platform.ml.impl.ngram.model.counter.NGramCounter
 import com.intellij.platform.ml.impl.ngram.model.counter.NGramHashMapCounter
+import org.jetbrains.annotations.ApiStatus
 
 
 /**
@@ -12,6 +13,7 @@ import com.intellij.platform.ml.impl.ngram.model.counter.NGramHashMapCounter
  * @property ngramCounter the n-gram counter used to store the frequencies of n-grams
  * @property ngramSize the size of the n-grams used in the model
  */
+@ApiStatus.Internal
 class SimpleNGramModel<T> private constructor(ngramCounter: NGramCounter<T>, ngramSize: Int) : NGramModel<T>(ngramCounter, ngramSize) {
 
   /**

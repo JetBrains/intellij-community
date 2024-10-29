@@ -60,9 +60,9 @@ net.n3.nanoxml.IXMLValidator
 - a:parseDTD(java.lang.String,net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLEntityResolver,Z):V
 a:net.n3.nanoxml.NonValidator
 - net.n3.nanoxml.IXMLValidator
-- p:attributeDefaultValues:java.util.Map
-- p:currentElements:java.util.Deque
-- p:parameterEntityResolver:net.n3.nanoxml.IXMLEntityResolver
+- pf:attributeDefaultValues:java.util.Map
+- pf:currentElements:java.util.Deque
+- pf:parameterEntityResolver:net.n3.nanoxml.IXMLEntityResolver
 - <init>():V
 - attributeAdded(java.lang.String,java.lang.String,java.lang.String,I):V
 - elementAttributesProcessed(java.lang.String,java.util.Properties,java.lang.String,I):V
@@ -86,16 +86,12 @@ f:net.n3.nanoxml.StdXMLBuilder
 - startBuilding(java.lang.String,I):V
 - startElement(java.lang.String,java.lang.String,java.lang.String,java.lang.String,I):V
 f:net.n3.nanoxml.StdXMLParser
-- <init>():V
+- <init>(net.n3.nanoxml.StdXMLReader,net.n3.nanoxml.IXMLBuilder,net.n3.nanoxml.IXMLValidator,net.n3.nanoxml.IXMLEntityResolver):V
 - getBuilder():net.n3.nanoxml.IXMLBuilder
 - getReader():net.n3.nanoxml.StdXMLReader
 - getResolver():net.n3.nanoxml.IXMLEntityResolver
 - getValidator():net.n3.nanoxml.IXMLValidator
 - parse():java.lang.Object
-- setBuilder(net.n3.nanoxml.IXMLBuilder):V
-- setReader(net.n3.nanoxml.StdXMLReader):V
-- setResolver(net.n3.nanoxml.IXMLEntityResolver):V
-- setValidator(net.n3.nanoxml.IXMLValidator):V
 c:net.n3.nanoxml.StdXMLReader
 - <init>(java.io.InputStream):V
 - <init>(java.io.Reader):V

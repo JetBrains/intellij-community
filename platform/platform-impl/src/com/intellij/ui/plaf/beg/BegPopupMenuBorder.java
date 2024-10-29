@@ -3,11 +3,13 @@
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ui.paint.LinePainter2D;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.border.AbstractBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class BegPopupMenuBorder extends AbstractBorder implements UIResource {
   private static Insets borderInsets = new Insets(3, 2, 2, 2);
   private static Color color1 = new Color(214, 211, 206);

@@ -25,9 +25,9 @@ import com.intellij.util.PathUtil
 import com.intellij.util.containers.BidirectionalMap
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.workspaceModel.ide.NonPersistentEntitySource
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.mutableModuleMap
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import io.opentelemetry.api.metrics.Meter
@@ -92,8 +92,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     val parentPath = PathUtil.getParentPath(canonicalPath)
     val baseModuleDir = WorkspaceModel.getInstance(project).getVirtualFileUrlManager().getOrCreateFromUrl(VfsUtilCore.pathToUrl(parentPath))
-    val entitySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(
-      project = project,
+    val entitySource = LegacyBridgeJpsEntitySourceFactory.getInstance(project).createEntitySourceForModule(
       baseModuleDir = baseModuleDir,
       externalSource = null,
     )

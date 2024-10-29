@@ -3,6 +3,7 @@ package com.intellij.cce.evaluation
 
 import com.intellij.application.options.PathMacrosImpl
 import com.intellij.cce.core.Language
+import com.intellij.cce.evaluation.JvmBuildSystem.entries
 import com.intellij.cce.workspace.EvaluationWorkspace
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState

@@ -8,7 +8,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.actions.VcsStatisticsCollector;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class EditChangelistDialog extends DialogWrapper {
   private final NewEditChangelistPanel myPanel;
   private final Project myProject;
@@ -64,11 +67,13 @@ public class EditChangelistDialog extends DialogWrapper {
     final String newDescription = myPanel.getDescription();
     if (!StringUtil.equals(oldComment, newDescription)) {
       clManager.editComment(oldName, newDescription);
+      VcsStatisticsCollector.CHANGE_LIST_COMMENT_EDITED.log(myProject, VcsStatisticsCollector.EditChangeListPlace.EDIT_DIALOG);
     }
 
     final String newName = myPanel.getChangeListName();
     if (!StringUtil.equals(oldName, newName)) {
       clManager.editName(oldName, newName);
+      VcsStatisticsCollector.CHANGE_LIST_NAME_EDITED.log(myProject);
     }
     if (!myList.isDefault() && myPanel.getMakeActiveCheckBox().isSelected()) {
       clManager.setDefaultChangeList(newName);

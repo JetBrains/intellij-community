@@ -8,6 +8,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
 import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
@@ -32,6 +33,7 @@ class MavenProjectReader(private val myProject: Project) {
   private val myReadHelper: MavenProjectModelReadHelper = MavenUtil.createModelReadHelper(myProject)
   private var mySettingsProfilesCache: SettingsProfilesCache? = null
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use async method", ReplaceWith("readProjectAsync(generalSettings, file, explicitProfiles, locator) }"))
   fun readProject(generalSettings: MavenGeneralSettings,
                   file: VirtualFile,
@@ -50,14 +52,16 @@ class MavenProjectReader(private val myProject: Project) {
 
     val model = myReadHelper.interpolate(basedir, file, readResult.first.model)
 
-    val modelMap: MutableMap<String, String?> = HashMap()
-    modelMap["groupId"] = model.mavenId.groupId
-    modelMap["artifactId"] = model.mavenId.artifactId
-    modelMap["version"] = model.mavenId.version
-    modelMap["build.outputDirectory"] = model.build.outputDirectory
-    modelMap["build.testOutputDirectory"] = model.build.testOutputDirectory
-    modelMap["build.finalName"] = model.build.finalName
-    modelMap["build.directory"] = model.build.directory
+    val modelMap: MutableMap<String, String> = HashMap()
+    val mavenId = model.mavenId
+    val build = model.build
+    mavenId.groupId?.let { modelMap["groupId"] = it }
+    mavenId.artifactId?.let { modelMap["artifactId"] = it }
+    mavenId.version?.let { modelMap["version"] = it }
+    build.outputDirectory?.let { modelMap["build.outputDirectory"] = it }
+    build.testOutputDirectory?.let { modelMap["build.testOutputDirectory"] = it }
+    build.finalName?.let { modelMap["build.finalName"] = it }
+    build.directory?.let { modelMap["build.directory"] = it }
 
     return MavenProjectReaderResult(model,
                                     modelMap,
@@ -113,7 +117,7 @@ class MavenProjectReader(private val myProject: Project) {
                                           problems: MutableCollection<MavenProjectProblem>) {
     if (mySettingsProfilesCache == null) {
       val settingsProfiles: MutableList<MavenProfile> = ArrayList()
-      val settingsProblems = MavenProjectProblem.createProblemsList()
+      val settingsProblems = LinkedHashSet<MavenProjectProblem>()
       val settingsAlwaysOnProfiles: MutableSet<String> = HashSet()
 
       for (each in generalSettings.effectiveSettingsFiles) {
@@ -237,7 +241,7 @@ class MavenProjectReader(private val myProject: Project) {
                            var alwaysOnProfiles: MutableSet<String>)
 
   private suspend fun doReadProjectModel(project: Project, file: VirtualFile, headerOnly: Boolean): RawModelReadResult {
-    val problems = MavenProjectProblem.createProblemsList()
+    val problems = LinkedHashSet<MavenProjectProblem>()
     val alwaysOnProfiles: MutableSet<String> = HashSet()
 
     val fileExtension = file.extension
@@ -280,6 +284,7 @@ class MavenProjectReader(private val myProject: Project) {
     val result = MavenModel()
     val xmlProject = readXml(file, problems, MavenProjectProblem.ProblemType.SYNTAX)
     if (xmlProject == null || "project" != xmlProject.name) {
+      MavenLog.LOG.warn("Invalid Maven project model: project '$xmlProject', name '${xmlProject?.name}', file ${file.path}")
       result.packaging = MavenConstants.TYPE_JAR
       return RawModelReadResult(result, problems, alwaysOnProfiles)
     }
@@ -559,6 +564,7 @@ class MavenProjectReader(private val myProject: Project) {
 
 
   // used in third-party plugins
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link MavenProjectResolver}")
   @Throws(MavenProcessCanceledException::class)
   fun resolveProject(generalSettings: MavenGeneralSettings,

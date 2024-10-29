@@ -5,9 +5,6 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity
 import com.intellij.platform.workspace.jps.entities.customImlData
 import com.intellij.platform.workspace.jps.serialization.impl.CustomModuleComponentSerializer
 import com.intellij.platform.workspace.jps.serialization.impl.ErrorReporter
-import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
-import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentWriter
-import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl.*
@@ -19,17 +16,17 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
  * Implements loading and saving configuration from [EclipseModuleManagerImpl] in iml file when workspace model is used
  */
 class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
+  override val componentName: String = "EclipseModuleManager"
+
   override fun loadComponent(detachedModuleEntity: ModuleEntity.Builder,
-                             reader: JpsFileContentReader,
-                             imlFileUrl: VirtualFileUrl,
+                             componentTag: Element,
                              errorReporter: ErrorReporter,
                              virtualFileManager: VirtualFileUrlManager) {
-    val componentTag = reader.loadComponent(imlFileUrl.url, "EclipseModuleManager") ?: return
     val entity = EclipseProjectPropertiesEntity(LinkedHashMap(), ArrayList(), ArrayList(), ArrayList(), false, 0,
                                                 LinkedHashMap(), detachedModuleEntity.entitySource) {
       this.module = detachedModuleEntity
     }
-    (entity as EclipseProjectPropertiesEntity.Builder).apply {
+    entity.apply {
       componentTag.getChildren(LIBELEMENT).forEach {
         eclipseUrls.add(virtualFileManager.getOrCreateFromUrl(it.getAttributeValue(VALUE_ATTR)!!))
       }
@@ -55,15 +52,15 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
     }
   }
 
-  override fun saveComponent(moduleEntity: ModuleEntity, imlFileUrl: VirtualFileUrl, writer: JpsFileContentWriter) {
+  override fun saveComponent(moduleEntity: ModuleEntity): Element? {
     val moduleOptions = moduleEntity.customImlData?.customModuleOptions
     if (moduleOptions != null && moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE] == JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID) {
-      return
+      return null
     }
     val eclipseProperties = moduleEntity.eclipseProperties
     if (eclipseProperties == null || eclipseProperties.eclipseUrls.isEmpty() && eclipseProperties.variablePaths.isEmpty()
         && !eclipseProperties.forceConfigureJdk && eclipseProperties.unknownCons.isEmpty()) {
-      return
+      return null
     }
 
     val componentTag = JDomSerializationUtil.createComponentElement("EclipseModuleManager")
@@ -92,6 +89,6 @@ class EclipseModuleManagerSerializer : CustomModuleComponentSerializer {
       srcDescriptionTag.addContent(Element(SRC_FOLDER).setAttribute(VALUE_ATTR, url).setAttribute(EXPECTED_POSITION, position.toString()))
     }
     componentTag.addContent(srcDescriptionTag)
-    writer.saveComponent(imlFileUrl.url, "EclipseModuleManager", componentTag)
+    return componentTag
   }
 }

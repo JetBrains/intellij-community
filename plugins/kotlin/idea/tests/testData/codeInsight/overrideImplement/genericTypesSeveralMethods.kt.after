@@ -6,3 +6,5 @@ class MyClass<A: Comparable<A>> : Iterable<A> {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "iterator(): Iterator<A>"

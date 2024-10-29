@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -10,14 +10,13 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
-import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.TimedZipHandler;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -256,7 +255,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     FileUtil.writeToFile(new File(root, "small1"), "some text");
     FileUtil.writeToFile(new File(root, "small2"), "another text");
     try (InputStream is = new ZeroInputStream(); OutputStream os = new FileOutputStream(new File(root, "large"))) {
-      FileUtil.copy(is, FileUtilRt.LARGE_FOR_CONTENT_LOADING * 2, os);
+      FileUtil.copy(is, FileSizeLimit.getDefaultContentLoadLimit() * 2, os);
     }
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"), root);
 
@@ -472,7 +471,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
     }
 
     @Override
-    protected @NotNull ArchiveHandler getHandler(@NotNull VirtualFile entryFile) {
+    protected @NotNull ZipHandlerBase getHandler(@NotNull VirtualFile entryFile) {
       return VfsImplUtil.getHandler(this, entryFile, path -> new ZipHandler(path) {
         @Override
         protected @NotNull Map<String, EntryInfo> getEntriesMap() {

@@ -776,7 +776,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
     elif dim == -1:
         df = df[roffset: roffset + rows]
     else:
-        df.iloc[roffset: roffset + rows]
+        df = df.iloc[roffset: roffset + rows]
 
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
@@ -796,7 +796,8 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 
     xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
 
-    xml += array_data_to_xml(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    xml += array_data_to_xml(rows, cols, formatted_row_elements, format='%s')
     return xml
 
 def dataset_to_xml(dataset, name, roffset, coffset, rows, cols, format):

@@ -26,6 +26,7 @@ open class AsyncFormattingService {
     val project = file.project
     ReadAction
       .nonBlocking<CodeFormattingData> { CodeFormattingData.prepare(file, listOf(range)) }
+      .withDocumentsCommitted(project)
       .expireWhen { project.isDisposed || !file.isValid }
       .finishOnUiThread(ModalityState.nonModal()) { _ ->
         CommandProcessor.getInstance().runUndoTransparentAction {

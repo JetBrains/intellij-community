@@ -5,6 +5,7 @@ import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.actions.RecentProjectsGroup;
 import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
@@ -29,9 +30,10 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Re
 /**
  * @see RecentProjectsGroup
  */
-final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisibleActionGroup {
+final class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware {
   LightEditRecentFileActionGroup() {
     super(ApplicationBundle.messagePointer("light.edit.action.recentFile.text"), true);
+    getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
   }
 
   @Override

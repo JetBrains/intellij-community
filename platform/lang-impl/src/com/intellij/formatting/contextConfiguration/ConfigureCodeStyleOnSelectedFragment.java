@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.CodeStyle;
@@ -44,17 +44,13 @@ import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.Setti
 public final class ConfigureCodeStyleOnSelectedFragment implements IntentionAction, LowPriorityAction {
   private static final Logger LOG = Logger.getInstance(ConfigureCodeStyleOnSelectedFragment.class);
 
-  @Nls
-  @NotNull
   @Override
-  public String getText() {
+  public @Nls @NotNull String getText() {
     return getFamilyName();
   }
 
-  @Nls
-  @NotNull
   @Override
-  public String getFamilyName() {
+  public @Nls @NotNull String getFamilyName() {
     return CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
   }
 
@@ -76,19 +72,17 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
            CodeFragmentCodeStyleSettingsPanel.hasOptionsToShow(provider);
   }
 
-  @Nullable
-  private static LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
+  private static @Nullable LanguageCodeStyleSettingsProvider getProviderForContext(Editor editor, PsiFile file) {
     Language language = PsiUtilBase.getLanguageInEditor(editor.getCaretModel().getCurrentCaret(), file.getProject());
     return language != null ? guessSettingsProviderForLanguage(language) : null;
   }
 
-  @Nullable
-  private static LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
+  private static @Nullable LanguageCodeStyleSettingsProvider guessSettingsProviderForLanguage(@NotNull Language language) {
     return LanguageCodeStyleSettingsProvider.findUsingBaseLanguage(language);
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+  public void invoke(final @NotNull Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     LanguageCodeStyleSettingsProvider settingsProvider = getProviderForContext(editor, file);
     assert settingsProvider != null;
@@ -117,7 +111,7 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
     private final CodeStyleSettings mySettings;
 
 
-    FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
+    FragmentCodeStyleSettingsDialog(final @NotNull Editor editor,
                                     @NotNull SelectedTextFormatter selectedTextFormatter,
                                     @NotNull LanguageCodeStyleSettingsProvider settingsProvider,
                                     CodeStyleSettings settings,
@@ -147,15 +141,13 @@ public final class ConfigureCodeStyleOnSelectedFragment implements IntentionActi
       init();
     }
 
-    @Nullable
     @Override
-    public JComponent getPreferredFocusedComponent() {
+    public @Nullable JComponent getPreferredFocusedComponent() {
       return myTabbedLanguagePanel.getPreferredFocusedComponent();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       return myTabbedLanguagePanel.getPanel();
     }
 

@@ -7,12 +7,14 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines common interface for resolving gradle project, i.e. building object-level representation of {@code 'build.gradle'}.
  */
+@ApiStatus.Internal
 public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExecutionSettings>
   extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemProjectResolver<S>
 {

@@ -2,10 +2,7 @@
 package com.intellij.openapi.editor.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.*
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.Inlay
@@ -129,11 +126,13 @@ class EditorEmbeddedComponentManagerTest {
 
   @Test
   fun `add two separate components and then insert line between`() = edt {
-    add(2, JPanel().apply { preferredSize = Dimension(37, 37) })
-    add(4, JPanel().apply { preferredSize = Dimension(43, 43) })
+    writeIntentReadAction {
+      add(2, JPanel().apply { preferredSize = Dimension(37, 37) })
+      add(4, JPanel().apply { preferredSize = Dimension(43, 43) })
 
-    WriteCommandAction.runWriteCommandAction(projectRule.project) {
-      editor.document.insertString(editor.document.getLineStartOffset(3), "A new line between components.\n")
+      WriteCommandAction.runWriteCommandAction(projectRule.project) {
+        editor.document.insertString(editor.document.getLineStartOffset(3), "A new line between components.\n")
+      }
     }
 
     pollAssertions {
@@ -242,12 +241,14 @@ class EditorEmbeddedComponentManagerTest {
 
   @Test
   fun `bulk mode`() = edt {
-    DocumentUtil.executeInBulk(editor.document) {
-      add(4, JPanel().apply { preferredSize = Dimension(19, 19) })
-      WriteCommandAction.runWriteCommandAction(projectRule.project) {
-        editor.document.insertString(editor.document.getLineStartOffset(3), "A new line.\n")
+    writeIntentReadAction {
+      DocumentUtil.executeInBulk(editor.document) {
+        add(4, JPanel().apply { preferredSize = Dimension(19, 19) })
+        WriteCommandAction.runWriteCommandAction(projectRule.project) {
+          editor.document.insertString(editor.document.getLineStartOffset(3), "A new line.\n")
+        }
+        add(2, JPanel().apply { preferredSize = Dimension(13, 13) })
       }
-      add(2, JPanel().apply { preferredSize = Dimension(13, 13) })
     }
 
     pollAssertions {

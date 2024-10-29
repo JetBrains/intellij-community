@@ -10,6 +10,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.regex.Pattern
 
+@Internal
 object InlayDumpUtil {
   val inlayPattern: Pattern = Pattern.compile("/\\*<# block ([^#]*)#>\\*/(\r\n|\r|\n)|/\\*<#([^#]*)#>\\*/")
 

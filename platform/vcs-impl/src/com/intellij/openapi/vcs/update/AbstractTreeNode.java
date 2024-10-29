@@ -23,10 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.psi.search.scope.packageSet.PackageSetBase;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -39,6 +36,7 @@ import java.util.Iterator;
 /**
  * author: lesya
  */
+@ApiStatus.Internal
 public abstract class AbstractTreeNode extends DefaultMutableTreeNode {
   protected static final ArrayList<File> EMPTY_FILE_ARRAY = new ArrayList<>();
   DefaultTreeModel myTreeModel;

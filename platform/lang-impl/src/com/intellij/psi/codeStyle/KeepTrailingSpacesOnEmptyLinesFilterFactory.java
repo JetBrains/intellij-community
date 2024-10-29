@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.editor.StripTrailingSpacesFilter.ALL_LINES;
 
+@ApiStatus.Internal
 public final class KeepTrailingSpacesOnEmptyLinesFilterFactory extends StripTrailingSpacesFilterFactory {
 
   private static final class KeepTrailingSpacesOnEmptyLinesFilter extends SmartStripTrailingSpacesFilter {

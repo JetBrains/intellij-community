@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.PairProcessor;
 import org.jetbrains.annotations.NotNull;
 
@@ -83,8 +83,8 @@ public class SSBasedInspectionTest extends SSBasedInspectionTestCase {
     final ToolsImpl tools = profile.getToolsOrNull("SSBasedInspection", myFixture.getProject());
     final SSBasedInspection inspection = (SSBasedInspection)tools.getTool().getTool();
     final PsiFile file = myFixture.getFile();
-    PerformanceTestUtil.newPerformanceTest("Chained method call inspection performance",
-                                        () -> InspectionEngine.inspectEx(
+    Benchmark.newBenchmark("Chained method call inspection performance",
+                           () -> InspectionEngine.inspectEx(
                                             Collections.singletonList(new LocalInspectionToolWrapper(inspection)), file,
                                             file.getTextRange(),
                                             file.getTextRange(), true, false, true, new DaemonProgressIndicator(), PairProcessor.alwaysTrue())).start();

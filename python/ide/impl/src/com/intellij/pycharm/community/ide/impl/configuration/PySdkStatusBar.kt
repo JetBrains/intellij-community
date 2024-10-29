@@ -56,7 +56,7 @@ private class PySwitchSdkAction : DumbAwareAction(PyBundle.message("switch.pytho
     val module = ModuleUtil.findModuleForFile(file, project) ?: return
 
     val dataContext = e.dataContext
-    PySdkPopupFactory(project, module).createPopup(dataContext).showInBestPositionFor(dataContext)
+    PySdkPopupFactory(module).createPopup(dataContext).showInBestPositionFor(dataContext)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread {
@@ -89,7 +89,7 @@ private class PySdkStatusBar(project: Project, scope: CoroutineScope) : EditorBa
     })
   }
 
-  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(project, it).createPopup(context) }
+  override fun createPopup(context: DataContext): ListPopup? = module?.let { PySdkPopupFactory(it).createPopup(context) }
 
   override fun ID(): String = ID
 

@@ -28,6 +28,12 @@ class JsonBySchemaCompletionTest : JsonBySchemaCompletionBaseTest() {
              """{"prop": <caret>}""", "\"prima\"", "\"primus\"", "\"proto\"")
   }
 
+  fun testEnumInArrayOfUniqueItems() {
+    // don't suggest the same enum elements again if the parent array assumes unique items
+    testImpl("""{"properties": {"prop": { "type": "array", "items": {"enum": ["prima", "proto", "primus"]}, "uniqueItems": true}}}""",
+             """{"prop": ["prima", <caret>]}""", "\"primus\"", "\"proto\"")
+  }
+
   fun testTopLevelAnyOfValues() {
     testImpl("""{"properties": {"prop": {"anyOf": [{"enum": ["prima", "proto", "primus"]},""" + "{\"type\": \"boolean\"}]}}}",
              """{"prop": <caret>}""", "\"prima\"", "\"primus\"", "\"proto\"", "false", "true")

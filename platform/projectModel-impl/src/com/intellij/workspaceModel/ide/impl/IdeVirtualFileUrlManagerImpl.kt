@@ -3,10 +3,14 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlImpl
 import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImpl
+import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-class IdeVirtualFileUrlManagerImpl : VirtualFileUrlManagerImpl() {
+class IdeVirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManagerImpl(isRootDirCaseSensitive) {
+  override val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+    get() = VirtualFileUrlBridge::class.java
+
   override fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrlImpl {
     return VirtualFileUrlBridge(id, manager)
   }

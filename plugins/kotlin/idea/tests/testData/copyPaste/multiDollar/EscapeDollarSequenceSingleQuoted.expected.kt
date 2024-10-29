@@ -1,0 +1,1 @@
+val to = "start Foo$$\$Bar end"

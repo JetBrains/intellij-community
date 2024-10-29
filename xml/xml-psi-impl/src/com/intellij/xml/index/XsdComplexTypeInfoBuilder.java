@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -19,7 +19,7 @@ public final class XsdComplexTypeInfoBuilder implements NanoXmlBuilder {
   private final MultiMap<SchemaTypeInfo, SchemaTypeInfo> myMap;
   private NameSpaceHelper myNameSpaceHelper;
 
-  public void setNameSpaceHelper(NameSpaceHelper nameSpaceHelper) {
+  private void setNameSpaceHelper(NameSpaceHelper nameSpaceHelper) {
     myNameSpaceHelper = nameSpaceHelper;
   }
 

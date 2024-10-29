@@ -18,6 +18,9 @@ interface KotlinMoveRefactoringAction : AbstractMultifileRefactoringTest.Refacto
     fun JsonObject.searchReferences() = get("searchReferences")?.asBoolean?.equals(true)
         ?: KotlinCommonRefactoringSettings.getInstance().MOVE_SEARCH_REFERENCES
 
+    fun JsonObject.moveExpectedActuals() = get("moveExpectedActuals")?.asBoolean?.equals(true)
+        ?: KotlinCommonRefactoringSettings.getInstance().MOVE_MPP_DECLARATIONS
+
     fun shouldUpdateReferences(config: JsonObject, source: PsiElement, target: PsiElement): Boolean {
         fun PsiElement.virtualFile() = if (this is PsiDirectory) virtualFile else containingFile.virtualFile
         val fileIndex = ProjectFileIndex.getInstance(source.project)

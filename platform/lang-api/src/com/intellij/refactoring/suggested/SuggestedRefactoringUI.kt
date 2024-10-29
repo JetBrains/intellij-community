@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.psi.PsiCodeFragment
 import com.intellij.refactoring.suggested.SuggestedRefactoringExecution.NewParameterValue
 import com.intellij.refactoring.suggested.SuggestedRefactoringSupport.Signature
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -39,8 +39,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
   private final IntentionAction myAction;
   private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
-  @Nullable
-  private final String myToolId;
+  private final @Nullable String myToolId;
   private final @Nullable TextRange myFixRange;
 
   public IntentionActionWithTextCaching(@NotNull IntentionAction action) {
@@ -183,8 +182,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
     return getActionClass(this) == getActionClass(other) && this.getText().equals(other.getText());
   }
 
-  @Nullable
-  public String getToolId() {
+  public @Nullable String getToolId() {
     return myToolId;
   }
 
@@ -195,8 +193,7 @@ public final class IntentionActionWithTextCaching implements Comparable<Intentio
   /**
    * @return <code>null</code> if the action belong to the problem at the caret offset
    */
-  @Nullable
-  public TextRange getFixRange() {
+  public @Nullable TextRange getFixRange() {
     return myFixRange;
   }
 

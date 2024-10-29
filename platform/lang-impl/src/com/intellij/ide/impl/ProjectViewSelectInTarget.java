@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.CompositeSelectInTarget;
@@ -48,13 +48,12 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     select(myProject, selector, getMinorViewId(), mySubId, virtualFile, requestFocus);
   }
 
-  @NotNull
-  public static ActionCallback select(@NotNull Project project,
-                                      final Object toSelect,
-                                      @Nullable final String viewId,
-                                      @Nullable final String subviewId,
-                                      final VirtualFile virtualFile,
-                                      final boolean requestFocus) {
+  public static @NotNull ActionCallback select(@NotNull Project project,
+                                               final Object toSelect,
+                                               final @Nullable String viewId,
+                                               final @Nullable String subviewId,
+                                               final VirtualFile virtualFile,
+                                               final boolean requestFocus) {
     if (SelectInProjectViewImplKt.getLOG().isDebugEnabled()) {
       SelectInProjectViewImplKt.getLOG().debug(
         "ProjectViewSelectInTarget.select: " +
@@ -121,8 +120,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
   }
 
   @Override
-  @NotNull
-  public Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
+  public @NotNull Collection<SelectInTarget> getSubTargets(@NotNull SelectInContext context) {
     List<SelectInTarget> result = new ArrayList<>();
     AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getProjectViewPaneById(getMinorViewId());
     int index = 0;

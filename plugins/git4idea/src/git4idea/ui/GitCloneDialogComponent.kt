@@ -9,12 +9,14 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
+import com.intellij.ui.dsl.builder.*
 import com.intellij.util.Alarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.GitNotificationIdsHolder.Companion.CLONE_ERROR_UNABLE_TO_CREATE_DESTINATION_DIR
@@ -32,7 +34,8 @@ class GitCloneDialogComponent(project: Project,
   DvcsCloneDialogComponent(project,
                            GitUtil.DOT_GIT,
                            GitRememberedInputs.getInstance(),
-                           dialogStateListener) {
+                           dialogStateListener,
+                           GitCloneDialogMainPanelCustomizer()) {
   private val LOG = Logger.getInstance(GitCloneDialogComponent::class.java)
 
   private val executableManager get() = GitExecutableManager.getInstance()
@@ -66,7 +69,16 @@ class GitCloneDialogComponent(project: Project,
     val directoryName = Paths.get(getDirectory()).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), listener, destinationParent, sourceRepositoryURL, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(
+      project,
+      Git.getInstance(),
+      listener,
+      destinationParent,
+      sourceRepositoryURL,
+      directoryName,
+      parentDirectory,
+      (mainPanelCustomizer as GitCloneDialogMainPanelCustomizer).getShallowCloneOptions(),
+    )
     val rememberedInputs = GitRememberedInputs.getInstance()
     rememberedInputs.addUrl(sourceRepositoryURL)
     rememberedInputs.cloneParentDir = parentDirectory
@@ -143,4 +155,16 @@ class GitCloneDialogComponent(project: Project,
     IN_PROGRESS,
     FAILED
   }
+}
+
+private class GitCloneDialogMainPanelCustomizer : DvcsCloneDialogComponent.MainPanelCustomizer() {
+  private val vm = GitShallowCloneViewModel()
+
+  override fun configure(panel: Panel) {
+    if (Registry.`is`("git.clone.shallow")) {
+      GitShallowCloneComponentFactory.appendShallowCloneRow(panel, vm).bottomGap(BottomGap.SMALL)
+    }
+  }
+
+  fun getShallowCloneOptions() = vm.getShallowCloneOptions()
 }

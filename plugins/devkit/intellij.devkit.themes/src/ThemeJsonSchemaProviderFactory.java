@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.themes;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-final class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory {
+final class ThemeJsonSchemaProviderFactory implements JsonSchemaProviderFactory, DumbAware {
   private static final @NonNls String THEME_SCHEMA = "/schemes/theme.schema.json";
 
   @NotNull

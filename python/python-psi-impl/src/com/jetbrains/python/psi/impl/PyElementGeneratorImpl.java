@@ -235,17 +235,6 @@ public final class PyElementGeneratorImpl extends PyElementGenerator {
   }
 
   @Override
-  @NotNull
-  public PyExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text) {
-    final PsiFile dummyFile = createDummyFile(languageLevel, text);
-    final PsiElement element = dummyFile.getFirstChild();
-    if (element instanceof PyExpressionStatement) {
-      return ((PyExpressionStatement)element).getExpression();
-    }
-    throw new IncorrectOperationException("could not parse text as expression: " + text);
-  }
-
-  @Override
   public @NotNull PyPattern createPatternFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
     throws IncorrectOperationException {
     String matchStatement = "match x:\n" +

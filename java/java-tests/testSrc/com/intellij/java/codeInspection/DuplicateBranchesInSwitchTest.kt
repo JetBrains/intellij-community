@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInspection
 
 import com.intellij.JavaTestUtil
@@ -40,6 +40,7 @@ class DuplicateBranchesInSwitchTest : LightJavaCodeInsightFixtureTestCase() {
   fun testManySimilarBranches() = doTest()
   fun testParentheses() = doTest()
   fun testAssignment() = doTest()
+  fun testMethodReferences() = doTest()
   fun testNoExceptionWhenFirstLabelIsMissing() = doTest()
   fun testUnresolvedQualifier() = doTest()
   fun testCatchTypeReference() = doTest()

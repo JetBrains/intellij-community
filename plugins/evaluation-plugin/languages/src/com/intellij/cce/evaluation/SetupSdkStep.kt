@@ -5,7 +5,7 @@ import com.intellij.cce.core.Language
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 
-abstract class SetupSdkStep : EvaluationStep {
+abstract class SetupSdkStep : ForegroundEvaluationStep {
   companion object {
     private val EP_NAME = ExtensionPointName.create<SetupSdkStep>("com.intellij.cce.setupSdkStep")
 

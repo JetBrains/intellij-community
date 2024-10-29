@@ -2,7 +2,7 @@
 package com.intellij.openapi.vcs
 
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 
 class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
   fun testInitialUnfreeze() {
@@ -17,7 +17,7 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text1 = sb1.toString()
     val text2 = sb2.toString()
 
-    PerformanceTestUtil.newPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
+    Benchmark.newBenchmark(PlatformTestUtil.getTestName(name, true)) {
       test(text1) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text2)
@@ -42,7 +42,7 @@ class LineStatusTrackerModifyPerformanceTest : BaseLineStatusTrackerTestCase() {
     val text2 = sb2.toString()
     val text3 = sb3.toString()
 
-    PerformanceTestUtil.newPerformanceTest(PlatformTestUtil.getTestName(name, true)) {
+    Benchmark.newBenchmark(PlatformTestUtil.getTestName(name, true)) {
       test(text1, text2) {
         tracker.doFrozen(Runnable {
           simpleTracker.setBaseRevision(text3)

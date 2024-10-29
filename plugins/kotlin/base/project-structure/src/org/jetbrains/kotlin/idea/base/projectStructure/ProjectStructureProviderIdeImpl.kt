@@ -1,6 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-@file:OptIn(KaAnalysisApiInternals::class, KaPlatformInterface::class)
+@file:OptIn(KaPlatformInterface::class)
 
 package org.jetbrains.kotlin.idea.base.projectStructure
 
@@ -10,12 +10,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootModificationTracker
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.containers.ConcurrentFactoryMap
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.kotlin.analysis.api.KaAnalysisApiInternals
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaImplementationDetail
 import org.jetbrains.kotlin.analysis.api.KaPlatformInterface
@@ -23,15 +23,7 @@ import org.jetbrains.kotlin.analysis.api.impl.base.projectStructure.KaBuiltinsMo
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTrackerFactory
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProviderBase
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaBuiltinsModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaNotUnderContentRootModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptDependencyModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaScriptModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
-import org.jetbrains.kotlin.analysis.api.projectStructure.danglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.*
 import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
@@ -125,10 +117,15 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
     fun <T> computeModule(
         psiElement: PsiElement,
         contextualModule: T? = null
-    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
-        val containingFile = psiElement.containingFile
-        val virtualFile = containingFile?.virtualFile
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase =
+        psiElement.containingFile.let { computeModule(it, psiElement, contextualModule, it?.virtualFile) }
 
+    fun <T> computeModule(
+        containingFile: PsiFile?,
+        psiElement: PsiElement,
+        contextualModule: T?,
+        virtualFile: VirtualFile?
+    ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
         if (containingFile != null) {
             computeSpecialModule(containingFile)?.let { return it }
         }
@@ -168,7 +165,7 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : K
         val config = ModuleInfoProvider.Configuration(
             createSourceLibraryInfoForLibraryBinaries = false,
             preferModulesFromExtensions = isScriptOrItsDependency(contextualModule, virtualFile) &&
-                    (!RootKindFilter.projectSources.matches(psiElement) || this.isInSpecialSrcDir(psiElement)),
+                    (!RootKindFilter.projectSources.matches(psiElement) || isInSpecialSrcDir(psiElement)),
             contextualModuleInfo = contextualModule?.ideaModuleInfo,
         )
 
@@ -202,14 +199,28 @@ private fun <T> cachedKtModule(
 ): KaModule where T : KaModule, T : KtModuleByModuleInfoBase {
     val contextToKtModule = CachedValuesManager.getCachedValue(anchorElement) {
         val project = anchorElement.project
+        val containingFile = anchorElement.containingFile
+        val virtualFile = containingFile?.virtualFile
+        val isLibraryFile =
+            virtualFile?.let { RootKindMatcher.matches(project, it, RootKindFilter.libraryFiles) } ?: false
+        val dependencies = if (isLibraryFile) {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project)
+            )
+        } else {
+            arrayOf(
+                ProjectRootModificationTracker.getInstance(project),
+                JavaLibraryModificationTracker.getInstance(project),
+                KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker()
+            )
+        }
         CachedValueProvider.Result.create(
             ConcurrentFactoryMap.createMap<T?, KaModule> { context ->
                 val projectStructureProvider = KotlinProjectStructureProvider.getInstance(project) as ProjectStructureProviderIdeImpl
-                projectStructureProvider.computeModule(anchorElement, context)
+                projectStructureProvider.computeModule(containingFile, anchorElement, context, virtualFile)
             },
-            ProjectRootModificationTracker.getInstance(project),
-            JavaLibraryModificationTracker.getInstance(project),
-            KotlinModificationTrackerFactory.getInstance(project).createProjectWideOutOfBlockModificationTracker(),
+            dependencies,
         )
     }
 

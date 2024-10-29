@@ -23,16 +23,6 @@
 #include "revlog.h"
 #include "util.h"
 
-#ifdef IS_PY3K
-/* The mapping of Python types is meant to be temporary to get Python
- * 3 to compile. We should remove this once Python 3 support is fully
- * supported and proper types are used in the extensions themselves. */
-#define PyInt_Check PyLong_Check
-#define PyInt_FromLong PyLong_FromLong
-#define PyInt_FromSsize_t PyLong_FromSsize_t
-#define PyInt_AsLong PyLong_AsLong
-#endif
-
 typedef struct indexObjectStruct indexObject;
 
 typedef struct {
@@ -43,6 +33,7 @@ typedef struct {
 	int abi_version;
 	Py_ssize_t (*index_length)(const indexObject *);
 	const char *(*index_node)(indexObject *, Py_ssize_t);
+	int (*fast_rank)(indexObject *, Py_ssize_t);
 	int (*index_parents)(PyObject *, int, int *);
 } Revlog_CAPI;
 
@@ -103,8 +94,7 @@ struct indexObjectStruct {
 	                  */
 	long rust_ext_compat; /* compatibility with being used in rust
 	                         extensions */
-	char format_version;  /* size of index headers. Differs in v1 v.s. v2
-	                         format */
+	long format_version;  /* format version selector (format_*) */
 };
 
 static Py_ssize_t index_length(const indexObject *self)
@@ -120,9 +110,9 @@ static Py_ssize_t inline_scan(indexObject *self, const char **offsets);
 static int index_find_node(indexObject *self, const char *node);
 
 #if LONG_MAX == 0x7fffffffL
-static const char *const tuple_format = PY23("Kiiiiiis#KiBB", "Kiiiiiiy#KiBB");
+static const char *const tuple_format = "Kiiiiiiy#KiBBi";
 #else
-static const char *const tuple_format = PY23("kiiiiiis#kiBB", "kiiiiiiy#kiBB");
+static const char *const tuple_format = "kiiiiiiy#kiBBi";
 #endif
 
 /* A RevlogNG v1 index entry is 64 bytes long. */
@@ -131,10 +121,54 @@ static const long v1_entry_size = 64;
 /* A Revlogv2 index entry is 96 bytes long. */
 static const long v2_entry_size = 96;
 
-static const long format_v1 = 1; /* Internal only, could be any number */
-static const long format_v2 = 2; /* Internal only, could be any number */
+/* A Changelogv2 index entry is 96 bytes long. */
+static const long cl2_entry_size = 96;
+
+/* Internal format version.
+ * Must match their counterparts in revlogutils/constants.py */
+static const long format_v1 = 1;       /* constants.py: REVLOGV1 */
+static const long format_v2 = 0xDEAD;  /* constants.py: REVLOGV2 */
+static const long format_cl2 = 0xD34D; /* constants.py: CHANGELOGV2 */
+
+static const long entry_v1_offset_high = 0;
+static const long entry_v1_offset_offset_flags = 4;
+static const long entry_v1_offset_comp_len = 8;
+static const long entry_v1_offset_uncomp_len = 12;
+static const long entry_v1_offset_base_rev = 16;
+static const long entry_v1_offset_link_rev = 20;
+static const long entry_v1_offset_parent_1 = 24;
+static const long entry_v1_offset_parent_2 = 28;
+static const long entry_v1_offset_node_id = 32;
+
+static const long entry_v2_offset_high = 0;
+static const long entry_v2_offset_offset_flags = 4;
+static const long entry_v2_offset_comp_len = 8;
+static const long entry_v2_offset_uncomp_len = 12;
+static const long entry_v2_offset_base_rev = 16;
+static const long entry_v2_offset_link_rev = 20;
+static const long entry_v2_offset_parent_1 = 24;
+static const long entry_v2_offset_parent_2 = 28;
+static const long entry_v2_offset_node_id = 32;
+static const long entry_v2_offset_sidedata_offset = 64;
+static const long entry_v2_offset_sidedata_comp_len = 72;
+static const long entry_v2_offset_all_comp_mode = 76;
+/* next free offset: 77 */
+
+static const long entry_cl2_offset_high = 0;
+static const long entry_cl2_offset_offset_flags = 4;
+static const long entry_cl2_offset_comp_len = 8;
+static const long entry_cl2_offset_uncomp_len = 12;
+static const long entry_cl2_offset_parent_1 = 16;
+static const long entry_cl2_offset_parent_2 = 20;
+static const long entry_cl2_offset_node_id = 24;
+static const long entry_cl2_offset_sidedata_offset = 56;
+static const long entry_cl2_offset_sidedata_comp_len = 64;
+static const long entry_cl2_offset_all_comp_mode = 68;
+static const long entry_cl2_offset_rank = 69;
+/* next free offset: 73 */
 
 static const char comp_mode_inline = 2;
+static const int rank_unknown = -1;
 
 static void raise_revlog_error(void)
 {
@@ -203,8 +237,19 @@ static inline int index_get_parents(indexObject *self, Py_ssize_t rev, int *ps,
 {
 	const char *data = index_deref(self, rev);
 
-	ps[0] = getbe32(data + 24);
-	ps[1] = getbe32(data + 28);
+	if (self->format_version == format_v1) {
+		ps[0] = getbe32(data + entry_v1_offset_parent_1);
+		ps[1] = getbe32(data + entry_v1_offset_parent_2);
+	} else if (self->format_version == format_v2) {
+		ps[0] = getbe32(data + entry_v2_offset_parent_1);
+		ps[1] = getbe32(data + entry_v2_offset_parent_2);
+	} else if (self->format_version == format_cl2) {
+		ps[0] = getbe32(data + entry_cl2_offset_parent_1);
+		ps[1] = getbe32(data + entry_cl2_offset_parent_2);
+	} else {
+		raise_revlog_error();
+		return -1;
+	}
 
 	/* If index file is corrupted, ps[] may point to invalid revisions. So
 	 * there is a risk of buffer overflow to trust them unconditionally. */
@@ -251,14 +296,36 @@ static inline int64_t index_get_start(indexObject *self, Py_ssize_t rev)
 		return 0;
 
 	data = index_deref(self, rev);
-	offset = getbe32(data + 4);
-	if (rev == 0) {
-		/* mask out version number for the first entry */
-		offset &= 0xFFFF;
-	} else {
-		uint32_t offset_high = getbe32(data);
+
+	if (self->format_version == format_v1) {
+		offset = getbe32(data + entry_v1_offset_offset_flags);
+		if (rev == 0) {
+			/* mask out version number for the first entry */
+			offset &= 0xFFFF;
+		} else {
+			uint32_t offset_high =
+			    getbe32(data + entry_v1_offset_high);
+			offset |= ((uint64_t)offset_high) << 32;
+		}
+	} else if (self->format_version == format_v2) {
+		offset = getbe32(data + entry_v2_offset_offset_flags);
+		if (rev == 0) {
+			/* mask out version number for the first entry */
+			offset &= 0xFFFF;
+		} else {
+			uint32_t offset_high =
+			    getbe32(data + entry_v2_offset_high);
+			offset |= ((uint64_t)offset_high) << 32;
+		}
+	} else if (self->format_version == format_cl2) {
+		uint32_t offset_high = getbe32(data + entry_cl2_offset_high);
+		offset = getbe32(data + entry_cl2_offset_offset_flags);
 		offset |= ((uint64_t)offset_high) << 32;
+	} else {
+		raise_revlog_error();
+		return -1;
 	}
+
 	return (int64_t)(offset >> 16);
 }
 
@@ -272,7 +339,16 @@ static inline int index_get_length(indexObject *self, Py_ssize_t rev)
 
 	data = index_deref(self, rev);
 
-	tmp = (int)getbe32(data + 8);
+	if (self->format_version == format_v1) {
+		tmp = (int)getbe32(data + entry_v1_offset_comp_len);
+	} else if (self->format_version == format_v2) {
+		tmp = (int)getbe32(data + entry_v2_offset_comp_len);
+	} else if (self->format_version == format_cl2) {
+		tmp = (int)getbe32(data + entry_cl2_offset_comp_len);
+	} else {
+		raise_revlog_error();
+		return -1;
+	}
 	if (tmp < 0) {
 		PyErr_Format(PyExc_OverflowError,
 		             "revlog entry size out of bound (%d)", tmp);
@@ -297,7 +373,7 @@ static PyObject *index_get(indexObject *self, Py_ssize_t pos)
 {
 	uint64_t offset_flags, sidedata_offset;
 	int comp_len, uncomp_len, base_rev, link_rev, parent_1, parent_2,
-	    sidedata_comp_len;
+	    sidedata_comp_len, rank = rank_unknown;
 	char data_comp_mode, sidedata_comp_mode;
 	const char *c_node_id;
 	const char *data;
@@ -317,42 +393,96 @@ static PyObject *index_get(indexObject *self, Py_ssize_t pos)
 	if (data == NULL)
 		return NULL;
 
-	offset_flags = getbe32(data + 4);
-	/*
-	 * The first entry on-disk needs the version number masked out,
-	 * but this doesn't apply if entries are added to an empty index.
-	 */
-	if (self->length && pos == 0)
-		offset_flags &= 0xFFFF;
-	else {
-		uint32_t offset_high = getbe32(data);
-		offset_flags |= ((uint64_t)offset_high) << 32;
-	}
-
-	comp_len = getbe32(data + 8);
-	uncomp_len = getbe32(data + 12);
-	base_rev = getbe32(data + 16);
-	link_rev = getbe32(data + 20);
-	parent_1 = getbe32(data + 24);
-	parent_2 = getbe32(data + 28);
-	c_node_id = data + 32;
-
 	if (self->format_version == format_v1) {
+		offset_flags = getbe32(data + entry_v1_offset_offset_flags);
+		/*
+		 * The first entry on-disk needs the version number masked out,
+		 * but this doesn't apply if entries are added to an empty
+		 * index.
+		 */
+		if (self->length && pos == 0)
+			offset_flags &= 0xFFFF;
+		else {
+			uint32_t offset_high =
+			    getbe32(data + entry_v1_offset_high);
+			offset_flags |= ((uint64_t)offset_high) << 32;
+		}
+
+		comp_len = getbe32(data + entry_v1_offset_comp_len);
+		uncomp_len = getbe32(data + entry_v1_offset_uncomp_len);
+		base_rev = getbe32(data + entry_v1_offset_base_rev);
+		link_rev = getbe32(data + entry_v1_offset_link_rev);
+		parent_1 = getbe32(data + entry_v1_offset_parent_1);
+		parent_2 = getbe32(data + entry_v1_offset_parent_2);
+		c_node_id = data + entry_v1_offset_node_id;
+
 		sidedata_offset = 0;
 		sidedata_comp_len = 0;
 		data_comp_mode = comp_mode_inline;
 		sidedata_comp_mode = comp_mode_inline;
+	} else if (self->format_version == format_v2) {
+		offset_flags = getbe32(data + entry_v2_offset_offset_flags);
+		/*
+		 * The first entry on-disk needs the version number masked out,
+		 * but this doesn't apply if entries are added to an empty
+		 * index.
+		 */
+		if (self->length && pos == 0)
+			offset_flags &= 0xFFFF;
+		else {
+			uint32_t offset_high =
+			    getbe32(data + entry_v2_offset_high);
+			offset_flags |= ((uint64_t)offset_high) << 32;
+		}
+
+		comp_len = getbe32(data + entry_v2_offset_comp_len);
+		uncomp_len = getbe32(data + entry_v2_offset_uncomp_len);
+		base_rev = getbe32(data + entry_v2_offset_base_rev);
+		link_rev = getbe32(data + entry_v2_offset_link_rev);
+		parent_1 = getbe32(data + entry_v2_offset_parent_1);
+		parent_2 = getbe32(data + entry_v2_offset_parent_2);
+		c_node_id = data + entry_v2_offset_node_id;
+
+		sidedata_offset =
+		    getbe64(data + entry_v2_offset_sidedata_offset);
+		sidedata_comp_len =
+		    getbe32(data + entry_v2_offset_sidedata_comp_len);
+		data_comp_mode = data[entry_v2_offset_all_comp_mode] & 3;
+		sidedata_comp_mode =
+		    ((data[entry_v2_offset_all_comp_mode] >> 2) & 3);
+	} else if (self->format_version == format_cl2) {
+		uint32_t offset_high = getbe32(data + entry_cl2_offset_high);
+		offset_flags = getbe32(data + entry_cl2_offset_offset_flags);
+		offset_flags |= ((uint64_t)offset_high) << 32;
+		comp_len = getbe32(data + entry_cl2_offset_comp_len);
+		uncomp_len = getbe32(data + entry_cl2_offset_uncomp_len);
+		/* base_rev and link_rev are not stored in changelogv2, but are
+		 still used by some functions shared with the other revlogs.
+		 They are supposed to contain links to other revisions,
+		 but they always point to themselves in the case of a changelog.
+		*/
+		base_rev = pos;
+		link_rev = pos;
+		parent_1 = getbe32(data + entry_cl2_offset_parent_1);
+		parent_2 = getbe32(data + entry_cl2_offset_parent_2);
+		c_node_id = data + entry_cl2_offset_node_id;
+		sidedata_offset =
+		    getbe64(data + entry_cl2_offset_sidedata_offset);
+		sidedata_comp_len =
+		    getbe32(data + entry_cl2_offset_sidedata_comp_len);
+		data_comp_mode = data[entry_cl2_offset_all_comp_mode] & 3;
+		sidedata_comp_mode =
+		    ((data[entry_cl2_offset_all_comp_mode] >> 2) & 3);
+		rank = getbe32(data + entry_cl2_offset_rank);
 	} else {
-		sidedata_offset = getbe64(data + 64);
-		sidedata_comp_len = getbe32(data + 72);
-		data_comp_mode = data[76] & 3;
-		sidedata_comp_mode = ((data[76] >> 2) & 3);
+		raise_revlog_error();
+		return NULL;
 	}
 
 	return Py_BuildValue(tuple_format, offset_flags, comp_len, uncomp_len,
 	                     base_rev, link_rev, parent_1, parent_2, c_node_id,
 	                     self->nodelen, sidedata_offset, sidedata_comp_len,
-	                     data_comp_mode, sidedata_comp_mode);
+	                     data_comp_mode, sidedata_comp_mode, rank);
 }
 /*
  * Pack header information in binary
@@ -361,13 +491,13 @@ static PyObject *index_pack_header(indexObject *self, PyObject *args)
 {
 	int header;
 	char out[4];
-	if (!PyArg_ParseTuple(args, "I", &header)) {
+	if (!PyArg_ParseTuple(args, "i", &header)) {
 		return NULL;
 	}
 	if (self->format_version != format_v1) {
 		PyErr_Format(PyExc_RuntimeError,
 		             "version header should go in the docket, not the "
-		             "index: %lu",
+		             "index: %d",
 		             header);
 		return NULL;
 	}
@@ -410,6 +540,7 @@ static const char *index_node(indexObject *self, Py_ssize_t pos)
 {
 	Py_ssize_t length = index_length(self);
 	const char *data;
+	const char *node_id;
 
 	if (pos == nullrev)
 		return nullid;
@@ -418,7 +549,46 @@ static const char *index_node(indexObject *self, Py_ssize_t pos)
 		return NULL;
 
 	data = index_deref(self, pos);
-	return data ? data + 32 : NULL;
+
+	if (self->format_version == format_v1) {
+		node_id = data + entry_v1_offset_node_id;
+	} else if (self->format_version == format_v2) {
+		node_id = data + entry_v2_offset_node_id;
+	} else if (self->format_version == format_cl2) {
+		node_id = data + entry_cl2_offset_node_id;
+	} else {
+		raise_revlog_error();
+		return NULL;
+	}
+
+	return data ? node_id : NULL;
+}
+
+/*
+ * Return the stored rank of a given revision if known, or rank_unknown
+ * otherwise.
+ *
+ * The rank of a revision is the size of the sub-graph it defines as a head.
+ * Equivalently, the rank of a revision `r` is the size of the set
+ * `ancestors(r)`, `r` included.
+ *
+ * This method returns the rank retrieved from the revlog in constant time. It
+ * makes no attempt at computing unknown values for versions of the revlog
+ * which do not persist the rank.
+ */
+static int index_fast_rank(indexObject *self, Py_ssize_t pos)
+{
+	Py_ssize_t length = index_length(self);
+
+	if (self->format_version != format_cl2 || pos >= length) {
+		return rank_unknown;
+	}
+
+	if (pos == nullrev) {
+		return 0; /* convention */
+	}
+
+	return getbe32(index_deref(self, pos) + entry_cl2_offset_rank);
 }
 
 /*
@@ -452,9 +622,10 @@ static int node_check(Py_ssize_t nodelen, PyObject *obj, char **node)
 static PyObject *index_append(indexObject *self, PyObject *obj)
 {
 	uint64_t offset_flags, sidedata_offset;
-	int rev, comp_len, uncomp_len, base_rev, link_rev, parent_1, parent_2;
+	int rev, comp_len, uncomp_len, base_rev, link_rev, parent_1, parent_2,
+	    sidedata_comp_len, rank;
 	char data_comp_mode, sidedata_comp_mode;
-	Py_ssize_t c_node_id_len, sidedata_comp_len;
+	Py_ssize_t c_node_id_len;
 	const char *c_node_id;
 	char comp_field;
 	char *data;
@@ -463,8 +634,8 @@ static PyObject *index_append(indexObject *self, PyObject *obj)
 	                      &uncomp_len, &base_rev, &link_rev, &parent_1,
 	                      &parent_2, &c_node_id, &c_node_id_len,
 	                      &sidedata_offset, &sidedata_comp_len,
-	                      &data_comp_mode, &sidedata_comp_mode)) {
-		PyErr_SetString(PyExc_TypeError, "11-tuple required");
+	                      &data_comp_mode, &sidedata_comp_mode, &rank)) {
+		PyErr_SetString(PyExc_TypeError, "12-tuple required");
 		return NULL;
 	}
 
@@ -500,25 +671,61 @@ static PyObject *index_append(indexObject *self, PyObject *obj)
 	}
 	rev = self->length + self->new_length;
 	data = self->added + self->entry_size * self->new_length++;
-	putbe32(offset_flags >> 32, data);
-	putbe32(offset_flags & 0xffffffffU, data + 4);
-	putbe32(comp_len, data + 8);
-	putbe32(uncomp_len, data + 12);
-	putbe32(base_rev, data + 16);
-	putbe32(link_rev, data + 20);
-	putbe32(parent_1, data + 24);
-	putbe32(parent_2, data + 28);
-	memcpy(data + 32, c_node_id, c_node_id_len);
-	/* Padding since SHA-1 is only 20 bytes for now */
-	memset(data + 32 + c_node_id_len, 0, 32 - c_node_id_len);
-	if (self->format_version == format_v2) {
-		putbe64(sidedata_offset, data + 64);
-		putbe32(sidedata_comp_len, data + 72);
+
+	memset(data, 0, self->entry_size);
+
+	if (self->format_version == format_v1) {
+		putbe32(offset_flags >> 32, data + entry_v1_offset_high);
+		putbe32(offset_flags & 0xffffffffU,
+		        data + entry_v1_offset_offset_flags);
+		putbe32(comp_len, data + entry_v1_offset_comp_len);
+		putbe32(uncomp_len, data + entry_v1_offset_uncomp_len);
+		putbe32(base_rev, data + entry_v1_offset_base_rev);
+		putbe32(link_rev, data + entry_v1_offset_link_rev);
+		putbe32(parent_1, data + entry_v1_offset_parent_1);
+		putbe32(parent_2, data + entry_v1_offset_parent_2);
+		memcpy(data + entry_v1_offset_node_id, c_node_id,
+		       c_node_id_len);
+	} else if (self->format_version == format_v2) {
+		putbe32(offset_flags >> 32, data + entry_v2_offset_high);
+		putbe32(offset_flags & 0xffffffffU,
+		        data + entry_v2_offset_offset_flags);
+		putbe32(comp_len, data + entry_v2_offset_comp_len);
+		putbe32(uncomp_len, data + entry_v2_offset_uncomp_len);
+		putbe32(base_rev, data + entry_v2_offset_base_rev);
+		putbe32(link_rev, data + entry_v2_offset_link_rev);
+		putbe32(parent_1, data + entry_v2_offset_parent_1);
+		putbe32(parent_2, data + entry_v2_offset_parent_2);
+		memcpy(data + entry_v2_offset_node_id, c_node_id,
+		       c_node_id_len);
+		putbe64(sidedata_offset,
+		        data + entry_v2_offset_sidedata_offset);
+		putbe32(sidedata_comp_len,
+		        data + entry_v2_offset_sidedata_comp_len);
 		comp_field = data_comp_mode & 3;
 		comp_field = comp_field | (sidedata_comp_mode & 3) << 2;
-		data[76] = comp_field;
-		/* Padding for 96 bytes alignment */
-		memset(data + 77, 0, self->entry_size - 77);
+		data[entry_v2_offset_all_comp_mode] = comp_field;
+	} else if (self->format_version == format_cl2) {
+		putbe32(offset_flags >> 32, data + entry_cl2_offset_high);
+		putbe32(offset_flags & 0xffffffffU,
+		        data + entry_cl2_offset_offset_flags);
+		putbe32(comp_len, data + entry_cl2_offset_comp_len);
+		putbe32(uncomp_len, data + entry_cl2_offset_uncomp_len);
+		putbe32(parent_1, data + entry_cl2_offset_parent_1);
+		putbe32(parent_2, data + entry_cl2_offset_parent_2);
+		memcpy(data + entry_cl2_offset_node_id, c_node_id,
+		       c_node_id_len);
+		putbe64(sidedata_offset,
+		        data + entry_cl2_offset_sidedata_offset);
+		putbe32(sidedata_comp_len,
+		        data + entry_cl2_offset_sidedata_comp_len);
+		comp_field = data_comp_mode & 3;
+		comp_field = comp_field | (sidedata_comp_mode & 3) << 2;
+		data[entry_cl2_offset_all_comp_mode] = comp_field;
+		putbe32(rank, data + entry_cl2_offset_rank);
+	} else {
+		raise_revlog_error();
+		return NULL;
 	}
 
 	if (self->ntinitialized)
@@ -534,14 +741,14 @@ static PyObject *index_append(indexObject *self, PyObject *obj)
 static PyObject *index_replace_sidedata_info(indexObject *self, PyObject *args)
 {
 	uint64_t offset_flags, sidedata_offset;
-	int rev;
+	Py_ssize_t rev;
+	int sidedata_comp_len;
 	char comp_mode;
-	Py_ssize_t sidedata_comp_len;
 	char *data;
 #if LONG_MAX == 0x7fffffffL
-	const char *const sidedata_format = PY23("nKiKB", "nKiKB");
+	const char *const sidedata_format = "nKiKB";
 #else
-	const char *const sidedata_format = PY23("nkikB", "nkikB");
+	const char *const sidedata_format = "nkikB";
 #endif
 
 	if (self->entry_size == v1_entry_size || self->inlined) {
@@ -573,10 +780,28 @@ static PyObject *index_replace_sidedata_info(indexObject *self, PyObject *args)
 	/* Find the newly added node, offset from the "already on-disk" length
 	 */
 	data = self->added + self->entry_size * (rev - self->length);
-	putbe64(offset_flags, data);
-	putbe64(sidedata_offset, data + 64);
-	putbe32(sidedata_comp_len, data + 72);
-	data[76] = (data[76] & ~(3 << 2)) | ((comp_mode & 3) << 2);
+	if (self->format_version == format_v2) {
+		putbe64(offset_flags, data + entry_v2_offset_high);
+		putbe64(sidedata_offset,
+		        data + entry_v2_offset_sidedata_offset);
+		putbe32(sidedata_comp_len,
+		        data + entry_v2_offset_sidedata_comp_len);
+		data[entry_v2_offset_all_comp_mode] =
+		    (data[entry_v2_offset_all_comp_mode] & ~(3 << 2)) |
+		    ((comp_mode & 3) << 2);
+	} else if (self->format_version == format_cl2) {
+		putbe64(offset_flags, data + entry_cl2_offset_high);
+		putbe64(sidedata_offset,
+		        data + entry_cl2_offset_sidedata_offset);
+		putbe32(sidedata_comp_len,
+		        data + entry_cl2_offset_sidedata_comp_len);
+		data[entry_cl2_offset_all_comp_mode] =
+		    (data[entry_cl2_offset_all_comp_mode] & ~(3 << 2)) |
+		    ((comp_mode & 3) << 2);
+	} else {
+		raise_revlog_error();
+		return NULL;
+	}
 
 	Py_RETURN_NONE;
 }
@@ -593,7 +818,7 @@ static PyObject *index_stats(indexObject *self)
 #define istat(__n, __d)                                                        \
 	do {                                                                   \
 		s = PyBytes_FromString(__d);                                   \
-		t = PyInt_FromSsize_t(self->__n);                              \
+		t = PyLong_FromSsize_t(self->__n);                             \
 		if (!s || !t)                                                  \
 			goto bail;                                             \
 		if (PyDict_SetItem(obj, s, t) == -1)                           \
@@ -684,6 +909,19 @@ static inline void set_phase_from_parents(char *phases, int parent_1,
 		phases[i] = phases[parent_2];
 }
 
+/* Take ownership of a given Python value and add it to a Python list.
+   Return -1 on failure (including if [elem] is NULL). */
+static int pylist_append_owned(PyObject *list, PyObject *elem)
+{
+	int res;
+
+	if (elem == NULL)
+		return -1;
+	res = PyList_Append(list, elem);
+	Py_DECREF(elem);
+	return res;
+}
+
 static PyObject *reachableroots2(indexObject *self, PyObject *args)
 {
 
@@ -696,7 +934,6 @@ static PyObject *reachableroots2(indexObject *self, PyObject *args)
 	PyObject *roots = NULL;
 	PyObject *reachable = NULL;
 
-	PyObject *val;
 	Py_ssize_t len = index_length(self);
 	long revnum;
 	Py_ssize_t k;
@@ -744,7 +981,7 @@ static PyObject *reachableroots2(indexObject *self, PyObject *args)
 
 	l = PyList_GET_SIZE(roots);
 	for (i = 0; i < l; i++) {
-		revnum = PyInt_AsLong(PyList_GET_ITEM(roots, i));
+		revnum = PyLong_AsLong(PyList_GET_ITEM(roots, i));
 		if (revnum == -1 && PyErr_Occurred())
 			goto bail;
 		/* If root is out of range, e.g. wdir(), it must be unreachable
@@ -757,7 +994,7 @@ static PyObject *reachableroots2(indexObject *self, PyObject *args)
 	/* Populate tovisit with all the heads */
 	l = PyList_GET_SIZE(heads);
 	for (i = 0; i < l; i++) {
-		revnum = PyInt_AsLong(PyList_GET_ITEM(heads, i));
+		revnum = PyLong_AsLong(PyList_GET_ITEM(heads, i));
 		if (revnum == -1 && PyErr_Occurred())
 			goto bail;
 		if (revnum + 1 < 0 || revnum + 1 >= len + 1) {
@@ -777,11 +1014,8 @@ static PyObject *reachableroots2(indexObject *self, PyObject *args)
 		revnum = tovisit[k++];
 		if (revstates[revnum + 1] & RS_ROOT) {
 			revstates[revnum + 1] |= RS_REACHABLE;
-			val = PyInt_FromLong(revnum);
-			if (val == NULL)
-				goto bail;
-			r = PyList_Append(reachable, val);
-			Py_DECREF(val);
+			r = pylist_append_owned(reachable,
+			                        PyLong_FromLong(revnum));
 			if (r < 0)
 				goto bail;
 			if (includepath == 0)
@@ -822,11 +1056,8 @@ static PyObject *reachableroots2(indexObject *self, PyObject *args)
 			     RS_REACHABLE) &&
 			    !(revstates[i + 1] & RS_REACHABLE)) {
 				revstates[i + 1] |= RS_REACHABLE;
-				val = PyInt_FromSsize_t(i);
-				if (val == NULL)
-					goto bail;
-				r = PyList_Append(reachable, val);
-				Py_DECREF(val);
+				r = pylist_append_owned(reachable,
+				                        PyLong_FromSsize_t(i));
 				if (r < 0)
 					goto bail;
 			}
@@ -850,7 +1081,6 @@ static int add_roots_get_min(indexObject *self, PyObject *roots, char *phases,
 	PyObject *item;
 	PyObject *iterator;
 	int rev, minrev = -1;
-	char *node;
 
 	if (!PySet_Check(roots)) {
 		PyErr_SetString(PyExc_TypeError,
@@ -861,9 +1091,10 @@ static int add_roots_get_min(indexObject *self, PyObject *roots, char *phases,
 	if (iterator == NULL)
 		return -2;
 	while ((item = PyIter_Next(iterator))) {
-		if (node_check(self->nodelen, item, &node) == -1)
+		rev = (int)PyLong_AsLong(item);
+		if (rev == -1 && PyErr_Occurred()) {
 			goto failed;
-		rev = index_find_node(self, node);
+		}
 		/* null is implicitly public, so negative is invalid */
 		if (rev < 0 || rev >= len)
 			goto failed;
@@ -907,7 +1138,7 @@ static PyObject *compute_phases_map_sets(indexObject *self, PyObject *args)
 	}
 
 	for (i = 0; i < numphases; ++i) {
-		PyObject *pyphase = PyInt_FromLong(trackedphases[i]);
+		PyObject *pyphase = PyLong_FromLong(trackedphases[i]);
 		PyObject *phaseroots = NULL;
 		if (pyphase == NULL)
 			goto release;
@@ -966,7 +1197,7 @@ static PyObject *compute_phases_map_sets(indexObject *self, PyObject *args)
 			                "bad phase number in internal list");
 			goto release;
 		}
-		pyrev = PyInt_FromLong(rev);
+		pyrev = PyLong_FromLong(rev);
 		if (pyrev == NULL)
 			goto release;
 		if (PySet_Add(pyphase, pyrev) == -1) {
@@ -980,7 +1211,7 @@ static PyObject *compute_phases_map_sets(indexObject *self, PyObject *args)
 	if (phasesetsdict == NULL)
 		goto release;
 	for (i = 0; i < numphases; ++i) {
-		PyObject *pyphase = PyInt_FromLong(trackedphases[i]);
+		PyObject *pyphase = PyLong_FromLong(trackedphases[i]);
 		if (pyphase == NULL)
 			goto release;
 		if (PyDict_SetItem(phasesetsdict, pyphase, phasesets[i]) ==
@@ -1038,8 +1269,7 @@ static PyObject *index_headrevs(indexObject *self, PyObject *args)
 	if (heads == NULL)
 		goto bail;
 	if (len == 0) {
-		PyObject *nullid = PyInt_FromLong(-1);
-		if (nullid == NULL || PyList_Append(heads, nullid) == -1) {
+		if (pylist_append_owned(heads, PyLong_FromLong(-1)) == -1) {
 			Py_XDECREF(nullid);
 			goto bail;
 		}
@@ -1083,13 +1313,9 @@ static PyObject *index_headrevs(indexObject *self, PyObject *args)
 	}
 
 	for (i = 0; i < len; i++) {
-		PyObject *head;
-
 		if (nothead[i])
 			continue;
-		head = PyInt_FromSsize_t(i);
-		if (head == NULL || PyList_Append(heads, head) == -1) {
-			Py_XDECREF(head);
+		if (pylist_append_owned(heads, PyLong_FromSsize_t(i)) == -1) {
 			goto bail;
 		}
 	}
@@ -1106,6 +1332,197 @@ bail:
 	return NULL;
 }
 
+/* "rgs" stands for "reverse growable set".
+   It is a representation of a set of integers that can't exceed, but
+   tend to be close to `max`.
+
+   `body` is a growable bit array covering the range `max-len+1..max`,
+   in reverse order.
+   `sum` keeps track of the cardinality of the set.
+*/
+typedef struct rgs {
+	int max;
+	int len;
+	char *body;
+	int sum;
+} rgs;
+
+static int rgs_offset(rgs *rgs, int i)
+{
+	return rgs->max - i;
+}
+
+/* returns 1 on success, 0 on failure */
+static int rgs_alloc(rgs *rgs, int max)
+{
+	int new_len = 64;
+	char *new_body = calloc(new_len, 1);
+	if (new_body == NULL)
+		return 0;
+	rgs->len = new_len;
+	rgs->body = new_body;
+	rgs->max = max;
+	rgs->sum = 0;
+	return 1;
+}
+
+static bool rgs_get(rgs *rgs, int i)
+{
+	int offset = rgs_offset(rgs, i);
+	if (offset >= rgs->len) {
+		return 0;
+	}
+	if (offset < 0) {
+		abort();
+	}
+	return rgs->body[offset];
+}
+
+/* Realloc `body` to length `new_len`.
+   Returns -1 when out of memory. */
+static int rgs_realloc(rgs *rgs, int new_len)
+{
+	int old_len = rgs->len;
+	char *old_body = rgs->body;
+	char *new_body = calloc(new_len, 1);
+	assert(new_len >= old_len);
+	if (new_body == NULL)
+		return -1;
+	memcpy(new_body, old_body, old_len);
+	free(old_body);
+	rgs->body = new_body;
+	rgs->len = new_len;
+	return 0;
+}
+
+/* Realloc the rgs `body` to include the `offset` */
+static int rgs_realloc_amortized(rgs *rgs, int offset)
+{
+	int old_len = rgs->len;
+	int new_len = old_len * 4;
+	if (offset >= new_len)
+		new_len = offset + 1;
+	return rgs_realloc(rgs, new_len);
+}
+
+/* returns 0 on success, -1 on error */
+static int rgs_set(rgs *rgs, int i, bool v)
+{
+	int offset = rgs_offset(rgs, i);
+	if (offset >= rgs->len) {
+		if (v == 0) {
+			/* no-op change: no need to resize */
+			return 0;
+		}
+		if (rgs_realloc_amortized(rgs, offset) == -1)
+			return -1;
+	}
+	if (offset < 0) {
+		abort();
+	}
+	rgs->sum -= rgs->body[offset];
+	rgs->sum += v;
+	rgs->body[offset] = v;
+	return 0;
+}
+
+/* Add a size_t value to a Python list. Return -1 on failure. */
+static inline int pylist_append_size_t(PyObject *list, size_t v)
+{
+	return pylist_append_owned(list, PyLong_FromSsize_t(v));
+}
+
+static PyObject *index_headrevsdiff(indexObject *self, PyObject *args)
+{
+	int begin, end;
+	Py_ssize_t i, j;
+	PyObject *heads_added = NULL;
+	PyObject *heads_removed = NULL;
+	PyObject *res = NULL;
+	rgs rgs;
+	rgs.body = NULL;
+
+	if (!PyArg_ParseTuple(args, "ii", &begin, &end))
+		goto bail;
+
+	if (!rgs_alloc(&rgs, end))
+		goto bail;
+
+	heads_added = PyList_New(0);
+	if (heads_added == NULL)
+		goto bail;
+	heads_removed = PyList_New(0);
+	if (heads_removed == NULL)
+		goto bail;
+
+	for (i = end - 1; i >= begin; i--) {
+		int parents[2];
+
+		if (rgs_get(&rgs, i)) {
+			if (rgs_set(&rgs, i, false) == -1) {
+				goto bail;
+			};
+		} else {
+			if (pylist_append_size_t(heads_added, i) == -1) {
+				goto bail;
+			}
+		}
+
+		if (index_get_parents(self, i, parents, i) < 0)
+			goto bail;
+		for (j = 0; j < 2; j++) {
+			if (parents[j] >= 0)
+				if (rgs_set(&rgs, parents[j], true) == -1) {
+					goto bail;
+				}
+		}
+	}
+
+	while (rgs.sum) {
+		int parents[2];
+
+		if (rgs_get(&rgs, i)) {
+			if (rgs_set(&rgs, i, false) == -1) {
+				goto bail;
+			}
+			if (pylist_append_size_t(heads_removed, i) == -1) {
+				goto bail;
+			}
+		}
+
+		if (index_get_parents(self, i, parents, i) < 0)
+			goto bail;
+		for (j = 0; j < 2; j++) {
+			if (parents[j] >= 0)
+				if (rgs_set(&rgs, parents[j], false) == -1) {
+					/* can't actually fail */
+					goto bail;
+				}
+		}
+		i--;
+	}
+
+	if (begin == 0 && end > 0) {
+		if (pylist_append_size_t(heads_removed, -1) == -1) {
+			goto bail;
+		}
+	}
+
+	if (!(res = PyTuple_Pack(2, heads_removed, heads_added))) {
+		goto bail;
+	}
+
+	Py_XDECREF(heads_removed);
+	Py_XDECREF(heads_added);
+	free(rgs.body);
+	return res;
+bail:
+	Py_XDECREF(heads_added);
+	Py_XDECREF(heads_removed);
+	free(rgs.body);
+	return NULL;
+}
+
 /**
  * Obtain the base revision index entry.
  *
@@ -1119,7 +1536,17 @@ static inline int index_baserev(indexObject *self, int rev)
 	data = index_deref(self, rev);
 	if (data == NULL)
 		return -2;
-	result = getbe32(data + 16);
+
+	if (self->format_version == format_v1) {
+		result = getbe32(data + entry_v1_offset_base_rev);
+	} else if (self->format_version == format_v2) {
+		result = getbe32(data + entry_v2_offset_base_rev);
+	} else if (self->format_version == format_cl2) {
+		return rev;
+	} else {
+		raise_revlog_error();
+		return -1;
+	}
 
 	if (result > rev) {
 		PyErr_Format(
@@ -1147,6 +1574,7 @@ static inline int index_baserev(indexObject *self, int rev)
 static int index_issnapshotrev(indexObject *self, Py_ssize_t rev)
 {
 	int ps[2];
+	int b;
 	Py_ssize_t base;
 	while (rev >= 0) {
 		base = (Py_ssize_t)index_baserev(self, rev);
@@ -1164,6 +1592,20 @@ static int index_issnapshotrev(indexObject *self, Py_ssize_t rev)
 			assert(PyErr_Occurred());
 			return -1;
 		};
+		while ((index_get_length(self, ps[0]) == 0) && ps[0] >= 0) {
+			b = index_baserev(self, ps[0]);
+			if (b == ps[0]) {
+				break;
+			}
+			ps[0] = b;
+		}
+		while ((index_get_length(self, ps[1]) == 0) && ps[1] >= 0) {
+			b = index_baserev(self, ps[1]);
+			if (b == ps[1]) {
+				break;
+			}
+			ps[1] = b;
+		}
 		if (base == ps[0] || base == ps[1]) {
 			return 0;
 		}
@@ -1196,16 +1638,25 @@ static PyObject *index_issnapshot(indexObject *self, PyObject *value)
 static PyObject *index_findsnapshots(indexObject *self, PyObject *args)
 {
 	Py_ssize_t start_rev;
+	Py_ssize_t end_rev;
 	PyObject *cache;
 	Py_ssize_t base;
 	Py_ssize_t rev;
 	PyObject *key = NULL;
 	PyObject *value = NULL;
 	const Py_ssize_t length = index_length(self);
-	if (!PyArg_ParseTuple(args, "O!n", &PyDict_Type, &cache, &start_rev)) {
+	if (!PyArg_ParseTuple(args, "O!nn", &PyDict_Type, &cache, &start_rev,
+	                      &end_rev)) {
 		return NULL;
 	}
-	for (rev = start_rev; rev < length; rev++) {
+	end_rev += 1;
+	if (end_rev > length) {
+		end_rev = length;
+	}
+	if (start_rev < 0) {
+		start_rev = 0;
+	}
+	for (rev = start_rev; rev < end_rev; rev++) {
 		int issnap;
 		PyObject *allvalues = NULL;
 		issnap = index_issnapshotrev(self, rev);
@@ -1223,14 +1674,14 @@ static PyObject *index_findsnapshots(indexObject *self, PyObject *args)
 			assert(PyErr_Occurred());
 			goto bail;
 		}
-		key = PyInt_FromSsize_t(base);
+		key = PyLong_FromSsize_t(base);
 		allvalues = PyDict_GetItem(cache, key);
 		if (allvalues == NULL && PyErr_Occurred()) {
 			goto bail;
 		}
 		if (allvalues == NULL) {
 			int r;
-			allvalues = PyList_New(0);
+			allvalues = PySet_New(0);
 			if (!allvalues) {
 				goto bail;
 			}
@@ -1240,8 +1691,8 @@ static PyObject *index_findsnapshots(indexObject *self, PyObject *args)
 				goto bail;
 			}
 		}
-		value = PyInt_FromSsize_t(rev);
-		if (PyList_Append(allvalues, value)) {
+		value = PyLong_FromSsize_t(rev);
+		if (PySet_Add(allvalues, value)) {
 			goto bail;
 		}
 		Py_CLEAR(key);
@@ -1267,8 +1718,8 @@ static PyObject *index_deltachain(indexObject *self, PyObject *args)
 		return NULL;
 	}
 
-	if (PyInt_Check(stoparg)) {
-		stoprev = (int)PyInt_AsLong(stoparg);
+	if (PyLong_Check(stoparg)) {
+		stoprev = (int)PyLong_AsLong(stoparg);
 		if (stoprev == -1 && PyErr_Occurred()) {
 			return NULL;
 		}
@@ -1302,15 +1753,9 @@ static PyObject *index_deltachain(indexObject *self, PyObject *args)
 	iterrev = rev;
 
 	while (iterrev != baserev && iterrev != stoprev) {
-		PyObject *value = PyInt_FromLong(iterrev);
-		if (value == NULL) {
+		if (pylist_append_owned(chain, PyLong_FromLong(iterrev))) {
 			goto bail;
 		}
-		if (PyList_Append(chain, value)) {
-			Py_DECREF(value);
-			goto bail;
-		}
-		Py_DECREF(value);
 
 		if (generaldelta) {
 			iterrev = baserev;
@@ -1341,15 +1786,9 @@ static PyObject *index_deltachain(indexObject *self, PyObject *args)
 	if (iterrev == stoprev) {
 		stopped = 1;
 	} else {
-		PyObject *value = PyInt_FromLong(iterrev);
-		if (value == NULL) {
+		if (pylist_append_owned(chain, PyLong_FromLong(iterrev))) {
 			goto bail;
 		}
-		if (PyList_Append(chain, value)) {
-			Py_DECREF(value);
-			goto bail;
-		}
-		Py_DECREF(value);
 
 		stopped = 0;
 	}
@@ -1468,7 +1907,6 @@ static PyObject *index_slicechunktodensity(indexObject *self, PyObject *args)
 	    0; /* total number of notable gap recorded so far */
 	Py_ssize_t *selected_indices = NULL; /* indices of gap skipped over */
 	Py_ssize_t num_selected = 0;         /* number of gaps skipped */
-	PyObject *chunk = NULL;              /* individual slice */
 	PyObject *allchunks = NULL;          /* all slices */
 	Py_ssize_t previdx;
 
@@ -1493,7 +1931,8 @@ static PyObject *index_slicechunktodensity(indexObject *self, PyObject *args)
 		goto bail;
 	}
 	for (i = 0; i < num_revs; i++) {
-		Py_ssize_t revnum = PyInt_AsLong(PyList_GET_ITEM(list_revs, i));
+		Py_ssize_t revnum =
+		    PyLong_AsLong(PyList_GET_ITEM(list_revs, i));
 		if (revnum == -1 && PyErr_Occurred()) {
 			goto bail;
 		}
@@ -1612,15 +2051,11 @@ static PyObject *index_slicechunktodensity(indexObject *self, PyObject *args)
 			goto bail;
 		}
 		if (previdx < endidx) {
-			chunk = PyList_GetSlice(list_revs, previdx, endidx);
-			if (chunk == NULL) {
+			PyObject *chunk =
+			    PyList_GetSlice(list_revs, previdx, endidx);
+			if (pylist_append_owned(allchunks, chunk) == -1) {
 				goto bail;
 			}
-			if (PyList_Append(allchunks, chunk) == -1) {
-				goto bail;
-			}
-			Py_DECREF(chunk);
-			chunk = NULL;
 		}
 		previdx = idx;
 	}
@@ -1629,7 +2064,6 @@ static PyObject *index_slicechunktodensity(indexObject *self, PyObject *args)
 
 bail:
 	Py_XDECREF(allchunks);
-	Py_XDECREF(chunk);
 done:
 	free(revs);
 	free(gaps);
@@ -1899,7 +2333,7 @@ static PyObject *ntobj_shortest(nodetreeObject *self, PyObject *args)
 		raise_revlog_error();
 		return NULL;
 	}
-	return PyInt_FromLong(length);
+	return PyLong_FromLong(length);
 }
 
 static void nt_dealloc(nodetree *self)
@@ -2047,7 +2481,7 @@ static PyObject *index_getitem(indexObject *self, PyObject *value)
 	char *node;
 	int rev;
 
-	if (PyInt_Check(value)) {
+	if (PyLong_Check(value)) {
 		long idx;
 		if (!pylong_to_long(value, &idx)) {
 			return NULL;
@@ -2059,7 +2493,7 @@ static PyObject *index_getitem(indexObject *self, PyObject *value)
 		return NULL;
 	rev = index_find_node(self, node);
 	if (rev >= -1)
-		return PyInt_FromLong(rev);
+		return PyLong_FromLong(rev);
 	if (rev == -2)
 		raise_revlog_error();
 	return NULL;
@@ -2091,7 +2525,7 @@ static PyObject *index_partialmatch(indexObject *self, PyObject *args)
 	char *node;
 	int rev, i;
 
-	if (!PyArg_ParseTuple(args, PY23("s#", "y#"), &node, &nodelen))
+	if (!PyArg_ParseTuple(args, "y#", &node, &nodelen))
 		return NULL;
 
 	if (nodelen < 1) {
@@ -2158,7 +2592,7 @@ static PyObject *index_shortest(indexObject *self, PyObject *args)
 		raise_revlog_error();
 		return NULL;
 	}
-	return PyInt_FromLong(length);
+	return PyLong_FromLong(length);
 }
 
 static PyObject *index_m_get(indexObject *self, PyObject *args)
@@ -2176,14 +2610,14 @@ static PyObject *index_m_get(indexObject *self, PyObject *args)
 		return NULL;
 	if (rev == -2)
 		Py_RETURN_NONE;
-	return PyInt_FromLong(rev);
+	return PyLong_FromLong(rev);
 }
 
 static int index_contains(indexObject *self, PyObject *value)
 {
 	char *node;
 
-	if (PyInt_Check(value)) {
+	if (PyLong_Check(value)) {
 		long rev;
 		if (!pylong_to_long(value, &rev)) {
 			return -1;
@@ -2221,7 +2655,7 @@ static PyObject *index_m_rev(indexObject *self, PyObject *val)
 		return NULL;
 	rev = index_find_node(self, node);
 	if (rev >= -1)
-		return PyInt_FromLong(rev);
+		return PyLong_FromLong(rev);
 	if (rev == -2)
 		raise_revlog_error();
 	return NULL;
@@ -2274,11 +2708,8 @@ static PyObject *find_gca_candidates(indexObject *self, const int *revs,
 		if (sv < poison) {
 			interesting -= 1;
 			if (sv == allseen) {
-				PyObject *obj = PyInt_FromLong(v);
-				if (obj == NULL)
-					goto bail;
-				if (PyList_Append(gca, obj) == -1) {
-					Py_DECREF(obj);
+				if (pylist_append_owned(
+				        gca, PyLong_FromLong(v)) == -1) {
 					goto bail;
 				}
 				sv |= poison;
@@ -2342,7 +2773,7 @@ static PyObject *find_deepest(indexObject *self, PyObject *revs)
 	}
 
 	for (i = 0; i < revcount; i++) {
-		int n = (int)PyInt_AsLong(PyList_GET_ITEM(revs, i));
+		int n = (int)PyLong_AsLong(PyList_GET_ITEM(revs, i));
 		if (n > maxrev)
 			maxrev = n;
 	}
@@ -2367,7 +2798,7 @@ static PyObject *find_deepest(indexObject *self, PyObject *revs)
 		goto bail;
 
 	for (i = 0; i < revcount; i++) {
-		int n = (int)PyInt_AsLong(PyList_GET_ITEM(revs, i));
+		int n = (int)PyLong_AsLong(PyList_GET_ITEM(revs, i));
 		long b = 1l << i;
 		depth[n] = 1;
 		seen[n] = b;
@@ -2497,13 +2928,13 @@ static PyObject *index_commonancestorsheads(indexObject *self, PyObject *args)
 		bitmask x;
 		long val;
 
-		if (!PyInt_Check(obj)) {
+		if (!PyLong_Check(obj)) {
 			PyErr_SetString(PyExc_TypeError,
 			                "arguments must all be ints");
 			Py_DECREF(obj);
 			goto bail;
 		}
-		val = PyInt_AsLong(obj);
+		val = PyLong_AsLong(obj);
 		Py_DECREF(obj);
 		if (val == -1) {
 			ret = PyList_New(0);
@@ -2544,7 +2975,7 @@ static PyObject *index_commonancestorsheads(indexObject *self, PyObject *args)
 		ret = PyList_New(1);
 		if (ret == NULL)
 			goto bail;
-		obj = PyInt_FromLong(revs[0]);
+		obj = PyLong_FromLong(revs[0]);
 		if (obj == NULL)
 			goto bail;
 		PyList_SET_ITEM(ret, 0, obj);
@@ -2597,8 +3028,10 @@ static void index_invalidate_added(indexObject *self, Py_ssize_t start)
 	if (i < 0)
 		return;
 
-	for (i = start; i < len; i++)
-		nt_delete_node(&self->nt, index_deref(self, i) + 32);
+	for (i = start; i < len; i++) {
+		const char *node = index_node(self, i);
+		nt_delete_node(&self->nt, node);
+	}
 
 	self->new_length = start - self->length;
 }
@@ -2613,14 +3046,8 @@ static int index_slice_del(indexObject *self, PyObject *item)
 	Py_ssize_t length = index_length(self) + 1;
 	int ret = 0;
 
-/* Argument changed from PySliceObject* to PyObject* in Python 3. */
-#ifdef IS_PY3K
 	if (PySlice_GetIndicesEx(item, length, &start, &stop, &step,
 	                         &slicelength) < 0)
-#else
-	if (PySlice_GetIndicesEx((PySliceObject *)item, length, &start, &stop,
-	                         &step, &slicelength) < 0)
-#endif
 		return -1;
 
 	if (slicelength <= 0)
@@ -2704,7 +3131,7 @@ static int index_assign_subscript(indexObject *self, PyObject *item,
 	if (value == NULL)
 		return self->ntinitialized ? nt_delete_node(&self->nt, node)
 		                           : 0;
-	rev = PyInt_AsLong(value);
+	rev = PyLong_AsLong(value);
 	if (rev > INT_MAX || rev < 0) {
 		if (!PyErr_Occurred())
 			PyErr_SetString(PyExc_ValueError, "rev out of range");
@@ -2731,9 +3158,18 @@ static Py_ssize_t inline_scan(indexObject *self, const char **offsets)
 	while (pos + self->entry_size <= end && pos >= 0) {
 		uint32_t comp_len, sidedata_comp_len = 0;
 		/* 3rd element of header is length of compressed inline data */
-		comp_len = getbe32(data + pos + 8);
-		if (self->entry_size == v2_entry_size) {
-			sidedata_comp_len = getbe32(data + pos + 72);
+		if (self->format_version == format_v1) {
+			comp_len =
+			    getbe32(data + pos + entry_v1_offset_comp_len);
+			sidedata_comp_len = 0;
+		} else if (self->format_version == format_v2) {
+			comp_len =
+			    getbe32(data + pos + entry_v2_offset_comp_len);
+			sidedata_comp_len = getbe32(
+			    data + pos + entry_v2_offset_sidedata_comp_len);
+		} else {
+			raise_revlog_error();
+			return -1;
 		}
 		incr = self->entry_size + comp_len + sidedata_comp_len;
 		if (offsets)
@@ -2753,10 +3189,10 @@ static Py_ssize_t inline_scan(indexObject *self, const char **offsets)
 
 static int index_init(indexObject *self, PyObject *args, PyObject *kwargs)
 {
-	PyObject *data_obj, *inlined_obj, *revlogv2;
+	PyObject *data_obj, *inlined_obj;
 	Py_ssize_t size;
 
-	static char *kwlist[] = {"data", "inlined", "revlogv2", NULL};
+	static char *kwlist[] = {"data", "inlined", "format", NULL};
 
 	/* Initialize before argument-checking to avoid index_dealloc() crash.
 	 */
@@ -2772,11 +3208,12 @@ static int index_init(indexObject *self, PyObject *args, PyObject *kwargs)
 	self->offsets = NULL;
 	self->nodelen = 20;
 	self->nullentry = NULL;
-	self->rust_ext_compat = 1;
+	self->rust_ext_compat = 0;
+	self->format_version = format_v1;
 
-	revlogv2 = NULL;
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|O", kwlist,
-	                                 &data_obj, &inlined_obj, &revlogv2))
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|l", kwlist,
+	                                 &data_obj, &inlined_obj,
+	                                 &(self->format_version)))
 		return -1;
 	if (!PyObject_CheckBuffer(data_obj)) {
 		PyErr_SetString(PyExc_TypeError,
@@ -2788,17 +3225,17 @@ static int index_init(indexObject *self, PyObject *args, PyObject *kwargs)
 		return -1;
 	}
 
-	if (revlogv2 && PyObject_IsTrue(revlogv2)) {
-		self->format_version = format_v2;
-		self->entry_size = v2_entry_size;
-	} else {
-		self->format_version = format_v1;
+	if (self->format_version == format_v1) {
 		self->entry_size = v1_entry_size;
+	} else if (self->format_version == format_v2) {
+		self->entry_size = v2_entry_size;
+	} else if (self->format_version == format_cl2) {
+		self->entry_size = cl2_entry_size;
 	}
 
 	self->nullentry = Py_BuildValue(
-	    PY23("iiiiiiis#iiBB", "iiiiiiiy#iiBB"), 0, 0, 0, -1, -1, -1, -1,
-	    nullid, self->nodelen, 0, 0, comp_mode_inline, comp_mode_inline);
+	    "iiiiiiiy#iiBBi", 0, 0, 0, -1, -1, -1, -1, nullid, self->nodelen, 0,
+	    0, comp_mode_inline, comp_mode_inline, rank_unknown);
 
 	if (!self->nullentry)
 		return -1;
@@ -2894,6 +3331,8 @@ static PyMappingMethods index_mapping_methods = {
 static PyMethodDef index_methods[] = {
     {"ancestors", (PyCFunction)index_ancestors, METH_VARARGS,
      "return the gca set of the given revs"},
+    {"headrevsdiff", (PyCFunction)index_headrevsdiff, METH_VARARGS,
+     "return the set of heads removed/added by a range of commits"},
     {"commonancestorsheads", (PyCFunction)index_commonancestorsheads,
      METH_VARARGS,
      "return the heads of the common ancestors of the given revs"},
@@ -3034,10 +3473,7 @@ bail:
 static Revlog_CAPI CAPI = {
     /* increment the abi_version field upon each change in the Revlog_CAPI
        struct or in the ABI of the listed functions */
-    2,
-    index_length,
-    index_node,
-    HgRevlogIndex_GetParents,
+    3, index_length, index_node, index_fast_rank, HgRevlogIndex_GetParents,
 };
 
 void revlog_module_init(PyObject *mod)

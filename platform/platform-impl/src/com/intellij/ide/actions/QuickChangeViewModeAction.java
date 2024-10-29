@@ -6,11 +6,13 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.util.Conditions.instanceOf;
 import static com.intellij.openapi.util.Conditions.not;
 
+@ApiStatus.Internal
 public final class QuickChangeViewModeAction extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {

@@ -337,21 +337,17 @@ public final class NullabilityProblemKind<T extends PsiElement> {
   private static NullabilityProblem<?> getSwitchBlockProblem(@NotNull PsiSwitchBlock switchBlock,
                                                              @NotNull PsiExpression expression,
                                                              @NotNull PsiExpression context) {
-    PsiType expressionType = expression.getType();
-    Nullability exprNullability = DfaPsiUtil.getTypeNullability(expressionType);
-    // if selector expr is nullable or unknown and switch contains null label, then we shouldn't check nullity of the expr
-    if (exprNullability != Nullability.NOT_NULL) {
-      PsiCodeBlock body = switchBlock.getBody();
-      if (body != null) {
-        PsiStatement[] statements = body.getStatements();
-        for (PsiStatement statement : statements) {
-          PsiSwitchLabelStatementBase labelStatement = tryCast(statement, PsiSwitchLabelStatementBase.class);
-          if (labelStatement == null) continue;
-          PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
-          if (labelElementList == null) continue;
-          for (PsiCaseLabelElement element : labelElementList.getElements()) {
-            if (element instanceof PsiExpression caseExpression && TypeConversionUtil.isNullType(caseExpression.getType())) return null;
-          }
+    // if switch contains null label, then we shouldn't check nullity of the expr
+    PsiCodeBlock body = switchBlock.getBody();
+    if (body != null) {
+      PsiStatement[] statements = body.getStatements();
+      for (PsiStatement statement : statements) {
+        PsiSwitchLabelStatementBase labelStatement = tryCast(statement, PsiSwitchLabelStatementBase.class);
+        if (labelStatement == null) continue;
+        PsiCaseLabelElementList labelElementList = labelStatement.getCaseLabelElementList();
+        if (labelElementList == null) continue;
+        for (PsiCaseLabelElement element : labelElementList.getElements()) {
+          if (element instanceof PsiExpression caseExpression && TypeConversionUtil.isNullType(caseExpression.getType())) return null;
         }
       }
     }

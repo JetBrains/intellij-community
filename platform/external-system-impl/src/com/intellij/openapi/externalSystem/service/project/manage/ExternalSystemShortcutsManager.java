@@ -14,6 +14,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.DisposableWrapperList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import java.util.Collection;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class ExternalSystemShortcutsManager implements Disposable {
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
   @NotNull

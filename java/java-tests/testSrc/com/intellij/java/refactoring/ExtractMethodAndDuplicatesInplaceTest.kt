@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.refactoring
 
+import com.intellij.codeInsight.hint.HintManager
+import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
@@ -8,6 +10,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.IdePopupManager
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.Disposer
@@ -15,6 +18,8 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.refactoring.JavaRefactoringSettings
 import com.intellij.refactoring.RefactoringBundle
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.extractMethod.newImpl.inplace.DuplicatesMethodExtractor
 import com.intellij.refactoring.listeners.RefactoringEventData
@@ -22,7 +27,8 @@ import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.LightJavaCodeInsightTestCase
-import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.replaceService
+import com.intellij.testFramework.utils.coroutines.waitCoroutinesBlocking
 import com.intellij.ui.ChooserInterceptor
 import com.intellij.ui.UiInterceptors
 import com.intellij.util.ui.UIUtil
@@ -45,9 +51,7 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     fun renameTemplate(templateState: TemplateState?, name: String) {
       if (templateState == null) return
       WriteCommandAction.runWriteCommandAction(templateState.project) {
-        val range = templateState.currentVariableRange!!
-        templateState.editor.document.replaceString(range.startOffset, range.endOffset, name)
-        templateState.update()
+        ExtractMethodHelper.renameTemplate(templateState, name)
       }
     }
   }
@@ -590,10 +594,6 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     } while (isVariableSwitched)
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor {
-    return ExtractMethodNewTest.SimpleLightProjectDescriptorWithAnnotations(moduleTypeId, projectJDK)
-  }
-
   override fun setUp() {
     super.setUp()
     val settings = JavaRefactoringSettings.getInstance()
@@ -611,10 +611,27 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
     }
   }
 
+  @Throws(RefactoringErrorHintException::class)
+  fun throwHintError(block: () -> Unit) {
+    var message: String? = null
+    val manager = object : HintManagerImpl() {
+      override fun showErrorHint(editor: Editor, text: String) {
+        super.showInformationHint(editor, text)
+        message = text
+      }
+    }
+    ApplicationManager.getApplication().replaceService(HintManager::class.java, manager, testRootDisposable)
+    block.invoke()
+    if (message != null) throw throw RefactoringErrorHintException(message)
+  }
+
   private fun startRefactoring(editor: Editor): TemplateState {
     val selection = with(editor.selectionModel) { TextRange(selectionStart, selectionEnd) }
-    MethodExtractor().doExtract(file, selection)
-    UIUtil.dispatchAllInvocationEvents()
+    throwHintError {
+      MethodExtractor().doExtract(file, selection)
+      UIUtil.dispatchAllInvocationEvents()
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
+    }
     val templateState = getActiveTemplate()
     require(templateState != null) { "Failed to start refactoring" }
     return templateState
@@ -622,7 +639,11 @@ class ExtractMethodAndDuplicatesInplaceTest: LightJavaCodeInsightTestCase() {
 
   private fun getActiveTemplate() = TemplateManagerImpl.getTemplateState(editor)
 
-  private fun nextTemplateVariable(): Boolean = nextTemplateVariable(getActiveTemplate())
+  private fun nextTemplateVariable(): Boolean {
+    return nextTemplateVariable(getActiveTemplate()).also {
+      waitCoroutinesBlocking(ExtractMethodService.getInstance(project).scope)
+    }
+  }
 
   private fun renameTemplate(name: String)  = renameTemplate(getActiveTemplate(), name)
 

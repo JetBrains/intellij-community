@@ -1,13 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.savedPatches
 
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.VcsBundle
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.ui.*
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.Processor
@@ -30,7 +30,7 @@ open class SavedPatchesUi(project: Project,
                           private val isShowDiffWithLocal: () -> Boolean,
                           focusMainUi: (Component?) -> Unit,
                           disposable: Disposable) :
-  JPanel(BorderLayout()), Disposable, DataProvider {
+  JPanel(BorderLayout()), Disposable, UiDataProvider {
 
   protected val patchesTree: SavedPatchesTree
   internal val changesBrowser: SavedPatchesChangesBrowser
@@ -171,12 +171,11 @@ open class SavedPatchesUi(project: Project,
     splitDiffProcessor = null
   }
 
-  override fun getData(dataId: String): Any? {
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorTabPreview
-    if (SAVED_PATCH_SELECTED_PATCH.`is`(dataId)) return selectedPatchObjectOrNull()
-    if (SAVED_PATCHES_UI.`is`(dataId)) return this
-    if (SAVED_PATCH_CHANGES.`is`(dataId)) return changesBrowser.getData(dataId)
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorTabPreview
+    sink[SAVED_PATCH_SELECTED_PATCH] = selectedPatchObjectOrNull()
+    sink[SAVED_PATCHES_UI] = this
+    sink[SAVED_PATCH_CHANGES] = changesBrowser.getSavedPatchChanges()
   }
 
   private fun selectedPatchObjectOrNull() = patchesTree.selectedPatchObjects().firstOrNull()
@@ -186,8 +185,12 @@ open class SavedPatchesUi(project: Project,
     return providers.find { it.dataClass.isInstance(selectedPatch.data) } ?: return providers.first()
   }
 
-  fun expandPatchesByProvider(provider: SavedPatchesProvider<*>) {
-    patchesTree.expandPatchesByProvider(provider)
+  fun showFirstUnderProvider(provider: SavedPatchesProvider<*>) {
+    patchesTree.invokeAfterRefresh { patchesTree.showFirstUnderProvider(provider) }
+  }
+
+  fun showFirstUnderObject(provider: SavedPatchesProvider<*>, userObject: Any) {
+    patchesTree.invokeAfterRefresh { patchesTree.showFirstUnderObject(provider, userObject) }
   }
 
   @ApiStatus.Internal

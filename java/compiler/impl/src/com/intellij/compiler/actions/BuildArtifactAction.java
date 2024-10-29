@@ -358,7 +358,7 @@ public final class BuildArtifactAction extends DumbAwareAction {
         }
 
         @Override
-        public PopupStep onChosen(ArtifactActionItem selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(ArtifactActionItem selectedValue, boolean finalChoice) {
           return doFinalStep(selectedValue);
         }
       };

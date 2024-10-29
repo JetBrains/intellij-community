@@ -155,7 +155,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   private static boolean hasParentWithId(final FrameworkSupportNode node, @NotNull String frameworkOrGroupId) {
-    FrameworkSupportNodeBase current = node;
+    FrameworkSupportNodeBase<?> current = node;
     while (current != null) {
       if (current.getId().equals(frameworkOrGroupId)) return true;
       current = current.getParentNode();
@@ -174,6 +174,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     }
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   public <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
     return (V)mySelectedVersions.get(frameworkOrGroupId);

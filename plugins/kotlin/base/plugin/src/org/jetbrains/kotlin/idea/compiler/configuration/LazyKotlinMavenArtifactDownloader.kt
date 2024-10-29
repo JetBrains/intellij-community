@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.compiler.configuration
 
+import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
@@ -14,6 +15,13 @@ internal class LazyKotlinMavenArtifactDownloader(
     private val version: String,
     private val artifactIsPom: Boolean = false,
 ) : AbstractLazyFileOutputProducer<Unit, DownloadContext>("${this::class.java.name}-$artifactId-$version") {
+
+    private val kotlinIdeRepository = RemoteRepositoryDescription(
+        /* id = */ "KotlinIDE-Plug",
+        /* name = */ "KotlinIDE-Plugin Repository",
+        /* url = */ "https://maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide-plugin-dependencies/"
+    )
+
     override fun produceOutput(input: Unit, computationContext: DownloadContext): List<File> {
         computationContext.indicator.text = computationContext.indicatorDownloadText
         return KotlinArtifactsDownloader.downloadMavenArtifacts(
@@ -21,7 +29,8 @@ internal class LazyKotlinMavenArtifactDownloader(
             version,
             computationContext.project,
             computationContext.indicator,
-            artifactIsPom
+            artifactIsPom,
+            listOf(kotlinIdeRepository)
         )
     }
 

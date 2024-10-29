@@ -10,12 +10,16 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import java.awt.*
+import java.awt.event.MouseAdapter
+import java.awt.event.MouseEvent
 import javax.swing.*
 
 class KeymapPane(val keymap: Keymap) {
   private val KEY_BACKGROUND = JBColor(0xDFE1E5, 0x4E5157)
 
   private val names = mutableListOf<ShortcutItem>()
+
+  private var hover: Boolean = false
 
   val jRadioButton = object : JRadioButton() {
     override fun paintComponent(g: Graphics?) {}
@@ -47,6 +51,9 @@ class KeymapPane(val keymap: Keymap) {
                                            RoundedPanel.RADIUS)
 
   private val regularBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.BORDER_COLOR,
+                                            RoundedPanel.RADIUS)
+
+  private val hoverBorder = RoundedBorder(RoundedPanel.ACTIVE_THICKNESS, RoundedPanel.THICKNESS, RoundedPanel.SELECTED_BORDER_COLOR,
                                             RoundedPanel.RADIUS)
 
 
@@ -133,6 +140,17 @@ class KeymapPane(val keymap: Keymap) {
   }
 
   init {
+    this.pane.addMouseListener(object : MouseAdapter() {
+      override fun mouseEntered(e: MouseEvent?) {
+        hover = true
+        update()
+      }
+
+      override fun mouseExited(e: MouseEvent?) {
+        hover = false
+        update()
+      }
+    })
     update()
   }
 
@@ -143,7 +161,7 @@ class KeymapPane(val keymap: Keymap) {
       val constraints = keyMapGridBagLayout.getConstraints(it.value)
       constraints.anchor = if (active) GridBagConstraints.LINE_START else GridBagConstraints.CENTER
       keyMapGridBagLayout.setConstraints(it.value, constraints)
-      mainPanel.border = if (active) /*if(UiUtils.isFocusOwner(pane)) focusBorder else*/ activeBorder else regularBorder
+      mainPanel.border = if (active) activeBorder else if(hover) hoverBorder else regularBorder
     }
 
     jRadioButton.isSelected = active

@@ -14,7 +14,9 @@ import com.intellij.platform.workspace.storage.*
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.mutableSdkMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.sdk.SdkBridgeImpl.Companion.sdkMap
 import com.intellij.workspaceModel.ide.legacyBridge.GlobalSdkTableBridge
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GlobalSdkBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
@@ -34,6 +36,7 @@ class GlobalSdkBridgeInitializer : BridgeInitializer {
   }
 }
 
+@ApiStatus.Internal
 class GlobalSdkBridgesLoader: GlobalSdkTableBridge {
 
   override fun initializeBridgesAfterLoading(mutableStorage: MutableEntityStorage,

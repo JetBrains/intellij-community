@@ -1,6 +1,4 @@
-// ERROR: Property 'public' exposes its 'internal' type 'B'.
-import J.B
-
+// ERROR: 'public' property exposes its 'internal' type 'B'.
 class J {
     var b: B? = null
 

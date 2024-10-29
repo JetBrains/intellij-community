@@ -1,15 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent.dev.content;
 
+import com.intellij.platform.util.io.storages.DataExternalizerEx;
+import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
-import com.intellij.platform.util.io.storages.DataExternalizerEx;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumerator;
 import com.intellij.platform.util.io.storages.enumerator.DurableEnumeratorFactory;
-import com.intellij.platform.util.io.storages.KeyDescriptorEx;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.CleanableStorage;
-import com.intellij.util.io.ScannableDataEnumeratorEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,14 +95,14 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
 
   @Override
   public boolean forEach(@NotNull ValueReader<? super byte[]> reader) throws IOException {
-    return ((ScannableDataEnumeratorEx<byte[]>)enumerator).forEach(
+    return enumerator.forEach(
       (enumeratorId, hash) -> reader.read(enumeratorIdToHashId(enumeratorId), hash)
     );
   }
 
   @Override
   public int recordsCount() throws IOException {
-    return ((ScannableDataEnumeratorEx<byte[]>)enumerator).recordsCount();
+    return enumerator.recordsCount();
   }
 
   @Override
@@ -204,7 +203,7 @@ public class ContentHashEnumeratorOverDurableEnumerator implements ContentHashEn
     }
 
     @Override
-    public KnownSizeRecordWriter writerFor(byte @NotNull [] hash) throws IOException {
+    public KnownSizeRecordWriter writerFor(byte @NotNull [] hash) {
       return DataExternalizerEx.fromBytes(hash);
     }
 

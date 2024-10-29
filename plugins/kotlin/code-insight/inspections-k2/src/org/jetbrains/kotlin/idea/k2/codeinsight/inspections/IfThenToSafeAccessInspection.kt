@@ -5,21 +5,13 @@ import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.util.InspectionMessage
-import com.intellij.codeInspection.util.IntentionFamilyName
-import com.intellij.codeInspection.util.IntentionName
-import com.intellij.modcommand.ModPsiUpdater
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
-import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
-import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.psi.isNullExpression
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeInsight.IfThenToSafeAccessFix
 import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationUtils
-import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationData
 import org.jetbrains.kotlin.idea.codeInsight.IfThenTransformationStrategy
-import org.jetbrains.kotlin.idea.codeInsight.TransformIfThenReceiverMode
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinModCommandQuickFix
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.applicators.ApplicabilityRanges
@@ -63,61 +55,11 @@ internal class IfThenToSafeAccessInspection :
 
     context(KaSession)
     override fun prepareContext(element: KtIfExpression): IfThenTransformationStrategy? {
-        val data = IfThenTransformationUtils.buildTransformationData(element) as IfThenTransformationData
-
-        if (data.negatedClause == null && data.baseClause.isUsedAsExpression) return null
-
-        // every usage is expected to have smart cast info;
-        // if smart cast is unstable, replacing usage with `it` can break code logic
-        if (IfThenTransformationUtils.collectTextBasedUsages(data).any { it.doesNotHaveStableSmartCast() }) return null
-
-        if (conditionIsSenseless(data)) return null
-
-        return IfThenTransformationStrategy.create(data)
+        return IfThenTransformationUtils.prepareIfThenTransformationStrategy(element, false)
     }
 
     override fun createQuickFix(
         element: KtIfExpression,
         context: IfThenTransformationStrategy,
-    ): KotlinModCommandQuickFix<KtIfExpression> = object : KotlinModCommandQuickFix<KtIfExpression>() {
-        override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("simplify.foldable.if.then")
-
-        override fun getName(): @IntentionName String {
-            val transformReceiverMode = (context as? IfThenTransformationStrategy.AddSafeAccess)?.transformReceiverMode
-
-            return if (transformReceiverMode == TransformIfThenReceiverMode.REPLACE_BASE_CLAUSE) {
-                if (context.newReceiverIsSafeCast) {
-                    KotlinBundle.message("replace.if.expression.with.safe.cast.expression")
-                } else {
-                    KotlinBundle.message("remove.redundant.if.expression")
-                }
-            } else {
-                KotlinBundle.message("replace.if.expression.with.safe.access.expression")
-            }
-        }
-
-        override fun applyFix(project: Project, element: KtIfExpression, updater: ModPsiUpdater) {
-            val data = IfThenTransformationUtils.buildTransformationData(element) as IfThenTransformationData
-            val transformedBaseClause = IfThenTransformationUtils.transformBaseClause(data, context.withWritableData(updater))
-
-            element.replace(transformedBaseClause)
-        }
-    }
-
-    context(KaSession)
-    private fun KtExpression.doesNotHaveStableSmartCast(): Boolean {
-        val expressionToCheck = when (this) {
-            is KtThisExpression -> instanceReference
-            else -> this
-        }
-        return expressionToCheck.smartCastInfo?.isStable != true
-    }
-
-
-    context(KaSession)
-    @OptIn(KaExperimentalApi::class)
-    private fun conditionIsSenseless(data: IfThenTransformationData): Boolean = data.condition
-        .diagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
-        .map { it.diagnosticClass }
-        .any { it == KaFirDiagnostic.SenselessComparison::class || it == KaFirDiagnostic.UselessIsCheck::class }
+    ): KotlinModCommandQuickFix<KtIfExpression> = IfThenToSafeAccessFix(context)
 }

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
+@ApiStatus.Internal
 public final class ShortcutTextField extends ExtendableTextField {
   private KeyStroke myKeyStroke;
   private int myLastPressedKeyCode = KeyEvent.VK_UNDEFINED;

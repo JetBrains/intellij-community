@@ -699,6 +699,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
         }
 
+        @TestMetadata("property.kt")
+        public void testProperty() throws Exception {
+            runTest("../../completion/testData/basic/common/dslMarker/property.kt");
+        }
+
         @TestMetadata("root.kt")
         public void testRoot() throws Exception {
             runTest("../../completion/testData/basic/common/dslMarker/root.kt");
@@ -1063,6 +1068,16 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("JavaTypeExtension.kt")
         public void testJavaTypeExtension() throws Exception {
             runTest("../../completion/testData/basic/common/extensions/JavaTypeExtension.kt");
+        }
+
+        @TestMetadata("KTIJ-28743.kt")
+        public void testKTIJ_28743() throws Exception {
+            runTest("../../completion/testData/basic/common/extensions/KTIJ-28743.kt");
+        }
+
+        @TestMetadata("KTIJ-30225.kt")
+        public void testKTIJ_30225() throws Exception {
+            runTest("../../completion/testData/basic/common/extensions/KTIJ-30225.kt");
         }
 
         @TestMetadata("KotlinGenericTypeExtension.kt")
@@ -2000,6 +2015,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/override/AfterVarKeyword.kt");
         }
 
+        @TestMetadata("ContextReceiver.kt")
+        public void testContextReceiver() throws Exception {
+            runTest("../../completion/testData/basic/common/override/ContextReceiver.kt");
+        }
+
         @TestMetadata("Generics.kt")
         public void testGenerics() throws Exception {
             runTest("../../completion/testData/basic/common/override/Generics.kt");
@@ -2013,6 +2033,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("InConstructorParameters2.kt")
         public void testInConstructorParameters2() throws Exception {
             runTest("../../completion/testData/basic/common/override/InConstructorParameters2.kt");
+        }
+
+        @TestMetadata("MethodNameMatch.kt")
+        public void testMethodNameMatch() throws Exception {
+            runTest("../../completion/testData/basic/common/override/MethodNameMatch.kt");
         }
 
         @TestMetadata("NoOverrideAfterFunKeyword.kt")
@@ -2415,6 +2440,26 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("smartCast.kt")
         public void testSmartCast() throws Exception {
             runTest("../../completion/testData/basic/common/primitiveCompletion/smartCast.kt");
+        }
+
+        @TestMetadata("smartCastAssignedLaterVariable.kt")
+        public void testSmartCastAssignedLaterVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
+        }
+
+        @TestMetadata("smartCastBySafeCastAndEarlyReturn.kt")
+        public void testSmartCastBySafeCastAndEarlyReturn() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastBySafeCastAndEarlyReturn.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable.kt")
+        public void testSmartCastReassignedVariable() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
+        }
+
+        @TestMetadata("smartCastReassignedVariable2.kt")
+        public void testSmartCastReassignedVariable2() throws Exception {
+            runTest("../../completion/testData/basic/common/primitiveCompletion/smartCastReassignedVariable2.kt");
         }
 
         @TestMetadata("stringCompletion.kt")
@@ -3767,6 +3812,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
         @TestMetadata("TypeArgOfOwnerClass.kt")
         public void testTypeArgOfOwnerClass() throws Exception {
             runTest("../../completion/testData/basic/common/TypeArgOfOwnerClass.kt");
+        }
+
+        @TestMetadata("TypeParamAsTypeArg.kt")
+        public void testTypeParamAsTypeArg() throws Exception {
+            runTest("../../completion/testData/basic/common/TypeParamAsTypeArg.kt");
         }
 
         @TestMetadata("TypeParameterFromOuterClass.kt")

@@ -5,24 +5,15 @@ import com.intellij.codeHighlighting.*
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.hints.*
 import com.intellij.diff.util.DiffUtil
-import com.intellij.openapi.application.readActionBlocking
-import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.impl.text.TextEditorInitializer
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
-import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.annotations.ApiStatus
 
 
 private val PSI_MODIFICATION_STAMP: Key<Long> = Key.create("inlay.psi.modification.stamp")
@@ -95,31 +86,5 @@ private fun getProviders(element: PsiElement, editor: Editor): List<ProviderWith
     // to avoid cases when old and new code vision UI are shown
     !(it.provider.group == InlayGroup.CODE_VISION_GROUP && Registry.`is`("editor.codeVision.new")) &&
     (settings.hintsShouldBeShown(it.provider.key, language) || isProviderAlwaysEnabledForEditor(editor, it.provider.key))
-  }
-}
-
-private class InlayHintsEditorInitializer : TextEditorInitializer {
-  override suspend fun initializeEditor(project: Project,
-                                        file: VirtualFile,
-                                        document: Document,
-                                        editorSupplier: suspend () -> EditorEx,
-                                        highlighterReady: suspend () -> Unit) {
-    val editor = editorSupplier.invoke()
-
-    var buffer: HintsBuffer? = null
-    var psiFile: PsiFile? = null
-
-    val psiManager = project.serviceAsync<PsiManager>()
-    readActionBlocking {
-      psiFile = psiManager.findFile(file)
-      psiFile?.let {
-        buffer = collectPlaceholders(file = it, editor = editor)
-      }
-    }
-
-    @ApiStatus.Internal
-    @RequiresEdt
-    fun applyPlaceholders(file: PsiFile, editor: Editor, hints: HintsBuffer): Unit = InlayHintsPass.applyCollected(hints, file, editor,
-                                                                                                                   true)
   }
 }

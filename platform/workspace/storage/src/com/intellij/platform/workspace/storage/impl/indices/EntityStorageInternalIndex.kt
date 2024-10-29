@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.impl.indices
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.platform.workspace.storage.impl.EntityId
+import com.intellij.platform.workspace.storage.impl.asString
 import com.intellij.platform.workspace.storage.impl.containers.BidirectionalLongSetMap
 import org.jetbrains.annotations.TestOnly
 
@@ -36,7 +37,7 @@ internal open class EntityStorageInternalIndex<T> private constructor(
     internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
       if (entry == null) {
-        LOG.trace { "Removing $id from index" }
+        LOG.trace { "Removing ${id.asString()} from index" }
         index.remove(id)
         return
       }
@@ -44,7 +45,7 @@ internal open class EntityStorageInternalIndex<T> private constructor(
       index.put(id, entry)
       if (oneToOneAssociation) {
         if ((index.getKeysByValue(entry)?.size ?: 0) > 1) {
-          thisLogger().error("One to one association is violated. Id: $id, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
+          thisLogger().error("One to one association is violated. Id: ${id.asString()}, Entity: $entry. This id is already associated with ${index.getKeysByValue(entry)}")
         }
       }
     }

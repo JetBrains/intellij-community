@@ -11,7 +11,11 @@ abstract class PerformanceWatcher {
   interface Snapshot {
     fun logResponsivenessSinceCreation(activityName: @NonNls String)
 
+    fun logResponsivenessSinceCreation(activityName: @NonNls String, spanName: String?)
+
     fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String?
+
+    fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String, spanName: String?): String?
   }
 
   companion object {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
@@ -9,6 +9,7 @@ import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
+import com.intellij.ide.ui.UISettings.Companion.isIdeHelpTooltipEnabled
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -19,7 +20,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
@@ -27,6 +27,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Dimension
@@ -35,6 +36,7 @@ import java.awt.Point
 import java.beans.PropertyChangeEvent
 import javax.swing.*
 
+@ApiStatus.Internal
 open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction(), RTRunConfiguration {
   companion object {
     private val PROP_ACTIVE_TARGET = Key<ExecutionTarget?>("PROP_ACTIVE_TARGET")
@@ -290,7 +292,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     private fun showPopup() {
       val popup: JBPopup = createPopup {}
 
-      if (Registry.`is`("ide.helptooltip.enabled")) {
+      if (isIdeHelpTooltipEnabled()) {
         HelpTooltip.setMasterPopup(this, popup)
       }
       popup.showUnderneathOf(this)
@@ -301,10 +303,12 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
     protected open fun doShiftClick() {}
   }
 
-  private class RunToolbarSelectConfigAction(val project: Project,
-                                             val configuration: RunnerAndConfigurationSettings) : DumbAwareAction() {
+  private class RunToolbarSelectConfigAction(
+    val project: Project,
+    val configuration: RunnerAndConfigurationSettings,
+  ) : DumbAwareAction() {
     init {
-      var name = Executor.shortenNameIfNeeded(configuration.name).takeIf { it.isNotEmpty() } ?: " "
+      val name = Executor.shortenNameIfNeeded(configuration.name).takeIf { it.isNotEmpty() } ?: " "
       val presentation = templatePresentation
       presentation.setText(name, false)
       presentation.description = ExecutionBundle.message("select.0.1", configuration.type.configurationTypeDescription, name)

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Comparing;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.IntObjectLRUMap;
 import com.intellij.util.io.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +17,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
 
+@ApiStatus.Internal
 public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> implements Closeable {
   private static volatile int STORAGE_SIZE_LIMIT = 1024 * 1024;
 
@@ -31,19 +33,15 @@ public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> impl
       return myNextVersion;
     }
 
-    @Nullable
     @Override
-    public SubIndexerVersion valueOf(int idx) {
+    public @Nullable SubIndexerVersion valueOf(int idx) {
       throw new UnsupportedOperationException();
     }
   }
 
-  @NotNull
-  private final CachingEnumerator<SubIndexerVersion> myEnumerator;
-  @NotNull
-  private final File myFile;
-  @NotNull
-  private final KeyDescriptor<SubIndexerVersion> mySubIndexerTypeDescriptor;
+  private final @NotNull CachingEnumerator<SubIndexerVersion> myEnumerator;
+  private final @NotNull File myFile;
+  private final @NotNull KeyDescriptor<SubIndexerVersion> mySubIndexerTypeDescriptor;
   private volatile PersistentHashMap<SubIndexerVersion, Integer> myMap;
   private volatile int myNextVersion;
   private volatile int myWrittenNextVersion;
@@ -147,8 +145,7 @@ public final class PersistentSubIndexerVersionEnumerator<SubIndexerVersion> impl
     writeNextVersion();
   }
 
-  @NotNull
-  private static File getNextVersionFile(File baseFile) {
+  private static @NotNull File getNextVersionFile(File baseFile) {
     return new File(baseFile.getAbsolutePath() + ".next");
   }
 

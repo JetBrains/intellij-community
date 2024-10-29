@@ -80,4 +80,8 @@ class MessagePatternsExample {
 
     String abc = MessageFormat.format("{1}{2}{3}{65}",6, 5, 4, 3,<error descr="Expression expected">)</error>;
   }
+
+  public static String useArray(Object[] arr) {
+    return MessageFormat.format("put{0}({2}, {1})", arr);
+  }
 }

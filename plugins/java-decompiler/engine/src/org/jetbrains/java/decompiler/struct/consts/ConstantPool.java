@@ -94,7 +94,8 @@ public class ConstantPool implements NewClassNameBuilder {
     int size = in.readUnsignedShort();
 
     for (int i = 1; i < size; i++) {
-      switch (in.readUnsignedByte()) {
+      byte tag = (byte)in.readUnsignedByte();
+      switch (tag) {
         case CodeConstants.CONSTANT_Utf8 -> in.readUTF();
         case CodeConstants.CONSTANT_Integer, CodeConstants.CONSTANT_Float, CodeConstants.CONSTANT_Fieldref, CodeConstants.CONSTANT_Methodref, CodeConstants.CONSTANT_InterfaceMethodref, CodeConstants.CONSTANT_NameAndType, CodeConstants.CONSTANT_Dynamic, CodeConstants.CONSTANT_InvokeDynamic ->
           in.discard(4);
@@ -102,8 +103,9 @@ public class ConstantPool implements NewClassNameBuilder {
           in.discard(8);
           i++;
         }
-        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType -> in.discard(2);
+        case CodeConstants.CONSTANT_Class, CodeConstants.CONSTANT_String, CodeConstants.CONSTANT_MethodType, CodeConstants.CONSTANT_Module, CodeConstants.CONSTANT_Package -> in.discard(2);
         case CodeConstants.CONSTANT_MethodHandle -> in.discard(3);
+        default -> throw new RuntimeException("Invalid Constant Pool entry #" + i + " Type: " + tag);
       }
     }
   }

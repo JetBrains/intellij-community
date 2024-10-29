@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.history.integration.ui;
 
@@ -7,15 +7,14 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
+import com.intellij.history.integration.ui.models.SelectionHistoryDialogModel;
 import com.intellij.history.integration.ui.views.SelectionHistoryDialog;
-import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.nio.charset.StandardCharsets;
 
-import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createDirectoryModel;
 import static com.intellij.history.integration.ui.HistoryDialogModelsKt.createSelectionModel;
 import static org.easymock.EasyMock.*;
 

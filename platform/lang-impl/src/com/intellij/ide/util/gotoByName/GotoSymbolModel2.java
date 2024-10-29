@@ -4,10 +4,7 @@ package com.intellij.ide.util.gotoByName;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
-import com.intellij.navigation.ChooseByNameContributor;
-import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.navigation.GotoClassContributor;
-import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -125,8 +122,14 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<LanguageRef> {
     String elementName = getElementName(element);
     if (elementName == null) return null;
 
-    if (element instanceof PsiElement) {
-      return SymbolPresentationUtil.getSymbolContainerText((PsiElement)element) + "." + elementName;
+    PsiElement psiElement = null;
+    if (element instanceof PsiElement psi) {
+      psiElement = psi;
+    } else if (element instanceof PsiElementNavigationItem item) {
+      psiElement = item.getTargetElement();
+    }
+    if (psiElement != null) {
+      return SymbolPresentationUtil.getSymbolContainerText(psiElement) + "." + elementName;
     }
 
     return elementName;

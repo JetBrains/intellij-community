@@ -93,10 +93,10 @@ internal class RemoveRedundantQualifierNameInspection : AbstractKotlinInspection
 }
 
 context (KaSession)
-private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassOrObjectSymbol? {
+private fun KaDeclarationSymbol.getContainingClassForCompanionObject(): KaNamedClassSymbol? {
     if (this !is KaClassSymbol || this.classKind != KaClassKind.COMPANION_OBJECT) return null
 
-    val containingClass = containingDeclaration as? KaNamedClassOrObjectSymbol
+    val containingClass = containingDeclaration as? KaNamedClassSymbol
     return containingClass?.takeIf { it.companionObject == this }
 }
 

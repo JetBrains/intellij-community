@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.replaceInProject;
 
 import com.intellij.find.*;
@@ -18,7 +18,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -54,8 +53,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
-@Service(Service.Level.PROJECT)
-public final class ReplaceInProjectManager {
+public class ReplaceInProjectManager {
   private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
@@ -79,13 +77,11 @@ public final class ReplaceInProjectManager {
       this.findModel = findModel;
     }
 
-    @NotNull
-    public FindModel getFindModel() {
+    public @NotNull FindModel getFindModel() {
       return findModel;
     }
 
-    @NotNull
-    public UsageView getUsageView() {
+    public @NotNull UsageView getUsageView() {
       return usageView;
     }
 
@@ -119,13 +115,11 @@ public final class ReplaceInProjectManager {
       isOpenInNewTabEnabled = UsageViewContentManager.getInstance(myProject).getReusableContentsCount() > 0;
     }
     if (model == null) {
-
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
-      FindInProjectUtil.setScope(myProject, findModel, dataContext);
-      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+      initModel(findModel, dataContext);
     }
     else {
       findModel = model;
@@ -139,6 +133,11 @@ public final class ReplaceInProjectManager {
         FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
     });
+  }
+
+  protected void initModel(@NotNull FindModel findModel, @NotNull DataContext dataContext) {
+    FindInProjectUtil.setScope(myProject, findModel, dataContext);
+    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
   }
 
   public void replaceInPath(@NotNull FindModel findModel) {
@@ -191,7 +190,7 @@ public final class ReplaceInProjectManager {
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
                                   @NotNull Factory<? extends UsageSearcher> usageSearcherFactory,
-                                  @NotNull final FindModel findModelCopy,
+                                  final @NotNull FindModel findModelCopy,
                                   @NotNull UsageViewPresentation presentation,
                                   @NotNull FindUsagesProcessPresentation processPresentation) {
     presentation.setMergeDupLinesAvailable(false);

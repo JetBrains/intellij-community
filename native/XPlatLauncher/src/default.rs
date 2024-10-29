@@ -17,11 +17,16 @@ const PRODUCT_INFO_REL_PATH: &str = "product-info.json";
 const PRODUCT_INFO_REL_PATH: &str = "Resources/product-info.json";
 
 #[cfg(target_os = "windows")]
-const PATH_MACRO: &str = "%IDE_HOME%";
+const IDE_HOME_MACRO: &str = "%IDE_HOME%";
 #[cfg(target_os = "macos")]
-const PATH_MACRO: &str = "$APP_PACKAGE/Contents";
+const IDE_HOME_MACRO: &str = "$APP_PACKAGE/Contents";
 #[cfg(target_os = "linux")]
-const PATH_MACRO: &str = "$IDE_HOME";
+const IDE_HOME_MACRO: &str = "$IDE_HOME";
+
+#[cfg(target_os = "windows")]
+const IDE_CACHE_DIR_MACRO: &str = "%IDE_CACHE_DIR%";
+#[cfg(target_family = "unix")]
+const IDE_CACHE_DIR_MACRO: &str = "$IDE_CACHE_DIR";
 
 pub struct DefaultLaunchConfiguration {
     pub product_info: ProductInfo,
@@ -29,6 +34,7 @@ pub struct DefaultLaunchConfiguration {
     pub ide_home: PathBuf,
     pub vm_options_path: PathBuf,
     pub user_config_dir: PathBuf,
+    pub user_caches_dir: PathBuf,
     pub args: Vec<String>,
     pub launcher_base_name: String,
     pub env_var_base_name: String
@@ -55,8 +61,12 @@ impl LaunchConfiguration for DefaultLaunchConfiguration {
         debug!("Appending product-specific VM options");
         vm_options.extend_from_slice(&self.launch_info.additionalJvmArguments);
 
+        let ide_home_path = self.ide_home.to_string_checked()?;
+        let ide_caches_path = self.user_caches_dir.to_string_checked()?;
         for vm_option in vm_options.iter_mut() {
-            *vm_option = self.expand_path_macro(vm_option)?;
+            *vm_option = vm_option
+                .replace(IDE_HOME_MACRO, &ide_home_path)
+                .replace(IDE_CACHE_DIR_MACRO, &ide_caches_path); 
         }
 
         vm_options.push(jvm_property!("ide.native.launcher", "true"));
@@ -91,16 +101,18 @@ impl DefaultLaunchConfiguration {
 
         let config_home = get_config_home()?;
         debug!("OS config dir: {config_home:?}");
+        let caches_home = get_caches_home()?;
 
         let product_info = read_product_info(&product_info_file)?;
-        let (launch_info, custom_data_directory_name) =
-            compute_launch_info(&product_info, args.first())?;
+        let product_launch_info = compute_launch_info(&product_info, args.first())?;
+        let launch_info = product_launch_info.product_info_launch_field;
         let vm_options_rel_path = &launch_info.vmOptionsFilePath;
-        let vm_options_path = product_info_file.parent().unwrap().join(vm_options_rel_path);
-        let data_directory_name = custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
-        let user_config_dir = config_home.join(&product_info.productVendor).join(data_directory_name);
+        let vm_options_path = product_info_file.parent().context("failed to get product_info_file parent()")?.join(vm_options_rel_path);
+        let data_directory_name = product_launch_info.custom_data_directory_name.unwrap_or(product_info.dataDirectoryName.clone());
+        let user_config_dir = config_home.join(&product_info.productVendor).join(&data_directory_name);
+        let user_caches_dir = caches_home.join(&product_info.productVendor).join(&data_directory_name);
         let launcher_base_name = Self::get_launcher_base_name(vm_options_rel_path);
-        let env_var_base_name = Self::get_env_var_base_name(&launcher_base_name);
+        let env_var_base_name = product_launch_info.custom_env_var_base_name.unwrap_or(product_info.envVarBaseName.clone());
 
         let config = DefaultLaunchConfiguration {
             product_info,
@@ -108,6 +120,7 @@ impl DefaultLaunchConfiguration {
             ide_home,
             vm_options_path,
             user_config_dir,
+            user_caches_dir,
             args,
             launcher_base_name,
             env_var_base_name
@@ -134,7 +147,7 @@ impl DefaultLaunchConfiguration {
             None => vm_options_filename
         };
 
-        // strip the "64" suffix ("idea64" -> "idea")
+        // strip the "64" suffix ("idea64" → "idea")
         let base_product_name = match vm_options_filename_no_last_extension.split_once("64") {
             Some((prefix, _)) => prefix,
             None => vm_options_filename_no_last_extension
@@ -142,18 +155,6 @@ impl DefaultLaunchConfiguration {
 
         debug!("get_launcher_base_name('{vm_options_rel_path}') -> {base_product_name}");
         base_product_name.to_string()
-    }
-
-    /// Converts a launcher base name (extracted from a VM options relative path),
-    /// to a base name of product-specific environment variables (like `<PRODUCT>_JDK`).
-    ///
-    /// See also: `org.jetbrains.intellij.build.ProductProperties#getEnvironmentVariableBaseName`.
-    fn get_env_var_base_name(launcher_base_name: &str) -> String {
-        match launcher_base_name {
-            "webstorm" => "WEBIDE".to_string(),
-            "idea-dbst" => "IDEA".to_string(),
-            _ => launcher_base_name.to_ascii_uppercase().replace('-', "_")
-        }
     }
 
     /// Locates the Java runtime and returns a path to the standard launcher (`bin/java` or `bin\\java.exe`).
@@ -236,7 +237,10 @@ impl DefaultLaunchConfiguration {
     /// the corresponding distribution option must be omitted.
     fn collect_vm_options_from_files(&self, vm_options: &mut Vec<String>) -> Result<()> {
         debug!("[1] Reading main VM options file: {:?}", self.vm_options_path);
-        let (dist_vm_options, _) = read_vm_options(&self.vm_options_path)?;
+        let (dist_vm_options, corrupted) = read_vm_options(&self.vm_options_path)?;
+        if corrupted {
+            bail!("Invalid character ('\\0') found in VM options file: {}", &self.vm_options_path.display());
+        }
 
         debug!("[2] Looking for user VM options file");
         let ((user_vm_options, corrupted), vm_options_path) = match self.get_user_vm_options_file() {
@@ -283,15 +287,17 @@ impl DefaultLaunchConfiguration {
             Err(e) => { debug!("Failed: {}", e.to_string()); }
         }
 
-        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().unwrap() } else { &self.ide_home };
-        let tb_file_base = real_ide_home.file_name().unwrap().to_str().unwrap();
-        let tb_file_path = real_ide_home.parent().unwrap().join(tb_file_base.to_string() + ".vmoptions");
+        let real_ide_home = if cfg!(target_os = "macos") { self.ide_home.parent().context("Failed to get ide_home parent")? } else { &self.ide_home };
+        let tb_file_base = real_ide_home.file_name()
+            .context("Failed to get real_ide_home file_name()")?.to_str()
+            .context("Failed to get to_str() from real_ide_home file_name()")?;
+        let tb_file_path = real_ide_home.parent().context("Failed to get real_ide_home parent()")?.join(tb_file_base.to_string() + ".vmoptions");
         debug!("Checking {:?}", tb_file_path);
         if tb_file_path.is_file() {
             return Ok(tb_file_path);
         }
 
-        let user_file_name = self.vm_options_path.file_name().unwrap();
+        let user_file_name = self.vm_options_path.file_name().context("failed to vm_options_path file_name()")?;
         let user_file_path = self.user_config_dir.join(user_file_name);
         debug!("Checking {:?}", user_file_path);
         if user_file_path.is_file() {
@@ -299,11 +305,6 @@ impl DefaultLaunchConfiguration {
         }
 
         bail!("User-editable config files not found");
-    }
-
-    fn expand_path_macro(&self, value: &str) -> Result<String> {
-        let ide_home_path = self.ide_home.to_string_checked()?;
-        Ok(value.replace(PATH_MACRO, &ide_home_path))
     }
 }
 
@@ -333,8 +334,14 @@ pub fn read_product_info(product_info_path: &Path) -> Result<ProductInfo> {
     Ok(product_info)
 }
 
+pub struct ProductLaunchInfo {
+    pub product_info_launch_field: ProductInfoLaunchField,
+    pub custom_env_var_base_name: Option<String>,
+    pub custom_data_directory_name: Option<String>,
+}
+
 pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&String>)
-    -> Result<(ProductInfoLaunchField, Option<String>)> {
+    -> Result<ProductLaunchInfo> {
 
     if product_info.launch.len() != 1 {
         bail!("Malformed product descriptor (expecting 1 'launch' record, got {})", product_info.launch.len())
@@ -354,9 +361,13 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
     };
 
     let result = match custom_command_data {
-        None => (launch_data.clone(), None),
-        Some(custom_command_data) => {
-            (ProductInfoLaunchField {
+        None => ProductLaunchInfo {
+            product_info_launch_field: launch_data.clone(),
+            custom_env_var_base_name: None,
+            custom_data_directory_name: None
+        },
+        Some(custom_command_data) => ProductLaunchInfo {
+            product_info_launch_field: ProductInfoLaunchField {
                 vmOptionsFilePath: custom_command_data.vmOptionsFilePath.clone().unwrap_or(launch_data.vmOptionsFilePath.clone()),
                 bootClassPathJarNames: if !custom_command_data.bootClassPathJarNames.is_empty() {
                     custom_command_data.bootClassPathJarNames.clone()
@@ -372,7 +383,9 @@ pub fn compute_launch_info(product_info: &ProductInfo, command_name: Option<&Str
                 },
                 mainClass: custom_command_data.mainClass.clone().unwrap_or(launch_data.mainClass.clone()),
                 customCommands: None
-            }, custom_command_data.dataDirectoryName.clone())
+            },
+            custom_env_var_base_name: custom_command_data.envVarBaseName.clone(),
+            custom_data_directory_name: custom_command_data.dataDirectoryName.clone()
         }
     };
     Ok(result)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.Disposable;
@@ -38,11 +38,8 @@ public class VcsExecutablePathSelector {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
     myPathSelector = new TextFieldWithBrowseButton(null, disposable);
-    myPathSelector.addBrowseFolderListener(VcsBundle.message("executable.select.title"),
-                                           null,
-                                           null,
-                                           FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
-                                           new MyTextComponentAccessor(handler));
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(VcsBundle.message("executable.select.title"));
+    myPathSelector.addBrowseFolderListener(null, descriptor, new MyTextComponentAccessor(handler));
     myPathSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

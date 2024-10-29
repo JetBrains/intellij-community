@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.Disposable;
@@ -22,8 +22,8 @@ final class ExternalAnnotatorManager implements Disposable {
   }
 
   private final MergingUpdateQueue myExternalActivitiesQueue =
-    new MergingUpdateQueue("ExternalActivitiesQueue", ApplicationManager.getApplication().isUnitTestMode() ? 0 : 300, true, MergingUpdateQueue.ANY_COMPONENT, this,
-                           null, false);
+    new MergingUpdateQueue("ExternalActivitiesQueue", 300, true, MergingUpdateQueue.ANY_COMPONENT, this,
+                           null, false).usePassThroughInUnitTestMode();
 
   @Override
   public void dispose() {
@@ -33,8 +33,8 @@ final class ExternalAnnotatorManager implements Disposable {
     myExternalActivitiesQueue.queue(update);
   }
 
+  @RequiresBackgroundThread
   void waitForAllExecuted(long timeout, @NotNull TimeUnit unit) throws ExecutionException, InterruptedException, TimeoutException {
-    ApplicationManager.getApplication().assertIsNonDispatchThread();
     CompletableFuture<?> future = new CompletableFuture<>();
     queue(new Update(new Object()/*must not coalesce with anything in the queue*/) {
       @Override

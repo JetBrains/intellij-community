@@ -6,7 +6,7 @@ import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import junit.framework.TestCase
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.analysis.*
@@ -513,7 +513,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
                          ?: fail("Cannot find UElement at caret")
 
     val expected = "'a''b'".repeat(size)
-    PerformanceTestUtil.newPerformanceTest("calculate value of many assignments") {
+    Benchmark.newBenchmark("calculate value of many assignments") {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),

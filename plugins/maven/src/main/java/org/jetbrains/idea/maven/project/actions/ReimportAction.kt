@@ -4,7 +4,6 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedProjectDialog.confirmLoadingUntrustedProject
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -12,7 +11,7 @@ import org.jetbrains.idea.maven.utils.actions.MavenActionUtil
 
 class ReimportAction : MavenProjectsManagerAction() {
   override fun isVisible(e: AnActionEvent): Boolean {
-    return !Registry.`is`("maven.incremental.sync.in.ui")
+    return true
   }
 
   override fun isAvailable(e: AnActionEvent): Boolean {

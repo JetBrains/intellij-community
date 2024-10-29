@@ -11,9 +11,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +61,7 @@ final class StackFilter {
       return myMethodName.equals(getExpectedName((PsiMember)parent)) && classMatches(((PsiMember)parent).getContainingClass());
     }
     if (parent instanceof PsiLambdaExpression) {
-      return myMethodName.startsWith("lambda$") && classMatches(ClassUtils.getContainingClass(parent));
+      return myMethodName.startsWith("lambda$") && classMatches(PsiUtil.getContainingClass(parent));
     }
     return false;
   }
@@ -108,7 +108,7 @@ final class StackFilter {
     } else {
       if (!afterDollar.matches("\\d+")) return false;
     }
-    PsiClass containingClass = ClassUtils.getContainingClass(aClass);
+    PsiClass containingClass = PsiUtil.getContainingClass(aClass);
     String prefix = StringUtil.substringBefore(shortName, "$");
     if (prefix == null) {
       return containingClass == null;

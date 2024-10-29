@@ -713,4 +713,33 @@ class GradleTestExecutionTest : GradleExecutionTestCase() {
       }
     }
   }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test maxParallelFork option is not reset for test executions`(gradleVersion: GradleVersion) {
+    testJavaProject(gradleVersion) {
+      // we need the presence of some test sources
+      writeText("src/test/java/org/example/TestCase.java", """
+        |package org.example;
+        |import $jUnitTestAnnotationClass;
+        |public class TestCase {
+        |  @Test public void test1() {}
+        |}
+      """.trimMargin())
+      // configure parallel forks value
+      val parallelForks = 5
+      // output max parallel forks value after test execution
+      appendText("build.gradle", """
+        |test {
+        |    maxParallelForks = $parallelForks
+        |    doLast { Test t ->
+        |        logger.lifecycle("The max parallel fork was [${'$'}{t.maxParallelForks}]")
+        |    }
+        |}
+      """.trimMargin())
+      executeTasks(":test", isRunAsTest = true)
+      // verify the max parallel fork value did not change
+      assertTestConsoleContains("The max parallel fork was [$parallelForks]")
+    }
+  }
 }

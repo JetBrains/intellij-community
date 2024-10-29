@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -118,8 +119,10 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       for ((tracker, files) in changedSchemesCopy) {
         runCatching {
           SlowOperations.knownIssue("IDEA-307617, EA-680581").use {
-            @Suppress("UNCHECKED_CAST")
-            (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+            writeIntentReadAction {
+              @Suppress("UNCHECKED_CAST")
+              (tracker as SchemeChangeApplicator<Scheme, Scheme>).reload(files as Set<SchemeChangeEvent<Scheme, Scheme>>)
+            }
           }
         }.getOrLogException(LOG)
       }

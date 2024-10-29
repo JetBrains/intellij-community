@@ -3,8 +3,8 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.Disposable;
@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
@@ -99,9 +100,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     @Override
     public void documentChanged(@NotNull DocumentEvent e) {
       Document document = e.getDocument();
-      if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
-        myUnsavedDocuments.add(document);
-      }
+      markDocumentUnsaved(document);
       Runnable currentCommand = CommandProcessor.getInstance().getCurrentCommand();
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       VirtualFile virtualFile = getFile(document);
@@ -204,9 +203,16 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
     int totalSize = 0;
     for (Document document : documents) {
       totalSize += document.getTextLength();
-      if (totalSize > FileUtilRt.LARGE_FOR_CONTENT_LOADING) return true;
+      if (totalSize > FileSizeLimit.getDefaultContentLoadLimit()) return true;
     }
     return false;
+  }
+
+  @ApiStatus.Internal
+  public void markDocumentUnsaved(Document document) {
+    if (!ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.ExternalDocumentChange.class)) {
+      myUnsavedDocuments.add(document);
+    }
   }
 
   @Override
@@ -425,6 +431,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
       String text = document.getText();
       String lineSeparator = getLineSeparator(document, file);
+
       if (!lineSeparator.equals("\n")) {
         text = StringUtil.convertLineSeparators(text, lineSeparator);
       }
@@ -706,7 +713,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
 
   @Override
   public void reloadFromDisk(@NotNull Document document, @Nullable Project project) {
-    try (AccessToken ignored = ClientId.withClientId(ClientId.getLocalId())) {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       ThreadingAssertions.assertEventDispatchThread();
 
       VirtualFile file = getFile(document);

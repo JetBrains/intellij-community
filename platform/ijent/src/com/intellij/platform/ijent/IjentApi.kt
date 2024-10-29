@@ -1,21 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent
 
+import com.intellij.platform.eel.EelApiBase
+import com.intellij.platform.eel.EelPosixApi
+import com.intellij.platform.eel.EelWindowsApi
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import com.intellij.platform.ijent.fs.IjentFileSystemPosixApi
 import com.intellij.platform.ijent.fs.IjentFileSystemWindowsApi
 
 /**
- * Provides access to an IJent process running on some machine. An instance of this interface gives ability to run commands
- * on a local or a remote machine. Every instance corresponds to a single machine, i.e. unlike Run Targets, if IJent is launched
- * in a Docker container, every call to execute a process (see [IjentExecApi]) runs a command in the same Docker container.
+ * Provides access to an IJent process running on some machine.
+ * An instance of this interface gives the ability to run commands on a local or a remote machine. Every instance corresponds to
+ * a single machine, i.e., unlike Run Targets, if IJent is launched in a Docker container, every call to execute a process
+ * (see [com.intellij.platform.eel.EelExecApi]) runs a command in the same Docker container.
  *
- * Usually, [com.intellij.platform.ijent.deploy] creates instances of [IjentApi].
+ * Usually, [com.intellij.platform.ijent.deploy] creates instances of [com.intellij.platform.ijent.IjentApi].
  */
-sealed interface IjentApi : AutoCloseable {
-  val id: IjentId
-
-  val platform: IjentPlatform
+sealed interface IjentApi : EelApiBase, AutoCloseable {
 
   /**
    * Checks if the API is active and is safe to use. If it returns false, IJent on the other side is certainly unavailable.
@@ -30,40 +31,35 @@ sealed interface IjentApi : AutoCloseable {
   /**
    * Returns basic info about the process that doesn't change during the lifetime of the process.
    */
-  val info: IjentInfo
+  val ijentProcessInfo: IjentProcessInfo
 
   /**
    * Explicitly terminates the process on the remote machine.
    *
    * The method is not supposed to block the current thread.
+   *
+   * For awaiting, use [waitUntilExit].
    */
   override fun close()
 
-  /** Docs: [IjentExecApi] */
-  val exec: IjentExecApi
-
-  val fs: IjentFileSystemApi
-
-  /** Docs: [IjentTunnelsApi] */
-  val tunnels: IjentTunnelsApi
-
   /**
-   * On Unix-like OS, PID is int32. On Windows, PID is uint32. The type of Long covers both PID types, and a separate class doesn't allow
-   * to forget that fact and misuse types in APIs.
+   * Suspends until the IJent process on the remote side terminates.
+   * This method doesn't throw exceptions.
    */
-  interface Pid {
-    val value: Long
-  }
+  suspend fun waitUntilExit()
+
+  /** Docs: [com.intellij.platform.eel.EelExecApi] */
+  override val exec: IjentExecApi
+
+  override val fs: IjentFileSystemApi
 }
 
-interface IjentPosixApi : IjentApi {
-  override val info: IjentPosixInfo
+interface IjentPosixApi : IjentApi, EelPosixApi {
   override val fs: IjentFileSystemPosixApi
   override val tunnels: IjentTunnelsPosixApi
 }
 
-interface IjentWindowsApi : IjentApi {
-  override val info: IjentWindowsInfo
+interface IjentWindowsApi : IjentApi, EelWindowsApi {
   override val fs: IjentFileSystemWindowsApi
   override val tunnels: IjentTunnelsWindowsApi
 }

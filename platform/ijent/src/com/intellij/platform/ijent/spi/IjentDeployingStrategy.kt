@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.spi
 
-import com.intellij.platform.ijent.IjentPlatform
+import com.intellij.platform.eel.EelPlatform
 import com.intellij.platform.ijent.deploy
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -13,7 +13,7 @@ import java.nio.file.Path
  *
  * Every instance of [IjentDeployingStrategy] is used to start exactly one IJent.
  *
- * @see com.intellij.platform.ijent.IjentApi
+ * @see com.intellij.platform.eel.IjentApi
  */
 @ApiStatus.OverrideOnly
 interface IjentDeployingStrategy {
@@ -25,7 +25,16 @@ interface IjentDeployingStrategy {
    *
    * @see com.intellij.platform.ijent.IjentExecFileProvider.getIjentBinary
    */
-  suspend fun getTargetPlatform(): IjentPlatform
+  suspend fun getTargetPlatform(): EelPlatform
+
+  /**
+   * Defines a set of options for connecting to a running IJent
+   * This step is logically different from deployment,
+   * and here we allow to configure the actual process of initial message exchange.
+   *
+   * @see IjentConnectionStrategy
+   */
+  suspend fun getConnectionStrategy(): IjentConnectionStrategy
 
   /**
    * Should start the ijent process.
@@ -39,7 +48,7 @@ interface IjentDeployingStrategy {
    * @param binaryPath path to ijent binary on target environment
    * @return process that will be used for communication
    */
-  suspend fun createProcess(binaryPath: String): Process
+  suspend fun createProcess(binaryPath: String): IjentSessionMediator
 
   /**
    * Copy files to the target environment. Typically used to transfer the ijent binary to the target machine.
@@ -57,11 +66,11 @@ interface IjentDeployingStrategy {
 
   interface Posix : IjentDeployingStrategy {
     /** @see [IjentDeployingStrategy.getTargetPlatform] */
-    override suspend fun getTargetPlatform(): IjentPlatform.Posix
+    override suspend fun getTargetPlatform(): EelPlatform.Posix
   }
 
   interface Windows : IjentDeployingStrategy {
     /** @see [IjentDeployingStrategy.getTargetPlatform] */
-    override suspend fun getTargetPlatform(): IjentPlatform.Windows
+    override suspend fun getTargetPlatform(): EelPlatform.Windows
   }
 }

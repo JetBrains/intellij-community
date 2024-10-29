@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.XDebuggerBundle
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Predicate
 
+@ApiStatus.Internal
 class AttachShowOnlyMyProcessesToggleAction :
   DumbAware, ProcessPredicate, ToggleAction(XDebuggerBundle.message("xdebugger.attach.show.only.my.processes")) {
 

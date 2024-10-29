@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -160,9 +160,8 @@ public final class GenericInlineHandler {
     Map<Language, InlineHandler.Inliner> inliners = initializeInliners(elementToInline, settings, refs);
     for (Language language : emptyInliners) {
       inliners.put(language, new InlineHandler.Inliner() {
-        @Nullable
         @Override
-        public MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
+        public @Nullable MultiMap<PsiElement, String> getConflicts(@NotNull PsiReference reference, @NotNull PsiElement referenced) {
           return null;
         }
 

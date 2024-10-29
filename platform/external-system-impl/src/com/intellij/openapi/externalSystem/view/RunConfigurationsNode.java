@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunCo
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -18,6 +19,7 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @Order(ExternalSystemNode.BUILTIN_RUN_CONFIGURATIONS_DATA_NODE_ORDER)
 public final class RunConfigurationsNode extends ExternalSystemNode<Void> {
   private final ModuleData myModuleData;

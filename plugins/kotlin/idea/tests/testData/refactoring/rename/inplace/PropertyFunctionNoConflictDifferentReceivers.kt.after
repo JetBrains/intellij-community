@@ -11,7 +11,7 @@ class A {
 
     fun String.n() {
         val pp = p()
-        val mm = this@String.p()
+        val mm = this@n.p()
     }
 }
 

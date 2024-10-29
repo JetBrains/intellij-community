@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -35,10 +35,10 @@ import java.awt.event.MouseEvent;
  * @author Dmitry Batkovich
  */
 public final class InspectionNodeInfo extends JPanel {
-  private final static Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
+  private static final Logger LOG = Logger.getInstance(InspectionNodeInfo.class);
 
-  public InspectionNodeInfo(@NotNull final InspectionTree tree,
-                            @NotNull final Project project) {
+  public InspectionNodeInfo(final @NotNull InspectionTree tree,
+                            final @NotNull Project project) {
     setLayout(new GridBagLayout());
     setBorder(JBUI.Borders.emptyTop(11));
     final InspectionToolWrapper<?, ?> toolWrapper = tree.getSelectedToolWrapper(false);

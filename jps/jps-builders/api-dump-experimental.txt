@@ -1,0 +1,7 @@
+*a:org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider
+- <init>():V
+- a:provideAuthenticationData(java.lang.String):org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider$AuthenticationData
+*f:org.jetbrains.jps.incremental.dependencies.DependencyAuthenticationDataProvider$AuthenticationData
+- <init>(java.lang.String,java.lang.String):V
+- getPassword():java.lang.String
+- getUserName():java.lang.String

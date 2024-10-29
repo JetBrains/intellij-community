@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class AAA {
     private int x = 42;
 

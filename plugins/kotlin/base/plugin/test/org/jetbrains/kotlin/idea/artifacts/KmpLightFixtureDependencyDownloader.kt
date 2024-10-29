@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.artifacts
 
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.JarUtil
+import com.intellij.testFramework.utils.io.createDirectory
 import com.intellij.util.SystemProperties
 import org.eclipse.aether.repository.RemoteRepository
 import org.jetbrains.idea.maven.aether.ArtifactKind
@@ -15,7 +16,8 @@ import org.jetbrains.kotlin.konan.target.TargetSupportException
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.EnumSet
+import java.util.*
+import kotlin.io.path.notExists
 
 /**
  * Utility test downloader of KMP library parts for manual module configuration without Gradle import.
@@ -109,9 +111,10 @@ object KmpLightFixtureDependencyDownloader {
 
         val transformedLibrariesRoot = directoryForTransformedDependencies
             ?: FileUtilRt.createTempDirectory("kotlinTransformedMetadataLibraries", "").toPath()
-        val destination = transformedLibrariesRoot.resolve(kmpCoordinates.toString())
-
-        resolvedArtifactPath.unzipTo(destination, fromSubdirectory = Paths.get("$sourceSet/"))
+        val destination = transformedLibrariesRoot.resolve(kmpCoordinates.toString().replace(":", "/"))
+        if (destination.notExists()) {
+            resolvedArtifactPath.unzipTo(destination.createDirectory(), fromSubdirectory = Paths.get("$sourceSet/"))
+        }
         return destination
     }
 }

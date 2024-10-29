@@ -39,7 +39,7 @@ sealed class ServerState {
 }
 
 sealed class UpdateResult {
-  class Success(val settingsSnapshot: SettingsSnapshot, val serverVersionId: String?) : UpdateResult()
+  class Success(val settingsSnapshot: SettingsSnapshot, val serverVersionId: String?, val isCrossIdeSyncEnabled: Boolean) : UpdateResult()
   object NoFileOnServer: UpdateResult()
   object FileDeletedFromServer: UpdateResult()
   class Error(@NlsSafe val message: String): UpdateResult()

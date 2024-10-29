@@ -12,11 +12,10 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
-import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiNamedElement
+import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.IS_INVALID_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_DATA_KEY
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_IS_IN_TOP_3_MOST_USED_DATA_KEY
@@ -27,6 +26,7 @@ import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsi
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USED_IN_LAST_MONTH
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USED_IN_LAST_WEEK
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywherePsiElementFeaturesProvider.Fields.LANGUAGE_USE_COUNT_DATA_KEY
+import com.intellij.searchEverywhereMl.ranking.core.utils.convertNameToNaturalLanguage
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.DAY
 import com.intellij.util.Time.WEEK
@@ -77,11 +77,11 @@ internal class SearchEverywherePsiElementFeaturesProvider : SearchEverywhereElem
     }
 
     if (similarityScore != null) {
-      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore!!)))
+      result.add(SIMILARITY_SCORE.with(roundDouble(similarityScore)))
     }
     else if (ApplicationManager.getApplication().isEAP) { // for now, we can collect the data only from EAP builds
       val elementName = getElementName(item)
-      val elementEmbedding = elementName?.let { generateEmbeddingBlocking(convertNameToNaturalLanguage(it)) }
+      val elementEmbedding = elementName?.let { TextEmbeddingProvider.getProvider()?.embed(convertNameToNaturalLanguage(it)) }
       val queryEmbedding = getQueryEmbedding(searchQuery, split = true)
       if (elementEmbedding != null && queryEmbedding != null) {
         result.add(SIMILARITY_SCORE.with(roundDouble(elementEmbedding.cosine(queryEmbedding).toDouble())))

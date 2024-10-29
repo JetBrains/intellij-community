@@ -7,11 +7,10 @@ import com.intellij.ide.plugins.org.PluginManagerFilters
 
 /**
  * Default implementation of [PluginManagementPolicy] that delegates logic to [com.intellij.ide.plugins.org.PluginManagerFilters]
- *
- * This implementation can be overridden by plugins
  */
-class DefaultPluginManagementPolicy : PluginManagementPolicy {
+class DefaultPluginManagementPolicy : PluginManagementPolicy by DefaultPluginManagementPolicyImpl
 
+internal object DefaultPluginManagementPolicyImpl : PluginManagementPolicy {
   override fun isUpgradeAllowed(localDescriptor: IdeaPluginDescriptor?, remoteDescriptor: IdeaPluginDescriptor?): Boolean {
     return true
   }
@@ -30,5 +29,9 @@ class DefaultPluginManagementPolicy : PluginManagementPolicy {
 
   override fun isInstallFromDiskAllowed(): Boolean {
     return PluginManagerFilters.getInstance().allowInstallFromDisk()
+  }
+
+  override fun isPluginAutoUpdateAllowed(): Boolean {
+    return true
   }
 }

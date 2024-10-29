@@ -3,6 +3,7 @@
 package com.intellij.psi.impl;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.Key;
@@ -14,18 +15,16 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueBase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Dmitry Avdeev
- */
+@ApiStatus.Internal
 public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
   private static final Key<?> PSI_MOD_COUNT_OPTIMIZATION = Key.create("PSI_MOD_COUNT_OPTIMIZATION");
   private final PsiManager myManager;
 
-  PsiCachedValue(@NotNull PsiManager manager, boolean trackValue) {
-    super(trackValue);
+  PsiCachedValue(@NotNull PsiManager manager) {
     myManager = manager;
   }
 
@@ -60,7 +59,8 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
       return false;
     }
     // injected files are physical but can sometimes (look at you, completion)
-    // be inexplicably injected into non-physical element, in which case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
+    // be inexplicably injected into a non-physical element,
+    // in this case PSI_MODIFICATION_COUNT doesn't change and thus can't be relied upon
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(myManager.getProject());
     PsiFile topLevelFile = manager.getTopLevelFile(dependency);
     return topLevelFile != null && topLevelFile.isPhysical();
@@ -104,6 +104,14 @@ public abstract class PsiCachedValue<T> extends CachedValueBase<T> {
     }
 
     return super.getTimeStamp(dependency);
+  }
+
+  @Override
+  protected @NotNull String getIdempotenceFailureContext() {
+    Project project = myManager.getProject();
+    DumbService dumbService = DumbService.getInstance(project);
+    boolean dumb = dumbService.isDumb();
+    return "Dumb mode: " + dumb + "\nAlternative resolve: " + dumbService.isAlternativeResolveEnabled();
   }
 
   @Override

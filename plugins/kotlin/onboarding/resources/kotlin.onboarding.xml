@@ -45,7 +45,7 @@
     <registryKey
             key="k2.feedback.survey.ide.version.number"
             description="The version of IDE to show survey in"
-            defaultValue="2024.2"
+            defaultValue="2024.3"
             restartRequired="false"/>
     <registryKey
             key="test.enable.k2.notification"

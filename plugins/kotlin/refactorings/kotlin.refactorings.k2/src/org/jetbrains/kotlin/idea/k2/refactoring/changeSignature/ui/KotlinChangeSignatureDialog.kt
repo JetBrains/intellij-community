@@ -73,14 +73,14 @@ internal class KotlinChangeSignatureDialog(
         ): ParameterTableModelItemBase<KotlinParameterInfo> {
             val resultParameterInfo = parameterInfo
                 ?: KotlinParameterInfo(
-                    -1,
-                    KotlinTypeInfo("", context = method.method),
-                    "",
-                    defaultValOrVar(method.method),
-                    null,
-                    false,
-                    null,
-                    method.method
+                    originalIndex = -1,
+                    originalType = KotlinTypeInfo("", context = method.method),
+                    name = "",
+                    valOrVar = defaultValOrVar(method.method),
+                    defaultValueForCall = null,
+                    defaultValueAsDefaultParameter = false,
+                    defaultValue = null,
+                    context = method.method
                 )
 
             val psiFactory = KtPsiFactory(myDefaultValueContext.project)

@@ -68,7 +68,7 @@ public final class AppMode {
   public static void setFlags(@NotNull List<String> args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (!args.isEmpty() && isGuiCommand(args.get(0)));
-    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && isFileAfterOptions(args));
+    isLightEdit = Boolean.parseBoolean(System.getProperty("idea.force.light.edit.mode")) || (!isCommandLine && !isKnownNonLightEditCommand(args) && isFileAfterOptions(args));
 
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
@@ -92,6 +92,15 @@ public final class AppMode {
         dontReopenProjects = true;
       }
     }
+  }
+
+  /**
+   * Checks whether a known command is present in the args which shouldn't be run in 'light edit' mode. 
+   * This is a temporary workaround for IJPL-161632.
+   */
+  private static boolean isKnownNonLightEditCommand(@NotNull List<String> args) {
+    return !args.isEmpty() &&
+           Arrays.asList("cwmHost", "cwmHostNoLobby", "remoteDevHost", "serverMode", "splitMode", "thinClient").contains(args.get(0));
   }
 
   private static boolean isGuiCommand(String arg) {

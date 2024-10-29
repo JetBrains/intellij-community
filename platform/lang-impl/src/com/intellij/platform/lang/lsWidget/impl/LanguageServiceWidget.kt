@@ -26,6 +26,8 @@ import com.intellij.util.ui.JBUI
 import kotlinx.coroutines.CoroutineScope
 import javax.swing.Icon
 
+private const val maxIconsInStatusBar = 3
+
 internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : EditorBasedStatusBarPopup(project, false, scope) {
   /**
    * This cache helps to perform some calculations in BGT (in [getWidgetState])
@@ -138,9 +140,5 @@ internal class LanguageServiceWidget(project: Project, scope: CoroutineScope) : 
     }
 
     override fun actionPerformed(e: AnActionEvent) {}
-  }
-
-  private companion object {
-    const val maxIconsInStatusBar = 3
   }
 }

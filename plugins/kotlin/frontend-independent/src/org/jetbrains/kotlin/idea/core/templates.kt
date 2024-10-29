@@ -29,9 +29,10 @@ fun getFunctionBodyTextFromTemplate(
     returnType: String,
     classFqName: FqName? = null
 ): String {
-    val fileTemplate = FileTemplateManager.getInstance(project)!!.getCodeTemplate(kind.templateFileName)
+    val fileTemplateManager = FileTemplateManager.getInstance(project)
+    val fileTemplate = fileTemplateManager.getCodeTemplate(kind.templateFileName)
 
-    val properties = Properties()
+    val properties = Properties(fileTemplateManager.defaultProperties)
     properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType)
     if (classFqName != null) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, classFqName.asString())

@@ -14,8 +14,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * An {@link ExecutorService} implementation which
- * delegates tasks to the EDT for execution.
+ * An {@link ExecutorService} implementation which delegates tasks to the EDT for execution.
  */
 final class EdtScheduledExecutorServiceImpl extends SchedulingWrapper implements EdtScheduledExecutorService {
   static final EdtScheduledExecutorService INSTANCE = new EdtScheduledExecutorServiceImpl();

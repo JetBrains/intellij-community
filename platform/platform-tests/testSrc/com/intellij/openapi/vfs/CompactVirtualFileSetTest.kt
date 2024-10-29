@@ -2,18 +2,13 @@
 package com.intellij.openapi.vfs
 
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.testFramework.rules.TempDirectory
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
-import org.junit.Rule
+import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl
+import org.junit.Assert.*
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.test.assertEquals
 
 class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
-  @JvmField
-  @Rule
-  var tempDir = TempDirectory()
 
   @Test
   fun `test empty set`() {
@@ -38,6 +33,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test very big set`() {
+    doSimpleAddTest(veryBigSetSize)
+  }
+
+  @Test
   fun `test addAll()`() {
     doSimpleAddAllTest(sliceSize = 3)
   }
@@ -50,6 +50,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test big addAll()`() {
     doSimpleAddAllTest(sliceSize = 777)
+  }
+
+  @Test
+  fun `test very big addAll()`() {
+    doSimpleAddAllTest(sliceSize = veryBigSetSize / 3)
   }
 
   @Test
@@ -77,6 +82,12 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test retainAll() of very big CVFSet`() {
+    val set = generateCVFSet(veryBigSetSize)
+    doTestRetainAll(set)
+  }
+
+  @Test
   fun `test remove() from small CVSet`() {
     doTestRemove(smallSetSize)
   }
@@ -89,6 +100,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test remove() from big CVSet`() {
     doTestRemove(bigSetSize)
+  }
+
+  @Test
+  fun `test remove() from very big CVSet`() {
+    doTestRemove(veryBigSetSize)
   }
 
   @Test
@@ -107,6 +123,11 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   }
 
   @Test
+  fun `test iterator remove from very big CVSet`() {
+    doTestIteratorRemove(veryBigSetSize)
+  }
+
+  @Test
   fun `test clear`() {
     val set = generateCVFSet(10)
     assertEquals(10, set.size)
@@ -116,6 +137,26 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
       set.add(createFile())
     }
     assertEquals(10, set.size)
+  }
+
+  @Test
+  fun `test process on small CVSet`() {
+    doTestProcess(smallSetSize)
+  }
+
+  @Test
+  fun `test process on reasonable CVSet`() {
+    doTestProcess(reasonableSetSize)
+  }
+
+  @Test
+  fun `test process on big CVSet`() {
+    doTestProcess(bigSetSize)
+  }
+
+  @Test
+  fun `test process on very big CVSet`() {
+    doTestProcess(veryBigSetSize)
   }
 
   private fun doTestRetainAll(set: Set<VirtualFile>) {
@@ -199,7 +240,17 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
     }
   }
 
-  private val counter = AtomicInteger()
+  private fun doTestProcess(size: Int) {
+    val set = (0 until 10).map { createFile() }.toHashSet()
+    val source = VfsUtilCore.createCompactVirtualFileSet(set)
+    assertEquals(set, source.toHashSet())
+    val target = CompactVirtualFileSet()
+    source.process {
+      target.add(it)
+      true
+    }
+    assertEquals(set.toHashSet(), target.toHashSet())
+  }
 
   private val smallSetSize: Int
     get() {
@@ -225,12 +276,39 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
       return size
     }
 
+  private val veryBigSetSize: Int
+    get() {
+      val size = 5500
+      assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+      assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
+      assertTrue(size * 5 > CompactVirtualFileSet.PARTITION_BIT_SET_LIMIT)
+      return size
+    }
+
   private fun generateCVFSet(size: Int): CompactVirtualFileSet {
     val set = VfsUtilCore.createCompactVirtualFileSet()
-    repeat(size) { set.add(createFile()) }
+    repeat(size) {
+      repeat(4) { createFile() } // ensure ids are spread
+      set.add(createFile())
+    }
     return set as CompactVirtualFileSet
   }
 
-  private fun createFile(): VirtualFile =
-    tempDir.newVirtualFile("file${counter.incrementAndGet()}.txt")
+  private val counter = AtomicInteger()
+  private val tempDir = LightTempDirTestFixtureImpl()
+
+  private fun createFile(): VirtualFile {
+    val fileName = "file${counter.incrementAndGet()}.txt"
+    return tempDir.getFile(fileName) ?: tempDir.createFile(fileName)
+  }
+
+  @Test
+  fun testFrozenMustNotBeModifiable() {
+    val set = VfsUtilCore.createCompactVirtualFileSet().freezed()
+    assertThrows(IllegalStateException::class.java) { set.clear() }
+    assertThrows(IllegalStateException::class.java) { set.add(createFile()) }
+    assertThrows(IllegalStateException::class.java) { set.remove(createFile()) }
+    assertThrows(IllegalStateException::class.java) { set.addAll(listOf(createFile(), createFile())) }
+    assertThrows(IllegalStateException::class.java) { set.retainAll(listOf(createFile(), createFile())) }
+  }
 }

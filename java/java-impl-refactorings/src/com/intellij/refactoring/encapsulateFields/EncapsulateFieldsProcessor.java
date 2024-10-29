@@ -289,7 +289,7 @@ public class EncapsulateFieldsProcessor extends BaseRefactoringProcessor {
     myNameToSetter = new HashMap<>();
 
     for (FieldDescriptor fieldDescriptor : myFieldDescriptors) {
-      final DocCommentPolicy<PsiDocComment> commentPolicy = new DocCommentPolicy<>(myDescriptor.getJavadocPolicy());
+      final DocCommentPolicy commentPolicy = new DocCommentPolicy(myDescriptor.getJavadocPolicy());
 
       PsiField field = fieldDescriptor.getField();
       final PsiDocComment docComment = field.getDocComment();

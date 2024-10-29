@@ -165,6 +165,11 @@ public class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNew
         runTest("../../shared/tests/testData/copyPaste/Imports3.java");
     }
 
+    @TestMetadata("IncompleteCodeWithVariableReference.java")
+    public void testIncompleteCodeWithVariableReference() throws Exception {
+        runTest("../../shared/tests/testData/copyPaste/IncompleteCodeWithVariableReference.java");
+    }
+
     @TestMetadata("Indentation.java")
     public void testIndentation() throws Exception {
         runTest("../../shared/tests/testData/copyPaste/Indentation.java");

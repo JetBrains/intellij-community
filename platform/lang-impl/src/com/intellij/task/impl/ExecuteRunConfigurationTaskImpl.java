@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.task.impl;
 
 import com.intellij.execution.ExecutionTarget;
@@ -15,11 +15,11 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public final class ExecuteRunConfigurationTaskImpl extends AbstractProjectTask implements ExecuteRunConfigurationTask {
-  @NotNull private final RunProfile myRunProfile;
-  @Nullable private ExecutionTarget myTarget;
-  @Nullable private RunnerSettings myRunnerSettings;
-  @Nullable private ConfigurationPerRunnerSettings myConfigurationSettings;
-  @Nullable private RunnerAndConfigurationSettings mySettings;
+  private final @NotNull RunProfile myRunProfile;
+  private @Nullable ExecutionTarget myTarget;
+  private @Nullable RunnerSettings myRunnerSettings;
+  private @Nullable ConfigurationPerRunnerSettings myConfigurationSettings;
+  private @Nullable RunnerAndConfigurationSettings mySettings;
 
   public ExecuteRunConfigurationTaskImpl(@NotNull RunProfile runProfile) {
     myRunProfile = runProfile;
@@ -37,39 +37,33 @@ public final class ExecuteRunConfigurationTaskImpl extends AbstractProjectTask i
     mySettings = settings;
   }
 
-  @NotNull
   @Override
-  public RunProfile getRunProfile() {
+  public @NotNull RunProfile getRunProfile() {
     return myRunProfile;
   }
 
-  @Nullable
   @Override
-  public ExecutionTarget getExecutionTarget() {
+  public @Nullable ExecutionTarget getExecutionTarget() {
     return myTarget;
   }
 
-  @Nullable
   @Override
-  public RunnerSettings getRunnerSettings() {
+  public @Nullable RunnerSettings getRunnerSettings() {
     return myRunnerSettings;
   }
 
-  @Nullable
   @Override
-  public ConfigurationPerRunnerSettings getConfigurationSettings() {
+  public @Nullable ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myConfigurationSettings;
   }
 
-  @Nullable
   @Override
-  public RunnerAndConfigurationSettings getSettings() {
+  public @Nullable RunnerAndConfigurationSettings getSettings() {
     return mySettings;
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NotNull String getPresentableName() {
     return LangBundle.message("project.task.name.run.task.0", myRunProfile.getName());
   }
 }

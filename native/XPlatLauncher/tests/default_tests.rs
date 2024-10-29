@@ -7,7 +7,7 @@ mod tests {
     use std::{env, fs};
     use std::collections::HashMap;
     use std::path::PathBuf;
-    use xplat_launcher::jvm_property;
+    use xplat_launcher::{get_caches_home, jvm_property};
     use crate::utils::*;
 
     #[test]
@@ -22,11 +22,28 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(all(target_os = "windows", target_arch = "x86_64")))]
     fn classpath_test_on_unicode_path() {
         let suffix = "δοκιμή-परीक्षा-시험";
         let test = prepare_custom_test_env(LauncherLocation::Standard, Some(suffix), true);
-        classpath_test_impl(&test);
+
+        #[cfg(target_os = "windows")]
+        {
+            let result = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump());
+            if result.exit_status.success() {
+                let dump = result.dump();
+                let classpath = &dump.systemProperties["java.class.path"];
+                assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
+                let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
+                assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+            } else {
+                assert_startup_error(&result, "Cannot convert VM option string");
+            }
+        }
+
+        #[cfg(not(target_os = "windows"))]
+        {
+            classpath_test_impl(&test);
+        }
     }
 
     #[test]
@@ -66,6 +83,15 @@ mod tests {
         assert!(classpath.contains("app.jar"), "app.jar is not present in classpath: {}", classpath);
         let os_specific_jar = format!("boot-{}.jar", env::consts::OS);
         assert!(classpath.contains(&os_specific_jar), "{} is not present in classpath: {}", os_specific_jar, classpath);
+    }
+
+    fn assert_startup_error(result: &LauncherRunResult, message: &str) {
+        let header = "Cannot start the IDE";
+        let header_present = result.stderr.find(header);
+        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
+        let message_present = result.stderr.find(message);
+        assert!(message_present.is_some(), "JVM error message ('{}') is missing: {:?}", message, result);
+        assert!(header_present.unwrap() < message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
     }
 
     #[test]
@@ -117,10 +143,17 @@ mod tests {
 
         let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
 
-        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with("-Dpath.macro.test="))
-            .unwrap_or_else(|| panic!("'-Dpath.macro.test=' is not in {:?}", dump.vmOptions));
+        let ide_home_property = jvm_property!("ide.home.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&ide_home_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", ide_home_property, dump.vmOptions));
         let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
-        assert_eq!(test.dist_root.canonicalize().unwrap(), path.canonicalize().unwrap());
+        assert_eq!(path.canonicalize().unwrap(), test.dist_root.canonicalize().unwrap());
+
+        let cache_dir_property = jvm_property!("cache.dir.macro.test", "");
+        let vm_option = dump.vmOptions.iter().find(|s| s.starts_with(&cache_dir_property))
+            .unwrap_or_else(|| panic!("'{}' is not in {:?}", cache_dir_property, dump.vmOptions));
+        let path = PathBuf::from(vm_option.split_once('=').unwrap().1);
+        assert!(path.starts_with(get_caches_home().unwrap()), "Suspicious {path:?}");
     }
 
     #[test]
@@ -227,6 +260,16 @@ mod tests {
     }
 
     #[test]
+    fn debug_vm_option_test() {
+        let mut test = prepare_test_env(LauncherLocation::Standard);
+        test.create_toolbox_vm_options("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n\n");
+
+        let dump = run_launcher_ext(&test, LauncherRunSpec::standard().with_dump().assert_status()).dump();
+
+        assert_vm_option_presence(&dump, "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n");
+    }
+
+    #[test]
     fn arguments_test() {
         let args = &["arguments-test-123"];
         let dump = run_launcher(LauncherRunSpec::standard().with_dump().with_args(args).assert_status()).dump();
@@ -306,45 +349,23 @@ mod tests {
     }
 
     #[test]
-    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_failures() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-XX:+UseG1GC\n-XX:+UseZGC\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-
         assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
-
-        let header = "Cannot start the IDE";
-        let header_present = result.stderr.find(header);
-        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
-
-        let jvm_message = "Conflicting collector combinations in option list";
-        let jvm_message_present = result.stderr.find(jvm_message);
-        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
-
-        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+        assert_startup_error(&result, "Conflicting collector combinations in option list");
     }
 
     #[test]
-    #[cfg(not(all(target_os = "windows", target_arch = "aarch64")))]
     fn reporting_vm_creation_panics() {
         let mut test = prepare_test_env(LauncherLocation::Standard);
         test.create_toolbox_vm_options("-Xms2g\n-Xmx1g\n");
 
         let result = run_launcher_ext(&test, &LauncherRunSpec::standard());
-
         assert!(!result.exit_status.success(), "Expected to fail:{:?}", result);
-
-        let header = "Cannot start the IDE";
-        let header_present = result.stderr.find(header);
-        assert!(header_present.is_some(), "Error header ('{}') is missing: {:?}", header, result);
-
-        let jvm_message = "Initial heap size set to a larger value than the maximum heap size";
-        let jvm_message_present = result.stderr.find(jvm_message);
-        assert!(jvm_message_present.is_some(), "JVM error message ('{}') is missing: {:?}", jvm_message, result);
-
-        assert!(header_present.unwrap() < jvm_message_present.unwrap(), "JVM error message wasn't captured: {:?}", result);
+        assert_startup_error(&result, "Initial heap size set to a larger value than the maximum heap size");
     }
 
     #[test]

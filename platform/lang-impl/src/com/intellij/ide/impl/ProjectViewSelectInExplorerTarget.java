@@ -7,12 +7,14 @@ import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.File;
 
 /**
  * @author Roman.Chernyatchik
  */
+@ApiStatus.Internal
 public final class ProjectViewSelectInExplorerTarget implements DumbAware, SelectInTarget {
   @Override
   public boolean canSelect(SelectInContext context) {

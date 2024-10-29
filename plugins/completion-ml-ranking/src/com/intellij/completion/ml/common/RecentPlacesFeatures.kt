@@ -23,9 +23,11 @@ import java.util.function.BooleanSupplier
 class RecentPlacesFeatures : ElementFeatureProvider {
   override fun getName(): String = "recent_places"
 
-  override fun calculateFeatures(element: LookupElement,
-                                 location: CompletionLocation,
-                                 contextFeatures: ContextFeatures): Map<String, MLFeatureValue> {
+  override fun calculateFeatures(
+    element: LookupElement,
+    location: CompletionLocation,
+    contextFeatures: ContextFeatures,
+  ): Map<String, MLFeatureValue> {
     val storage = location.project.service<RecentPlacesStorage>()
     val inRecentPlaces = storage.contains(element.lookupString)
     val inChildrenRecentPlaces = storage.childrenContains(element.lookupString)
@@ -44,7 +46,10 @@ class RecentPlacesFeatures : ElementFeatureProvider {
     private val recentPlacesStorage = project.service<RecentPlacesStorage>()
 
     override fun recentPlaceAdded(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) {
-      if (ApplicationManager.getApplication().isUnitTestMode || !changePlace.file.isValid || changePlace.file.isDirectory) return
+      if (ApplicationManager.getApplication().isUnitTestMode || !changePlace.file.isValid || changePlace.file.isDirectory) {
+        return
+      }
+
       val offset = changePlace.caretPosition?.startOffset ?: return
 
       @Suppress("IncorrectParentDisposable")
@@ -69,23 +74,27 @@ class RecentPlacesFeatures : ElementFeatureProvider {
         }
         .coalesceBy(this, changePlace.file)
         .expireWith(project)
-        .expireWhen(BooleanSupplier { changePlace.window == null || changePlace.window.isDisposed })
+        .expireWhen(BooleanSupplier {
+          val window = changePlace.getWindow()
+          window == null || window.isDisposed
+        })
         .submit(AppExecutorUtil.getAppExecutorService())
     }
 
     override fun recentPlaceRemoved(changePlace: IdeDocumentHistoryImpl.PlaceInfo, isChanged: Boolean) = Unit
 
-    private fun PsiElement.getChildrenNames(): List<String> =
-      this.children.filterIsInstance<PsiNamedElement>().mapNotNull { it.name }
+    private fun PsiElement.getChildrenNames(): List<String> {
+      return this.children.filterIsInstance<PsiNamedElement>().mapNotNull { it.name }
+    }
 
-    private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? =
-      try {
-        if (virtualFile.isValid && getPsi(baseLanguage)?.isValid == true)
-          findElementAt(offset)
-        else null
-      } catch (t: Throwable) {
+    private fun FileViewProvider.tryFindElementAt(offset: Int): PsiElement? {
+      return try {
+        if (virtualFile.isValid && getPsi(baseLanguage)?.isValid == true) findElementAt(offset) else null
+      }
+      catch (_: Throwable) {
         null
       }
+    }
 
     private fun findDeclaration(element: PsiElement): PsiElement? {
       var curElement = element

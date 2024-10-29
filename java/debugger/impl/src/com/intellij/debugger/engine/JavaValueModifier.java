@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -103,13 +103,13 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     if (value != null && JAVA_LANG_STRING.equals(varType.name()) && !(value instanceof StringReference)) {
       String v = DebuggerUtils.getValueAsString(context, value);
       if (v != null) {
-        value = DebuggerUtilsEx.mirrorOfString(v, context.getDebugProcess().getVirtualMachineProxy(), context);
+        value = DebuggerUtilsEx.mirrorOfString(v, context.getSuspendContext().getVirtualMachineProxy(), context);
       }
     }
     if (value instanceof DoubleValue) {
       double dValue = ((DoubleValue)value).doubleValue();
       if (varType instanceof FloatType && Float.MIN_VALUE <= dValue && dValue <= Float.MAX_VALUE) {
-        value = context.getDebugProcess().getVirtualMachineProxy().mirrorOf((float)dValue);
+        value = context.getSuspendContext().getVirtualMachineProxy().mirrorOf((float)dValue);
       }
     }
     if (value != null) {
@@ -148,7 +148,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
     if (varType instanceof LongType) {
       try {
         return new ExpressionEvaluatorImpl(new IdentityEvaluator(
-          evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
+          evaluationContext.getSuspendContext().getVirtualMachineProxy().mirrorOf(Long.decode(expression.getExpression()))));
       }
       catch (NumberFormatException ignored) {
       }
@@ -179,7 +179,7 @@ public abstract class JavaValueModifier extends XValueModifier implements XStrin
       final ReferenceType refType;
       try {
         refType = evaluationContext.getDebugProcess().loadClass(evaluationContext,
-                                                                ex.className(),
+                                                                ex,
                                                                 setValueRunnable.getClassLoader(evaluationContext));
         if (refType != null) {
           //try again

@@ -7,8 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ExcludedFileFormattingRestriction implements LanguageFormattingRestriction {
   @Override
   public boolean isFormatterAllowed(@NotNull PsiElement context) {

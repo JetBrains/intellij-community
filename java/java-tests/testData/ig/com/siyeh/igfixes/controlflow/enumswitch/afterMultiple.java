@@ -1,4 +1,4 @@
-// "Create missing branches: 'ACTIVE', and 'INACTIVE'" "true"
+// "Create missing branches 'ACTIVE' and 'INACTIVE'" "true"
 class Main {
     enum Status { ACTIVE, INACTIVE, ERROR }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Class EvaluatorBuilderImpl
@@ -6,6 +6,7 @@
  */
 package com.intellij.debugger.engine.evaluation.expression;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -59,7 +60,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
                                           @Nullable final SourcePosition position,
                                           @NotNull Project project) throws EvaluateException {
     CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, contextElement);
-    PsiCodeFragment codeFragment = factory.createCodeFragment(text, contextElement, project);
+    PsiCodeFragment codeFragment = factory.createPsiCodeFragment(text, contextElement, project);
     if (codeFragment == null) {
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.invalid.expression", text.getText()));
     }
@@ -818,6 +819,16 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiElement element = resolveResult.getElement();
 
       if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
+        var computeSyntheticValue = element.getUserData(JavaEvaluationContextWrapper.SYNTHETIC_VARIABLE_VALUE_KEY);
+        if (computeSyntheticValue != null) {
+          myResult = new Evaluator() {
+            @Override
+            public Object evaluate(EvaluationContextImpl context) {
+              return computeSyntheticValue.invoke();
+            }
+          };
+          return;
+        }
         final Value labeledValue = element.getUserData(CodeFragmentFactoryContextWrapper.LABEL_VARIABLE_VALUE_KEY);
         if (labeledValue != null) {
           myResult = new IdentityEvaluator(labeledValue);
@@ -1201,10 +1212,25 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
       PsiExpression qualifier = methodExpr.getQualifierExpression();
       Evaluator objectEvaluator;
       JVMName contextClass = null;
+      JVMName signature = null;
 
       if (psiMethod != null) {
+        signature = JVMNameUtil.getJVMSignature(psiMethod);
+        if (AnnotationUtil.isAnnotated(psiMethod, CommonClassNames.JAVA_LANG_INVOKE_MH_POLYMORPHIC, 0)) {
+          throw new EvaluateRuntimeException(new UnsupportedExpressionException(
+            JavaDebuggerBundle.message("evaluation.error.signature.polymorphic.call.evaluation.not.supported")));
+        }
+
         PsiClass methodPsiClass = psiMethod.getContainingClass();
-        contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
+        if (PsiUtil.isArrayClass(methodPsiClass)) {
+          contextClass = JVMNameUtil.getJVMRawText(CommonClassNames.JAVA_LANG_OBJECT);
+          if ("clone".equals(psiMethod.getName())) {
+            signature = null;
+          }
+        }
+        else {
+          contextClass = JVMNameUtil.getJVMQualifiedName(methodPsiClass);
+        }
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
           objectEvaluator = new TypeEvaluator(contextClass);
         }
@@ -1273,9 +1299,8 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
         mustBeVararg = psiMethod.isVarArgs();
       }
 
-      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(),
-                                     psiMethod != null ? JVMNameUtil.getJVMSignature(psiMethod) : null, argumentEvaluators,
-                                     mustBeVararg);
+      myResult = new MethodEvaluator(objectEvaluator, contextClass, methodExpr.getReferenceName(), signature,
+                                     argumentEvaluators, mustBeVararg);
     }
 
     @Override
@@ -1416,7 +1441,10 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitMethodReferenceExpression(@NotNull PsiMethodReferenceExpression expression) {
       PsiElement qualifier = expression.getQualifier();
       PsiType interfaceType = expression.getFunctionalInterfaceType();
-      if (!Registry.is("debugger.compiling.evaluator.method.refs") && interfaceType != null && qualifier != null) {
+      if (!Registry.is("debugger.compiling.evaluator.method.refs") &&
+          !Registry.is("debugger.evaluate.method.helper") &&
+          interfaceType != null &&
+          qualifier != null) {
         String code = null;
         try {
           PsiElement resolved = expression.resolve();
@@ -1488,7 +1516,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     private Evaluator buildFromJavaCode(String code, String imports, @NotNull PsiElement context) {
       TextWithImportsImpl text = new TextWithImportsImpl(CodeFragmentKind.CODE_BLOCK, code, imports, JavaFileType.INSTANCE);
-      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createCodeFragment(text, context, context.getProject());
+      JavaCodeFragment codeFragment = DefaultCodeFragmentFactory.getInstance().createPsiCodeFragment(text, context, context.getProject());
       return accept(codeFragment);
     }
 

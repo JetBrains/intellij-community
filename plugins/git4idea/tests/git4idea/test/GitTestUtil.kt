@@ -80,7 +80,7 @@ internal fun initRepo(project: Project, repoRoot: Path, makeInitialCommit: Boole
   }
 }
 
-private fun setupLocalIgnore(repoRoot: Path) {
+internal fun setupLocalIgnore(repoRoot: Path) {
   repoRoot.resolve(".git/info/exclude").write(".shelf")
 }
 
@@ -130,7 +130,7 @@ internal fun createRepository(project: Project, root: Path, makeInitialCommit: B
 
 internal fun GitRepository.createSubRepository(name: String): GitRepository {
   val childRoot = File(this.root.path, name)
-  HeavyPlatformTestCase.assertTrue(childRoot.mkdir())
+  HeavyPlatformTestCase.assertTrue(childRoot.mkdirs())
   val repo = createRepository(this.project, childRoot.path)
   this.tac(".gitignore", name)
   return repo
@@ -183,7 +183,7 @@ fun findGitLogProvider(project: Project): GitLogProvider {
   return providers[0] as GitLogProvider
 }
 
-internal fun makePushSpec(repository: GitRepository, from: String, to: String): PushSpec<GitPushSource, GitPushTarget> {
+internal fun makePushSpec(repository: GitRepository, from: String, to: String, canChangeUpstream: Boolean = false): PushSpec<GitPushSource, GitPushTarget> {
   val source = repository.branches.findLocalBranch(from)!!
   var target: GitRemoteBranch? = repository.branches.findBranchByName(to) as GitRemoteBranch?
   val newBranch: Boolean
@@ -196,7 +196,11 @@ internal fun makePushSpec(repository: GitRepository, from: String, to: String): 
   else {
     newBranch = false
   }
-  return PushSpec(GitPushSource.create(source), GitPushTarget(target, newBranch))
+  val pushTarget = GitPushTarget(target, newBranch)
+  if (canChangeUpstream) {
+    pushTarget.shouldSetNewUpstream(true)
+  }
+  return PushSpec(GitPushSource.create(source), pushTarget)
 }
 
 internal fun GitRepository.resolveConflicts() {

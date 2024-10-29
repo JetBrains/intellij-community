@@ -22,7 +22,7 @@ class FileHistoryUiFactory implements VcsLogManager.VcsLogUiFactory<FileHistoryU
   private final @NotNull VirtualFile myRoot;
   private final @Nullable Hash myHash;
 
-  public FileHistoryUiFactory(@NotNull FilePath path, @NotNull VirtualFile root, @Nullable Hash hash) {
+  FileHistoryUiFactory(@NotNull FilePath path, @NotNull VirtualFile root, @Nullable Hash hash) {
     myFilePath = path;
     myRoot = root;
     myHash = hash;

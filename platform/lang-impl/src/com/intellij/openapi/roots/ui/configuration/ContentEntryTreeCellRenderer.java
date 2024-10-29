@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -43,11 +29,10 @@ import java.util.Set;
 public class ContentEntryTreeCellRenderer extends NodeRenderer {
   protected final ContentEntryTreeEditor myTreeEditor;
   private final List<? extends ModuleSourceRootEditHandler<?>> myEditHandlers;
-  @NotNull
-  private final Set<String> myExcludedUrls;
+  private final @NotNull Set<String> myExcludedUrls;
 
-  public ContentEntryTreeCellRenderer(@NotNull final ContentEntryTreeEditor treeEditor, 
-                                      @NotNull ContentEntry contentEntry, 
+  public ContentEntryTreeCellRenderer(final @NotNull ContentEntryTreeEditor treeEditor,
+                                      @NotNull ContentEntry contentEntry,
                                       List<? extends ModuleSourceRootEditHandler<?>> editHandlers) {
     myTreeEditor = treeEditor;
     myEditHandlers = editHandlers;
@@ -123,8 +108,7 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
     return icon;
   }
 
-  @Nullable
-  private Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
+  private @Nullable Icon getSourceFolderIcon(JpsModuleSourceRootType<?> type) {
     for (ModuleSourceRootEditHandler<?> handler : myEditHandlers) {
       if (handler.getRootType().equals(type)) {
         return handler.getFolderUnderRootIcon();

@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.vcs.log.graph.impl.facade
 
 import com.intellij.vcs.log.graph.api.elements.GraphEdge
@@ -7,6 +9,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.collapsing.DottedFilterEdgesGenerator
 import com.intellij.vcs.log.graph.impl.facade.CascadeController.Companion.performActionRecursively
+import org.jetbrains.annotations.ApiStatus
 
 fun <CommitId> hideCommits(graphController: LinearGraphController,
                            permanentGraphInfo: PermanentGraphInfo<CommitId>,

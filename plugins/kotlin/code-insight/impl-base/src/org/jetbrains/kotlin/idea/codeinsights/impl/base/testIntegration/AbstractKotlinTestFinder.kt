@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.codeinsights.impl.base.testIntegration
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
@@ -15,11 +16,15 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.testIntegration.TestFinder
 import com.intellij.testIntegration.TestFinderHelper
+import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils
 import com.intellij.util.CommonProcessors
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.stubindex.KotlinClassShortNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeShortNameIndex
 import org.jetbrains.kotlin.idea.testIntegration.framework.KotlinPsiBasedTestFramework
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -63,12 +68,14 @@ abstract class AbstractKotlinTestFinder : TestFinder {
 
         val scope = getSearchScope(element, true)
 
-        val cache = PsiShortNamesCache.getInstance(element.project)
+        val project = element.project
+        val cache = PsiShortNamesCache.getInstance(project).withoutLanguages(KotlinLanguage.INSTANCE)
 
         val frameworks = TestFrameworks.getInstance()
         val classesWithWeights = ArrayList<Pair<out PsiNamedElement, Int>>()
         for (candidateNameWithWeight in TestFinderHelper.collectPossibleClassNamesWithWeights(klassName)) {
-            for (eachClass in cache.getClassesByName(candidateNameWithWeight.first, scope)) {
+            val name = candidateNameWithWeight.first
+            for (eachClass in cache.getClassesByName(name, scope)) {
                 if (eachClass.isAnnotationType || frameworks.isTestClass(eachClass)) continue
 
                 if (eachClass is KtLightClassForFacade) {
@@ -76,6 +83,23 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                 } else if (eachClass.isPhysical || eachClass is KtLightClass) {
                     classesWithWeights.add(Pair.create(eachClass, candidateNameWithWeight.second))
                 }
+            }
+
+            KotlinClassShortNameIndex.processElements(name, project, scope, null) { ktClassOrObject: KtClassOrObject ->
+                if (!ktClassOrObject.isAnnotation()) {
+                    val notATest =
+                        DumbService.getDumbAwareExtensions(project, TestFramework.EXTENSION_NAME).none { framework ->
+                            framework.isTestClass(ktClassOrObject)
+                        }
+                    if (notATest) {
+                        classesWithWeights.add(Pair.create(ktClassOrObject, candidateNameWithWeight.second))
+                    }
+                }
+                true
+            }
+
+            KotlinFileFacadeShortNameIndex.processElements(name, project, scope, null) { ktFile ->
+                classesWithWeights.add(Pair.create(ktFile, candidateNameWithWeight.second))
             }
         }
 
@@ -95,14 +119,17 @@ abstract class AbstractKotlinTestFinder : TestFinder {
         val frameworks = TestFrameworks.getInstance()
 
 
-        val cache = PsiShortNamesCache.getInstance(klass.project)
         val classNamesProcessor = object : CommonProcessors.CollectProcessor<String>() {
             override fun accept(t: String?): Boolean {
                 return t?.let { pattern.matcher(it).matches() } ?: false
             }
         }
+        val project = klass.project
+        var cache = PsiShortNamesCache.getInstance(project)
+
         cache.processAllClassNames(classNamesProcessor)
 
+        cache = cache.withoutLanguages(KotlinLanguage.INSTANCE)
         for (candidateName in classNamesProcessor.results) {
             for (candidateClass in cache.getClassesByName(candidateName, scope)) {
                 if (!candidateClass.isPhysical && candidateClass !is KtLightClass) {
@@ -113,6 +140,23 @@ abstract class AbstractKotlinTestFinder : TestFinder {
                 }
 
                 processor.process(Pair.create(candidateClass, TestFinderHelper.calcTestNameProximity(klassName, candidateName)))
+            }
+
+            KotlinClassShortNameIndex.processElements(candidateName, project, scope, null) { ktClassOrObject: KtClassOrObject ->
+                val isPotentialTest =
+                    DumbService.getDumbAwareExtensions(project, TestFramework.EXTENSION_NAME).any { framework ->
+                        framework.isTestClass(ktClassOrObject) || framework.isPotentialTestClass(ktClassOrObject)
+                    }
+
+                if (isPotentialTest) {
+                    processor.process(
+                        Pair.create<KtClassOrObject, Int>(
+                            ktClassOrObject,
+                            TestFinderHelper.calcTestNameProximity(klassName, candidateName)
+                        )
+                    )
+                }
+                true
             }
         }
 

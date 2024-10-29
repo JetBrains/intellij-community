@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
@@ -47,21 +46,22 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         override val KtCallableDeclaration.returnTypeClassId: ClassId?
-            get() = getSymbolOfType<KaCallableSymbol>().returnType.classId
+            get() = (symbol as KaCallableSymbol).returnType.classId
 
         context(KaSession)
         override val KtCallableDeclaration.receiverTypeClassId: ClassId?
-            get() = getSymbolOfType<KaCallableSymbol>().receiverType?.classId
+            get() = (symbol as KaCallableSymbol).receiverType?.classId
 
         context(KaSession)
         override val KtCallableDeclaration.overrideCount: Int
-            get() = getSymbolOfType<KaCallableSymbol>().allOverriddenSymbols.count()
+            get() = (symbol as KaCallableSymbol).allOverriddenSymbols.count()
 
         context(KaSession)
         override val KtProperty.isJvmField: Boolean
             get() {
-                val symbol = getVariableSymbol() as? KaPropertySymbol ?: return false
-                return symbol.hasBackingField && (symbol.backingFieldSymbol?.hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
+                val symbol = symbol as? KaPropertySymbol ?: return false
+                return symbol.hasBackingField
+                        && (symbol.backingFieldSymbol?.annotations?.contains(JvmAbi.JVM_FIELD_ANNOTATION_CLASS_ID) == true)
             }
 
         context(KaSession)
@@ -76,13 +76,13 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
 
         context(KaSession)
         private fun KaType.hasSuperTypeClassId(superTypeClassId: ClassId): Boolean {
-            val superClassSymbol = getClassOrObjectSymbolByClassId(superTypeClassId) ?: return false
-            return isSubTypeOf(superClassSymbol.buildStarProjectedType())
+            val superClassSymbol = findClass(superTypeClassId) ?: return false
+            return isSubtypeOf(superClassSymbol.buildStarProjectedType())
         }
 
         context(KaSession)
         override fun KtClassOrObject.hasSuperClass(superTypeClassId: ClassId): Boolean {
-            val subClassSymbol = getClassOrObjectSymbol() ?: return false
+            val subClassSymbol = classSymbol ?: return false
             return subClassSymbol.buildStarProjectedType().hasSuperTypeClassId(superTypeClassId)
         }
 
@@ -96,7 +96,7 @@ class K2ParcelMigrateToParcelizeQuickFix(clazz: KtClass) : AbstractKotlinApplica
                 ?.successfulConstructorCallOrNull()
                 ?.symbol
                 ?.containingClassId
-                ?.let { getClassOrObjectSymbolByClassId(it) }
+                ?.let { findClass(it) }
                 ?.psi as? KtClassOrObject
 
         context(KaSession)

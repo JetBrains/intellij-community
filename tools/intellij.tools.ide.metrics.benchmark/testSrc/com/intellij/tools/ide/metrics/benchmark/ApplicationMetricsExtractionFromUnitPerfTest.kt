@@ -5,11 +5,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.tools.ide.metrics.collector.OpenTelemetryJsonMeterCollector
 import com.intellij.tools.ide.metrics.collector.metrics.MetricsSelectionStrategy
 import com.intellij.tools.ide.metrics.collector.metrics.PerformanceMetrics
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
@@ -62,8 +63,8 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
       .ofLongs()
       .build()
 
-    PerformanceTestUtil.newPerformanceTest(testName) {
-      runWithSpan(tracer, customSpanName) {
+    Benchmark.newBenchmark(testName) {
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 
@@ -96,7 +97,7 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     meters.assertMeterIsExported("custom.histogram.range.someUnit", 10000)
   }
 
-  private fun List<PerformanceMetrics.Metric>.assertMeterIsExported(meterName: String, expectedValue: Long) {
+  private fun List<PerformanceMetrics.Metric>.assertMeterIsExported(meterName: String, expectedValue: Int) {
     Assertions.assertEquals(this.single { it.id.name == meterName }.value, expectedValue,
                             "$meterName meter should be present in .json meters file")
   }
@@ -106,8 +107,8 @@ class ApplicationMetricsExtractionFromUnitPerfTest {
     val testName = testInfo.testMethod.get().name
     val customSpanName = "custom span"
 
-    val perfTest = PerformanceTestUtil.newPerformanceTest(testName) {
-      runWithSpan(tracer, customSpanName) {
+    val perfTest = Benchmark.newBenchmark(testName) {
+      tracer.spanBuilder(customSpanName).use {
         runBlocking { delay(Random.nextInt(50, 100).milliseconds) }
       }
 

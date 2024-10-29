@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.FileSelectInContext;
@@ -22,15 +22,13 @@ import java.io.File;
 
 
 public class PsiNavigationSupportImpl extends PsiNavigationSupport {
-  @Nullable
   @Override
-  public Navigatable getDescriptor(@NotNull PsiElement element) {
+  public @Nullable Navigatable getDescriptor(@NotNull PsiElement element) {
     return EditSourceUtil.getDescriptor(element);
   }
 
-  @NotNull
   @Override
-  public Navigatable createNavigatable(@NotNull Project project, @NotNull VirtualFile vFile, int offset) {
+  public @NotNull Navigatable createNavigatable(@NotNull Project project, @NotNull VirtualFile vFile, int offset) {
     return new OpenFileDescriptor(project, vFile, offset);
   }
 

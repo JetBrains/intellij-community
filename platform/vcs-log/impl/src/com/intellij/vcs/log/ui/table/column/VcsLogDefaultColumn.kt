@@ -24,6 +24,7 @@ import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
 import com.intellij.vcs.log.ui.render.GraphCommitCell
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer
 import com.intellij.vcs.log.ui.table.*
+import com.intellij.vcs.log.ui.table.links.CommitLinksResolveListener
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcsUtil.VcsUtil
@@ -53,12 +54,12 @@ internal data object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", fa
   override fun getValue(model: GraphTableModel, row: Int): FilePath? {
     val visiblePack = model.visiblePack
     if (visiblePack.hasPathsInformation()) {
-      val path = visiblePack.filePathOrDefault(visiblePack.visibleGraph.getRowInfo(row).commit)
+      val path = visiblePack.filePathOrDefault(model.getRowInfo(row).commit)
       if (path != null) {
         return path
       }
     }
-    return visiblePack.getRoot(row)?.let(VcsUtil::getFilePath)
+    return model.getRootAtRow(row)?.let(VcsUtil::getFilePath)
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
@@ -79,14 +80,17 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
                          VcsLogMetadataColumn {
   override fun getValue(model: GraphTableModel, row: Int): GraphCommitCell {
     val printElements = if (VisiblePack.NO_GRAPH_INFORMATION.get(model.visiblePack, false)) emptyList()
-    else model.visiblePack.visibleGraph.getRowInfo(row).printElements
+    else model.getRowInfo(row).printElements
 
     val metadata = model.getCommitMetadata(row, true)
+    val commitId = model.getCommitId(metadata)
     return GraphCommitCell(
+      commitId,
       getValue(model, metadata),
       model.getRefsAtRow(row),
       if (metadata !is LoadingDetails) getBookmarkRefs(model.logData.project, metadata.id, metadata.root) else emptyList(),
-      printElements
+      printElements,
+      metadata is LoadingDetails
     )
   }
 
@@ -124,10 +128,17 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
       }
     })
 
+    table.logData.project.messageBus.connect(table).subscribe(CommitLinksResolveListener.TOPIC, CommitLinksResolveListener { logId->
+      if (logId == table.id) {
+        table.repaint()
+      }
+    })
     return commitCellRenderer
   }
 
-  override fun getStubValue(model: GraphTableModel): GraphCommitCell = GraphCommitCell("", emptyList(), emptyList(), emptyList())
+  override fun getStubValue(model: GraphTableModel): GraphCommitCell {
+    return GraphCommitCell(null, "", emptyList(), emptyList(), emptyList(), true)
+  }
 
 }
 

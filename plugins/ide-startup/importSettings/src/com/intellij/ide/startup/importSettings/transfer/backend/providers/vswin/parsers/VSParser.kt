@@ -1,15 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.ide.startup.importSettings.providers.vswin.parsers
+package com.intellij.ide.startup.importSettings.transfer.backend.providers.vswin.parsers
 
 import com.intellij.ide.startup.importSettings.db.KnownLafs
 import com.intellij.ide.startup.importSettings.models.Settings
+import com.intellij.ide.startup.importSettings.providers.vswin.parsers.VSXmlParser
 import com.intellij.ide.startup.importSettings.providers.vswin.utilities.VSHive
 import com.intellij.ide.startup.importSettings.transfer.backend.db.KnownColorSchemes
 import com.intellij.openapi.diagnostic.logger
 
-class VSParser(private val hive: VSHive) {
+class VSParser(hive: VSHive) {
   val settings: Settings
-  private val logger = logger<VSParser>()
 
   init {
     val regParser = hive.registry
@@ -28,10 +28,6 @@ class VSParser(private val hive: VSHive) {
 
       plugins.putAll(regParser.extensions)
 
-      //if (hive.productVersionTextRepresentation() == "2015") {
-      //    plugins.add(KnownPlugins.XAMLStyler)
-      //}
-
       for (path in regParser.recentProjects) {
         if (!addRecentProjectIfNeeded { path }) break
       }
@@ -43,3 +39,5 @@ class VSParser(private val hive: VSHive) {
     }
   }
 }
+
+private val logger = logger<VSParser>()

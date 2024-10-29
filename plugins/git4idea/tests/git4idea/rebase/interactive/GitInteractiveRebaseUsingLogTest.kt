@@ -2,14 +2,17 @@
 package git4idea.rebase.interactive
 
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.branch.GitRebaseParams
+import git4idea.i18n.GitBundle
 import git4idea.log.createLogData
 import git4idea.log.refreshAndWait
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEntry
 import git4idea.rebase.GitRebaseUtils
+import git4idea.rebase.interactive.dialog.GitInteractiveRebaseDialog
 import git4idea.test.GitSingleRepoTest
 
 class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
@@ -110,6 +113,26 @@ class GitInteractiveRebaseUsingLogTest : GitSingleRepoTest() {
     assertExceptionDuringEntriesGeneration(commit0, CantRebaseUsingLogException.Reason.FIXUP_SQUASH) {
       "We shouldn't generate entries if squash!/fixup! prefix used. Generated entries: $it"
     }
+  }
+
+  // IJPL-156329
+  fun `test incorrect git-rebase-todo file was generated`() {
+    val commit = file("firstFile.txt").create("").addCommit("0").details()
+    build {
+        1()
+        2()
+    }
+    logData.refreshAndWait(repo, true)
+    updateChangeListManager()
+
+    dialogManager.onDialog(GitInteractiveRebaseDialog::class.java) {
+      git("reset HEAD~ --hard")
+      DialogWrapper.OK_EXIT_CODE
+    }
+
+    interactivelyRebaseUsingLog(repo, commit, logData)
+
+    assertErrorNotification("Rebase failed", GitBundle.message("rebase.using.log.couldnt.start.error"))
   }
 
   private fun getRebaseEntriesUsingGit(commit: VcsCommitMetadata): List<GitRebaseEntry> {

@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 class VirtualFileNameStoreTest {
   @Test
   fun `test 1`() {
-    val store = VirtualFileNameStore()
+    val store = VirtualFileNameStore(false)
     assertEquals(1, store.generateIdForName("a"))
     assertEquals(2, store.generateIdForName("b"))
     assertEquals(3, store.generateIdForName("c"))
@@ -16,14 +16,14 @@ class VirtualFileNameStoreTest {
 
   @Test
   fun `test 2`() {
-    val store = VirtualFileNameStore()
+    val store = VirtualFileNameStore(false)
     assertEquals(1, store.generateIdForName("a"))
     assertEquals(1, store.generateIdForName("a"))
   }
 
   @Test
   fun `test 3`() {
-    val store = VirtualFileNameStore()
+    val store = VirtualFileNameStore(false)
     assertEquals(1, store.generateIdForName("a"))
     assertEquals(2, store.generateIdForName("b"))
     assertEquals(3, store.generateIdForName("c"))

@@ -67,14 +67,6 @@ public final class IdeBorderFactory {
   }
 
   /**
-   * @deprecated use {@link JBUI.Borders#empty(int)}
-   */
-  @Deprecated(forRemoval = true)
-  public static Border createEmptyBorder(int thickness) {
-    return JBUI.Borders.empty(thickness);
-  }
-
-  /**
    * @deprecated use {@link JBUI.Borders#empty(int, int, int, int)}
    */
   @Deprecated

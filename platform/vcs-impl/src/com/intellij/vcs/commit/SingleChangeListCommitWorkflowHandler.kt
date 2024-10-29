@@ -2,6 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.progress.withModalProgressIndicator
 import com.intellij.openapi.util.Disposer
@@ -16,6 +17,7 @@ import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.await
 
 class SingleChangeListCommitWorkflowHandler(
@@ -32,6 +34,7 @@ class SingleChangeListCommitWorkflowHandler(
     }
   }
 
+  @ApiStatus.Internal
   override val amendCommitHandler: AmendCommitHandlerImpl = AmendCommitHandlerImpl(this)
 
   private fun getChangeList() = ui.getChangeList()
@@ -49,7 +52,7 @@ class SingleChangeListCommitWorkflowHandler(
 
     ui.addStateListener(this, this)
     ui.addExecutorListener(this, this)
-    ui.addDataProvider(createDataProvider())
+    ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addChangeListListener(this, this)
   }
 

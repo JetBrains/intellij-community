@@ -29,6 +29,18 @@ public final class GlobalInspectionUtil {
                                    @NotNull InspectionManager manager,
                                    @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor,
                                    @NotNull GlobalInspectionContext globalContext) {
+    ProblemDescriptor descriptor = createProblemDescriptor(elt, info, range, problemGroup, manager);
+    problemDescriptionsProcessor.addProblemElement(
+      GlobalInspectionContextUtil.retrieveRefElement(elt, globalContext),
+      descriptor
+    );
+  }
+
+  public static ProblemDescriptor createProblemDescriptor(@NotNull PsiElement elt,
+                                                          @NotNull HighlightInfo info,
+                                                          TextRange range,
+                                                          @Nullable ProblemGroup problemGroup,
+                                                          @NotNull InspectionManager manager) {
     List<LocalQuickFix> fixes = new ArrayList<>();
     info.findRegisteredQuickFix((descriptor, fixRange) -> {
       if (descriptor.getAction() instanceof LocalQuickFix) {
@@ -36,13 +48,12 @@ public final class GlobalInspectionUtil {
       }
       return null;
     });
-    ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
-                                                                   HighlightInfo.convertType(info.type), false,
-                                                                   fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    ProblemDescriptor descriptor =
+      manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
+                                      HighlightInfo.convertType(info.type), false,
+                                      fixes.isEmpty() ? null : fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     descriptor.setProblemGroup(problemGroup);
-    problemDescriptionsProcessor.addProblemElement(
-      GlobalInspectionContextUtil.retrieveRefElement(elt, globalContext),
-      descriptor
-    );
+
+    return descriptor;
   }
 }

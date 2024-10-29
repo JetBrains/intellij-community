@@ -6,9 +6,16 @@ import com.github.benmanes.caffeine.cache.LoadingCache
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_CENTERED
 import com.intellij.lang.documentation.DocumentationMarkup.CLASS_GRAYED
 import com.intellij.lang.documentation.DocumentationSettings
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.event.EditorFactoryEvent
+import com.intellij.openapi.editor.event.EditorFactoryListener
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
 import com.intellij.openapi.editor.impl.EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER
 import com.intellij.openapi.editor.markup.EffectType
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.Gray
 import com.intellij.ui.components.JBHtmlPaneStyleConfiguration
@@ -35,18 +42,27 @@ const val CODE_BLOCK_CLASS = "code-block"
  * Provides list of default CSS rules for JBHtmlPane
  */
 @Suppress("UseJBColor", "CssInvalidHtmlTagReference", "CssInvalidPropertyValue", "CssUnusedSymbol")
-internal object JBHtmlPaneStyleSheetRulesProvider {
+@Service(Service.Level.APP)
+internal class JBHtmlPaneStyleSheetRulesProvider {
 
-  @JvmStatic
+  init {
+    // Editor color scheme, referenced from JBHtmlPaneStyleConfiguration, can contain references to projects and editors.
+    // Drop caches if projects or editors are closed to avoid memory leaks.
+    val messageBus = ApplicationManager.getApplication().messageBus.connect()
+    messageBus.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
+      override fun projectClosed(project: Project) {
+        styleSheetCache.invalidateAll()
+      }
+    })
+    EditorFactory.getInstance().addEditorFactoryListener(object : EditorFactoryListener {
+      override fun editorReleased(event: EditorFactoryEvent) {
+        styleSheetCache.invalidateAll()
+      }
+    }, messageBus)
+  }
+
   fun getStyleSheet(paneBackgroundColor: Color, configuration: JBHtmlPaneStyleConfiguration): StyleSheet =
     styleSheetCache.get(Pair(paneBackgroundColor.rgb and 0xffffff, configuration))
-
-  internal fun buildCodeBlock(childNodes: List<Node>) =
-    Element("div").addClass(CODE_BLOCK_CLASS).appendChild(
-      Element("pre")
-        .attr("style", "padding: 0px; margin: 0px")
-        .insertChildren(0, childNodes)
-    )
 
   private val inlineCodeStyling = ControlColorStyleBuilder(
     ElementKind.CodeInline,
@@ -133,14 +149,14 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     return styles
   }
 
-  private fun getMonospaceFontSizeCorrection(inlineCode: Boolean) =
+  private fun getMonospaceFontSizeCorrection(inlineCode: Boolean): Int =
     @Suppress("DEPRECATION", "removal")
     // TODO: When removing `getMonospaceFontSizeCorrection` copy it's code here
     DocumentationSettings.getMonospaceFontSizeCorrection(inlineCode)
 
   private fun getShortcutRules(
     paneBackgroundColor: Color,
-    configuration: JBHtmlPaneStyleConfiguration
+    configuration: JBHtmlPaneStyleConfiguration,
   ): String {
     val fontName = if (configuration.useFontLigaturesInCode) EDITOR_FONT_NAME_PLACEHOLDER else EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER
     val contentCodeFontSizePercent = getMonospaceFontSizeCorrection(true)
@@ -158,7 +174,6 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     return result
   }
 
-  @JvmStatic
   private fun getCodeRules(
     paneBackgroundColor: Color,
     configuration: JBHtmlPaneStyleConfiguration,
@@ -198,8 +213,18 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     return result.joinToString("\n")
   }
 
-  private fun toHtmlColor(color: Color): String =
-    toHexString(color.rgb and 0xFFFFFF)
+  companion object {
+
+    internal fun buildCodeBlock(childNodes: List<Node>): Element =
+      Element("div").addClass(CODE_BLOCK_CLASS).appendChild(
+        Element("pre")
+          .attr("style", "padding: 0px; margin: 0px")
+          .insertChildren(0, childNodes)
+      )
+
+    private fun toHtmlColor(color: Color): String =
+      toHexString(color.rgb and 0xFFFFFF)
+  }
 
   private data class ControlColorStyleBuilder(
     val elementKind: ElementKind,
@@ -211,7 +236,7 @@ internal object JBHtmlPaneStyleSheetRulesProvider {
     val defaultBorderRadius: Int = 0,
     val fallbackToEditorBackground: Boolean = false,
     val fallbackToEditorForeground: Boolean = false,
-    val fallbackToEditorBorder: Boolean = false
+    val fallbackToEditorBorder: Boolean = false,
   ) {
 
     private fun getBackgroundColor(configuration: JBHtmlPaneStyleConfiguration): Color? = getColor(configuration, ElementProperty.BackgroundColor)

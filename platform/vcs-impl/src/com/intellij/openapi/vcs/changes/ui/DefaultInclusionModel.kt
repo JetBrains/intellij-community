@@ -8,6 +8,7 @@ import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.HashingStrategy
 import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -22,6 +23,7 @@ abstract class BaseInclusionModel : InclusionModel {
   protected fun fireInclusionChanged() = inclusionEventDispatcher.multicaster.inclusionChanged()
 }
 
+@ApiStatus.Internal
 object NullInclusionModel : InclusionModel {
   override fun getInclusion(): Set<Any> = emptySet()
   override fun getInclusionState(item: Any): ThreeStateCheckBox.State = ThreeStateCheckBox.State.NOT_SELECTED

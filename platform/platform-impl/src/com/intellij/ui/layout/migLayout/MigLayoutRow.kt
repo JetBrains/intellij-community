@@ -144,21 +144,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
     }
 
-  override var subRowsEnabled: Boolean = true
-    set(value) {
-      if (field == value) {
-        return
-      }
-
-      field = value
-      subRows?.forEach {
-        it.enabled = value
-        it.subRowsEnabled = value
-      }
-
-      components.firstOrNull()?.parent?.repaint() // Repaint all dependent components in sync
-    }
-
   override var subRowsVisible: Boolean = true
     set(value) {
       if (field == value) {
@@ -174,9 +159,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
         }
       }
     }
-
-  @Deprecated("Use Kotlin UI DSL Version 2")
-  override var subRowIndent: Int = -1
 
   internal val isLabeledIncludingSubRows: Boolean
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
@@ -200,14 +182,12 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     val row = MigLayoutRow(this, builder,
                            labeled = label != null,
                            noGrid = noGrid,
-                           indent = if (subRowIndent >= 0) subRowIndent * spacing.indentLevel else newIndent,
+                           indent = newIndent,
                            incrementsIndent = incrementsIndent)
 
     if (isSeparated) {
       val separatorRow = MigLayoutRow(this, builder, indent = newIndent, noGrid = true)
       configureSeparatorRow(separatorRow, title)
-      separatorRow.enabled = subRowsEnabled
-      separatorRow.subRowsEnabled = subRowsEnabled
       separatorRow.visible = subRowsVisible
       separatorRow.subRowsVisible = subRowsVisible
       row.getOrCreateSubRowsList().add(separatorRow)
@@ -222,8 +202,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
     subRows.add(insertIndex, row)
 
-    row.enabled = subRowsEnabled
-    row.subRowsEnabled = subRowsEnabled
     row.visible = subRowsVisible
     row.subRowsVisible = subRowsVisible
 
@@ -433,16 +411,6 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     return this
   }
 
-  override fun onGlobalReset(callback: () -> Unit): Row {
-    builder.resetCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
-  override fun onGlobalIsModified(callback: () -> Boolean): Row {
-    builder.isModifiedCallbacks.getOrPut(null, { SmartList() }).add(callback)
-    return this
-  }
-
   private val labeledComponents = listOf(JTextComponent::class, JComboBox::class, JSpinner::class, JSlider::class)
 
   /**
@@ -524,10 +492,6 @@ private class CellBuilderImpl<T : JComponent>(
     return this
   }
 
-  override fun visible(isVisible: Boolean) {
-    viewComponent.isVisible = isVisible
-  }
-
   override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
     viewComponent.isVisible = predicate()
     predicate.addListener { viewComponent.isVisible = it }
@@ -541,14 +505,6 @@ private class CellBuilderImpl<T : JComponent>(
 
   override fun shouldSaveOnApply(): Boolean {
     return !(applyIfEnabled && !viewComponent.isEnabled)
-  }
-
-  @Deprecated("Use Kotlin UI DSL Version 2, see Cell.widthGroup()")
-  override fun sizeGroup(name: String): CellBuilderImpl<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      sizeGroup(name)
-    }
-    return this
   }
 
   @Deprecated("Use Kotlin UI DSL Version 2")
@@ -569,13 +525,6 @@ private class CellBuilderImpl<T : JComponent>(
   override fun withLargeLeftGap(): CellBuilder<T> {
     builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
-    }
-    return this
-  }
-
-  override fun withLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(viewComponent) {
-      horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
     }
     return this
   }

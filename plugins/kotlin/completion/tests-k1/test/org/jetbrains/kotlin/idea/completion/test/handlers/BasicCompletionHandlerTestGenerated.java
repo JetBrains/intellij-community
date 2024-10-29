@@ -190,6 +190,16 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("FunctionalType.kt")
+        public void testFunctionalType() throws Exception {
+            runTest("../testData/handlers/basic/contextReceivers/FunctionalType.kt");
+        }
+
+        @TestMetadata("IncompleteFunctionalType.kt")
+        public void testIncompleteFunctionalType() throws Exception {
+            runTest("../testData/handlers/basic/contextReceivers/IncompleteFunctionalType.kt");
+        }
+
         @TestMetadata("WithoutDeclaration.kt")
         public void testWithoutDeclaration() throws Exception {
             runTest("../testData/handlers/basic/contextReceivers/WithoutDeclaration.kt");
@@ -1118,6 +1128,61 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("TopLevelFunctionShadowingWithSameParameterName.kt")
+        public void testTopLevelFunctionShadowingWithSameParameterName() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelFunctionShadowingWithSameParameterName.kt");
+        }
+
+        @TestMetadata("TopLevelFunctionShadowingWithSameParameterName2.kt")
+        public void testTopLevelFunctionShadowingWithSameParameterName2() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelFunctionShadowingWithSameParameterName2.kt");
+        }
+
+        @TestMetadata("TopLevelRootClass.kt")
+        public void testTopLevelRootClass() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootClass.kt");
+        }
+
+        @TestMetadata("TopLevelRootClassFromRootPackage.kt")
+        public void testTopLevelRootClassFromRootPackage() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootClassFromRootPackage.kt");
+        }
+
+        @TestMetadata("TopLevelRootExtensionFunction.kt")
+        public void testTopLevelRootExtensionFunction() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootExtensionFunction.kt");
+        }
+
+        @TestMetadata("TopLevelRootExtensionProperty.kt")
+        public void testTopLevelRootExtensionProperty() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootExtensionProperty.kt");
+        }
+
+        @TestMetadata("TopLevelRootFunction.kt")
+        public void testTopLevelRootFunction() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootFunction.kt");
+        }
+
+        @TestMetadata("TopLevelRootFunctionFromRootPackage.kt")
+        public void testTopLevelRootFunctionFromRootPackage() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootFunctionFromRootPackage.kt");
+        }
+
+        @TestMetadata("TopLevelRootFunctionShadowingWithLocalFunction.kt")
+        public void testTopLevelRootFunctionShadowingWithLocalFunction() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootFunctionShadowingWithLocalFunction.kt");
+        }
+
+        @TestMetadata("TopLevelRootObjectFunction.kt")
+        public void testTopLevelRootObjectFunction() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootObjectFunction.kt");
+        }
+
+        @TestMetadata("TopLevelRootProperty.kt")
+        public void testTopLevelRootProperty() throws Exception {
+            runTest("../testData/handlers/basic/topLevelDeclarations/TopLevelRootProperty.kt");
         }
 
         @TestMetadata("TopLevelWithSameSignature.kt")

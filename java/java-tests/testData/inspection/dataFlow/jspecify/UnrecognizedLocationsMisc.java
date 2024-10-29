@@ -16,6 +16,8 @@
 import org.jspecify.annotations.NullMarked;
 import org.jspecify.annotations.Nullable;
 
+// Covered by
+// conformance-tests/src/assertions/java/org/jspecify/conformance/tests/irrelevantannotations/notnullmarked/Other.java
 @NullMarked
 abstract class UnrecognizedLocationsMisc {
   interface Super {}

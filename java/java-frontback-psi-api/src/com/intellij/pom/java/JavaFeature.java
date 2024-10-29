@@ -51,6 +51,7 @@ public enum JavaFeature {
   MODULES(LanguageLevel.JDK_1_9, "feature.modules"),
   COLLECTION_FACTORIES(LanguageLevel.JDK_1_9, "feature.collection.factories"),
   PRIVATE_INTERFACE_METHODS(LanguageLevel.JDK_1_9, "feature.private.interface.methods"),
+  UTF8_PROPERTY_FILES(LanguageLevel.JDK_1_9, "feature.utf8.property.files"),
   LVTI(LanguageLevel.JDK_10, "feature.lvti"),
   VAR_LAMBDA_PARAMETER(LanguageLevel.JDK_11, "feature.var.lambda.parameter"),
   NESTMATES(LanguageLevel.JDK_11, "feature.nestmates"),

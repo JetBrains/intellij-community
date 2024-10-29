@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.execution.Executor;
@@ -46,8 +46,8 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
   private final SearchEverywhereCommandInfo DEBUG_COMMAND =
     new SearchEverywhereCommandInfo("debug", IdeBundle.message("searcheverywhere.runconfigurations.command.debug.description"), this);
 
-  private final static int RUN_MODE = 0;
-  private final static int DEBUG_MODE = 1;
+  private static final int RUN_MODE = 0;
+  private static final int DEBUG_MODE = 1;
 
   private final Project myProject;
   private final Component myContextComponent;
@@ -59,15 +59,13 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
     myCommandSupplier = commandSupplier;
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return getClass().getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("searcheverywhere.run.configs.tab.name");
   }
 
@@ -96,21 +94,13 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
     return true;
   }
 
-  @Nullable
   @Override
-  public Object getDataForItem(@NotNull ChooseRunConfigurationPopup.ItemWrapper element, @NotNull String dataId) {
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public ListCellRenderer<? super ChooseRunConfigurationPopup.ItemWrapper> getElementsRenderer() {
+  public @NotNull ListCellRenderer<? super ChooseRunConfigurationPopup.ItemWrapper> getElementsRenderer() {
     return renderer;
   }
 
-  @NotNull
   @Override
-  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
     return Arrays.asList(RUN_COMMAND, DEBUG_COMMAND);
   }
 
@@ -254,9 +244,8 @@ public final class RunConfigurationsSEContributor implements SearchEverywhereCon
     }
   }
 
-  @Nullable
-  private static Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings,
-                                       @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
+  private static @Nullable Executor findExecutor(@NotNull RunnerAndConfigurationSettings settings,
+                                                 @MagicConstant(intValues = {RUN_MODE, DEBUG_MODE}) int mode) {
     Executor runExecutor = DefaultRunExecutor.getRunExecutorInstance();
     Executor debugExecutor = ExecutorRegistry.getInstance().getExecutorById(ToolWindowId.DEBUG);
 

@@ -26,11 +26,23 @@
             order="before kotlinProcessor"/>
     <refactoring.changeSignatureUsageProcessor
             implementation="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProcessor"/>
+
+    <suggestedRefactoringSupport
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.suggested.KotlinSuggestedRefactoringSupport"/>
+
+    <refactoring.introduceParameterMethodUsagesProcessor
+            implementation="org.jetbrains.kotlin.idea.k2.refactoring.introduceParameter.KotlinIntroduceParameterMethodUsageProcessor"/>
+
     <java.changeSignature.converter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinJavaChangeInfoConverter"/>
     <changeSignature.usageProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureUsageProvider"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlinePropertyHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineFunctionHandler"/>
     <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineAnonymousFunctionHandler"/>
+    <inlineActionHandler implementation="org.jetbrains.kotlin.idea.k2.refactoring.inline.KotlinInlineTypeAliasHandler"/>
+    <refactoring.inlineHandler
+            language="kotlin"
+            implementationClass="org.jetbrains.kotlin.idea.k2.refactoring.inline.JavaToKotlinInlineHandler"/>
 
     <refactoring.copyHandler
             id="kotlinClass"
@@ -50,6 +62,10 @@
     <extensionPoint
             qualifiedName="org.jetbrains.kotlin.extractFunctionDescriptorModifier"
             interface="org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractFunctionDescriptorModifier"
+            dynamic="true"/>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.changeSignatureConflictFilter"
+            interface="org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeSignatureConflictFilter"
             dynamic="true"/>
   </extensionPoints>
 

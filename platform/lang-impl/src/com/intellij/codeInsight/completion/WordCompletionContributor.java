@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -32,7 +32,7 @@ public class WordCompletionContributor extends CompletionContributor implements 
   }
 
   @Override
-  public void fillCompletionVariants(@NotNull final CompletionParameters parameters, @NotNull final CompletionResultSet result) {
+  public void fillCompletionVariants(final @NotNull CompletionParameters parameters, final @NotNull CompletionResultSet result) {
     if (parameters.getCompletionType() == CompletionType.BASIC && shouldPerformWordCompletion(parameters)) {
       addWordCompletionVariants(result, parameters, Collections.emptySet());
     }
@@ -42,7 +42,15 @@ public class WordCompletionContributor extends CompletionContributor implements 
     addWordCompletionVariants(result, parameters, excludes, false);
   }
 
-  public static void addWordCompletionVariants(CompletionResultSet result, final CompletionParameters parameters, Set<String> excludes, boolean allowEmptyPrefix) {
+  public static void addWordCompletionVariants(CompletionResultSet result,
+                                               CompletionParameters parameters,
+                                               Set<String> excludes,
+                                               boolean allowEmptyPrefix) {
+    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
+        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return;
+    }
+
     final Set<String> realExcludes = new HashSet<>(excludes);
     for (String exclude : excludes) {
       String[] words = exclude.split("[ .-]");
@@ -124,6 +132,11 @@ public class WordCompletionContributor extends CompletionContributor implements 
     }
 
     if (Boolean.TRUE.equals(parameters.getOriginalFile().getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
+      return false;
+    }
+
+    if (parameters.getProcess() instanceof CompletionProgressIndicator cpi &&
+        Boolean.TRUE.equals(cpi.getUserData(BaseCompletionService.FORBID_WORD_COMPLETION))) {
       return false;
     }
 

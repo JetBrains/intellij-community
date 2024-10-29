@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.fileEditor.impl.text;
 
@@ -112,8 +112,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     };
   }
 
-  @Nullable
-  private static Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
+  private static @Nullable Object getSlowData(@NotNull String dataId, @NotNull Editor e, @NotNull Caret caret) {
     if (e.isDisposed() || !(e instanceof EditorEx)) {
       return null;
     }
@@ -236,8 +235,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return PsiUtilCore.findLanguageFromElement(elt);
   }
 
-  @Nullable
-  private static PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull Caret caret, @NotNull VirtualFile file) {
+  private static @Nullable PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull Caret caret, @NotNull VirtualFile file) {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
 
@@ -250,8 +248,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     }
   }
 
-  @Nullable
-  private static PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
+  private static @Nullable PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
     if (!file.isValid()) {
       return null; // fix for SCR 40329
     }

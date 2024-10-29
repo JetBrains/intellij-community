@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions.moveLeftRight;
 
 import com.intellij.openapi.actionSystem.DataContext;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Range;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class MoveElementLeftRightActionHandler extends EditorWriteActionHandler.ForEachCaret {
   private static final Comparator<PsiElement> BY_OFFSET = Comparator.comparingInt(PsiElement::getTextOffset);
 
@@ -122,8 +124,7 @@ public final class MoveElementLeftRightActionHandler extends EditorWriteActionHa
     caret.setSelection(selectionStart + caretShift, selectionEnd + caretShift);
   }
 
-  @Nullable
-  private Range<Integer> findRangeOfElementsToMove(PsiElement @NotNull [] elements, int startOffset, int endOffset) {
+  private @Nullable Range<Integer> findRangeOfElementsToMove(PsiElement @NotNull [] elements, int startOffset, int endOffset) {
     int startIndex = elements.length;
     int endIndex = -1;
     if (startOffset == endOffset) {

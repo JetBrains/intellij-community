@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.Nullable;
 final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase implements UnknownSdkFixAction {
   private static final Logger LOG = Logger.getInstance(UnknownMissingSdkFixLocal.class);
 
-  private @NotNull final UnknownSdkLocalSdkFix myFix;
-  private @NotNull final UnknownSdk mySdk;
+  private final @NotNull UnknownSdkLocalSdkFix myFix;
+  private final @NotNull UnknownSdk mySdk;
 
   UnknownMissingSdkFixLocal(@NotNull UnknownSdk sdk,
                             @NotNull UnknownSdkLocalSdkFix fix) {
@@ -78,9 +78,8 @@ final class UnknownMissingSdkFixLocal extends UnknownSdkFixActionLocalBase imple
     return myFix.getExistingSdkHome();
   }
 
-  @NotNull
   @Override
-  protected Sdk applyLocalFix() {
+  protected @NotNull Sdk applyLocalFix() {
     ThreadingAssertions.assertEventDispatchThread();
 
     try {

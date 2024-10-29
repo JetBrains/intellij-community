@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.openapi.project.impl
 
 import com.intellij.ide.actions.OpenFileAction
@@ -11,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 const val PER_PROJECT_INSTANCE_TEST_SCRIPT: String = "test_script.txt"

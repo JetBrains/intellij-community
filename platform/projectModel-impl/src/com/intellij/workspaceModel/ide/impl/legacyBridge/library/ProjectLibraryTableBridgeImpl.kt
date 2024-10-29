@@ -2,8 +2,9 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -31,7 +32,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
-internal class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
+private class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
   override fun isEnabled(): Boolean = true
 
   override fun initializeBridges(project: Project, changes: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
@@ -47,7 +48,7 @@ internal class ProjectLibraryTableBridgeInitializer : BridgeInitializer {
           project = project,
           initialId = addChange.newEntity.symbolicId,
           initialEntityStorage = (WorkspaceModel.getInstance(project) as WorkspaceModelInternal).entityStorage,
-          targetBuilder = builder
+          targetBuilder = builder,
         )
       }
     }
@@ -160,12 +161,12 @@ class ProjectLibraryTableBridgeImpl(
 
     if (targetBuilder == null) {
       withContext(Dispatchers.EDT) {
-        (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
+        (project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl).updateProjectModelSilent("Add project library mapping") {
           for ((entity, library) in libraries) {
             it.mutableLibraryMap.addIfAbsent(entity, library)
           }
         }
-        ApplicationManager.getApplication().runWriteAction {
+        writeAction {
           for ((_, library) in libraries) {
             dispatcher.multicaster.afterLibraryAdded(library)
           }
@@ -236,11 +237,17 @@ class ProjectLibraryTableBridgeImpl(
       cacheStorageResult = false
     )
 
-  override fun addListener(listener: LibraryTable.Listener) = dispatcher.addListener(listener)
-  override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) =
-    dispatcher.addListener(listener, parentDisposable)
+  override fun addListener(listener: LibraryTable.Listener) {
+    dispatcher.addListener(listener)
+  }
 
-  override fun removeListener(listener: LibraryTable.Listener) = dispatcher.removeListener(listener)
+  override fun addListener(listener: LibraryTable.Listener, parentDisposable: Disposable) {
+    dispatcher.addListener(listener, parentDisposable)
+  }
+
+  override fun removeListener(listener: LibraryTable.Listener) {
+    dispatcher.removeListener(listener)
+  }
 
   override fun dispose() {
     for (library in libraries) {
@@ -264,8 +271,9 @@ class ProjectLibraryTableBridgeImpl(
     val MutableEntityStorage.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
       get() = getMutableExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
 
-    fun EntityStorage.findLibraryEntity(library: LibraryBridge) =
-      libraryMap.getEntities(library).firstOrNull() as LibraryEntity?
+    fun EntityStorage.findLibraryEntity(library: LibraryBridge): LibraryEntity? {
+      return libraryMap.getEntities(library).firstOrNull() as LibraryEntity?
+    }
 
     private val LOG = logger<ProjectLibraryTableBridgeImpl>()
   }

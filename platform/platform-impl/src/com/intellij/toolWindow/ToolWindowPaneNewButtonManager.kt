@@ -13,6 +13,7 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.Icon
 import javax.swing.JComponent
+import javax.swing.JPanel
 
 internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean) : ToolWindowButtonManager {
 
@@ -24,9 +25,19 @@ internal class ToolWindowPaneNewButtonManager(paneId: String, isPrimary: Boolean
   override val isNewUi: Boolean
     get() = true
 
-  override fun add(pane: JComponent) {
-    pane.add(left, BorderLayout.WEST)
-    pane.add(right, BorderLayout.EAST)
+  override fun setupToolWindowPane(pane: JComponent) {
+    left.topStripe.bottomAnchorDropAreaComponent = pane
+    left.bottomStripe.bottomAnchorDropAreaComponent = pane
+    right.topStripe.bottomAnchorDropAreaComponent = pane
+    right.bottomStripe.bottomAnchorDropAreaComponent = pane
+  }
+
+  override fun wrapWithControls(pane: ToolWindowPane): JComponent {
+    return JPanel(BorderLayout()).apply {
+      add(pane, BorderLayout.CENTER)
+      add(left, BorderLayout.WEST)
+      add(right, BorderLayout.EAST)
+    }
   }
 
   override fun updateToolStripesVisibility(showButtons: Boolean, state: ToolWindowPaneState): Boolean {

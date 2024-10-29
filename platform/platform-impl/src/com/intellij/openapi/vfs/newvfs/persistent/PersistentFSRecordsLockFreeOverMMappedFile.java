@@ -193,8 +193,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <R, E extends Throwable> R readRecord(int recordId,
-                                               @NotNull RecordReader<R, E> reader) throws E, IOException {
+  public <R> R readRecord(int recordId,
+                          @NotNull RecordReader<R> reader) throws IOException {
     long recordOffsetInFile = recordOffsetInFile(recordId);
     int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     Page page = storage.pageByOffset(recordOffsetInFile);
@@ -203,8 +203,8 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <E extends Throwable> int updateRecord(int recordId,
-                                                @NotNull RecordUpdater<E> updater) throws E, IOException {
+  public int updateRecord(int recordId,
+                          @NotNull RecordUpdater updater) throws IOException {
     int trueRecordId = (recordId <= NULL_ID) ?
                        allocateRecord() :
                        recordId;
@@ -221,12 +221,12 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public <R, E extends Throwable> R readHeader(@NotNull HeaderReader<R, E> reader) throws E, IOException {
+  public <R> R readHeader(@NotNull HeaderReader<R> reader) throws IOException {
     return reader.readHeader(headerAccessor);
   }
 
   @Override
-  public <E extends Throwable> void updateHeader(@NotNull HeaderUpdater<E> updater) throws E, IOException {
+  public void updateHeader(@NotNull HeaderUpdater updater) throws IOException {
     if (updater.updateHeader(headerAccessor)) {
       incrementGlobalModCount();
     }
@@ -402,13 +402,20 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
 
 
   @Override
-  public int allocateRecord() {
+  public int allocateRecord() throws IOException {
     Page headerPage = headerPage();
     ByteBuffer headerPageBuffer = headerPage.rawPageBuffer();
     while (true) {// CAS loop:
       int allocatedRecords = (int)INT_HANDLE.getVolatile(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET);
       int newAllocatedRecords = allocatedRecords + 1;
       if (INT_HANDLE.compareAndSet(headerPageBuffer, FileHeader.RECORDS_ALLOCATED_OFFSET, allocatedRecords, newAllocatedRecords)) {
+
+        long recordOffsetInFile = recordOffsetInFile(newAllocatedRecords);
+        int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
+        Page page = storage.pageByOffset(recordOffsetInFile);
+        ByteBuffer pageBuffer = page.rawPageBuffer();
+        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
+
         return newAllocatedRecords;
       }
     }
@@ -531,33 +538,6 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
   }
 
   @Override
-  public void fillRecord(int recordId,
-                         long timestamp,
-                         long length,
-                         int flags,
-                         int nameId,
-                         int parentId,
-                         boolean cleanAttributeRef) throws IOException {
-    checkParentIdIsValid(parentId);
-
-    long recordOffsetInFile = recordOffsetInFile(recordId);
-    int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    Page page = storage.pageByOffset(recordOffsetInFile);
-    ByteBuffer pageBuffer = page.rawPageBuffer();
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.PARENT_REF_OFFSET, parentId);
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.NAME_REF_OFFSET, nameId);
-    setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.FLAGS_OFFSET, flags);
-    if (cleanAttributeRef) {
-      setIntVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.ATTR_REF_OFFSET, 0);
-    }
-    //TODO RC: why not set contentId?
-    setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.TIMESTAMP_OFFSET, timestamp);
-    setLongVolatile(pageBuffer, recordOffsetOnPage + RecordLayout.LENGTH_OFFSET, length);
-
-    incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-  }
-
-  @Override
   public void markRecordAsModified(int recordId) throws IOException {
     long recordOffsetInFile = recordOffsetInFile(recordId);
     int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
@@ -583,6 +563,10 @@ public final class PersistentFSRecordsLockFreeOverMMappedFile implements Persist
       int offsetOfWord = recordOffsetOnPage + wordNo * Integer.BYTES;
       setIntVolatile(pageBuffer, offsetOfWord, 0);
     }
+
+    //make storage .dirty: usually it is done automatically, since we inc _global_ modCount while updating _record_ modCount,
+    // but here we don't update record modCount, so must increment global one explicitly
+    incrementGlobalModCount();
   }
 
 

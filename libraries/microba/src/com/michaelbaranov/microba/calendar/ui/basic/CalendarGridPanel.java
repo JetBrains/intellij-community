@@ -1,35 +1,5 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.Color;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.event.ActionEvent;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TimeZone;
-
-import javax.swing.AbstractAction;
-import javax.swing.BorderFactory;
-import javax.swing.InputMap;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.KeyStroke;
-import javax.swing.SwingConstants;
-import javax.swing.UIManager;
-
 import com.michaelbaranov.microba.Microba;
 import com.michaelbaranov.microba.calendar.CalendarColors;
 import com.michaelbaranov.microba.calendar.CalendarPane;
@@ -37,6 +7,13 @@ import com.michaelbaranov.microba.calendar.HolidayPolicy;
 import com.michaelbaranov.microba.calendar.VetoPolicy;
 import com.michaelbaranov.microba.common.PolicyEvent;
 import com.michaelbaranov.microba.common.PolicyListener;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.*;
 
 class CalendarGridPanel extends JPanel implements FocusListener,
     PolicyListener, PropertyChangeListener, MouseListener, KeyListener {
@@ -57,7 +34,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
   // date lable
   public static final String PROPERTY_NAME_NOTIFY_SELECTED_DATE_CLICKED = "##same date clicked##";
 
-  private CalendarPane peer;
+  private final CalendarPane peer;
 
   private Date date;
 
@@ -71,40 +48,40 @@ class CalendarGridPanel extends JPanel implements FocusListener,
 
   private VetoPolicy vetoPolicy;
 
-  private DateLabel labels[] = new DateLabel[42];
+  private final DateLabel[] labels = new DateLabel[42];
 
-  private Set focusableComponents = new HashSet();
+  private final Set<JComponent> focusableComponents = new HashSet<>();
 
   private boolean explicitDateSetToNullFlag;
 
   private HolidayPolicy holidayPolicy;
 
-  private Color focusColor;
+  private final Color focusColor;
 
-  private Color restrictedColor;
+  private final Color restrictedColor;
 
-  private Color gridBgEn;
+  private final Color gridBgEn;
 
-  private Color gridBgDis;
+  private final Color gridBgDis;
 
-  private Color gridFgEn;
+  private final Color gridFgEn;
 
-  private Color gridFgDis;
+  private final Color gridFgDis;
 
-  private Color selBgEn;
+  private final Color selBgEn;
 
-  private Color selBgDis;
+  private final Color selBgDis;
 
-  private Color wkFgEn;
+  private final Color wkFgEn;
 
-  private Color wkFgDis;
+  private final Color wkFgDis;
 
-  private Color holFgEn;
+  private final Color holFgEn;
 
-  private Color holFgDis;
+  private final Color holFgDis;
 
-  public CalendarGridPanel(CalendarPane peer, Date date, Locale locale,
-      TimeZone zone, VetoPolicy vetoDateModel, HolidayPolicy holidayPolicy) {
+  CalendarGridPanel(CalendarPane peer, Date date, Locale locale,
+                    TimeZone zone, VetoPolicy vetoDateModel, HolidayPolicy holidayPolicy) {
 
     this.peer = peer;
 
@@ -157,7 +134,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     this.zone = zone;
     this.date = date;
     this.baseDate = date == null ? new Date() : date;
-    this.explicitDateSetToNullFlag = date == null ? true : false;
+    this.explicitDateSetToNullFlag = date == null;
     this.focusDate = getFocusDateForDate(date);
     this.vetoPolicy = vetoDateModel;
     this.holidayPolicy = holidayPolicy;
@@ -181,7 +158,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     setFocusable(true);
 
     // TODO: move the following to key listeners?
-    InputMap input = this.getInputMap(JComponent.WHEN_FOCUSED);
+    InputMap input = this.getInputMap(WHEN_FOCUSED);
     input.put(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0),
         "##microba.commit##");
     input.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0),
@@ -189,6 +166,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
 
     this.getActionMap().put("##microba.commit##", new AbstractAction() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         Calendar c = getCalendar(focusDate);
         if (vetoPolicy == null || !vetoPolicy.isRestricted(this, c)) {
@@ -203,11 +181,13 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     reflectData();
   }
 
+  @Override
   public void focusGained(FocusEvent e) {
     setBorder(BorderFactory.createLineBorder(focusColor));
     reflectFocusedDate();
   }
 
+  @Override
   public void focusLost(FocusEvent e) {
     setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 1));
     reflectFocusedDate();
@@ -235,7 +215,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
       return -1;
     Calendar bc = getCalendar(baseDate);
     Calendar sc = getCalendar(date);
-    // selectd date visible in base month
+    // selected date visible in base month
     if (bc.get(Calendar.ERA) == sc.get(Calendar.ERA)
         && bc.get(Calendar.YEAR) == sc.get(Calendar.YEAR)
         && bc.get(Calendar.MONTH) == sc.get(Calendar.MONTH)) {
@@ -358,7 +338,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
   public void setDate(Date date) {
     Date old = this.date;
     this.date = date;
-    this.explicitDateSetToNullFlag = date == null ? true : false;
+    this.explicitDateSetToNullFlag = date == null;
     this.focusDate = getFocusDateForDate(date);
     if (old != null || date != null)
       firePropertyChange(PROPERTY_NAME_DATE, old, date);
@@ -374,10 +354,12 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     return date;
   }
 
+  @Override
   public Locale getLocale() {
     return locale;
   }
 
+  @Override
   public void setLocale(Locale locale) {
     Locale old = this.locale;
     this.locale = locale;
@@ -418,7 +400,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     reflectData();
   }
 
-  public Collection getFocusableComponents() {
+  public Collection<JComponent> getFocusableComponents() {
     return focusableComponents;
   }
 
@@ -426,7 +408,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
 
     private Date date;
 
-    private int id;
+    private final int id;
 
     private boolean focused;
 
@@ -436,12 +418,12 @@ class CalendarGridPanel extends JPanel implements FocusListener,
 
     private boolean banned;
 
-    private boolean holliday;
+    private boolean holiday;
 
-    public DateLabel(int id) {
+    DateLabel(int id) {
       super();
       this.id = id;
-      setHorizontalAlignment(SwingConstants.CENTER);
+      setHorizontalAlignment(CENTER);
 
       setFocused(false);
       setSelected(false);
@@ -451,7 +433,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     }
 
     public void setHolliday(boolean b) {
-      holliday = b;
+      holiday = b;
       update();
       repaint();
     }
@@ -486,13 +468,13 @@ class CalendarGridPanel extends JPanel implements FocusListener,
       // foreground by the rest
       updateBg();
       updateFg();
-      udapteBorder();
+      updateBorder();
       // Tooltip:
       updateTooltip();
     }
 
     private void updateTooltip() {
-      if (holidayPolicy != null && holliday) {
+      if (holidayPolicy != null && holiday) {
         Calendar c = Calendar.getInstance(zone, locale);
         c.setTime(date);
         setToolTipText(holidayPolicy.getHollidayName(this, c));
@@ -500,7 +482,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
         setToolTipText(null);
     }
 
-    private void udapteBorder() {
+    private void updateBorder() {
       if (isFocused() && isEnabled()) {
         setBorder(BorderFactory
             .createLineBorder(banned ? restrictedColor : focusColor));
@@ -548,6 +530,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
       repaint();
     }
 
+    @Override
     public void paint(Graphics g) {
 
       if (isBanned()) {
@@ -566,7 +549,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     }
 
     public boolean isHolliday() {
-      return holliday;
+      return holiday;
     }
 
     public Date getDate() {
@@ -579,10 +562,12 @@ class CalendarGridPanel extends JPanel implements FocusListener,
 
   }
 
+  @Override
   public void policyChanged(PolicyEvent event) {
     reflectData();
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals(PROPERTY_NAME_VETO_POLICY)) {
       VetoPolicy oldValue = (VetoPolicy) evt.getOldValue();
@@ -630,6 +615,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     reflectData();
   }
 
+  @Override
   public void mouseClicked(MouseEvent e) {
     if (!isEnabled())
       return;
@@ -645,28 +631,34 @@ class CalendarGridPanel extends JPanel implements FocusListener,
         if (selected)
           firePropertyChange(
               PROPERTY_NAME_NOTIFY_SELECTED_DATE_CLICKED, null,
-              new Integer(id));
+              id);
       }
     }
   }
 
+  @Override
   public void mousePressed(MouseEvent e) {
 
   }
 
+  @Override
   public void mouseReleased(MouseEvent e) {
   }
 
+  @Override
   public void mouseEntered(MouseEvent e) {
   }
 
+  @Override
   public void mouseExited(MouseEvent e) {
   }
 
+  @Override
   public void keyTyped(KeyEvent e) {
 
   }
 
+  @Override
   public void keyPressed(KeyEvent e) {
     if (!isEnabled())
       return;
@@ -699,6 +691,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     }
   }
 
+  @Override
   public void keyReleased(KeyEvent e) {
   }
 
@@ -710,6 +703,7 @@ class CalendarGridPanel extends JPanel implements FocusListener,
     return focusDate;
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     reflectData();

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.util.io.FileAttributes;
@@ -45,11 +45,11 @@ public final class ChildInfoImpl implements ChildInfo {
     this.symLinkTarget = symLinkTarget;
     this.children = children;
     if (fileId <= 0 && fileId != UNKNOWN_ID_YET) {
-      int parentId = FSRecords.getParent(fileId);
+      int parentId = FSRecords.getInstance().getParent(fileId);
       throw new IllegalArgumentException("fileId is invalid: fileId=" + fileId + ", parentId=" + parentId + ", nameId=" + nameId);
     }
     else if (nameId <= 0 && nameId != UNKNOWN_ID_YET) {
-      int parentId = FSRecords.getParent(fileId);
+      int parentId = FSRecords.getInstance().getParent(fileId);
       throw new IllegalArgumentException("nameId is invalid: fileId=" + fileId + ", parentId=" + parentId + ", nameId=" + nameId);
     }
   }

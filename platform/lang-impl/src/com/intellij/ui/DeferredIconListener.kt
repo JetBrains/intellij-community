@@ -3,8 +3,10 @@ package com.intellij.ui
 
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.BroadcastDirection
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 
+@ApiStatus.Internal
 interface DeferredIconListener {
   fun evaluated(deferred: DeferredIcon, result: Icon)
 

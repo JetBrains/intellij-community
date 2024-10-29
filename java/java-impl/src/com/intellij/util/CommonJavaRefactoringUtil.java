@@ -54,7 +54,7 @@ public final class CommonJavaRefactoringUtil {
   );
 
   public static @NotNull JavaBaseRefactoringSupportProvider getRefactoringSupport() {
-    var provider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var provider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     return (JavaBaseRefactoringSupportProvider)provider;
   }
 

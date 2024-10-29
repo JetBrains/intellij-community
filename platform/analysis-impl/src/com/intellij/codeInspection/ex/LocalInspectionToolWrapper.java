@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspectionTool, LocalInspectionEP> {
   /** This should be used in tests primarily */
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
-    super(tool, findInspectionEP(tool));
+    super(tool, InspectionToolRegistrar.getInstance().findInspectionEP(tool));
   }
 
   public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
@@ -53,6 +53,10 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
   }
 
+  public boolean isDumbAware() {
+    return getTool().isDumbAware();
+  }
+
   public static @Nullable InspectionToolWrapper<?, ?> findTool2RunInBatch(@NotNull Project project,
                                                                           @Nullable PsiElement element,
                                                                           @NotNull String name) {
@@ -77,15 +81,5 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       return null;
     }
     return toolWrapper;
-  }
-
-  private static LocalInspectionEP findInspectionEP(@NotNull LocalInspectionTool tool) {
-    LocalInspectionEP byKey = LocalInspectionEP.LOCAL_INSPECTION.getByKey(tool.getShortName(), LocalInspectionToolWrapper.class, InspectionEP::getShortName);
-    if (byKey != null) {
-      return byKey;
-    }
-    // sometimes tool.getShortName() is inconsistent with `shortName="xxx"` in plugin.xml. For example: CheckDtdReferencesInspection
-    // revert to brute force search among all extensions in this case
-    return LocalInspectionEP.LOCAL_INSPECTION.findFirstSafe(ep -> tool.getClass().getName().equals(ep.implementationClass));
   }
 }

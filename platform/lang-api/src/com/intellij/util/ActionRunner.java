@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
@@ -29,14 +28,6 @@ public abstract class ActionRunner {
   @Deprecated(forRemoval = true)
   public static <T> T runInsideWriteAction(final @NotNull InterruptibleRunnableWithResult<T> runnable) throws Exception {
     return WriteAction.computeAndWait(() -> runnable.run());
-  }
-
-  /**
-   * @deprecated use {@link ReadAction#run(ThrowableRunnable)} or {@link ReadAction#compute(ThrowableComputable)} instead
-   */
-  @Deprecated(forRemoval = true)
-  public static void runInsideReadAction(final @NotNull InterruptibleRunnable runnable) throws Exception {
-    ReadAction.run(() -> runnable.run());
   }
 
   /**

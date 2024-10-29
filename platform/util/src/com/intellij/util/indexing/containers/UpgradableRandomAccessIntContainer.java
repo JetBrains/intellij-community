@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Supplier;
@@ -11,6 +12,7 @@ import java.util.function.Supplier;
  * @param <T> implementation that is used while size < threshold
  * @param <F> implementation that is used once threshold is reached
  */
+@ApiStatus.Internal
 public final class UpgradableRandomAccessIntContainer<
   T extends RandomAccessIntContainer,
   F extends RandomAccessIntContainer> implements RandomAccessIntContainer {

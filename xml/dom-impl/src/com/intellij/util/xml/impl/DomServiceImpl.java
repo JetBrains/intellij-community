@@ -14,7 +14,6 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.stubs.ObjectStubTree;
-import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -47,11 +46,8 @@ public class DomServiceImpl extends DomService {
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile instanceof VirtualFileWithId) {
         ObjectStubTree<?> tree = StubTreeLoader.getInstance().readFromVFile(file.getProject(), virtualFile);
-        if (tree != null) {
-          Stub root = tree.getRoot();
-          if (root instanceof FileStub) {
-            return ((FileStub)root).getHeader();
-          }
+        if (tree != null && tree.getRoot() instanceof FileStub fileStub) {
+          return fileStub.getHeader();
         }
       }
     }

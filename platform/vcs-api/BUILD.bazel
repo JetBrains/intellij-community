@@ -1,0 +1,31 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "vcs",
+  module_name = "intellij.platform.vcs",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-api:lang",
+    "@community//platform/vcs-api/vcs-api-core:vcs-core",
+    "@community//platform/diff-api:diff",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@libraries//:caffeine",
+  ],
+  exports = [
+    "@community//platform/platform-api:ide",
+    "@community//platform/vcs-api/vcs-api-core:vcs-core",
+    "@community//platform/diff-api:diff",
+  ]
+)
+### auto-generated section `build` end

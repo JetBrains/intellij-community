@@ -96,15 +96,20 @@ public final class GitUpdateProcess {
 
     GitUtil.updateRepositories(repositories);
 
-    mySubmodulesInDetachedHead = new LinkedHashMap<>();
-    for (GitRepository repository : myRepositories) {
-      if (!repository.isOnBranch()) {
-        GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
-        if (submodule != null) {
-          mySubmodulesInDetachedHead.put(repository, submodule);
-        }
+    mySubmodulesInDetachedHead = collectDetachedSubmodules(myRepositories);
+  }
+
+  private static @NotNull Map<GitRepository, GitSubmodule> collectDetachedSubmodules(@NotNull List<GitRepository> repositories) {
+    Map<GitRepository, GitSubmodule> detachedSubmodules = new LinkedHashMap<>();
+    for (GitRepository repository : repositories) {
+      if (repository.isOnBranch()) continue;
+
+      GitSubmodule submodule = GitSubmoduleKt.asSubmodule(repository);
+      if (submodule != null) {
+        detachedSubmodules.put(repository, submodule);
       }
     }
+    return detachedSubmodules;
   }
 
   /**
@@ -306,10 +311,14 @@ public final class GitUpdateProcess {
       }
     }
 
-    for (GitRepository repository : mySubmodulesInDetachedHead.keySet()) {
-      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, mySubmodulesInDetachedHead.get(repository).getParent(), repository,
+    for (GitSubmodule submodule : mySubmodulesInDetachedHead.values()) {
+      GitRepository submoduleRepository = submodule.getRepository();
+      GitRepository parentRepository = submodule.getParent();
+      if (mySubmodulesInDetachedHead.containsKey(parentRepository)) continue; // updated recursively
+
+      GitUpdater updater = new GitSubmoduleUpdater(myProject, myGit, parentRepository, submoduleRepository,
                                                    myProgressIndicator, myUpdatedFiles);
-      updaters.put(repository, updater);
+      updaters.put(submoduleRepository, updater);
     }
 
     LOG.info("Updaters: " + updaters);

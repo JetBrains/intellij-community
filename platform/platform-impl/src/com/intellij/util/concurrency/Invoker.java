@@ -1,10 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.codeWithMe.ClientId;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -20,9 +18,7 @@ import org.jetbrains.concurrency.Obsolescent;
 import org.jetbrains.concurrency.Promise;
 
 import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -188,33 +184,31 @@ public abstract class Invoker implements Disposable {
    * @param attempt an attempt to run the specified task
    */
   private void invokeSafely(@NotNull Task<?, ?> task, int attempt) {
-    try (AccessToken ignored = ClientId.withClientId(task.clientId)) {
-      try {
-        if (task.canInvoke(disposed)) {
-          if (!delegate.run(task, task.promise)) {
-            offerRestart(task, attempt);
-            return;
-          }
-          if (task instanceof Task.Async<?> t) {
-            Promise<?> incomplete = t.setDone();
-            if (incomplete != null) {
-              count.incrementAndGet();
-              incomplete
-                .onError(th -> handleTaskError(task, th, attempt))
-                .onProcessed(r -> count.decrementAndGet());
-            }
-          }
-          else if (task instanceof Task.Sync<?> t) {
-            t.setDone();
+    try {
+      if (task.canInvoke(disposed)) {
+        if (!delegate.run(task, task.promise)) {
+          offerRestart(task, attempt);
+          return;
+        }
+        if (task instanceof Task.Async<?> t) {
+          Promise<?> incomplete = t.setDone();
+          if (incomplete != null) {
+            count.incrementAndGet();
+            incomplete
+              .onError(th -> handleTaskError(task, th, attempt))
+              .onProcessed(r -> count.decrementAndGet());
           }
         }
+        else if (task instanceof Task.Sync<?> t) {
+          t.setDone();
+        }
       }
-      catch (Throwable throwable) {
-        handleTaskError(task, throwable, attempt);
-      }
-      finally {
-        count.decrementAndGet();
-      }
+    }
+    catch (Throwable throwable) {
+      handleTaskError(task, throwable, attempt);
+    }
+    finally {
+      count.decrementAndGet();
     }
   }
 
@@ -282,7 +276,6 @@ public abstract class Invoker implements Disposable {
   static abstract class Task<T, R> implements Runnable {
     final AsyncPromise<T> promise = new AsyncPromise<>();
     private final Supplier<? extends R> supplier;
-    private final String clientId;
     private volatile R result;
 
     static class Sync<T> extends Task<T, T> {
@@ -325,7 +318,6 @@ public abstract class Invoker implements Disposable {
 
     Task(@NotNull Supplier<? extends R> supplier) {
       this.supplier = supplier;
-      this.clientId = ClientId.getCurrentValue();
     }
 
     boolean canRestart(boolean disposed, int attempt) {
@@ -366,9 +358,7 @@ public abstract class Invoker implements Disposable {
 
     @Override
     public void run() {
-      try (AccessToken ignored = ClientId.withClientId(clientId)) {
-        result = supplier.get();
-      }
+      result = supplier.get();
     }
 
     @Override

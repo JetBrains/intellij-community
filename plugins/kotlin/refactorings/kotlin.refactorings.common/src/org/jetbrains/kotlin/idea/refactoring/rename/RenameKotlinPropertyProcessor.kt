@@ -247,7 +247,7 @@ class RenameKotlinPropertyProcessor : RenameKotlinPsiProcessor() {
             addRenameElements(propertyMethod, originalName, adjustedPropertyName, allRenames, scope)
         }
 
-        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
   protected enum class UsageKind {

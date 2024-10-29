@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.execution.BeforeRunTask;
@@ -20,7 +20,7 @@ import java.util.List;
 
 public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends AbstractToolBeforeRunTask<?, ?>, T extends Tool>
   extends BeforeRunTask<ToolBeforeRunTask> {
-  @NonNls private final static String ACTION_ID_ATTRIBUTE = "actionId";
+  private static final @NonNls String ACTION_ID_ATTRIBUTE = "actionId";
   private static final Logger LOG = Logger.getInstance(AbstractToolBeforeRunTask.class);
   private String myToolActionId;
 
@@ -28,8 +28,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     super(providerId);
   }
 
-  @Nullable
-  public String getToolActionId() {
+  public @Nullable String getToolActionId() {
     return myToolActionId;
   }
 
@@ -96,8 +95,7 @@ public abstract class AbstractToolBeforeRunTask<ToolBeforeRunTask extends Abstra
     return result.get();
   }
 
-  @Nullable
-  public T findCorrespondingTool() {
+  public @Nullable T findCorrespondingTool() {
     if (myToolActionId == null) {
       return null;
     }

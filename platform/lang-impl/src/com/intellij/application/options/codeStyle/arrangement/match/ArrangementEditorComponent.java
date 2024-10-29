@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
@@ -15,10 +15,10 @@ public final class ArrangementEditorComponent implements ArrangementRepresentati
                                                          ArrangementEditorAware
 {
 
-  @NotNull private final ArrangementMatchingRulesControl myList;
-  @NotNull private final JComponent                      myComponent;
-  @NotNull private final Insets                          myBorderInsets;
-  @NotNull private final ArrangementMatchingRuleEditor   myEditor;
+  private final @NotNull ArrangementMatchingRulesControl myList;
+  private final @NotNull JComponent                      myComponent;
+  private final @NotNull Insets                          myBorderInsets;
+  private final @NotNull ArrangementMatchingRuleEditor   myEditor;
 
   private final int myRow;
 
@@ -42,9 +42,8 @@ public final class ArrangementEditorComponent implements ArrangementRepresentati
     //myComponent = new ArrangementAnimationPanel(borderPanel, true, false);
   }
 
-  @NotNull
   @Override
-  public JComponent getComponent() {
+  public @NotNull JComponent getComponent() {
     return myComponent;
   }
 

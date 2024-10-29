@@ -9,7 +9,6 @@ import com.intellij.jsp.JspSpiUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Predicates;
@@ -42,6 +41,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.NotNullList;
+import com.siyeh.ig.psiutils.ImportUtils;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -704,25 +704,15 @@ public final class ImportHelper{
       });
   }
 
+  /**
+   * Checks if the class with the given fully qualified name is already imported in the specified Java file.
+   *
+   * @param file the Java file to check for the import.
+   * @param fullyQualifiedName the fully qualified name of the class to check.
+   * @return true if the class is already imported, false otherwise.
+   */
   public static boolean isAlreadyImported(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
-    String className = extractClassName(file, fullyQualifiedName);
-
-    Project project = file.getProject();
-    PsiResolveHelper resolveHelper = PsiResolveHelper.getInstance(project);
-
-    PsiClass psiClass = resolveHelper.resolveReferencedClass(className, file);
-    return psiClass != null && fullyQualifiedName.equals(psiClass.getQualifiedName());
-  }
-
-  private static @NotNull String extractClassName(@NotNull PsiJavaFile file, @NotNull String fullyQualifiedName) {
-    for (PsiClass aClass : file.getClasses()) {
-      String outerClassName = aClass.getQualifiedName();
-      if (outerClassName != null && fullyQualifiedName.startsWith(outerClassName)) {
-        return fullyQualifiedName.substring(outerClassName.lastIndexOf('.') + 1);
-      }
-    }
-
-    return ClassUtil.extractClassName(fullyQualifiedName);
+    return ImportUtils.isAlreadyImported(file, fullyQualifiedName);
   }
 
   public ASTNode getDefaultAnchor(@NotNull PsiImportList list, @NotNull PsiImportStatementBase statement){

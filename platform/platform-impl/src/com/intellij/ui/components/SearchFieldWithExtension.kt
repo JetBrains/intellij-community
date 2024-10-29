@@ -58,6 +58,7 @@ class SearchFieldWithExtension(
   }
 
   override fun getUIClassID(): String = UI_CLASS_ID
+  @ApiStatus.Internal
   override fun getUI(): DarculaSearchFieldWithExtensionUI = super.getUI() as DarculaSearchFieldWithExtensionUI
 
   override fun requestFocus(): Unit = textField.requestFocus()
@@ -71,6 +72,7 @@ class SearchFieldWithExtension(
   }
 }
 
+@ApiStatus.Internal
 @Suppress("unused")
 @ApiStatus.Experimental
 class DarculaSearchBorder : DarculaTextBorder() {
@@ -96,6 +98,7 @@ internal class DarculaSearchFieldWithExtensionBorder : DarculaTextBorder() {
   }
 }
 
+@ApiStatus.Internal
 @Suppress("unused")
 @ApiStatus.Experimental
 class DarculaSearchFieldWithExtensionUI : PanelUI() {

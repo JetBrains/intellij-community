@@ -16,7 +16,6 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.DiffContext;
-import com.intellij.diff.DiffContextEx;
 import com.intellij.diff.tools.ErrorDiffTool;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffBundle;
@@ -25,12 +24,14 @@ import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeChooser;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Nullable private final String myFileName;
   @Nullable private final @Nls String myTitle;
@@ -68,9 +69,5 @@ public class UnknownFileTypeDiffRequest extends ComponentDiffRequest {
   @Override
   public String getTitle() {
     return myTitle;
-  }
-
-  private static void tryReloadRequest(@NotNull DiffContext context) {
-    if (context instanceof DiffContextEx) ((DiffContextEx)context).reloadDiffRequest();
   }
 }

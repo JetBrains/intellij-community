@@ -1,0 +1,80 @@
+package pkg;
+
+import java.util.ArrayList;
+
+public class TestLVTComplex {
+   public static void main() {
+      int[] x = new int[5];
+
+      for(int var10000 : x) {
+         ;
+      }
+
+      for(int var24 : x) {
+         System.out.println("asdf");
+      }
+
+      ArrayList<Object> x1 = new ArrayList();
+
+      for(Object var16 : x1) {
+         ;
+      }
+
+      for(Object y : x1) {
+         int[] x2 = new int[10];
+
+         for(int var25 : x2) {
+            ;
+         }
+
+         for(int var26 : x2) {
+            System.out.println("asdf");
+         }
+
+         System.out.println("asdf");
+      }
+
+      Bob hi = TestLVTComplex.Bob.HI;
+      switch (hi.ordinal()) {
+         case 0 -> System.out.println("HI");
+         case 1 -> System.out.println("LO");
+      }
+
+      if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
+         String var18 = "a";
+      } else {
+         String var19 = "b";
+      }
+
+      String a2;
+      if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
+         a2 = "a";
+      } else {
+         a2 = "b";
+      }
+
+      if (TestLVTComplex.Bob.HI == TestLVTComplex.Bob.HI) {
+         a2 = "a";
+      }
+
+      System.out.println(a2);
+   }
+
+   private static enum Bob {
+      HI,
+      LO;
+
+      static {
+         for(Bob b : values()) {
+            for(Bob c : values()) {
+               for(Bob var10000 : values()) {
+                  if (b == c) {
+                     System.out.println("Asdf");
+                  }
+               }
+            }
+         }
+
+      }
+   }
+}

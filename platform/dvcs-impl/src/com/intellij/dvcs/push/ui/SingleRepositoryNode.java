@@ -19,8 +19,10 @@ import com.intellij.dvcs.push.PushTargetPanel;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class SingleRepositoryNode extends RepositoryNode {
 
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;

@@ -40,12 +40,16 @@ public class MavenCustomRepositoryHelper {
   }
 
   public void addTestData(String relativePath) throws IOException {
-    File to = new File(myWorkingData, relativePath);
-    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePath), to);
+    addTestData(relativePath, relativePath);
+  }
+
+  public void addTestData(String relativePathFrom, String relativePathTo) throws IOException {
+    File to = new File(myWorkingData, relativePathTo);
+    FileUtil.copyDir(new File(getOriginalTestDataPath(), relativePathFrom), to);
     LocalFileSystem.getInstance().refreshIoFiles(Collections.singleton(to));
   }
 
-  private static String getOriginalTestDataPath() {
+  public static String getOriginalTestDataPath() {
     String sourcesDir = System.getProperty("maven.sources.dir", PluginPathManager.getPluginHomePath("maven"));
     return FileUtil.toSystemIndependentName(sourcesDir + "/src/test/data");
   }

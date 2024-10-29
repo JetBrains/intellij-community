@@ -94,20 +94,6 @@ public interface ActionToolbar {
   @NotNull String getPlace();
 
   /**
-   * @return the current layout policy
-   * @see #NOWRAP_LAYOUT_POLICY
-   * @see #WRAP_LAYOUT_POLICY
-   *
-   * @deprecated This method is deprecated since version 2024.1 and will be removed in a future release. Please do not rely on value
-   * returned by this method. Use {@link ActionToolbar#getLayoutStrategy()} instead
-   */
-  @LayoutPolicy
-  @Deprecated(since = "2024.1", forRemoval = true)
-  default int getLayoutPolicy() {
-    return 0;
-  }
-
-  /**
    * Sets the layout policy for the toolbar.
    *
    * @param layoutPolicy the layout policy to set. Use one of the following constants:

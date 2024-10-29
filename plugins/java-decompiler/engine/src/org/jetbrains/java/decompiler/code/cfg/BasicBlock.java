@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
 import org.jetbrains.java.decompiler.code.Instruction;
@@ -148,5 +148,20 @@ public class BasicBlock implements IGraphNode {
   @Override
   public String toString() {
     return id + ":" + DecompilerContext.getNewLineSeparator() + seq.toString(0);
+  }
+
+  public int getStartInstruction() {
+      if (seq.isEmpty()) {
+          return 0;
+      }
+      return originalOffsets.get(0);
+  }
+
+  public int getEndInstruction() {
+      if (seq.isEmpty()) {
+          return 0;
+      }
+      int end = seq.getLastInstr().length;
+      return end + originalOffsets.get(size() -1);
   }
 }

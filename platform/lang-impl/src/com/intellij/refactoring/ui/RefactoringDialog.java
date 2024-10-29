@@ -3,6 +3,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.AccessToken;
@@ -14,7 +15,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.Button;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.Refactoring;
 import com.intellij.refactoring.RefactoringBundle;
@@ -69,9 +69,8 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
         return selected;
       }
 
-      @NotNull
       @Override
-      public String getDoNotShowMessage() {
+      public @NotNull String getDoNotShowMessage() {
         return RefactoringBundle.message("open.in.editor.label");
       }
     });
@@ -81,9 +80,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
     return true;
   }
 
-  @NonNls
-  @NotNull
-  protected String getRefactoringId() {
+  protected @NonNls @NotNull String getRefactoringId() {
     return getClass().getName();
   }
 
@@ -166,7 +163,7 @@ public abstract class RefactoringDialog extends DialogWrapper implements Possibl
 
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {

@@ -2,7 +2,9 @@
 package com.intellij.vcs.log.ui.table.column
 
 import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 data class VcsLogColumnProperties(
   val visibility: TableColumnVisibilityProperty,
   val width: TableColumnWidthProperty
@@ -15,6 +17,8 @@ data class VcsLogColumnProperties(
   }
 }
 
+@ApiStatus.Internal
 class TableColumnVisibilityProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Boolean>("Table.${column.id}.ColumnIdVisibility")
 
+@ApiStatus.Internal
 class TableColumnWidthProperty(val column: VcsLogColumn<*>) : VcsLogUiProperty<Int>("Table.${column.id}.ColumnIdWidth")

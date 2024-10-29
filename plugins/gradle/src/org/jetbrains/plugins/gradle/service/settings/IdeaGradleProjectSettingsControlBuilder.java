@@ -7,7 +7,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -37,7 +36,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import one.util.streamex.StreamEx;
-import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +105,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   private @Nullable JComboBox<DistributionTypeItem> myGradleDistributionComboBox;
   private @Nullable JBLabel myGradleDistributionHint;
-  private @NotNull LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+  private @NotNull GradleLocationSettingType myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
   private @Nullable TargetPathFieldWithBrowseButton myGradleHomePathField;
   @SuppressWarnings({"unused", "RedundantSuppression"}) // used by ExternalSystemUiUtil.showUi to show/hide the component via reflection
   private @Nullable JPanel myGradlePanel;
@@ -274,13 +272,13 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     File gradleHome = GradleInstallationManager.getInstance().getAutodetectedGradleHome(myProjectRef.get());
     if (gradleHome == null) {
-      new DelayedBalloonInfo(MessageType.WARNING, LocationSettingType.UNKNOWN, BALLOON_DELAY_MILLIS).run();
+      new DelayedBalloonInfo(MessageType.WARNING, GradleLocationSettingType.UNKNOWN, BALLOON_DELAY_MILLIS).run();
       return;
     }
-    myGradleHomeSettingType = LocationSettingType.DEDUCED;
-    new DelayedBalloonInfo(MessageType.INFO, LocationSettingType.DEDUCED, BALLOON_DELAY_MILLIS).run();
+    myGradleHomeSettingType = GradleLocationSettingType.DEDUCED;
+    new DelayedBalloonInfo(MessageType.INFO, GradleLocationSettingType.DEDUCED, BALLOON_DELAY_MILLIS).run();
     myGradleHomePathField.setText(gradleHome.getPath());
-    myGradleHomePathField.getTextField().setForeground(LocationSettingType.DEDUCED.getColor());
+    myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.DEDUCED.getColor());
   }
 
   private void addGradleComponents(PaintAwarePanel content, int indentLevel) {
@@ -325,12 +323,12 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     myGradleHomePathField.getTextField().getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void insertUpdate(DocumentEvent e) {
-        myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
+        myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.EXPLICIT_CORRECT.getColor());
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
-        myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
+        myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.EXPLICIT_CORRECT.getColor());
       }
 
       @Override
@@ -389,10 +387,10 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       else {
         Project project = myProjectRef.get();
         if (GradleInstallationManager.getInstance().isGradleSdkHome(project, myGradleHomePathField.getText())) {
-          myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
+          myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
         }
         else {
-          myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
+          myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_INCORRECT;
           myShowBalloonIfNecessary = true;
         }
       }
@@ -428,11 +426,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleHomePathField != null && getSelectedGradleDistribution() == DistributionType.LOCAL) {
       String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
       if (StringUtil.isEmpty(gradleHomePath)) {
-        myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+        myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.empty", gradleHomePath));
       }
       else if (!GradleInstallationManager.getInstance().isGradleSdkHome(myProjectRef.get(), new File(gradleHomePath))) {
-        myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
+        myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_INCORRECT;
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
         throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.incorrect", gradleHomePath));
       }
@@ -583,7 +581,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       GradleRuntimeTargetUI.installActionListener(myGradleHomePathField, myProjectRef.get(),
                                                   GradleBundle.message("gradle.settings.text.home.path"));
       myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
-      myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
+      myGradleHomePathField.getTextField().setForeground(GradleLocationSettingType.EXPLICIT_CORRECT.getColor());
     }
     resetImportControls(settings);
 
@@ -592,21 +590,21 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     resetGradleDelegationControls(wizardContext);
 
     if (StringUtil.isEmpty(gradleHome)) {
-      myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+      myGradleHomeSettingType = GradleLocationSettingType.UNKNOWN;
       deduceGradleHomeIfPossible();
     }
     else {
       File gradleHomeFile = new File(gradleHome);
       if (GradleInstallationManager.getInstance().isGradleSdkHome(project, gradleHomeFile)) {
-        myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
+        myGradleHomeSettingType = GradleLocationSettingType.EXPLICIT_CORRECT;
       }
       else {
         myGradleHomeSettingType = GradleInstallationManager.getInstance().suggestBetterGradleHomePath(project, gradleHome) != null
-                                  ? LocationSettingType.EXPLICIT_CORRECT
-                                  : LocationSettingType.EXPLICIT_INCORRECT;
+                                  ? GradleLocationSettingType.EXPLICIT_CORRECT
+                                  : GradleLocationSettingType.EXPLICIT_INCORRECT;
       }
       myAlarm.cancelAllRequests();
-      if (myGradleHomeSettingType == LocationSettingType.EXPLICIT_INCORRECT &&
+      if (myGradleHomeSettingType == GradleLocationSettingType.EXPLICIT_INCORRECT &&
           settings.getDistributionType() == DistributionType.LOCAL) {
         new DelayedBalloonInfo(MessageType.ERROR, myGradleHomeSettingType, 0).run();
       }
@@ -940,7 +938,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     private final @Nls String myText;
     private final long myTriggerTime;
 
-    DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull LocationSettingType settingType, long delayMillis) {
+    DelayedBalloonInfo(@NotNull MessageType messageType, @NotNull GradleLocationSettingType settingType, long delayMillis) {
       myMessageType = messageType;
       myText = settingType.getDescription(GradleConstants.SYSTEM_ID);
       myTriggerTime = System.currentTimeMillis() + delayMillis;

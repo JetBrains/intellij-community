@@ -53,9 +53,9 @@ userDataMap = {}
 
  [[<a>]]b[a]
 --
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],{},null]
-RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (1,2); layer:5999; tooltip: null : ROUNDED_BOX
+RangeHighlighter: (3,4); layer:5999; tooltip: null : BOXED
 ------------
 --- FIND MODEL ---
 myStringToFind = 'a'
@@ -84,9 +84,9 @@ userDataMap = {}
 
  [[<a>]]b[a]
 --
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],{},null]
-RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (1,2); layer:5999; tooltip: null : ROUNDED_BOX
+RangeHighlighter: (3,4); layer:5999; tooltip: null : BOXED
 ------------
 --- FIND MODEL ---
 myStringToFind = 'a'
@@ -115,9 +115,9 @@ userDataMap = {}
 
  [[<a>]]b[a]
 --
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (1,2); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],{},null]
-RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (1,2); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (1,2); layer:5999; tooltip: null : ROUNDED_BOX
+RangeHighlighter: (3,4); layer:5999; tooltip: null : BOXED
 ------------
 --- FIND MODEL ---
 myStringToFind = 'a'
@@ -146,6 +146,6 @@ userDataMap = {}
 
  cb[[<a>]]
 --
-RangeHighlighter: (3,4); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,{},java.awt.Color[r=113,g=179,b=98]]
-RangeHighlighter: (3,4); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],{},null]
+RangeHighlighter: (3,4); layer:5999; tooltip: null : BOXED
+RangeHighlighter: (3,4); layer:5999; tooltip: null : ROUNDED_BOX
 ------------

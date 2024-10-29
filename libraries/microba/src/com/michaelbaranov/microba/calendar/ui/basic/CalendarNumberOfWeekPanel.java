@@ -1,19 +1,11 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.Color;
-import java.awt.Dimension;
-import java.awt.FontMetrics;
-import java.awt.Graphics;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 import java.util.TimeZone;
-
-import javax.swing.BorderFactory;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.UIManager;
 
 public class CalendarNumberOfWeekPanel extends JPanel /*
                              * implements
@@ -26,9 +18,9 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
 
   public static final String PROPERTY_NAME_ZONE = "zone";
 
-  private Color backgroundColorActive = UIManager.getColor("activeCaption");
+  private final Color backgroundColorActive = UIManager.getColor("activeCaption");
 
-  private Color backgroundColorInactive = UIManager
+  private final Color backgroundColorInactive = UIManager
       .getColor("inactiveCaption");
 
   private Date baseDate;
@@ -37,7 +29,7 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
 
   private TimeZone zone;
 
-  private JLabel[] labels = new JLabel[6];
+  private final JLabel[] labels = new JLabel[6];
 
   public CalendarNumberOfWeekPanel(Date baseDate, Locale locale,
       TimeZone timeZone) {
@@ -106,6 +98,7 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
     return c;
   }
 
+  @Override
   public void setLocale(Locale locale) {
     this.locale = locale;
     reflectBaseDate();
@@ -116,6 +109,7 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
     reflectBaseDate();
   }
 
+  @Override
   public void paint(Graphics g) {
     FontMetrics fm = g.getFontMetrics(labels[0].getFont());
     Dimension dimension = new Dimension(fm.stringWidth("00") + 8, 1);
@@ -124,6 +118,7 @@ public class CalendarNumberOfWeekPanel extends JPanel /*
     super.paint(g);
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     reflectBaseDate();

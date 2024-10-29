@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class AbstractArrangementRuleAction extends AnAction {
 
-  @Nullable
-  protected ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
+  protected @Nullable ArrangementMatchingRulesControl getRulesControl(@NotNull AnActionEvent e) {
     return e.getData(ArrangementSectionRulesControl.KEY);
   }
 

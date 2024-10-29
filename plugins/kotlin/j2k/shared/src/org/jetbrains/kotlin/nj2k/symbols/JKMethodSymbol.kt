@@ -80,19 +80,16 @@ class JKMultiverseFunctionSymbol(
         get() = target.receiverTypeReference?.toJK(typeFactory)
 
     context(KaSession)
-    @Suppress("UNCHECKED_CAST")
-    override val parameterTypes: List<JKType>?
+    override val parameterTypes: List<JKType>
         get() = target.valueParameters.map { parameter ->
-            val type = parameter.typeReference?.toJK(typeFactory)
-            type?.let {
-                if (parameter.isVarArg) {
-                    JKClassType(
-                        symbolProvider.provideClassSymbol(StandardNames.FqNames.array.toSafe()),
-                        parameters = listOf(it)
-                    )
-                } else it
-            }
-        }.takeIf { parameters -> parameters.all { it != null } } as? List<JKType>
+            val type = typeFactory.fromKaType(parameter.symbol.returnType)
+            if (parameter.isVarArg) {
+                JKClassType(
+                    symbolProvider.provideClassSymbol(StandardNames.FqNames.array.toSafe()),
+                    parameters = listOf(type)
+                )
+            } else type
+        }
 
     context(KaSession)
     override val returnType: JKType?

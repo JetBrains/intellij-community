@@ -3,7 +3,7 @@ package com.intellij.collaboration.file.codereview
 
 import com.intellij.diff.editor.DiffFileType
 import com.intellij.diff.editor.DiffViewerVirtualFile
-import com.intellij.ide.actions.SplitAction
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.vcs.editor.ComplexPathVirtualFileSystem
@@ -16,7 +16,7 @@ abstract class CodeReviewDiffVirtualFile(sourceId: String)
 
   init {
     @Suppress("LeakingThis")
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
   }
 
   abstract override fun getPresentableName(): String

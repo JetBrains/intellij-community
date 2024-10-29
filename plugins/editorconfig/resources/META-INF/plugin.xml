@@ -484,6 +484,7 @@ check the documentation for <a href="https://editorconfig.org/">EditorConfig</a>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigIncompleteReSharperOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsFormattingOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigMsLanguageOptionDescriptorProvider"/>
+    <optionDescriptorProvider implementation="org.editorconfig.language.extensions.impl.EditorConfigFantomasFormattingOptionDescriptorProvider"/>
     <optionDescriptorProvider implementation="org.editorconfig.configmanagement.extended.IntellijConfigOptionDescriptorProvider"/>
   </extensions>
 

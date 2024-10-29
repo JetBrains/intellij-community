@@ -1,0 +1,11 @@
+package test
+
+fun testUnaryPlus() {
+    +10
+    +(10)
+}
+
+fun testUnaryMinus() {
+    -10
+    -(10)
+}

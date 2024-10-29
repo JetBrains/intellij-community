@@ -26,14 +26,16 @@ import java.util.stream.Stream;
  */
 public final class MutationSignature {
   public static final String ATTR_MUTATES = "mutates";
-  static final MutationSignature UNKNOWN = new MutationSignature(false, new boolean[0]);
-  static final MutationSignature PURE = new MutationSignature(false, new boolean[0]);
-  private static final MutationSignature MUTATES_THIS_ONLY = new MutationSignature(true, new boolean[0]);
+  static final MutationSignature UNKNOWN = new MutationSignature(false, false, new boolean[0]);
+  static final MutationSignature PURE = new MutationSignature(false, false, new boolean[0]);
+  private static final MutationSignature MUTATES_THIS_ONLY = new MutationSignature(true, false, new boolean[0]);
   private final boolean myThis;
+  private final boolean myIo;
   private final boolean[] myParameters;
 
-  private MutationSignature(boolean mutatesThis, boolean[] params) {
+  private MutationSignature(boolean mutatesThis, boolean io, boolean[] params) {
     myThis = mutatesThis;
+    myIo = io;
     myParameters = params;
   }
 
@@ -42,6 +44,13 @@ public final class MutationSignature {
    */
   public boolean mutatesThis() {
     return myThis;
+  }
+
+  /**
+   * @return true if the method may perform input/output operations
+   */
+  public boolean performsIO() {
+    return myIo;
   }
 
   /**
@@ -72,7 +81,7 @@ public final class MutationSignature {
    */
   public MutationSignature alsoMutatesThis() {
     return this == UNKNOWN || myThis ? this :
-           isPure() ? MUTATES_THIS_ONLY : new MutationSignature(true, myParameters);
+           isPure() ? MUTATES_THIS_ONLY : new MutationSignature(true, myIo, myParameters);
   }
 
   /**
@@ -83,7 +92,7 @@ public final class MutationSignature {
     if (myParameters.length > n && myParameters[n]) return this;
     boolean[] params = Arrays.copyOf(myParameters, Math.max(n + 1, myParameters.length));
     params[n] = true;
-    return new MutationSignature(myThis, params);
+    return new MutationSignature(myThis, myIo, params);
   }
 
   /**
@@ -95,15 +104,15 @@ public final class MutationSignature {
 
   @Override
   public int hashCode() {
-    return (myThis ? 137 : 731) + Arrays.hashCode(myParameters);
+    return (myThis ? 4247 : 22661) + (myIo ? 137 : 731) + Arrays.hashCode(myParameters);
   }
 
   @Override
   public boolean equals(Object obj) {
     if (obj == this) return true;
     if ((this == UNKNOWN) != (obj == UNKNOWN)) return false;
-    return obj instanceof MutationSignature && ((MutationSignature)obj).myThis == myThis &&
-           Arrays.equals(((MutationSignature)obj).myParameters, myParameters);
+    return obj instanceof MutationSignature signature && signature.myThis == myThis && signature.myIo == myIo &&
+           Arrays.equals(signature.myParameters, myParameters);
   }
 
   @Override
@@ -111,7 +120,7 @@ public final class MutationSignature {
     if (isPure()) return "(pure)";
     if (this == UNKNOWN) return "(unknown)";
     return IntStreamEx.range(myParameters.length).mapToEntry(idx -> "param" + (idx + 1), idx -> myParameters[idx])
-      .prepend("this", myThis).filterValues(b -> b).keys().joining(",");
+      .prepend("this", myThis).prepend("io", myIo).filterValues(b -> b).keys().joining(",");
   }
 
   /**
@@ -137,10 +146,10 @@ public final class MutationSignature {
   }
 
   /**
-   * @return true if known to mutate any parameter or receiver; false if pure or not known
+   * @return true if known to mutate any parameter or receiver, or performs an input/output; false if pure or not known
    */
   public boolean mutatesAnything() {
-    if (myThis) return true;
+    if (myThis || myIo) return true;
     for (boolean parameter : myParameters) {
       if (parameter) return true;
     }
@@ -157,11 +166,15 @@ public final class MutationSignature {
       return UNKNOWN;
     }
     boolean mutatesThis = false;
+    boolean mutatesIO = false;
     boolean[] args = {};
     for (String part : signature.split(",")) {
       part = part.trim();
       if (part.equals("this")) {
         mutatesThis = true;
+      }
+      else if (part.equals("io")) {
+        mutatesIO = true;
       }
       else if (part.equals("param")) {
         if (args.length == 0) {
@@ -184,7 +197,7 @@ public final class MutationSignature {
         throw new IllegalArgumentException(JavaAnalysisBundle.message("mutation.signature.problem.invalid.token", part));
       }
     }
-    return new MutationSignature(mutatesThis, args);
+    return new MutationSignature(mutatesThis, mutatesIO, args);
   }
 
   /**

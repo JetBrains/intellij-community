@@ -51,7 +51,7 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup = DiagnosticBasedPost
         Errors.EXPOSED_TYPE_PARAMETER_BOUND
     ),
     diagnosticBasedProcessing(
-        ConvertToIsArrayOfCallFix,
+        ConvertToIsArrayOfCallFixFactory,
         Errors.CANNOT_CHECK_FOR_ERASED,
     ),
     fixTypeMismatchDiagnosticBasedProcessing
@@ -86,7 +86,6 @@ private val inspectionLikePostProcessingGroup = InspectionLikeProcessingGroup(
     RemoveRedundantSamAdaptersProcessing(),
     RemoveRedundantCastToNullableProcessing(),
     inspectionBasedProcessing(ReplacePutWithAssignmentInspection()),
-    ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody(),
     RemoveExplicitPropertyTypeProcessing(),
     RemoveRedundantNullabilityProcessing(),
     inspectionBasedProcessing(FoldInitializerAndIfToElvisInspection(), writeActionNeeded = false),
@@ -120,13 +119,6 @@ private val cleaningUpDiagnosticBasedPostProcessingGroup = DiagnosticBasedPostPr
 private val inferringTypesPostProcessingGroup = NamedPostProcessingGroup(
     KotlinNJ2KServicesBundle.message("processing.step.inferring.types"),
     listOf(
-        InspectionLikeProcessingGroup(
-            processings = listOf(
-                VarToValProcessing(),
-                LocalVarToValInspectionBasedProcessing()
-            ),
-            runSingleTime = true
-        ),
         NullabilityInferenceProcessing(),
         MutabilityInferenceProcessing(),
         ClearUnknownInferenceLabelsProcessing()
@@ -141,8 +133,7 @@ private val cleaningUpCodePostProcessingGroup = NamedPostProcessingGroup(
             // so that the property and accessor types wouldn't differ in projections.
             diagnosticBasedProcessing(RemoveModifierFixBase.createRemoveProjectionFactory(isRedundant = true), Errors.REDUNDANT_PROJECTION),
         ),
-        ConvertGettersAndSettersToPropertyProcessing(),
-        InspectionLikeProcessingGroup(RemoveExplicitAccessorInspectionBasedProcessing()),
+        K1ConvertGettersAndSettersToPropertyProcessing(),
         MergePropertyWithConstructorParameterProcessing(),
         errorsFixingDiagnosticBasedPostProcessingGroup,
         addOrRemoveModifiersProcessingGroup,

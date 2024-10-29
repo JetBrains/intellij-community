@@ -5,6 +5,7 @@ import com.intellij.execution.impl.RunManagerImpl.Companion.getInstanceImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.testFramework.PlatformTestUtil
@@ -98,6 +99,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
+    refreshFiles(listOf(m))
     readFiles(m)
 
     assertEquals(1, rootNodes.size)
@@ -151,11 +153,12 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
       <artifactId>m</artifactId>
       <version>1</version>
       """.trimIndent())
+    refreshFiles(listOf(m))
     readFiles(projectPom, m)
 
     assertEquals(2, rootNodes.size)
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -333,7 +336,7 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
     assertEquals(m1, rootNodes[0].virtualFile)
     assertEquals(m2, rootNodes[1].virtualFile)
 
-    createModulePom("m2", """
+    updateModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>am2</artifactId>
       <version>1</version>
@@ -387,7 +390,9 @@ class MavenProjectsNavigatorTest : MavenMultiVersionImportingTestCase() {
 
     readFiles(projectPom)
     withContext(Dispatchers.EDT) {
-      assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+      writeIntentReadAction {
+        assertTrue(rootNodes[0].navigatable!!.canNavigateToSource())
+      }
     }
   }
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.ContainerUtil;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableDeferredKt;
 import kotlinx.coroutines.Job;
@@ -59,6 +60,8 @@ public final class EnvironmentUtil {
    * Tested with bash/zsh/fish/tcsh/csh/ksh.
    */
   private static final String SHLVL = "SHLVL";
+
+  private static final String MAC_OS_LOCALE_PATH = "/usr/share/locale";
 
   private static final AtomicReference<CompletableDeferred<Map<String, String>>> ourEnvGetter = new AtomicReference<>();
 
@@ -502,13 +505,8 @@ public final class EnvironmentUtil {
   }
 
   private static boolean checkIfLocaleAvailable(String candidateLanguageTerritory) {
-    Locale[] available = Locale.getAvailableLocales();
-    for (Locale l : available) {
-      if (Objects.equals(l.toString(), candidateLanguageTerritory)) {
-        return true;
-      }
-    }
-    return false;
+    return ContainerUtil.exists(Locale.getAvailableLocales(), l -> Objects.equals(l.toString(), candidateLanguageTerritory)) &&
+           new File(MAC_OS_LOCALE_PATH, candidateLanguageTerritory).exists();
   }
 
   public static @NotNull String setLocaleEnv(@NotNull Map<String, String> env, @NotNull Charset charset) {

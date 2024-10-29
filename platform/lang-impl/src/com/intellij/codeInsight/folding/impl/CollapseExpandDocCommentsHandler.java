@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -32,7 +32,7 @@ public final class CollapseExpandDocCommentsHandler implements CodeInsightAction
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file){
+  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file){
     CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(project);
     foldingManager.updateFoldRegions(editor);
     final FoldRegion[] allFoldRegions = editor.getFoldingModel().getAllFoldRegions();
@@ -49,9 +49,8 @@ public final class CollapseExpandDocCommentsHandler implements CodeInsightAction
     editor.getFoldingModel().runBatchFoldingOperation(processor);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+  public @Nullable PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
     return null;
   }
 

@@ -332,95 +332,6 @@ part of the response payload and not part of the wire protocol adding a newline
 after responses. In other words, the length of the response contains the
 trailing ``\n``.
 
-Clients supporting version 2 of the SSH transport send a line beginning
-with ``upgrade`` before the ``hello`` and ``between`` commands. The line
-(which isn't a well-formed command line because it doesn't consist of a
-single command name) serves to both communicate the client's intent to
-switch to transport version 2 (transports are version 1 by default) as
-well as to advertise the client's transport-level capabilities so the
-server may satisfy that request immediately.
-
-The upgrade line has the form:
-
-    upgrade <token> <transport capabilities>
-
-That is the literal string ``upgrade`` followed by a space, followed by
-a randomly generated string, followed by a space, followed by a string
-denoting the client's transport capabilities.
-
-The token can be anything. However, a random UUID is recommended. (Use
-of version 4 UUIDs is recommended because version 1 UUIDs can leak the
-client's MAC address.)
-
-The transport capabilities string is a URL/percent encoded string
-containing key-value pairs defining the client's transport-level
-capabilities. The following capabilities are defined:
-
-proto
-   A comma-delimited list of transport protocol versions the client
-   supports. e.g. ``ssh-v2``.
-
-If the server does not recognize the ``upgrade`` line, it should issue
-an empty response and continue processing the ``hello`` and ``between``
-commands. Here is an example handshake between a version 2 aware client
-and a non version 2 aware server:
-
-   c: upgrade 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a proto=ssh-v2
-   c: hello\n
-   c: between\n
-   c: pairs 81\n
-   c: 0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
-   s: 0\n
-   s: 324\n
-   s: capabilities: lookup changegroupsubset branchmap pushkey known getbundle ...\n
-   s: 1\n
-   s: \n
-
-(The initial ``0\n`` line from the server indicates an empty response to
-the unknown ``upgrade ..`` command/line.)
-
-If the server recognizes the ``upgrade`` line and is willing to satisfy that
-upgrade request, it replies to with a payload of the following form:
-
-   upgraded <token> <transport name>\n
-
-This line is the literal string ``upgraded``, a space, the token that was
-specified by the client in its ``upgrade ...`` request line, a space, and the
-name of the transport protocol that was chosen by the server. The transport
-name MUST match one of the names the client specified in the ``proto`` field
-of its ``upgrade ...`` request line.
-
-If a server issues an ``upgraded`` response, it MUST also read and ignore
-the lines associated with the ``hello`` and ``between`` command requests
-that were issued by the server. It is assumed that the negotiated transport
-will respond with equivalent requested information following the transport
-handshake.
-
-All data following the ``\n`` terminating the ``upgraded`` line is the
-domain of the negotiated transport. It is common for the data immediately
-following to contain additional metadata about the state of the transport and
-the server. However, this isn't strictly speaking part of the transport
-handshake and isn't covered by this section.
-
-Here is an example handshake between a version 2 aware client and a version
-2 aware server:
-
-   c:  upgrade 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a proto=ssh-v2
-   c:  hello\n
-   c:  between\n
-   c:  pairs 81\n
-   c:  0000000000000000000000000000000000000000-0000000000000000000000000000000000000000
-   s: upgraded 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a ssh-v2\n
-   s: <additional transport specific data>
-
-The client-issued token that is echoed in the response provides a more
-resilient mechanism for differentiating *banner* output from Mercurial
-output. In version 1, properly formatted banner output could get confused
-for Mercurial server output. By submitting a randomly generated token
-that is then present in the response, the client can look for that token
-in response lines and have reasonable certainty that the line did not
-originate from a *banner* message.
-
 SSH Version 1 Transport
 -----------------------
 
@@ -487,31 +398,6 @@ The server terminates if it receives an empty command (a ``\n`` character).
 If the server announces support for the ``protocaps`` capability, the client
 should issue a ``protocaps`` command after the initial handshake to annonunce
 its own capabilities. The client capabilities are persistent.
-
-SSH Version 2 Transport
------------------------
-
-**Experimental and under development**
-
-Version 2 of the SSH transport behaves identically to version 1 of the SSH
-transport with the exception of handshake semantics. See above for how
-version 2 of the SSH transport is negotiated.
-
-Immediately following the ``upgraded`` line signaling a switch to version
-2 of the SSH protocol, the server automatically sends additional details
-about the capabilities of the remote server. This has the form:
-
-   <integer length of value>\n
-   capabilities: ...\n
-
-e.g.
-
-   s: upgraded 2e82ab3f-9ce3-4b4e-8f8c-6fd1c0e9e23a ssh-v2\n
-   s: 240\n
-   s: capabilities: known getbundle batch ...\n
-
-Following capabilities advertisement, the peers communicate using version
-1 of the SSH transport.
 
 Capabilities
 ============

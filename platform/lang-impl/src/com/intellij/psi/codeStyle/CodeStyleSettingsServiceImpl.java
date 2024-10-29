@@ -4,12 +4,14 @@ package com.intellij.psi.codeStyle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CodeStyleSettingsServiceImpl implements CodeStyleSettingsService {
   @Override
   public void addListener(@NotNull CodeStyleSettingsServiceListener listener, @Nullable Disposable disposable) {

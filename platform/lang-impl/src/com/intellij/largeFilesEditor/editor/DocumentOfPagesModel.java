@@ -7,9 +7,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 
+@ApiStatus.Internal
 public final class DocumentOfPagesModel {
 
   private static final Logger LOG = Logger.getInstance(DocumentOfPagesModel.class);

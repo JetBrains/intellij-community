@@ -68,7 +68,8 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     for (TargetPortBinding targetPortBinding : request.getTargetPortBindings()) {
       int theOnlyPort = targetPortBinding.getTarget();
       if (targetPortBinding.getLocal() != null && !targetPortBinding.getLocal().equals(theOnlyPort)) {
-        throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
+        throw new UnsupportedOperationException("TCP port forwarding for the local target is not implemented. " +
+                                                "Please use the same port number for both local and target ports.");
       }
       myTargetPortBindings.put(targetPortBinding, getResolvedPortBinding(theOnlyPort));
     }
@@ -76,7 +77,8 @@ public class LocalTargetEnvironment extends TargetEnvironment {
     for (LocalPortBinding localPortBinding : request.getLocalPortBindings()) {
       int theOnlyPort = localPortBinding.getLocal();
       if (localPortBinding.getTarget() != null && !localPortBinding.getTarget().equals(theOnlyPort)) {
-        throw new UnsupportedOperationException("Local target's TCP port forwarder is not implemented");
+        throw new UnsupportedOperationException("TCP port forwarding for the local target is not implemented. " +
+                                                "Please use the same port number for both local and target ports.");
       }
       myLocalPortBindings.put(localPortBinding, getResolvedPortBinding(theOnlyPort));
     }

@@ -7,12 +7,13 @@ import com.intellij.find.SearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.ui.BadgeIconSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ShowFilterPopupGroup extends DefaultActionGroup implements ShortcutProvider {
+public class ShowFilterPopupGroup extends DefaultActionGroup implements ShortcutProvider, DumbAware {
   private static final BadgeIconSupplier FILTER_ICON = new BadgeIconSupplier(AllIcons.General.Filter);
 
   public ShowFilterPopupGroup() {

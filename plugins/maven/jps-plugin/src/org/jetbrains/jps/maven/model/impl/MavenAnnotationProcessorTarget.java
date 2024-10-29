@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.maven.model.impl;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
  * Class is used to provide implicit dependencies between modules. It is used in cases when one module uses other project modules as
  * annotation processors, which is possible using "annotationProcessorPaths" option of "maven-compiler-plugin"
  */
+@ApiStatus.Internal
 public final class MavenAnnotationProcessorTarget extends JVMModuleBuildTarget<BuildRootDescriptor> {
   @NotNull
   private final MavenAnnotationProcessorTargetType myTargetType;

@@ -12,8 +12,10 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
 import com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EditCleanupProfileIntentionAction implements IntentionAction {
   public static final EditCleanupProfileIntentionAction INSTANCE = new EditCleanupProfileIntentionAction();
   private EditCleanupProfileIntentionAction() {}

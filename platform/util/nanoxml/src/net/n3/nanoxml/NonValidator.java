@@ -43,18 +43,18 @@ public abstract class NonValidator implements IXMLValidator {
   /**
    * The parameter entity resolver.
    */
-  protected IXMLEntityResolver parameterEntityResolver;
+  protected final IXMLEntityResolver parameterEntityResolver;
 
   /**
    * Contains the default values for attributes for the different element
    * types.
    */
-  protected Map<String, Properties> attributeDefaultValues;
+  protected final Map<String, Properties> attributeDefaultValues;
 
   /**
    * The stack of elements to be processed.
    */
-  protected Deque<Properties> currentElements;
+  protected final Deque<Properties> currentElements;
 
   /**
    * Creates the &quot;validator&quot;.

@@ -10,11 +10,10 @@ import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFieldDataFromJava
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKPhysicalMethodData
 import org.jetbrains.kotlin.nj2k.tree.*
-import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
-import org.jetbrains.kotlin.nj2k.tree.Mutability.IMMUTABLE
-import org.jetbrains.kotlin.nj2k.tree.Mutability.MUTABLE
-import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.nj2k.tree.Visibility.PRIVATE
+import org.jetbrains.kotlin.nj2k.tree.Mutability.*
+import org.jetbrains.kotlin.nj2k.tree.Modality.FINAL
+import org.jetbrains.kotlin.nj2k.tree.OtherModifier.STATIC
 import org.jetbrains.kotlin.nj2k.types.JKJavaArrayType
 import org.jetbrains.kotlin.nj2k.types.arrayInnerType
 import org.jetbrains.kotlin.nj2k.types.isStringType
@@ -83,7 +82,13 @@ class ClassMemberConversion(context: NewJ2kConverterContext) : RecursiveConversi
     context(KaSession)
     private fun JKField.convert() {
         removeStaticModifierFromAnonymousClassMember()
-        mutability = if (modality == FINAL) IMMUTABLE else MUTABLE
+        val hasMutableAnnotation = annotationList.annotations.any { MUTABLE_ANNOTATIONS.contains(it.classSymbol.fqName) }
+        mutability = when {
+            modality == FINAL -> IMMUTABLE
+            hasMutableAnnotation -> MUTABLE
+            mutability != UNKNOWN -> mutability
+            else -> UNKNOWN
+        }
         modality = FINAL
 
         if (isExternallyAccessible()) {

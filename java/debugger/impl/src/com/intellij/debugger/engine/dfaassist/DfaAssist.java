@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine.dfaassist;
 
 import com.intellij.debugger.DebuggerInvocationUtil;
@@ -23,7 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -31,20 +31,19 @@ import com.intellij.xdebugger.XDebuggerManagerListener;
 import com.intellij.xdebugger.impl.dfaassist.DfaAssistBase;
 import com.intellij.xdebugger.impl.dfaassist.DfaResult;
 import com.sun.jdi.*;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.concurrent.Callable;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.xdebugger.impl.dfaassist.DfaAssistBase.AssistMode.*;
 
 public final class DfaAssist extends DfaAssistBase implements DebuggerContextListener, XDebuggerManagerListener {
   private static final int CLEANUP_DELAY_MILLIS = 300;
   private volatile CancellablePromise<?> myComputation;
-  private volatile ScheduledFuture<?> myScheduledCleanup;
+  private volatile Job scheduledCleanup;
   private volatile boolean myInactive = false;
   private final DebuggerStateManager myManager;
 
@@ -106,7 +105,7 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     }
     if (event == DebuggerSession.Event.RESUME) {
       cancelComputation();
-      myScheduledCleanup = EdtScheduledExecutorService.getInstance().schedule(this::cleanUp, CLEANUP_DELAY_MILLIS, TimeUnit.MILLISECONDS);
+      scheduledCleanup = EdtScheduler.getInstance().schedule(CLEANUP_DELAY_MILLIS, this::cleanUp);
     }
     if (event != DebuggerSession.Event.PAUSE && event != DebuggerSession.Event.REFRESH) {
       return;
@@ -160,9 +159,9 @@ public final class DfaAssist extends DfaAssistBase implements DebuggerContextLis
     if (promise != null) {
       promise.cancel();
     }
-    ScheduledFuture<?> cleanup = myScheduledCleanup;
+    Job cleanup = scheduledCleanup;
     if (cleanup != null) {
-      cleanup.cancel(false);
+      cleanup.cancel(null);
     }
   }
 

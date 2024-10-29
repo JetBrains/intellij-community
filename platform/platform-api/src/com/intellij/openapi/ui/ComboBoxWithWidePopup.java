@@ -2,7 +2,9 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.ui.SimpleColoredComponent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnknownNullability;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,7 +23,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   }
 
   @SuppressWarnings("unchecked")
-  public E getItem() {
+  public @UnknownNullability E getItem() {
     return (E)getSelectedItem();
   }
 
@@ -61,6 +63,8 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
   }
 
   public class AdjustingListCellRenderer implements ListCellRenderer<E> {
+
+    @ApiStatus.Internal
     public final ListCellRenderer<? super E> delegate;
 
     AdjustingListCellRenderer(ListCellRenderer<? super E> delegate) {

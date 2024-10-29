@@ -5,20 +5,17 @@ package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.*
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorProvider
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.DUMB_AWARE
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -126,7 +123,9 @@ internal class EditorCompositeModelManager(
             }
             else {
               withContext(Dispatchers.EDT) {
-                provider.createEditor(project, file)
+                writeIntentReadAction {
+                  provider.createEditor(project, file)
+                }
               }
             }
 
@@ -162,7 +161,7 @@ internal class EditorCompositeModelManager(
     for (editorWithProvider in editorsWithProviders) {
       val editor = editorWithProvider.fileEditor
       editor.addPropertyChangeListener(editorPropertyChangeListener)
-      editor.putUserData(DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
+      editor.putUserData(FileEditorManagerKeys.DUMB_AWARE, DumbService.isDumbAware(editorWithProvider.provider))
     }
   }
 }

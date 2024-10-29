@@ -1,0 +1,12 @@
+test.java.file
+  POLYADIC_EXPRESSION
+    REFERENCE_EXPRESSION
+      REFERENCE_PARAMETER_LIST
+        <empty list>
+      IDENTIFIER
+    ASTERISK
+    ERROR_ELEMENT
+      <empty list>
+    ASTERISK
+    ERROR_ELEMENT
+      <empty list>

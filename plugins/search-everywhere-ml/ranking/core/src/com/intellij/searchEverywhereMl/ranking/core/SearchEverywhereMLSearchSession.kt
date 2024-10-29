@@ -10,9 +10,8 @@ import com.intellij.ide.util.scopeChooser.ScopeDescriptor
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.platform.ml.embeddings.utils.convertNameToNaturalLanguage
-import com.intellij.platform.ml.embeddings.utils.generateEmbeddingBlocking
 import com.intellij.searchEverywhereMl.SearchEverywhereMlExperiment
+import com.intellij.searchEverywhereMl.TextEmbeddingProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.FeaturesProviderCacheDataProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.searchEverywhereMl.ranking.core.features.statistician.SearchEverywhereStatisticianService
@@ -21,13 +20,16 @@ import com.intellij.searchEverywhereMl.ranking.core.id.MissingKeyProviderCollect
 import com.intellij.searchEverywhereMl.ranking.core.id.SearchEverywhereMlOrderedItemIdProvider
 import com.intellij.searchEverywhereMl.ranking.core.model.SearchEverywhereModelProvider
 import com.intellij.searchEverywhereMl.ranking.core.performance.PerformanceTracker
+import com.intellij.searchEverywhereMl.ranking.core.utils.convertNameToNaturalLanguage
 import com.intellij.util.concurrency.NonUrgentExecutor
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SearchEverywhereMLSearchSession(project: Project?,
-                                               val mixedListInfo: SearchEverywhereMixedListInfo,
-                                               private val sessionId: Int,
-                                               private val loggingRandomisation: FeaturesLoggingRandomisation) {
+internal class SearchEverywhereMLSearchSession(
+  project: Project?,
+  val mixedListInfo: SearchEverywhereMixedListInfo,
+  private val sessionId: Int,
+  private val loggingRandomisation: FeaturesLoggingRandomisation,
+) {
   val itemIdProvider = SearchEverywhereMlOrderedItemIdProvider { MissingKeyProviderCollector.addMissingProviderForClass(it::class.java) }
 
   val sessionStartTime: Long = System.currentTimeMillis()
@@ -46,17 +48,19 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   private val performanceTracker = PerformanceTracker()
 
-  fun onSearchRestart(project: Project?,
-                      experimentStrategy: SearchEverywhereMlExperiment,
-                      reason: SearchRestartReason,
-                      tabId: String,
-                      orderByMl: Boolean,
-                      keysTyped: Int,
-                      backspacesTyped: Int,
-                      searchQuery: String,
-                      previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
-                      searchScope: ScopeDescriptor?,
-                      isSearchEverywhere: Boolean) {
+  fun onSearchRestart(
+    project: Project?,
+    experimentStrategy: SearchEverywhereMlExperiment,
+    reason: SearchRestartReason,
+    tabId: String,
+    orderByMl: Boolean,
+    keysTyped: Int,
+    backspacesTyped: Int,
+    searchQuery: String,
+    previousElementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+    searchScope: ScopeDescriptor?,
+    isSearchEverywhere: Boolean,
+  ) {
     val prevTimeToResult = performanceTracker.timeElapsed
 
     val prevState = currentSearchState.getAndUpdate { prevState ->
@@ -84,9 +88,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
     }
   }
 
-  fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
-                     indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+  fun onItemSelected(
+    project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
+    indexes: IntArray, selectedItems: List<Any>, closePopup: Boolean,
+    elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+  ) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       if (project != null) {
@@ -114,9 +120,11 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
     }
   }
 
-  fun onSearchFinished(project: Project?,
-                       experimentStrategy: SearchEverywhereMlExperiment,
-                       elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>) {
+  fun onSearchFinished(
+    project: Project?,
+    experimentStrategy: SearchEverywhereMlExperiment,
+    elementsProvider: () -> List<SearchEverywhereFoundElementInfoWithMl>,
+  ) {
     val state = getCurrentSearchState()
     if (state != null && experimentStrategy.isLoggingEnabledForTab(state.tabId)) {
       val shouldLogFeatures = loggingRandomisation.shouldLogFeatures(state.tabId)
@@ -138,7 +146,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun getSearchQueryEmbedding(searchQuery: String, split: Boolean): FloatTextEmbedding? {
     return embeddingCache[searchQuery]
-           ?: generateEmbeddingBlocking(if (split) convertNameToNaturalLanguage(searchQuery) else searchQuery)
+           ?: TextEmbeddingProvider.getProvider()?.embed(if (split) convertNameToNaturalLanguage(searchQuery) else searchQuery)
              ?.also { embeddingCache[searchQuery] = it }
   }
 }

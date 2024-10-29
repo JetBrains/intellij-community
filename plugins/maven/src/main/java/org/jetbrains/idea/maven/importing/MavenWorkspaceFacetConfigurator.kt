@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val FACET_DETECTION_DISABLED_KEY = Key.create<ConcurrentHashMap<MavenWorkspaceFacetConfigurator, Boolean>>("FACET_DETECTION_DISABLED_KEY")
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 interface MavenWorkspaceFacetConfigurator : MavenWorkspaceConfigurator {
   fun isApplicable(mavenProject: MavenProject): Boolean
   fun isFacetDetectionDisabled(project: Project): Boolean

@@ -1,0 +1,31 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "serviceContainer",
+  module_name = "intellij.platform.serviceContainer",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/core-api:core",
+    "@community//platform/core-impl",
+    "@community//platform/util-ex",
+    "@community//platform/projectModel-impl",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/instanceContainer",
+    "@community//platform/diagnostic",
+    "@community//platform/util/coroutines:util-coroutines",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -6,13 +6,13 @@ import com.intellij.ide.GeneralSettings
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.ui.MessageConstants
 import com.intellij.openapi.ui.Messages
 import org.intellij.lang.annotations.MagicConstant
 import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface RestartDialog {
   fun showRestartRequired()
@@ -28,19 +28,21 @@ class RestartDialogImpl : RestartDialog {
 
     @JvmStatic
     fun restartWithConfirmation() {
+      val app = ApplicationManagerEx.getApplicationEx()
+
       if (GeneralSettings.getInstance().isConfirmExit) {
-        if (Messages.showYesNoDialog(
-            IdeBundle.message("dialog.message.restart.ide"),
-            IdeBundle.message("dialog.title.restart.ide"),
-            IdeBundle.message("dialog.action.restart.yes"),
-            IdeBundle.message("dialog.action.restart.cancel"),
-            Messages.getWarningIcon()
-          ) != Messages.YES) {
+        val answer = Messages.showYesNoDialog(
+          IdeBundle.message(if (app.isRestartCapable()) "dialog.message.restart.ide" else "dialog.message.restart.alt"),
+          IdeBundle.message("dialog.title.restart.ide"),
+          IdeBundle.message(if (app.isRestartCapable()) "ide.restart.action" else "ide.shutdown.action"),
+          CommonBundle.getCancelButtonText(),
+          Messages.getQuestionIcon()
+        )
+        if (answer != Messages.YES) {
           return
         }
       }
 
-      val app = ApplicationManager.getApplication() as ApplicationEx
       app.restart(true)
     }
 

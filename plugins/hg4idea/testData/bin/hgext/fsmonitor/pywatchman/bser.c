@@ -28,6 +28,7 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <bytesobject.h>
 #ifdef _MSC_VER
@@ -1052,7 +1053,7 @@ static int pdu_info_helper(
     int64_t* total_len_out) {
   const char* start = NULL;
   const char* data = NULL;
-  int datalen = 0;
+  Py_ssize_t datalen = 0;
   const char* end;
   int64_t expected_len;
   off_t position;
@@ -1101,7 +1102,7 @@ static PyObject* bser_pdu_len(PyObject* self, PyObject* args) {
 
 static PyObject* bser_loads(PyObject* self, PyObject* args, PyObject* kw) {
   const char* data = NULL;
-  int datalen = 0;
+  Py_ssize_t datalen = 0;
   const char* start;
   const char* end;
   int64_t expected_len;

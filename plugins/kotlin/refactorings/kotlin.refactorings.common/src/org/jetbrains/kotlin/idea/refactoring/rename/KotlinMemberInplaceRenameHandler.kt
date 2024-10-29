@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtPrimaryConstructor
+import org.jetbrains.kotlin.psi.KtThisExpression
 
 class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
     private class RenamerImpl(
@@ -80,6 +82,11 @@ class KotlinMemberInplaceRenameHandler : MemberInplaceRenameHandler() {
     override fun isAvailable(element: PsiElement?, editor: Editor, file: PsiFile): Boolean {
         if (!editor.settings.isVariableInplaceRenameEnabled) return false
         val currentElement = element?.substitute() as? KtNamedDeclaration ?: return false
+        val elementAtCaret = file.findElementAt(editor.caretModel.offset)
+        val thisExpression = PsiTreeUtil.getParentOfType(elementAtCaret, KtThisExpression::class.java)
+        if (thisExpression != null && PsiTreeUtil.isAncestor(thisExpression.instanceReference, elementAtCaret!!, false)) {
+            return false
+        }
         return currentElement.nameIdentifier != null && !KotlinVariableInplaceRenameHandler.isInplaceRenameAvailable(currentElement)
     }
 }

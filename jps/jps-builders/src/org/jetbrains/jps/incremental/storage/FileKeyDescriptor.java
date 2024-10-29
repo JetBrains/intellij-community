@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -11,10 +11,7 @@ import java.io.DataOutput;
 import java.io.File;
 import java.io.IOException;
 
-/**
-* @author Eugene Zhuravlev
-*/
-public final class FileKeyDescriptor implements KeyDescriptor<File> {
+final class FileKeyDescriptor implements KeyDescriptor<File> {
   @Override
   public void save(@NotNull DataOutput out, File value) throws IOException {
     IOUtil.writeUTF(out, value.getPath());

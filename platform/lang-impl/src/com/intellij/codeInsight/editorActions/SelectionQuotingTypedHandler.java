@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -28,9 +28,8 @@ import java.util.List;
 public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
 
-  @NotNull
   @Override
-  public Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  public @NotNull Result beforeSelectionRemoved(char c, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     SelectionModel selectionModel = editor.getSelectionModel();
     if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_QUOTE && selectionModel.hasSelection() && isQuote(c)) {
       String selectedText = selectionModel.getSelectedText();
@@ -246,7 +245,7 @@ public final class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
     document.replaceString(offset, offset + 1, String.valueOf(newChar));
   }
 
-  public static abstract class UnquotingFilter {
+  public abstract static class UnquotingFilter {
     public abstract boolean skipReplacementQuotesOrBraces(@NotNull PsiFile file,
                                                           @NotNull Editor editor,
                                                           @NotNull String selectedText,

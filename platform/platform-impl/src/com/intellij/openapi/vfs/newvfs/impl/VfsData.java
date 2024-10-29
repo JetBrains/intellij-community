@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicReferenceArray;
  * Dead ids won't be reused in the same session of the IDE. </li>
  * </ol>
  */
+@ApiStatus.Internal
 public final class VfsData {
   private static final Logger LOG = Logger.getInstance(VfsData.class);
 
@@ -225,8 +226,13 @@ public final class VfsData {
     private final AtomicReferenceArray<Object> objectFieldsArray;
 
     /**
-     * fields cortege [nameId, flags] per fileId
-     * flag's lowest 3 bytes are used as modificationCounter
+     * [flags | modCount] per fileId
+     * Currently it is single int32 per fileId: flag bits (highest byte) and modificationCounter (lowest 3 bytes)
+     * Flags are from {@link VirtualFileSystemEntry.VfsDataFlags}: they are a subset of underlying {@link PersistentFS.Flags},
+     * see {@link VirtualDirectoryImpl#createChildImpl(int, int, int, boolean)} for an assignment.
+     * Modification counter is separated from underlying {@link FSRecordsImpl#getModCount(int)}: it is transient (not persistent),
+     * and incremented only on file _content_ modification, while {@link FSRecordsImpl#getModCount(int)} is incremented on _any_
+     * file attribute/content/etc change.
      */
     private final AtomicIntegerArray intFieldsArray;
 

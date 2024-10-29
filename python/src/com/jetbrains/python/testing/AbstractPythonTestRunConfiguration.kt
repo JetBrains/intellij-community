@@ -85,17 +85,21 @@ protected constructor(project: Project, factory: ConfigurationFactory, private v
    * @return The created target environment function, or null if it is impossible to compute the testSpec.
    */
   @Internal
-  protected open fun createTargetEnvFunction(virtualFile: VirtualFile, className: String?, funName: String?): TargetEnvironmentFunction<String>? {
+  protected fun createTargetEnvFun(virtualFile: VirtualFile, className: String?, funName: String?, namesSplitter: String = TEST_NAME_PARTS_SPLITTER): TargetEnvironmentFunction<String>? {
     val testSpec = ReadAction.compute<String?, IllegalStateException> {
       val pythonFile = PsiManager.getInstance(project).findFile(virtualFile) as? PyFile ?: return@compute null
       val qName = pythonFile.getQName() ?: return@compute null
-      (listOf(qName) + listOfNotNull(className, funName)).joinToString(TEST_NAME_PARTS_SPLITTER)
+      (listOf(qName) + listOfNotNull(className, funName)).joinToString(namesSplitter)
     } ?: return null
 
     return TargetEnvironmentFunction {
       testSpec
     }
   }
+
+  @Internal
+  protected open fun createTargetEnvFunction(virtualFile: VirtualFile, className: String?, funName: String?): TargetEnvironmentFunction<String>? =
+    createTargetEnvFun(virtualFile, className, funName)
 
   @Throws(RuntimeConfigurationException::class)
   override fun checkConfiguration() {

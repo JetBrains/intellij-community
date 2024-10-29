@@ -60,6 +60,7 @@ import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -72,6 +73,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
+import static com.intellij.openapi.application.ActionsKt.invokeAndWaitIfNeeded;
 import static org.junit.Assert.*;
 
 /**
@@ -133,6 +135,12 @@ public final class EditorTestUtil {
     else if (assertActionIsEnabled) {
       fail("Action " + action + " is disabled");
     }
+  }
+
+  public static boolean checkActionIsEnabled(@NotNull Editor editor, @NotNull AnAction action) {
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
+    ActionUtil.performDumbAwareUpdate(action, event, false);
+    return event.getPresentation().isEnabled();
   }
 
   @NotNull
@@ -316,6 +324,19 @@ public final class EditorTestUtil {
     setEditorVisibleSizeInPixels(editor, visibleWidthInPixels, visibleHeightInPixels);
     applianceManager.registerSoftWrapIfNecessary();
     return !model.getRegisteredSoftWraps().isEmpty();
+  }
+
+  @TestOnly
+  public static void releaseAllEditors() {
+    invokeAndWaitIfNeeded(null, () -> {
+      EditorFactory editorFactory = EditorFactory.getInstance();
+      for (Editor editor : editorFactory.getAllEditors()) {
+        if (!editor.isDisposed()) {
+          editorFactory.releaseEditor(editor);
+        }
+      }
+      return Unit.INSTANCE;
+    });
   }
 
   public static void setEditorVisibleSize(Editor editor, int widthInChars, int heightInChars) {

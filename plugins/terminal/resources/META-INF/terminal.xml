@@ -6,12 +6,10 @@
                 canCloseContents="true"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.DefaultTerminalRunnerFactory"/>
 
-    <projectConfigurable groupId="tools" groupWeight="130"
+    <projectConfigurable groupId="tools"
                          bundle="messages.IdeBundle"
                          key="configurable.TerminalOptionsConfigurable.display.name"
                          id="terminal" instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
-
-    <fileEditorProvider id="terminal-session-editor" implementation="org.jetbrains.plugins.terminal.vfs.TerminalSessionEditorProvider"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.terminal.TerminalOptionsProvider"/>
 
@@ -21,7 +19,7 @@
 
     <registryKey key="terminal.Ctrl-E.opens.RecentFiles.popup" defaultValue="false"
                  description="Ctrl+E in terminal opens 'Recent Files' popup on Linux/Windows"/>
-    <registryKey key="terminal.new.ui" defaultValue="false"
+    <registryKey key="terminal.new.ui" defaultValue="true"
                  description="Enable new terminal UI"/>
     <registryKey key="terminal.new.ui.fish" defaultValue="false"
                  description="Enable new terminal for Fish"/>
@@ -35,12 +33,13 @@
                  description="Whether to show the GotIt tooltip with a proposal to try the New Terminal"/>
     <registryKey key="terminal.new.ui.inline.completion" defaultValue="false"
                  description="Whether to show the inline (grey text) completion in the New Terminal"/>
+    <registryKey key="terminal.new.ui.autocompletion" defaultValue="true"
+                 description="Whether to run autocompletion in the New Terminal"/>
 
     <experimentalFeature id="terminal.shell.command.handling" percentOfUsers="100"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.RunAnythingTerminalBridge"/>
     <terminal.shellCommandHandler implementation="org.jetbrains.plugins.terminal.OpenFileShellCommandHandler"/>
     <selectInTarget implementation="org.jetbrains.plugins.terminal.view.SelectInTerminal"/>
-    <advancedSetting id="terminal.show.application.title" default="false" groupKey="group.advanced.settings.terminal"/>
 
     <actionPromoter implementation="org.jetbrains.plugins.terminal.action.TerminalCtrlCActionsPromoter"/>
     <editorActionHandler action="EditorEnter" implementationClass="org.jetbrains.plugins.terminal.block.prompt.TerminalEnterHandler"
@@ -79,12 +78,9 @@
              id="terminalCommandSpec"
              order="before stats"
              implementationClass="org.jetbrains.plugins.terminal.block.completion.ShellCommandSpecCompletionWeigher"/>
-    <!--suppress PluginXmlValidity -->
     <inline.completion.provider implementation="org.jetbrains.plugins.terminal.block.completion.TerminalInlineCompletionProvider"/>
     <feedback.idleFeedbackSurvey implementation="org.jetbrains.plugins.terminal.block.feedback.BlockTerminalFeedbackSurvey"/>
 
-    <fileType name="Terminal Prompt" language="Terminal Prompt" extensions="prompt" fieldName="INSTANCE"
-              implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileType"/>
     <lang.fileViewProviderFactory language="Terminal Prompt"
                                   implementationClass="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptFileViewProviderFactory"/>
     <highlightErrorFilter implementation="org.jetbrains.plugins.terminal.block.prompt.lang.TerminalPromptErrorFilter"/>

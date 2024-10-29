@@ -230,6 +230,14 @@ fun TargetEnvironment.LocalPortBinding.getTargetEnvironmentValue(): TargetEnviro
     resolvedPortBinding.targetEndpoint
   }
 
+fun TargetEnvironment.TargetPortBinding.getTargetEnvironmentValue(): TargetEnvironmentFunction<HostPort> =
+  TraceableTargetEnvironmentFunction { targetEnvironment ->
+    val targetPortBinding = this@getTargetEnvironmentValue
+    val resolvedPortBinding = (targetEnvironment.targetPortBindings[targetPortBinding]
+                               ?: throw IllegalStateException("Target port binding \"$targetPortBinding\" cannot be found"))
+    resolvedPortBinding.targetEndpoint
+  }
+
 @Throws(IOException::class)
 fun TargetEnvironment.downloadFromTarget(localPath: Path, progressIndicator: ProgressIndicator) {
   val localFileDir = localPath.parent

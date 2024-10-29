@@ -19,7 +19,6 @@ import com.jetbrains.python.packaging.common.*
 import com.jetbrains.python.packaging.management.PythonRepositoryManager
 import com.jetbrains.python.packaging.management.packagesByRepository
 import com.jetbrains.python.packaging.repository.*
-import com.jetbrains.python.packaging.repository.withBasicAuthorization
 import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 
@@ -52,10 +51,20 @@ abstract class PipBasedRepositoryManager(project: Project, sdk: Sdk) : PythonRep
   private val latestVersions = Caffeine.newBuilder()
     .expireAfterWrite(Duration.ofDays(1))
     .build<PythonPackageSpecification, PyPackageVersion?> {
-      val details = packageDetailsCache[it]
-      if (details is EmptyPythonPackageDetails || details.availableVersions.isEmpty()) return@build null
+      val details = packageDetailsCache.getIfPresent(it)
+      val cachedDetailsVersion = details?.availableVersions?.firstOrNull()
+      if (cachedDetailsVersion != null) {
+        return@build PyPackageVersionNormalizer.normalize(cachedDetailsVersion)
+      }
 
-      PyPackageVersionNormalizer.normalize(details.availableVersions.first())
+      val versions = tryParsingVersionsFromPage(it.name, it.repository?.repositoryUrl)
+      val latest = versions?.firstOrNull()
+      if (latest != null) {
+        return@build PyPackageVersionNormalizer.normalize(latest)
+      }
+
+      val fromDetails = packageDetailsCache.get(it).availableVersions.firstOrNull() ?: return@build null
+      return@build PyPackageVersionNormalizer.normalize(fromDetails)
     }
 
 

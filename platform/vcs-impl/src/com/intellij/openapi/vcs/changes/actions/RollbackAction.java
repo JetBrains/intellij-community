@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes.actions;
 
@@ -47,7 +47,7 @@ import static com.intellij.util.ui.UIUtil.removeMnemonic;
 import static com.intellij.vcsUtil.RollbackUtil.getRollbackOperationName;
 import static java.util.Collections.emptyList;
 
-public class RollbackAction extends DumbAwareAction {
+public final class RollbackAction extends DumbAwareAction {
 
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

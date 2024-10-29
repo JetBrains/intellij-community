@@ -4,3 +4,5 @@ class C : (String) -> Boolean {
         <selection><caret>TODO("Not yet implemented")</selection>
     }
 }
+
+// MEMBER: "invoke(p1: String): Boolean"

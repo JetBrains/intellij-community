@@ -8,10 +8,13 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.UserDataHolderBase
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Spec for external system task execution.
+ * @see [TaskExecutionSpec.create].
  */
+@ApiStatus.NonExtendable
 interface TaskExecutionSpec {
 
   /**

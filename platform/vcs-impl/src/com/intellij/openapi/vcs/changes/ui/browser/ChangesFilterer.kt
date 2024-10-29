@@ -27,9 +27,11 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 
+@ApiStatus.Internal
 class ChangesFilterer(val project: Project?, val listener: Listener) : Disposable {
   companion object {
     @JvmField

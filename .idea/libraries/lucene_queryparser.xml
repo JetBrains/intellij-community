@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-queryparser" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queryparser:9.10.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-queryparser:9.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.10.0/lucene-queryparser-9.10.0.jar">
-          <sha256sum>e2f0e51599b6daf65c42b850ef1b39b617d794b6176ac81d3ff8597211cbec88</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0.jar">
+          <sha256sum>fc866b7bbfc199436feb24be7dd5c575445342eb283bfe07dd519eab131d3675</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.10.0/lucene-queryparser-9.10.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.10.0/lucene-queryparser-9.10.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.10.0/lucene-queryparser-9.10.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-queryparser/9.12.0/lucene-queryparser-9.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

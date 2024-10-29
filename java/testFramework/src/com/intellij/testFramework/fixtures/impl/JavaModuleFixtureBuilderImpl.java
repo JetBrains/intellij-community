@@ -39,6 +39,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
 public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> extends ModuleFixtureBuilderImpl<T> implements JavaModuleFixtureBuilder<T> {
   private final List<Lib> myLibraries = new ArrayList<>();
   private final List<MavenLib> myMavenLibraries = new ArrayList<>();
@@ -210,18 +213,18 @@ public abstract class JavaModuleFixtureBuilderImpl<T extends ModuleFixture> exte
     if (myOutputPath != null) {
       final File pathFile = new File(myOutputPath);
       if (!pathFile.mkdirs()) {
-        assert pathFile.exists() : "unable to create: " + myOutputPath;
+        assertTrue("unable to create: " + myOutputPath, pathFile.exists());
       }
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myOutputPath);
-      assert virtualFile != null : "cannot find output path: " + myOutputPath;
+      assertNotNull("cannot find output path: " + myOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPath(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);
     }
     if (myTestOutputPath != null) {
-      assert new File(myTestOutputPath).mkdirs() : myTestOutputPath;
+      assertTrue(myTestOutputPath, new File(myTestOutputPath).mkdirs());
       final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myTestOutputPath);
-      assert virtualFile != null : "cannot find test output path: " + myTestOutputPath;
+      assertNotNull("cannot find test output path: " + myTestOutputPath, virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setCompilerOutputPathForTests(virtualFile);
       rootModel.getModuleExtension(CompilerModuleExtension.class).inheritCompilerOutputPath(false);
       rootModel.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(false);

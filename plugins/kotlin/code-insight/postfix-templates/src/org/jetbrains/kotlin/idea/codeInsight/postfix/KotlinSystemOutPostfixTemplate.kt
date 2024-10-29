@@ -9,7 +9,7 @@ internal class KotlinSystemOutPostfixTemplate : StringBasedPostfixTemplate {
     constructor(provider: KotlinPostfixTemplateProvider) : super(
         /* name = */ "sout",
         /* example = */ "println(expr)",
-        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { !it.isUnit }),
+        /* selector = */ allExpressions(ValuedFilter, StatementFilter, ExpressionTypeFilter { !it.isUnitType }),
         /* provider = */ provider
     )
 

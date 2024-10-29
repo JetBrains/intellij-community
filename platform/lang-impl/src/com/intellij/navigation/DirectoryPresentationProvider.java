@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.navigation;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -12,13 +12,15 @@ import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class DirectoryPresentationProvider implements ItemPresentationProvider<PsiDirectory> {
   @Override
-  public ItemPresentation getPresentation(@NotNull final PsiDirectory directory) {
+  public ItemPresentation getPresentation(final @NotNull PsiDirectory directory) {
     final VirtualFile vFile = directory.getVirtualFile();
     final Project project = directory.getProject();
     final String locationString = vFile.getPath();

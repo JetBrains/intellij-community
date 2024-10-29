@@ -3,7 +3,6 @@ package org.editorconfig.language.util
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
@@ -174,7 +173,7 @@ object EditorConfigPsiTreeUtil {
   fun findIdentifierUnderCaret(element: PsiElement?): PsiElement? {
     element ?: return null
     val project = element.project
-    val editor = (FileEditorManager.getInstance(project) as? FileEditorManagerImpl)?.getSelectedTextEditor(true) ?: return null
+    val editor = FileEditorManager.getInstance(project).getSelectedTextEditor(true) ?: return null
     val file = element.containingFile ?: return null
     return findIdentifierUnderCaret(editor, file)
   }

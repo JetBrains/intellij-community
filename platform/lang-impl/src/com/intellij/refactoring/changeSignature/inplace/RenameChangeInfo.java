@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,9 +9,11 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeInfo;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.rename.RenameProcessor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class RenameChangeInfo implements ChangeInfo {
   private final PsiFile myFile;
   private final int myOffset;
@@ -87,8 +75,7 @@ public abstract class RenameChangeInfo implements ChangeInfo {
     return myOldName;
   }
 
-  @Nullable
-  public PsiNameIdentifierOwner getNamedElement() {
+  public @Nullable PsiNameIdentifierOwner getNamedElement() {
     return PsiTreeUtil.getParentOfType(myFile.findElementAt(myOffset), PsiNameIdentifierOwner.class);
   }
 
@@ -103,8 +90,7 @@ public abstract class RenameChangeInfo implements ChangeInfo {
     }
   }
 
-  @Nullable
-  public PsiElement getNameIdentifier() {
+  public @Nullable PsiElement getNameIdentifier() {
     final PsiNameIdentifierOwner namedElement = getNamedElement();
     return namedElement != null ? namedElement.getNameIdentifier() : null;
   }

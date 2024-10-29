@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.popup.TreePopup;
 import com.intellij.openapi.ui.popup.TreePopupStep;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.ui.TreeUIHelper;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NextStepHandler;
 import com.intellij.ui.popup.WizardPopup;
@@ -401,6 +402,13 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
         int x = getSize().width - icon.getIconWidth() - 1;
         int y = rec.y + (rec.height - icon.getIconWidth()) / 2;
         icon.paintIcon(this, g, x, y);
+      }
+    }
+
+    @Override
+    protected void configureUiHelper(final TreeUIHelper helper) {
+      if (mySpeedSearch != null) {
+        mySpeedSearch.installSupplyTo(this, false);
       }
     }
   }

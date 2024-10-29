@@ -1,3 +1,4 @@
+// FIR_COMPARISON
 import java.io.File
 
 interface I {
@@ -31,7 +32,6 @@ abstract class A : Base(), I {
     override fun fromBase1(): String = ""
 }
 
-// IGNORE_K2
 // ABSENT: abstractFun
 // ABSENT: abstractVal
 // EXIST: { itemText: "nonAbstractFun", attributes: "bold" }

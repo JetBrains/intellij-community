@@ -9,10 +9,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class TargetCustomToolPanel(private val project: Project,
                             private val targetEnvironmentType: TargetEnvironmentType<*>,
                             private val targetSupplier: Supplier<TargetEnvironmentConfiguration>,

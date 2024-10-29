@@ -3,6 +3,7 @@ package com.intellij.execution;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
 import com.intellij.debugger.impl.GenericDebuggerRunnerSettings;
+import com.intellij.debugger.impl.RemoteConnectionBuilder;
 import com.intellij.diagnostic.logging.OutputFileUtil;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.ArgumentFileFilter;
@@ -48,6 +49,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
@@ -216,6 +218,10 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     return false;
   }
 
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return true;
+  }
+
   @Override
   public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                               @NotNull TargetProgressIndicator targetProgressIndicator) throws ExecutionException {
@@ -247,6 +253,11 @@ public abstract class JavaTestFrameworkRunnableState<T extends
     downloadAdditionalDependencies(getJavaParameters());
     appendForkInfo(getEnvironment().getExecutor());
     appendRepeatMode();
+
+    var asyncStackTraceForExceptions = isPrintAsyncStackTraceForExceptions();
+    if (asyncStackTraceForExceptions && Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+      RemoteConnectionBuilder.addDebuggerAgent(getJavaParameters(), getEnvironment().getProject(), true);
+    }
 
     TargetedCommandLineBuilder commandLineBuilder = super.createTargetedCommandLine(request);
     File inputFile = InputRedirectAware.getInputFile(getConfiguration());

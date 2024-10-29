@@ -12,11 +12,13 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_PROJECT_DATA_SERVICE_ORDER)
 public final class ProjectDataServiceImpl extends AbstractProjectDataService<ProjectData, Project> {
   @Override

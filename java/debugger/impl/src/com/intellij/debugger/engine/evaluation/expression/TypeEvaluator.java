@@ -45,7 +45,7 @@ public class TypeEvaluator implements Evaluator {
     ReferenceType lastRes = SoftReference.dereference(myLastResult);
     if (lastRes != null && classLoader == SoftReference.dereference(myLastClassLoader)) {
       // if class loader is null, check that vms match
-      if (classLoader != null || lastRes.virtualMachine().equals(context.getDebugProcess().getVirtualMachineProxy().getVirtualMachine())) {
+      if (classLoader != null || lastRes.virtualMachine().equals(context.getSuspendContext().getVirtualMachineProxy().getVirtualMachine())) {
         return lastRes;
       }
     }
@@ -57,7 +57,7 @@ public class TypeEvaluator implements Evaluator {
     }
     catch (EvaluateException e) {
       ReferenceType singleLoadedClass =
-        getOnlyItem(filter(debugProcess.getVirtualMachineProxy().classesByName(typeName), ReferenceType::isPrepared));
+        getOnlyItem(filter(context.getSuspendContext().getVirtualMachineProxy().classesByName(typeName), ReferenceType::isPrepared));
       if (singleLoadedClass == null) {
         throw e;
       }

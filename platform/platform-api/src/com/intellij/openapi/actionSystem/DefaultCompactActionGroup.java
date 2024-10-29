@@ -15,13 +15,14 @@
  */
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DefaultCompactActionGroup extends DefaultActionGroup implements CompactActionGroup {
+public class DefaultCompactActionGroup extends DefaultActionGroup {
   public DefaultCompactActionGroup() {
     super();
   }
@@ -32,5 +33,12 @@ public class DefaultCompactActionGroup extends DefaultActionGroup implements Com
 
   public DefaultCompactActionGroup(@NlsActions.ActionText String shortName, boolean popup) {
     super(shortName, popup);
+  }
+
+  @Override
+  @NotNull Presentation createTemplatePresentation() {
+    Presentation presentation = super.createTemplatePresentation();
+    presentation.putClientProperty(ActionUtil.HIDE_DISABLED_CHILDREN, true);
+    return presentation;
   }
 }

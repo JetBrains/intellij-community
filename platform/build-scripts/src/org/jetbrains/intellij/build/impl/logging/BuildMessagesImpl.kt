@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging
 
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.BuildMessages
+import org.jetbrains.intellij.build.BuildScriptsLoggedError
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
+import org.jetbrains.intellij.build.logging.*
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.nio.file.Files
@@ -115,36 +114,23 @@ class BuildMessagesImpl private constructor(
     processMessage(LogMessage(LogMessage.Kind.SET_PARAMETER, "$parameterName=$value"))
   }
 
+  @Suppress("OVERRIDE_DEPRECATION")
   override fun block(blockName: String, task: Callable<Unit>) {
-    runBlocking {
-      TraceManager.exportPendingSpans()
-    }
-
     try {
       processMessage(LogMessage(LogMessage.Kind.BLOCK_STARTED, blockName))
-      spanBuilder(blockName.lowercase(Locale.getDefault())).use {
-        try {
-          task.call()
-        }
-        catch (e: Throwable) {
-          // print all pending spans
-          runBlocking {
-            TraceManager.exportPendingSpans()
-          }
-          throw e
-        }
-      }
+      task.call()
     }
     finally {
-      runBlocking {
-        TraceManager.exportPendingSpans()
-      }
       processMessage(LogMessage(LogMessage.Kind.BLOCK_FINISHED, blockName))
     }
   }
 
   override fun artifactBuilt(relativeArtifactPath: String) {
     logger.processMessage(LogMessage(LogMessage.Kind.ARTIFACT_BUILT, relativeArtifactPath))
+  }
+
+  override fun startWritingFileToBuildLog(artifactPath: String) {
+    logger.processMessage(LogMessage(LogMessage.Kind.IMPORT_DATA, artifactPath))
   }
 
   override fun reportStatisticValue(key: String, value: String) {
@@ -161,10 +147,6 @@ class BuildMessagesImpl private constructor(
 
   override fun cancelBuild(reason: String) {
     logger.processMessage(LogMessage(LogMessage.Kind.BUILD_CANCEL, reason))
-  }
-
-  override fun startWritingFileToBuildLog(artifactPath: String) {
-    logger.processMessage(LogMessage(LogMessage.Kind.IMPORT_DATA, artifactPath))
   }
 }
 

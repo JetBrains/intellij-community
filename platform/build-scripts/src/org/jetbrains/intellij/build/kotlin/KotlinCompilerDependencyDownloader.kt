@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.xml.dom.XmlElement
@@ -11,7 +11,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.dow
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.extractFileToCacheLocation
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getTargetFile
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader.getUriForMavenArtifact
-import org.jetbrains.intellij.build.suspendingRetryWithExponentialBackOff
+import org.jetbrains.intellij.build.retryWithExponentialBackOff
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -43,7 +43,7 @@ object KotlinCompilerDependencyDownloader {
     // Ideal solution would be to move compilation to other process altogether and do not modify current process classpath
     println(" * Downloading $kotlinJpsPluginUrl")
     val tmpLocation = Files.createTempFile(cacheLocation.parent, cacheLocation.name, ".tmp")
-    suspendingRetryWithExponentialBackOff {
+    retryWithExponentialBackOff {
       FileUtils.copyURLToFile(kotlinJpsPluginUrl.toURL(), tmpLocation.toFile())
     }
     Files.move(tmpLocation, cacheLocation, StandardCopyOption.ATOMIC_MOVE)

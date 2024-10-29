@@ -94,16 +94,20 @@ java.lang.StringBuffer#compareTo(java.lang.StringBuffer;)
 java.lang.StringBuilder#compareTo(java.lang.StringBuilder;)
 java.lang.AbstractStringBuilder#compareTo(java.lang.AbstractStringBuilder;)
 java.util.zip.Deflater#setInput(java.nio.ByteBuffer;)
+java.util.zip.Deflater#setDictionary(java.nio.ByteBuffer;)
 java.util.zip.Deflater#deflate(java.nio.ByteBuffer;)
 java.util.zip.Deflater#deflate(java.nio.ByteBuffer;int;)
 java.util.zip.Inflater#setInput(java.nio.ByteBuffer;)
 java.util.zip.Inflater#setDictionary(java.nio.ByteBuffer;)
 java.util.zip.Inflater#inflate(java.nio.ByteBuffer;)
+java.util.zip.ZipInputStream#readNBytes(int;)
 java.util.regex.Pattern#asMatchPredicate()
 java.util.function.Predicate#not(java.util.function.Predicate<? super T>;)
 java.util.concurrent.TimeUnit#convert(java.time.Duration;)
 java.util.Optional#isEmpty()
 java.util.Collection#toArray(java.util.function.IntFunction<T[]>;)
+java.util.LinkedList.ReverseOrderLinkedListView#toArray(java.util.function.IntFunction<T[]>;)
+java.util.AbstractMap.ViewCollection#toArray(java.util.function.IntFunction<T[]>;)
 java.util.Collections.UnmodifiableCollection#toArray(java.util.function.IntFunction<T[]>;)
 java.util.Collections.SynchronizedCollection#toArray(java.util.function.IntFunction<T[]>;)
 java.util.Collections.CheckedCollection#toArray(java.util.function.IntFunction<T[]>;)
@@ -111,10 +115,15 @@ java.util.Collections.AsLIFOQueue#toArray(java.util.function.IntFunction<T[]>;)
 java.util.OptionalInt#isEmpty()
 java.util.OptionalLong#isEmpty()
 java.util.OptionalDouble#isEmpty()
+java.util.ReverseOrderListView#toArray(java.util.function.IntFunction<T[]>;)
+java.util.ReverseOrderDequeView#toArray(java.util.function.IntFunction<T[]>;)
+java.util.ReverseOrderSortedSetView#toArray(java.util.function.IntFunction<T[]>;)
 java.security.spec.PSSParameterSpec#TRAILER_FIELD_BC
 java.security.spec.RSAPublicKeySpec#RSAPublicKeySpec(java.math.BigInteger;java.math.BigInteger;java.security.spec.AlgorithmParameterSpec;)
 java.security.spec.RSAPublicKeySpec#getParams()
 java.security.spec.XECPublicKeySpec
+java.security.spec.MGF1ParameterSpec#SHA512_224
+java.security.spec.MGF1ParameterSpec#SHA512_256
 java.security.spec.RSAPrivateKeySpec#RSAPrivateKeySpec(java.math.BigInteger;java.math.BigInteger;java.security.spec.AlgorithmParameterSpec;)
 java.security.spec.RSAPrivateKeySpec#getParams()
 java.security.spec.XECPrivateKeySpec
@@ -125,7 +134,9 @@ java.security.spec.RSAKeyGenParameterSpec#getKeyParams()
 java.security.spec.RSAMultiPrimePrivateCrtKeySpec#RSAMultiPrimePrivateCrtKeySpec(java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.math.BigInteger;java.security.spec.RSAOtherPrimeInfo[];java.security.spec.AlgorithmParameterSpec;)
 java.security.interfaces.RSAKey#getParams()
 java.security.interfaces.XECKey
+java.security.interfaces.RSAPublicKey#getParams()
 java.security.interfaces.XECPublicKey
+java.security.interfaces.RSAPrivateKey#getParams()
 java.security.interfaces.XECPrivateKey
 javax.crypto.spec.ChaCha20ParameterSpec
 jdk.jshell.execution.RemoteCodes#RESULT_USER_EXCEPTION_CHAINED

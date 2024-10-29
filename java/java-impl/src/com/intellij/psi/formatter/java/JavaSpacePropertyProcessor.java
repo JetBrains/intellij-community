@@ -643,7 +643,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   }
 
   private int getLinesAroundField() {
-    if (isClass(myParent)) {
+    boolean isParentAClass = isClass(myParent);
+    if (isParentAClass && JavaFormatterAnnotationUtil.isFieldWithAnnotations(myChild2)) {
+      return myJavaSettings.BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS;
+    } else if (isParentAClass) {
       return mySettings.BLANK_LINES_AROUND_FIELD;
     }
     else {
@@ -1272,16 +1275,24 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES);
     }
     else if (myRole2 == ChildRole.RPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
     }
     else if (myRole2 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
     }
     else if (myRole1 == ChildRole.LPARENTH) {
-      createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      createParenthSpaceInMethodParameters(list, mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE);
     }
     else if (myRole1 == ChildRole.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+  }
+
+  private void createParenthSpaceInMethodParameters(@NotNull PsiParameterList list, boolean shouldUseDependentSpacing) {
+    if (shouldUseDependentSpacing && list.getParametersCount() > 1) {
+      createSpaceWithLinefeedIfListWrapped(list.getParameters(), mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+    } else {
+      createParenthSpace(shouldUseDependentSpacing, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
   }
 
@@ -1372,7 +1383,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole2 == ChildRole.RPARENTH) {
       boolean space = myRole1 == ChildRole.COMMA || mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1380,7 +1391,7 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     else if (myRole1 == ChildRole.LPARENTH) {
       boolean space = mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES;
       if (mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE && list.getExpressionCount() > 1) {
-        createSpaceWithLinefeedIfListWrapped(list, space);
+        createSpaceWithLinefeedIfListWrapped(list.getExpressions(), space);
         return;
       }
       createSpaceInCode(space);
@@ -1403,20 +1414,15 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
-  private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
-    PsiExpression[] expressions = list.getExpressions();
-    int length = expressions.length;
+  private void createSpaceWithLinefeedIfListWrapped(PsiElement @NotNull[] psiElementList, boolean space) {
+    int length = psiElementList.length;
     assert length > 1;
-
-    List<TextRange> ranges = new ArrayList<>();
-    for (int i = 0; i < length - 1; i++) {
-      int startOffset = expressions[i].getTextRange().getEndOffset();
-      int endOffset = expressions[i + 1].getTextRange().getStartOffset();
-      ranges.add(new TextRange(startOffset, endOffset));
-    }
-
     int spaces = space ? 1 : 0;
-    myResult = Spacing.createDependentLFSpacing(spaces, spaces, ranges, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
+
+    int startOffset = psiElementList[0].getTextRange().getStartOffset();
+    int endOffset = psiElementList[length - 1].getTextRange().getEndOffset();
+    myResult = Spacing.createDependentLFSpacing(spaces, spaces, new TextRange(startOffset, endOffset), mySettings.KEEP_LINE_BREAKS,
+                                                mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   @Override

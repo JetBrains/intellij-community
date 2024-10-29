@@ -18,7 +18,7 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 
-public final class CollectTroubleshootingInformationDialog extends DialogWrapper {
+final class CollectTroubleshootingInformationDialog extends DialogWrapper {
   private JTextArea summary;
   private JPanel centerPanel;
   private ComboBox<TroubleInfoCollector> troubleTypeBox;

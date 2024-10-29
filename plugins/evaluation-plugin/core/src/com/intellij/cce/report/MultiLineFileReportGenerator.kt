@@ -2,9 +2,9 @@
 package com.intellij.cce.report
 
 import com.intellij.cce.core.Session
-import com.intellij.cce.metric.CharFScore
-import com.intellij.cce.metric.EditSimilarity
+import com.intellij.cce.metric.CharFScoreFirstLine
 import com.intellij.cce.metric.Metric
+import com.intellij.cce.metric.RelaxedExactMatchOnlyAlphanum
 import com.intellij.cce.metric.TotalLatencyMetric
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import kotlinx.html.*
@@ -35,15 +35,27 @@ class MultiLineFileReportGenerator(
     super.codeContainer(this, text, sessions, lookupOrder)
   }
 
+  private fun Metric.evaluateAndDisplay(session: Session): String {
+    val score = evaluate(listOf(session)).toDouble().takeIf { !it.isNaN() } ?: 0.0
+    return (score * 100).roundToInt().toString()
+  }
+
   private fun getSessionMetricsAndColor(session: Session) = with(session) {
     listOf(
-      "${(evaluate(CharFScore()) * 100).roundToInt()}%",
-      "${(evaluate(EditSimilarity()) * 100).roundToInt()}%",
+      "${PRIMARY_METRIC.evaluateAndDisplay(session)}%",
+      "${SECONDARY_METRIC.evaluateAndDisplay(session)}%",
       "${formatDouble((evaluate(TotalLatencyMetric()) / 1000))}s"
     ).joinToString("  ", transform = { it.padEnd(4) }) to color()
   }
 
   private fun Session.evaluate(metric: Metric) = metric.evaluate(listOf(this)).toDouble()
 
-  private fun Session.color() = "hsl(${(evaluate(CharFScore()) * 120).roundToInt()}, 100%, 75%)"
+  private fun Session.color() = "hsl(${(evaluate(PRIMARY_METRIC) * PRIMARY_COLORING_SCALER).roundToInt()}, 100%, 75%)"
+
+  companion object {
+    private val PRIMARY_METRIC = CharFScoreFirstLine()
+    private const val PRIMARY_COLORING_SCALER = 120
+
+    private val SECONDARY_METRIC = RelaxedExactMatchOnlyAlphanum()
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl.pointers;
 
 import com.intellij.facet.Facet;
@@ -33,7 +33,7 @@ public final class FacetPointersFacetManagerListener implements FacetManagerList
   }
 
   @Override
-  public void facetRenamed(@NotNull final Facet facet, @NotNull final String oldName) {
+  public void facetRenamed(final @NotNull Facet facet, final @NotNull String oldName) {
     FacetPointersManager manager = FacetPointersManager.getInstance(myProject);
     if (manager instanceof FacetPointersManagerImpl managerImpl) {
       managerImpl.refreshPointers();

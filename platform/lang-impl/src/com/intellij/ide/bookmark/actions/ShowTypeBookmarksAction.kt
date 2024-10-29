@@ -15,7 +15,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys.NAVIGATABLE
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
@@ -72,7 +73,7 @@ internal class ShowTypeBookmarksAction : DumbAwareAction() {
   }
 
 
-  private class MyScrollPane(val tree: Tree) : DataProvider, JBScrollPane(tree) {
+  private class MyScrollPane(val tree: Tree) : UiDataProvider, JBScrollPane(tree) {
     init {
       border = JBUI.Borders.empty()
       viewportBorder = JBUI.Borders.empty()
@@ -83,9 +84,8 @@ internal class ShowTypeBookmarksAction : DumbAwareAction() {
       if (!isPreferredSizeSet) it.width = it.width.coerceAtMost(JBUI.scale(640))
     }
 
-    override fun getData(dataId: String): Any? = when {
-      NAVIGATABLE.`is`(dataId) -> TreeUtil.getAbstractTreeNode(tree.selectionPath)
-      else -> null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[NAVIGATABLE] = TreeUtil.getAbstractTreeNode(tree.selectionPath)
     }
   }
 

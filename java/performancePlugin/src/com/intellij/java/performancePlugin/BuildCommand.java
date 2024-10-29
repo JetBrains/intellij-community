@@ -65,6 +65,7 @@ public class BuildCommand extends AbstractCommand {
         @Override
         public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           if (errors > 0) {
+            context.message("Compilation FAILED.", getLine());
             CompilerMessage[] errorMessages = compileContext.getMessages(CompilerMessageCategory.ERROR);
             StringBuilder errorMessage = new StringBuilder("Errors happened during build: " + errors);
             for (CompilerMessage error : errorMessages) {
@@ -74,12 +75,6 @@ public class BuildCommand extends AbstractCommand {
             spanRef.get().setAttribute("Errors", errors);
           }
           if (warnings > 0) {
-            CompilerMessage[] warningMessages = compileContext.getMessages(CompilerMessageCategory.WARNING);
-            StringBuilder warningMessage = new StringBuilder("Warnings happened during build: " + warnings);
-            for (CompilerMessage warning : warningMessages) {
-              warningMessage.append("\n").append(warning);
-            }
-            context.message(warningMessage.toString(), getLine());
             spanRef.get().setAttribute("Warnings", warnings);
           }
           connection.disconnect();

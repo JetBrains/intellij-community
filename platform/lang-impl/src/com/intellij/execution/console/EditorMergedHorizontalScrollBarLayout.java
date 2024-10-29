@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -31,7 +31,7 @@ public class EditorMergedHorizontalScrollBarLayout extends AbstractLayoutManager
   }
 
   @Override
-  public void layoutContainer(@NotNull final Container parent) {
+  public void layoutContainer(final @NotNull Container parent) {
     final int componentCount = parent.getComponentCount();
     if (componentCount == 0) {
       return;

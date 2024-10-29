@@ -18,7 +18,7 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.*
 
-class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
+internal class KeymapChooserPage(val controller: WizardController) : OnboardingPage {
   private val pages = mutableListOf<KeymapPane>()
   private var activeKeymap: KeymapPane
   private val keymapPane = JPanel(GridBagLayout())

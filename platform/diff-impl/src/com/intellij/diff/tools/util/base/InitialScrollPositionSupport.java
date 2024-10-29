@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class InitialScrollPositionSupport {
   public abstract static class InitialScrollHelperBase {
     protected boolean myShouldScroll = true;
@@ -44,6 +46,7 @@ public final class InitialScrollPositionSupport {
 
     protected abstract LogicalPosition @Nullable [] getCaretPositions();
 
+    @ApiStatus.Internal
     @Nullable
     protected abstract EditorsVisiblePositions getVisiblePositions();
   }
@@ -54,6 +57,7 @@ public final class InitialScrollPositionSupport {
       return doGetCaretPositions(getEditors());
     }
 
+    @ApiStatus.Internal
     @Nullable
     @Override
     protected EditorsVisiblePositions getVisiblePositions() {

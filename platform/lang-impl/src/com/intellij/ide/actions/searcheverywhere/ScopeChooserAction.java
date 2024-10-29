@@ -24,6 +24,7 @@ import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class ScopeChooserAction extends ActionGroup implements CustomComponentAction, DumbAware, SearchEverywhereToggleAction {
   static final char CHOOSE = 'O';
   static final char TOGGLE = 'P';
@@ -47,8 +49,7 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
 
   protected abstract void onScopeSelected(@NotNull ScopeDescriptor o);
 
-  @NotNull
-  protected abstract ScopeDescriptor getSelectedScope();
+  protected abstract @NotNull ScopeDescriptor getSelectedScope();
 
   protected abstract void onProjectScopeToggled();
 
@@ -57,9 +58,8 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
   @Override
   public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) { return EMPTY_ARRAY; }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JComponent component = new ActionButtonWithText(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
     ComponentUtil.putClientProperty(component, MnemonicHelper.MNEMONIC_CHECKER, keyCode ->
       KeyEvent.getExtendedKeyCodeForChar(TOGGLE) == keyCode ||
@@ -131,9 +131,8 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
       return true;
     });
     BaseListPopupStep<ScopeDescriptor> step = new BaseListPopupStep<>("", items) {
-      @Nullable
       @Override
-      public PopupStep<?> onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {
+      public @Nullable PopupStep<?> onChosen(ScopeDescriptor selectedValue, boolean finalChoice) {
         onScopeSelected(selectedValue);
         ActionToolbar toolbar = ActionToolbar.findToolbarBy(button);
         if (toolbar != null) toolbar.updateActionsImmediately();
@@ -145,9 +144,8 @@ public abstract class ScopeChooserAction extends ActionGroup implements CustomCo
         return true;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(ScopeDescriptor value) {
+      public @NotNull String getTextFor(ScopeDescriptor value) {
         return StringUtil.notNullize(value.getDisplayName());
       }
 

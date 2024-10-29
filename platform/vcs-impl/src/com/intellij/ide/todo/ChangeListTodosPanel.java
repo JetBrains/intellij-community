@@ -10,10 +10,12 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class ChangeListTodosPanel extends TodoPanel {
 
   private final Alarm myAlarm;

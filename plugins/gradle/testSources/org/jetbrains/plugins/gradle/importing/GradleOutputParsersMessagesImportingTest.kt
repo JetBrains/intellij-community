@@ -123,10 +123,11 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         assertNode("Could not resolve junit:junit:4.12 for project:test")
       }
     }
+    val projectQualifier = if (isGradleAtLeast("8.10")) "root project" else "project"
     assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 for project:test",
                                "project:test: Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.\n" +
                                "Required by:\n" +
-                               "    project :\n" +
+                               "    $projectQualifier :\n" +
                                "\n" +
                                "Possible solution:\n" +
                                " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
@@ -217,7 +218,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                                "  $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
                                "  $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
                                "Required by:\n" +
-                               "    project :\n" +
+                               "    $projectQualifier :\n" +
                                "\n" +
                                "Possible solution:\n" +
                                " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +
@@ -241,12 +242,13 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
         assertNode("Could not resolve junit:junit:4.12 because no repositories are defined")
       }
     }
+    val projectQualifier = if (isGradleAtLeast("8.10")) "root project" else "project"
     assertSyncViewSelectedNode("Could not resolve junit:junit:4.12 because no repositories are defined", """
       |A problem occurred configuring root project 'project'.
       |> Could not resolve all $artifacts for configuration ':classpath'.
       |   > Cannot resolve external dependency junit:junit:4.12 because no repositories are defined.
       |     Required by:
-      |         project :
+      |         $projectQualifier :
       |
       |Possible solution:
       | - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html
@@ -285,7 +287,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
       |> Could not resolve all $artifacts for configuration ':classpath'.
       |   > Could not resolve junit:junit:99.99.
       |     Required by:
-      |         project :
+      |         $projectQualifier :
       |      > No cached version of junit:junit:99.99 available for offline mode.
       |
       |Possible solution:
@@ -317,7 +319,7 @@ class GradleOutputParsersMessagesImportingTest : GradleOutputParsersMessagesImpo
                                "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.pom\n" +
                                "       $itemLinePrefix $MAVEN_REPOSITORY/junit/junit/99.99/junit-99.99.jar\n" +
                                "     Required by:\n" +
-                               "         project :\n" +
+                               "         $projectQualifier :\n" +
                                "\n" +
                                "Possible solution:\n" +
                                " - Declare repository providing the artifact, see the documentation at https://docs.gradle.org/current/userguide/declaring_repositories.html\n" +

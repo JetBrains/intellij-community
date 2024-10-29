@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.listeners.InlineCompletionDocumentListener
@@ -12,13 +12,11 @@ import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.observable.util.addKeyListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.removeUserData
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.application
 import kotlinx.coroutines.CoroutineScope
 
 object InlineCompletion {
-
   private val KEY = Key.create<InlineCompletionHandler>("inline.completion.handler")
 
   fun getHandlerOrNull(editor: Editor): InlineCompletionHandler? = editor.getUserData(KEY)

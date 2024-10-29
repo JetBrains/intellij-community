@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.CommonBundle;
@@ -183,15 +183,13 @@ final class EditVariableDialog extends DialogWrapper {
       }
     }
 
-    @NotNull
     @Override
-    public String getColumnName(int column) {
+    public @NotNull String getColumnName(int column) {
       return myNames[column];
     }
 
-    @NotNull
     @Override
-    public Class<?> getColumnClass(int c) {
+    public @NotNull Class<?> getColumnClass(int c) {
       if (c <= 2) {
         return String.class;
       }

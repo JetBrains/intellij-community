@@ -18,7 +18,7 @@ class ExpectedExpressionMatcher(val types: List<KaType>? = null, val nullability
 
     context(KaSession)
     fun match(candidateType: KaType): Boolean {
-        if (types != null && types.none { candidateType.isSubTypeOf(it) }) {
+        if (types != null && types.none { candidateType.isSubtypeOf(it) }) {
             return false
         }
         if (nullability != null && nullability != candidateType.nullability) {
@@ -187,7 +187,7 @@ private fun getForElvis(target: KtElement): ExpectedExpressionMatcher? {
             val loopParameter = forExpression.loopParameter
 
             val elementType = when {
-                loopParameter != null && loopParameter.typeReference != null -> loopParameter.getParameterSymbol().returnType
+                loopParameter != null && loopParameter.typeReference != null -> loopParameter.symbol.returnType
                 else -> buildClassType(DefaultTypeClassIds.ANY)
             }
 

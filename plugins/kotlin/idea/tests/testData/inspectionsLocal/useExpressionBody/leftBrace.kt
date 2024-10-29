@@ -1,7 +1,7 @@
 // HIGHLIGHT: INFORMATION
 // PROBLEM: Use expression body instead of return
 
-fun simple(): Int {
-    ret<caret>urn 1 *
+fun simple(): Int {<caret>
+    return 1 *
            (2 + 3)
 }

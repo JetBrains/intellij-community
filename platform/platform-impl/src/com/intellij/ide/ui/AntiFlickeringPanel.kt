@@ -1,19 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.ui.DirtyUI
-import com.intellij.util.SingleAlarm
+import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.*
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 import javax.swing.JPanel
 
 /** A hacky way to reduce flickering. */
-@ApiStatus.Internal
+@Internal
 class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout()) {
   private var savedSelfieImage: BufferedImage? = null
   private var savedSize: Dimension? = null
@@ -47,20 +47,23 @@ class AntiFlickeringPanel(private val content: JComponent) : JPanel(BorderLayout
     isChildOpaque = content.isOpaque
     content.isOpaque = false
 
-    val alarm = SingleAlarm({
-                              savedSelfieImage = null
-                              savedSize = null
-                              savedPreferredSize = null
-                              isOpaque = false
-                              content.isOpaque = isChildOpaque
-                              revalidate()
-                              needToScroll?.let {
-                                needToScroll = null
-                                scrollRectToVisible(it)
-                              }
-                              repaint()
-                            }, delay, null)
-    alarm.request()
+    EdtExecutorService.getScheduledExecutorInstance().schedule(
+      {
+        savedSelfieImage = null
+        savedSize = null
+        savedPreferredSize = null
+        isOpaque = false
+        content.isOpaque = isChildOpaque
+        revalidate()
+        needToScroll?.let {
+          needToScroll = null
+          scrollRectToVisible(it)
+        }
+        repaint()
+      },
+      delay.toLong(),
+      java.util.concurrent.TimeUnit.MILLISECONDS
+    )
   }
 
   override fun getSize(): Dimension {

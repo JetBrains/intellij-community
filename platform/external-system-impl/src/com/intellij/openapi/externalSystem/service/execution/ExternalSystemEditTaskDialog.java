@@ -21,12 +21,14 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class ExternalSystemEditTaskDialog extends DialogWrapper {
 
   @NotNull private final ExternalSystemTaskExecutionSettings myTaskExecutionSettings;

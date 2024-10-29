@@ -154,7 +154,6 @@ web.baseurl
   references. See also ``notify.strip``.
 
 '''
-from __future__ import absolute_import
 
 import email.errors as emailerrors
 import email.utils as emailutils
@@ -315,7 +314,7 @@ deftemplates = {
 }
 
 
-class notifier(object):
+class notifier:
     '''email notification class.'''
 
     def __init__(self, ui, repo, hooktype):
@@ -435,7 +434,10 @@ class notifier(object):
             if spec is None:
                 subs.add(sub)
                 continue
-            revs = self.repo.revs(b'%r and %d:', spec, ctx.rev())
+            try:
+                revs = self.repo.revs(b'%r and %d:', spec, ctx.rev())
+            except error.RepoLookupError:
+                continue
             if len(revs):
                 subs.add(sub)
                 continue
@@ -448,7 +450,7 @@ class notifier(object):
         try:
             msg = mail.parsebytes(data)
         except emailerrors.MessageParseError as inst:
-            raise error.Abort(inst)
+            raise error.Abort(stringutil.forcebytestr(inst))
 
         # store sender and subject
         sender = msg['From']
@@ -463,7 +465,7 @@ class notifier(object):
             # create fresh mime message from scratch
             # (multipart templates must take care of this themselves)
             headers = msg.items()
-            payload = msg.get_payload(decode=pycompat.ispy3)
+            payload = msg.get_payload(decode=True)
             # for notification prefer readability over data precision
             msg = mail.mimeencode(self.ui, payload, self.charsets, self.test)
             # reinstate custom headers
@@ -522,7 +524,7 @@ class notifier(object):
                 )
         msg['To'] = ', '.join(sorted(subs))
 
-        msgtext = msg.as_bytes() if pycompat.ispy3 else msg.as_string()
+        msgtext = msg.as_bytes()
         if self.test:
             self.ui.write(msgtext)
             if not msgtext.endswith(b'\n'):

@@ -127,7 +127,7 @@ class GradleSourceSetSerialisationService : SerializationService<GradleSourceSet
     }
 
     private fun writeSourceSets(writer: IonWriter, context: SourceSetModelWriteContext, sourceSetModel: GradleSourceSetModel) {
-      writeCollection(writer, SOURCE_SET_MODEL_SOURCE_SETS_FIELD, sourceSetModel.sourceSets.values) {
+      writeCollection(writer, SOURCE_SET_MODEL_SOURCE_SETS_FIELD, sourceSetModel.sourceSets.values as Collection<ExternalSourceSet>) {
         writeSourceSet(writer, context, it)
       }
     }

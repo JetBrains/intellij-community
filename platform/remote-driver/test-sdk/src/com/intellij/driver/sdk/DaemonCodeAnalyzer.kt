@@ -15,6 +15,19 @@ interface DaemonCodeAnalyzer {
   fun isRunningOrPending(): Boolean
 
   fun isAllAnalysisFinished(psiFile: PsiFile): Boolean
+  fun getHighlights(document: Document, severity: HighlightSeverity?, project: Project): List<HighlightInfo>
+}
+
+@Remote("com.intellij.codeInsight.daemon.impl.HighlightInfo")
+interface HighlightInfo {
+  fun getDescription(): String
+  fun getSeverity(): HighlightSeverity
+  fun getText(): String
+}
+
+@Remote("com.intellij.lang.annotation.HighlightSeverity")
+interface HighlightSeverity {
+  fun getName(): String
 }
 
 fun Driver.isCodeAnalysisRunning(project: Project? = null): Boolean {
@@ -33,8 +46,14 @@ fun Driver.isCodeAnalysisFinished(project: Project? = null, file: VirtualFile): 
 
 fun Driver.waitForCodeAnalysis(project: Project? = null, file: VirtualFile, timeout: Duration = 1.minutes) {
   withContext {
-    waitFor(timeout) {
+    waitFor("No Code analysis", timeout) {
       isCodeAnalysisFinished(project, file)
     }
+  }
+}
+
+fun Driver.getHighlights(document: Document): List<HighlightInfo> {
+  return withReadAction {
+    service<DaemonCodeAnalyzer>(singleProject()).getHighlights(document, null, singleProject())
   }
 }

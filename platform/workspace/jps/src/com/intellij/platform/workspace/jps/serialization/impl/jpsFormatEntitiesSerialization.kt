@@ -31,6 +31,22 @@ interface JpsFileContentWriter {
   fun saveComponent(fileUrl: String, componentName: String, componentTag: Element?)
 
   fun getReplacePathMacroMap(fileUrl: String): PathMacroMap
+
+  /**
+   * In contrast to `saveComponent` (which accumulates changes), this method rewrites file content as a whole at one shot.
+   * (i.e. two subsequent invocations of `saveFile` will rewrite each other's work, instead of complementing it)
+   */
+  fun saveFile(fileUrl: String, writer: (WritableJpsFileContent) -> Unit) {
+    writer(object : WritableJpsFileContent {
+      override fun saveComponent(componentName: String, componentTag: Element?) {
+        saveComponent(fileUrl, componentName, componentTag)
+      }
+    })
+  }
+}
+
+interface WritableJpsFileContent {
+  fun saveComponent(componentName: String, componentTag: Element?)
 }
 
 interface JpsAppFileContentWriter: JpsFileContentWriter {

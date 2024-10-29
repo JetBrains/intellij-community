@@ -2,53 +2,58 @@
 package com.intellij.cce.visitor
 
 import com.intellij.cce.core.*
-import com.intellij.cce.visitor.exceptions.PsiConverterException
 import com.intellij.psi.*
 
-class JavaRenameVisitor : EvaluationVisitor, JavaRecursiveElementVisitor() {
-  private var codeFragment: CodeFragment? = null
-
-  override val language: Language = Language.JAVA
-  override val feature: String = "rename"
-
-  override fun getFile(): CodeFragment = codeFragment
-                                         ?: throw PsiConverterException("Invoke 'accept' with visitor on PSI first")
-
-  override fun visitJavaFile(file: PsiJavaFile) {
-    codeFragment = CodeFragment(file.textOffset, file.textLength)
-    super.visitJavaFile(file)
+class JavaRenameVisitor : RenameVisitorBase(Language.JAVA) {
+  override fun createPsiVisitor(codeFragment: CodeFragment): PsiElementVisitor {
+    return JavaRenamePsiVisitor(codeFragment)
   }
 
-  override fun visitLocalVariable(variable: PsiLocalVariable) {
-    val token = createCodeToken(variable, TypeProperty.LOCAL_VARIABLE)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitLocalVariable(variable)
-  }
+  private class JavaRenamePsiVisitor(private val codeFragment: CodeFragment): JavaRecursiveElementVisitor() {
+    override fun visitMethod(method: PsiMethod) {
+      val token = createCodeToken(method, TypeProperty.METHOD)
+      if (token != null)
+        codeFragment.addChild(token)
+      super.visitMethod(method)
+    }
 
-  override fun visitField(field: PsiField) {
-    val token = createCodeToken(field, TypeProperty.FIELD)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitField(field)
-  }
+    override fun visitClass(aClass: PsiClass) {
+      val token = createCodeToken(aClass, TypeProperty.CLASS)
+      if (token != null)
+        codeFragment.addChild(token)
+      super.visitClass(aClass)
+    }
+    override fun visitLocalVariable(variable: PsiLocalVariable) {
+      val token = createCodeToken(variable, TypeProperty.LOCAL_VARIABLE)
+      if (token != null)
+        codeFragment.addChild(token)
+      super.visitLocalVariable(variable)
+    }
 
-  override fun visitParameter(parameter: PsiParameter) {
-    val token = createCodeToken(parameter, TypeProperty.PARAMETER)
-    if (token != null)
-      codeFragment?.addChild(token)
-    super.visitParameter(parameter)
-  }
+    override fun visitField(field: PsiField) {
+      val token = createCodeToken(field, TypeProperty.FIELD)
+      if (token != null)
+        codeFragment.addChild(token)
+      super.visitField(field)
+    }
 
-  private fun createCodeToken(namedElement: PsiNamedElement, tokenType: TypeProperty): CodeToken? {
-    val name = namedElement.name ?: return null
-    return CodeToken(name, namedElement.textOffset, properties(tokenType, SymbolLocation.PROJECT) {})
-  }
+    override fun visitParameter(parameter: PsiParameter) {
+      val token = createCodeToken(parameter, TypeProperty.PARAMETER)
+      if (token != null)
+        codeFragment.addChild(token)
+      super.visitParameter(parameter)
+    }
 
-  private fun properties(tokenType: TypeProperty, location: SymbolLocation, init: JvmProperties.Builder.() -> Unit)
-    : TokenProperties {
-    return JvmProperties.create(tokenType, location) {
-      init(this)
+    private fun createCodeToken(namedElement: PsiNamedElement, tokenType: TypeProperty): CodeToken? {
+      val name = namedElement.name ?: return null
+      return CodeToken(name, namedElement.textOffset, properties(tokenType, SymbolLocation.PROJECT) {})
+    }
+
+    private fun properties(tokenType: TypeProperty, location: SymbolLocation, init: JvmProperties.Builder.() -> Unit)
+      : TokenProperties {
+      return JvmProperties.create(tokenType, location) {
+        init(this)
+      }
     }
   }
 }

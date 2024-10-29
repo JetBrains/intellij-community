@@ -37,6 +37,7 @@ internal class Context {
   val iconsCommitHashesToSync: MutableSet<String>
   val devIconsCommitHashesToSync: MutableSet<String>
   val devIconsSyncAll: Boolean
+  val dryRun: Boolean = System.getenv("BUILD_IS_PERSONAL") == "true"
 
   init {
     val devRepoArg = "dev.repo"

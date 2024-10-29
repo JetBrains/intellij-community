@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -33,7 +34,7 @@ public class IntentionsUIImpl extends IntentionsUI {
   @RequiresEdt
   public void update(@NotNull CachedIntentions cachedIntentions, boolean actionsChanged) {
     Editor editor = cachedIntentions.getEditor();
-    if (editor == null) {
+    if (editor == null || editor instanceof ImaginaryEditor) {
       return;
     }
     if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().hasFocus()) {

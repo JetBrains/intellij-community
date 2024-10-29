@@ -3,6 +3,7 @@ package git4idea.index.vfs
 
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
@@ -52,6 +53,7 @@ import org.jetbrains.annotations.NonNls
 import java.io.ByteArrayInputStream
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import kotlin.Throws
 
 @Service(Service.Level.PROJECT)
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
@@ -106,7 +108,9 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
-    return GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
+    val indexFile = GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
+    OutsidersPsiFileSupport.markFile(indexFile, filePath.path)
+    return indexFile
   }
 
   private fun createIndexVirtualFile(key: Key): GitIndexVirtualFile? {

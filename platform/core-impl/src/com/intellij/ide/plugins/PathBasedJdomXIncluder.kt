@@ -3,6 +3,9 @@
 
 package com.intellij.ide.plugins
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 interface PathResolver {
   val isFlat: Boolean
     get() = false

@@ -15,6 +15,9 @@
  */
 package com.intellij.diagnostic.hprof.util
 
+import org.jetbrains.annotations.ApiStatus
+
+@ApiStatus.Internal
 interface IntList {
   operator fun get(index: Int): Int
   operator fun set(index: Int, value: Int)

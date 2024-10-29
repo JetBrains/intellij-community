@@ -2,9 +2,13 @@
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleType;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +17,7 @@ import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.LinkedList;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.*;
 import static com.intellij.ui.scale.DerivedScaleType.PIX_SCALE;
@@ -421,5 +426,42 @@ public final class PaintUtil {
    */
   public static int getStringWidth(String text, Graphics g, FontMetrics metrics) {
     return metrics.getStringBounds(text, g).getBounds().width;
+  }
+  
+  @ApiStatus.Internal
+  @Contract("!null, _, _ -> !null")
+  public static @Nullable String cutContainerText(@Nullable String text, int maxWidth, FontMetrics fm) {
+    if (text == null) return null;
+
+    if (text.startsWith("(") && text.endsWith(")")) {
+      text = text.substring(1, text.length() - 1);
+    }
+
+    if (maxWidth < 0) return text;
+
+    boolean in = text.startsWith("in ");
+    if (in) text = text.substring(3);
+    String left = in ? "in " : "";
+    String adjustedText = left + text;
+
+    int fullWidth = fm.stringWidth(adjustedText);
+    if (fullWidth < maxWidth) return adjustedText;
+
+    String separator = text.contains("/") ? "/" :
+                       SystemInfo.isWindows && text.contains("\\") ? "\\" :
+                       text.contains(".") ? "." :
+                       text.contains("-") ? "-" : " ";
+    LinkedList<String> parts = new LinkedList<>(StringUtil.split(text, separator));
+    int index;
+    while (parts.size() > 1) {
+      index = parts.size() / 2 - 1;
+      parts.remove(index);
+      if (fm.stringWidth(left + StringUtil.join(parts, separator) + "...") < maxWidth) {
+        parts.add(index, "...");
+        return left + StringUtil.join(parts, separator);
+      }
+    }
+    int adjustedWidth = Math.max(adjustedText.length() * maxWidth / fullWidth - 1, left.length() + 3);
+    return StringUtil.trimMiddle(adjustedText, adjustedWidth);
   }
 }

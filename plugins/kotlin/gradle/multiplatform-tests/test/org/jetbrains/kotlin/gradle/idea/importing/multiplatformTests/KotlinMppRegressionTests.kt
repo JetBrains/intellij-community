@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.highlighting.HighlightingChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.orderEntries.OrderEntriesChecker
@@ -105,7 +106,23 @@ class KotlinMppRegressionTests : AbstractKotlinMppGradleImportingTest() {
             // Using jvmToolchain API to select the JDK
             allowAccessToDirsIfExists("/Library/Java/")
             publish("producer")
-            onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker)
+            onlyCheckers(HighlightingChecker, KotlinFacetSettingsChecker, GradleProjectsPublishingTestsFeature)
+        }
+    }
+
+    @Test
+    @PluginTargetVersions(pluginVersion = "2.1.20-dev-201+")
+    fun testKTIJ30915KotlinNewKlibRefreshInVfs() {
+        doTest(
+            afterImport = { context ->
+                val cinteropHeaderFile = context.testProjectRoot.resolve("libs/include/interop/myInterop.h")
+                cinteropHeaderFile.writeText(cinteropHeaderFile.readText().replace("BAG", "BAT"))
+                // The problem with VFS occures only with second import after changing .h file.
+                // Also, see: KTIJ-30915
+                importProject()
+            }) {
+            onlyCheckers(HighlightingChecker)
+            hideLineMarkers = true
         }
     }
 }

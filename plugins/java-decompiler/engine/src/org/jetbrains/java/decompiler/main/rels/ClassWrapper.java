@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -9,10 +9,9 @@ import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
-import org.jetbrains.java.decompiler.modules.decompiler.exps.VarExprent;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
@@ -40,6 +39,7 @@ public class ClassWrapper {
   public void init() {
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS, classStruct);
     DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_WRAPPER, this);
+    DecompilerContext.setProperty(DecompilerContext.CURRENT_CLASS_NODE, DecompilerContext.getClassProcessor().getMapRootClasses().get(classStruct.qualifiedName));
     DecompilerContext.getLogger().startClass(classStruct.qualifiedName);
 
     boolean testMode = DecompilerContext.getOption(IFernflowerPreferences.UNIT_TEST_MODE);
@@ -47,7 +47,7 @@ public class ClassWrapper {
     for (StructMethod mt : classStruct.getMethods()) {
       DecompilerContext.getLogger().startMethod(mt.getName() + " " + mt.getDescriptor());
 
-      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt.getDescriptor());
+      MethodDescriptor md = MethodDescriptor.parseDescriptor(mt, null);
       VarProcessor varProc = new VarProcessor(classStruct, mt, md);
       DecompilerContext.startMethod(varProc);
 
@@ -83,12 +83,12 @@ public class ClassWrapper {
         else {
           int varIndex = 0;
           if (!mt.hasModifier(CodeConstants.ACC_STATIC)) {
-            varProc.getThisVars().put(new VarVersionPair(0, 0), classStruct.qualifiedName);
-            varProc.setVarName(new VarVersionPair(0, 0), vc.getFreeName(0));
+            varProc.getThisVars().put(new VarVersion(0, 0), classStruct.qualifiedName);
+            varProc.setVarName(new VarVersion(0, 0), vc.getFreeName(0));
             varIndex = 1;
           }
           for (int i = 0; i < md.params.length; i++) {
-            varProc.setVarName(new VarVersionPair(varIndex, 0), vc.getFreeName(varIndex));
+            varProc.setVarName(new VarVersion(varIndex, 0), vc.getFreeName(varIndex));
             varIndex += md.params[i].getStackSize();
           }
         }
@@ -102,7 +102,7 @@ public class ClassWrapper {
         throw e;
       }
       catch (Throwable t) {
-        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " couldn't be decompiled.";
+        String message = "Method " + mt.getName() + " " + mt.getDescriptor() + " in class " + classStruct.qualifiedName + " couldn't be decompiled.";
         DecompilerContext.getLogger().writeMessage(message, IFernflowerLogger.Severity.WARN, t);
         isError = true;
       }
@@ -138,10 +138,10 @@ public class ClassWrapper {
         for (int i = varProc.getFirstParameterPosition(); i < entries.size(); i++) {
           StructMethodParametersAttribute.Entry entry = entries.get(i);
           if (entry.myName != null) {
-            varProc.setVarName(new VarVersionPair(index, 0), entry.myName);
+            varProc.setVarName(new VarVersion(index, 0), entry.myName);
           }
           if ((entry.myAccessFlags & CodeConstants.ACC_FINAL) != 0) {
-            varProc.setParameterFinal(new VarVersionPair(index, 0));
+            varProc.setParameterFinal(new VarVersion(index, 0));
           }
           index += md.params[i].getStackSize();
         }
@@ -150,27 +150,12 @@ public class ClassWrapper {
   }
 
   private static void applyDebugInfo(StructMethod mt, VarProcessor varProc, MethodWrapper methodWrapper) {
-    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES)) {
+    // Only rename parameters in the var processor if we aren't already renaming them with JAD naming
+    if (DecompilerContext.getOption(IFernflowerPreferences.USE_DEBUG_VAR_NAMES) && (!DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_VARNAMING) || !DecompilerContext.getOption(IFernflowerPreferences.USE_JAD_PARAMETER_RENAMING))) {
       StructLocalVariableTableAttribute attr = mt.getLocalVariableAttr();
       if (attr != null) {
         // only param names here
-        varProc.setDebugVarNames(attr.getMapParamNames());
-
-        // the rest is here
-        methodWrapper.getOrBuildGraph().iterateExprents(exprent -> {
-          List<Exprent> lst = exprent.getAllExprents(true);
-          lst.add(exprent);
-          lst.stream()
-            .filter(e -> e.type == Exprent.EXPRENT_VAR)
-            .forEach(e -> {
-              VarExprent varExprent = (VarExprent)e;
-              String name = varExprent.getDebugName(mt);
-              if (name != null) {
-                varProc.setVarName(varExprent.getVarVersionPair(), name);
-              }
-            });
-          return 0;
-        });
+        varProc.setDebugVarNames(attr.getMapNames());
       }
     }
   }

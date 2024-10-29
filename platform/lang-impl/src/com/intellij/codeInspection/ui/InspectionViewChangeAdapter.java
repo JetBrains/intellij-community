@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.reference.RefElement;
@@ -201,8 +201,7 @@ final class InspectionViewChangeAdapter extends PsiTreeChangeAdapter {
       return !myFirstFinished || !mySecondFinished;
     }
 
-    @NotNull
-    public static <X> Processor<? super X> combine(@NotNull Processor<? super X> processor1, @Nullable Processor<? super X> processor2) {
+    public static @NotNull <X> Processor<? super X> combine(@NotNull Processor<? super X> processor1, @Nullable Processor<? super X> processor2) {
       return processor2 == null ? processor1 : new CompositeProcessor<>(processor1, processor2);
     }
   }

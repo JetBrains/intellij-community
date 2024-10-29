@@ -107,7 +107,7 @@ class PresentationEntryBuildingTest : UsefulTestCase() {
     repeat(PresentationTreeBuilderImpl.MAX_NODE_COUNT - 2) {
       expected.add(txt("a"))
     }
-    expected.add(txt("..."))
+    expected.add(txt("…"))
     testBuildEntries(*expected.toTypedArray()) {
       repeat(200) {
         text("a")

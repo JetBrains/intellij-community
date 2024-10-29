@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +16,8 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
-public final class MessageCounter {
+@ApiStatus.Internal
+final class MessageCounter {
   private final Map<ProjectSystemId, Map<String/* group */, Map<NotificationSource, Object2IntOpenHashMap<NotificationCategory>>>>
     map = new HashMap<>();
 

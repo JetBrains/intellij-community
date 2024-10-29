@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.BundleBase;
@@ -31,8 +31,7 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private final Project myProject;
   private ContentManager myBackContentManager;
   private ContentManager myForthContentManager;
-  @NotNull
-  private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
+  private final @NotNull StoredSettingsBean myStoredSettings = new StoredSettingsBean();
   private static final @NonNls String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final @NonNls String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 

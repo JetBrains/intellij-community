@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class PersistentFSPaths {
 
   private static final @NonNls String ROOTS_START_PREFIX = "roots_";
@@ -20,14 +22,6 @@ public final class PersistentFSPaths {
   public @NotNull Path getCorruptionMarkerFile() {
     return storagesDir.resolve("corruption.marker");
   }
-
-  public @NotNull Path getStoragesReplacementMarkerFile() {
-    return storagesDir.resolve("replace-storages.marker");
-  }
-
-  public @NotNull Path getRecoveryInProgressMarkerFile() { return storagesDir.resolve("recovery-in-progress.marker"); }
-
-  public @NotNull Path getVfsLogStorage() { return storagesDir.resolve("vfslog"); }
 
   public @NotNull Path getRootsBaseFile() {
     return storagesDir.resolve(ROOTS_START_PREFIX);

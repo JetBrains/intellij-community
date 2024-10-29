@@ -18,7 +18,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.EditorMouseFixture;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -315,7 +315,7 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
   }
 
 
-  public void testReplacePerformance() throws Exception {
+  public void testReplacePerformance() {
     String aas = StringUtil.repeat("a", 100);
     String text = StringUtil.repeat(aas + "\n" + StringUtil.repeat("aaaaasdbbbbbbbbbbbbbbbbb\n", 100), 1000);
     String bbs = StringUtil.repeat("b", 100);
@@ -328,15 +328,15 @@ public class FindInEditorTest extends LightPlatformCodeInsightTestCase {
       myFindModel.setReplaceState(true);
       myFindModel.setPromptOnReplace(false);
 
-      PerformanceTestUtil.newPerformanceTest("replace", ()->{
+      Benchmark.newBenchmark("replace", ()->{
         for (int i=0; i<25; i++) {
           myFindModel.   setStringToFind(aas);
           myFindModel.setStringToReplace(bbs);
-          FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
+          FindUtil.replace(getProject(), editor, 0, myFindModel);
           assertEquals(repl, editor.getDocument().getText());
           myFindModel.   setStringToFind(bbs);
           myFindModel.setStringToReplace(aas);
-          FindUtil.replace(editor.getProject(), editor, 0, myFindModel);
+          FindUtil.replace(getProject(), editor, 0, myFindModel);
           assertEquals(text, editor.getDocument().getText());
         }
       }).start();

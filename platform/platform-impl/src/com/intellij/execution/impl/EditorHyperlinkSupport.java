@@ -77,7 +77,7 @@ public final class EditorHyperlinkSupport {
 
           Runnable runnable = getLinkNavigationRunnable(e.getLogicalPosition());
           if (runnable != null) {
-            try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
               runnable.run();
             }
             e.consume();

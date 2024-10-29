@@ -16,14 +16,29 @@ public class TestClassCast {
 
 class 'pkg/TestClassCast' {
    method 'test (Ljava/util/List;)V' {
+      0      7
       1      7
       3      8
       f      9
       10      9
+      11      9
       12      9
+      13      9
+      14      9
+      15      9
+      16      9
       18      12
+      19      12
+      1a      12
+      1b      12
       1c      12
+      1d      12
+      1e      12
+      1f      12
+      20      12
       21      12
+      22      12
+      23      12
       24      13
    }
 }

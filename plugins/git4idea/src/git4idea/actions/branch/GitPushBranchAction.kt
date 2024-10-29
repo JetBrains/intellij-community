@@ -14,7 +14,6 @@ import git4idea.repo.GitRepository
 import icons.DvcsImplIcons
 import javax.swing.Icon
 
-//TODO: incoming/outgoing
 class GitPushBranchAction
   : GitSingleBranchAction(ActionsBundle.messagePointer("action.Vcs.Push.text")) {
 

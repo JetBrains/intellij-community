@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
@@ -77,10 +77,9 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
 
   public <S extends InputRedirectAware> SettingsEditorFragment<S, ?> createRedirectFragment() {
     TextFieldWithBrowseButton inputFile = new TextFieldWithBrowseButton();
-    inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<>(null, null, inputFile, null,
-                                                                                           FileChooserDescriptorFactory
-                                                                                             .createSingleFileDescriptor(),
-                                                                                           TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT) {
+    inputFile.addActionListener(new ComponentWithBrowseButton.BrowseFolderActionListener<>(
+      inputFile, null, FileChooserDescriptorFactory.createSingleFileDescriptor(), TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
+    ) {
       @Override
       protected @Nullable VirtualFile getInitialFile() {
         VirtualFile initialFile = super.getInitialFile();
@@ -117,16 +116,11 @@ public final class CommonParameterFragments<Settings extends CommonProgramRunCon
     @NotNull Project project,
     @NotNull Computable<? extends Module> moduleProvider
   ) {
-    ExtendableTextField textField = new ExtendableTextField(10);
+    var textField = new ExtendableTextField(10);
     MacrosDialog.addMacroSupport(textField, MacrosDialog.Filters.DIRECTORY_PATH, () -> moduleProvider.compute() != null);
-    TextFieldWithBrowseButton workingDirectoryField = new TextFieldWithBrowseButton(textField);
-    workingDirectoryField.addBrowseFolderListener(
-      ExecutionBundle.message("select.working.directory.message"),
-      null,
-      project,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor(),
-      TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
-    );
+    var workingDirectoryField = new TextFieldWithBrowseButton(textField);
+    var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(ExecutionBundle.message("select.working.directory.message"));
+    workingDirectoryField.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     LabeledComponent<TextFieldWithBrowseButton> field = LabeledComponent.create(
       workingDirectoryField,
       ExecutionBundle.message("run.configuration.working.directory.label"),

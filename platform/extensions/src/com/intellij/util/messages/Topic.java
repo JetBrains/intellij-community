@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -92,6 +92,7 @@ public class Topic<L> {
    *
    * @return class of the interface that defines contract for working with the current topic
    */
+  @ApiStatus.Internal
   public @NotNull Class<L> getListenerClass() {
     return myListenerClass;
   }
@@ -118,6 +119,7 @@ public class Topic<L> {
    * @return broadcasting strategy configured for the current topic. Default value is {@link BroadcastDirection#TO_CHILDREN}
    * @see BroadcastDirection
    */
+  @ApiStatus.Internal
   public @NotNull BroadcastDirection getBroadcastDirection() {
     return myBroadcastDirection;
   }

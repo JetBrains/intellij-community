@@ -59,7 +59,7 @@ public class StdXMLReader {
    * @param systemID the non-null system ID.
    * @throws MalformedURLException if the system ID does not contain a valid URL
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
-   * @throws IOException           if an error occurred opening the stream
+   * @throws IOException           if an error occurred while opening the stream
    */
   public StdXMLReader(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL systemIDasURL;
@@ -134,7 +134,7 @@ public class StdXMLReader {
   }
 
   /**
-   * Scans the encoding from an &lt;?xml...?&gt; tag.
+   * Scans the encoding from an {@code <?xml...?>} tag.
    *
    * @param str the first tag in the XML data.
    * @return the encoding, or null if no encoding has been specified.
@@ -212,7 +212,9 @@ public class StdXMLReader {
 
       case 0xEF:
         for (int i = 0; i < 2; i++) {
-          pbstream.read();
+          if (pbstream.read() < 0) {
+            throw new IOException("Unexpected end of file");
+          }
         }
 
         return new InputStreamReader(pbstream, StandardCharsets.UTF_8);
@@ -312,7 +314,7 @@ public class StdXMLReader {
    * @param systemID the system ID, which is never null
    * @throws MalformedURLException if the system ID does not contain a valid URL
    * @throws FileNotFoundException if the system ID refers to a local file which does not exist
-   * @throws IOException           if an error occurred opening the stream
+   * @throws IOException           if an error occurred while opening the stream
    */
   public Reader openStream(String publicID, String systemID) throws MalformedURLException, FileNotFoundException, IOException {
     URL url = new URL(currentReader.systemId, systemID);

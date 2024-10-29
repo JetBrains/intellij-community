@@ -1,0 +1,56 @@
+f:org.jetbrains.builtInWebServer.PathInfo
+- <init>(java.nio.file.Path,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,Z):V
+- b:<init>(java.nio.file.Path,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile,java.lang.String,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getFile():com.intellij.openapi.vfs.VirtualFile
+- f:getFilePath():java.lang.String
+- f:getFileType():com.intellij.openapi.fileTypes.FileType
+- f:getIoFile():java.nio.file.Path
+- f:getModuleName():java.lang.String
+- f:getName():java.lang.String
+- f:getOrResolveVirtualFile():com.intellij.openapi.vfs.VirtualFile
+- f:getPath():java.lang.String
+- f:getRoot():com.intellij.openapi.vfs.VirtualFile
+- f:getRootLessPathIfPossible():java.lang.String
+- f:isDirectory():Z
+- f:isLibrary():Z
+- f:isRootNameOptionalInPath():Z
+- f:isValid():Z
+f:org.jetbrains.builtInWebServer.PathQuery
+- equals(java.lang.Object):Z
+- f:getSearchInArtifacts():Z
+- f:getSearchInLibs():Z
+- f:getUseHtaccess():Z
+- f:getUseVfs():Z
+- hashCode():I
+a:org.jetbrains.builtInWebServer.WebServerRootsProvider
+- <init>():V
+- a:getPathInfo(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):org.jetbrains.builtInWebServer.PathInfo
+- isClearCacheOnFileContentChanged(com.intellij.openapi.vfs.VirtualFile):Z
+- a:resolve(java.lang.String,com.intellij.openapi.project.Project,org.jetbrains.builtInWebServer.PathQuery):org.jetbrains.builtInWebServer.PathInfo
+f:org.jetbrains.ide.BuiltInServerBundle
+- s:getReloadOnSaveGotItContent():java.lang.String
+- s:getReloadOnSaveGotItTitle():java.lang.String
+- s:getReloadOnSavePreviewGotItContent():java.lang.String
+- s:getReloadOnSavePreviewGotItTitle():java.lang.String
+a:org.jetbrains.ide.BuiltInServerManager
+- sf:Companion:org.jetbrains.ide.BuiltInServerManager$Companion
+- <init>():V
+- a:addAuthToken(com.intellij.util.Url):com.intellij.util.Url
+- a:configureRequestToWebServer(java.net.URLConnection):V
+- a:createClientBootstrap():io.netty.bootstrap.Bootstrap
+- sf:getInstance():org.jetbrains.ide.BuiltInServerManager
+- a:getPort():I
+- a:getServerDisposable():com.intellij.openapi.Disposable
+- a:isOnBuiltInWebServer(com.intellij.util.Url):Z
+- a:waitForStart():org.jetbrains.ide.BuiltInServerManager
+f:org.jetbrains.ide.BuiltInServerManager$Companion
+- f:getInstance():org.jetbrains.ide.BuiltInServerManager
+a:org.jetbrains.ide.CustomPortServerManager
+- <init>():V
+- a:cannotBind(java.lang.Exception,I):V
+- a:getPort():I
+- a:isAvailableExternally():Z
+- a:setManager(org.jetbrains.ide.CustomPortServerManager$CustomPortService):V
+org.jetbrains.ide.CustomPortServerManager$CustomPortService
+- a:isBound():Z
+- a:rebind():Z

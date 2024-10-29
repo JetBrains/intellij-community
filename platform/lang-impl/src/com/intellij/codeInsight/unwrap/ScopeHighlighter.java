@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.unwrap;
 
@@ -20,9 +20,9 @@ import java.util.List;
 public final class ScopeHighlighter {
   public static final NotNullFunction<PsiElement,TextRange> NATURAL_RANGER = dom -> dom.getTextRange();
 
-  @NotNull private final Editor myEditor;
-  @NotNull private final List<RangeHighlighter> myActiveHighliters = new ArrayList<>();
-  @NotNull private final NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
+  private final @NotNull Editor myEditor;
+  private final @NotNull List<RangeHighlighter> myActiveHighliters = new ArrayList<>();
+  private final @NotNull NotNullFunction<? super PsiElement, ? extends TextRange> myRanger;
 
   public ScopeHighlighter(@NotNull Editor editor) {
     this(editor, NATURAL_RANGER);

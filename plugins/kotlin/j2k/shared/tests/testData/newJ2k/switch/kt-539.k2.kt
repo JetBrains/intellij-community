@@ -4,7 +4,7 @@ object SwitchDemo {
     @JvmStatic
     fun main(args: Array<String>) {
         val month = 8
-        var monthString: String?
+        val monthString: String?
         when (month) {
             1 -> monthString = "January"
             2 -> monthString = "February"

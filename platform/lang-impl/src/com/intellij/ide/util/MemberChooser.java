@@ -5,6 +5,7 @@ import com.intellij.codeInsight.generation.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -22,6 +23,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.ui.JBInsets;
@@ -47,7 +49,7 @@ import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.nullsLast;
 
-public class MemberChooser<T extends ClassMember> extends DialogWrapper implements DataProvider {
+public class MemberChooser<T extends ClassMember> extends DialogWrapper implements UiCompatibleDataProvider {
   protected Tree myTree;
   private DefaultTreeModel myTreeModel;
   protected JComponent[] myOptionControls;
@@ -73,9 +75,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected LinkedHashSet<T> mySelectedElements;
 
-  @NonNls private static final String PROP_SORTED = "MemberChooser.sorted";
-  @NonNls private static final String PROP_SHOWCLASSES = "MemberChooser.showClasses";
-  @NonNls private static final String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
+  private static final @NonNls String PROP_SORTED = "MemberChooser.sorted";
+  private static final @NonNls String PROP_SHOWCLASSES = "MemberChooser.showClasses";
+  private static final @NonNls String PROP_COPYJAVADOC = "MemberChooser.copyJavadoc";
 
   public MemberChooser(T[] elements,
                        boolean allowEmptySelection,
@@ -150,7 +152,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     myContainerNodes.clear();
 
     ApplicationManager.getApplication().runReadAction(() -> {
-      myTreeModel = buildModel();
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162824")) {
+        myTreeModel = buildModel();
+      }
     });
 
     myTree.setModel(myTreeModel);
@@ -399,8 +403,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     };
   }
 
-  @NotNull
-  protected String convertElementText(@NotNull String originalElementText) {
+  protected @NotNull String convertElementText(@NotNull String originalElementText) {
     return originalElementText;
   }
 
@@ -458,13 +461,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     return myOptionControls;
   }
 
-  @Nullable
-  private LinkedHashSet<T> getSelectedElementsList() {
+  private @Nullable LinkedHashSet<T> getSelectedElementsList() {
     return getExitCode() == OK_EXIT_CODE ? mySelectedElements : null;
   }
 
-  @Nullable
-  public List<T> getSelectedElements() {
+  public @Nullable List<T> getSelectedElements() {
     final LinkedHashSet<T> list = getSelectedElementsList();
     return list == null ? null : new ArrayList<>(list);
   }
@@ -662,14 +663,10 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     super.dispose();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return null;
-      return (DataProvider) slowId -> CommonDataKeys.PSI_ELEMENT.is(slowId) ? member.getElement() : null;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (!(ContainerUtil.getFirstItem(mySelectedElements) instanceof ClassMemberWithElement member)) return;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> member.getElement());
   }
 
   private final class MyTreeSelectionListener implements TreeSelectionListener {
@@ -726,7 +723,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   protected abstract static class ElementNodeImpl extends DefaultMutableTreeNode implements ElementNode {
     private final int myOrder;
-    @NotNull private final MemberChooserObject myDelegate;
+    private final @NotNull MemberChooserObject myDelegate;
 
     public ElementNodeImpl(@Nullable DefaultMutableTreeNode parent, @NotNull MemberChooserObject delegate, Ref<Integer> order) {
       myOrder = order.get();
@@ -737,9 +734,8 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
     }
 
-    @NotNull
     @Override
-    public MemberChooserObject getDelegate() {
+    public @NotNull MemberChooserObject getDelegate() {
       return myDelegate;
     }
 

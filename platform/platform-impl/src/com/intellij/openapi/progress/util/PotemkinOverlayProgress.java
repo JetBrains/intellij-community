@@ -2,15 +2,16 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.ide.actions.DumpThreadsAction;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.StandardProgressIndicator;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.KeyStrokeAdapter;
@@ -18,7 +19,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Obsolete;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +30,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 
+@ApiStatus.Internal
 public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
   implements StandardProgressIndicator, ProgressIndicatorWithDelayedPresentation, PingProgress, Disposable {
 
@@ -114,8 +116,8 @@ public final class PotemkinOverlayProgress extends AbstractProgressIndicatorBase
     }
     else if (DUMP_SHORTCUT.equals(shortcut)) {
       event.consume();
-      IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, myComponent);
-      DumpThreadsAction.dumpThreads(frame == null ? null : frame.getProject());
+      Project project = ProjectUtil.getProjectForComponent(myComponent);
+      DumpThreadsAction.dumpThreads(project);
     }
   }
 

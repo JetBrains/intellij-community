@@ -24,7 +24,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -41,7 +40,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.search.JavaVersionBasedScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +50,7 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.sun.jdi.ObjectCollectedException;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.EventRequest;
@@ -90,7 +89,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   /** The thread that the user is currently stepping through. */
   private final AtomicReference<ThreadReferenceProxyImpl> mySteppingThroughThread = new AtomicReference<>();
   private final AtomicReference<ThreadReferenceProxyImpl> myLastThread = new AtomicReference<>();
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private boolean myModifiedClassesScanRequired = false;
 
@@ -217,7 +216,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     myContextManager = new MyDebuggerStateManager();
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
-    ValueLookupManager.getInstance(getProject()).startListening();
+    ValueLookupManagerController.getInstance(getProject()).startListening();
     myDebugEnvironment = environment;
     myBaseScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();
@@ -243,6 +242,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return myContextManager;
   }
 
+  @NotNull
   public Project getProject() {
     return getProcess().getProject();
   }
@@ -409,7 +409,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void pause() {
-    myDebugProcess.getManagerThread().schedule(myDebugProcess.createPauseCommand());
+    myDebugProcess.getManagerThread().schedule(myDebugProcess.createPauseCommand(null));
   }
 
   /*Presentation*/
@@ -428,6 +428,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
   }
 
   public void dispose() {
+    updateAlarm.dispose();
     getProcess().dispose();
     clearSteppingThrough();
     myLastThread.set(null);
@@ -542,7 +543,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
         }
 
         if (currentThread == null) {
-          Collection<ThreadReferenceProxyImpl> allThreads = getProcess().getVirtualMachineProxy().allThreads();
+          Collection<ThreadReferenceProxyImpl> allThreads = suspendContext.getVirtualMachineProxy().allThreads();
           ThreadReferenceProxyImpl lastThread = myLastThread.get();
           if (lastThread != null && allThreads.contains(lastThread)) {
             currentThread = lastThread;
@@ -756,11 +757,10 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     }
 
     private void notifyThreadsRefresh() {
-      myUpdateAlarm.cancelAllRequests();
-      myUpdateAlarm.addRequest(() -> {
+      updateAlarm.cancelAndRequest(ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, () -> {
         final DebuggerStateManager contextManager = getContextManager();
         contextManager.fireStateChanged(contextManager.getContext(), Event.THREADS_REFRESH);
-      }, ApplicationManager.getApplication().isUnitTestMode() ? 0 : 100, ModalityState.nonModal());
+      });
     }
   }
 

@@ -19,11 +19,11 @@ class EnhancedSwitchStatements {
     }
     switch (new Random().nextInt()) {
       case 0 -> throw new IllegalStateException("no args");
-      <error descr="Different case kinds used in the switch">case 1:</error> break;
+      <error descr="Different 'case' kinds used in 'switch'">case 1:</error> break;
     }
     switch (new Random().nextInt()) {
       case 0: throw new IllegalStateException("no args"); break;
-      <error descr="Different case kinds used in the switch">case 1 -> { System.out.println("one"); }</error>
+      <error descr="Different 'case' kinds used in 'switch'">case 1 -> { System.out.println("one"); }</error>
     }
 
     { <error descr="Case statement outside switch">case 11 -> System.out.println("hi there");</error> }

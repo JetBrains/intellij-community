@@ -28,6 +28,6 @@ internal class FileHistoryDiffProcessor(project: Project,
 
   override fun getCurrentRequestProvider(): DiffRequestProducer? {
     val change = changeGetter() ?: return null
-    return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap(), true)
+    return VcsLogChangesBrowser.createDiffRequestProducer(project!!, change, HashMap())
   }
 }

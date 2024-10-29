@@ -4,7 +4,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -26,7 +26,7 @@ public class JoinLinesPerformanceTest extends LightJavaCodeInsightTestCase {
       }""";
     String inputText = text.replace("$bytes$", bytesOriginal);
 
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
+    Benchmark.newBenchmark(getTestName(false), () -> executeAction(IdeActions.ACTION_EDITOR_JOIN_LINES))
       .setup(() -> configureFromFileText("X.java", inputText))
       .start();
     String outputText = text.replace("$bytes$", bytesResult);

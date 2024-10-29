@@ -171,7 +171,10 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
       return@mapNotNull action
     }
     val extendedActions = model.dataContext.getData(QuickActionProvider.KEY)?.getActions(true) ?: emptyList()
-    val actions = (mainActions + extendedActions).mapNotNull {
+    val allActions = mainActions + extendedActions + extendedActions.flatMap {
+      (it as? ActionGroup)?.let { model.updateSession.children(it) } ?: emptyList()
+    }
+    val actions = allActions.mapNotNull {
       runCatching {
         val mode = model.actionMatches(pattern, matcher, it)
         if (mode != MatchMode.NONE) {
@@ -294,7 +297,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     return intentions
   }
 
-  private fun optionsFlow(
+  private suspend fun optionsFlow(
     pattern: String,
     presentationProvider: suspend (AnAction) -> Presentation,
   ): Flow<MatchedValue> {
@@ -303,7 +306,7 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
     val weightMatcher = buildWeightMatcher(pattern)
 
     val map = model.configurablesNames
-    val registrar = SearchableOptionsRegistrar.getInstance() as SearchableOptionsRegistrarImpl
+    val registrar = serviceAsync<SearchableOptionsRegistrar>() as SearchableOptionsRegistrarImpl
 
     val words = registrar.getProcessedWords(pattern)
     val filterOutInspections = Registry.`is`("go.to.action.filter.out.inspections", true)
@@ -322,24 +325,24 @@ internal class ActionAsyncProvider(private val model: GotoActionModel) {
       }
 
       var registrarDescriptions: MutableSet<OptionDescription>? = null
+      registrar.initialize()
       for (word in words) {
-        val descriptions = Objects.requireNonNullElse(registrar.getAcceptableDescriptions(word), hashSetOf())
-        descriptions.removeIf {
-          @Suppress("HardCodedStringLiteral")
-          it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections"
-        }
-
-        if (!descriptions.isEmpty()) {
-          if (registrarDescriptions == null) {
-            registrarDescriptions = descriptions
+        val descriptions = registrar.findAcceptableDescriptions(word)
+          ?.filter {
+            @Suppress("HardCodedStringLiteral")
+            !(it.path == "ActionManager" || filterOutInspections && it.groupName == "Inspections")
           }
-          else {
-            registrarDescriptions.retainAll(descriptions)
-          }
-        }
-        else {
+          ?.toHashSet()
+        if (descriptions.isNullOrEmpty()) {
           registrarDescriptions = null
           break
+        }
+
+        if (registrarDescriptions == null) {
+          registrarDescriptions = descriptions
+        }
+        else {
+          registrarDescriptions.retainAll(descriptions)
         }
       }
 

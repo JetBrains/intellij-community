@@ -6,6 +6,7 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.compiler.CompilerWorkspaceConfiguration
+import com.intellij.compiler.ParallelCompilationOption
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
 import com.intellij.compiler.options.CompilerOptionsFilter.Setting
 import com.intellij.compiler.options.CompilerUIConfigurable.applyResourcePatterns
@@ -25,10 +26,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
 import java.util.*
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JComponent
-import javax.swing.JTextField
+import javax.swing.*
 
 class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), SearchableConfigurable {
   private val disabledSettings: MutableSet<Setting> = EnumSet.noneOf(Setting::class.java)
@@ -42,7 +40,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
   private lateinit var cbDisplayNotificationPopup: JCheckBox
   private lateinit var cbEnableAutomakeCell: Cell<JCheckBox>
   private lateinit var cbEnableAutomake: JCheckBox
-  private lateinit var cbParallelCompilation: JCheckBox
+
+  private lateinit var comboboxJpsParallelCompilation: JComboBox<ParallelCompilationOption>
 
   lateinit var sharedHeapSizeField: JTextField
   lateinit var sharedVMOptionsField: ExpandableTextField
@@ -93,13 +92,17 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
         cbEnableAutomake = cbEnableAutomakeCell.component
       }
       row {
-        cbParallelCompilation = checkBox(JavaCompilerBundle.message("settings.compile.independent.modules.in.parallel"))
-          .comment(JavaCompilerBundle.message("settings.parallel.module.compile.may.require.larger.heap.size"))
+        cbRebuildOnDependencyChange = checkBox(JavaCompilerBundle.message("settings.rebuild.module.on.dependency.change"))
           .component
       }
       row {
-        cbRebuildOnDependencyChange = checkBox(JavaCompilerBundle.message("settings.rebuild.module.on.dependency.change"))
+        label(JavaCompilerBundle.message("settings.compile.independent.modules.in.parallel"))
+        comboboxJpsParallelCompilation = comboBox(ParallelCompilationOption.entries)
           .component
+        contextHelp(
+          title = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.title"),
+          description = JavaCompilerBundle.message("settings.parallel.module.compile.context.help.description")
+        )
       }
     }
 
@@ -184,7 +187,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR to listOf(cbAutoShowFirstError),
       Setting.DISPLAY_NOTIFICATION_POPUP to listOf(cbDisplayNotificationPopup),
       Setting.AUTO_MAKE to listOf(cbEnableAutomake),
-      Setting.PARALLEL_COMPILATION to listOf(cbParallelCompilation),
+      Setting.PARALLEL_COMPILATION to listOf(comboboxJpsParallelCompilation),
       Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE to listOf(cbRebuildOnDependencyChange),
       Setting.HEAP_SIZE to listOf(heapSizeField, sharedHeapSizeField),
       Setting.COMPILER_VM_OPTIONS to listOf(vmOptionsField, sharedVMOptionsField),
@@ -214,8 +217,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
       if (!disabledSettings.contains(Setting.AUTO_MAKE)) {
         workspaceConfiguration.MAKE_PROJECT_ON_SAVE = cbEnableAutomake.isSelected
       }
-      if (!disabledSettings.contains(Setting.PARALLEL_COMPILATION) && configuration.isParallelCompilationEnabled != cbParallelCompilation.isSelected) {
-        configuration.isParallelCompilationEnabled = cbParallelCompilation.isSelected
+      if (!disabledSettings.contains(Setting.PARALLEL_COMPILATION)) {
+        configuration.parallelCompilationOption = comboboxJpsParallelCompilation.getItemAt(comboboxJpsParallelCompilation.selectedIndex)
       }
       if (!disabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)) {
         workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE = cbRebuildOnDependencyChange.isSelected
@@ -257,8 +260,8 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     cbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY)
     cbAssertNotNull.setSelected(configuration.isAddNotNullAssertions)
     cbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE)
-    cbParallelCompilation.setSelected(configuration.isParallelCompilationEnabled())
     cbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE)
+    comboboxJpsParallelCompilation.selectedItem = configuration.parallelCompilationOption
     val heapSize = workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE
     heapSizeField.text = if (heapSize > 0) heapSize.toString() else ""
     // for compatibility with older projects
@@ -291,7 +294,7 @@ class CompilerUIConfigurableKt(val project: Project) : DslConfigurableBase(), Se
     isModified = isModified || !disabledSettings.contains(Setting.AUTO_MAKE)
                  && ComparingUtils.isModified(cbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE)
     isModified = isModified || !disabledSettings.contains(Setting.PARALLEL_COMPILATION)
-                 && ComparingUtils.isModified(cbParallelCompilation, configuration.isParallelCompilationEnabled())
+                 && (comboboxJpsParallelCompilation.selectedItem != configuration.parallelCompilationOption)
     isModified = isModified || !disabledSettings.contains(Setting.REBUILD_MODULE_ON_DEPENDENCY_CHANGE)
                  && ComparingUtils.isModified(cbRebuildOnDependencyChange, workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE)
     isModified = isModified || !disabledSettings.contains(Setting.HEAP_SIZE)

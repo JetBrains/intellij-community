@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.xdebugger.XDebuggerManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DebuggerCodeToolbarGroup : DefaultActionGroup() {
   override fun getActionUpdateThread() = ActionUpdateThread.BGT
 

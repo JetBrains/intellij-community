@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -196,18 +196,18 @@ class RegisterToolWindowTaskBuilder @PublishedApi internal constructor(private v
 
   @PublishedApi
   internal fun build(): RegisterToolWindowTask {
-    val result = RegisterToolWindowTask(id = id,
-                                        anchor = anchor,
-                                        component = null,
-                                        sideTool = sideTool,
-                                        canCloseContent = canCloseContent,
-                                        shouldBeAvailable = shouldBeAvailable,
-                                        contentFactory = contentFactory,
-                                        icon = icon,
-                                        stripeTitle = stripeTitle)
-
-    result.hideOnEmptyContent = hideOnEmptyContent
-    return result
+    return RegisterToolWindowTask(RegisterToolWindowTaskData(
+      id = id,
+      anchor = anchor,
+      component = null,
+      sideTool = sideTool,
+      canCloseContent = canCloseContent,
+      shouldBeAvailable = shouldBeAvailable,
+      contentFactory = contentFactory,
+      icon = icon,
+      stripeTitle = stripeTitle,
+      hideOnEmptyContent = hideOnEmptyContent,
+    ))
   }
 }
 

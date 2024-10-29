@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.LoadingNode;
+import com.intellij.ui.treeStructure.BgtAwareTreeModel;
 import com.intellij.ui.treeStructure.CachingTreePath;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
@@ -40,7 +41,9 @@ import static java.util.Collections.emptyList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 import static org.jetbrains.concurrency.Promises.resolvedPromise;
 
-public final class AsyncTreeModel extends AbstractTreeModel implements Searchable, TreeVisitor.Acceptor, CachedTreePresentationSupport {
+public final class AsyncTreeModel extends AbstractTreeModel
+  implements Searchable, TreeVisitor.LoadingAwareAcceptor, CachedTreePresentationSupport, BgtAwareTreeModel
+{
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Invoker foreground;
   private final Invoker background;
@@ -236,6 +239,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
    * @param allowLoading load all needed children if {@code true}
    * @return a promise that will be resolved when visiting is finished
    */
+  @Override
   public @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
     var walker = createWalker(visitor, allowLoading);
     if (allowLoading) {

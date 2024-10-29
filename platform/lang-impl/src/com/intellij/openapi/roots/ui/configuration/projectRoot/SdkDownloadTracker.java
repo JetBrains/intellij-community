@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.google.common.collect.Sets;
@@ -40,8 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public final class SdkDownloadTracker {
   private static final Logger LOG = Logger.getInstance(SdkDownloadTracker.class);
 
-  @NotNull
-  public static SdkDownloadTracker getInstance() {
+  public static @NotNull SdkDownloadTracker getInstance() {
     return ApplicationManager.getApplication().getService(SdkDownloadTracker.class);
   }
 
@@ -70,8 +69,7 @@ public final class SdkDownloadTracker {
     myPendingTasks.remove(task);
   }
 
-  @Nullable
-  private PendingDownload findTask(@NotNull Sdk sdk) {
+  private @Nullable PendingDownload findTask(@NotNull Sdk sdk) {
     for (PendingDownload task : myPendingTasks) {
       if (task.containsSdk(sdk)) {
         return task;
@@ -122,8 +120,7 @@ public final class SdkDownloadTracker {
    * Looks into the currently downloading SDK instances
    * and returns one with matching name
    */
-  @NotNull
-  public List<Sdk> findDownloadingSdks(@Nullable String sdkName) {
+  public @NotNull List<Sdk> findDownloadingSdks(@Nullable String sdkName) {
     if (sdkName == null) return Collections.emptyList();
 
     List<Sdk> result = new ArrayList<>();
@@ -231,8 +228,7 @@ public final class SdkDownloadTracker {
   // it does call the method from the dialog setup, with NON_MODAL modality, which
   // we would like to ignore.
   private static final class SmartPendingDownloadModalityTracker implements PendingDownloadModalityTracker{
-    @NotNull
-    static ModalityState modality() {
+    static @NotNull ModalityState modality() {
       ModalityState state = ModalityState.current();
       TransactionGuard.getInstance().assertWriteSafeContext(state);
       return state;
@@ -270,8 +266,7 @@ public final class SdkDownloadTracker {
       return myCollection.contains(sdk);
     }
 
-    @NotNull
-    synchronized List<T> copy() {
+    synchronized @NotNull List<T> copy() {
       return new ArrayList<>(myCollection);
     }
   }

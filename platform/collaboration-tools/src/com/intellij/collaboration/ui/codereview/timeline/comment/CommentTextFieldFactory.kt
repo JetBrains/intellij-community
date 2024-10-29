@@ -4,6 +4,7 @@ package com.intellij.collaboration.ui.codereview.timeline.comment
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.collaboration.ui.codereview.CodeReviewChatItemUIUtil
 import com.intellij.collaboration.ui.icon.IconsProvider
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.actions.IncrementalFindAction
@@ -39,7 +40,7 @@ object CommentTextFieldFactory {
     project: Project?,
     document: Document,
     scrollOnChange: ScrollOnChangePolicy = ScrollOnChangePolicy.ScrollToField,
-    placeHolder: @Nls String? = null
+    placeHolder: @Nls String? = null,
   ): EditorTextField = CommentTextField(project, document).apply {
     putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
     setPlaceholder(placeHolder)
@@ -127,7 +128,7 @@ object CommentTextFieldFactory {
 
 private class CommentTextField(
   project: Project?,
-  document: Document
+  document: Document,
 ) : EditorTextField(document, project, FileTypes.PLAIN_TEXT) {
   init {
     isOneLineMode = false
@@ -148,11 +149,10 @@ private class CommentTextField(
     }
   }
 
-  override fun getData(dataId: String): Any? {
-    if (PlatformCoreDataKeys.FILE_EDITOR.`is`(dataId)) {
-      return editor?.let { TextEditorProvider.getInstance().getTextEditor(it) } ?: super.getData(dataId)
-    }
-    return super.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    val editor = editor ?: return
+    sink[PlatformCoreDataKeys.FILE_EDITOR] = TextEditorProvider.getInstance().getTextEditor(editor)
   }
 }
 

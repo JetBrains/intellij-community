@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components.panels
 
 import com.intellij.ui.components.panels.ListLayout.Axis
@@ -268,8 +268,9 @@ class ListLayout private constructor(
      * @param vertGrow should the component be stretched vertically
      */
     @JvmStatic
-    fun horizontal(horGap: Int = 0, vertAlignment: Alignment = Alignment.CENTER, vertGrow: GrowPolicy = GrowPolicy.NO_GROW): ListLayout =
-      ListLayout(Axis.X, vertAlignment, vertGrow, horGap)
+    fun horizontal(horGap: Int = 0, vertAlignment: Alignment = Alignment.CENTER, vertGrow: GrowPolicy = GrowPolicy.NO_GROW): ListLayout {
+      return ListLayout(Axis.X, vertAlignment, vertGrow, horGap)
+    }
 
     /**
      * Create a simple vertical variant - major axis [Axis.Y]
@@ -279,9 +280,9 @@ class ListLayout private constructor(
      * @param horGrow should the component be stretched horizontally
      */
     @JvmStatic
-    fun vertical(vertGap: Int = 0, horAlignment: Alignment = Alignment.START, horGrow: GrowPolicy = GrowPolicy.GROW): ListLayout =
-      ListLayout(Axis.Y, horAlignment, horGrow, vertGap)
-
+    fun vertical(vertGap: Int = 0, horAlignment: Alignment = Alignment.START, horGrow: GrowPolicy = GrowPolicy.GROW): ListLayout {
+      return ListLayout(Axis.Y, horAlignment, horGrow, vertGap)
+    }
 
     /**
      * How much the difference between min and pref sizes is shrunk
@@ -300,6 +301,4 @@ class ListLayout private constructor(
 
     private fun getVisibleComponents(container: Container): List<Component> = container.components.filter { it.isVisible }
   }
-
-
 }

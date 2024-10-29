@@ -7,10 +7,12 @@ import com.intellij.framework.detection.impl.FrameworkDetectionContextImpl;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ConfigureDetectedFrameworksDialog extends DialogWrapper {
   private final DetectedFrameworksComponent myComponent;
   private final Project myProject;

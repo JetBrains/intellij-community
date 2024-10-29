@@ -5,7 +5,9 @@ import com.intellij.completion.ngram.slp.counting.trie.ArrayTrieCounter
 import com.intellij.completion.ngram.slp.modeling.ngram.JMModel
 import com.intellij.completion.ngram.slp.modeling.ngram.NGramModel
 import com.intellij.completion.ngram.slp.modeling.runners.ModelRunner
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Double,
                                   model: NGramModel, vocabulary: VocabularyWithLimit) : ModelRunner(model, vocabulary) {
 
@@ -87,6 +89,7 @@ class NGramIncrementalModelRunner(private val nGramOrder: Int, val lambda: Doubl
   }
 }
 
+@ApiStatus.Internal
 class NGramModelScorer(private val scoringFunction: (List<String>) -> Double, prefix: Array<String>) {
   private val tokens: MutableList<String> = mutableListOf(*prefix, "!placeholder!")
 

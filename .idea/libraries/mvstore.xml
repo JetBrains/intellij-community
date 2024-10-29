@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="mvstore" type="repository">
-    <properties maven-id="com.h2database:h2-mvstore:2.2.224">
+    <properties maven-id="com.h2database:h2-mvstore:2.3.232">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar">
-          <sha256sum>10c78293cb07bbeeb37b0cc2c919a7909e95c9e4eef0467f21bf961b2492214c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232.jar">
+          <sha256sum>2c8225cd73b2394382b9d0016d9278a00291562224a594eef00c00a6ac50bc04</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.2.224/h2-mvstore-2.2.224-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/h2database/h2-mvstore/2.3.232/h2-mvstore-2.3.232-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

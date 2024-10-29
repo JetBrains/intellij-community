@@ -2,15 +2,17 @@
 package com.jetbrains.python.packaging.conda
 
 import com.intellij.execution.process.CapturingProcessHandler
+import com.intellij.execution.process.ProcessOutput
 import com.intellij.execution.target.TargetProgressIndicator
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withRawProgressReporter
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.packaging.PyExecutionException
 import com.jetbrains.python.packaging.common.PythonPackage
@@ -34,15 +36,15 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
 
   override val repositoryManager: CondaRepositoryManger = CondaRepositoryManger(project, sdk)
 
-  override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+  override suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
     return if (specification is CondaPackageSpecification) {
       runPackagingOperationOrShowErrorDialog(sdk, message("python.new.project.install.failed.title", specification.name), specification.name) {
-        runConda("install", specification.buildInstallationString() + "-y", message("conda.packaging.install.progress", specification.name))
+        runConda("install", specification.buildInstallationString() + "-y" + options, message("conda.packaging.install.progress", specification.name))
         refreshPaths()
         reloadPackages()
       }
     }
-    else return super.installPackage(specification)
+    else return super.installPackage(specification, emptyList<String>())
   }
 
   override suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
@@ -91,7 +93,8 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       .filterNot { it.startsWith("#") }
       .map { line -> line.split("\\s+".toRegex()) }
       .filterNot { it.size < 2 }
-      .map { CondaPackage(it[0], it[1], installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
+      //TODO: fix
+      .map { CondaPackage(it[0], it[1], editableMode = false, installedWithPip = (it.size >= 4 && it[3] == "pypi")) }
       .sortedWith(compareBy(CondaPackage::name))
       .toList()
   }
@@ -116,8 +119,10 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       val commandLineString = StringUtil.join(commandLine, " ")
       val handler = CapturingProcessHandler(process, targetedCommandLine.charset, commandLineString)
 
-      val result = withBackgroundProgressIndicator(project, text, cancellable = true) {
-        handler.runProcess(10 * 60 * 1000)
+      val result = withBackgroundProgress(project, text, true) {
+        withRawProgressReporter<ProcessOutput?> {
+          handler.runProcess(10 * 60 * 1000)
+        } as ProcessOutput
       }
 
       result.checkSuccess(thisLogger())
@@ -129,5 +134,4 @@ class CondaPackageManager(project: Project, sdk: Sdk) : PipBasedPackageManager(p
       else result.stdout
     }
   }
-
 }

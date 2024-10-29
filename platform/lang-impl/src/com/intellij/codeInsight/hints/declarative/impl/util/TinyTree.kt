@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hints.declarative.impl.util
 
-import com.intellij.openapi.fileEditor.impl.text.VersionedExternalizer
+import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.readINT
 import com.intellij.util.io.DataInputOutputUtil.writeINT
 import it.unimi.dsi.fastutil.bytes.ByteArrayList
@@ -107,14 +107,14 @@ class TinyTree<T> private constructor(
 
   class TooManyElementsException : Exception()
 
-  abstract class Externalizer<T> : VersionedExternalizer<TinyTree<T>> {
+  abstract class Externalizer<T> : DataExternalizer<TinyTree<T>> {
 
     companion object {
       // increment on format changed
       private const val SERDE_VERSION = 0
     }
 
-    override fun serdeVersion(): Int = SERDE_VERSION
+    open fun serdeVersion(): Int = SERDE_VERSION
 
     abstract fun writeDataPayload(output: DataOutput, payload: T)
 
@@ -131,11 +131,11 @@ class TinyTree<T> private constructor(
     }
 
     override fun read(input: DataInput): TinyTree<T> {
-      val size       = readINT(input)
+      val size = readINT(input)
       val firstChild = readByteArray(input, size)
-      val nextChild  = readByteArray(input, size)
-      val payload    = readByteArray(input, size)
-      val data       = ArrayList<T>(size)
+      val nextChild = readByteArray(input, size)
+      val payload = readByteArray(input, size)
+      val data = ArrayList<T>(size)
       repeat(size) {
         data.add(readDataPayload(input))
       }

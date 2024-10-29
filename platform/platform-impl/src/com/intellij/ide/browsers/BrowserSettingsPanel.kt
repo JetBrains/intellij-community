@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers
 
 import com.intellij.ide.GeneralLocalSettings
@@ -137,7 +137,7 @@ internal class BrowserSettingsPanel {
         }
       }.component
       alternativeBrowserPathField = cell(TextFieldWithBrowseButton()).applyToComponent {
-        addBrowseFolderListener(IdeBundle.message("title.select.path.to.browser"), null, null, APP_FILE_CHOOSER_DESCRIPTOR)
+        addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor().withTitle(IdeBundle.message("title.select.path.to.browser")))
       }.align(AlignX.FILL)
         .component
     }
@@ -252,7 +252,6 @@ internal class BrowserSettingsPanel {
   }
 
   companion object {
-    private val APP_FILE_CHOOSER_DESCRIPTOR = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()
     private val PATH_COLUMN_INFO: EditableColumnInfo<ConfigurableWebBrowser, String> = object : EditableColumnInfo<ConfigurableWebBrowser, String>(
       IdeBundle.message("settings.browsers.column.path")) {
       override fun valueOf(item: ConfigurableWebBrowser): String? {
@@ -264,7 +263,7 @@ internal class BrowserSettingsPanel {
       }
 
       override fun getEditor(item: ConfigurableWebBrowser): TableCellEditor? {
-        return LocalPathCellEditor().fileChooserDescriptor(APP_FILE_CHOOSER_DESCRIPTOR).normalizePath(true)
+        return LocalPathCellEditor().fileChooserDescriptor(FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor()).normalizePath(true)
       }
     }
     private val ACTIVE_COLUMN_INFO: EditableColumnInfo<ConfigurableWebBrowser, Boolean> = object : EditableColumnInfo<ConfigurableWebBrowser, Boolean>() {

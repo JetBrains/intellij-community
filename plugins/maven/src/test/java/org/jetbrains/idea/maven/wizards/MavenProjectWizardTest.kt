@@ -12,10 +12,9 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
-import com.intellij.testFramework.closeProjectAsync
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.useProjectAsync
 import com.intellij.testFramework.utils.module.assertModules
-import com.intellij.testFramework.withProjectAsync
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -26,6 +25,9 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
   override fun runInDispatchThread() = false
 
   fun `test when module is created then its pom is unignored`() = runBlocking {
+    Registry.get("ide.activity.tracking.enable.debug").setValue(true, testRootDisposable)
+    setSystemProperty("idea.force.commit.on.external.change", "true", testRootDisposable)
+
     // create project
     waitForProjectCreation {
       createProjectFromTemplate(JAVA) {
@@ -33,7 +35,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
         it.javaBuildSystemData!!.buildSystem = MAVEN
         it.javaMavenData!!.sdk = mySdk
       }
-    }.withProjectAsync { project ->
+    }.useProjectAsync { project ->
       val mavenProjectsManager = MavenProjectsManager.getInstance(project)
       // import project
       assertModules(project, "project")
@@ -59,8 +61,7 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
 
       // verify pom unignored
       assertSize(0, mavenProjectsManager.ignoredFilesPaths)
-    }.closeProjectAsync()
-    return@runBlocking
+    }
   }
 
   fun `test new maven module inherits project sdk by default`() = runBlocking {
@@ -94,7 +95,6 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
       val modifiableModel = ModuleRootManager.getInstance(untitledModule).modifiableModel
       assertTrue(modifiableModel.isSdkInherited)
     }
-    return@runBlocking
   }
 
   fun `test configurator creates module in project structure modifiable model`() = runBlocking {
@@ -131,6 +131,5 @@ class MavenProjectWizardTest : MavenNewProjectWizardTestCase() {
         modulesConfigurator.apply()
       }
     }
-    return@runBlocking
   }
 }

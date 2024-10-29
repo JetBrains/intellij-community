@@ -6,10 +6,7 @@ import com.intellij.util.asSafely
 import com.jetbrains.jsonSchema.extension.JsonSchemaValidation
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter
 import com.jetbrains.jsonSchema.ide.JsonSchemaService
-import com.jetbrains.jsonSchema.impl.IfThenElse
-import com.jetbrains.jsonSchema.impl.JsonSchemaObject
-import com.jetbrains.jsonSchema.impl.JsonSchemaType
-import com.jetbrains.jsonSchema.impl.MergedJsonSchemaObject
+import com.jetbrains.jsonSchema.impl.*
 import com.jetbrains.jsonSchema.impl.light.legacy.LegacyJsonSchemaObjectMerger
 import com.jetbrains.jsonSchema.impl.light.versions.JsonSchemaInterpretationStrategy
 
@@ -123,6 +120,10 @@ internal class MergedJsonSchemaObjectView(
     if (otherDef == null) return baseDef
 
     return LightweightJsonSchemaObjectMerger.mergeObjects(baseDef, otherDef, otherDef)
+  }
+
+  override fun getMetadata(): MutableList<JsonSchemaMetadataEntry>? {
+    return other.metadata ?: base.metadata
   }
 
   override fun hasPatternProperties(): Boolean {

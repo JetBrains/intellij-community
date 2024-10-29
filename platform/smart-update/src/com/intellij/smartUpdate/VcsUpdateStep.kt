@@ -9,8 +9,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.update.ActionInfo
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction
 import com.intellij.openapi.vcs.update.ScopeInfo
-import com.intellij.ui.components.Label
-import com.intellij.ui.components.Link
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.ComponentPredicate
 import javax.swing.JComponent
@@ -43,8 +41,8 @@ class VcsUpdateStep : SmartUpdateStep {
   override fun getDetailsComponent(project: Project): JComponent? {
     if (!ActionInfo.UPDATE.showOptions(project)) return super.getDetailsComponent(project)
     return panel {
-      row { cell(Label(SmartUpdateBundle.message("warning.default.update.options.will.be.applied"))) }
-      row { cell(Link(SmartUpdateBundle.message("label.change.options")) { showOptionsDialog(project) }) }
+      row { label(SmartUpdateBundle.message("warning.default.update.options.will.be.applied")) }
+      row { link(SmartUpdateBundle.message("label.change.options")) { showOptionsDialog(project) } }
     }
   }
 

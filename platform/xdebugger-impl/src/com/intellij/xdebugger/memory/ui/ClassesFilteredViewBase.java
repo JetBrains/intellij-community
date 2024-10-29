@@ -4,10 +4,7 @@ package com.intellij.xdebugger.memory.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -40,7 +37,7 @@ import java.awt.event.KeyEvent;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implements Disposable {
+public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implements UiDataProvider, Disposable {
   protected static final double DELAY_BEFORE_INSTANCES_QUERY_COEFFICIENT = 0.5;
   protected static final double MAX_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(2);
   protected static final int DEFAULT_BATCH_SIZE = Integer.MAX_VALUE;
@@ -264,10 +261,9 @@ public abstract class ClassesFilteredViewBase extends BorderLayoutPanel implemen
     return myTable;
   }
 
-  public Object getData(@NotNull String dataId) {
-    return null;
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
   }
-
 
   private static class FilterTextField extends SearchTextField {
     FilterTextField() {

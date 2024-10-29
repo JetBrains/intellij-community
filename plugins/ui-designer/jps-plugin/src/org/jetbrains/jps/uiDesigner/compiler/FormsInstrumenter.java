@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.uiDesigner.compiler;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -26,7 +26,7 @@ import org.jetbrains.jps.incremental.instrumentation.ClassProcessingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
-import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
+import org.jetbrains.jps.incremental.storage.OneToManyPathMapping;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -86,19 +86,17 @@ public final class FormsInstrumenter extends FormsBuilder {
       final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(sdk, platformCp, classpath, outputConsumer);
 
       try {
-        final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
-
-        final OneToManyPathsMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap();
-
+        Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer, config.isUseDynamicBundles());
+        OneToManyPathMapping sourceToFormMap = context.getProjectDescriptor().dataManager.getSourceToFormMap(chunk.representativeTarget());
         for (Map.Entry<File, Collection<File>> entry : processed.entrySet()) {
           final File src = entry.getKey();
           final Collection<File> forms = entry.getValue();
 
-          final Collection<String> formPaths = new ArrayList<>(forms.size());
+          List<String> formPaths = new ArrayList<>(forms.size());
           for (File form : forms) {
             formPaths.add(form.getPath());
           }
-          sourceToFormMap.update(src.getPath(), formPaths);
+          sourceToFormMap.setOutputs(src.getPath(), formPaths);
           srcToForms.remove(src);
         }
         // clean mapping

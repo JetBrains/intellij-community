@@ -45,16 +45,25 @@ interface PluginManagementPolicy {
   fun canEnablePlugin(descriptor: IdeaPluginDescriptor?): Boolean
 
   /**
-   * Allows to prohibit installation of [descriptor] from remote repositories
+   * Allows or prohibits installation of [descriptor] from remote repositories
    */
   fun canInstallPlugin(descriptor: IdeaPluginDescriptor?): Boolean
 
   /**
-   * Allows to prohibit installation of plugins from disk. Disables relevant item in the cog menu of Marketplace UI
+   * Allows or prohibits installation of plugins from disk. Disables relevant item in the cog menu of Marketplace UI
    *
    * @see com.intellij.ide.plugins.InstallFromDiskAction
    */
   fun isInstallFromDiskAllowed(): Boolean
+
+  /**
+   * Allows or prohibits the plugin auto-update. If prohibited, the corresponding setting is forcefully disabled and inactive.
+   *
+   * Note: added in 24.3, a default implementation is given for compatibility.
+   *
+   * @see com.intellij.openapi.updateSettings.impl.PluginAutoUpdateService
+   */
+  fun isPluginAutoUpdateAllowed(): Boolean = DefaultPluginManagementPolicyImpl.isPluginAutoUpdateAllowed()
 
   companion object {
     @JvmStatic

@@ -1,0 +1,8 @@
+// "Remove invocation" "true"
+
+fun x() {
+    val y = (1 + 2)(<caret>)
+}
+
+// IGNORE_K1
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.UnresolvedInvocationQuickFix$RemoveInvocationQuickFix

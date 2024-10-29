@@ -21,9 +21,11 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class DirectoryContentImpl extends DiffContentBase implements DirectoryContent {
   @NotNull private final VirtualFile myFile;
   @Nullable private final Project myProject;

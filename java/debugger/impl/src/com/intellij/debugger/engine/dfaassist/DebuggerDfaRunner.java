@@ -291,7 +291,10 @@ public class DebuggerDfaRunner {
     }
     else if (valueInfo instanceof JdiValueInfo.ObjectRef) {
       TypeConstraint exactType = getType(myBody, ((JdiValueInfo.ObjectRef)valueInfo).getSignature());
-      if (exactType == TypeConstraints.TOP) return;
+      if (exactType == TypeConstraints.TOP) {
+        state.meetDfType(var, DfTypes.NOT_NULL_OBJECT);
+        return;
+      }
       state.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
       if (valueInfo instanceof JdiValueInfo.EnumConstant) {
         String name = ((JdiValueInfo.EnumConstant)valueInfo).getName();

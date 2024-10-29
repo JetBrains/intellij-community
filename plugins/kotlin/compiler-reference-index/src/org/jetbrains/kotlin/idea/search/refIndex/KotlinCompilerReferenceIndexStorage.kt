@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.server.BuildManager
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
@@ -44,8 +43,8 @@ class KotlinCompilerReferenceIndexStorage private constructor(
 
         private val LOG = logger<KotlinCompilerReferenceIndexStorage>()
 
-        fun open(project: Project): KotlinCompilerReferenceIndexStorage? {
-            val projectPath = runReadAction { project.takeUnless(Project::isDisposed)?.basePath } ?: return null
+        fun open(project: Project, projectPath: String): KotlinCompilerReferenceIndexStorage? {
+            if (project.isDisposed) return null
             val buildDataPaths = project.buildDataPaths
             val kotlinDataContainerPath = buildDataPaths.kotlinDataContainer ?: kotlin.run {
                 LOG.warn("${SettingConstants.KOTLIN_DATA_CONTAINER_ID} is not found")

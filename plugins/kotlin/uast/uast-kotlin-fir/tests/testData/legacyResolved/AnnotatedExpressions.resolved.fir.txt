@@ -22,8 +22,8 @@ USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> Decompiled_M
 UAnnotation (fqName = kotlin.Suppress) -> USimpleNameReferenceExpression (identifier = Suppress) -> Decompiled_Class: Suppress
 USwitchClauseExpressionWithBody -> UQualifiedReferenceExpression -> Decompiled_Method: isBlank
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isBlank) -> FUN: isBlank
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isBlank) -> Decompiled_Method: isBlank
 UBinaryExpression (operator = !=) -> UQualifiedReferenceExpression -> Decompiled_Method: isNotEmpty
 UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = str) -> Kotlin_Light_Value_Parameter: str
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> FUN: isNotEmpty
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = isNotEmpty) -> Decompiled_Method: isNotEmpty
 UBinaryExpression (operator = !=) -> USimpleNameReferenceExpression (identifier = !=) -> FUN: equals

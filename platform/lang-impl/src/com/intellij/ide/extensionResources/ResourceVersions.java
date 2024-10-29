@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.extensionResources;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -24,8 +24,7 @@ import java.util.Objects;
 
 @State(name = "ExtensionsRootType", storages = @Storage(StoragePathMacros.CACHE_FILE))
 final class ResourceVersions implements PersistentStateComponent<ResourceVersions.State> {
-  @NotNull
-  public static ResourceVersions getInstance() {
+  public static @NotNull ResourceVersions getInstance() {
     return ApplicationManager.getApplication().getService(ResourceVersions.class);
   }
 
@@ -39,9 +38,8 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
     myState.rememberPlugin(plugin);
   }
 
-  @Nullable
   @Override
-  public State getState() {
+  public @Nullable State getState() {
     return myState.clone();
   }
 
@@ -104,8 +102,7 @@ final class ResourceVersions implements PersistentStateComponent<ResourceVersion
       return plugin.getPluginId().getIdString();
     }
 
-    @NotNull
-    private static String getVersion(@NotNull IdeaPluginDescriptor plugin) {
+    private static @NotNull String getVersion(@NotNull IdeaPluginDescriptor plugin) {
       if (!plugin.isBundled()) {
         return Objects.requireNonNull(plugin.getVersion());
       }

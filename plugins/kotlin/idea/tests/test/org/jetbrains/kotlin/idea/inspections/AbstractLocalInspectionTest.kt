@@ -30,7 +30,10 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingPassBase
 import org.jetbrains.kotlin.idea.intentions.computeOnBackground
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
@@ -68,13 +71,13 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         if (candidateFiles.isEmpty()) {
             throw AssertionError(
-                ".inspection file is not found for " + testDataFile +
+                "$inspectionFileName file is not found for " + testDataFile +
                         "\nAdd it to base directory of test data. It should contain fully-qualified name of inspection class."
             )
         }
         if (candidateFiles.size > 1) {
             throw AssertionError(
-                "Several .inspection files are available for " + testDataFile +
+                "Several $inspectionFileName files are available for " + testDataFile +
                         "\nPlease remove some of them\n" + candidateFiles
             )
         }
@@ -117,7 +120,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
       These "extra" file names should be of the form: "xxx.1.blah", "xxx.2.foo", "xxx.3.xml" etc.
       I.e., they should start with the main file name, followed by sequential number 1,2,3..., followed by any extension.
      */
-    private fun findExtraFilesForTest(mainFile: File): List<String> {
+    protected fun findExtraFilesForTest(mainFile: File): List<String> {
         var i = 1
         val extraFileNames = mutableListOf<String>()
         extraFileLoop@ while (true) {
@@ -242,8 +245,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
 
         val fixDescription = localFixTextString?.let { "with specified text '$localFixTextString'" } ?: ""
         if (localFixTextString != "none") {
-            assertTrue(
-              "Fix $fixDescription not found in actions available:\n $availableDescription",
+            assertTrue("Fix '$fixDescription' not found among ${allLocalFixActions.size} actions available:\n $availableDescription",
               localFixActions.isNotEmpty()
             )
         }
@@ -343,7 +345,7 @@ abstract class AbstractLocalInspectionTest : KotlinLightCodeInsightFixtureTestCa
                 noLocalFixTextStrings,
             )
         ) {
-            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied", Files.exists(afterFileAbsolutePath))
+            assertFalse("${afterFileAbsolutePath.fileName} should not exist as no action could be applied:\n$afterFileAbsolutePath", Files.exists(afterFileAbsolutePath))
             return
         }
 

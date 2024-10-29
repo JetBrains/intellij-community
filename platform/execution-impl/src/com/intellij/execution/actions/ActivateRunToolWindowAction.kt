@@ -15,7 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ActivateRunToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.RUN, AllIcons.Toolwindows.ToolWindowRun) {
   override fun ensureToolWindowCreated(project: Project) {
     val runContentManager = RunContentManager.getInstance(project) as RunContentManagerImpl

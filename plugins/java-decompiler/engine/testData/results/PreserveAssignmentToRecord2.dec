@@ -15,16 +15,27 @@ public record PreserveAssignmentToRecord2(int x) {
 
 class 'org/example/PreserveAssignmentToRecord2' {
    method '<init> (I)V' {
+      4      6
       5      6
       6      6
+      7      6
+      8      6
       9      7
+      a      7
+      b      7
       c      7
+      d      7
       e      7
+      f      7
+      10      7
       11      8
    }
 
    method 'x ()I' {
+      0      11
       1      11
+      2      11
+      3      11
       4      11
    }
 }

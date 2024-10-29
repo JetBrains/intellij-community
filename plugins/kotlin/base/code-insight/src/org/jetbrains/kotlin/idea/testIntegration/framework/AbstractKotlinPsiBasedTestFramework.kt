@@ -18,7 +18,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     protected abstract val disabledTestAnnotation: String
     protected abstract val allowTestMethodsInObject: Boolean
 
-    protected fun isFrameworkAvailable(element: KtElement): Boolean =
+    protected open fun isFrameworkAvailable(element: KtElement): Boolean =
         isFrameworkAvailable(element, markerClassFqn, true)
 
     protected fun isFrameworkAvailable(element: KtElement, markerClassFqn: String, javaOnly: Boolean): Boolean {
@@ -45,8 +45,11 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
         }
     }
 
-    override fun checkTestClass(declaration: KtClassOrObject): ThreeState =
-        when {
+    override fun checkTestClass(declaration: KtClassOrObject): ThreeState {
+        if (!isFrameworkAvailable(declaration)) {
+            return NO
+        }
+        return when {
             declaration.isAnnotation() -> NO
             (declaration.isTopLevel() && declaration is KtObjectDeclaration) && !allowTestMethodsInObject -> NO
             declaration.annotationEntries.isNotEmpty() -> UNSURE
@@ -55,6 +58,7 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             declaration.declarations.any { it is KtClassOrObject && !it.isPrivate() } -> UNSURE
             else -> NO
         }
+    }
 
     override fun isTestMethod(declaration: KtNamedFunction): Boolean {
         return when {
@@ -105,9 +109,13 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
     }
 
     protected fun isAnnotated(element: KtAnnotated, fqNames: Set<String>): Boolean {
+        return findAnnotation(element, fqNames) != null
+    }
+
+    protected fun findAnnotation(element: KtAnnotated, fqNames: Set<String>): KtAnnotationEntry? {
         val annotationEntries = element.annotationEntries
         if (annotationEntries.isEmpty()) {
-            return false
+            return null
         }
 
         val file = element.containingKtFile
@@ -116,11 +124,11 @@ abstract class AbstractKotlinPsiBasedTestFramework : KotlinPsiBasedTestFramework
             val shortName = annotationEntry.shortName ?: continue
             val fqName = annotationEntry.typeReference?.text
             if (fqName in fqNames || checkNameMatch(file, fqNames, shortName.asString())) {
-                return true
+                return annotationEntry
             }
         }
 
-        return false
+        return null
     }
 
     protected fun findAnnotatedFunction(classOrObject: KtClassOrObject?, fqNames: Set<String>): KtNamedFunction? {

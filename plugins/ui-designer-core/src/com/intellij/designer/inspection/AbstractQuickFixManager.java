@@ -258,7 +258,7 @@ public abstract class AbstractQuickFixManager {
     }
 
     @Override
-    public PopupStep onChosen(ErrorInfo value, boolean finalChoice) {
+    public PopupStep<?> onChosen(ErrorInfo value, boolean finalChoice) {
       List<QuickFix> quickFixes = value.getQuickFixes();
       if (finalChoice) {
         return doFinalStep(getQuickFixRunnable(quickFixes.get(0)));
@@ -294,7 +294,7 @@ public abstract class AbstractQuickFixManager {
     }
 
     @Override
-    public PopupStep onChosen(QuickFix value, boolean finalChoice) {
+    public PopupStep<?> onChosen(QuickFix value, boolean finalChoice) {
       return doFinalStep(getQuickFixRunnable(value));
     }
   }

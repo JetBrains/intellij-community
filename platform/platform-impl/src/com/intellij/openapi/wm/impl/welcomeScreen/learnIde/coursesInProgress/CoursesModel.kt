@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ComponentEvent
 import java.awt.event.MouseAdapter
@@ -11,6 +12,7 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class CoursesModel {
   private val courseCards: MutableList<CourseCardComponent> = mutableListOf()
   private var hoveredCard: CourseCardComponent? = null

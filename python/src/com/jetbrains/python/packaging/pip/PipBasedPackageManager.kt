@@ -4,18 +4,18 @@ package com.jetbrains.python.packaging.pip
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.packaging.management.PythonPackageManager
-import com.jetbrains.python.packaging.management.runPackagingTool
 import com.jetbrains.python.packaging.common.PythonPackage
 import com.jetbrains.python.packaging.common.PythonPackageSpecification
 import com.jetbrains.python.packaging.common.runPackagingOperationOrShowErrorDialog
+import com.jetbrains.python.packaging.management.PythonPackageManager
+import com.jetbrains.python.packaging.management.runPackagingTool
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PipBasedPackageManager(project: Project, sdk: Sdk) : PythonPackageManager(project, sdk) {
-  override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+  override suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
     return runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.new.project.install.failed.title", specification.name), specification.name) {
-      runPackagingTool("install", specification.buildInstallationString(), PyBundle.message("python.packaging.install.progress", specification.name))
+      runPackagingTool("install", specification.buildInstallationString() + options, PyBundle.message("python.packaging.install.progress", specification.name))
       refreshPaths()
       reloadPackages()
     }

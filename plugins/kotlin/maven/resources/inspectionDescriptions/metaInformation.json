@@ -1,0 +1,16 @@
+{
+  "inspections": [
+    {
+      "id": "KotlinTestJUnit",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "DifferentKotlinMavenVersion",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "DifferentMavenStdlibVersion",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

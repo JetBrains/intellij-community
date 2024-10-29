@@ -2,7 +2,8 @@
 package com.intellij.ide.starters.local.generator
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.io.*
+import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.util.io.getResolvedPath
 import com.intellij.openapi.vfs.*
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
@@ -35,7 +36,9 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun writeText(path: Path, content: String) {
     if (path is TestFileSystemLocation) {
-      path.virtualFile.writeText(content)
+      WriteAction.runAndWait<Throwable> {
+        path.virtualFile.writeText(content)
+      }
       return
     }
     super.writeText(path, content)
@@ -43,7 +46,9 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun writeBytes(path: Path, content: ByteArray) {
     if (path is TestFileSystemLocation) {
-      path.virtualFile.writeBytes(content)
+      WriteAction.runAndWait<Throwable> {
+        path.virtualFile.writeBytes(content)
+      }
       return
     }
     super.writeBytes(path, content)
@@ -51,7 +56,9 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun findOrCreateFile(path: Path, relativePath: String): Path {
     if (path is TestFileSystemLocation) {
-      val vFile = path.virtualFile.findOrCreateFile(relativePath)
+      val vFile = WriteAction.computeAndWait<VirtualFile, Throwable> {
+        path.virtualFile.findOrCreateFile(relativePath)
+      }
       val debugPath = path.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }
@@ -60,7 +67,9 @@ class TestAssetsProcessorImpl : AssetsProcessorImpl() {
 
   override fun findOrCreateDirectory(path: Path, relativePath: String): Path {
     if (path is TestFileSystemLocation) {
-      val vFile = path.virtualFile.findOrCreateDirectory(relativePath)
+      val vFile = WriteAction.computeAndWait<VirtualFile, Throwable> {
+        path.virtualFile.findOrCreateDirectory(relativePath)
+      }
       val debugPath = path.debugPath.getResolvedPath(relativePath)
       return TestFileSystemLocation(vFile, debugPath)
     }

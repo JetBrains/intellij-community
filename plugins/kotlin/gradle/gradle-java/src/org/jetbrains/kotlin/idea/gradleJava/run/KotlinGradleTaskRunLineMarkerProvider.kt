@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement
 class KotlinGradleTaskRunLineMarkerProvider : RunLineMarkerContributor() {
     override fun getInfo(element: PsiElement): Info? {
         if (!isInGradleKotlinScript(element)) return null
-        if (!isTaskNameLineMarkerCandidate(element)) return null
+        if (!isRunTaskInGutterCandidate(element)) return null
         findTaskNameAround(element)?.takeIf { it.isNotEmpty() } ?: return null
         val actions = getActions()
         val event = createActionEvent(element)

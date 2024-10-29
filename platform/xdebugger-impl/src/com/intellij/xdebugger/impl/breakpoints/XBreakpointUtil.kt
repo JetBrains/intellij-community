@@ -34,8 +34,10 @@ object XBreakpointUtil {
    * The forcibly shortened version of [XBreakpointType.getShortText].
    */
   @JvmStatic
-  fun getShortText(breakpoint: XBreakpoint<*>): @Nls String =
-    StringUtil.shortenTextWithEllipsis(breakpoint.shortText, 70, 5)
+  fun getShortText(breakpoint: XBreakpoint<*>): @Nls String {
+    val len = 70
+    return StringUtil.shortenTextWithEllipsis(breakpoint.shortText, len, len / 2)
+  }
 
   /**
    * @see XBreakpointType.getDisplayText
@@ -77,8 +79,7 @@ object XBreakpointUtil {
       offset = textLength
     }
 
-    val debuggerSupports = DebuggerSupport.getDebuggerSupports()
-    for (debuggerSupport in debuggerSupports) {
+    for (debuggerSupport in DebuggerSupport.getDebuggerSupports()) {
       val provider = debuggerSupport.breakpointPanelProvider
       val breakpoint = provider.findBreakpoint(project, editorDocument, offset)
       if (breakpoint != null) {
@@ -105,10 +106,11 @@ object XBreakpointUtil {
   }
 
   @JvmStatic
-  fun collectPanelProviders(): List<BreakpointPanelProvider<*>> =
-    DebuggerSupport.getDebuggerSupports()
+  fun collectPanelProviders(): List<BreakpointPanelProvider<*>> {
+    return DebuggerSupport.getDebuggerSupports()
       .map { it.breakpointPanelProvider }
       .sortedByDescending { it.priority }
+  }
 
   @JvmStatic
   fun getDebuggerSupport(project: Project, breakpointItem: BreakpointItem): DebuggerSupport? {

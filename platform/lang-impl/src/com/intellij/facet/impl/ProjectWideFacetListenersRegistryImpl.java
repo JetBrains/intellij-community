@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.facet.impl;
 
 import com.intellij.facet.*;
@@ -25,8 +25,8 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
   }
 
   @Override
-  public <F extends Facet<?>> void registerListener(@NotNull final FacetTypeId<F> typeId, @NotNull final ProjectWideFacetListener<? extends F> listener,
-                                                    @NotNull final Disposable parentDisposable) {
+  public <F extends Facet<?>> void registerListener(final @NotNull FacetTypeId<F> typeId, final @NotNull ProjectWideFacetListener<? extends F> listener,
+                                                    final @NotNull Disposable parentDisposable) {
     registerListener(typeId, listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -37,17 +37,17 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
   }
 
   @Override
-  public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
+  public void registerListener(final @NotNull ProjectWideFacetListener<Facet> listener) {
     FacetEventsPublisher.getInstance(myProject).registerListener(null, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
-  public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
+  public void unregisterListener(final @NotNull ProjectWideFacetListener<Facet> listener) {
     FacetEventsPublisher.getInstance(myProject).unregisterListener(null, new ProjectWideFacetListenerWrapper<>(listener));
   }
 
   @Override
-  public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener, @NotNull final Disposable parentDisposable) {
+  public void registerListener(final @NotNull ProjectWideFacetListener<Facet> listener, final @NotNull Disposable parentDisposable) {
     registerListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
       @Override

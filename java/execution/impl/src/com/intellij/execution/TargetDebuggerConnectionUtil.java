@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @ApiStatus.Internal
 public final class TargetDebuggerConnectionUtil {
-  private TargetDebuggerConnectionUtil() {}
+  private TargetDebuggerConnectionUtil() { }
 
   @Nullable
   private static Integer requiredDebuggerTargetPort(@NotNull JavaCommandLineState javaCommandLineState,
@@ -55,7 +55,6 @@ public final class TargetDebuggerConnectionUtil {
    * @param javaCommandLineState the command line state that is going to be
    *                             modified
    * @param request              the target environment request
-   * @param configuration        the target environment configuration
    * @return the constructed {@link TargetDebuggerConnection} object for
    * further resolution of connection parameters from IDE side or {@code null}
    * in the case of inappropriate {@link Executor} or the local type of the
@@ -68,7 +67,8 @@ public final class TargetDebuggerConnectionUtil {
     JavaParameters javaParameters;
     try {
       javaParameters = javaCommandLineState.getJavaParameters();
-    } catch (ExecutionException e){
+    }
+    catch (ExecutionException e) {
       return null;
     }
 

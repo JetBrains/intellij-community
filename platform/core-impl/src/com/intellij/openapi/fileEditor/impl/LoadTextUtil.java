@@ -18,11 +18,13 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.transformer.TextPresentationTransformers;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.text.ByteArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,6 +240,7 @@ public final class LoadTextUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static class DetectResult {
     public final Charset hardCodedCharset;
     public final CharsetToolkit.GuessedEncoding guessed;
@@ -271,6 +274,7 @@ public final class LoadTextUtil {
     return new DetectResult(result, guessed, detectedBOM);
   }
 
+  /** detects the charset, and update it in {@link VirtualFile#setCharset(Charset)} */
   public static @NotNull Charset detectCharsetAndSetBOM(@NotNull VirtualFile virtualFile, byte @NotNull [] content, @NotNull FileType fileType) {
     Charset internalCharset = detectInternalCharsetAndSetBOM(virtualFile, content, content.length, true, fileType).hardCodedCharset;
     return internalCharset instanceof SevenBitCharset ? ((SevenBitCharset)internalCharset).myBaseCharset : internalCharset;
@@ -323,11 +327,13 @@ public final class LoadTextUtil {
   }
 
 
+  @ApiStatus.Internal
   public static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content) {
     return guessFromContent(virtualFile, content, content.length);
   }
 
   private static final boolean GUESS_UTF = Boolean.parseBoolean(System.getProperty("idea.guess.utf.encoding", "true"));
+
   private static @NotNull DetectResult guessFromContent(@NotNull VirtualFile virtualFile, byte @NotNull [] content, int length) {
     AutoDetectionReason detectedFromBytes = null;
     try {
@@ -400,6 +406,7 @@ public final class LoadTextUtil {
                            @NotNull String text,
                            long newModificationStamp) throws IOException {
     Charset existing = virtualFile.getCharset();
+    text = TextPresentationTransformers.toPersistent(text, virtualFile).toString();
     Pair.NonNull<Charset, byte[]> chosen = charsetForWriting(project, virtualFile, text, existing);
     Charset charset = chosen.first;
     byte[] buffer = chosen.second;
@@ -519,7 +526,8 @@ public final class LoadTextUtil {
     }
 
     if (file instanceof LightVirtualFile) {
-      return limitCharSequence(((LightVirtualFile)file).getContent(), limit);
+      CharSequence text = ((LightVirtualFile)file).getContent();
+      return limitCharSequence(text, limit);
     }
 
     if (file.isDirectory()) {
@@ -547,9 +555,24 @@ public final class LoadTextUtil {
                                                                   @NotNull VirtualFile virtualFile,
                                                                   boolean saveDetectedSeparators,
                                                                   boolean saveBOM) {
-    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, virtualFile.getFileType());
-    ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile, saveDetectedSeparators, info, info.hardCodedCharset);
-    return result.text;
+    return getTextByBinaryPresentation(bytes, virtualFile, saveDetectedSeparators, saveBOM, true);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull CharSequence getTextByBinaryPresentation(byte @NotNull [] bytes,
+                                                                  @NotNull VirtualFile virtualFile,
+                                                                  boolean saveDetectedSeparators,
+                                                                  boolean saveBOM,
+                                                                  boolean applyTextTransformer) {
+    FileType type = virtualFile.getFileType();
+    DetectResult info = detectInternalCharsetAndSetBOM(virtualFile, bytes, bytes.length, saveBOM, type);
+    ConvertResult result = convertBytesAndSetSeparator(bytes, bytes.length, virtualFile,
+                                                       saveDetectedSeparators, info, info.hardCodedCharset);
+    if (applyTextTransformer) {
+      return TextPresentationTransformers.fromPersistent(result.text, virtualFile);
+    } else {
+      return result.text;
+    }
   }
 
   static @NotNull Set<String> detectAllLineSeparators(@NotNull VirtualFile virtualFile) {
@@ -568,11 +591,11 @@ public final class LoadTextUtil {
 
   // written in push way to make sure no-one stores the CharSequence because it came from thread-local byte buffers which will be overwritten soon
   public static @NotNull FileType processTextFromBinaryPresentationOrNull(@NotNull ByteSequence bytes,
-                                                                 @NotNull VirtualFile virtualFile,
-                                                                 boolean saveDetectedSeparators,
-                                                                 boolean saveBOM,
-                                                                 @NotNull FileType fileType,
-                                                                 @NotNull NotNullFunction<? super CharSequence, ? extends FileType> fileTextProcessor) {
+                                                                          @NotNull VirtualFile virtualFile,
+                                                                          boolean saveDetectedSeparators,
+                                                                          boolean saveBOM,
+                                                                          @NotNull FileType fileType,
+                                                                          @NotNull NotNullFunction<? super CharSequence, ? extends FileType> fileTextProcessor) {
     byte[] buffer = ((ByteArraySequence)bytes).getInternalBuffer();
     DetectResult detectResult = detectInternalCharsetAndSetBOM(virtualFile, buffer, bytes.length(), saveBOM, fileType);
     Charset internalCharset = detectResult.hardCodedCharset;

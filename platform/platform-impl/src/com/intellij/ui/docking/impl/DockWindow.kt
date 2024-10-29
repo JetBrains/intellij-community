@@ -8,6 +8,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer
 import com.intellij.openapi.ui.FrameWrapper
 import com.intellij.openapi.util.Disposer
@@ -50,6 +51,7 @@ internal class DockWindow(
                  isDialog = isDialog,
                  coroutineScope = coroutineScope) {
   var northPanelAvailable: Boolean = false
+    private set
   private val northPanel = VerticalBox()
   private val northExtensions = LinkedHashMap<String, JComponent>()
   val uiContainer: NonOpaquePanel = NonOpaquePanel(BorderLayout())
@@ -108,7 +110,6 @@ internal class DockWindow(
     val buttonManager: ToolWindowButtonManager
     if (ExperimentalUI.isNewUI()) {
       buttonManager = ToolWindowPaneNewButtonManager(paneId, false)
-      buttonManager.add(dockContentUiContainer)
       buttonManager.initMoreButton(dockManager.project)
       buttonManager.updateResizeState(null)
     }
@@ -116,14 +117,15 @@ internal class DockWindow(
       buttonManager = ToolWindowPaneOldButtonManager(paneId)
     }
     val containerComponent = container.containerComponent
-    toolWindowPane = ToolWindowPane(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
-                                    buttonManager = buttonManager)
+    toolWindowPane = ToolWindowPane.create(frame = frame, coroutineScope = coroutineScope!!.childScope(), paneId = paneId,
+                                           buttonManager = buttonManager)
     val toolWindowManagerImpl = ToolWindowManager.getInstance(dockManager.project) as ToolWindowManagerImpl
     toolWindowManagerImpl.addToolWindowPane(toolWindowPane!!, this)
 
     toolWindowPane!!.setDocumentComponent(containerComponent)
     dockContentUiContainer.remove(containerComponent)
-    dockContentUiContainer.add(toolWindowPane!!, BorderLayout.CENTER)
+    val toolWindowsComponent = buttonManager.wrapWithControls(toolWindowPane!!)
+    dockContentUiContainer.add(toolWindowsComponent, BorderLayout.CENTER)
 
     // Close the container if it's empty, and we've just removed the last tool window
     dockManager.project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
@@ -242,9 +244,11 @@ internal class DockWindow(
     }
     frame.addWindowListener(object : WindowAdapter() {
       override fun windowClosing(e: WindowEvent) {
-        container.closeAll()
-        if (uiNotifyConnector != null) {
-          Disposer.dispose(uiNotifyConnector)
+        WriteIntentReadAction.run {
+          container.closeAll()
+          if (uiNotifyConnector != null) {
+            Disposer.dispose(uiNotifyConnector)
+          }
         }
       }
     })

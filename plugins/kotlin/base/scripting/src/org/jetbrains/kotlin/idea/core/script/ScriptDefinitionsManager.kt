@@ -15,17 +15,17 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
-import org.jetbrains.kotlin.script.ScriptTemplatesProvider
-import org.jetbrains.kotlin.scripting.definitions.*
+import org.jetbrains.kotlin.scripting.definitions.LazyScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.script.experimental.api.SourceCode
-import kotlin.script.experimental.host.toScriptSource
 
 
 /**
@@ -38,7 +38,6 @@ import kotlin.script.experimental.host.toScriptSource
  * provides its own definitions list, the resulting one is partitioned. Partitions in their turn are sorted.
  * E.g. if definition sources are ordered as (A, B, C), their definitions might look as ((A-def-1, A-def-2), (B-def), (C-def)).
  *
- * [ScriptDefinitionsSource]s are registered via extension points either as [ScriptTemplatesProviderAdapter] or [ScriptDefinitionContributor].
  * Their order is crucial because it affects definition search algo.
  *
  * In rare exceptional cases, the resulting definitions' order might be inaccurate and doesn't accommodate the user's needs.
@@ -116,12 +115,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
         return definition
     }
 
-    @Deprecated("Migrating to configuration refinement", level = DeprecationLevel.ERROR)
-    override fun findScriptDefinition(fileName: String): KotlinScriptDefinition? {
-        @Suppress("DEPRECATION")
-        return findDefinition(File(fileName).toScriptSource())?.legacyDefinition
-    }
-
     /**
      * Goes through the list of registered [ScriptDefinitionsSource]s and triggers definitions reload.
      * Result of previous reloads is invalidated including those launched via [reloadDefinitionsBy].
@@ -169,9 +162,7 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
      * @return Definition bundled with IDEA and aimed for basic '.kts' scripts support.
      */
     override fun getDefaultDefinition(): ScriptDefinition {
-        val bundledScriptDefinitionContributor = getBundledScriptDefinitionContributor()
-            ?: error("BundledScriptDefinitionContributor must be registered in plugin.xml")
-        return ScriptDefinition.FromLegacy(getScriptingHostConfiguration(), bundledScriptDefinitionContributor.getDefinitions().last())
+        return project.defaultDefinition
     }
 
     // This function is aimed to fix locks acquisition order.
@@ -287,12 +278,8 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
     // FOR TESTS ONLY: we introduce a possibility to cut dependencies over inheritance
 
     protected open fun getSources(): List<ScriptDefinitionsSource> {
-        @Suppress("DEPRECATION")
-        val fromDeprecatedEP = project.extensionArea.getExtensionPoint(ScriptTemplatesProvider.EP_NAME).extensionList
-            .map { ScriptTemplatesProviderAdapter(it).asSource() }
-        val fromNewEp = ScriptDefinitionContributor.EP_NAME.getPoint(project).extensionList
-            .map { it.asSource() }
-        return fromNewEp.dropLast(1) + fromDeprecatedEP + fromNewEp.last()
+        val fromNewEp = SCRIPT_DEFINITIONS_SOURCES.getExtensions(project)
+        return fromNewEp.dropLast(1) + fromNewEp.last()
     }
 
     protected open fun getKotlinScriptingSettings(): KotlinScriptingSettings = KotlinScriptingSettings.getInstance(project)
@@ -313,9 +300,6 @@ open class ScriptDefinitionsManager(private val project: Project) : LazyScriptDe
             else script.locationId?.let { VirtualFileManager.getInstance().findFileByUrl(it) }
         return virtualFile != null && ScratchFileService.getInstance().getRootType(virtualFile) is ScratchRootType
     }
-
-    protected open fun getBundledScriptDefinitionContributor() =
-        ScriptDefinitionContributor.find<BundledScriptDefinitionContributor>(project)
 
     protected open fun executeUnderReadLock(block: () -> Unit) = runReadAction { block() }
 

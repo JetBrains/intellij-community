@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
@@ -16,6 +17,8 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndex;
+import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.PersistentMapBasedForwardIndex;
 import com.intellij.util.io.DataExternalizer;
@@ -44,11 +47,12 @@ public class CompilerReferenceIndex<Input> {
   private static final String NAME_ENUM_TAB = "name.tab";
 
   private static final String VERSION_FILE = "version";
+
   private final ConcurrentMap<IndexId<?, ?>, InvertedIndex<?, ?, Input>> myIndices;
   private final NameEnumerator myNameEnumerator;
   private final PersistentStringEnumerator myFilePathEnumerator;
   private final File myBuildDir;
-  private final File myIndicesDir;
+  private final Path myIndicesDir;
   private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(() -> force());
 
   private volatile Throwable myRebuildRequestCause;
@@ -67,15 +71,20 @@ public class CompilerReferenceIndex<Input> {
                                 @Nullable PathRelativizerService relativizer, boolean readOnly, int version,
                                 boolean isCaseSensitive) {
     myBuildDir = buildDir;
-    myIndicesDir = getIndexDir(buildDir);
-    if (!myIndicesDir.exists() && !myIndicesDir.mkdirs()) {
-      throw new RuntimeException("Can't create dir: " + buildDir.getAbsolutePath());
+    myIndicesDir = getIndexDir(buildDir.toPath());
+
+    try {
+      Files.createDirectories(myIndicesDir);
     }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
     try {
       if (versionDiffers(buildDir, version)) {
         saveVersion(buildDir, version);
       }
-      myFilePathEnumerator = new PersistentStringEnumerator(new File(myIndicesDir, FILE_ENUM_TAB).toPath()) {
+      myFilePathEnumerator = new PersistentStringEnumerator(myIndicesDir.resolve(FILE_ENUM_TAB)) {
 
         @Override
         public int enumerate(String path) throws IOException {
@@ -102,15 +111,34 @@ public class CompilerReferenceIndex<Input> {
 
       myIndices = new ConcurrentHashMap<>();
       for (IndexExtension<?, ?, ? super Input> indexExtension : indices) {
-        //noinspection unchecked
-        myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
+        myIndices.put(indexExtension.getName(), createCompilerIndex(indexExtension, readOnly));
       }
 
-      myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
+      myNameEnumerator = new NameEnumerator(myIndicesDir.resolve(NAME_ENUM_TAB).toFile());
     }
     catch (IOException e) {
+      //IJPL-2855: must close all storages opened
+      Exception closeException = ExceptionUtil.runAndCatch(
+        this::close
+      );
+      if (closeException != null) {
+        e.addSuppressed(closeException);
+      }
+
       removeIndexFiles(myBuildDir, e);
       throw new BuildDataCorruptedException(e);
+    }
+    catch (Throwable t) {
+      //IJPL-2855: must always close all storages opened
+      Exception closeException = ExceptionUtil.runAndCatch(
+        this::close
+      );
+      if (closeException != null) {
+        t.addSuppressed(closeException);
+      }
+
+      removeIndexFiles(myBuildDir, t);
+      throw t;
     }
   }
 
@@ -155,14 +183,13 @@ public class CompilerReferenceIndex<Input> {
 
   public void close() {
     myLowMemoryWatcher.stop();
-    final CommonProcessors.FindFirstProcessor<Exception> exceptionProc =
-      new CommonProcessors.FindFirstProcessor<Exception>() {
-        @Override
-        public boolean process(Exception e) {
-          LOG.error(e);
-          return super.process(e);
-        }
-      };
+    CommonProcessors.FindFirstProcessor<Exception> exceptionProc = new CommonProcessors.FindFirstProcessor<>() {
+      @Override
+      public boolean process(Exception e) {
+        LOG.error(e);
+        return super.process(e);
+      }
+    };
     close(myFilePathEnumerator, exceptionProc);
     close(myNameEnumerator, exceptionProc);
     for (Iterator<Map.Entry<IndexId<?, ?>, InvertedIndex<?, ?, Input>>> iterator = myIndices.entrySet().iterator(); iterator.hasNext(); ) {
@@ -187,11 +214,66 @@ public class CompilerReferenceIndex<Input> {
     removeIndexFiles(buildDir, null);
   }
 
+  public void saveVersion(@NotNull File buildDir, int version) {
+    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
+    try {
+      NioFiles.createParentDirectories(versionFile);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    try (DataOutputStream os = new DataOutputStream(Files.newOutputStream(versionFile))) {
+      os.writeInt(version);
+    }
+    catch (IOException ex) {
+      LOG.error(ex);
+      throw new BuildDataCorruptedException(ex);
+    }
+  }
+
+  public File getIndicesDir() {
+    return myIndicesDir.toFile();
+  }
+
+  private <Key, Value> @NotNull CompilerMapReduceIndex<Key, Value> createCompilerIndex(@NotNull IndexExtension<Key, Value, ? super Input> indexExtension,
+                                                                                       boolean readOnly) throws IOException {
+    IndexStorage<Key, Value> indexStorage = createIndexStorage(
+      indexExtension.getKeyDescriptor(),
+      indexExtension.getValueExternalizer(),
+      indexExtension.getName(),
+      myIndicesDir.toFile(),
+      readOnly
+    );
+    try {
+      if (readOnly) {
+        //noinspection unchecked,rawtypes
+        return new CompilerMapReduceIndex(indexExtension, indexStorage, /* forwardIndex: */ null, /* forwardIndexAccessor: */ null);
+      }
+      else {
+        Path storagePath = myIndicesDir.resolve(indexExtension.getName().getName() + ".inputs");
+        ForwardIndex forwardIndex = new PersistentMapBasedForwardIndex(storagePath, /* readOnly: */ false);
+        try {
+          ForwardIndexAccessor<Key, Value> forwardIndexAccessor = new KeyCollectionForwardIndexAccessor<>(indexExtension);
+          //noinspection unchecked,rawtypes
+          return new CompilerMapReduceIndex(indexExtension, indexStorage, forwardIndex, forwardIndexAccessor);
+        }
+        catch (Throwable t) {//IJPL-2855: must close all storages opened
+          forwardIndex.close();
+          throw t;
+        }
+      }
+    }
+    catch (Throwable t) {//IJPL-2855: must close all storages opened
+      indexStorage.close();
+      throw t;
+    }
+  }
+
   public static void removeIndexFiles(File buildDir, Throwable cause) {
-    final File indexDir = getIndexDir(buildDir);
-    if (indexDir.exists()) {
+    Path indexDir = getIndexDir(buildDir.toPath());
+    if (Files.exists(indexDir)) {
       try {
-        FileUtilRt.deleteRecursively(indexDir.toPath());
+        FileUtilRt.deleteRecursively(indexDir);
         LOG.info("backward reference index deleted", cause != null ? cause : new Exception());
       }
       catch (Throwable e) {
@@ -200,16 +282,71 @@ public class CompilerReferenceIndex<Input> {
     }
   }
 
-  private static File getIndexDir(@NotNull File buildDir) {
-    return new File(buildDir, "backward-refs");
+  private static @NotNull Path getIndexDir(@NotNull Path buildDir) {
+    return buildDir.resolve("backward-refs");
+  }
+
+  public Throwable getRebuildRequestCause() {
+    return myRebuildRequestCause;
   }
 
   public static boolean exists(@NotNull File buildDir) {
-    return getIndexDir(buildDir).exists();
+    return Files.exists(getIndexDir(buildDir.toPath()));
+  }
+
+  public void setRebuildRequestCause(Throwable e) {
+    myRebuildRequestCause = e;
+    LOG.error(e);
+  }
+
+  private static void close(@NotNull InvertedIndex<?, ?, ?> index,
+                            @NotNull CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
+    try {
+      index.dispose();
+    }
+    catch (Exception e) {
+      exceptionProcessor.process(e);
+    }
+  }
+
+  private static void close(@Nullable Closeable closeable,
+                            @NotNull Processor<? super Exception> exceptionProcessor) {
+    if (closeable == null) return;
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (closeable) {
+      try {
+        closeable.close();
+      }
+      catch (IOException e) {
+        exceptionProcessor.process(new BuildDataCorruptedException(e));
+      }
+      catch (Exception e) {
+        exceptionProcessor.process(e);
+      }
+    }
+  }
+
+  final class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
+    CompilerMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
+                           @NotNull IndexStorage<Key, Value> storage,
+                           @Nullable ForwardIndex index,
+                           @Nullable ForwardIndexAccessor<Key, Value> accessor) throws IOException {
+      super(extension, storage, index, accessor);
+    }
+
+    @Override
+    public void checkCanceled() {
+
+    }
+
+    @Override
+    protected void requestRebuild(@NotNull Throwable e) {
+      setRebuildRequestCause(e);
+    }
   }
 
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
-    Path versionFile = getIndexDir(buildDir).toPath().resolve(VERSION_FILE);
+    Path versionFile = getIndexDir(buildDir.toPath()).resolve(VERSION_FILE);
     try (DataInputStream is = new DataInputStream(Files.newInputStream(versionFile))) {
       int currentIndexVersion = is.readInt();
       boolean isDiffer = currentIndexVersion != expectedVersion;
@@ -227,91 +364,19 @@ public class CompilerReferenceIndex<Input> {
     return true;
   }
 
-  public void saveVersion(@NotNull File buildDir, int version) {
-    File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
-
-    FileUtil.createIfDoesntExist(versionFile);
-    try (DataOutputStream os = new DataOutputStream(new FileOutputStream(versionFile))) {
-      os.writeInt(version);
-    }
-    catch (IOException ex) {
-      LOG.error(ex);
-      throw new BuildDataCorruptedException(ex);
-    }
-  }
-
-  public Throwable getRebuildRequestCause() {
-    return myRebuildRequestCause;
-  }
-
-  public File getIndicesDir() {
-    return myIndicesDir;
-  }
-
-  public void setRebuildRequestCause(Throwable e) {
-    myRebuildRequestCause = e;
-    LOG.error(e);
-  }
-
-  private static void close(InvertedIndex<?, ?, ?> index, CommonProcessors.FindFirstProcessor<? super Exception> exceptionProcessor) {
-    try {
-      index.dispose();
-    }
-    catch (Exception e) {
-      exceptionProcessor.process(e);
-    }
-  }
-
-  private static void close(Closeable closeable, Processor<? super Exception> exceptionProcessor) {
-    //noinspection SynchronizationOnLocalVariableOrMethodParameter
-    synchronized (closeable) {
-      try {
-        closeable.close();
-      }
-      catch (IOException e) {
-        exceptionProcessor.process(new BuildDataCorruptedException(e));
-      }
-      catch (Exception e) {
-        exceptionProcessor.process(e);
-      }
-    }
-  }
-
-  final class CompilerMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Value, Input> {
-    CompilerMapReduceIndex(final @NotNull IndexExtension<Key, Value, Input> extension,
-                           final @NotNull File indexDir,
-                           boolean readOnly)
-      throws IOException {
-      super(extension,
-            createIndexStorage(extension.getKeyDescriptor(), extension.getValueExternalizer(), extension.getName(), indexDir, readOnly),
-            readOnly ? null : new PersistentMapBasedForwardIndex(new File(indexDir, extension.getName().getName() + ".inputs").toPath(), false),
-            readOnly ? null : new KeyCollectionForwardIndexAccessor<>(extension));
-    }
-
-    @Override
-    public void checkCanceled() {
-
-    }
-
-    @Override
-    protected void requestRebuild(@NotNull Throwable e) {
-      setRebuildRequestCause(e);
-    }
-  }
-
   private static <Key, Value> IndexStorage<Key, Value> createIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                                                                           @NotNull DataExternalizer<Value> valueExternalizer,
                                                                           @NotNull IndexId<Key, Value> indexId,
                                                                           @NotNull File indexDir,
                                                                           boolean readOnly) throws IOException {
-    return new MapIndexStorage<Key, Value>(new File(indexDir, indexId.getName()).toPath(),
-                                           keyDescriptor,
-                                           valueExternalizer,
-                                           16 * 1024,
-                                           false,
-                                           true,
-                                           false,
-                                           readOnly,
-                                           null);
+    return new MapIndexStorage<>(new File(indexDir, indexId.getName()).toPath(),
+                                 keyDescriptor,
+                                 valueExternalizer,
+                                 16 * 1024,
+                                 false,
+                                 true,
+                                 false,
+                                 readOnly,
+                                 null);
   }
 }

@@ -10,17 +10,17 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 import kotlin.random.Random
 
-internal fun generateDb(file: Path, count: Int): List<Pair<Int, ByteArray>> {
+internal fun generateDb(file: Path, count: Int): List<Pair<Long, ByteArray>> {
   val random = Random(42)
   Files.createDirectories(file.parent)
-  val list = ArrayList<Pair<Int, ByteArray>>(count)
+  val list = ArrayList<Pair<Long, ByteArray>>(count)
   FileChannel.open(file, EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE_NEW)).use { channel ->
     val writer = IkvWriter(channel)
     writer.use {
-      for (i in 0 until count) {
+      (0 until count).forEach { i ->
         val data = random.nextBytes(random.nextInt(64, 512))
-        val key = Xxh3.hash(data).toInt()
-        writer.write(writer.entry(key), data)
+        val key = Xxh3.hash(data)
+        writer.write(writer.entry(key, data.size), data)
         list.add(Pair(key, data))
       }
     }

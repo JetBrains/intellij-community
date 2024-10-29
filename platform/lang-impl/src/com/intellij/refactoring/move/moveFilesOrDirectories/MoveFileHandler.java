@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -54,8 +54,7 @@ public abstract class MoveFileHandler {
    * @param searchInNonJavaFiles if true, search for references in non-code files (such as .xml) has been requested.
    * @return the list of usages that need to be updated, or null if nothing needs to be updated.
    */
-  @Nullable
-  public abstract List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
+  public abstract @Nullable List<UsageInfo> findUsages(PsiFile psiFile, PsiDirectory newParent, boolean searchInComments, boolean searchInNonJavaFiles);
 
   /**
    * Finds conflicts which may arise when file is moved, 
@@ -100,8 +99,7 @@ public abstract class MoveFileHandler {
     }
   }
 
-  @NotNull
-  public static MoveFileHandler forElement(PsiFile element) {
+  public static @NotNull MoveFileHandler forElement(PsiFile element) {
     for(MoveFileHandler processor: EP_NAME.getExtensionList()) {
       if (processor.canProcessElement(element)) {
         return processor;

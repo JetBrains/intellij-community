@@ -16,8 +16,29 @@
 package com.jetbrains.python.ast;
 
 
+import com.intellij.psi.PsiCodeFragment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
-public interface PyAstExpressionCodeFragment extends PyAstFile {
+public interface PyAstExpressionCodeFragment extends PyAstFile, PsiCodeFragment {
+  /**
+   * Retrieves the real context of fragment, e.g., if fragment is breakpoint condition,
+   * returns the file in which breakpoint is set.
+   * On the `getContext()` may return a hidden file with imports (and real context is context of that file)
+   *
+   * @return the real context of the element, or null if there is no context
+   */
+  @Nullable
+  default PsiElement getRealContext() {
+    return getContext();
+  }
+
+  @Override
+  default void forceResolveScope(GlobalSearchScope scope) {}
+
+  @Override
+  default GlobalSearchScope getForcedResolveScope() { return null; }
 }

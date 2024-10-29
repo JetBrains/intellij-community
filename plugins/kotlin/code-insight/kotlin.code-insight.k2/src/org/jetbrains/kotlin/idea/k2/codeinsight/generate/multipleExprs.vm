@@ -1,0 +1,37 @@
+override fun toString(): String {
+return "$classname(##
+#set($size = $fields.size())
+#set($idx = 0)
+#foreach ($field in $fields)
+#if ($idx == 0)
+" +
+"##
+#end
+$field.name=##
+#addQuote($field)
+$##
+#addFieldToString($field)##
+#addQuote($field)
+#if ($idx < $size - 1), ##
+#end
+#set($idx = $idx + 1)
+" +
+"##
+#end
+)##
+"
+}
+#macro(addQuote $field)
+    #if ($field.string && $field.notNull)'##
+    #end
+#end
+
+#macro(addFieldToString $field)
+#if ($field.array)
+{##
+${field.name}##
+.contentToString()}##
+#else
+${field.name}##
+#end
+#end

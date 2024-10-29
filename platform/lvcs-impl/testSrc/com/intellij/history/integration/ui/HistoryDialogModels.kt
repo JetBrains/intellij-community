@@ -5,7 +5,7 @@ import com.intellij.history.core.tree.RootEntry
 import com.intellij.history.integration.IntegrationTestCase
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
-import com.intellij.history.integration.ui.views.SelectionHistoryDialogModel
+import com.intellij.history.integration.ui.models.SelectionHistoryDialogModel
 import com.intellij.openapi.vfs.VirtualFile
 
 fun IntegrationTestCase.createFileModel(file: VirtualFile): EntireFileHistoryDialogModel {

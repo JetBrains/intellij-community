@@ -62,7 +62,10 @@ fun KtBlockStringTemplateEntry.dropCurlyBrackets(): KtSimpleNameStringTemplateEn
         else -> (expression as KtNameReferenceExpression).getReferencedNameElement().text
     }
 
-    val newEntry = KtPsiFactory(project).createSimpleNameStringTemplateEntry(name)
+    val newEntry = (parent as? KtStringTemplateExpression)?.interpolationPrefix?.let { interpolationPrefix ->
+        KtPsiFactory(project).createMultiDollarSimpleNameStringTemplateEntry(name, interpolationPrefix.textLength)
+    } ?: KtPsiFactory(project).createSimpleNameStringTemplateEntry(name)
+
     return replaced(newEntry)
 }
 
@@ -184,4 +187,13 @@ fun KtExpression.prependDotQualifiedReceiver(receiver: KtExpression, factory: Kt
 fun KtExpression.appendDotQualifiedSelector(selector: KtExpression, factory: KtPsiFactory): KtExpression {
     val dotQualified = factory.createExpressionByPattern("$0.$1", this, selector)
     return this.replaced(dotQualified)
+}
+
+fun KtSecondaryConstructor.getOrCreateBody(): KtBlockExpression {
+    bodyExpression?.let { return it }
+
+    val delegationCall = getDelegationCall()
+    val anchor = if (delegationCall.isImplicit) valueParameterList else delegationCall
+    val newBody = KtPsiFactory(project).createEmptyBody()
+    return addAfter(newBody, anchor) as KtBlockExpression
 }

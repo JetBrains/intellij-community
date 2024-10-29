@@ -10,10 +10,15 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.codeStyle.JavaFileCodeStyleFacade;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +40,15 @@ public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate implemen
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
     MacroCallNode type = new MacroCallNode(new IterableComponentTypeMacro());
     type.addParameter(new VariableNode("EXPR", null));
-    template.addVariable("TYPE", type, type, false);
+
+    if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+        element instanceof PsiExpression expr &&
+        PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
+      template.addVariable("TYPE", new TextExpression(PsiKeyword.VAR), false);
+    }
+    else {
+      template.addVariable("TYPE", type, type, false);
+    }
 
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
     template.addVariable("NAME", name, name, true);

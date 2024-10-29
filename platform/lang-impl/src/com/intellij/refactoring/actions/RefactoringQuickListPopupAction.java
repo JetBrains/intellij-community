@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   public RefactoringQuickListPopupAction() {
@@ -120,13 +122,13 @@ public final class RefactoringQuickListPopupAction extends QuickSwitchSchemeActi
     }
 
     @Override
-    public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                              @NotNull UpdateSession updateSession) {
+    public @NotNull List<@NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                       @NotNull List<? extends @NotNull AnAction> visibleChildren) {
       boolean isRootGroup = getClass() == MyGroup.class;
       return ContainerUtil.filter(visibleChildren, o ->
         o instanceof Separator && (isRootGroup || ((Separator)o).getText() != null) ||
         isRefactoringAction(o, (ActionManagerImpl)actionManager) &&
-        updateSession.presentation(o).isEnabledAndVisible());
+        e.getUpdateSession().presentation(o).isEnabledAndVisible());
     }
   }
 }

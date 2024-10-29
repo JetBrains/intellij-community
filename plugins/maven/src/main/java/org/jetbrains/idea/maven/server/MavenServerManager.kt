@@ -15,6 +15,7 @@ interface MavenServerManager : Disposable {
 
   fun restartMavenConnectors(project: Project, wait: Boolean, condition: Predicate<MavenServerConnector>)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use suspend", ReplaceWith("getConnector"))
   fun getConnectorBlocking(project: Project, workingDirectory: String): MavenServerConnector
 
@@ -27,7 +28,7 @@ interface MavenServerManager : Disposable {
 
   fun getMavenEventListener(): File
 
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use {@link MavenServerManager#createEmbedder(Project, boolean, String)}",
               ReplaceWith("createEmbedder(project, alwaysOnline, multiModuleProjectDirectory)"))
   fun createEmbedder(project: Project,
@@ -41,7 +42,7 @@ interface MavenServerManager : Disposable {
                      alwaysOnline: Boolean,
                      multiModuleProjectDirectory: String): MavenEmbedderWrapper
 
-
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("use createIndexer()")
   fun createIndexer(project: Project): MavenIndexerWrapper
 

@@ -21,8 +21,10 @@ import com.intellij.warmup.waitIndexInitialization
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 suspend fun importOrOpenProjectAsync(args: OpenProjectArgs): Project {
   WarmupLogger.logInfo("Opening project from ${args.projectDir}...")
   // most of the sensible operations would run in the same thread

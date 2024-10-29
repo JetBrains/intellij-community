@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethodObject.reflect;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -173,7 +174,11 @@ final class PsiReflectionAccessUtil {
         return TypeConversionUtil.erasure(type);
       }
 
-      type = type.getSuperTypes()[0];
+      PsiType[] types = type.getSuperTypes();
+      if (types.length == 0) {
+        Logger.getInstance(PsiReflectionAccessUtil.class).error("Empty super types for " + type);
+      }
+      type = types[0];
     }
 
     return type;

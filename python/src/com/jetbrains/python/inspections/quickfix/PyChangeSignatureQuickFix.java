@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -47,62 +48,68 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     assert mapping.getCallableType() != null;
     final PyFunction function = as(mapping.getCallableType().getCallable(), PyFunction.class);
     assert function != null;
-    final PyCallSiteExpression callSiteExpression = mapping.getCallSiteExpression();
-    int positionalParamAnchor = -1;
-    final PyParameter[] parameters = function.getParameterList().getParameters();
-    for (PyParameter parameter : parameters) {
-      final PyNamedParameter namedParam = parameter.getAsNamed();
-      final boolean isVararg = namedParam != null && (namedParam.isPositionalContainer() || namedParam.isKeywordContainer());
-      if (parameter instanceof PySingleStarParameter || parameter.hasDefaultValue() || isVararg) {
-        break;
+    Supplier<List<Pair<Integer, PyParameterInfo>>> extraParamsSupplier = () -> {
+      final PyCallSiteExpression callSiteExpression = mapping.getCallSiteExpression();
+      int positionalParamAnchor = -1;
+      final PyParameter[] parameters = function.getParameterList().getParameters();
+      for (PyParameter parameter : parameters) {
+        final PyNamedParameter namedParam = parameter.getAsNamed();
+        final boolean isVararg = namedParam != null && (namedParam.isPositionalContainer() || namedParam.isKeywordContainer());
+        if (parameter instanceof PySingleStarParameter || parameter.hasDefaultValue() || isVararg) {
+          break;
+        }
+        positionalParamAnchor++;
       }
-      positionalParamAnchor++;
-    }
-    final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callSiteExpression.getContainingFile());
-    final Set<String> usedParamNames = new HashSet<>();
-    for (PyExpression arg : mapping.getUnmappedArguments()) {
-      if (arg instanceof PyKeywordArgument) {
-        final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
-        final String valueText = value != null ? value.getText() : "";
-        newParameters.add(Pair.create(parameters.length - 1,
-                                      new PyParameterInfo(NEW_PARAMETER, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
+      final List<Pair<Integer, PyParameterInfo>> newParameters = new ArrayList<>();
+      final TypeEvalContext context = TypeEvalContext.userInitiated(function.getProject(), callSiteExpression.getContainingFile());
+      final Set<String> usedParamNames = new HashSet<>();
+      for (PyExpression arg : mapping.getUnmappedArguments()) {
+        if (arg instanceof PyKeywordArgument) {
+          final PyExpression value = ((PyKeywordArgument)arg).getValueExpression();
+          final String valueText = value != null ? value.getText() : "";
+          newParameters.add(Pair.create(parameters.length - 1,
+                                        new PyParameterInfo(NEW_PARAMETER, ((PyKeywordArgument)arg).getKeyword(), valueText, true)));
+        }
+        else {
+          final String paramName = generateParameterName(arg, function, usedParamNames, context);
+          newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(NEW_PARAMETER, paramName, arg.getText(), false)));
+          usedParamNames.add(paramName);
+        }
       }
-      else {
-        final String paramName = generateParameterName(arg, function, usedParamNames, context);
-        newParameters.add(Pair.create(positionalParamAnchor, new PyParameterInfo(NEW_PARAMETER, paramName, arg.getText(), false)));
-        usedParamNames.add(paramName);
-      }
-    }
-    return new PyChangeSignatureQuickFix(function, newParameters, mapping.getCallSiteExpression());
+      return newParameters;
+    };
+    return new PyChangeSignatureQuickFix(function, extraParamsSupplier, mapping.getCallSiteExpression());
   }
 
   public static @NotNull PyChangeSignatureQuickFix forMismatchingMethods(@NotNull PyFunction function, @NotNull PyFunction complementary) {
-    final int paramLength = function.getParameterList().getParameters().length;
-    final int complementaryParamLength = complementary.getParameterList().getParameters().length;
-    final List<Pair<Integer, PyParameterInfo>> extraParams;
-    if (complementaryParamLength > paramLength) {
-      extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(NEW_PARAMETER, "**kwargs", "", false)));
-    }
-    else {
-      extraParams = Collections.emptyList();
-    }
-    return new PyChangeSignatureQuickFix(function, extraParams, null);
+    Supplier<List<Pair<Integer, PyParameterInfo>>> extraParamsSupplier = () -> {
+      final int paramLength = function.getParameterList().getParameters().length;
+      final int complementaryParamLength = complementary.getParameterList().getParameters().length;
+      final List<Pair<Integer, PyParameterInfo>> extraParams;
+      if (complementaryParamLength > paramLength) {
+        extraParams = Collections.singletonList(Pair.create(paramLength - 1, new PyParameterInfo(NEW_PARAMETER, "**kwargs", "", false)));
+      }
+      else {
+        extraParams = Collections.emptyList();
+      }
+      return extraParams;
+    };
+    return new PyChangeSignatureQuickFix(function, extraParamsSupplier, null);
   }
 
-  private final List<Pair<Integer, PyParameterInfo>> myExtraParameters;
+  private final @NotNull Supplier<List<Pair<Integer, PyParameterInfo>>> myExtraParametersSupplier;
   private final @Nullable SmartPsiElementPointer<PyCallSiteExpression> myOriginalCallSiteExpression;
 
 
   /**
-   * @param extraParameters new parameters anchored by indexes of the existing parameters they should be inserted <em>after</em>
-   *                        (-1 in case they should precede the first parameter)
+   * @param extraParametersSupplier supplies new parameters anchored by indexes of the existing parameters they should be inserted <em>after</em>
+   *                                (-1 in case they should precede the first parameter)
    */
   private PyChangeSignatureQuickFix(@NotNull PyFunction function,
-                                    @NotNull List<Pair<Integer, PyParameterInfo>> extraParameters,
+                                    @NotNull Supplier<List<Pair<Integer, PyParameterInfo>>> extraParametersSupplier,
                                     @Nullable PyCallSiteExpression expression) {
     super(function);
-    myExtraParameters = ContainerUtil.sorted(extraParameters, Comparator.comparingInt(p -> p.getFirst()));
+    myExtraParametersSupplier = () -> ContainerUtil.sorted(extraParametersSupplier.get(), Comparator.comparingInt(p -> p.getFirst()));
     if (expression != null) {
       myOriginalCallSiteExpression = SmartPointerManager.getInstance(function.getProject()).createSmartPsiElementPointer(expression);
     }
@@ -122,8 +129,12 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
     if (function == null) {
       return getFamilyName();
     }
-    final String params = StringUtil.join(createMethodDescriptor(function).getParameters(), info -> info.isNew() ? PyBundle
-      .message("QFIX.bold.html.text", info.getName()) : info.getName(), ", ");
+    List<PyParameterInfo> parameters = new PyMethodDescriptor(function).getParameters();
+    final String params = StringUtil.join(
+      parameters,
+      info -> info.isNew() ? PyBundle.message("QFIX.bold.html.text", info.getName()) : info.getName(),
+      ", "
+    );
 
     final String message = PyBundle.message("QFIX.change.signature.of", StringUtil.notNullize(function.getName()) + "(" + params + ")");
     return XmlStringUtil.wrapInHtml(message);
@@ -198,6 +209,8 @@ public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   private @NotNull PyMethodDescriptor createMethodDescriptor(final PyFunction function) {
     return new PyMethodDescriptor(function) {
+      private final List<Pair<Integer, PyParameterInfo>> myExtraParameters = myExtraParametersSupplier.get();
+
       @Override
       public @NotNull List<PyParameterInfo> getParameters() {
         final List<PyParameterInfo> result = new ArrayList<>();

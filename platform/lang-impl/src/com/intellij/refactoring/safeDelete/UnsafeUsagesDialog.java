@@ -9,6 +9,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,6 +17,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 
+@ApiStatus.Internal
 public final class UnsafeUsagesDialog extends DialogWrapper {
   private JEditorPane myMessagePane;
   private final String @Nls [] myConflictDescriptions;

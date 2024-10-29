@@ -1,4 +1,3 @@
-// API_VERSION: 1.8
 @file:OptIn(ExperimentalSubclassOptIn::class)
 
 @RequiresOptIn(

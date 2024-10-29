@@ -42,14 +42,14 @@ interface VcsLogUiProperties {
   }
 }
 
-fun VcsLogUiProperties.onPropertyChange(disposable: Disposable, listener: (VcsLogUiProperties.VcsLogUiProperty<*>) -> Unit) {
+internal fun VcsLogUiProperties.onPropertyChange(disposable: Disposable, listener: (VcsLogUiProperties.VcsLogUiProperty<*>) -> Unit) {
   val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
     override fun <T> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) = listener(property)
   }
   addChangeListener(propertiesChangeListener, disposable)
 }
 
-fun <T> VcsLogUiProperties.getOrNull(property: VcsLogUiProperties.VcsLogUiProperty<T>): T? {
+internal fun <T> VcsLogUiProperties.getOrNull(property: VcsLogUiProperties.VcsLogUiProperty<T>): T? {
   if (!exists(property)) return null
   return this[property]
 }

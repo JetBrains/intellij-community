@@ -24,6 +24,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsole;
 import org.jetbrains.idea.maven.server.MavenServerConsoleIndicator;
 
+/**
+ * @deprecated use MavenRunConfigurationType instead
+ */
+@Deprecated(forRemoval = true)
 public abstract class MavenExecutor {
   final MavenRunnerParameters myParameters;
   private final String myCaption;
@@ -98,7 +102,8 @@ public abstract class MavenExecutor {
     }
     else {
       myConsole
-        .systemMessage(MavenServerConsoleIndicator.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode), null);
+        .systemMessage(MavenServerConsoleIndicator.LEVEL_ERROR, RunnerBundle.message("maven.execution.terminated.abnormally", exitCode),
+                       null);
       return false;
     }
   }

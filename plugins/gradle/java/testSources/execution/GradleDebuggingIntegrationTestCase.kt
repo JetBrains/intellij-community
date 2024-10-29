@@ -122,6 +122,10 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
     }
   }
 
+  fun createGradlePropertiesFile(relativeModulePath: String = ".", content: String) {
+    createProjectSubFile("$relativeModulePath/gradle.properties", content)
+  }
+
   fun executeRunConfiguration(
     vararg taskNames: String,
     modulePath: String = ".",

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.indexing.StorageException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuilder<Key, Value> {
   private final @NotNull Map<Key, Value> myMap;
 
@@ -22,14 +24,12 @@ public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuil
 
   @Override
   public boolean differentiate(@NotNull Map<Key, Value> newData,
-                               @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> addProcessor,
-                               @NotNull KeyValueUpdateProcessor<? super Key, ? super Value> updateProcessor,
-                               @NotNull RemovedKeyProcessor<? super Key> removeProcessor) throws StorageException {
+                               @NotNull UpdatedEntryProcessor<? super Key, ? super Value> changesProcessor) throws StorageException {
     if (myMap.isEmpty()) {
-      return EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, addProcessor);
+      return EmptyInputDataDiffBuilder.processAllKeyValuesAsAdded(myInputId, newData, changesProcessor);
     }
     if (newData.isEmpty()) {
-      return EmptyInputDataDiffBuilder.processAllKeyValuesAsRemoved(myInputId, myMap, removeProcessor);
+      return EmptyInputDataDiffBuilder.processAllKeyValuesAsRemoved(myInputId, myMap, changesProcessor);
     }
 
     int added = 0;
@@ -42,11 +42,11 @@ public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuil
       Value newValue = newData.get(key);
       if (!Comparing.equal(oldValue, newValue) || (newValue == null && !newData.containsKey(key))) {
         if (newData.containsKey(key)) {
-          updateProcessor.process(key, newValue, myInputId);
+          changesProcessor.updated(key, newValue, myInputId);
           updated++;
         }
         else {
-          removeProcessor.process(key, myInputId);
+          changesProcessor.removed(key, myInputId);
           removed++;
         }
       }
@@ -55,7 +55,7 @@ public class MapInputDataDiffBuilder<Key, Value> extends DirectInputDataDiffBuil
     for (Map.Entry<Key, Value> e : newData.entrySet()) {
       final Key newKey = e.getKey();
       if (!myMap.containsKey(newKey)) {
-        addProcessor.process(newKey, e.getValue(), myInputId);
+        changesProcessor.added(newKey, e.getValue(), myInputId);
         added++;
       }
     }

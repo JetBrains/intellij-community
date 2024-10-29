@@ -36,8 +36,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 /**
  * Provides 3 streams of output named system, stdout and stderr,
@@ -156,7 +155,7 @@ public class OutputChecker {
     String actual = preprocessBuffer(buildOutputString(), sortClassPath);
 
     File outsDir = new File(myAppPath.produce(), "outs");
-    assert outsDir.exists() || outsDir.mkdirs() : outsDir;
+    assertTrue(outsDir.toString(), outsDir.exists() || outsDir.mkdirs());
 
     File outFile = getOutFile(outsDir, jdk, null, "");
     if (!outFile.exists()) {
@@ -265,6 +264,9 @@ public class OutputChecker {
       result = result.replace("-Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 ", "");
       result = result.replace("-Dkotlinx.coroutines.debug.enable.creation.stack.trace=false ", "");
       result = result.replace("-Ddebugger.agent.enable.coroutines=true ", "");
+      result = result.replace("-Dkotlinx.coroutines.debug.enable.flows.stack.trace=true ", "");
+      result = result.replace("-Dkotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace=true ", "");
+      result = result.replace("-Ddebugger.agent.support.throwable=false ", "");
       result = result.replaceAll("\\((.*):\\d+\\)", "($1:!LINE_NUMBER!)");
 
       result = fixSlashes(result, JDK_HOME_STR);

@@ -21,6 +21,8 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
+
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.K1PluginStartupActivity"/>
     <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility"
@@ -155,6 +157,9 @@
             order="first"
             key="KNM"
             factoryClass="org.jetbrains.kotlin.idea.structureView.KtDecompiledFileStructureViewBuilderProvider"/>
+    <lang.logicalStructureTreeElementProvider
+            implementation="org.jetbrains.kotlin.idea.structureView.KotlinClassLogicalStructureTreeElementProvider"
+            order="before javaPsiClassLogicalStructureTreeElementProvider"/>
   </extensions>
 
   <!-- Line markers -->
@@ -274,8 +279,6 @@
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.conversion.copy.ConvertTextJavaCopyPasteProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCopyPasteReferenceProcessor"/>
     <copyPastePostProcessor implementation="org.jetbrains.kotlin.idea.refactoring.cutPaste.MoveDeclarationsCopyPasteProcessor"/>
-
-    <filePasteProvider implementation="org.jetbrains.kotlin.idea.conversion.copy.KotlinFilePasteProvider" order="first"/>
 
     <elementDescriptionProvider order="first" implementation="org.jetbrains.kotlin.idea.findUsages.KotlinElementDescriptionProvider"/>
   </extensions>

@@ -1,4 +1,4 @@
-// "Create missing switch branch 'Pair<I>(C y, int x)'" "true-preview"
+// "Create missing branch 'Pair<I>(C y, int x)'" "true-preview"
 sealed interface I permits C, D {}
 final class C implements I {}
 final class D implements I {}

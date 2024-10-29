@@ -16,7 +16,11 @@ internal class TestPluginInstaller(private val afterInstallPluginCallback: (Plug
 
   // there's no marketplace to find plugin descriptors, so we'll just populate that in advance
 
-  override fun install(installer: PluginDownloader): Boolean {
+  override suspend fun installCollected(installers: List<PluginDownloader>, settingsAlreadyChanged: Boolean) {
+    doInstallCollected(installers, settingsAlreadyChanged)
+  }
+
+  override suspend fun install(installer: PluginDownloader): Boolean {
     val pluginId = installer.id
     val descriptor = TestPluginDescriptor.ALL[pluginId] as TestPluginDescriptor
     if (!descriptor.isDynamic)
@@ -27,9 +31,13 @@ internal class TestPluginInstaller(private val afterInstallPluginCallback: (Plug
     return true
   }
 
-  override fun createDownloader(pluginId: PluginId, indicator: ProgressIndicator): PluginDownloader? {
-    val descriptor = TestPluginDescriptor.ALL[pluginId] ?: return null
-    return PluginDownloader.createDownloader(descriptor)
+  override fun createDownloaders(pluginIds: Collection<PluginId>): List<PluginDownloader> {
+    val retval = arrayListOf<PluginDownloader>()
+    for (pluginId in pluginIds) {
+      val descriptor = TestPluginDescriptor.ALL[pluginId] ?: continue
+      retval.add(PluginDownloader.createDownloader(descriptor))
+    }
+    return retval
   }
 }
 

@@ -5,13 +5,14 @@ import com.intellij.codeInsight.completion.InsertHandler
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.renderer.base.annotations.KaRendererAnnotationsFilter
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaTypeParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
@@ -20,9 +21,12 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.completion.lookups.TailTextProvider.getTailText
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.idea.completion.lookups.withClassifierSymbolInfo
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.types.Variance
 
-class TypeLookupElementFactory {
+internal object TypeLookupElementFactory {
+
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun createLookup(type: KaType): LookupElement? {
@@ -51,21 +55,34 @@ class TypeLookupElementFactory {
 
     context(KaSession)
     fun createLookup(symbol: KaClassifierSymbol): LookupElement? {
-        val (relativeNameAsString, fqNameAsString) = when (symbol) {
-            is KaTypeParameterSymbol -> symbol.name.asString().let { it to it }
+        val relativeName = symbol.name
+            ?: return null
 
-            is KaClassLikeSymbol -> when (val classId = symbol.classId) {
-                null -> symbol.name?.asString()?.let { it to it }
-                else -> classId.relativeClassName.asString() to classId.asFqNameString()
-            }
-        } ?: return null
+        val descriptor = when (symbol) {
+            is KaClassLikeSymbol -> symbol.classId
+                ?.let { (packageFqName, relativeClassName, _) ->
+                    ClassDescriptor(
+                        relativeClassName = relativeClassName,
+                        renderedClassId = buildString { // see ClassId::asFqNameString
+                            if (!packageFqName.isRoot) {
+                                append(packageFqName.render())
+                                append(".")
+                            }
+                            append(relativeClassName.render())
+                        },
+                        tailText = getTailText(symbol, usePackageFqName = true),
+                    )
+                }
 
-        val tailText = (symbol as? KaClassLikeSymbol)?.let { getTailText(symbol, usePackageFqName = true) }
+            else -> null
+        }
 
-        return LookupElementBuilder.create(TypeLookupObject(fqNameAsString), relativeNameAsString)
-            .withInsertHandler(TypeInsertHandler)
+        return LookupElementBuilder.create(
+            /* lookupObject = */ TypeLookupObject(descriptor?.renderedClassId ?: relativeName.render()),
+            /* lookupString = */ descriptor?.relativeClassName?.asString() ?: relativeName.asString(),
+        ).withInsertHandler(TypeInsertHandler)
             .let { withClassifierSymbolInfo(symbol, it) }
-            .withTailText(tailText)
+            .withTailText(descriptor?.tailText)
     }
 
     private fun KaType.getSymbolIfTypeParameterOrUsualClass(): KaClassifierSymbol? = when (this) {
@@ -93,3 +110,9 @@ private object TypeInsertHandler : InsertHandler<LookupElement> {
         context.insertAndShortenReferencesInStringUsingTemporarySuffix(lookupObject.fqRenderedType)
     }
 }
+
+private data class ClassDescriptor(
+    val relativeClassName: FqName,
+    val renderedClassId: @NonNls String,
+    val tailText: @NlsSafe String,
+)

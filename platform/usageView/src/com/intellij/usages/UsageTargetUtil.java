@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -18,21 +19,27 @@ import java.util.List;
 public final class UsageTargetUtil {
   private static final ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
 
+  /** @deprecated Use {@link #findUsageTargets(Editor, PsiFile, PsiElement)} */
+  @Deprecated(forRemoval = true)
   public static UsageTarget[] findUsageTargets(@NotNull DataProvider dataProvider) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
     PsiFile file = CommonDataKeys.PSI_FILE.getData(dataProvider);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
+    return findUsageTargets(editor, file, psiElement);
+  }
 
+  public static UsageTarget @Nullable [] findUsageTargets(@Nullable Editor editor,
+                                                          @Nullable PsiFile file,
+                                                          @Nullable PsiElement psiElement) {
     List<UsageTarget> result = new ArrayList<>();
     if (file != null && editor != null) {
       UsageTarget[] targets = findUsageTargets(editor, file);
       Collections.addAll(result, targets);
     }
-    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (psiElement != null) {
       UsageTarget[] targets = findUsageTargets(psiElement);
       Collections.addAll(result, targets);
     }
-
     return result.isEmpty() ? null : result.toArray(UsageTarget.EMPTY_ARRAY);
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.sh.spellchecker;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.tree.TokenSet;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.sh.ShTypes.*;
 import static com.intellij.sh.lexer.ShTokenTypes.COMMENT;
 
-public class ShSpellcheckingStrategy extends SpellcheckingStrategy {
+public class ShSpellcheckingStrategy extends SpellcheckingStrategy implements DumbAware {
   private static final TokenSet TOKENS_WITH_TEXT = TokenSet.create(STRING_CONTENT, RAW_STRING, HEREDOC_CONTENT, COMMENT);
 
   @NotNull

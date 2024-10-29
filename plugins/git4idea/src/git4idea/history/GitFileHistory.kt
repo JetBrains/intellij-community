@@ -26,6 +26,7 @@ import git4idea.history.GitLogParser.GitLogOption
 import git4idea.log.GitLogProvider
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.function.Consumer
 
@@ -75,7 +76,7 @@ class GitFileHistory internal constructor(private val project: Project,
     while (starts.isNotEmpty()) {
       val (startRevisions, startPath) = starts.removeFirst()
       val lastCommits = runGitLog(logParser, startPath, visitedCommits, consumer, startRevisions + parameters.toList())
-      if (lastCommits.isEmpty()) return
+      if (lastCommits.isEmpty()) continue
 
       for (lastCommit in lastCommits) {
         val parents = getParentsAndPathsIfRename(lastCommit, startPath)
@@ -86,6 +87,9 @@ class GitFileHistory internal constructor(private val project: Project,
       }
     }
   }
+
+  @TestOnly
+  internal fun getFilePath() = path
 
   @Throws(VcsException::class)
   private fun runGitLog(logParser: GitLogParser<GitLogFullRecord>,

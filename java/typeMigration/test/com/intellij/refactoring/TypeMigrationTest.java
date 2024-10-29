@@ -309,7 +309,6 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
   }
 
   // Set<String> f; foo(AbstractSet<String> s){f = s} -> Set<Integer>f; foo(AbstractSet<Integer> s){f = s}
-  // TODO: This test produces incorrect result since Java 8
   public void testT49() {
     doTestFieldType("f",
                     myFactory.createTypeFromText("java.util.Set<B>", null));
@@ -317,7 +316,6 @@ public class TypeMigrationTest extends TypeMigrationTestBase {
 
   //captured wildcard: Set<? extends JComponent> s; Set<? extends JComponent> c1 = s; ->
   //  Set<? extends JButton> s; Set<? extends JButton> c1 = s;
-  // TODO: This test produces incorrect result since Java 8
   public void testT50() {
     doTestFieldType("c1",
                     myFactory.createTypeFromText("java.util.Set<? extends JButton>", null));

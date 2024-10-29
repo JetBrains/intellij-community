@@ -9,9 +9,11 @@ import com.intellij.openapi.fileTypes.impl.FileTypeOverrider;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.FileContentUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class LightEditFileTypeOverrider implements FileTypeOverrider {
 
   private static final Key<Boolean> KEY = Key.create("LightEdit.PlainText");

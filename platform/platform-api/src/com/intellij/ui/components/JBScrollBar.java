@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.Key;
@@ -189,7 +189,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
     Component parent = getParent();
     if (parent instanceof JBScrollPane pane) {
       JViewport viewport = pane.getViewport();
-      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.isInterpolationEligibleFor(this)) {
+      if (viewport != null && ScrollSettings.isEligibleFor(viewport.getView()) && ScrollSettings.INSTANCE.isInterpolationEligibleFor(this)) {
         delay = pane.getInitialDelay(getValueIsAdjusting());
       }
     }
@@ -308,7 +308,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       return TouchScrollUtil.getDelta(event);
     }
     double rotation = event.getPreciseWheelRotation();
-    if (ScrollSettings.isPixelPerfectEnabled()) {
+    if (ScrollSettings.isPixelPerfectEnabled.invoke()) {
       // calculate an absolute delta if possible
       if (SystemInfo.isMac) {
         // Native code in our JDK for Mac uses 0.1 to convert pixels to units,
@@ -320,7 +320,7 @@ public class JBScrollBar extends JScrollBar implements TopComponent, Interpolabl
       int size = font == null ? JBUIScale.scale(10) : font.getSize(); // assume an unit size
       return size * rotation * event.getScrollAmount();
     }
-    if (ScrollSettings.isHighPrecisionEnabled()) {
+    if (ScrollSettings.isHighPrecisionEnabled.invoke()) {
       // calculate a relative delta if possible
       int direction = rotation < 0 ? -1 : 1;
       int unitIncrement = getUnitIncrement(direction);

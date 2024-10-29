@@ -1,0 +1,5 @@
+public class JavaClass {
+    public static int message() {
+        return 42;
+    }
+}

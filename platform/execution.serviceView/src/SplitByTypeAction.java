@@ -2,7 +2,6 @@
 package com.intellij.platform.execution.serviceView;
 
 import com.intellij.execution.services.ServiceViewManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -21,7 +20,7 @@ final class SplitByTypeAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean isEnabled;
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       Project project = e.getProject();
       ServiceView selectedView = getSelectedView(e);
       isEnabled = project != null && selectedView != null &&

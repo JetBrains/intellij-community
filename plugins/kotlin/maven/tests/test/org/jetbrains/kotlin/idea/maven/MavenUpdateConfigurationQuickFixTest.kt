@@ -4,10 +4,12 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.maven.testFramework.assertWithinTimeout
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
@@ -123,16 +125,19 @@ class MavenUpdateConfigurationQuickFixTest12 : KotlinMavenImportingTestCase() {
     private suspend fun doTest(intentionName: String) {
         val pomVFile = createProjectSubFile("pom.xml", File(getTestDataPath(), "pom.xml").readText())
         val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataPath(), "src.kt").readText())
+        LocalFileSystem.getInstance().refreshFiles(listOf(pomVFile, sourceVFile))
         projectPom = pomVFile
         addPom(projectPom)
         importProjectAsync()
         withContext(Dispatchers.EDT) {
-            assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
-            codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
-            (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
-            codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
-            FileDocumentManager.getInstance().saveAllDocuments()
-            checkResult(pomVFile)
+            writeIntentReadAction {
+                assertTrue(ModuleRootManager.getInstance(testFixture.module).fileIndex.isInSourceContent(sourceVFile))
+                codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
+                (codeInsightTestFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
+                codeInsightTestFixture.launchAction(codeInsightTestFixture.findSingleIntention(intentionName))
+                FileDocumentManager.getInstance().saveAllDocuments()
+                checkResult(pomVFile)
+            }
         }
     }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.CustomFoldRegion;
@@ -14,7 +13,6 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 import java.util.*;
@@ -98,7 +96,7 @@ public final class DocRenderItemUpdater implements Runnable {
     while (!toProcess.isEmpty() && System.currentTimeMillis() < deadline);
     editorTasks.entrySet().forEach((entry -> runFoldingTasks(entry.getKey(), entry.getValue())));
     keepers.values().forEach(k -> k.restorePosition(false));
-    if (!myQueue.isEmpty()) SwingUtilities.invokeLater(ThreadContext.captureThreadContext(() -> processChunk(onAfterDone)));
+    if (!myQueue.isEmpty()) ApplicationManager.getApplication().invokeLater(() -> processChunk(onAfterDone));
     if (myQueue.isEmpty() && onAfterDone != null) onAfterDone.run();
   }
 

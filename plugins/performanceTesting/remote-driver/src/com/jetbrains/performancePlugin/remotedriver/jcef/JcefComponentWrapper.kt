@@ -2,11 +2,11 @@ package com.jetbrains.performancePlugin.remotedriver.jcef
 
 import com.intellij.ui.jcef.JBCefBrowserBase
 import com.intellij.ui.jcef.JBCefJSQuery
-import kotlinx.coroutines.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import java.awt.Component
-import java.util.function.Consumer
+import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.coroutines.resumeWithException
 
@@ -16,6 +16,10 @@ private const val JB_BROWSER_KEY = "JBCefBrowser.instance"
 internal class JcefComponentWrapper(private val component: Component) {
   private val jbCefBrowser = findBrowser()
   private val jsExecutor = JsExecutor(jbCefBrowser)
+
+  fun hasDocument() = jbCefBrowser.cefBrowser.hasDocument()
+
+  fun getUrl(): String = jbCefBrowser.cefBrowser.url
 
   fun runJs(js: String) = jsExecutor.runJs(js)
 
@@ -45,10 +49,10 @@ internal class JcefComponentWrapper(private val component: Component) {
       jbCefBrowser = currentComponent.getClientProperty(JB_BROWSER_KEY)
       currentComponent = currentComponent.parent as JComponent
     }
-    require(jbCefBrowser != null) {
+    check(jbCefBrowser != null) {
       "Failed to retrieve jbCefBrowser from $component"
     }
-    require(jbCefBrowser is JBCefBrowserBase) {
+    check(jbCefBrowser is JBCefBrowserBase) {
       "$jbCefBrowser is not JBCefBrowser"
     }
     return jbCefBrowser
@@ -56,37 +60,34 @@ internal class JcefComponentWrapper(private val component: Component) {
 
   private class JsExecutor(jbCefBrowser: JBCefBrowserBase) {
     private val cefBrowser = jbCefBrowser.cefBrowser
-    private var callback: Consumer<String>? = null
-
-    private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser).apply {
-      addHandler {
-        callback?.accept(it)
-        null
-      }
-    }
-
-    private val mutex = Mutex()
+    private val jsResultQuery = JBCefJSQuery.create(jbCefBrowser)
 
     fun runJs(js: String) {
       cefBrowser.executeJavaScript(js, cefBrowser.url, 0)
     }
 
-    suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String = mutex.withLock {
+    suspend fun callJs(js: String, executeTimeoutMs: Long = 3000): String =
       withTimeout(executeTimeoutMs) {
         suspendCancellableCoroutine { continuation ->
+          val handler = object : Function<String, JBCefJSQuery.Response?> {
+            override fun apply(result: String): JBCefJSQuery.Response? {
+              jsResultQuery.removeHandler(this)
+              continuation.resumeWith(Result.success(result))
+              return null
+            }
+          }
+
+          jsResultQuery.addHandler(handler)
+
           continuation.invokeOnCancellation {
-            callback = null
+            jsResultQuery.removeHandler(handler)
             continuation.resumeWithException(IllegalStateException("""
             |No result from script '$js' in embedded browser in ${executeTimeoutMs}ms.
             |Check logs in the browsers devTools(`ide.browser.jcef.contextMenu.devTools.enabled` key in the Registry...)""".trimMargin()))
           }
-          callback = Consumer<String> {
-            continuation.resumeWith(Result.success(it))
-            callback = null
-          }
+
           cefBrowser.executeJavaScript(jsResultQuery.inject(js), cefBrowser.url, 0)
         }
       }
-    }
   }
 }

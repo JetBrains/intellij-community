@@ -15,10 +15,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class InsertMissingTokenFix implements ModCommandAction {
+  @NotNull
   private final String myToken;
+  private final boolean myMoveAfter;
 
-  public InsertMissingTokenFix(String token) {
+  public InsertMissingTokenFix(@NotNull String token) {
+    this(token, false);
+  }
+
+  public InsertMissingTokenFix(@NotNull String token, boolean moveAfter) {
     myToken = token;
+    myMoveAfter = moveAfter;
   }
 
   @Override
@@ -44,7 +51,11 @@ public class InsertMissingTokenFix implements ModCommandAction {
     String oldText = document.getText();
     String newText = oldText.substring(0, offset) + myToken + oldText.substring(offset);
     VirtualFile file = Objects.requireNonNull(FileDocumentManager.getInstance().getFile(document));
-    return new ModUpdateFileText(file, oldText, newText,
-                                 List.of(new ModUpdateFileText.Fragment(offset, 0, myToken.length())));
+    ModCommand fix = new ModUpdateFileText(file, oldText, newText,
+                                           List.of(new ModUpdateFileText.Fragment(offset, 0, myToken.length())));
+    if (myMoveAfter) {
+      fix = fix.andThen(new ModNavigate(file, -1, -1, offset + myToken.length()));
+    }
+    return fix;
   }
 }

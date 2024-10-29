@@ -10,8 +10,10 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JList
 
+@ApiStatus.Internal
 class CodeVisionGlobalSettingsProvider : InlayGroupSettingProvider {
 
   companion object {

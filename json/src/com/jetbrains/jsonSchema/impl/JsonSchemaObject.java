@@ -166,6 +166,10 @@ public abstract class JsonSchemaObject {
 
   public abstract @Nullable JsonSchemaObject getSchemaDependencyByName(@NotNull String name);
 
+  // custom metadata provided by schemas, can be used in IDE features
+  // the format in the schema is a key with either a single string value or an array of string values
+  public abstract @Nullable List<JsonSchemaMetadataEntry> getMetadata();
+
   // also remove?
   public abstract @Nullable List<? extends JsonSchemaObject> getAllOf();
 
@@ -192,7 +196,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#guessType}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @Nullable JsonSchemaType guessType() {
     return JsonSchemaObjectReadingUtils.guessType(this);
   }
@@ -200,7 +204,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#hasStringChecks}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean hasStringChecks() {
     return JsonSchemaObjectReadingUtils.hasStringChecks(this);
   }
@@ -208,7 +212,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#hasNumericChecks}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean hasNumericChecks() {
     return JsonSchemaObjectReadingUtils.hasNumericChecks(this);
   }
@@ -216,7 +220,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#hasArrayChecks}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean hasArrayChecks() {
     return JsonSchemaObjectReadingUtils.hasArrayChecks(this);
   }
@@ -224,7 +228,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObjectReadingUtils#hasObjectChecks}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean hasObjectChecks() {
     return JsonSchemaObjectReadingUtils.hasObjectChecks(this);
   }
@@ -240,6 +244,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObject#getPropertyNames} and {@link JsonSchemaObject#getPropertyByName}
    */
+  @ApiStatus.Internal
   @Deprecated
   public abstract @NotNull Map<String, ? extends JsonSchemaObject> getProperties();
 
@@ -288,6 +293,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated use {@link JsonSchemaObject#getDefinitionNames} and {@link JsonSchemaObject#getDefinitionByName}
    */
+  @ApiStatus.Internal
   @Deprecated
   public abstract @Nullable Map<String, ? extends JsonSchemaObject> getDefinitionsMap();
 
@@ -300,6 +306,7 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated Do not use
    */
+  @ApiStatus.Internal
   @Deprecated
   public abstract @Nullable JsonSchemaType mergeTypes(@Nullable JsonSchemaType selfType,
                                                       @Nullable JsonSchemaType otherType,
@@ -308,12 +315,14 @@ public abstract class JsonSchemaObject {
   /**
    * @deprecated Do not use
    */
+  @ApiStatus.Internal
   @Deprecated
   public abstract Set<JsonSchemaType> mergeTypeVariantSets(@Nullable Set<JsonSchemaType> self, @Nullable Set<JsonSchemaType> other);
 
   /**
    * @deprecated Do not use
    */
+  @ApiStatus.Internal
   @Deprecated
   public abstract void mergeValues(@NotNull JsonSchemaObject other);
 }

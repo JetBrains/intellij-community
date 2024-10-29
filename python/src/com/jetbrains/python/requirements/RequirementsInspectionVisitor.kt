@@ -9,7 +9,6 @@ import com.jetbrains.python.requirements.psi.NameReq
 import com.jetbrains.python.requirements.psi.UriReference
 
 open class RequirementsInspectionVisitor(val holder: ProblemsHolder,
-                                         val onTheFly: Boolean,
                                          val session: LocalInspectionToolSession) : PsiElementVisitor() {
 
   override fun visitElement(element: PsiElement) {

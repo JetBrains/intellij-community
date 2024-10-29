@@ -9,6 +9,7 @@ import com.intellij.execution.services.ServiceViewManager
 import com.intellij.execution.services.ServiceViewToolWindowDescriptor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.NlsContexts
@@ -16,9 +17,8 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindowId
-import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.DoubleClickListener
-import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.*
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
@@ -38,7 +38,6 @@ import javax.swing.tree.MutableTreeNode
 internal class ConfigureServicesDialog(private val project: Project) : DialogWrapper(project) {
   private val includedServicesTree = ServicesTree(project, ExecutionBundle.message("service.view.configure.run.configuration.types"))
   private val excludedServicesTree = ServicesTree(project, ExecutionBundle.message("service.view.configure.run.tool.windows"))
-  private val statusLabel = JBLabel()
   private val initiallyFocusedTree: ServicesTree
 
   companion object {
@@ -77,7 +76,13 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
   }
 
   init {
-    title = ExecutionBundle.message("service.view.configure.dialog.title")
+    val baseText = ExecutionBundle.message("service.view.configure.dialog.title")
+    if (project.isDefault) {
+      title = IdeUICustomization.getInstance().projectMessage("title.for.new.projects", baseText)
+    }
+    else {
+      title = baseText
+    }
 
     val services = collectServices(project)
     val types = collectTypes(project)
@@ -119,9 +124,23 @@ internal class ConfigureServicesDialog(private val project: Project) : DialogWra
     excludedPane.preferredSize = includedPane.preferredSize
     treesPanel.add(excludedPane, gridBag.next().weighty(1.0).fillCell())
     mainPanel.add(treesPanel, BorderLayout.CENTER)
+
+    val statusPanel = JPanel(BorderLayout())
+    mainPanel.add(statusPanel, BorderLayout.SOUTH)
+    val statusLabel = JBLabel()
     statusLabel.text = XmlStringUtil.wrapInHtml(ExecutionBundle.message("service.view.configure.dialog.description"))
     statusLabel.border = JBUI.Borders.emptyTop(5)
-    mainPanel.add(statusLabel, BorderLayout.SOUTH)
+    statusPanel.add(statusLabel, BorderLayout.NORTH)
+
+    if (!project.isDefault) {
+      val actionLink = ActionLink(ExecutionBundle.message("service.view.configure.dialog.new.project.text")) {
+        ConfigureServicesDialog(ProjectManager.getInstance().defaultProject).show()
+      }
+      actionLink.border = JBUI.Borders.emptyTop(10)
+      actionLink.background = JBColor.background()
+      statusPanel.add(actionLink, BorderLayout.SOUTH)
+    }
+
     return mainPanel
   }
 

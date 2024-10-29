@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.header;
 
 import com.intellij.application.options.schemes.SchemesModel;
@@ -10,12 +10,16 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
+@ApiStatus.Internal
 public abstract class InspectionProfileSchemesModel implements SchemesModel<InspectionProfileModifiableModel> {
   private static final Logger LOG = Logger.getInstance(InspectionProfileSchemesModel.class);
   private final List<SingleInspectionProfilePanel> myProfilePanels = new ArrayList<>();
@@ -151,10 +155,9 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     return ContainerUtil.find(myProfilePanels, panel -> panel.getProfile().equals(profile));
   }
 
-  @NotNull
-  protected abstract SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model);
+  protected abstract @NotNull SingleInspectionProfilePanel createPanel(@NotNull InspectionProfileModifiableModel model);
 
-  private boolean hasName(@NotNull final String name, boolean shared) {
+  private boolean hasName(final @NotNull String name, boolean shared) {
     final boolean hasName = myProfilePanels.stream().map(SingleInspectionProfilePanel::getProfile).anyMatch(p -> name.equals(p.getName()) && p.isProjectLevel() == shared);
     if (hasName) return true;
     return myProfilePanels.stream().anyMatch(p -> {
@@ -190,10 +193,8 @@ public abstract class InspectionProfileSchemesModel implements SchemesModel<Insp
     return null;
   }
 
-  @NotNull
-  @Unmodifiable
-  public static List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
-                                                              @NotNull InspectionProfileManager projectManager) {
+  public static @NotNull @Unmodifiable List<InspectionProfileImpl> getSortedProfiles(@NotNull InspectionProfileManager appManager,
+                                                                                     @NotNull InspectionProfileManager projectManager) {
     return ContainerUtil.notNullize(ContainerUtil.concat(ContainerUtil.sorted(appManager.getProfiles()),
                                                          ContainerUtil.sorted(projectManager.getProfiles())));
   }

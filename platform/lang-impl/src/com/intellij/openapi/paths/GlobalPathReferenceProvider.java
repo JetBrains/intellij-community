@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -16,7 +16,7 @@ import java.util.List;
  */
 public final class GlobalPathReferenceProvider implements PathReferenceProvider {
 
-  @NonNls private static final String[] PREFIXES = {
+  private static final @NonNls String[] PREFIXES = {
     "tel:", "sms:", "skype:", "data:", "xmpp:"
   };
 
@@ -62,8 +62,7 @@ public final class GlobalPathReferenceProvider implements PathReferenceProvider 
   }
 
   @Override
-  @Nullable
-  public PathReference getPathReference(@NotNull String path, @NotNull final PsiElement element) {
+  public @Nullable PathReference getPathReference(@NotNull String path, final @NotNull PsiElement element) {
     return URLUtil.containsScheme(path) ? new PathReference(path, PathReference.NULL_ICON) : null;
   }
 }

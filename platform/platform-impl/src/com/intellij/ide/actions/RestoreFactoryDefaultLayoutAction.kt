@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.KeepPopupOnPerform
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RestoreFactoryDefaultLayoutAction : DumbAwareToggleAction() {
 
   companion object {

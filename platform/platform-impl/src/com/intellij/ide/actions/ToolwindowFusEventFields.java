@@ -6,12 +6,14 @@ import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_FINISHED_EVENT_ID;
 
+@ApiStatus.Internal
 public final class ToolwindowFusEventFields implements FeatureUsageCollectorExtension {
   public static final StringEventField TOOLWINDOW =
     EventFields.StringValidatedByCustomRule("toolwindow", ToolWindowUtilValidator.class);

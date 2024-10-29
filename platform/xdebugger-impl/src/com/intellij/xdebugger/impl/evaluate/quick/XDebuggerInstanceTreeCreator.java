@@ -18,10 +18,12 @@ import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeCreator;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 
+@ApiStatus.Internal
 public class XDebuggerInstanceTreeCreator implements DebuggerTreeCreator<Pair<XInstanceEvaluator,String>> {
   @NotNull private final Project myProject;
   private final XDebuggerEditorsProvider myProvider;

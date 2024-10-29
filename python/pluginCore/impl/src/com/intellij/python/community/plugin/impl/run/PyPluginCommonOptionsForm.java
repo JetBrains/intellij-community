@@ -49,8 +49,8 @@ public class PyPluginCommonOptionsForm implements AbstractPyCommonOptionsForm {
     content.moduleComboBox.setModules(validModules);
     content.moduleComboBox.setSelectedModule(selection);
 
-    content.workingDirectoryTextField.addBrowseFolderListener(PyBundle.message("configurable.select.working.directory"), "", data.getProject(),
-                                                              FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    content.workingDirectoryTextField.addBrowseFolderListener(data.getProject(), FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("configurable.select.working.directory")));
 
     ActionListener listener = new ActionListener() {
       @Override

@@ -16,6 +16,7 @@ import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -25,9 +26,10 @@ import java.awt.*;
 
 import static com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT;
 
+@ApiStatus.Internal
 public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   @Override
-  public void perform(@NotNull Project project, AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     XDebugSession session = DebuggerUIUtil.getSession(event);
     if (session == null) return;
 
@@ -71,7 +73,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   @Override
-  public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     XValueMarkers<?, ?> markers = getValueMarkers(event);
     if (markers == null) return false;
 
@@ -89,7 +91,7 @@ public class XMarkObjectActionHandler extends MarkObjectActionHandler {
   }
 
   @Override
-  public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+  public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
     return getValueMarkers(event) == null;
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.platform.util
 
 import com.intellij.openapi.diagnostic.logger
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -86,6 +87,7 @@ private class ArgsReader(
   }
 }
 
+@ApiStatus.Internal
 class ArgsParser(args: List<String>) {
   private val args = Args(args)
   private val arguments = mutableListOf<TypedArg<*>>()

@@ -242,9 +242,14 @@ public open class VersionedEntityStorageImpl(initialStorage: ImmutableEntityStor
     val oldCopy = currentPointer
     if (oldCopy.storage == newStorage) return
     val change = VersionedStorageChangeImpl(oldCopy.storage, newStorage, changes)
-    beforeChanged(change)
-    currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
-    afterChanged(change)
+    try {
+      (newStorage as? AbstractEntityStorage)?.isEventHandling = true
+      beforeChanged(change)
+      currentPointer = Current(version = oldCopy.version + 1, storage = newStorage)
+      afterChanged(change)
+    } finally {
+      (newStorage as? AbstractEntityStorage)?.isEventHandling = false
+    }
   }
 }
 

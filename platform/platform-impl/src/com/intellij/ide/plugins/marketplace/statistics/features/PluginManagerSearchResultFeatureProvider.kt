@@ -5,8 +5,10 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginNode
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.utils.getPluginInfoByDescriptor
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.round
 
+@ApiStatus.Internal
 object PluginManagerSearchResultFeatureProvider {
   private val NAME_LENGTH_DATA_KEY = EventFields.Int("nameLength")
   private val DEVELOPED_BY_JETBRAINS_DATA_KEY = EventFields.Boolean("byJetBrains")

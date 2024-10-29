@@ -25,6 +25,8 @@ class FileStructureSuggester : AbstractFeatureSuggester() {
 
   override val languages = listOf("JAVA", "kotlin", "Python", "JavaScript", "ECMAScript 6")
 
+  override val forceCheckForStatistics = true
+
   private var prevActionIsEditorFindAction = false
 
   override fun getSuggestion(action: Action): Suggestion {

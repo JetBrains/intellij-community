@@ -136,6 +136,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("list.kt")
         public void testList() throws Exception {
             performTest();
@@ -374,8 +379,78 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
-        @TestMetadata("call.kt")
-        public void testCall() throws Exception {
+        @TestMetadata("booleanLiteralFalse.kt")
+        public void testBooleanLiteralFalse() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("booleanLiteralTrue.kt")
+        public void testBooleanLiteralTrue() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsAll.kt")
+        public void testCollectionsAll() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsAll_implicitReceiver.kt")
+        public void testCollectionsAll_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty.kt")
+        public void testCollectionsIsEmpty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_implicitReceiver.kt")
+        public void testCollectionsIsEmpty_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_implicitReceiver_listReceiver.kt")
+        public void testCollectionsIsEmpty_implicitReceiver_listReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_listReceiver.kt")
+        public void testCollectionsIsEmpty_listReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsNotEmpty.kt")
+        public void testCollectionsIsNotEmpty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsNotEmpty_implicitReceiver.kt")
+        public void testCollectionsIsNotEmpty_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsNone.kt")
+        public void testCollectionsNone() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsNone_implicitReceiver.kt")
+        public void testCollectionsNone_implicitReceiver() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("ifExpression.kt")
+        public void testIfExpression() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("isInstanceCheck.kt")
+        public void testIsInstanceCheck() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("isNotInstanceCheck.kt")
+        public void testIsNotInstanceCheck() throws Exception {
             performTest();
         }
 
@@ -394,8 +469,28 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
             performTest();
         }
 
+        @TestMetadata("operatorEQ.kt")
+        public void testOperatorEQ() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("operatorIN.kt")
+        public void testOperatorIN() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("qualifiedCall.kt")
+        public void testQualifiedCall() throws Exception {
+            performTest();
+        }
+
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("simpleCall.kt")
+        public void testSimpleCall() throws Exception {
             performTest();
         }
     }
@@ -667,6 +762,11 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
             @TestMetadata("valAtLambaArgumentInCall.kt")
             public void testValAtLambaArgumentInCall() throws Exception {
+                performTest();
+            }
+
+            @TestMetadata("valInsideLambda.kt")
+            public void testValInsideLambda() throws Exception {
                 performTest();
             }
 
@@ -982,6 +1082,16 @@ public abstract class K2PostfixTemplateTestGenerated extends AbstractK2PostfixTe
 
         @TestMetadata("call.kt")
         public void testCall() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty.kt")
+        public void testCollectionsIsEmpty() throws Exception {
+            performTest();
+        }
+
+        @TestMetadata("collectionsIsEmpty_listReceiver.kt")
+        public void testCollectionsIsEmpty_listReceiver() throws Exception {
             performTest();
         }
 

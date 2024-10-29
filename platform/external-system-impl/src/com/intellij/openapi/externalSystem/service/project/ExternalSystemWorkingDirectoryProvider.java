@@ -18,9 +18,11 @@ package com.intellij.openapi.externalSystem.service.project;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.WorkingDirectoryProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
+@ApiStatus.Internal
 public class ExternalSystemWorkingDirectoryProvider implements WorkingDirectoryProvider {
   @Nullable
   @Override

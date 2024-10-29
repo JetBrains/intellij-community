@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2024 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,11 @@ import com.intellij.codeInsight.AnnotationTargetUtil;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.refactoring.util.ModifierListUtil;
 import com.intellij.util.SmartList;
@@ -106,10 +108,11 @@ public final class MissortedModifiersInspection extends BaseInspection implement
   @Override
   public @NotNull OptPane getOptionsPane() {
     return pane(
-      checkbox("m_requireAnnotationsFirst", InspectionGadgetsBundle.message("missorted.modifiers.require.option"))
-        .description(InspectionGadgetsBundle.message("missorted.modifiers.require.option.description")),
-      checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.allowed.place"))
-        .description(InspectionGadgetsBundle.message("missorted.modifiers.allowed.place.description"))
+      checkbox("m_requireAnnotationsFirst", InspectionGadgetsBundle.message("missorted.modifiers.require.option"),
+               checkbox("typeUseWithType", InspectionGadgetsBundle.message("missorted.modifiers.allowed.place"))
+                 .description(HtmlChunk.raw(InspectionGadgetsBundle.message("missorted.modifiers.allowed.place.description",
+                                                                            JavaBundle.message("generate.type.use.before.type")))))
+        .description(HtmlChunk.raw(InspectionGadgetsBundle.message("missorted.modifiers.require.option.description")))
     );
   }
 

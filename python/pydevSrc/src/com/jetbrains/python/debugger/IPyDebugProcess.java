@@ -30,7 +30,7 @@ public interface IPyDebugProcess extends PyFrameAccessor {
 
   void showConsole(PyThreadInfo thread);
 
-  void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<XValueChildrenList> callback);
+  void loadReferrers(PyReferringObjectsValue var, PyDebugCallback<? super XValueChildrenList> callback);
 
   void suspendAllOtherThreads(PyThreadInfo thread);
 

@@ -1,25 +1,24 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.ide.IdeCoreBundle
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.StreamUtil
+import com.intellij.testFramework.junit5.fixture.TestFixture
+import com.intellij.testFramework.junit5.fixture.TestFixtures
+import com.intellij.testFramework.junit5.http.localhostHttpServer
+import com.intellij.testFramework.junit5.http.url
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.TimeoutUtil
 import com.sun.net.httpserver.HttpServer
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatExceptionOfType
 import org.assertj.core.api.Condition
-import org.junit.Rule
-import org.junit.Test
-import org.junit.rules.DisableOnDebug
-import org.junit.rules.TestRule
-import org.junit.rules.Timeout
-import org.junit.runner.Description
-import org.junit.runners.model.Statement
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.Timeout
 import java.io.IOException
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
-import java.net.InetSocketAddress
 import java.net.SocketTimeoutException
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -27,47 +26,13 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Predicate
 import java.util.zip.GZIPOutputStream
-import kotlin.test.assertEquals
 
+@TestFixtures
+@Timeout(value = 5, unit = TimeUnit.SECONDS)
 class HttpRequestsTest {
-  private val LOCALHOST = "127.0.0.1"
 
-  private lateinit var server: HttpServer
-  private lateinit var url: String
-
-  @JvmField
-  @Rule(order = 1)
-  val serverRule: TestRule = object : TestRule, AutoCloseable {
-    override fun apply(base: Statement, description: Description): Statement {
-      return object : Statement() {
-        override fun evaluate() {
-          start()
-          use {
-            base.evaluate()
-          }
-        }
-
-        private fun start() {
-          if (!::server.isInitialized) {
-            server = HttpServer.create()
-            server.bind(InetSocketAddress(LOCALHOST, 0), 1)
-          }
-          server.start()
-          url = "http://$LOCALHOST:${server.address.port}"
-        }
-      }
-    }
-
-    override fun close() {
-      if (::server.isInitialized) {
-        server.stop(0)
-      }
-    }
-  }
-
-  @JvmField
-  @Rule(order = 2)
-  val timeout: TestRule = DisableOnDebug(Timeout(5, TimeUnit.SECONDS))
+  private val serverFixture: TestFixture<HttpServer> = localhostHttpServer()
+  private val server: HttpServer get() = serverFixture.get()
 
   @Test
   fun redirectLimit() {
@@ -75,14 +40,14 @@ class HttpRequestsTest {
     // infinite redirect
     server.createContext("/") { ex ->
       requested.incrementAndGet()
-      ex.responseHeaders.add("Location", url)
+      ex.responseHeaders.add("Location", server.url)
       ex.sendResponseHeaders(HttpURLConnection.HTTP_MOVED_TEMP, -1)
       ex.close()
     }
     assertThatExceptionOfType(IOException::class.java)
-      .isThrownBy { HttpRequests.request(url).redirectLimit(2).readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).redirectLimit(2).readString(null) }
       .withMessage(IdeCoreBundle.message("error.connection.failed.redirects"))
-    assertEquals(2, requested.get())
+    assertThat(requested.get()).isEqualTo(2)
   }
 
   @Test
@@ -100,9 +65,9 @@ class HttpRequestsTest {
       ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, 0)
       ex.close()
     }
-    assertThat(HttpRequests.request(url).redirectLimit(2).readString(null)).isEqualTo("")
-    assertEquals(1, requested1.get())
-    assertEquals(1, requested2.get())
+    assertThat(HttpRequests.request(server.url).redirectLimit(2).readString(null)).isEqualTo("")
+    assertThat(requested1.get()).isEqualTo(1)
+    assertThat(requested2.get()).isEqualTo(1)
   }
 
   @Test
@@ -120,10 +85,10 @@ class HttpRequestsTest {
       ex.close()
     }
     assertThatExceptionOfType(SocketTimeoutException::class.java)
-      .isThrownBy { HttpRequests.request(url).readTimeout(50).readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).readTimeout(50).readString(null) }
   }
 
-  @Suppress("NonAsciiCharacters", "SpellCheckingInspection")
+  @Suppress("NonAsciiCharacters")
   @Test
   fun readContent() {
     server.createContext("/") { ex ->
@@ -132,10 +97,10 @@ class HttpRequestsTest {
       ex.responseBody.write("hello кодировочки".toByteArray(charset("koi8-r")))
       ex.close()
     }
-    assertThat(HttpRequests.request(url).readString(null)).isEqualTo("hello кодировочки")
+    assertThat(HttpRequests.request(server.url).readString(null)).isEqualTo("hello кодировочки")
   }
 
-  @Suppress("NonAsciiCharacters", "SpellCheckingInspection")
+  @Suppress("NonAsciiCharacters")
   @Test
   fun gzippedContent() {
     server.createContext("/") { ex ->
@@ -147,8 +112,8 @@ class HttpRequestsTest {
       }
       ex.close()
     }
-    assertThat(HttpRequests.request(url).readString(null)).isEqualTo("hello кодировочки")
-    assertThat(HttpRequests.request(url).gzip(false).readBytes(null)).startsWith(0x1f, 0x8b) // GZIP magic
+    assertThat(HttpRequests.request(server.url).readString(null)).isEqualTo("hello кодировочки")
+    assertThat(HttpRequests.request(server.url).gzip(false).readBytes(null)).startsWith(0x1f, 0x8b) // GZIP magic
   }
 
   @Test
@@ -157,14 +122,14 @@ class HttpRequestsTest {
       ex.sendResponseHeaders(if ("HEAD" == ex.requestMethod) HttpURLConnection.HTTP_NO_CONTENT else HttpURLConnection.HTTP_NOT_IMPLEMENTED, -1)
       ex.close()
     }
-    assertThat(HttpRequests.request(url).tuner { (it as HttpURLConnection).requestMethod = "HEAD" }.tryConnect())
+    assertThat(HttpRequests.request(server.url).tuner { (it as HttpURLConnection).requestMethod = "HEAD" }.tryConnect())
       .isEqualTo(HttpURLConnection.HTTP_NO_CONTENT)
   }
 
   @Test
-  fun putNotAllowed() {
+  fun putNotAllowed(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
-      .isThrownBy { HttpRequests.request(url).tuner { (it as HttpURLConnection).requestMethod = "PUT" }.tryConnect() }
+      .isThrownBy { HttpRequests.request(server.url).tuner { (it as HttpURLConnection).requestMethod = "PUT" }.tryConnect() }
       .withMessageContaining("'PUT' not supported")
   }
 
@@ -176,7 +141,7 @@ class HttpRequestsTest {
       ex.sendResponseHeaders(HttpURLConnection.HTTP_OK, -1)
       ex.close()
     }
-    HttpRequests.post(url, null).write("hello")
+    HttpRequests.post(server.url, null).write("hello")
     assertThat(receivedData.get()).isEqualTo("hello")
   }
 
@@ -187,7 +152,7 @@ class HttpRequestsTest {
       ex.close()
     }
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
-      .isThrownBy { HttpRequests.post(url, null).write("hello") }
+      .isThrownBy { HttpRequests.post(server.url, null).write("hello") }
       .withMessage(IdeCoreBundle.message("error.connection.failed.status", HttpURLConnection.HTTP_NOT_FOUND))
       .`is`(statusCode(HttpURLConnection.HTTP_NOT_FOUND))
   }
@@ -202,7 +167,7 @@ class HttpRequestsTest {
       ex.close()
     }
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
-      .isThrownBy { HttpRequests.post(url, null).isReadResponseOnError(true).write("hello") }
+      .isThrownBy { HttpRequests.post(server.url, null).isReadResponseOnError(true).write("hello") }
       .withMessage(serverErrorText)
   }
 
@@ -212,7 +177,7 @@ class HttpRequestsTest {
       ex.sendResponseHeaders(HttpURLConnection.HTTP_NOT_MODIFIED, -1)
       ex.close()
     }
-    assertThat(HttpRequests.request(url).readBytes(null)).isEmpty()
+    assertThat(HttpRequests.request(server.url).readBytes(null)).isEmpty()
   }
 
   @Test
@@ -222,14 +187,14 @@ class HttpRequestsTest {
       ex.close()
     }
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
-      .isThrownBy { HttpRequests.request(url).productNameAsUserAgent().readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).productNameAsUserAgent().readString(null) }
       .`is`(statusCode(HttpURLConnection.HTTP_UNAUTHORIZED))
   }
 
   @Test
-  fun invalidHeader() {
+  fun invalidHeader(): Unit = rethrowLoggedErrorsIn {
     assertThatExceptionOfType(AssertionError::class.java)
-      .isThrownBy { HttpRequests.request(url).tuner { it.setRequestProperty("X-Custom", "c-str\u0000") }.readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).tuner { it.setRequestProperty("X-Custom", "c-str\u0000") }.readString(null) }
       .withMessageContaining("value contains NUL bytes")
   }
 
@@ -242,7 +207,7 @@ class HttpRequestsTest {
       exchange.close()
     }
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
-      .isThrownBy { HttpRequests.request(url).isReadResponseOnError(true).readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).isReadResponseOnError(true).readString(null) }
       .`is`(statusCode(HttpURLConnection.HTTP_NOT_FOUND))
   }
 
@@ -255,7 +220,7 @@ class HttpRequestsTest {
       ex.close()
     }
     assertThatExceptionOfType(HttpRequests.HttpStatusException::class.java)
-      .isThrownBy { HttpRequests.request(url).readString(null) }
+      .isThrownBy { HttpRequests.request(server.url).readString(null) }
       .withMessage(message)
   }
 

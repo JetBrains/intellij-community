@@ -24,6 +24,7 @@ internal class StickyLinesManager(
 
   private var activeVisualArea: Rectangle = Rectangle()
   private var activeVisualLine: Int = -1
+  private var activeLineHeight: Int = -1
   private var activeIsEnabled: Boolean = false
   private var activeLineLimit: Int = -1
 
@@ -102,8 +103,11 @@ internal class StickyLinesManager(
     }
   }
 
-  override fun modelChanged() {
+  override fun linesUpdated() {
     recalculateAndRepaintLines()
+  }
+
+  override fun linesRemoved() {
   }
 
   override fun dispose() {
@@ -120,7 +124,7 @@ internal class StickyLinesManager(
       activeVisualArea = editor.scrollingModel.visibleArea
       isLineChanged() // activeVisualLine updated as a side effect
     }
-    if (activeVisualLine != -1 && !isPoint(activeVisualArea)) {
+    if (activeVisualLine != -1 && activeLineHeight != -1 && !isPoint(activeVisualArea)) {
       visualStickyLines.recalculate(activeVisualArea)
       repaintLines()
     }
@@ -128,6 +132,7 @@ internal class StickyLinesManager(
 
   private fun resetLines() {
     activeVisualLine = -1
+    activeLineHeight = -1
     visualStickyLines.clear()
     repaintLines()
   }
@@ -146,8 +151,9 @@ internal class StickyLinesManager(
 
   private fun isLineChanged(): Boolean {
     val newVisualLine: Int = editor.yToVisualLine(activeVisualArea.y)
-    if (activeVisualLine != newVisualLine) {
-      activeVisualLine = newVisualLine
+    val newLineHeight: Int = editor.lineHeight
+    if (activeVisualLine != newVisualLine || activeLineHeight != newLineHeight) {
+      activeVisualLine = newVisualLine; activeLineHeight = newLineHeight
       return true
     }
     return false

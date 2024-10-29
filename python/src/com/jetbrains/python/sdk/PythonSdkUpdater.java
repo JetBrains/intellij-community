@@ -28,7 +28,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -138,26 +137,21 @@ public final class PythonSdkUpdater {
           "Starting SDK refresh for '" + mySdk.getName() + "' triggered by " + Trigger.getCauseByTrace(myRequestData.myTraceback));
       }
       try {
-        if (Registry.get("python.use.targets.api").asBoolean()) {
-          PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
-          String version = targetsFacade.getInterpreterVersion(indicator);
-          commitSdkVersionIfChanged(mySdk, version);
-          if (targetsFacade.isLocalTarget()) {
-            List<String> paths = targetsFacade.getInterpreterPaths(indicator);
-            updateSdkPaths(mySdk, paths, myProject);
-          }
-          else {
-            targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
-          }
+        PyTargetsIntrospectionFacade targetsFacade = new PyTargetsIntrospectionFacade(mySdk, myProject);
+        String version = targetsFacade.getInterpreterVersion(indicator);
+        commitSdkVersionIfChanged(mySdk, version);
+        if (targetsFacade.isLocalTarget()) {
+          List<String> paths = targetsFacade.getInterpreterPaths(indicator);
+          updateSdkPaths(mySdk, paths, myProject);
         }
         else {
-          updateLocalSdkVersionAndPaths(mySdk, myProject);
+          targetsFacade.synchronizeRemoteSourcesAndSetupMappings(indicator);
         }
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         refreshPackages(mySdk, indicator);
       }
-      catch (InvalidSdkException | ExecutionException e) {
+      catch (ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
       }
       finally {
@@ -274,6 +268,7 @@ public final class PythonSdkUpdater {
   /**
    * @deprecated Use {@link #scheduleUpdate} or {@link #updateVersionAndPathsSynchronouslyAndScheduleRemaining}
    */
+  @ApiStatus.Internal
   @Deprecated
   public static boolean update(@NotNull Sdk sdk, @Nullable Project project, @Nullable Component ownerComponent) {
     return updateVersionAndPathsSynchronouslyAndScheduleRemaining(sdk, project);
@@ -560,7 +555,8 @@ public final class PythonSdkUpdater {
     return Pair.createNonNull(lib, source);
   }
 
-  private static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
+  @ApiStatus.Internal
+  public static @NotNull Set<VirtualFile> getModuleRoots(@Nullable Project project) {
     if (project != null) {
       final Set<VirtualFile> moduleRoots = new HashSet<>();
       final Module[] modules = ModuleManager.getInstance(project).getModules();

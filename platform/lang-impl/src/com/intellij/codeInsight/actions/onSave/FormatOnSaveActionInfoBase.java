@@ -19,6 +19,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class FormatOnSaveActionInfoBase<Options extends FormatOnSaveOptionsBase<?>> extends ActionOnSaveInfo {
 
   private final @NotNull @NlsContexts.Checkbox String myActionOnSaveName;

@@ -334,8 +334,6 @@ public class SdkEditor implements Configurable, Place.Navigator {
       .newBuilder()
       .withSdkType(sdkType)
       .withSdkFilter(sdk -> {
-        if (sdk == null) return false;
-
         if (sdk.getName().equals(this.myInitialName)) return false;
         if (sdk.getName().equals(this.myModifiedName)) return false;
 

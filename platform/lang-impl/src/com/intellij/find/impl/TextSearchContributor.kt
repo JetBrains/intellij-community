@@ -48,13 +48,13 @@ import java.lang.ref.WeakReference
 import javax.swing.ListCellRenderer
 
 @ApiStatus.Internal
-class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
-                                                        SearchFieldActionsContributor,
-                                                        SearchEverywhereExtendedInfoProvider,
-                                                        PossibleSlowContributor,
-                                                        SearchEverywhereEmptyTextProvider,
-                                                        SearchEverywherePreviewProvider,
-                                                        DumbAware, ScopeSupporting, Disposable {
+open class TextSearchContributor(val event: AnActionEvent) : WeightedSearchEverywhereContributor<SearchEverywhereItem>,
+                                                             SearchFieldActionsContributor,
+                                                             SearchEverywhereExtendedInfoProvider,
+                                                             PossibleSlowContributor,
+                                                             SearchEverywhereEmptyTextProvider,
+                                                             SearchEverywherePreviewProvider,
+                                                             DumbAware, ScopeSupporting, Disposable {
 
   private val project = event.getRequiredData(CommonDataKeys.PROJECT)
   private val model = FindManager.getInstance(project).findInProjectModel

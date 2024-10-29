@@ -69,5 +69,6 @@ const val X_INTELLIJ_LANGUAGE_INJECTION = "x-intellij-language-injection"
 const val X_INTELLIJ_CASE_INSENSITIVE = "x-intellij-case-insensitive"
 const val X_INTELLIJ_ENUM_METADATA = "x-intellij-enum-metadata"
 const val X_INTELLIJ_ENUM_ORDER_SENSITIVE = "x-intellij-enum-order-sensitive"
+const val X_INTELLIJ_METADATA = "x-intellij-metadata"
 
 internal val ROOT_POINTER_VARIANTS = setOf(SCHEMA_ROOT_POINTER, "#/", "#", "")

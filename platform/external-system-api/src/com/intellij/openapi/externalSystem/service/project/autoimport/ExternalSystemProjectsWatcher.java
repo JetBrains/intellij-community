@@ -17,9 +17,7 @@ package com.intellij.openapi.externalSystem.service.project.autoimport;
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker;
 import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
 
 /**
  * @see ExternalSystemProjectTracker#markDirty
@@ -28,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @deprecated use {@link ExternalSystemProjectTracker} instead
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
-@Deprecated
+@Deprecated(forRemoval = true)
 public interface ExternalSystemProjectsWatcher {
   void markDirtyAllExternalProjects();
 

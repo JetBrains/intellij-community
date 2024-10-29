@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -26,9 +26,9 @@ public final class ArrangementMatchNodeComponentFactory {
 
   private static final Logger LOG = Logger.getInstance(ArrangementMatchNodeComponentFactory.class);
 
-  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
-  @NotNull private final ArrangementColorsProvider          myColorsProvider;
-  @NotNull private final ArrangementMatchingRulesControl    myList;
+  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
+  private final @NotNull ArrangementColorsProvider          myColorsProvider;
+  private final @NotNull ArrangementMatchingRulesControl    myList;
 
   public ArrangementMatchNodeComponentFactory(@NotNull ArrangementStandardSettingsManager manager,
                                               @NotNull ArrangementColorsProvider provider,
@@ -48,9 +48,8 @@ public final class ArrangementMatchNodeComponentFactory {
    * @param allowModification   flag which indicates whether given model can be changed at future
    * @return renderer for the given model
    */
-  @NotNull
-  public ArrangementUiComponent getComponent(@NotNull final ArrangementMatchCondition rendererTarget,
-                                             @NotNull final StdArrangementMatchRule rule,
+  public @NotNull ArrangementUiComponent getComponent(final @NotNull ArrangementMatchCondition rendererTarget,
+                                             final @NotNull StdArrangementMatchRule rule,
                                              final boolean allowModification)
   {
     final Ref<ArrangementUiComponent> ref = new Ref<>();
@@ -76,9 +75,9 @@ public final class ArrangementMatchNodeComponentFactory {
                                                              ArrangementAnimationManager.Callback
   {
 
-    @NotNull private final StdArrangementMatchRule myRule;
+    private final @NotNull StdArrangementMatchRule myRule;
 
-    @NotNull private Object myModelValue;
+    private @NotNull Object myModelValue;
     private int myRow;
 
     RemoveAtomConditionCallback(@NotNull StdArrangementMatchRule rule) {

@@ -23,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
@@ -65,7 +62,7 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     }
   }
 
-  private static BaseInjection findLanguageParams(PsiElement place) {
+  private static @Nullable BaseInjection findLanguageParams(@NotNull PsiElement place) {
     PsiElement parent = place.getParent();
     if (parent instanceof GrAssignmentExpression && ((GrAssignmentExpression)parent).getRValue() == place) {
       final GrExpression lvalue = ((GrAssignmentExpression)parent).getLValue();
@@ -78,6 +75,11 @@ public final class GrConcatenationInjector implements MultiHostInjector {
     }
     else if (parent instanceof GrVariable) {
       return getLanguageParams((PsiModifierListOwner)parent);
+    }
+    else if (parent instanceof GrBinaryExpression expression) {
+      PsiMethod method = GrInjectionUtil.getMethodFromLeftShiftOperator(expression);
+      PsiParameter parameter = GrInjectionUtil.getSingleParameterFromMethod(method);
+      return parameter != null ? getLanguageParams(parameter) : null;
     }
     else if (parent instanceof GrArgumentList) {
       final PsiElement pparent = parent.getParent();

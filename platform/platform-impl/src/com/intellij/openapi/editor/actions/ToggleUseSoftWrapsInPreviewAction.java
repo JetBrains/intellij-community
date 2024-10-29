@@ -10,8 +10,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ToggleUseSoftWrapsInPreviewAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   @Override

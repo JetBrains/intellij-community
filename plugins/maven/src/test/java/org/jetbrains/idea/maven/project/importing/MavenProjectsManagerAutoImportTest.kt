@@ -3,9 +3,11 @@ package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTracker
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -30,7 +32,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   fun testResolvingEnvVariableInRepositoryPath() = runBlocking {
     val temp = System.getenv(envVar)
     waitForImportWithinTimeout {
-      updateSettingsXml("<localRepository>\${env." + envVar + "}/tmpRepo</localRepository>")
+      updateSettingsXml("<localRepository>\${env.$envVar}/tmpRepo</localRepository>")
     }
     val repo = File("$temp/tmpRepo").getCanonicalFile()
     assertEquals(repo.path, mavenGeneralSettings.getEffectiveLocalRepository().path)
@@ -251,7 +253,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModules("project", mn("project", "m"))
     runWriteAction<IOException> { m.delete(this) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertModules("project")
   }
 
@@ -263,12 +265,12 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     <packaging>pom</packaging>
                     <version>1</version>
                     """.trimIndent())
-    createModulePom("dir/module", """
+    createPom("dir/module", """
       <groupId>test</groupId>
       <artifactId>module</artifactId>
       <version>1</version>
       """.trimIndent())
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -276,13 +278,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        <modules>
                          <module>dir/module</module>
                        </modules>
-                       """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+                       """.trimIndent()))
+    scheduleProjectImportAndWait()
     assertEquals(2, MavenProjectsManager.getInstance(project).getProjects().size)
     val dir = projectRoot.findChild("dir")
     WriteCommandAction.writeCommandAction(project).run<IOException> { dir!!.delete(null) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, MavenProjectsManager.getInstance(project).getProjects().size)
   }
 
@@ -306,7 +308,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     </build>
                     """.trimIndent())
     assertNoPendingProjectForReload()
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -322,9 +324,9 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                            </plugin>
                          </plugins>
                        </build>
-                       """.trimIndent())
+                       """.trimIndent()))
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
   }
 
   @Test
@@ -342,13 +344,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     val parentNode = roots[0]
     assertNotNull(parentNode)
     assertTrue(projectsTree.getModules(roots[0]).isEmpty())
-    val m = createModulePom("m",
+    val m = createPom("m",
                             """
                                       <groupId>test</groupId>
                                       <artifactId>m</artifactId>
                                       <version>1</version>
                                       """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     val children = projectsTree.getModules(roots[0])
     assertEquals(1, children.size)
     assertEquals(m, children[0].file)
@@ -374,7 +376,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                     </build>
                     """.trimIndent())
     assertNoPendingProjectForReload()
-    createProjectPom("""
+    replaceContent(projectPom, createPomXml("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -390,9 +392,9 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                            </plugin>
                          </plugins>
                        </build>
-                       """.trimIndent())
+                       """.trimIndent()))
     assertHasPendingProjectForReload()
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
   }
 
   @Test
@@ -419,7 +421,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
         </dependency>
       </dependencies>
       """.trimIndent())
-    createModulePom("m2", """
+    val m2 = createModulePom("m2", """
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -427,7 +429,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     importProjectAsync()
     assertModuleModuleDeps("m1", "m2")
     assertModuleLibDeps("m1")
-    createModulePom("m2", """
+    replaceContent(m2, createPomXml("""
       <groupId>test</groupId>
       <artifactId>m2</artifactId>
       <version>1</version>
@@ -438,14 +440,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
           <version>4.0</version>
         </dependency>
       </dependencies>
-      """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+      """.trimIndent()))
+    scheduleProjectImportAndWait()
     assertModuleModuleDeps("m1", "m2")
 
-    // relying on transitive dependencies is not a good practice
-    // transitive dependency updating is not fully supported by incremental sync
-    // run full sync to pick up transitive dependency
-    updateAllProjectsFullSync()
+    updateAllProjects()
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
   }
 
@@ -460,13 +459,13 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                       <module>m</module>
                     </modules>
                     """.trimIndent())
-    val m = createModulePom("m",
+    val m = createPom("m",
                             """
                             <groupId>test</groupId>
                             <artifactId>m</artifactId>
                             <version>1</version>
                             """.trimIndent())
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
 
@@ -474,7 +473,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertEquals(1, projectsTree.rootProjects.size)
     assertEquals(1, projectsTree.getModules(projectsTree.rootProjects[0]).size)
 
-    createProjectPom("""
+    createPom("", """
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -527,14 +526,11 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
     assertModuleLibDeps("m1", "Maven: junit:junit:4.0")
     WriteCommandAction.writeCommandAction(project).run<IOException> { m2.delete(this) }
 
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertModules("project", "m1")
     assertModuleModuleDeps("m1")
 
-    // relying on transitive dependencies is not a good practice
-    // transitive dependency updating is not fully supported by incremental sync
-    // run full sync to pick up transitive dependency changes
-    updateAllProjectsFullSync()
+    updateAllProjects()
     assertModuleLibDeps("m1", "Maven: test:m2:1")
   }
 
@@ -554,7 +550,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
 
     importProjectAsync()
     assertEquals(0, projectsTree.rootProjects.size)
-    createProjectPom("""
+    createPom("", """"
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>
@@ -564,7 +560,7 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
                        </modules>
                        """.trimIndent())
     //importProjectAsync();
-    scheduleProjectImportAndWaitAsync()
+    scheduleProjectImportAndWait()
     assertEquals(1, projectsTree.rootProjects.size)
   }
 
@@ -679,5 +675,28 @@ class MavenProjectsManagerAutoImportTest : MavenMultiVersionImportingTestCase() 
   @RequiresEdt
   private fun scheduleProjectImportAndWaitWithoutCheckFloatingBarEdt() {
     ExternalSystemProjectTracker.getInstance(project).scheduleProjectRefresh()
+  }
+
+  private fun createPom(relativePath: String, xml: String): VirtualFile {
+    val dir = createProjectSubDir(relativePath)
+    val pomName = "pom.xml"
+    var f = dir.findChild(pomName)
+    if (f == null) {
+      try {
+        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }!!
+      }
+      catch (e: IOException) {
+        throw RuntimeException(e)
+      }
+    }
+    replaceContent(f, xml)
+    return f
+  }
+
+  private fun replaceContent(file: VirtualFile, content: String) {
+    WriteCommandAction.runWriteCommandAction(project, ThrowableComputable<Any?, IOException?> {
+      VfsUtil.saveText(file, content)
+      null
+    } as ThrowableComputable<*, IOException?>)
   }
 }

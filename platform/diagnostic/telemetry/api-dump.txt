@@ -2,5 +2,6 @@ e:com.intellij.platform.diagnostic.telemetry.TracerLevel
 - java.lang.Enum
 - sf:DEFAULT:com.intellij.platform.diagnostic.telemetry.TracerLevel
 - sf:DETAILED:com.intellij.platform.diagnostic.telemetry.TracerLevel
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.platform.diagnostic.telemetry.TracerLevel
 - s:values():com.intellij.platform.diagnostic.telemetry.TracerLevel[]

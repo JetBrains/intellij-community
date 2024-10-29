@@ -1,0 +1,32 @@
+{
+  "inspections": [
+    {
+      "id": "RedundantTypeConversion",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "CheckNodeTest",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HardwiredNamespacePrefix",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "ImplicitTypeConversion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IndexZeroUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltTemplateInvocation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XsltVariableShadowing",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

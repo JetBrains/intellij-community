@@ -10,7 +10,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 /*
  Validates if the vendor name was provided by Marketplace and is therefore safe to report.
  */
-class MarketplaceVendorsListValidator : CustomValidationRule() {
+internal class MarketplaceVendorsListValidator : CustomValidationRule() {
   override fun getRuleId(): String {
     return "mp_vendors_list"
   }

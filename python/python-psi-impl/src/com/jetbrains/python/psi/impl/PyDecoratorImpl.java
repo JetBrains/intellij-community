@@ -111,7 +111,7 @@ public class PyDecoratorImpl extends PyBaseElementImpl<PyDecoratorStub> implemen
 
   @Override
   public String toString() {
-    return "PyDecorator: @" + PyUtil.getReadableRepr(getCallee(), true); //getCalledFunctionReference().getReferencedName();
+    return "PyDecorator: @" + getQualifiedName();
   }
 
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {

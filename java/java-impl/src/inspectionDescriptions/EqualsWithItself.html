@@ -8,6 +8,12 @@ The inspection also checks
 calls to <code>Objects.equals()</code>, <code>Objects.deepEquals()</code>,
 <code>Arrays.equals()</code>, <code>Comparator.compare()</code>, <code>assertEquals()</code> methods of
 test frameworks (JUnit, TestNG, AssertJ), <code>Integer.compare()</code>, <code>Integer.compareUnsigned()</code> and similar methods.
+<p>
+  Note that in rare cases, the inspection may report <code>equals()</code> calls that return false, because while the expressions
+  on the both sides are the same, they produce separate objects, and comparison is performed on references, rather than on content. 
+  The simplest example is <code>new Object().equals(new Object())</code>. In any case, such calls are suspicious, and likely 
+  something else was intended.
+</p>
 <p><b>Example:</b></p>
 <pre><code>
   class Foo {
@@ -21,9 +27,5 @@ test frameworks (JUnit, TestNG, AssertJ), <code>Integer.compare()</code>, <code>
 }
 </code></pre>
 <!-- tooltip end -->
-<p>
-  Use the option to report test assertions report only on non-extendable library classes (like <code>String</code>) and primitive types.
-  This option can be useful, when testing <code>equals()</code> methods.
-</p>
 </body>
 </html>

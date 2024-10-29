@@ -5,6 +5,7 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.concurrency.runnable
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
@@ -29,6 +30,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.asCancellablePromise
 import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.RepeatedTest
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
@@ -42,6 +44,7 @@ import kotlin.coroutines.Continuation
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.assertNotNull
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
@@ -113,8 +116,9 @@ class CancellationPropagationTest {
     pumpEDT()
   }
 
+  @IJIgnore(issue = "IJPL-160197")
   @Test
-  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
+  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking(timeout = 60.seconds) {
     launch {
       blockingContextScope {
         ApplicationManager.getApplication().withModality {
@@ -131,7 +135,7 @@ class CancellationPropagationTest {
   }
 
   @Test
-  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
+  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking(60.seconds) {
     installThreadContext(coroutineContext).use {
       val expired = AtomicBoolean(false)
       ApplicationManager.getApplication().withModality {
@@ -479,7 +483,7 @@ class CancellationPropagationTest {
     lock.timeoutWaitUp()
 
     childFuture1CanThrow.up()
-    waitAssertCompletedWithCancellation(childFuture1)
+    waitAssertCompletedWith(childFuture1, CancellationException::class)
     childFuture2CanFinish.up()
     waitAssertCompletedNormally(childFuture2)
     waitAssertCompletedNormally(rootJob)
@@ -725,7 +729,7 @@ class CancellationPropagationTest {
     assertFalse(job.isCancelled)
   }
 
-  @Test
+  @RepeatedTest(1000)
   fun `synchronous non-blocking read action is awaited`() = timeoutRunBlocking {
     val dummyDisposable = Disposer.newDisposable()
     var allowedToCompleteRA by AtomicReference(false)
@@ -745,6 +749,23 @@ class CancellationPropagationTest {
     job.join()
     Disposer.dispose(dummyDisposable)
     assertFalse(job.isCancelled)
+  }
+
+  @RepeatedTest(1000)
+  fun `non-blocking read action is externally disposed`() = timeoutRunBlocking {
+    val dummyDisposable = Disposer.newDisposable()
+    val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Test NBRA", 1)
+    val job = withRootJob { job ->
+      ReadAction.nonBlocking(Callable {
+        while (true) {
+          ProgressManager.checkCanceled()
+        }
+      }).expireWith(dummyDisposable)
+        .submit(executor)
+    }
+    Disposer.dispose(dummyDisposable)
+    // if NBRA is not properly canceled, we would have a leaking Job, and `blockingContextScope` would never finish
+    job.join()
   }
 
   @Test
@@ -835,8 +856,8 @@ class CancellationPropagationTest {
     val semaphore = Semaphore(1)
     val job = launch(Dispatchers.Default) {
       blockingContext {
-        semaphore.up()
         application.invokeAndWait {
+          semaphore.up()
           while (true) {
             Cancellation.checkCancelled()
           }

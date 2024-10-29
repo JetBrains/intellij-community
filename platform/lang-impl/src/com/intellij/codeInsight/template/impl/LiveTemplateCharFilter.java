@@ -5,7 +5,9 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class LiveTemplateCharFilter extends CharFilter {
   @Override
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {

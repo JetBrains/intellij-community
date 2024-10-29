@@ -22,6 +22,8 @@ internal object OptInFixesUtils {
     fun annotationFqName(diagnostic: Diagnostic) = when (diagnostic.factory) {
         OPT_IN_USAGE -> OPT_IN_USAGE.cast(diagnostic).a
         OPT_IN_USAGE_ERROR -> OPT_IN_USAGE_ERROR.cast(diagnostic).a
+        OPT_IN_TO_INHERITANCE -> OPT_IN_TO_INHERITANCE.cast(diagnostic).a
+        OPT_IN_TO_INHERITANCE_ERROR -> OPT_IN_TO_INHERITANCE_ERROR.cast(diagnostic).a
         OPT_IN_OVERRIDE -> OPT_IN_OVERRIDE.cast(diagnostic).a
         OPT_IN_OVERRIDE_ERROR -> OPT_IN_OVERRIDE_ERROR.cast(diagnostic).a
         else -> null

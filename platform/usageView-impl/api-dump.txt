@@ -65,7 +65,7 @@ c:com.intellij.usages.impl.UsageNode
 - p:updateNotify():V
 c:com.intellij.usages.impl.UsagePreviewPanel
 - com.intellij.usages.impl.UsageContextPanelBase
-- com.intellij.openapi.actionSystem.DataProvider
+- com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - sf:LINE_HEIGHT_PROPERTY:java.lang.String
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation):V
 - <init>(com.intellij.openapi.project.Project,com.intellij.usages.UsageViewPresentation,Z):V
@@ -75,7 +75,6 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - sf:createPreviewHtml(java.lang.String):java.lang.String
 - dispose():V
 - f:getCannotPreviewMessage(java.util.List):java.lang.String
-- getData(java.lang.String):java.lang.Object
 - f:getLineHeight():I
 - sf:getNameElementTextRange(com.intellij.psi.PsiElement):com.intellij.openapi.util.TextRange
 - sf:highlight(java.util.List,com.intellij.openapi.editor.Editor,com.intellij.openapi.project.Project,Z,I):V
@@ -83,6 +82,7 @@ c:com.intellij.usages.impl.UsagePreviewPanel
 - f:releaseEditor():V
 - removePropertyChangeListener(java.beans.PropertyChangeListener):V
 - f:setShowTooltipBalloon(Z):V
+- uiDataSnapshot(com.intellij.openapi.actionSystem.DataSink):V
 - p:updateLayoutLater(java.util.List):V
 - updateLayoutLater(java.util.List,com.intellij.usages.UsageView):V
 com.intellij.usages.impl.UsageViewElementsListener
@@ -162,7 +162,7 @@ c:com.intellij.usages.impl.UsageViewManagerImpl
 - s:getProgressTitle(com.intellij.usages.UsageViewPresentation):java.lang.String
 - getSelectedUsageView():com.intellij.usages.UsageView
 - searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,com.intellij.usages.FindUsagesProcessPresentation,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):V
-- searchAndShowUsages(com.intellij.usages.UsageTarget[],com.intellij.openapi.util.Factory,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
+- searchAndShowUsages(com.intellij.usages.UsageTarget[],java.util.function.Supplier,Z,Z,com.intellij.usages.UsageViewPresentation,com.intellij.usages.UsageViewManager$UsageViewStateListener):com.intellij.usages.UsageView
 - showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation):com.intellij.usages.UsageView
 - showUsages(com.intellij.usages.UsageTarget[],com.intellij.usages.Usage[],com.intellij.usages.UsageViewPresentation,com.intellij.openapi.util.Factory):com.intellij.usages.UsageView
 c:com.intellij.usages.impl.rules.FileGroupingRule
@@ -196,30 +196,6 @@ a:com.intellij.usages.impl.rules.UsageGroupBase
 - com.intellij.usages.UsageGroup
 - p:<init>(I):V
 - compareTo(com.intellij.usages.UsageGroup):I
-*e:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- java.lang.Enum
-- sf:AFTER_ALL:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_DIRECTORY_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_FILE_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_MODULE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_NONE_CODE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_SCOPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:AFTER_USAGE_TYPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_ALL:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_DIRECTORY_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_FILE_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_MODULE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_NON_CODE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_SCOPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:BEFORE_USAGE_TYPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:DIRECTORY_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:FILE_STRUCTURE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:MODULE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:NON_CODE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:SCOPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- sf:USAGE_TYPE:com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- s:valueOf(java.lang.String):com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks
-- s:values():com.intellij.usages.impl.rules.UsageGroupingRulesDefaultRanks[]
 com.intellij.usages.impl.rules.UsageTypeProvider
 - a:getUsageType(com.intellij.psi.PsiElement):com.intellij.usages.impl.rules.UsageType
 com.intellij.usages.impl.rules.UsageTypeProviderEx

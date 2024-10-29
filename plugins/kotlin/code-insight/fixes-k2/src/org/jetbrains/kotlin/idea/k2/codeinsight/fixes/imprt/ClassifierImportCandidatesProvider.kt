@@ -17,8 +17,11 @@ internal open class ClassifierImportCandidatesProvider(
     override val positionContext: KotlinNameReferencePositionContext,
     indexProvider: KtSymbolFromIndexProvider,
 ) : ImportCandidatesProvider(indexProvider) {
-    protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean = kotlinClass.canBeImported()
-    protected open fun acceptsJavaClass(javaClass: PsiClass): Boolean = javaClass.canBeImported()
+    protected open fun acceptsKotlinClass(kotlinClass: KtClassLikeDeclaration): Boolean =
+        !kotlinClass.isImported() && kotlinClass.canBeImported()
+
+    protected open fun acceptsJavaClass(javaClass: PsiClass): Boolean =
+        !javaClass.isImported() && javaClass.canBeImported()
 
     context(KaSession)
     protected open fun acceptsClassLikeSymbol(symbol: KaClassLikeSymbol): Boolean = true

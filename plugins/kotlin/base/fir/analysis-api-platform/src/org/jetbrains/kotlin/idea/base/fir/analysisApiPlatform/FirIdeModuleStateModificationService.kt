@@ -19,7 +19,9 @@ import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
@@ -36,6 +38,7 @@ import com.intellij.platform.workspace.storage.EntityChange
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.psi.PsiManager
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBridge
@@ -45,9 +48,9 @@ import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProvider
 import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltinsVirtualFileProviderBaseImpl
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 import org.jetbrains.kotlin.idea.base.projectStructure.getBinaryAndSourceModuleInfos
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
@@ -57,7 +60,10 @@ import org.jetbrains.kotlin.idea.base.util.caching.newEntity
 import org.jetbrains.kotlin.idea.facet.isKotlinFacet
 import org.jetbrains.kotlin.idea.util.AbstractSingleFileModuleBeforeFileEventListener
 import org.jetbrains.kotlin.idea.util.toKaModulesForModificationEvents
+import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.alwaysTrue
+import java.io.File
+import java.net.URL
 import java.util.regex.Pattern
 
 private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\\d*)\\.jar")
@@ -67,6 +73,17 @@ private val STDLIB_PATTERN = Pattern.compile("kotlin-stdlib-(\\d*)\\.(\\d*)\\.(\
 class FirIdeModuleStateModificationService(val project: Project) : Disposable {
 
     init {
+        val files: Set<String> by lazy {
+            val result = mutableSetOf<String>()
+            object : BuiltinsVirtualFileProviderBaseImpl() {
+                override fun findVirtualFile(url: URL): VirtualFile {
+                    result.addIfNotNull(URLUtil.splitJarUrl(url.file)?.first)
+                    return LightVirtualFile()
+                }
+            }.getBuiltinVirtualFiles()
+            result
+        }
+
         project.messageBus.connect(this).subscribe(FileDocumentManagerListener.TOPIC, object : FileDocumentManagerListener {
             override fun fileWithNoDocumentChanged(file: VirtualFile) {
                 // Builtins sessions are created based on `BuiltInsVirtualFileProvider.getInstance().getBuiltInVirtualFiles()`
@@ -77,7 +94,8 @@ class FirIdeModuleStateModificationService(val project: Project) : Disposable {
                 // To ensure that no cached psi with stale stubs/virtual files,
                 // it's required to clear caches manually,
                 // otherwise opening file which referred the old builtins would let to PIEAE exceptions
-                if (file in BuiltinsVirtualFileProvider.getInstance().getBuiltinVirtualFiles()) {
+                val jarPath = URLUtil.splitJarUrl(file.path)?.first
+                if (jarPath != null && jarPath in files) {
                     runWriteAction {
                         PsiManager.getInstance(project).dropPsiCaches()
                         //todo clear builtins on global module state modification KT-69247

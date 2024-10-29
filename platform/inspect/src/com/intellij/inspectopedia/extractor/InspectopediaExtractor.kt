@@ -12,9 +12,9 @@ import com.intellij.codeInspection.options.*
 import com.intellij.ide.plugins.PluginManagerCore.getPluginSet
 import com.intellij.inspectopedia.extractor.data.Inspection
 import com.intellij.inspectopedia.extractor.data.OptionsPanelInfo
-import com.intellij.inspectopedia.extractor.utils.HtmlUtils
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.ProjectManager
@@ -50,12 +50,12 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: IOException) {
       LOG.error("Output directory does not exist and could not be created")
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
 
     if (!Files.isDirectory(outputPath) || !Files.isWritable(outputPath)) {
       LOG.error("Output path is invalid")
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
 
     try {
@@ -95,6 +95,7 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
 
         try {
           val language = wrapper.language
+          val extraState = inspectionExtraState.inspections.get(wrapper.id)
           availablePlugins.get(pluginId)!!.inspections.add(Inspection(
             id = wrapper.tool.alternativeID ?: wrapper.id,
             name = wrapper.displayName,
@@ -107,13 +108,14 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
             isCleanup = wrapper.isCleanupTool,
             isEnabledDefault = wrapper.isEnabledByDefault,
             options = panelInfo,
-            cweIds = inspectionExtraState.inspections.get(wrapper.id)?.cweIds,
+            cweIds = extraState?.cweIds,
+            codeQualityCategory = extraState?.codeQualityCategory,
           ))
         }
         catch (e: Throwable) {
           System.err.println("Error while processing ${wrapper.extension}")
           e.printStackTrace()
-          exitProcess(-1)
+          ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
         }
       }
 
@@ -139,9 +141,9 @@ private class InspectopediaExtractor : ModernApplicationStarter() {
     }
     catch (e: Exception) {
       e.printStackTrace()
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
-    exitProcess(0)
+    ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
   }
 }
 
@@ -189,14 +191,14 @@ private fun retrievePanelStructure(component: OptComponent, controller: OptionCo
 }
 
 @Suppress("unused")
-data class Plugins(
+private data class Plugins(
   @JvmField val plugins: List<Plugin>,
   @JvmField val ideCode: String,
   @JvmField val ideName: String,
   @JvmField val ideVersion: String,
 )
 
-data class Plugin(
+private data class Plugin(
   @JvmField val id: String,
   @JvmField val name: String,
   @JvmField val version: String?,

@@ -38,13 +38,11 @@ final class KJvmUtils {
     return meta != null? meta.getKmProperties() : Collections.emptyList();
   }
 
-  @Nullable
-  static String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
+  static @Nullable String getKotlinName(JvmNodeReferenceID cls, Utils utils) {
     return find(map(utils.getNodes(cls, JvmClass.class), c -> getKotlinName(c)), Objects::nonNull);
   }
 
-  @Nullable
-  static String getKotlinName(JvmClass cls) {
+  static @Nullable String getKotlinName(JvmClass cls) {
     KmDeclarationContainer container = getDeclarationContainer(cls);
     if (container instanceof KmPackage) {
       return cls.getPackageName();

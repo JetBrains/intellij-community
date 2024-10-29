@@ -36,11 +36,11 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
   private class LombokGetterOrSetterMayBeUsedVisitor extends JavaElementVisitor {
     private final @Nullable ProblemsHolder myHolder;
 
-    private final @Nullable LombokGetterOrSetterMayBeUsedInspection.LombokGetterOrSetterMayBeUsedFix myLombokGetterOrSetterMayBeUsedFix;
+    private final @Nullable LombokGetterOrSetterMayBeUsedFix myLombokGetterOrSetterMayBeUsedFix;
 
     private LombokGetterOrSetterMayBeUsedVisitor(
       @Nullable ProblemsHolder holder,
-      @Nullable LombokGetterOrSetterMayBeUsedInspection.LombokGetterOrSetterMayBeUsedFix lombokGetterOrSetterMayBeUsedFix
+      @Nullable LombokGetterOrSetterMayBeUsedFix lombokGetterOrSetterMayBeUsedFix
     ) {
       this.myHolder = holder;
       this.myLombokGetterOrSetterMayBeUsedFix = lombokGetterOrSetterMayBeUsedFix;

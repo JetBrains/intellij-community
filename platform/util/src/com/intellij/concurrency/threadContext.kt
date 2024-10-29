@@ -8,13 +8,14 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.Cancellation
+import com.intellij.util.Processor
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.internal.intellij.IntellijCoroutines
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.ApiStatus.Internal
-import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.Callable
 import java.util.function.Consumer
 import java.util.function.Function
@@ -23,7 +24,8 @@ import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
-private val LOG: Logger = Logger.getInstance("#com.intellij.concurrency")
+private const val category = "#com.intellij.concurrency"
+private val LOG: Logger = Logger.getInstance(category)
 
 /**
  * This class contains an overriding coroutine context for [IntellijCoroutines.currentThreadCoroutineContext].
@@ -77,7 +79,9 @@ private data class InstalledThreadContext(
    * It can be explicitly reset, so `null` is a permitted value.
    */
   val context: CoroutineContext?
-)
+) {
+  val creationTrace: Throwable? = if (isStacktraceLoggingEnabled()) Throwable("$context created at") else null
+}
 
 private val INITIAL_THREAD_CONTEXT = InstalledThreadContext(null, null)
 
@@ -100,18 +104,22 @@ private inline fun currentThreadContextOrFallback(getter: (CoroutineContext?) ->
   }
 }
 
-@VisibleForTesting
-fun currentThreadContextOrNull(): CoroutineContext? {
-  return currentThreadContextOrFallback { null }
+@ApiStatus.Internal
+fun currentThreadOverriddenContextOrNull(): CoroutineContext? {
+  return tlCoroutineContext.get().context
 }
 
+@ApiStatus.Internal
+fun currentThreadContextOrNull(): CoroutineContext? {
+  return currentThreadContextOrFallback { it?.minusKey(ContinuationInterceptor) }
+}
 
 /**
  * @return current thread context
  */
 fun currentThreadContext(): CoroutineContext {
   checkContextInstalled()
-  return currentThreadContextOrFallback { it?.minusKey(ContinuationInterceptor) } ?: EmptyCoroutineContext
+  return currentThreadContextOrNull() ?: EmptyCoroutineContext
 }
 
 private fun checkContextInstalled() {
@@ -272,39 +280,6 @@ fun resetThreadContext(): AccessToken {
 }
 
 /**
- * Runs [action] with the cancellation guarantees of [job].
- *
- * Consider the following example:
- * ```kotlin
- * fun computeSomethingUseful() {
- *    preComputation()
- *    application.executeOnPooledThread(::executeInLoop)
- *    postComputation()
- * }
- *
- * fun executeInLoop() {
- *   doSomething()
- *   ProgressManager.checkCancelled()
- *   Thread.sleep(1000)
- *   executeInLoop()
- * }
- * ```
- *
- * If someone wants to track the execution of `computeSomethingUseful`, most likely they are not interested in `executeInLoop`,
- * as it is a daemon computation that can be only canceled.
- * It can be a launch of an external process, or some periodic diagnostic check.
- *
- * In this case, the platform offers to weaken the cancellation guarantees for the computation:
- * it still would be cancellable on project closing or component unloading, but it would not be bound to the context cancellation.
- */
-@Experimental
-fun <T> escapeCancellation(job: Job, action: () -> T): T {
-  return installThreadContext(currentThreadContext() + job + BlockingJob(job), true).use {
-    action()
-  }
-}
-
-/**
  * Installs [coroutineContext] as the current thread context.
  * If [replace] is `false` (default) and the current thread already has context, then this function logs an error.
  *
@@ -315,7 +290,13 @@ fun installThreadContext(coroutineContext: CoroutineContext, replace: Boolean = 
     @OptIn(InternalCoroutinesApi::class)
     val currentSnapshot = IntellijCoroutines.currentThreadCoroutineContext()
     if (!replace && previousContext.snapshot === currentSnapshot && previousContext.context != null) {
-      LOG.error("Thread context was already set: $previousContext. \n Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack.")
+      LOG.error(Throwable("Thread context was already set: $previousContext. \n " +
+                "Most likely, you are using 'runBlocking' instead of 'runBlockingCancellable' somewhere in the asynchronous stack. \n" +
+                "Also, if you have any kind of manual event queue draining/pumping/flushing/etc \n" +
+                "you have to wrap the loop with `resetThreadContext().use { // your queue draining code }`. \n" +
+                "See usages of resetThreadContext().").apply {
+        addSuppressed(previousContext.creationTrace ?: tracingHint())
+      })
     }
     InstalledThreadContext(currentSnapshot, coroutineContext)
   }
@@ -405,6 +386,7 @@ fun <T> withThreadLocal(variable: ThreadLocal<T>, update: (value: T) -> T): Acce
  * This method should be used with executors from [java.util.concurrent.Executors] or with [java.util.concurrent.CompletionStage] methods.
  * Do not use this method with executors returned from [com.intellij.util.concurrency.AppExecutorUtil], they already capture the context.
  */
+@ApiStatus.Internal
 fun captureThreadContext(runnable: Runnable): Runnable {
   return captureRunnableThreadContext(runnable)
 }
@@ -412,6 +394,7 @@ fun captureThreadContext(runnable: Runnable): Runnable {
 /**
  * Same as [captureThreadContext] but for [Supplier]
  */
+@ApiStatus.Internal
 fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
   val c = captureCallableThreadContext(s::get)
   return Supplier(c::call)
@@ -420,6 +403,7 @@ fun <T> captureThreadContext(s : Supplier<T>) : Supplier<T> {
 /**
  * Same as [captureThreadContext] but for [Consumer]
  */
+@ApiStatus.Internal
 fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
   val f = capturePropagationContext(c::accept)
   return Consumer(f::apply)
@@ -428,8 +412,30 @@ fun <T> captureThreadContext(c : Consumer<T>) : Consumer<T> {
 /**
  * Same as [captureThreadContext] but for [Function]
  */
+@ApiStatus.Internal
 fun <T, U> captureThreadContext(f : Function<T, U>) : Function<T, U> {
   return capturePropagationContext(f)
+}
+
+/**
+ * Same as [captureThreadContext] but for a Kotlin lambda
+ */
+@ApiStatus.Internal
+fun <T> captureThreadContext(action: () -> T): () -> T {
+  val c = captureCallableThreadContext(action)
+  return c::call
+}
+
+
+/**
+ * Same as [captureThreadContext] but for [Processor]
+ *
+ * Cannot be named as [captureThreadContext] due to a call-site clash with the overload with a [Function] argument
+ */
+@ApiStatus.Internal
+fun <T> captureThreadContextProcessor(processor: Processor<T>): Processor<T> {
+  val c = captureThreadContext(Function<T, Boolean> { processor.process(it) })
+  return Processor { c.apply(it) }
 }
 
 /**
@@ -447,6 +453,7 @@ interface InternalCoroutineContextKey<T : CoroutineContext.Element> : CoroutineC
  * Strips off internal elements from thread contexts.
  * If you need to compare contexts by equality, most likely you need to use this method.
  */
+@ApiStatus.Internal
 fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element> {
   checkContextInstalled()
   return context.fold(HashSet()) { acc, element ->
@@ -468,6 +475,10 @@ fun getContextSkeleton(context: CoroutineContext): Set<CoroutineContext.Element>
 /**
  * Same as [captureCallableThreadContext] but for [Callable].
  */
+@ApiStatus.Internal
 fun <V> captureThreadContext(callable: Callable<V>): Callable<V> {
   return captureCallableThreadContext(callable)
 }
+
+private fun isStacktraceLoggingEnabled() = LOG.isTraceEnabled
+private fun tracingHint() = Throwable("To enable stack trace recording set log category '$category' to 'trace'")

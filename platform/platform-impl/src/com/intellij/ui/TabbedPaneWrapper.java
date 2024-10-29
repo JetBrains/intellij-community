@@ -2,7 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -352,7 +353,7 @@ public class TabbedPaneWrapper {
     TabWrapper createTabWrapper(@NotNull JComponent component);
   }
 
-  public static final class TabWrapper extends JPanel implements DataProvider {
+  public static final class TabWrapper extends JPanel implements UiCompatibleDataProvider {
     boolean myCustomFocus = true;
     private JComponent myComponent;
 
@@ -362,15 +363,9 @@ public class TabbedPaneWrapper {
       add(component, BorderLayout.CENTER);
     }
 
-    /*
-     * Make possible to search down for DataProviders
-     */
     @Override
-    public Object getData(final @NotNull String dataId) {
-      if (myComponent instanceof DataProvider) {
-        return ((DataProvider)myComponent).getData(dataId);
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      DataSink.uiDataSnapshot(sink, myComponent);
     }
 
     public JComponent getComponent() {

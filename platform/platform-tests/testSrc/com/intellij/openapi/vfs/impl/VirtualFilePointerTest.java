@@ -5,6 +5,7 @@ import com.intellij.CacheSwitcher;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
+import com.intellij.idea.IJIgnore;
 import com.intellij.mock.MockVirtualFile;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,7 +34,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.SuperUserStatus;
@@ -164,6 +165,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertEquals("[before:true, after:false]", fileToDeleteListener.log.toString());
   }
 
+  @IJIgnore(issue = "IJPL-149673")
   @Test
   public void testSwitchingVfs() {
     final var file = tempDir.newFile("myfile.txt");
@@ -600,7 +602,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertTrue(pointer.isValid());
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
-    Collection<Job<?>> reads = ConcurrentCollectionFactory.createConcurrentSet();
+    Collection<Job> reads = ConcurrentCollectionFactory.createConcurrentSet();
     VirtualFileListener listener = new VirtualFileListener() {
       @Override
       public void fileCreated(@NotNull VirtualFileEvent event) {
@@ -639,7 +641,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
     finally {
       connection.disconnect();  // unregister listener early
-      for (Job<?> read : reads) {
+      for (Job read : reads) {
         while (!read.isDone()) {
           read.waitForCompletion(1000);
         }
@@ -647,9 +649,9 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     }
   }
 
-  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job<?>> reads) {
+  private static void stressRead(VirtualFilePointer pointer, Collection<? super Job> reads) {
     for (int i = 0; i < 10; i++) {
-      AtomicReference<Job<?>> reference = new AtomicReference<>();
+      AtomicReference<Job> reference = new AtomicReference<>();
       reference.set(JobLauncher.getInstance().submitToJobThread(() -> ApplicationManager.getApplication().runReadAction(() -> {
         VirtualFile file = pointer.getFile();
         if (file != null && !file.isValid()) {
@@ -788,7 +790,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       };
 
       run.set(true);
-      List<Job<?>> jobs = new ArrayList<>(nThreads);
+      List<Job> jobs = new ArrayList<>(nThreads);
       for (int it = 0; it < nThreads; it++) {
         jobs.add(JobLauncher.getInstance().submitToJobThread(read, null));
       }
@@ -798,7 +800,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
       myVirtualFilePointerManager.create(fileToCreatePointer.getUrl() + "/b/c", disposable, listener);
 
       run.set(false);
-      for (Job<?> job : jobs) {
+      for (Job job : jobs) {
         job.waitForCompletion(2_000);
       }
       ExceptionUtil.rethrowAll(exception.get());
@@ -1125,7 +1127,7 @@ public class VirtualFilePointerTest extends BareTestFixtureTestCase {
     assertNotNull(pointer.getFile());
     assertTrue(pointer.getFile().isValid());
 
-    PerformanceTestUtil.newPerformanceTest("get()", () -> {
+    Benchmark.newBenchmark("get()", () -> {
       for (int i=0; i<200_000_000; i++) {
         assertNotNull(pointer.getFile());
       }

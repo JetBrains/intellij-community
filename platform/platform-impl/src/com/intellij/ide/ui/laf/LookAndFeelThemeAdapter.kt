@@ -7,9 +7,9 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UITheme
 import com.intellij.openapi.client.ClientSystemInfo
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.TableActions
 import com.intellij.util.ResourceUtil
@@ -18,8 +18,11 @@ import com.intellij.util.ui.JBInsets
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Font
+import java.awt.GraphicsEnvironment
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import javax.swing.*
@@ -30,13 +33,13 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 import javax.swing.text.DefaultEditorKit
 
 @Internal
-internal class LookAndFeelThemeAdapter(
+class LookAndFeelThemeAdapter(
   private val base: LookAndFeel,
   private val theme: UIThemeLookAndFeelInfo,
 ) : BasicLookAndFeel() {
   companion object {
     @JvmField
-    internal val preInitializedBaseLaf = AtomicReference<LookAndFeel?>()
+    val preInitializedBaseLaf: AtomicReference<LookAndFeel?> = AtomicReference<LookAndFeel?>()
 
     @JvmStatic
     var isAltPressed: Boolean = false
@@ -73,15 +76,15 @@ internal class LookAndFeelThemeAdapter(
     base.uninitialize()
   }
 
-  override fun getID() = "LookAndFeelThemeAdapter"
+  override fun getID(): String = "LookAndFeelThemeAdapter"
 
-  override fun getDescription() = getID()
+  override fun getDescription(): String = getID()
 
-  override fun getName() = getID()
+  override fun getName(): String = getID()
 
-  override fun isNativeLookAndFeel() = true
+  override fun isNativeLookAndFeel(): Boolean = true
 
-  override fun isSupportedLookAndFeel() = true
+  override fun isSupportedLookAndFeel(): Boolean = true
 }
 
 private object DefaultMenuArrowIcon : MenuArrowIcon(
@@ -278,4 +281,44 @@ fun setEarlyUiLaF() {
   val theme = createRawDarculaTheme()
   val laf = LookAndFeelThemeAdapter(createBaseLaF(), UIThemeLookAndFeelInfoImpl(theme))
   UIManager.setLookAndFeel(laf)
+}
+
+// used by Rider
+@Internal
+fun createBaseLaF(): LookAndFeel {
+  if (SystemInfoRt.isMac) {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.apple.laf.AquaLookAndFeel")
+    return MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as BasicLookAndFeel
+  }
+  else if (!SystemInfoRt.isLinux || GraphicsEnvironment.isHeadless()) {
+    return IdeaLaf(customFontDefaults = null)
+  }
+
+  // Normally, GTK LaF is considered "system" when (1) a GNOME session is active, and (2) GTK library is available.
+  // Here, we weaken the requirements to only (2) and force GTK LaF installation to let it detect the system fonts
+  // and scale them based on Xft.dpi value.
+  try {
+    val aClass = ClassLoader.getPlatformClassLoader().loadClass("com.sun.java.swing.plaf.gtk.GTKLookAndFeel")
+    val gtk = MethodHandles.privateLookupIn(aClass, MethodHandles.lookup())
+      .findConstructor(aClass, MethodType.methodType(Void.TYPE)).invoke() as LookAndFeel
+    // GTK is available
+    if (gtk.isSupportedLookAndFeel) {
+      // on JBR 11, overrides `SunGraphicsEnvironment#uiScaleEnabled` (sets `#uiScaleEnabled_overridden` to `false`)
+      gtk.initialize()
+      val fontDefaults = HashMap<Any, Any?>()
+      val gtkDefaults = gtk.defaults
+      for (key in gtkDefaults.keys) {
+        if (key.toString().endsWith(".font")) {
+          // `UIDefaults#get` unwraps lazy values
+          fontDefaults.put(key, gtkDefaults[key])
+        }
+      }
+      @Suppress("UsePropertyAccessSyntax")
+      return IdeaLaf(customFontDefaults = if (fontDefaults.isEmpty()) null else fontDefaults)
+    }
+  }
+  catch (e: Exception) {
+    logger<IdeaLaf>().warn(e)
+  }
+  return IdeaLaf(customFontDefaults = null)
 }

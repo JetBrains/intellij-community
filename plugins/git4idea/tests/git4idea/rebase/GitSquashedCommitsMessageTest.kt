@@ -54,4 +54,15 @@ class GitSquashedCommitsMessageTest {
     val messages = listOf("fixup! msg", "fixup! msg", "msg")
     assertEquals("msg", GitSquashedCommitsMessage.prettySquash(messages))
   }
+
+  @Test
+  fun `autosquash subjects is not removed if target commit is missing`() {
+    val messages = listOf("???", "fixup! msg")
+    assertEquals("""
+      ???
+      
+      
+      fixup! msg
+    """.trimIndent(), GitSquashedCommitsMessage.prettySquash(messages))
+  }
 }

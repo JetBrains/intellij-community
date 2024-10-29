@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="lucene-highlighter" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:9.10.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.lucene:lucene-highlighter:9.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.10.0/lucene-highlighter-9.10.0.jar">
-          <sha256sum>ef26cc1cdf1439faaa204e95cb9db6fc69c17addae98847226d58834d2a7f03a</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0.jar">
+          <sha256sum>5094e1b38f02eb72500a4283ac0f654e2e81943c5359b629567dd7900c935a59</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.10.0/lucene-highlighter-9.10.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.10.0/lucene-highlighter-9.10.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.10.0/lucene-highlighter-9.10.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/lucene/lucene-highlighter/9.12.0/lucene-highlighter-9.12.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

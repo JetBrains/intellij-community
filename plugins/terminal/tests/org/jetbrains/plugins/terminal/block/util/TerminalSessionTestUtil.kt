@@ -103,7 +103,7 @@ internal object TerminalSessionTestUtil {
 
   fun getCommandResultFuture(session: BlockTerminalSession): CompletableFuture<CommandResult> {
     val disposable = Disposer.newDisposable(session)
-    val scraper = ShellCommandOutputScraper(session)
+    val scraper = ShellCommandOutputScraperImpl(session)
     val lastOutput: AtomicReference<StyledCommandOutput?> = AtomicReference()
     scraper.addListener(object : ShellCommandOutputListener {
       override fun commandOutputChanged(output: StyledCommandOutput) {

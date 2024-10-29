@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -38,22 +38,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.function.BiFunction;
 
 @ApiStatus.Experimental
 public final class LanguageConsoleBuilder {
-  @Nullable
-  private LanguageConsoleView consoleView;
+  private @Nullable LanguageConsoleView consoleView;
   private Condition<? super LanguageConsoleView> executionEnabled = Conditions.alwaysTrue();
 
-  @Nullable
-  private PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
-  @Nullable
-  private BaseConsoleExecuteActionHandler executeActionHandler;
-  @Nullable
-  private String historyType;
+  private @Nullable BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
+  private @Nullable BaseConsoleExecuteActionHandler executeActionHandler;
+  private @Nullable String historyType;
 
-  @Nullable
-  private GutterContentProvider gutterContentProvider;
+  private @Nullable GutterContentProvider gutterContentProvider;
 
   private boolean oneLineInput;
 
@@ -67,7 +63,7 @@ public final class LanguageConsoleBuilder {
   public LanguageConsoleBuilder() {
   }
 
-  public LanguageConsoleBuilder processHandler(@NotNull final ProcessHandler processHandler) {
+  public LanguageConsoleBuilder processHandler(final @NotNull ProcessHandler processHandler) {
     executionEnabled = console -> !processHandler.isProcessTerminated();
     return this;
   }
@@ -85,8 +81,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  @NotNull
-  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
+  public @NotNull LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType, boolean moveCaretToTheFirstLine) {
     if (consoleView == null) {
       this.executeActionHandler = executeActionHandler;
       this.historyType = historyType;
@@ -97,8 +92,7 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  @NotNull
-  public LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
+  public @NotNull LanguageConsoleBuilder initActions(@NotNull BaseConsoleExecuteActionHandler executeActionHandler, @NotNull String historyType) {
     return initActions(executeActionHandler, historyType, false);
   }
 
@@ -112,7 +106,7 @@ public final class LanguageConsoleBuilder {
    * todo This API doesn't look good, but it is much better than force client to know low-level details
    */
   public static AnAction registerExecuteAction(@NotNull LanguageConsoleView console,
-                                               @NotNull final Consumer<? super String> executeActionHandler,
+                                               final @NotNull Consumer<? super String> executeActionHandler,
                                                @NotNull String historyType,
                                                @Nullable String historyPersistenceId,
                                                @Nullable Condition<? super LanguageConsoleView> enabledCondition) {
@@ -151,14 +145,12 @@ public final class LanguageConsoleBuilder {
     return this;
   }
 
-  @NotNull
-  public LanguageConsoleBuilder processInputStateKey(@Nullable String value) {
+  public @NotNull LanguageConsoleBuilder processInputStateKey(@Nullable String value) {
     processInputStateKey = value;
     return this;
   }
 
-  @NotNull
-  public LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
+  public @NotNull LanguageConsoleView build(@NotNull Project project, @NotNull Language language) {
     final MyHelper helper = new MyHelper(project, language.getDisplayName() + " Console", language, psiFileFactory);
     GutteredLanguageConsole consoleView = new GutteredLanguageConsole(helper, gutterContentProvider);
     if (oneLineInput) {
@@ -182,22 +174,21 @@ public final class LanguageConsoleBuilder {
   }
 
   public static final class MyHelper extends LanguageConsoleImpl.Helper {
-    private final PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
+    private final BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
 
     public MyHelper(@NotNull  Project project,
                     @NotNull String title,
                     @NotNull Language language,
-                    @Nullable PairFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
+                    @Nullable BiFunction<? super VirtualFile, ? super Project, ? extends PsiFile> psiFileFactory) {
       super(project, new LightVirtualFile(title, language, ""));
       this.psiFileFactory = psiFileFactory;
     }
 
-    @NotNull
     @Override
-    public PsiFile getFile() {
-      return psiFileFactory == null ? super.getFile() : psiFileFactory.fun(virtualFile, project);
+    public @NotNull PsiFile getFile() {
+      return psiFileFactory == null ? super.getFile() : psiFileFactory.apply(virtualFile, project);
     }
 
     @Override
@@ -219,7 +210,7 @@ public final class LanguageConsoleBuilder {
     }
 
     @Override
-    boolean isHistoryViewerForceAdditionalColumnsUsage() {
+    public boolean isHistoryViewerForceAdditionalColumnsUsage() {
       return false;
     }
 
@@ -271,8 +262,7 @@ public final class LanguageConsoleBuilder {
           lineEndGutter.setBounds(lineStartGutterWidth + (w - lineEndGutterWidth - editor.getEditor().getScrollPane().getVerticalScrollBar().getWidth()), 0, lineEndGutterWidth, h);
         }
 
-        @NotNull
-        private EditorComponentImpl getEditorComponent() {
+        private @NotNull EditorComponentImpl getEditorComponent() {
           for (int i = getComponentCount() - 1; i >= 0; i--) {
             Component component = getComponent(i);
             if (component instanceof EditorComponentImpl) {
@@ -297,7 +287,7 @@ public final class LanguageConsoleBuilder {
     }
 
     @Override
-    protected void doAddPromptToHistory() {
+    public void doAddPromptToHistory() {
       gutterContentProvider.beforeEvaluate(getHistoryViewer());
     }
 
@@ -333,7 +323,8 @@ public final class LanguageConsoleBuilder {
             return;
           }
 
-          // workaround - editor ask us to paint line 4-6, but we should draw line for line 3 (startLine - 1) also, otherwise it will be not rendered
+          // workaround - editor asks us to paint line 4-6, but we should draw line for line 3 (startLine - 1) also,
+          // otherwise it will be not rendered
           int actualStartLine = startLine == 0 ? 0 : startLine - 1;
           int y = (actualStartLine + 1) * lineHeight;
           g.setColor(editor.getColorsScheme().getColor(EditorColors.INDENT_GUIDE_COLOR));
@@ -419,7 +410,6 @@ public final class LanguageConsoleBuilder {
         }
 
         gutterSizeUpdater = new Task(start, end);
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(gutterSizeUpdater);
       }
 

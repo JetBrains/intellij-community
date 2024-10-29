@@ -127,7 +127,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
           PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
           if (STREAM_MAP.test(qualifierCall) && qualifierCall.getMethodExpression().getTypeParameters().length == 0 &&
               !isIdentityMapping(qualifierCall.getArgumentList().getExpressions()[0], false)) {
-            String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", name) +
+            String message = JavaBundle.message("inspection.call.message", name) +
                              ": " + JavaBundle.message("inspection.redundant.stream.optional.call.explanation.map.flatMap");
             holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                    new RemoveCallFix(name, "map"));
@@ -284,7 +284,7 @@ public final class RedundantStreamOptionalCallInspection extends AbstractBaseJav
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = explanation != null
                          ? JavaBundle.message("inspection.redundant.stream.optional.call.message.with.explanation", methodName, explanation)
-                         : JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
+                         : JavaBundle.message("inspection.call.message", methodName);
         holder.registerProblem(call, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, getRange(call),
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }

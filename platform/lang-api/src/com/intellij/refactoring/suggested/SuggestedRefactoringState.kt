@@ -10,6 +10,8 @@ import com.intellij.util.asSafely
 import com.intellij.util.keyFMap.KeyFMap
 import org.jetbrains.annotations.Nls
 import com.intellij.psi.createSmartPointer
+import com.intellij.refactoring.RefactoringBundle
+import org.jetbrains.annotations.ApiStatus
 
 private var nextFeatureUsageId = 0
 
@@ -258,4 +260,20 @@ data class SuggestedChangeSignatureData private constructor(
       )
     }
   }
+}
+
+@ApiStatus.Internal
+fun SuggestedRefactoringData.getIntentionText(): @Nls String {
+  val text = when (this) {
+    is SuggestedRenameData -> RefactoringBundle.message(
+      "suggested.refactoring.rename.intention.text",
+      oldName,
+      newName
+    )
+    is SuggestedChangeSignatureData -> RefactoringBundle.message(
+      "suggested.refactoring.change.signature.intention.text",
+      nameOfStuffToUpdate
+    )
+  }
+  return text
 }

@@ -18,7 +18,6 @@ private val BACKGROUND = JBColor.namedColor("Toolbar.Floating.background", JBCol
 
 @ApiStatus.NonExtendable
 abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToolbarComponent, Disposable.Default {
-
   private val _parentDisposable: Disposable?
   private val parentDisposable: Disposable
     get() = _parentDisposable ?: this
@@ -26,20 +25,23 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
   private val transparentComponent = ToolbarTransparentComponent()
   private val componentAnimator = TransparentComponentAnimator(transparentComponent, parentDisposable)
 
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Use constructor with parentDisposable")
-  constructor(
-    actionGroup: ActionGroup
-  ) : super(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true) {
-    this._parentDisposable = null
-  }
-
   constructor(
     actionGroup: ActionGroup,
     parentDisposable: Disposable
   ) : super(ActionPlaces.CONTEXT_TOOLBAR, actionGroup, true) {
     this._parentDisposable = parentDisposable
   }
+
+  @ApiStatus.Internal
+  var backgroundAlpha: Float = BACKGROUND_ALPHA
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var showingTime: Int by componentAnimator::showingTime
+
+  @get:ApiStatus.Internal
+  @set:ApiStatus.Internal
+  var hidingTime: Int by componentAnimator::hidingTime
 
   protected abstract val autoHideable: Boolean
 
@@ -84,7 +86,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     val graphics = g.create()
     try {
       if (graphics is Graphics2D) {
-        val opacity = transparentComponent.getOpacity() * BACKGROUND_ALPHA
+        val opacity = transparentComponent.getOpacity() * backgroundAlpha
         graphics.composite = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, opacity)
         graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       }
@@ -139,6 +141,7 @@ abstract class AbstractFloatingToolbarComponent : ActionToolbarImpl, FloatingToo
     }
 
     override fun hideComponent() {
+      if (!isVisible) return
       isVisible = false
       toolbar.updateActionsImmediately(false)
     }

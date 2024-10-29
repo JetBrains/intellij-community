@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.toolWindow
 
 import com.intellij.ide.impl.ProjectUtil
@@ -24,9 +24,9 @@ internal class FocusTask(private val toolWindow: ToolWindowImpl) : Runnable {
 
     val component = getShowingComponentToRequestFocus(toolWindow)
     if (component == null) {
-      toolWindow.focusAlarm.cancelAllRequests()
+      toolWindow.focusAlarm.cancel()
       resetStartTime()
-      toolWindow.focusAlarm.request(delay = 100)
+      toolWindow.focusAlarm.requestWithCustomDelay(100)
     }
     else {
       val owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().permanentFocusOwner

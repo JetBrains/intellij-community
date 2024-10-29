@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.enter;
 
@@ -29,11 +29,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EnterBetweenBracesFinalHandler extends EnterHandlerDelegateAdapter {
   @Override
-  public Result preprocessEnter(@NotNull final PsiFile file,
+  public Result preprocessEnter(final @NotNull PsiFile file,
                                 @NotNull Editor editor,
-                                @NotNull final Ref<Integer> caretOffsetRef,
+                                final @NotNull Ref<Integer> caretOffsetRef,
                                 final @NotNull Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext,
+                                final @NotNull DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
     if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
       return Result.Continue;

@@ -42,7 +42,7 @@ import java.awt.event.ItemListener;
 import java.util.Arrays;
 import java.util.Set;
 
-public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
+public final class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
   private JPanel myRoot;
   private ComboBox<@Nls String> myLanguage;
   private EditorTextField myPrefix;

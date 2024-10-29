@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete
 
@@ -13,7 +13,9 @@ import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.refactoring.AbstractMultifileRefactoringTest
 import org.jetbrains.kotlin.idea.refactoring.rename.loadTestConfiguration
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
+import org.jetbrains.kotlin.idea.test.KotlinMultiFileTestCase
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import java.io.File
 
@@ -36,14 +38,14 @@ abstract class AbstractMultiModuleSafeDeleteTest : KotlinMultiFileTestCase() {
         PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir, ::fileFilter, ::fileNameMapper)
     }
 
-    protected open fun fileFilter(file: VirtualFile): Boolean {
+    override fun fileFilter(file: VirtualFile): Boolean {
         if (file.isFile && file.extension == "kt") {
             if (file.name.endsWith(".k2.kt")) return false
         }
         return !KotlinTestUtils.isMultiExtensionName(file.name)
     }
 
-    private fun fileNameMapper(file: VirtualFile): String =
+    override fun fileNameMapper(file: VirtualFile): String =
         file.name.replace(".k2.kt", ".kt")
 
     override fun getTestRoot(): String = "/refactoring/safeDeleteMultiModule/"

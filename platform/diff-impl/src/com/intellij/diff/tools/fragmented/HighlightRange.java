@@ -17,8 +17,10 @@ package com.intellij.diff.tools.fragmented;
 
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class HighlightRange {
   @NotNull private final TextRange myBase;
   @NotNull private final TextRange myChanged;

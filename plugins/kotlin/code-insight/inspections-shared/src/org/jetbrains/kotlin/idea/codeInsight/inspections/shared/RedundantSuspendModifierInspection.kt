@@ -40,7 +40,7 @@ internal class RedundantSuspendModifierInspection : AbstractKotlinInspection() {
             if (function.hasModifier(KtTokens.OVERRIDE_KEYWORD) || function.hasModifier(KtTokens.ACTUAL_KEYWORD)) return
 
             analyze(function) {
-                val functionSymbol = function.getFunctionLikeSymbol() as? KaNamedFunctionSymbol ?: return
+                val functionSymbol = function.symbol as? KaNamedFunctionSymbol ?: return
                 if (functionSymbol.modality == KaSymbolModality.OPEN) return
 
                 if (function.hasSuspendOrUnresolvedCall()) return

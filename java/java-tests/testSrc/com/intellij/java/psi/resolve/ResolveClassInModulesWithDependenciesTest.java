@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.JavaResolveTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -59,25 +60,25 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
   public void testModuleSourceAsLibrarySource() throws Exception {
     VirtualFile dir = getTempDir().createVirtualDir();
+    createFile(myModule, dir, "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(dir.getUrl()));
 
     final PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
     final VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
     assertNotNull(file);
-    createFile(myModule, file.getParent(), "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
 
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
   public void testModuleSourceAsLibraryClasses() throws Exception {
     VirtualFile dir = getTempDir().createVirtualDir();
+    createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(dir.getUrl()), Collections.emptyList());
 
     PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
     PsiFile psiFile = ref.getElement().getContainingFile();
     final VirtualFile file = psiFile.getVirtualFile();
     assertNotNull(file);
-    createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
     DependenciesBuilder.analyzeFileDependencies(psiFile, (place, dependency) -> {
     });
@@ -99,6 +100,7 @@ public class ResolveClassInModulesWithDependenciesTest extends JavaResolveTestCa
 
       ModuleRootModificationUtil.addDependency(getModule(), module);
     });
+    IndexingTestUtil.waitUntilIndexesAreReady(myProject);
   }
 
   private PsiReference configure() throws Exception {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.actions.ForceOnDemandRenderersAction;
@@ -23,8 +23,8 @@ import org.jetbrains.annotations.Nullable;
 public interface OnDemandRenderer extends FullValueEvaluatorProvider {
   @Nullable
   @Override
-  default XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext,
-                                                    ValueDescriptorImpl valueDescriptor) {
+  default XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
+                                                    @NotNull ValueDescriptorImpl valueDescriptor) {
     if (isOnDemand(evaluationContext, valueDescriptor) && !isCalculated(valueDescriptor)) {
       return createFullValueEvaluator(getLinkText());
     }

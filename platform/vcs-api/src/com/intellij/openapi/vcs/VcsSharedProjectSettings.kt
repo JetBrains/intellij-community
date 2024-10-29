@@ -3,10 +3,12 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 @Service(Service.Level.PROJECT)
 @State(name = "VcsProjectSettings", storages = [Storage("vcs.xml")])
-internal class VcsSharedProjectSettings : BaseState(), PersistentStateComponent<VcsSharedProjectSettings> {
+@ApiStatus.Internal
+class VcsSharedProjectSettings : BaseState(), PersistentStateComponent<VcsSharedProjectSettings> {
   var isDetectVcsMappingsAutomatically: Boolean by property(true)
 
   override fun getState(): VcsSharedProjectSettings {

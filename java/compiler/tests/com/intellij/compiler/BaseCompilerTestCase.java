@@ -6,6 +6,7 @@ import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -13,7 +14,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
+import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,6 +34,7 @@ import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.DirectoryContentSpecKt;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -40,6 +44,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -58,6 +63,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     CompilerTestUtil.enableExternalCompiler();
+    WorkspaceModelCacheImpl.forceEnableCaching(getTestRootDisposable());
   }
 
   protected void forceFSRescan() {
@@ -236,6 +242,8 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
 
     PlatformTestUtil.saveProject(myProject);
     CompilerTestUtil.saveApplicationSettings();
+    TestLoggerFactory.publishArtifactIfTestFails(Paths.get(PathManager.getOptionsPath()), "config-before-compilation");
+    CompilerTests.saveWorkspaceModelCaches(myProject);
     ApplicationManager.getApplication().invokeAndWait(() -> {
       CompilerTester.enableDebugLogging();
       action.accept(new CompileStatusNotification() {

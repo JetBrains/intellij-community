@@ -328,6 +328,42 @@ public class JBTreeTable extends JComponent implements TreePathBackgroundSupplie
       }
     }
 
+    // Insets support below
+    @Override
+    public Dimension getPreferredSize() {
+      var size = super.getPreferredSize();
+      var insets = getInsets();
+      return new Dimension(size.width + insets.left + insets.right, size.height + insets.top + insets.bottom);
+    }
+
+    @Override
+    public @NotNull Rectangle getCellRect(int row, int column, boolean includeSpacing) {
+      var rect = super.getCellRect(row, column, includeSpacing);
+      var insets = getInsets();
+      return new Rectangle(rect.x + insets.left, rect.y + insets.top, rect.width, rect.height);
+    }
+
+    @Override
+    public int columnAtPoint(@NotNull Point point) {
+      var insets = getInsets();
+      return super.columnAtPoint(new Point(point.x - insets.left, point.y - insets.top));
+    }
+
+    @Override
+    public int rowAtPoint(@NotNull Point point) {
+      var insets = getInsets();
+      return super.rowAtPoint(new Point(point.x - insets.left, point.y - insets.top));
+    }
+
+    @Override
+    public int getScrollableUnitIncrement(@NotNull Rectangle visibleRect, int orientation, int direction) {
+      int increment = super.getScrollableUnitIncrement(visibleRect, orientation, direction);
+      if (increment == 0 && orientation == SwingConstants.VERTICAL && direction < 0) {
+        return visibleRect.y; // To support insets
+      }
+      return increment;
+    }
+
     private final class MyAccessibleContext extends AccessibleContextDelegate {
 
       MyAccessibleContext() {

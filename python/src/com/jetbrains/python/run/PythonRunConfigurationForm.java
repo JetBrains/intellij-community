@@ -225,7 +225,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
           JBPopupFactory.getInstance().createListPopup(
             new BaseListPopupStep<@Nls String>(PyBundle.message("python.configuration.choose.target.to.run"), Lists.newArrayList(getScriptPathText(), getModuleNameText())) {
               @Override
-              public PopupStep onChosen(@Nls String selectedValue, boolean finalChoice) {
+              public PopupStep<?> onChosen(@Nls String selectedValue, boolean finalChoice) {
                 setTargetComboBoxValue(selectedValue);
                 updateRunModuleMode();
                 return FINAL_CHOICE;

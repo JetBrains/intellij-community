@@ -1,0 +1,125 @@
+*:com.intellij.ide.lightEdit.LightEditService
+- a:closeEditorWindow():Z
+- a:createNewDocument(java.nio.file.Path):com.intellij.ide.lightEdit.LightEditorInfo
+- a:getEditorManager():com.intellij.ide.lightEdit.LightEditorManager
+- s:getInstance():com.intellij.ide.lightEdit.LightEditService
+- a:getProject():com.intellij.openapi.project.Project
+- a:getSelectedFile():com.intellij.openapi.vfs.VirtualFile
+- a:getSelectedFileEditor():com.intellij.openapi.fileEditor.FileEditor
+- s:getWindowName():java.lang.String
+- a:isAutosaveMode():Z
+- a:isForceOpenInLightEditMode():Z
+- a:isLightEditEnabled():Z
+- a:isPreferProjectMode():Z
+- a:isTabNavigationAvailable(com.intellij.openapi.actionSystem.AnAction):Z
+- a:navigateToTab(com.intellij.openapi.actionSystem.AnAction):V
+- a:openFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.project.Project
+- a:openFile(java.nio.file.Path,Z):com.intellij.openapi.project.Project
+- a:saveNewDocuments():V
+- a:saveToAnotherFile(com.intellij.openapi.vfs.VirtualFile):V
+- a:setAutosaveMode(Z):V
+- a:showEditorWindow():V
+- a:updateFileStatus(java.util.Collection):V
+*:com.intellij.ide.lightEdit.LightEditServiceListener
+- lightEditWindowClosed(com.intellij.openapi.project.Project):V
+- lightEditWindowOpened(com.intellij.openapi.project.Project):V
+*:com.intellij.ide.lightEdit.LightEditTabAttributesProvider
+- a:calcAttributes(com.intellij.ide.lightEdit.LightEditorInfo):com.intellij.openapi.editor.markup.TextAttributes
+*:com.intellij.ide.lightEdit.LightEditorInfo
+- a:getFile():com.intellij.openapi.vfs.VirtualFile
+- a:getFileEditor():com.intellij.openapi.fileEditor.FileEditor
+- a:getPreferredSavePath():java.nio.file.Path
+- a:isNew():Z
+- a:isSaveRequired():Z
+- a:isUnsaved():Z
+- a:setPreferredSavePath(java.nio.file.Path):V
+*:com.intellij.ide.lightEdit.LightEditorListener
+- java.util.EventListener
+- afterClose(com.intellij.ide.lightEdit.LightEditorInfo):V
+- afterCreate(com.intellij.ide.lightEdit.LightEditorInfo):V
+- afterSelect(com.intellij.ide.lightEdit.LightEditorInfo):V
+- autosaveModeChanged(Z):V
+- beforeClose(com.intellij.ide.lightEdit.LightEditorInfo):V
+- fileStatusChanged(java.util.Collection):V
+*:com.intellij.ide.lightEdit.LightEditorManager
+- a:addListener(com.intellij.ide.lightEdit.LightEditorListener):V
+- a:addListener(com.intellij.ide.lightEdit.LightEditorListener,com.intellij.openapi.Disposable):V
+- a:closeEditor(com.intellij.ide.lightEdit.LightEditorInfo):V
+- a:containsUnsavedDocuments():Z
+- a:createEditor(com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
+- a:createEmptyEditor(java.lang.String):com.intellij.ide.lightEdit.LightEditorInfo
+- a:getEditors(com.intellij.openapi.vfs.VirtualFile):java.util.Collection
+- a:getOpenFiles():java.util.Collection
+- a:isFileOpen(com.intellij.openapi.vfs.VirtualFile):Z
+- a:isImplicitSaveAllowed(com.intellij.openapi.editor.Document):Z
+- a:saveAs(com.intellij.ide.lightEdit.LightEditorInfo,com.intellij.openapi.vfs.VirtualFile):com.intellij.ide.lightEdit.LightEditorInfo
+com.intellij.ide.structureView.StructureViewModel$ExpandInfoProvider
+- *:getMinimumAutoExpandDepth():I
+*:com.intellij.ide.ui.ToolbarSettings
+- com.intellij.openapi.components.PersistentStateComponent
+- *sf:Companion:com.intellij.ide.ui.ToolbarSettings$Companion
+- sf:INCLUSION_STATE:java.lang.String
+- sf:ROLLBACK_ACTION_ID:java.lang.String
+- s:getInstance():com.intellij.ide.ui.ToolbarSettings
+- a:isAvailable():Z
+- a:isEnabled():Z
+- a:isVisible():Z
+- a:setEnabled(Z):V
+- a:setVisible(Z):V
+*f:com.intellij.ide.ui.ToolbarSettings$Companion
+- sf:INCLUSION_STATE:java.lang.String
+- sf:ROLLBACK_ACTION_ID:java.lang.String
+- f:getInstance():com.intellij.ide.ui.ToolbarSettings
+*f:com.intellij.injected.editor.InjectionMeta
+- s:getInjectionIndent():com.intellij.openapi.util.Key
+a:com.intellij.openapi.actionSystem.AnAction
+- com.intellij.openapi.actionSystem.ActionUpdateThreadAware
+- com.intellij.openapi.project.PossiblyDumbAware
+- *:<init>(java.util.function.Supplier,java.util.function.Supplier):V
+- *:<init>(java.util.function.Supplier,java.util.function.Supplier,java.util.function.Supplier):V
+*:com.intellij.openapi.editor.CustomFoldRegion
+- com.intellij.openapi.editor.FoldRegion
+- a:getGutterIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
+- a:getHeightInPixels():I
+- a:getLocation():java.awt.Point
+- a:getRenderer():com.intellij.openapi.editor.CustomFoldRegionRenderer
+- a:getWidthInPixels():I
+- a:repaint():V
+- a:update():V
+*:com.intellij.openapi.editor.CustomFoldRegionRenderer
+- calcGutterIconRenderer(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.editor.markup.GutterIconRenderer
+- a:calcHeightInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
+- a:calcWidthInPixels(com.intellij.openapi.editor.CustomFoldRegion):I
+- getContextMenuGroup(com.intellij.openapi.editor.CustomFoldRegion):com.intellij.openapi.actionSystem.ActionGroup
+- a:paint(com.intellij.openapi.editor.CustomFoldRegion,java.awt.Graphics2D,java.awt.geom.Rectangle2D,com.intellij.openapi.editor.markup.TextAttributes):V
+com.intellij.openapi.editor.FoldingModel
+- *:addCustomLinesFolding(I,I,com.intellij.openapi.editor.CustomFoldRegionRenderer):com.intellij.openapi.editor.CustomFoldRegion
+*:com.intellij.openapi.editor.ScrollPositionCalculator
+- calcOffsetsToScroll(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):java.awt.Point
+- a:getHorizontalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
+- a:getVerticalOffset(com.intellij.openapi.editor.Editor,java.awt.Point,com.intellij.openapi.editor.ScrollType,java.awt.Rectangle,javax.swing.JScrollPane):I
+a:com.intellij.openapi.editor.colors.EditorColorsManager
+- *a:getSchemeModificationCounter():J
+com.intellij.openapi.editor.highlighter.HighlighterIterator
+- *:getTextAttributesKeys():com.intellij.openapi.editor.colors.TextAttributesKey[]
+*e:com.intellij.openapi.editor.markup.CustomHighlighterOrder
+- java.lang.Enum
+- sf:AFTER_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
+- sf:AFTER_TEXT:com.intellij.openapi.editor.markup.CustomHighlighterOrder
+- sf:BEFORE_BACKGROUND:com.intellij.openapi.editor.markup.CustomHighlighterOrder
+- s:valueOf(java.lang.String):com.intellij.openapi.editor.markup.CustomHighlighterOrder
+- s:values():com.intellij.openapi.editor.markup.CustomHighlighterOrder[]
+com.intellij.openapi.editor.markup.CustomHighlighterRenderer
+- *:getOrder():com.intellij.openapi.editor.markup.CustomHighlighterOrder
+com.intellij.ui.breadcrumbs.BreadcrumbsProvider
+- *:acceptStickyElement(com.intellij.psi.PsiElement):Z
+*:com.intellij.ui.tree.SuspendingTreeVisitor
+- a:visit(javax.swing.tree.TreePath,kotlin.coroutines.Continuation):java.lang.Object
+com.intellij.ui.tree.TreeVisitor
+- *:visitThread():com.intellij.ui.tree.TreeVisitor$VisitThread
+*e:com.intellij.ui.tree.TreeVisitor$VisitThread
+- java.lang.Enum
+- sf:BGT:com.intellij.ui.tree.TreeVisitor$VisitThread
+- sf:EDT:com.intellij.ui.tree.TreeVisitor$VisitThread
+- s:valueOf(java.lang.String):com.intellij.ui.tree.TreeVisitor$VisitThread
+- s:values():com.intellij.ui.tree.TreeVisitor$VisitThread[]

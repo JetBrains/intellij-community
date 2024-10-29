@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import java.util.Arrays;
 
 public final class JsonSchemaUsageTriggerCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("json.schema", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("json.schema", 3);
   private static final EventId1<String> COMPLETION_BY_SCHEMA_INVOKED =
     GROUP.registerEvent("completion.by.schema.invoked", EventFields.String("schemaKind",
                                                                            Arrays.asList("builtin", "schema", "user", "remote")));

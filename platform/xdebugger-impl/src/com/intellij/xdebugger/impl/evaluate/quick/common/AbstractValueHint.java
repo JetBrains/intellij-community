@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -39,7 +39,9 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.evaluate.ValueLookupManagerController;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -58,6 +60,8 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import static com.intellij.xdebugger.impl.evaluate.quick.common.XDebuggerPopupPanel.updatePopupBounds;
+
 public abstract class AbstractValueHint {
   private static final Logger LOG = Logger.getInstance(AbstractValueHint.class);
   private static final Key<AbstractValueHint> HINT_KEY = Key.create("allows only one value hint per editor");
@@ -66,7 +70,7 @@ public abstract class AbstractValueHint {
     @Override
     public void keyReleased(KeyEvent e) {
       if (!isAltMask(e.getModifiers())) {
-        ValueLookupManager.getInstance(myProject).hideHint();
+        ValueLookupManagerController.getInstance(myProject).hideHint();
       }
     }
   };
@@ -94,10 +98,6 @@ public abstract class AbstractValueHint {
     myEditor = editor;
     myType = type;
     myCurrentRange = textRange;
-  }
-
-  protected boolean canShowHint() {
-    return true;
   }
 
   protected abstract void evaluateAndShowHint();
@@ -140,7 +140,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint() || !isCurrentRangeValid()) {
+    if (!isCurrentRangeValid()) {
       hideHint();
       return;
     }
@@ -209,7 +209,8 @@ public abstract class AbstractValueHint {
     return myEditor;
   }
 
-  protected ValueHintType getType() {
+  @ApiStatus.Internal
+  public ValueHintType getType() {
     return myType;
   }
 
@@ -225,9 +226,10 @@ public abstract class AbstractValueHint {
     }
   }
 
-  private boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
+  @ApiStatus.Internal
+  protected boolean myInsideShow = false; // to avoid invoking myHideRunnable for new popups with updated presentation
 
-  private void processHintHidden() {
+  protected void processHintHidden() {
     if (!myInsideShow) {
       if (myHideRunnable != null) {
         myHideRunnable.run();
@@ -316,21 +318,42 @@ public abstract class AbstractValueHint {
   protected void onHintHidden() {
   }
 
-  protected boolean isHintHidden() {
+  @ApiStatus.Internal
+  public boolean isHintHidden() {
     return myHintHidden;
   }
 
-  protected JComponent createExpandableHintComponent(@Nullable Icon icon,
-                                                     final SimpleColoredText text,
-                                                     final Runnable expand,
-                                                     @Nullable XFullValueEvaluator evaluator) {
-    SimpleColoredComponent component = HintUtil.createInformationComponent();
-    component.setIcon(icon != null
-                      ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
-                      : UIUtil.getTreeCollapsedIcon());
+  @ApiStatus.Internal
+  protected SimpleColoredComponent fillSimpleColoredComponent(SimpleColoredComponent component,
+                                                              Icon icon,
+                                                              final SimpleColoredText text,
+                                                              @Nullable XFullValueEvaluator evaluator) {
+    HintUtil.installInformationProperties(component);
+    component.setIcon(icon);
     component.setCursor(hintCursor());
     text.appendToComponent(component);
     appendEvaluatorLink(evaluator, component);
+    return component;
+  }
+
+  protected JComponent createExpandableHintComponent(@Nullable Icon icon,
+                                                                 final SimpleColoredText text,
+                                                                 final Runnable expand,
+                                                                 @Nullable XFullValueEvaluator evaluator) {
+    return createExpandableHintComponent(icon, text, expand, evaluator, null);
+  }
+
+  @ApiStatus.Internal
+  protected SimpleColoredComponent createExpandableHintComponent(@Nullable Icon icon,
+                                                                 final SimpleColoredText text,
+                                                                 final Runnable expand,
+                                                                 @Nullable XFullValueEvaluator evaluator,
+                                                                 @Nullable XValuePresentation valuePresenter) {
+    Icon notNullIcon = icon != null
+                       ? IconManager.getInstance().createRowIcon(UIUtil.getTreeCollapsedIcon(), icon)
+                       : UIUtil.getTreeCollapsedIcon();
+
+    SimpleColoredComponent component = fillSimpleColoredComponent(createComponent(valuePresenter), notNullIcon, text, evaluator);
     new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
@@ -346,8 +369,14 @@ public abstract class AbstractValueHint {
             }
           }
           else {
-            hideCurrentHint();
-            expand.run();
+            myInsideShow = true;
+            try {
+              hideCurrentHint();
+              expand.run();
+            }
+            finally {
+              myInsideShow = false;
+            }
           }
           return true;
         }
@@ -500,7 +529,21 @@ public abstract class AbstractValueHint {
     return Objects.hash(myProject, myEditor, myType, myCurrentRange);
   }
 
-  void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
+  @ApiStatus.Internal
+  public void setEditorMouseEvent(EditorMouseEvent editorMouseEvent) {
     myEditorMouseEvent = editorMouseEvent;
+  }
+
+  @ApiStatus.Internal
+  protected void resizePopup(int widthDelta, int hightDelta) {
+    final Window popupWindow = SwingUtilities.windowForComponent(myCurrentPopup.getContent());
+    if (popupWindow == null) return;
+
+    Dimension popupSize = myCurrentPopup.getSize();
+    updatePopupBounds(popupWindow, popupSize.width + widthDelta, popupSize.height + hightDelta);
+  }
+
+  private static SimpleColoredComponent createComponent(@Nullable XValuePresentation valuePresenter) {
+    return (valuePresenter != null && valuePresenter.isAsync()) ? new SimpleColoredComponentWithProgress() : new SimpleColoredComponent();
   }
 }

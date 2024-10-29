@@ -3,10 +3,12 @@ package com.intellij.terminal;
 
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.jediterm.terminal.DefaultTerminalCopyPasteHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.StringSelection;
 
+@ApiStatus.Internal
 public final class IdeTerminalCopyPasteHandler extends DefaultTerminalCopyPasteHandler {
 
   @Override

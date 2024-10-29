@@ -69,9 +69,6 @@ public final class RepositoryHelper {
       hosts.add(pluginsUrl);
     }
 
-    @SuppressWarnings("removal") var fromContributors = CustomPluginRepoContributor.getRepositoriesFromContributors();
-    hosts.addAll(fromContributors);
-
     ContainerUtil.removeDuplicates(hosts);
     return hosts;
   }

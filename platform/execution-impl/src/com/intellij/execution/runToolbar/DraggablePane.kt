@@ -7,12 +7,14 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.AWTEventListener
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 open class DraggablePane : JPanel() {
   private var listener: DragListener? = null
   private var startPoint: Point? = null

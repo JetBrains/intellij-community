@@ -5,14 +5,13 @@ package org.jetbrains.uast.kotlin
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.resolution.singleConstructorCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -37,24 +36,15 @@ class FirKotlinUastLanguagePlugin : UastLanguagePlugin {
 
     override fun isFileSupported(fileName: String): Boolean = when {
         fileName.endsWith(".kt", false) -> true
-        fileName.endsWith(".kts", false) -> isK2ScriptingEnabled
+        fileName.endsWith(".kts", false) -> true
         else -> false
     }
 
     private val PsiElement.isSupportedElement: Boolean
         get() {
             val ktFile = containingFile?.let(::unwrapFakeFileForLightClass) as? KtFile ?: return false
-            if (!ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)) {
-                return false
-            }
-
-            // Disable UAST for script files in K2 until scripting support is properly implemented in the K2 plugin.
-            // UAST should not analyze script files.
-            return !ktFile.isScript() || isK2ScriptingEnabled
+            return ApplicationManager.getApplication().service<FirKotlinUastResolveProviderService>().isSupportedFile(ktFile)
         }
-
-    private val isK2ScriptingEnabled: Boolean
-        get() = Registry.`is`("kotlin.k2.scripting.enabled", true)
 
     override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
         if (parent == null && !element.isSupportedElement) return null

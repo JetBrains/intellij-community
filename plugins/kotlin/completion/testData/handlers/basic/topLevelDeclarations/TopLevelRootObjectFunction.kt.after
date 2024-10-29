@@ -1,0 +1,9 @@
+package pack
+
+fun usage() {
+    ObjectFromRoot.functionFromRootObject()<caret>
+}
+
+// IGNORE_K2
+// ELEMENT: functionFromRootObject
+// TAIL_TEXT: "() (<root>)"

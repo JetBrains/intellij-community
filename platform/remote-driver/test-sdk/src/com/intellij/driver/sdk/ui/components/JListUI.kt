@@ -2,6 +2,9 @@ package com.intellij.driver.sdk.ui.components
 
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.invokeAction
+import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.ui.CellRendererReader
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.RectangleRef
@@ -12,10 +15,15 @@ import java.awt.Point
 import javax.swing.JList
 
 /** Locates JList element */
-fun Finder.list(@Language("xpath") xpath: String? = null) = x(xpath ?: xQuery { byType(JList::class.java.name) },
-                                                              JListUiComponent::class.java)
+fun Finder.list(@Language("xpath") xpath: String? = null) =
+  x(xpath ?: xQuery { byType(JList::class.java.name) }, JListUiComponent::class.java)
 
 fun Finder.list(locator: QueryBuilder.() -> String) = x(JListUiComponent::class.java) {locator()}
+
+fun Finder.accessibleList(locator: QueryBuilder.() -> String = { byType(JList::class.java) }) =
+  x(JListUiComponent::class.java) { locator() }.apply {
+    replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
+  }
 
 /** Locates JBList element */
 fun Finder.jBlist(@Language("xpath") xpath: String? = null) = x(xpath ?: "//div[@class='JBList']",
@@ -35,19 +43,43 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
   val selectedItems: List<String>
     get() = fixture.collectSelectedItems()
 
+  fun replaceCellRendererReader(reader: CellRendererReader) {
+    fixture.replaceCellRendererReader(reader)
+  }
+
   fun clickItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
     findItemIndex(itemText, fullMatch)?.let { index ->
       if (offset == null) {
         fixture.clickItemAtIndex(index)
       } else {
-        val cellBounds = driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
-        println("cellBounds: ${cellBounds}")
+        val cellBounds = getCellBounds(index)
         val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
         check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
         robot.click(component, cellOffset)
       }
     } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
   }
+
+  fun doubleClickItem(itemText: String, fullMatch: Boolean = true) {
+    findItemIndex(itemText, fullMatch)?.let { index ->
+      val cellBounds = getCellBounds(index)
+      doubleClick(Point(cellBounds.getCenterX().toInt(), cellBounds.getCenterY().toInt()))
+    }
+  }
+
+  fun hoverItem(itemText: String, fullMatch: Boolean = true, offset: Point? = null) {
+    findItemIndex(itemText, fullMatch)?.let { index ->
+      if (offset == null) {
+        hoverItemAtIndex(index)
+      } else {
+        val cellBounds = getCellBounds(index)
+        val cellOffset = Point(offset.x, offset.y + cellBounds.getY().toInt())
+        check(cellBounds.contains(cellOffset)) { "point is out of cell bounds" }
+        robot.moveMouse(component, cellOffset)
+      }
+    } ?: throw IllegalArgumentException("item with text $itemText not found, all items: ${items.joinToString(", ")}")
+  }
+
 
   fun clickItemAtIndex(index: Int) = fixture.clickItemAtIndex(index)
 
@@ -58,6 +90,14 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
     moveMouse(Point(cellBounds.getX().toInt(), cellBounds.getY().toInt()))
   }
 
+  fun invokeSelectNextRowAction() {
+    driver.invokeAction("List-selectNextRow", component = component)
+  }
+
+  fun invokeSelectPrevRowAction() {
+    driver.invokeAction("List-selectPreviousRow", component = component)
+  }
+
   protected fun findItemIndex(itemText: String, fullMatch: Boolean): Int? =
     fixture.collectItems().indexOfFirst {
       if (fullMatch) it == itemText
@@ -66,10 +106,14 @@ open class JListUiComponent(data: ComponentData) : UiComponent(data) {
       if (it == -1) null
       else it
     }
+
+  private fun getCellBounds(index: Int): RectangleRef =
+    driver.withContext(OnDispatcher.EDT) { listComponent.getCellBounds(index, index) }
 }
 
 @Remote("com.jetbrains.performancePlugin.remotedriver.fixtures.JListTextFixture", plugin = REMOTE_ROBOT_MODULE_ID)
 interface JListFixtureRef {
+  fun replaceCellRendererReader(reader: CellRendererReader)
   fun collectItems(): List<String>
   fun collectRawItems(): List<String>
   fun collectSelectedItems(): List<String>
@@ -81,4 +125,3 @@ interface JListFixtureRef {
 interface JListComponent {
   fun getCellBounds(index0: Int, index1: Int): RectangleRef
 }
-

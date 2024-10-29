@@ -2,10 +2,12 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Random;
 
+@ApiStatus.Internal
 public final class AddRandomNamesTestProcessAction extends AddTestProcessAction implements DumbAware {
   private final Random myRandom = new Random();
 

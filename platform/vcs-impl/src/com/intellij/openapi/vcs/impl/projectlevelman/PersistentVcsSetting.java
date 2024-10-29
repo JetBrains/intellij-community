@@ -3,14 +3,12 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
 
+@ApiStatus.Internal
 public interface PersistentVcsSetting {
   @NonNls @NotNull String getId();
 

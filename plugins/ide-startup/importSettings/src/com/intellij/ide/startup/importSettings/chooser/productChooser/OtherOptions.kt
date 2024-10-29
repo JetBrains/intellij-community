@@ -18,7 +18,7 @@ import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 
-class OtherOptions(private val controller: ImportSettingsController, private val syncDataProvider: SyncActionsDataProvider) : ProductChooserAction() {
+internal class OtherOptions(private val controller: ImportSettingsController, private val syncDataProvider: SyncActionsDataProvider) : ProductChooserAction() {
 
   private val jbDataProvider = JBrActionsDataProvider.getInstance()
 

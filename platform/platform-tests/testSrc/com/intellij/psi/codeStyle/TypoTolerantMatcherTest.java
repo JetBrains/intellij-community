@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.SplittableRandom;
 import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class TypoTolerantMatcherTest {
   @Test
@@ -41,5 +41,12 @@ public class TypoTolerantMatcherTest {
     List<String> matched = ContainerUtil.filter(data, matcher::matches);
     List<String> expected = List.of("foo", "bar", "buzz");
     assertEquals(expected, matched);
+  }
+
+  @Test
+  public void testLongPattern() {
+    MinusculeMatcher matcher = NameUtil.buildMatcher("MyLongTestClassName").typoTolerant().build();
+    assertFalse(matcher instanceof TypoTolerantMatcher);
+    assertTrue(matcher.matches("MyLongTestClassName"));
   }
 }

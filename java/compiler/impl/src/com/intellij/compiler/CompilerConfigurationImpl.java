@@ -6,6 +6,7 @@ import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
 import com.intellij.compiler.impl.javaCompiler.eclipse.EclipseCompiler;
 import com.intellij.compiler.impl.javaCompiler.javac.JavacCompiler;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.compiler.server.CompilerConfigurationUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -79,6 +80,7 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   private final List<CompiledPattern> myCompiledPatterns = new ArrayList<>();
   private final List<CompiledPattern> myNegatedCompiledPatterns = new ArrayList<>();
   private boolean myWildcardPatternsInitialized = false;
+  private boolean myParallelCompilationOptionSetExplicitly = false;
   private final Project myProject;
   private final ExcludedEntriesConfiguration myExcludesConfiguration;
 
@@ -166,11 +168,16 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
     public boolean USE_RELEASE_OPTION = true;
+    @Nullable
+    public ParallelCompilationOption PARALLEL_COMPILATION_OPTION = null;
   }
 
   @Override
   public Element getState() {
     Element state = new Element("state");
+    if (!myParallelCompilationOptionSetExplicitly) {
+      myState.PARALLEL_COMPILATION_OPTION = null;
+    }
     XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
@@ -297,8 +304,12 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
     }
   }
 
-  @Override
-  public boolean isParallelCompilationEnabled() {
+  private void migrateParallelCompilationOption() {
+    if (isOldParallelCompilationEnabled()) myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.ENABLED;
+    else myState.PARALLEL_COMPILATION_OPTION = ParallelCompilationOption.AUTOMATIC;
+  }
+
+  private boolean isOldParallelCompilationEnabled() {
     // returns parallel compilation flag first by looking into workspace.xml and then intellij.yaml
 
     //noinspection deprecation
@@ -311,9 +322,40 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   }
 
   @Override
+  public boolean isParallelCompilationEnabled() {
+    return switch (getParallelCompilationOption()) {
+        case ENABLED -> true;
+        case AUTOMATIC -> CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs();
+        case DISABLED -> false;
+      };
+  }
+
+  @Override
   public void setParallelCompilationEnabled(boolean enabled) {
-    //noinspection deprecation
-    CompilerWorkspaceConfiguration.getInstance(myProject).PARALLEL_COMPILATION = enabled;
+    ParallelCompilationOption option;
+    if (enabled) {
+      option = ParallelCompilationOption.ENABLED;
+    } else {
+      option = ParallelCompilationOption.DISABLED;
+    }
+
+    setParallelCompilationOption(option);
+  }
+
+  @Override
+  @NotNull
+  public ParallelCompilationOption getParallelCompilationOption() {
+    if (myState.PARALLEL_COMPILATION_OPTION == null) migrateParallelCompilationOption();
+    return myState.PARALLEL_COMPILATION_OPTION;
+  }
+
+  @Override
+  public void setParallelCompilationOption(@NotNull ParallelCompilationOption option) {
+    ParallelCompilationOption oldOption = getParallelCompilationOption();
+    if (oldOption != option) {
+      myParallelCompilationOptionSetExplicitly = true;
+      myState.PARALLEL_COMPILATION_OPTION = option;
+    }
   }
 
   @Override
@@ -756,6 +798,9 @@ public final class CompilerConfigurationImpl extends CompilerConfiguration imple
   @Override
   public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
+    if (myState.PARALLEL_COMPILATION_OPTION != null) {
+      myParallelCompilationOptionSetExplicitly = true;
+    }
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
         if ("DEFAULT_COMPILER".equals(option.getAttributeValue("name"))) {

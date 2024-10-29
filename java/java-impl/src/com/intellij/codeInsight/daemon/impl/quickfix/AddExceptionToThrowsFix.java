@@ -135,6 +135,10 @@ public final class AddExceptionToThrowsFix extends PsiBasedModCommandAction<PsiE
     };
   }
 
+  static boolean isAnyOfTheMethodsUnmodifiable(@NotNull PsiMethod targetMethod) {
+    return ContainerUtil.or(getSuperMethods(targetMethod), method -> method instanceof PsiCompiledElement || method instanceof SyntheticElement);
+  }
+
   private static @Nullable PsiMethod collectExceptions(Set<? super PsiClassType> unhandled, PsiElement element) {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;

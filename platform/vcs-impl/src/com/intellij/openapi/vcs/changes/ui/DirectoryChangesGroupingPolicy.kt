@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.DIRECTORY_CACHE
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder.PATH_NODE_BUILDER
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 import javax.swing.tree.DefaultTreeModel
 
+@ApiStatus.Internal
 class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTreeModel) : BaseChangesGroupingPolicy() {
   override fun getParentNodeFor(nodePath: StaticFilePath,
                                 node: ChangesBrowserNode<*>,
@@ -52,7 +54,7 @@ class DirectoryChangesGroupingPolicy(val project: Project, val model: DefaultTre
     return node
   }
 
-  class Factory : ChangesGroupingPolicyFactory() {
+  internal class Factory : ChangesGroupingPolicyFactory() {
     override fun createGroupingPolicy(project: Project, model: DefaultTreeModel): DirectoryChangesGroupingPolicy =
       DirectoryChangesGroupingPolicy(project, model)
   }

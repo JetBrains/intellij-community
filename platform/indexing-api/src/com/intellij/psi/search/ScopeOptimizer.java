@@ -45,7 +45,7 @@ public interface ScopeOptimizer {
   }
 
   @Nullable
-  static SearchScope calculateOverallRestrictedUseScope(@NotNull List<ScopeOptimizer> optimizers, @NotNull PsiElement element) {
+  static SearchScope calculateOverallRestrictedUseScope(@NotNull List<? extends ScopeOptimizer> optimizers, @NotNull PsiElement element) {
     boolean seen = false;
     SearchScope acc = null;
     for (ScopeOptimizer optimizer : optimizers) {

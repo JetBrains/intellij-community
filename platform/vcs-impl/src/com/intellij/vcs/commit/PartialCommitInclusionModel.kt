@@ -14,7 +14,9 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.convertExclusionState
 import com.intellij.openapi.vcs.impl.PartialChangesUtil.getPartialTracker
 import com.intellij.util.ui.ThreeStateCheckBox
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PartialCommitInclusionModel(private val project: Project) : BaseInclusionModel(), Disposable {
   var changeLists: Collection<LocalChangeList> = emptyList()
     set(value) {

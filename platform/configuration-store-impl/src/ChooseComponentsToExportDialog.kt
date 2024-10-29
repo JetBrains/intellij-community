@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.configurationStore
 
 import com.intellij.ide.util.ElementsChooser
@@ -22,7 +22,6 @@ import java.awt.event.ActionEvent
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
 import javax.swing.*
 
 private const val DEFAULT_FILE_NAME = "settings.zip"
@@ -137,10 +136,10 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
       title = ConfigurationStoreBundle.message("title.export.file.location")
       description = ConfigurationStoreBundle.message("prompt.choose.export.settings.file.path")
       isHideIgnored = false
-      withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+      ConfigImportHelper.setSettingsFilter(this)
     }
     chooseSettingsFile(descriptor, pathPanel.text, window) { file ->
-      val path = if (file.isDirectory) "${file.path}/$DEFAULT_FILE_NAME" else file.path
+      val path = if (file.isDirectory) "${file.path}/${DEFAULT_FILE_NAME}" else file.path
       pathPanel.text = FileUtil.toSystemDependentName(path)
     }
   }

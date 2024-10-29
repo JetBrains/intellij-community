@@ -2,11 +2,16 @@
 package com.intellij.util.io
 
 import com.intellij.util.concurrency.Semaphore
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import java.util.concurrent.*
 import kotlin.time.Duration
+
+@Deprecated("Please migrate to using kotlinx.coroutines.future.await instead. " +
+            "The deprecation level is going to be changed to ERROR in as soon as there's no more usages in the monorepo.",
+            ReplaceWith("this.await()", "kotlinx.coroutines.future.await"))
+suspend fun <T> CompletableFuture<T>.await(): T {
+  // behave in a backward compatible manner during the transition period
+  return (this as Future<T>).await()
+}
 
 suspend fun <T> Future<T>.await(): T {
   if (isDone) {

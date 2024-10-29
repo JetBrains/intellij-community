@@ -11,6 +11,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.colors.CodeInsightColors
 import com.intellij.openapi.fileTypes.FileTypeRegistry
@@ -137,13 +138,15 @@ open class PsiFileNode(project: Project?, value: PsiFile, viewSettings: ViewSett
           openFileWithPsiElementAsync(element = extractPsiFromValue()!!, searchForOpen = true, requestFocus = true)
         }
         else {
-          navigationItem?.navigate(/* requestFocus = */ false)
+          withContext(Dispatchers.EDT) {
+            navigationItem?.navigate(/* requestFocus = */ false)
+          }
         }
       }
     }
     else {
       withContext(Dispatchers.EDT) {
-        blockingContext {
+        writeIntentReadAction {
           navigate(requestFocus, false)
         }
       }

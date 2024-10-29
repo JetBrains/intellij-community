@@ -2,6 +2,7 @@ com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (TestP
 org.jetbrains.kotlin.psi.KtClassBody: UExpressionList (class_body) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (withSetter)) <- UField (name = withSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (get)) <- UMethod (name = getWithSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
+org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = getWithSetter) <- UClass (name = TestPropertyInitializer)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (field)) <- USimpleNameReferenceExpression (identifier = field) <- UReturnExpression <- UBlockExpression <- UMethod (name = getWithSetter)
 com.intellij.psi.impl.source.tree.LeafPsiElement: UIdentifier (Identifier (set)) <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer) <- UFile (package = )
 org.jetbrains.kotlin.psi.KtParameterList: UDeclarationsExpression <- UReturnExpression <- UBlockExpression <- UMethod (name = setWithSetter) <- UClass (name = TestPropertyInitializer)

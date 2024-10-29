@@ -3,10 +3,7 @@ package com.intellij.platform.whatsNew
 
 import com.intellij.ide.IdeBundle
 import com.intellij.l10n.LocalizationStateService
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.service
@@ -30,7 +27,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.charset.StandardCharsets
 
-internal sealed class WhatsNewContent {
+internal abstract class WhatsNewContent {
   companion object {
     private val DataContext.project: Project?
       get() = CommonDataKeys.PROJECT.getData(this)
@@ -111,7 +108,16 @@ internal sealed class WhatsNewContent {
         if (request.isNotEmpty()) {
           service<ActionManager>().getAction(request)?.let {
             withContext(Dispatchers.EDT) {
-              it.actionPerformed(AnActionEvent.createFromAnAction(it, null, WhatsNewAction.PLACE, dataContext))
+              it.actionPerformed(
+                AnActionEvent.createEvent(
+                  it,
+                  dataContext,
+                  /*presentation =*/ null,
+                  WhatsNewAction.PLACE,
+                  ActionUiKind.NONE,
+                  /*event =*/ null
+                )
+              )
               logger.trace { "EapWhatsNew action $request performed" }
               WhatsNewCounterUsageCollector.actionPerformed(dataContext.project, request)
             }
@@ -278,24 +284,9 @@ internal class WhatsNewVisionContent(page: WhatsNewInVisionContentProvider.Page)
 }
 
 fun getCurrentLanguageTag(): String {
-  val lang = LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
+  return LocalizationStateService.getInstance()?.getSelectedLocale()?.lowercase() ?: run {
     logger.error("Cannot get a LocalizationStateService instance. Default to en-us locale.")
-    return "en-us"
-  }
-  if (lang.contains('-')) {
-    logger.error("Failed assumption: it is expected that the IDE language tag \"$lang\" doesn't contain \"-\".")
-    return lang
-  }
-
-  return when(lang) {
-    "en" -> "en-us"
-    "ja" -> "ja-jp"
-    "zh" -> "zh-cn"
-    "ko" -> "ko-kr"
-    else -> {
-      logger.error("Unknown language tag for What's New: \"$lang\".")
-      lang
-    }
+    "en-us"
   }
 }
 

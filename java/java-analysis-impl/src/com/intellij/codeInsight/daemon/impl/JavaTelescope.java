@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.concurrency.JobLauncher;
@@ -20,6 +20,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -41,7 +42,7 @@ final class JavaTelescope {
     }
   }
 
-  static @Nls UsagesHint usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
+  static @Nullable UsagesHint usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
     int totalUsageCount = UsagesCountManager.getInstance(member.getProject()).countMemberUsages(file, member);
     if (totalUsageCount == TOO_MANY_USAGES) return null;
     if (totalUsageCount < AdvancedSettings.getInt("code.vision.java.minimal.usages")) return null;

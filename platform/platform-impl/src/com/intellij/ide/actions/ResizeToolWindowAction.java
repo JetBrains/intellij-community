@@ -16,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ResizeToolWindowAction extends AnAction implements DumbAware, FusAwareAction {
 
   @Override

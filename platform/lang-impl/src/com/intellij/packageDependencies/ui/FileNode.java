@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -36,8 +36,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
     myIcon = doGetIcon();
   }
 
-  @NotNull
-  private Icon doGetIcon() {
+  private @NotNull Icon doGetIcon() {
     return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 
@@ -122,8 +121,7 @@ public final class FileNode extends PackageDependenciesNode implements Comparabl
     return deps.containsKey(getFile());
   }
 
-  @Nullable
-  private PsiFile getFile() {
+  private @Nullable PsiFile getFile() {
     return myVFile.isValid() && !myProject.isDisposed() ? PsiManager.getInstance(myProject).findFile(myVFile) : null;
   }
 

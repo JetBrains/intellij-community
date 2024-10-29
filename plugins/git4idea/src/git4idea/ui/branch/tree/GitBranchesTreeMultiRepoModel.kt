@@ -5,31 +5,31 @@ import com.intellij.dvcs.branch.BranchType
 import com.intellij.dvcs.branch.GroupingKey.GROUPING_BY_DIRECTORY
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.util.ui.tree.AbstractTreeModel
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.vcsUtil.Delegates.equalVetoingObservable
-import git4idea.*
+import git4idea.GitLocalBranch
+import git4idea.GitReference
+import git4idea.GitRemoteBranch
+import git4idea.GitTag
 import git4idea.branch.*
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.popup.GitBranchesTreePopup
-import git4idea.ui.branch.tree.GitBranchesTreeModel.*
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 class GitBranchesTreeMultiRepoModel(
   private val project: Project,
   private val repositories: List<GitRepository>,
   private val topLevelActions: List<Any> = emptyList()
-) : AbstractTreeModel(), GitBranchesTreeModel {
+) : GitBranchesTreeModel() {
 
-  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
+  private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private val branchManager = project.service<GitBranchManager>()
 
   private lateinit var commonLocalBranchesTree: LazyRefsSubtreeHolder<GitLocalBranch>
   private lateinit var commonRemoteBranchesTree: LazyRefsSubtreeHolder<GitRemoteBranch>
   private lateinit var commonTagsTree: LazyRefsSubtreeHolder<GitTag>
-
-  private val branchesTreeCache = mutableMapOf<Any, List<Any>>()
 
   override var isPrefixGrouping: Boolean by equalVetoingObservable(branchManager.isGroupingEnabled(GROUPING_BY_DIRECTORY)) {
     rebuild()
@@ -48,30 +48,22 @@ class GitBranchesTreeMultiRepoModel(
     val remoteFavorites = project.service<GitBranchManager>().getFavoriteBranches(GitBranchType.REMOTE)
     commonLocalBranchesTree = LazyRefsSubtreeHolder(repositories, localBranches, localFavorites, null, ::isPrefixGrouping)
     commonRemoteBranchesTree = LazyRefsSubtreeHolder(repositories, remoteBranches, remoteFavorites, null, ::isPrefixGrouping)
-    initTags()
+    initTags(null)
     treeStructureChanged(TreePath(arrayOf(root)), null, null)
   }
 
-  private fun initTags() {
+  override fun initTags(matcher: MinusculeMatcher?) {
     val tags = GitBranchUtil.getCommonTags(repositories)
     val favoriteTags = project.service<GitBranchManager>().getFavoriteBranches(GitTagType)
     commonTagsTree = LazyRefsSubtreeHolder(repositories, tags, favoriteTags, null, ::isPrefixGrouping)
   }
 
-  override fun getRoot() = TreeRoot
-
-  override fun getChild(parent: Any?, index: Int): Any = getChildren(parent)[index]
-
-  override fun getChildCount(parent: Any?): Int = getChildren(parent).size
-
-  override fun getIndexOfChild(parent: Any?, child: Any?): Int = getChildren(parent).indexOf(child)
-
   override fun isLeaf(node: Any?): Boolean = node is GitReference || node is RefUnderRepository
                                              || (node === GitBranchType.LOCAL && commonLocalBranchesTree.isEmpty())
                                              || (node === GitBranchType.REMOTE && commonRemoteBranchesTree.isEmpty())
-                                             || (node === TagsNode && commonTagsTree.isEmpty())
+                                             || (node === GitTagType && commonTagsTree.isEmpty())
 
-  private fun getChildren(parent: Any?): List<Any> {
+  override fun getChildren(parent: Any?): List<Any> {
     if (parent == null) return emptyList()
     return when (parent) {
       TreeRoot -> getTopLevelNodes()
@@ -94,11 +86,11 @@ class GitBranchesTreeMultiRepoModel(
     return if (localAndRemoteNodes.isEmpty()) topNodes else topNodes + branchesSubtreeSeparator + localAndRemoteNodes
   }
 
-  private fun getBranchTreeNodes(branchType: BranchType, path: List<String>): List<Any> {
+  private fun getBranchTreeNodes(branchType: GitRefType, path: List<String>): List<Any> {
     val branchesMap: Map<String, Any> = when {
       GitBranchType.LOCAL == branchType -> commonLocalBranchesTree.tree
       GitBranchType.REMOTE == branchType -> commonRemoteBranchesTree.tree
-      branchType == TagsNode -> commonTagsTree.tree
+      branchType == GitTagType -> commonTagsTree.tree
       else -> emptyMap()
     }
 
@@ -107,18 +99,6 @@ class GitBranchesTreeMultiRepoModel(
 
   override fun getPreferredSelection(): TreePath? = getPreferredBranch()?.let { createTreePathFor(this, it) }
 
-  override fun updateTags() {
-    val indexOfTagsNode = getIndexOfChild(root, TagsNode)
-    initTags()
-    branchesTreeCache.keys.clear()
-    if (indexOfTagsNode < 0) {
-      treeStructureChanged(TreePath(arrayOf(root)), null, null)
-    }
-    else {
-      treeStructureChanged(TreePath(arrayOf(root)), intArrayOf(indexOfTagsNode), arrayOf(TagsNode))
-    }
-  }
-
-  private fun getPreferredBranch(): GitBranch? =
-    getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree)
+  private fun getPreferredBranch(): GitReference? =
+    getPreferredBranch(project, repositories, null, commonLocalBranchesTree, commonRemoteBranchesTree, commonTagsTree)
 }

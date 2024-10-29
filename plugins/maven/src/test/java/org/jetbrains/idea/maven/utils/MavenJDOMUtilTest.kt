@@ -40,6 +40,7 @@ class MavenJDOMUtilTest : MavenTestCase() {
 
   private suspend fun readValue(xml: String, valuePath: String): String? {
     val f = createProjectSubFile("foo.xml", xml)
+    refreshFiles(listOf(f))
 
     val el = MavenJDOMUtil.read(f, object : MavenJDOMUtil.ErrorHandler {
       override fun onReadError(e: IOException?) {

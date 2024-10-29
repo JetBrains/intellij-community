@@ -1,14 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
 
 import java.io.File;
+import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class BuildDataPathsImpl implements BuildDataPaths {
   private final File myDataStorageRoot;
 
@@ -31,17 +34,28 @@ public final class BuildDataPathsImpl implements BuildDataPaths {
     return new File(getTargetsDataRoot(), targetType.getTypeId());
   }
 
-  @Override
-  public @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
-    BuildTargetType<?> targetType = target.getTargetType();
-    final String targetId = target.getId();
-    return getTargetDataRoot(targetType, targetId);
+  public @NotNull Path getTargetTypeDataRootDir(@NotNull BuildTargetType<?> targetType) {
+    return getTargetsDataRoot().toPath().resolve(targetType.getTypeId());
   }
 
   @Override
-  public @NotNull File getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) {
+  public @NotNull File getTargetDataRoot(@NotNull BuildTarget<?> target) {
+    return getTargetDataRootDir(target).toFile();
+  }
+
+  @Override
+  public @NotNull Path getTargetDataRootDir(@NotNull BuildTarget<?> target) {
+    return getTargetDataRoot(target.getTargetType(), target.getId());
+  }
+
+  @Override
+  public @NotNull Path getTargetDataRoot(@NotNull BuildTargetType<?> targetType, @NotNull String targetId) {
+    return getTargetTypeDataRootDir(targetType).resolve(targetIdToFilename(targetId));
+  }
+
+  private static @NotNull String targetIdToFilename(@NotNull String targetId) {
     // targetId may diff from another targetId only in case
     // when used as a file name in case-insensitive file systems, both paths for different targets will point to the same dir
-    return new File(getTargetTypeDataRoot(targetType), PathUtilRt.suggestFileName(targetId + "_" + Integer.toHexString(targetId.hashCode()), true, false));
+    return PathUtilRt.suggestFileName(targetId, true, false) + "_" + Integer.toHexString(targetId.hashCode());
   }
 }

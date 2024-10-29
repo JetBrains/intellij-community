@@ -4,13 +4,13 @@ package com.jetbrains.python;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.jetbrains.python.psi.PyElementType;
+import com.jetbrains.python.psi.*;
 
 public final class PyTokenTypes {
   private PyTokenTypes() {
   }
 
-  public static final PyElementType IDENTIFIER = new PyElementType("IDENTIFIER");
+  public static final PyElementType IDENTIFIER = new PyReparseableIdentifier("IDENTIFIER");
   public static final PyElementType LINE_BREAK = new PyElementType("LINE_BREAK");
   public static final PyElementType STATEMENT_BREAK = new PyElementType("STATEMENT_BREAK");
   public static final PyElementType SPACE = new PyElementType("SPACE");
@@ -19,7 +19,7 @@ public final class PyTokenTypes {
   public static final IElementType BAD_CHARACTER = TokenType.BAD_CHARACTER;
   public static final PyElementType INCONSISTENT_DEDENT = new PyElementType("INCONSISTENT_DEDENT");
 
-  public static final PyElementType END_OF_LINE_COMMENT = new PyElementType("END_OF_LINE_COMMENT");
+  public static final PyElementType END_OF_LINE_COMMENT = new PyReparseableEndOfLineCommentType("END_OF_LINE_COMMENT");
 
   public static final PyElementType AND_KEYWORD = new PyElementType("AND_KEYWORD");
   public static final PyElementType AS_KEYWORD = new PyElementType("AS_KEYWORD");
@@ -69,12 +69,12 @@ public final class PyTokenTypes {
   public static final PyElementType FLOAT_LITERAL = new PyElementType("FLOAT_LITERAL");
   public static final PyElementType IMAGINARY_LITERAL = new PyElementType("IMAGINARY_LITERAL");
 
-  public static final PyElementType SINGLE_QUOTED_STRING = new PyElementType("SINGLE_QUOTED_STRING");
-  public static final PyElementType TRIPLE_QUOTED_STRING = new PyElementType("TRIPLE_QUOTED_STRING");
+  public static final PyElementType SINGLE_QUOTED_STRING = new PyReparseableSingleQuotedStringTokenType("SINGLE_QUOTED_STRING");
+  public static final PyElementType TRIPLE_QUOTED_STRING = new PyReparseableTripleQuotedStringTokenType("TRIPLE_QUOTED_STRING");
   public static final PyElementType SINGLE_QUOTED_UNICODE = new PyElementType("SINGLE_QUOTED_UNICODE");
   public static final PyElementType TRIPLE_QUOTED_UNICODE = new PyElementType("TRIPLE_QUOTED_UNICODE");
 
-  public static final PyElementType DOCSTRING = new PyElementType("DOCSTRING");
+  public static final PyElementType DOCSTRING = new PyReparseableTripleQuotedStringTokenType("DOCSTRING");
 
   public static final TokenSet UNICODE_NODES = TokenSet.create(TRIPLE_QUOTED_UNICODE, SINGLE_QUOTED_UNICODE);
   public static final TokenSet TRIPLE_NODES = TokenSet.create(TRIPLE_QUOTED_UNICODE, TRIPLE_QUOTED_STRING);
@@ -141,6 +141,15 @@ public final class PyTokenTypes {
 
   public static final TokenSet COMPARISON_OPERATIONS = TokenSet.create(
       LT, GT, EQEQ, GE, LE, NE, NE_OLD, IN_KEYWORD, IS_KEYWORD, NOT_KEYWORD);
+
+  public static final TokenSet UNARY_OPS = TokenSet.create(NOT_KEYWORD, PLUS, MINUS, TILDE, AWAIT_KEYWORD);
+
+  public static final TokenSet BINARY_OPS = TokenSet.create(OR_KEYWORD, AND_KEYWORD, LT, GT,
+                                                            OR, XOR, AND, LTLT, GTGT,
+                                                            EQEQ, GE, LE, NE, NE_OLD,
+                                                            IN_KEYWORD, IS_KEYWORD, NOT_KEYWORD, PLUS,
+                                                            MINUS, MULT, AT, FLOORDIV, DIV,
+                                                            PERC, EXP);
 
   public static final TokenSet SHIFT_OPERATIONS = TokenSet.create(LTLT, GTGT);
   public static final TokenSet ADDITIVE_OPERATIONS = TokenSet.create(PLUS, MINUS);

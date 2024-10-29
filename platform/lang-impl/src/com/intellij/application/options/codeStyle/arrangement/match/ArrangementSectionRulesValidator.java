@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -23,8 +23,7 @@ public final class ArrangementSectionRulesValidator extends ArrangementMatchingR
   }
 
   @Override
-  @Nullable
-  protected String validate(int index) {
+  protected @Nullable String validate(int index) {
     if (myRulesModel.getSize() < index) {
       return null;
     }
@@ -38,9 +37,7 @@ public final class ArrangementSectionRulesValidator extends ArrangementMatchingR
     return super.validate(index);
   }
 
-  @Nullable
-  @Nls
-  private String validateSectionRule(@NotNull ArrangementSectionRuleManager.ArrangementSectionRuleData data, int index) {
+  private @Nullable @Nls String validateSectionRule(@NotNull ArrangementSectionRuleManager.ArrangementSectionRuleData data, int index) {
     int startSectionIndex = -1;
     final Set<String> sectionRules = new HashSet<>();
     for (int i = 0; i < index; i++) {
@@ -67,8 +64,7 @@ public final class ArrangementSectionRulesValidator extends ArrangementMatchingR
     return null;
   }
 
-  @Nullable
-  private ArrangementSectionRuleManager.ArrangementSectionRuleData extractSectionText(int i) {
+  private @Nullable ArrangementSectionRuleManager.ArrangementSectionRuleData extractSectionText(int i) {
     Object element = myRulesModel.getElementAt(i);
     if (element instanceof StdArrangementMatchRule) {
       assert mySectionRuleManager != null;

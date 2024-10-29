@@ -17,11 +17,13 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.module.Module;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.psi.PsiElement;
 
 import javax.swing.tree.TreeNode;
 
+@ApiStatus.Internal
 public interface Retriever {
   @Nullable
   PsiElement getPsiElement(@Nullable TreeNode node);

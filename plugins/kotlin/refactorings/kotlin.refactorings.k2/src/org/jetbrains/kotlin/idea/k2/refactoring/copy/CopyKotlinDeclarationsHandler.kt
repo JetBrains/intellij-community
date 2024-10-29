@@ -3,6 +3,9 @@
 package org.jetbrains.kotlin.idea.k2.refactoring.copy
 
 import com.intellij.ide.util.EditorHelper
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -27,14 +30,13 @@ import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefixOrRoot
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
 import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.SourceDirectory
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor.Directory
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetInternalUsagesForCopyFile
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.retargetUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.unMarkAllUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkModuleDependencyConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.checkVisibilityConflictsForInternalUsages
-import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createCopyTarget
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkModuleDependencyConflictsForInternalUsages
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.conflict.checkVisibilityConflictsForInternalUsages
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.createKotlinFile
 import org.jetbrains.kotlin.idea.refactoring.checkConflictsInteractively
 import org.jetbrains.kotlin.idea.refactoring.copy.*
@@ -72,7 +74,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             return TargetData(
                 openInEditor = false,
                 newName = newName,
-                targetDirWrapper = sourceData.initialTargetDirectory.toSourceDirectory(),
+                targetDirWrapper = sourceData.initialTargetDirectory.toDirectory(),
                 targetSourceRoot = targetSourceRoot
             )
 
@@ -92,7 +94,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
             openInEditor = dialog.openInEditor
             newName = dialog.newName
-            targetDirWrapper = dialog.targetDirectory?.toSourceDirectory(sourceData)
+            targetDirWrapper = dialog.targetDirectory?.toDirectory(sourceData)
             targetSourceRoot = dialog.targetSourceRoot
         } else {
             val dialog = CopyFilesOrDirectoriesDialog(
@@ -101,7 +103,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             if (!dialog.showAndGet()) return null
             openInEditor = dialog.openInEditor()
             newName = dialog.newName
-            targetDirWrapper = dialog.targetDirectory?.toSourceDirectory()
+            targetDirWrapper = dialog.targetDirectory?.toDirectory()
             targetSourceRoot = dialog.targetDirectory?.sourceRoot
         }
 
@@ -114,12 +116,12 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         )
     }
 
-    private fun MoveDestination.toSourceDirectory(
+    private fun MoveDestination.toDirectory(
         sourceData: SourceData
-    ): SourceDirectory = SourceDirectory(FqName(targetPackage.qualifiedName), runWriteAction { getTargetDirectory(sourceData.initialTargetDirectory) })
+    ): Directory = Directory(FqName(targetPackage.qualifiedName), runWriteAction { getTargetDirectory(sourceData.initialTargetDirectory) })
 
-    private fun PsiDirectory.toSourceDirectory(
-    ): SourceDirectory = SourceDirectory(getFqNameWithImplicitPrefixOrRoot(), this)
+    private fun PsiDirectory.toDirectory(
+    ): Directory = Directory(getFqNameWithImplicitPrefixOrRoot(), this)
 
     private fun doCopyFiles(filesToCopy: Array<out PsiFileSystemItem>, initialTargetDirectory: PsiDirectory?) {
         if (filesToCopy.isEmpty()) return
@@ -161,7 +163,9 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
         val targetData = getTargetData(sourceData) ?: return
 
         for (element in elementsToCopy) {
-            markInternalUsages(element)
+            analyzeInModalWindow(elementsToCopy.first(), RefactoringBundle.message("refactoring.preprocess.usages.progress")) {
+                markInternalUsages(element, element)
+            }
         }
 
         val conflicts: MultiMap<PsiElement, String> =
@@ -171,8 +175,10 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         project.checkConflictsInteractively(conflicts) {
             try {
-                project.executeCommand(copyCommandName) {
-                    doRefactor(sourceData, targetData)
+                ApplicationManagerEx.getApplicationEx().runWriteActionWithCancellableProgressInDispatchThread(copyCommandName, project, null) {
+                    project.executeCommand(copyCommandName) {
+                        doRefactor(sourceData, targetData)
+                    }
                 }
             } finally {
                 elements.filterIsInstance<KtElement>().forEach(::unMarkAllUsages)
@@ -188,7 +194,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         try {
             val targetDirectory = runWriteAction {
-                targetData.targetDirWrapper.getOrCreateTarget() as PsiDirectory
+                targetData.targetDirWrapper.getOrCreateTarget(dirStructureMatchesPkg = true) as PsiDirectory
             }
 
             val targetFileName =
@@ -224,7 +230,17 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
                 EditorHelper.openInEditor(refactoringResult.targetFile)
             }
         } catch (e: IncorrectOperationException) {
-            Messages.showMessageDialog(sourceData.project, e.message, RefactoringBundle.message("error.title"), Messages.getErrorIcon())
+            ApplicationManager.getApplication().invokeLater(
+                Runnable {
+                    Messages.showMessageDialog(
+                        sourceData.project,
+                        e.message,
+                        RefactoringBundle.message("error.title"),
+                        Messages.getErrorIcon()
+                    )
+                },
+                ModalityState.nonModal()
+            )
         }
     }
 
@@ -273,7 +289,7 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
             }
 
             @Suppress("UNCHECKED_CAST")
-            retargetInternalUsages(oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
+            retargetUsages(emptyList(), oldToNewElementsMapping as Map<PsiElement, PsiElement>, fromCopy = true)
 
             newElements.singleOrNull()
         }
@@ -296,13 +312,9 @@ class CopyKotlinDeclarationsHandler : AbstractCopyKotlinDeclarationsHandler() {
 
         if (elements.isEmpty()) return MultiMap.empty()
 
-        val (fakeTarget, _) = createCopyTarget(
-            elements, targetData.targetDirWrapper.baseDirectory, targetData.targetDirWrapper.pkgName, targetData.newName
-        )
-
         return MultiMap<PsiElement, String>().apply {
-            putAllValues(checkVisibilityConflictsForInternalUsages(elements, fakeTarget))
-            putAllValues(checkModuleDependencyConflictsForInternalUsages(elements, fakeTarget))
+            putAllValues(checkVisibilityConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.pkgName, targetData.targetDirWrapper.baseDirectory))
+            putAllValues(checkModuleDependencyConflictsForInternalUsages(sourceData.elementsToCopy, elements, targetData.targetDirWrapper.baseDirectory))
         }
     }
 

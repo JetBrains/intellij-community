@@ -41,6 +41,7 @@ fun setupGradleJvm(project: Project, projectSettings: GradleProjectSettings, gra
     else -> getGradleJvmLookupProvider(project, projectSettings)
       .newLookupBuilder()
       .withProject(project)
+      .withLookupReason(GradleBundle.message("gradle.jvm.resolution.lookup.reason", gradleVersion.version))
       .withVersionFilter {
         val javaVersion = JavaVersion.tryParse(it)
         javaVersion != null &&

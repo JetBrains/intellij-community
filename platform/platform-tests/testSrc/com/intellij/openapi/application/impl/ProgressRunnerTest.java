@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.IdeEventQueue;
@@ -14,9 +14,9 @@ import com.intellij.openapi.progress.impl.ProgressRunner;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.progress.util.ProgressWindowTest.TestProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.platform.ide.bootstrap.StartupUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
@@ -55,9 +55,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   public static List<Object[]> dataOnEdt() {
     List<Object[]> result = new ArrayList<>();
     result.add(new Boolean[]{true, false});
-    if (StartupUtil.isImplicitReadOnEDTDisabled()) {
-      result.add(new Boolean[]{true, true});
-    }
+    result.add(new Boolean[]{true, true});
     result.add(new Boolean[]{false, false});
     return result;
   }
@@ -347,11 +345,11 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   @Test
   @IJIgnore(issue = "IDEA-350585")
   @Ignore
-  public void testPumpingExceptionPropagation() {
+  public void testPumpingExceptionPropagation() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-
-    final String failureMessage = "Expected Failure";
-    ProgressResult<?> result = computeAssertingExceptionConditionally(
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      final String failureMessage = "Expected Failure";
+      ProgressResult<?> result = computeAssertingExceptionConditionally(
         myOnEdt && myReleaseIWLockOnRun,
         () -> {
           return new ProgressRunner<>(() ->
@@ -364,14 +362,15 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
             .sync()
             .submitAndGet();
         });
-    if (result == null) {
-      return;
-    }
-    assertFalse(result.isCanceled());
-    Throwable throwable = result.getThrowable();
+      if (result == null) {
+        return;
+      }
+      assertFalse(result.isCanceled());
+      Throwable throwable = result.getThrowable();
 
-    assertNotNull(throwable);
-    assertEquals(failureMessage, ExceptionUtil.getRootCause(throwable).getMessage());
+      assertNotNull(throwable);
+      assertEquals(failureMessage, ExceptionUtil.getRootCause(throwable).getMessage());
+    });
   }
 
   @Test

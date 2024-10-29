@@ -101,7 +101,10 @@ class ChangeListsIndexes {
   }
 
   public void changeRemoved(@NotNull Change change) {
-    myChanges.remove(change);
+    boolean wasRemoved = myChanges.remove(change);
+    if (LOG.isDebugEnabled() && !wasRemoved) {
+      LOG.debug("Change wasn't removed: " + change);
+    }
 
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.gradle.idea.importing.multiplatformTests
 
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.CustomGradlePropertiesTestFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
@@ -39,6 +40,7 @@ class KotlinMppTestSourceRootDetectionTest : AbstractKotlinMppGradleImportingTes
     @TestMetadata("jvmNativeWithAdditionalCompilations")
     fun `testJvmNativeWithAdditionalCompilations - legacy`() {
         doTest {
+            onlyCheckers(ContentRootsChecker, CustomGradlePropertiesTestFeature)
             testClassifier = "legacy"
             this.addCustomGradleProperty("kotlin.mpp.import.legacyTestSourceSetDetection", "true")
         }

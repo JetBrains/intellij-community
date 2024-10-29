@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.actions.onSave;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.ide.actionsOnSave.ActionOnSaveComment;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.lang.Language;
@@ -9,11 +10,14 @@ import com.intellij.lang.LanguageImportStatements;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 final class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<OptimizeImportsOnSaveOptions> {
 
@@ -26,6 +30,22 @@ final class OptimizeImportsOnSaveActionInfo extends FormatOnSaveActionInfoBase<O
   @Override
   protected @NotNull OptimizeImportsOnSaveOptions getOptionsFromStoredState() {
     return OptimizeImportsOnSaveOptions.getInstance(getProject());
+  }
+
+  @Override
+  public @Nullable ActionOnSaveComment getComment() {
+    if (isActionOnSaveEnabled()) {
+      ActionOnSaveComment customComment = FormatOnSavePresentationService.getInstance().getCustomImportsComment(getContext());
+      if (customComment != null) {
+        return customComment;
+      }
+    }
+    return super.getComment();
+  }
+
+  @Override
+  public @NotNull List<? extends ActionLink> getActionLinks() {
+    return FormatOnSavePresentationService.getInstance().getCustomImportsActionLinks(getContext());
   }
 
   @Override

@@ -92,7 +92,7 @@ public class MappedFileStorageHelperLongTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       storageHelper.writeLongField(fileId, FIELD_LONG_OFFSET_IN_ROW, /*value: */ -fileId);
@@ -110,7 +110,7 @@ public class MappedFileStorageHelperLongTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       long valueRead = storageHelper.readLongField(fileId, FIELD_LONG_OFFSET_IN_ROW);
@@ -124,7 +124,7 @@ public class MappedFileStorageHelperLongTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       storageHelper.writeLongField(fileId, FIELD_LONG_OFFSET_IN_ROW, /*value: */ -fileId);

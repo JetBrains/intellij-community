@@ -19,7 +19,7 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "pointlessboolean";
     myDefaultHint = InspectionGadgetsBundle.message("constant.conditional.expression.simplify.quickfix");
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   public void testNegation() { doTest(); }

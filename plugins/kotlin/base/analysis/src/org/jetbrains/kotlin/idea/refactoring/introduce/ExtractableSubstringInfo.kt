@@ -4,26 +4,18 @@ package org.jetbrains.kotlin.idea.refactoring.introduce
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
-import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.nextSiblingOfSameType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
-import kotlin.apply
-import kotlin.collections.indexOf
-import kotlin.sequences.joinToString
-import kotlin.sequences.map
-import kotlin.text.substring
 
 abstract class ExtractableSubstringInfo(
-  val startEntry: KtStringTemplateEntry,
-  val endEntry: KtStringTemplateEntry,
-  val prefix: String,
-  val suffix: String,
+    val startEntry: KtStringTemplateEntry,
+    val endEntry: KtStringTemplateEntry,
+    val prefix: String,
+    val suffix: String,
 ) {
     abstract val isString: Boolean
 
@@ -41,10 +33,21 @@ abstract class ExtractableSubstringInfo(
         get() = generateSequence(startEntry) { if (it != endEntry) it.nextSiblingOfSameType() else null }
 
     fun createExpression(): KtExpression {
-        val quote = template.firstChild.text
-        val literalValue = if (isString) "$quote$content$quote" else content
+        val quote = template.node.findChildByType(KtTokens.OPEN_QUOTE)?.text
+            ?: throw KotlinExceptionWithAttachments("Missing opening quote in a string template").withPsiAttachment("template", template)
+        val interpolationPrefix = takeInterpolationPrefixIfNeeded()
+        val literalValue = if (isString) "$interpolationPrefix$quote$content$quote" else content
         return KtPsiFactory(template.project).createExpression(literalValue)
             .apply { extractableSubstringInfo = this@ExtractableSubstringInfo }
+    }
+
+    private fun takeInterpolationPrefixIfNeeded(): String {
+        val originalInterpolationPrefix = template.interpolationPrefix?.text ?: return ""
+        for (entry in entries) {
+            if (entry is KtStringTemplateEntryWithExpression) return originalInterpolationPrefix
+            if (entry is KtLiteralStringTemplateEntry && '$' in entry.text) return originalInterpolationPrefix
+        }
+        return ""
     }
 
     fun copy(newTemplate: KtStringTemplateExpression): ExtractableSubstringInfo {

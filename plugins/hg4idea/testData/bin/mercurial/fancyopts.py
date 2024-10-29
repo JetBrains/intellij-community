@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import abc
 import functools
@@ -205,7 +204,7 @@ def earlygetopt(args, shortlist, namelist, gnu=False, keepsep=False):
     return parsedopts, parsedargs
 
 
-class customopt(object):  # pytype: disable=ignored-metaclass
+class customopt:  # pytype: disable=ignored-metaclass
     """Manage defaults and mutations for any type of opt."""
 
     __metaclass__ = abc.ABCMeta

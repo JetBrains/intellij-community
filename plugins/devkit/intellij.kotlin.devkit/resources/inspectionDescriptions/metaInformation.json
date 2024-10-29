@@ -1,0 +1,20 @@
+{
+  "inspections": [
+    {
+      "id": "KotlinObjectExtensionRegistration",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ForbiddenInSuspectContextMethod",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "CompanionObjectInExtension",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "KotlinObjectRegisteredAsExtension",
+      "codeQualityCategory": "Performance"
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -266,7 +266,7 @@ public class XmlBuilderDriver {
   private CharSequence getAttributeValue(LighterASTNode attrNode, FlyweightCapableTreeStructure<LighterASTNode> structure) {
     final CharSequence fullValue = findTextByTokenType(attrNode, structure, XmlElementType.XML_ATTRIBUTE_VALUE);
     int start = 0;
-    if (fullValue.length() > 0 && fullValue.charAt(0) == '\"') start++;
+    if (!fullValue.isEmpty() && fullValue.charAt(0) == '\"') start++;
 
     int end = fullValue.length();
     if (fullValue.length() > start && fullValue.charAt(fullValue.length() - 1) == '\"') end--;

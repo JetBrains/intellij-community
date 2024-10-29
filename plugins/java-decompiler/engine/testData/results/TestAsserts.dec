@@ -16,10 +16,13 @@ class 'pkg/TestAsserts' {
    method 'foo ()I' {
       0      4
       1      4
+      8      6
       9      6
       a      6
+      1b      8
       1c      8
       1d      8
+      20      8
       21      8
       22      8
       2d      10

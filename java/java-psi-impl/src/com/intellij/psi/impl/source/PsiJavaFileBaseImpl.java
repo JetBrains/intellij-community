@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -465,6 +466,10 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     for (PsiJavaCodeReferenceElement aImplicitlyImported : getImplicitlyImportedPackageReferences()) {
       PsiElement resolved = aImplicitlyImported.resolve();
       if (resolved != null) {
+        if (resolved instanceof PsiPackage && "java.lang".equals(((PsiPackage)resolved).getQualifiedName())) {
+          LanguageLevel level = PsiUtil.getLanguageLevel(place);
+          processor = new JavaLangClassesFilter(processor, level);
+        }
         if (!processOnDemandTarget(resolved, state, place, processor)) return false;
       }
     }
@@ -679,6 +684,38 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       }
 
       return myProcessor.execute(element, myState);
+    }
+  }
+
+  private static class JavaLangClassesFilter extends DelegatingScopeProcessor {
+    private static final Map<String, LanguageLevel> ourJavaLangClassFeatures = new HashMap<>();
+
+    static {
+      // Only classes appeared in java.lang since Java 9 are listed here
+      // As --release option works since Java 9
+      ourJavaLangClassFeatures.put("MatchException", JavaFeature.PATTERNS_IN_SWITCH.getMinimumLevel());
+      ourJavaLangClassFeatures.put("Module", JavaFeature.MODULES.getMinimumLevel());
+      ourJavaLangClassFeatures.put("ModuleLayer", JavaFeature.MODULES.getMinimumLevel());
+      ourJavaLangClassFeatures.put("ProcessHandle", LanguageLevel.JDK_1_9);
+      ourJavaLangClassFeatures.put("Record", JavaFeature.RECORDS.getMinimumLevel());
+      ourJavaLangClassFeatures.put("ScopedValue", JavaFeature.SCOPED_VALUES.getMinimumLevel());
+      ourJavaLangClassFeatures.put("WrongThreadException", LanguageLevel.JDK_19);
+    }
+ 
+    private final LanguageLevel myLevel;
+
+    JavaLangClassesFilter(@NotNull PsiScopeProcessor processor, LanguageLevel level) {
+      super(processor);
+      myLevel = level;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+      if (element instanceof PsiClass) {
+        LanguageLevel classMinLevel = ourJavaLangClassFeatures.get(((PsiClass)element).getName());
+        if (classMinLevel != null && myLevel.isLessThan(classMinLevel)) return true;
+      }
+      return super.execute(element, state);
     }
   }
 }

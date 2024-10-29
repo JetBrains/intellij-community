@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -13,18 +13,15 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Collections;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class ModuleRequiresRepr extends Proto {
+final class ModuleRequiresRepr extends Proto {
   private final int myVersion;
 
-  public ModuleRequiresRepr(DependencyContext context, int access, int name, String version) {
+  ModuleRequiresRepr(DependencyContext context, int access, int name, String version) {
     super(access, context.get(null), name, Collections.emptySet());
     myVersion = context.get(version);
   }
 
-  public ModuleRequiresRepr(DependencyContext context, DataInput in) {
+  ModuleRequiresRepr(DependencyContext context, DataInput in) {
     super(context, in);
     try {
       myVersion = DataInputOutputUtil.readINT(in);

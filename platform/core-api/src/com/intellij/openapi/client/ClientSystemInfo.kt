@@ -17,6 +17,11 @@ class ClientSystemInfo private constructor() {
       return getInstance()?.macClient ?: SystemInfo.isMac
     }
 
+    @JvmStatic
+    fun isWindows(): Boolean {
+      return getInstance()?.windowsClient ?: SystemInfo.isWindows
+    }
+
     @ApiStatus.Internal
     fun getInstance(): ClientSystemInfo? {
       return ClientSessionsManager.getAppSession()?.takeIf { it.isRemote }?.getUserData(CLIENT_INFO_KEY)
@@ -26,4 +31,5 @@ class ClientSystemInfo private constructor() {
   }
 
   var macClient: Boolean? = null
+  var windowsClient: Boolean? = null
 }

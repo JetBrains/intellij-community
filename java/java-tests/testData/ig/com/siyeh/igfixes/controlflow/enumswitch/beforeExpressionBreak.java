@@ -1,4 +1,4 @@
-// "Create missing branches: 'B', and 'C'" "true"
+// "Create missing branches 'B' and 'C'" "true"
 package com.siyeh.ipp.enumswitch;
 
 class BeforeDefault {

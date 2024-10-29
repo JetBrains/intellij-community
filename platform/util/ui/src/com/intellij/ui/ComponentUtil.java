@@ -24,7 +24,7 @@ public final class ComponentUtil {
   /**
    * @deprecated use {@link ClientProperty#get(Component, Key)} instead
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static <T> T getClientProperty(@NotNull JComponent component, @NotNull Key<T> key) {
     return ClientProperty.get(component, key);
   }

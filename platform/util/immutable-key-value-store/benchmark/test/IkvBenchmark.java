@@ -26,12 +26,12 @@ public class IkvBenchmark {
 
     private Path dbFile;
     private Ikv.SizeAwareIkv ikv;
-    private int key;
+    private long key;
 
     @Setup
     public void setupDb() throws Exception {
       dbFile = Files.createTempDirectory("ikv-").resolve("db");
-      List<Pair<Integer, byte[]>> list = BenchmarkHelperKt.generateDb(dbFile, 5_000);
+      List<Pair<Long, byte[]>> list = BenchmarkHelperKt.generateDb(dbFile, 5_000);
       ikv = (Ikv.SizeAwareIkv)Ikv.loadIkv(dbFile);
       key = list.get(3000).getFirst();
     }

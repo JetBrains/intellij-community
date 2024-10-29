@@ -15,6 +15,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.ui.content.impl.ContentManagerImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
@@ -54,7 +55,7 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
         setToolbarVisible(Collections.singletonList(component), isToolbarVisible(toolWindow, properties));
 
         // support nested content managers, e.g. RunnerLayoutUi as content component
-        ContentManager contentManager = component instanceof DataProvider ? PlatformDataKeys.CONTENT_MANAGER.getData((DataProvider)component) : null;
+        ContentManager contentManager = ContentManagerImpl.getContentManager(component);
         if (contentManager != null) {
           contentManager.addContentManagerListener(this);
         }

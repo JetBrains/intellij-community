@@ -1,0 +1,3 @@
+import `foo bar`.FooBar
+
+fun bar(fooBar: FooBar<caret>)

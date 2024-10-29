@@ -50,7 +50,7 @@ public final class ConsoleViewUtil {
   }
 
   public static void setupConsoleEditor(@NotNull EditorEx editor, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    ApplicationManager.getApplication().runWriteIntentReadAction(() -> {
       EditorSettings editorSettings = editor.getSettings();
       editorSettings.setLineMarkerAreaShown(lineMarkerAreaShown);
       editorSettings.setIndentGuidesShown(false);
@@ -68,6 +68,7 @@ public final class ConsoleViewUtil {
       scheme.setEditorFontSize(UISettingsUtils.getInstance().getScaledConsoleFontSize());
       editor.setColorsScheme(scheme);
       editor.setHighlighter(new NullEditorHighlighter());
+      return null;
     });
   }
 

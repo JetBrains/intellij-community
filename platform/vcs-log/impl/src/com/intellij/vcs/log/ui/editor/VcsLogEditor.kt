@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.editor
 
 import com.intellij.diff.util.FileEditorBase
@@ -17,11 +17,13 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogEditorUtil.disposeLogUis
 import com.intellij.vcs.log.ui.VcsLogUiHolder
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class VcsLogFileType private constructor() : FileType {
   override fun getName(): String = "VcsLog"
   override fun getDescription(): String = VcsLogBundle.message("filetype.vcs.log.description")
@@ -43,10 +45,11 @@ abstract class VcsLogFile(name: String) : LightVirtualFile(name, VcsLogFileType.
   abstract fun createMainComponent(project: Project): JComponent
 }
 
-class VcsLogIconProvider : FileIconProvider {
+private class VcsLogIconProvider : FileIconProvider {
   override fun getIcon(file: VirtualFile, flags: Int, project: Project?): Icon? = (file as? VcsLogFile)?.fileType?.icon
 }
 
+@ApiStatus.Internal
 class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogFile) : FileEditorBase() {
   private val rootComponent: JComponent = JPanel(BorderLayout()).also {
     it.add(vcsLogFile.createMainComponent(project), BorderLayout.CENTER)

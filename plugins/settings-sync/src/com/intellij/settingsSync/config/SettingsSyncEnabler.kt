@@ -2,11 +2,16 @@ package com.intellij.settingsSync.config
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.settingsSync.*
 import com.intellij.util.EventDispatcher
+import kotlinx.coroutines.*
 import java.util.*
 
 internal class SettingsSyncEnabler {
@@ -48,9 +53,7 @@ internal class SettingsSyncEnabler {
         updateResult = result
         if (result is UpdateResult.Success) {
           val cloudEvent = SyncSettingsEvent.CloudChange(result.settingsSnapshot, result.serverVersionId, syncSettings)
-          runBlockingCancellable {
-            saveSettings(ApplicationManager.getApplication(), forceSavingAllSettings = true)
-          }
+
           settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.TakeFromServer(cloudEvent))
         }
       }
@@ -64,12 +67,7 @@ internal class SettingsSyncEnabler {
 
   fun pushSettingsToServer() {
     val settingsSyncControls = SettingsSyncMain.getInstance().controls
-    object : Task.Modal(null, SettingsSyncBundle.message("enable.sync.push.to.server.progress"), false) {
-      override fun run(indicator: ProgressIndicator) {
-        // todo initialization must be modal but pushing to server can be made later
-        settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
-      }
-    }.queue()
+    settingsSyncControls.bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
   }
 
 

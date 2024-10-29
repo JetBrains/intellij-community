@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
@@ -70,7 +71,7 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
             val jdiClass = mainThread.virtualMachine().classesByName(className).singleOrNull()
                 ?: error("Class '$className' was not found in the debuggee process class loader")
 
-            val locations = jdiClass.allLineLocations()
+            val locations = DebuggerUtilsAsync.allLineLocationsSync(jdiClass)
             assert(locations.isNotEmpty()) { "There are no locations for class $className" }
 
             val allFilesWithSameName = files.filter { it.name == expectedFile.name }

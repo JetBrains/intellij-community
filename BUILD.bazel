@@ -1,23 +1,18 @@
-load("//tools/adt/idea/jps-build:idea.bzl", "idea_source")
+load("@rules_kotlin//kotlin:core.bzl", "define_kt_toolchain")
 
-idea_source(
-    name = "idea_source",
-    include = ["**"],
-    exclude = [
-        "BUILD.bazel",
-        ".git/**",
-        ".idea/workspace.xml",
-        "build/download/**",
-        "config/**",
-        "out/**",
-        "system/**",
-    ],
-    target_compatible_with = select({
-        "@platforms//os:windows": ["@platforms//:incompatible"],
-        "//tools/base/bazel/ci/conditions:studio-linux-large": [],
-        "//tools/base/bazel/ci/conditions:ci": ["@platforms//:incompatible"],
-        "//conditions:default": [],
-    }),
-    target_dir = "tools/idea",
-    visibility = ["//visibility:public"],
+load("@community//:build/compiler-options.bzl", "create_javac_options", "create_kotlinc_options")
+
+define_kt_toolchain(
+  name = "kotlin_toolchain",
+  api_version = "2.0",
+  language_version = "2.0"
 )
+
+create_javac_options(name = "j8", release = "8")
+create_kotlinc_options(name="k8", jvm_target="1.8")
+
+create_javac_options(name = "j11", release = "11")
+create_kotlinc_options(name= "k11", jvm_target= "11")
+
+create_javac_options(name = "j17", release = "17")
+create_kotlinc_options(name = "k17", jvm_target = "17")

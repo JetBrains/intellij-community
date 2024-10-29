@@ -11,10 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
@@ -86,7 +83,7 @@ public final class JavaHighlightUtil {
 
   @NotNull
   public static String formatType(@Nullable PsiType type) {
-    return type == null ? PsiKeyword.NULL : type.getInternalCanonicalText();
+    return type == null ? PsiKeyword.NULL : PsiTypesUtil.removeExternalAnnotations(type).getInternalCanonicalText();
   }
 
   @Nullable

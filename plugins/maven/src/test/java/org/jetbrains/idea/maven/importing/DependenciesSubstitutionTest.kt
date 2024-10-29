@@ -29,6 +29,7 @@ open class DependenciesSubstitutionTest : MavenMultiVersionImportingTestCase() {
                            "    <version>1.0</version>" +
                            "  </dependency>" +
                            "</dependencies>")
+      refreshFiles(listOf(p1Pom, p2Pom))
       importProjectAsync(p1Pom)
       importProjectAsync(p2Pom)
       assertModules("p1", "p2")

@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteActio
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.idea.codeInsight.overrideImplement.OverrideImplementFacility
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtReferenceExpression
@@ -56,10 +56,10 @@ internal class AnonymousTemplateEditingListener(private val psiFile: PsiFile, pr
     private fun resolveSubtypeInfo(referenceExpression: KtReferenceExpression): SubtypeInfo? {
         val referencedClasses = sequence {
             for (symbol in referenceExpression.mainReference.resolveToSymbols()) {
-                if (symbol is KaNamedClassOrObjectSymbol) {
+                if (symbol is KaNamedClassSymbol) {
                     yield(symbol)
                 } else if (symbol is KaConstructorSymbol) {
-                    val containingClassSymbol = symbol.containingDeclaration as? KaNamedClassOrObjectSymbol
+                    val containingClassSymbol = symbol.containingDeclaration as? KaNamedClassSymbol
                     if (containingClassSymbol != null) {
                         yield(containingClassSymbol)
                     }

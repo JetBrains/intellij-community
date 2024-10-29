@@ -6,6 +6,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -15,6 +16,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.lang.reflect.Field;
 
+@ApiStatus.Internal
 public final class MovablePopup {
   private final HierarchyListener myListener = event -> setVisible(false);
   private Runnable myOnAncestorFocusLost = null;

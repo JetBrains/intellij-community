@@ -2,15 +2,15 @@
 package org.jetbrains.idea.devkit.dom.impl.productModules
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.psi.xml.XmlFile
 import com.intellij.util.xml.DomFileDescription
 import org.jetbrains.idea.devkit.dom.productModules.ProductModulesElement
-import org.jetbrains.idea.devkit.util.PsiUtil
 
 internal class ProductModulesDomFileDescription 
   : DomFileDescription<ProductModulesElement>(ProductModulesElement::class.java, "product-modules") {
   
   override fun isMyFile(file: XmlFile, module: Module?): Boolean {
-    return file.name == "product-modules.xml" && module != null && PsiUtil.isIdeaProject(module.project)
+    return file.name == "product-modules.xml" && module != null && IntelliJProjectUtil.isIntelliJPlatformProject(module.project)
   }
 }

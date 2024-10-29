@@ -1,4 +1,0 @@
-// "Replace with 'actual'" "true"
-// IGNORE_K2
-
-actual fun foo() = 42

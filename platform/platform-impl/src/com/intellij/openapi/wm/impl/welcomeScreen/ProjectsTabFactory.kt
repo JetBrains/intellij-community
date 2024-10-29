@@ -15,6 +15,7 @@ import com.intellij.ide.impl.ProjectUtil.openOrImportFilesAsync
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
@@ -25,7 +26,6 @@ import com.intellij.openapi.wm.WelcomeScreenTab
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
-import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenActionsUtil.ToolbarTextButtonWrapper
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService
 import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneableProjectsService.CloneProjectListener
 import com.intellij.openapi.wm.impl.welcomeScreen.recentProjects.ProjectCollectors
@@ -213,45 +213,67 @@ internal class ProjectsTab(private val parentDisposable: Disposable) : DefaultWe
   }
 
   private fun createActionsToolbar(): ActionToolbar {
-    val mainAndMore = WelcomeScreenActionsUtil.splitAndWrapActions(
-      (ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup),
-      { action: AnAction? -> ActionGroupPanelWrapper.wrapGroups(action!!, parentDisposable) },
-      ProjectsTabFactory.PRIMARY_BUTTONS_NUM)
-    val toolbarActionGroup = DefaultActionGroup(
-      mainAndMore.getFirst().getChildren(null).map { action: AnAction -> createButtonWrapper(action) })
-    val moreActionGroup: ActionGroup = mainAndMore.getSecond()
-    val moreActionPresentation = moreActionGroup.templatePresentation
-    moreActionPresentation.icon = AllIcons.Actions.More
-    moreActionPresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
-    toolbarActionGroup.addAction(moreActionGroup)
-    val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarActionGroup, true) {
+    val actionManager = ActionManager.getInstance()
+    val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_PROJECTS_STATE) as ActionGroup
+    val toolbarGroup = object : ActionGroupWrapper(baseGroup) {
+      override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+        val mapped = visibleChildren.mapIndexed { index, action ->
+          when {
+            index >= ProjectsTabFactory.PRIMARY_BUTTONS_NUM -> action
+            action is ActionGroup && action is ActionsWithPanelProvider -> {
+              val p = e.updateSession.presentation(action)
+              val wrapper = p.getClientProperty(ActionUtil.INLINE_ACTIONS)?.first()
+                            ?: ActionGroupPanelWrapper.wrapGroups(action, parentDisposable).also {
+                              p.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(it))
+                            }
+              e.updateSession.presentation(wrapper)
+              wrapper
+            }
+            action is ActionGroup -> {
+              val children = e.updateSession.children(action).toList()
+              when {
+                children.isEmpty() -> action
+                else -> children.first().also {
+                  e.updateSession.presentation(it).putClientProperty(
+                    ActionUtil.INLINE_ACTIONS, children.subList(1, children.size))
+                }
+              }
+            }
+            else -> action
+          }
+        }
+        mapped.forEach { action ->
+          e.updateSession.presentation(action).putClientProperty(
+            ActionUtil.COMPONENT_PROVIDER, WelcomeScreenActionsUtil.createToolbarTextButtonAction(action))
+        }
+        return mapped
+      }
+    }
+    val toolbar: ActionToolbarImpl = object : ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, toolbarGroup, true) {
+      override fun isSecondaryAction(action: AnAction, actionIndex: Int): Boolean {
+        return actionIndex >= ProjectsTabFactory.PRIMARY_BUTTONS_NUM
+      }
+
       override fun createToolbarButton(action: AnAction,
                                        look: ActionButtonLook?,
                                        place: String,
                                        presentation: Presentation,
                                        minimumSize: Supplier<out Dimension>): ActionButton {
-        val toolbarButton = super.createToolbarButton(action, look, place, presentation, minimumSize)
-        toolbarButton.isFocusable = true
-        return toolbarButton
+        return super.createToolbarButton(action, look, place, presentation, minimumSize).apply {
+          isFocusable = true
+        }
       }
     }
     toolbar.isOpaque = false
-    toolbar.setReservePlaceAutoPopupIcon(false)
+    toolbar.isReservePlaceAutoPopupIcon = false
+    toolbar.setSecondaryActionsIcon(AllIcons.Actions.More, true)
+    @Suppress("DialogTitleCapitalization")
+    toolbar.setSecondaryActionsTooltip(IdeBundle.message("welcome.screen.more.actions.link.text"))
     return toolbar
   }
-
-  private fun createButtonWrapper(action: AnAction): ToolbarTextButtonWrapper {
-    if (action is ActionGroup) {
-      val actions = action.getChildren(null).map { ActionGroupPanelWrapper.wrapGroups(it, parentDisposable) }
-      return ToolbarTextButtonWrapper.wrapAsOptionButton(actions)
-    }
-    return ToolbarTextButtonWrapper.wrapAsTextButton(action)
-  }
-
-  companion object {
-    private const val PROMO_BORDER_OFFSET = 16
-  }
 }
+
+private const val PROMO_BORDER_OFFSET = 16
 
 private enum class PanelState {
   EMPTY, NOT_EMPTY

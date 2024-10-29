@@ -17,8 +17,10 @@ import com.intellij.vcs.log.graph.impl.facade.LinearGraphController.LinearGraphA
 import com.intellij.vcs.log.graph.impl.print.GraphElementComparatorByLayoutIndex
 import com.intellij.vcs.log.graph.impl.print.PrintElementGeneratorImpl
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Cursor
 
+@ApiStatus.Internal
 class VisibleGraphImpl<CommitId : Any>(private val graphController: LinearGraphController,
                                        val permanentGraph: PermanentGraphInfo<CommitId>,
                                        private val colorGenerator: GraphColorGetter) : VisibleGraph<CommitId> {

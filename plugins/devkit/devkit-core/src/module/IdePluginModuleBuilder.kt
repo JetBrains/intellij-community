@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.plugins.PluginManager
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
@@ -68,7 +68,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
     return IdePluginInitialStep(contextProvider)
   }
 
-  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+  override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
     if (getPluginType() == PluginType.PLUGIN) {
       return super.isSuitableSdkType(sdkType)
     }
@@ -148,7 +148,7 @@ internal class IdePluginModuleBuilder : StarterModuleBuilder() {
       val resourceRootPath = "$contentEntryPath/resources" //NON-NLS
       val contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath) ?: return
 
-      val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, contentRoot)
+      val contentEntry = MarkRootsManager.findContentEntry(modifiableRootModel, contentRoot)
       contentEntry?.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE)
     }
   }

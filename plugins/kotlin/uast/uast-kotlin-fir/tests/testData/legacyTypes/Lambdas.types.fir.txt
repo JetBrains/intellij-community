@@ -37,7 +37,7 @@ UFile (package = ) [import java.util.stream.Stream...]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                             UBlockExpression [{...}] : void
-                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (Local))()] : <ErrorType>
+                                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (Local))()]
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [invoke()] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (baz)) [UIdentifier (Identifier (baz))]

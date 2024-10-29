@@ -88,7 +88,7 @@ public abstract class BasePlatformTestCase extends UsefulTestCase {
   }
 
   /**
-   * Return the absolute path to the test data.
+   * Returns the absolute path to the test data.
    * Not intended to be overridden in tests written as part of the IntelliJ IDEA codebase;
    * it must be overridden in plugins which use the test framework.
    *

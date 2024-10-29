@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.editor.actions;
 
@@ -9,12 +9,14 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class ToggleShowImportPopupsAction extends ToggleAction {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {
@@ -42,8 +44,7 @@ public final class ToggleShowImportPopupsAction extends ToggleAction {
     super.update(e);
   }
 
-  @Nullable
-  private static PsiFile getFile(@NotNull AnActionEvent e) {
+  private static @Nullable PsiFile getFile(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor == null ? null : e.getData(CommonDataKeys.PSI_FILE);
   }

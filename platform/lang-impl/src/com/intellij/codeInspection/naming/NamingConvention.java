@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -25,8 +23,7 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
    *         if tool was already present and merging of settings is required ({@link AbstractNamingConventionMerger}),
    *         short name should be equal to the old tool name
    */
-  @NonNls
-  public abstract String getShortName();
+  public abstract @NonNls String getShortName();
 
   /**
    * @return default settings for the convention

@@ -1,0 +1,15 @@
+// FILE: build.gradle.kts
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts Person"
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+
+class Pers<caret>on(val name: String, val age: Int)
+
+tasks.register("person") {
+    Person("Sam", 35)
+}
+

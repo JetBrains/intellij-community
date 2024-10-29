@@ -22,8 +22,10 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class XCompareWithClipboardAction extends XFetchValueActionBase {
 
   @Override

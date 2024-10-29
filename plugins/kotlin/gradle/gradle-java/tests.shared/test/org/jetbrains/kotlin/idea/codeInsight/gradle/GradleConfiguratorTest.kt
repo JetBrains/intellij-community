@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
+import org.jetbrains.kotlin.idea.configuration.notifications.dropHotfixPart
 import org.jetbrains.kotlin.idea.configuration.notifications.showNewKotlinCompilerAvailableNotificationIfNeeded
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
@@ -96,12 +97,15 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 }
             }
 
+            val externalCompilerVersion = ExternalCompilerVersionProvider.findLatest(myProject)
             assertEquals(
-                IdeKotlinVersion.get("1.3.70"),
-                ExternalCompilerVersionProvider.findLatest(myProject)
+                IdeKotlinVersion.get(LATEST_STABLE_GRADLE_PLUGIN_VERSION),
+                externalCompilerVersion
             )
 
-            val expectedCountAfter = if (kotlinVersion.isRelease) 1 else 0
+            // Should show notification if the bundled version > external compiler version
+            val shouldShowNotification = kotlinVersion.isRelease && kotlinVersion.kotlinVersion.dropHotfixPart > externalCompilerVersion!!.kotlinVersion
+            val expectedCountAfter = if (shouldShowNotification) 1 else 0
             runInEdtAndWait { NonBlockingReadActionImpl.waitForAsyncTaskCompletion() }
             connection.deliverImmediately() // the first notification from import action
             assertEquals(expectedCountAfter, counter.get())
@@ -118,7 +122,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             connection.deliverImmediately()
             assertEquals(expectedCountAfter, counter.get())
 
-            if (kotlinVersion.isRelease) {
+            if (shouldShowNotification) {
                 assertTrue(propertiesComponent.isValueSet(propertyKey))
             } else {
                 assertFalse(propertiesComponent.isValueSet(propertyKey))
@@ -179,7 +183,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureKotlinWithPluginsBlock() {
         val files = importProjectFromTestData()
 
@@ -249,7 +253,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureJvmWithBuildGradle() {
         val files = importProjectFromTestData()
 
@@ -273,7 +277,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureJvmWithBuildGradleKts() {
         val files = importProjectFromTestData()
 
@@ -297,7 +301,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("5.6.4 <=> 6.7.1")
+    @TargetVersions("5.6.4 <=> 6.8.3")
     fun testConfigureJvmMilestoneWithBuildGradle() {
         val files = importProjectFromTestData()
 
@@ -321,7 +325,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("5.6.4 <=> 6.7.1")
+    @TargetVersions("5.6.4 <=> 6.8.3")
     fun testConfigureJvmMilestoneWithBuildGradleKts() {
         val files = importProjectFromTestData()
 
@@ -345,7 +349,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("5.6.4")
+    @TargetVersions("<=6.8.3")
     fun testConfigureJvmKotlin17WithBuildGradleSourceCompat16() { // jvmTarget = 1.8 expected to be used instead of 1.6
         val files = importProjectFromTestData()
 
@@ -369,7 +373,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("5.6.4")
+    @TargetVersions("<=6.8.3")
     fun testConfigureJvmKotlin17WithBuildGradleTargetCompat16() { // jvmTarget = 1.8 expected to be used instead of 1.6
         val files = importProjectFromTestData()
 
@@ -393,7 +397,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureAllModulesInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -419,7 +423,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureAllModulesInJvmProjectKts() {
         val files = importProjectFromTestData()
 
@@ -445,7 +449,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureRootModuleInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -470,7 +474,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureRootModuleInJvmProjectKts() {
         val files = importProjectFromTestData()
 
@@ -495,7 +499,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureSubModuleInJvmProjectGroovy() {
         val files = importProjectFromTestData()
 
@@ -520,7 +524,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
-    @TargetVersions("<=6.7.1")
+    @TargetVersions("<=6.8.3")
     fun testConfigureSubModuleInJvmProjectKts() {
         val files = importProjectFromTestData()
 
@@ -894,6 +898,19 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    fun testAddLanguageVersionModernKotlinSyntax() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.8", null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
     fun testAddLanguageVersionGSK() {
         val files = importProjectFromTestData()
 
@@ -904,6 +921,125 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
             checkFiles(files)
         }
+    }
+
+    @Test
+    fun testAddLanguageVersionGSKModernKotlinSyntax() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, "1.8", null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    private fun changeLanguageVersion(languageVersion: String) {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeLanguageVersion(myTestFixture.module, languageVersion, null, false)
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    fun testAddLanguageVersionIfKotlinOptionsDslExistsGroovy() {
+        changeLanguageVersion("1.1")
+    }
+
+    @Test
+    fun testAddLanguageVersionIfKotlinOptionsDslExistsKts() {
+        changeLanguageVersion("1.2")
+    }
+
+    @Test
+    fun testAddLanguageVersionIfCompilerOptionsDslExistsGroovy() {
+        changeLanguageVersion("1.3")
+    }
+
+    @Test
+    fun testAddLanguageVersionIfCompilerOptionsDslExistsKts() {
+        changeLanguageVersion("1.4")
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion("1.7")
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInCompilerOptionsKts() {
+        changeLanguageVersion("1.7")
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion("1.7")
+    }
+
+    @Test
+    fun testDontTouchSameLanguageVersionInKotlinOptionsKts() {
+        changeLanguageVersion("1.7")
+    }
+
+    private fun addInlineClasses() {
+        val files = importProjectFromTestData()
+
+        runInEdtAndWait {
+            runWriteAction {
+                KotlinWithGradleConfigurator.changeFeatureConfiguration(
+                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
+                )
+            }
+
+            checkFiles(files)
+        }
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInKotlinOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInKotlinOptionsGroovy() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInCompilerOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testDontTouchSameFreeCompilerArgsInCompilerOptionsGroovy() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion("1.9")
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInCompilerOptionsKts() {
+        changeLanguageVersion("2.0")
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion("2.1")
+    }
+
+    @Test
+    fun testReplaceLanguageVersionInKotlinOptionsKts() {
+        changeLanguageVersion("2.2")
     }
 
     @Test
@@ -933,6 +1069,12 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     }
 
     @Test
+    @TargetVersions("8.2+") // Don't want to bring a new version of Gradle only because of this test because it will increase common test time
+    fun testChangeLanguageVersionInCompilerOptionsKts() {
+        changeLanguageVersion("2.3")
+    }
+
+    @Test
     fun testAddLibrary() {
         val files = importProjectFromTestData()
 
@@ -952,17 +1094,29 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
 
     @Test
     fun testChangeFeatureSupport() {
-        val files = importProjectFromTestData()
+        addInlineClasses()
+    }
 
-        runInEdtAndWait {
-            runWriteAction {
-                KotlinWithGradleConfigurator.changeFeatureConfiguration(
-                    myTestFixture.module, LanguageFeature.InlineClasses, LanguageFeature.State.ENABLED, false
-                )
-            }
+    // compilerOptions + same option with another value
+    @Test
+    fun testChangeFeatureSupportCompilerOptionsKts() {
+        addInlineClasses()
+    }
 
-            checkFiles(files)
-        }
+    @Test
+    @TargetVersions("8.2+")
+    fun testChangeFeatureSupportCompilerOptionsAssignmentSyntaxKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testChangeFeatureSupportCompilerOptions() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testChangeFeatureSupportCompilerOptionsAssignmentSyntax() {
+        addInlineClasses()
     }
 
     @Test
@@ -987,6 +1141,10 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testDisableFeatureSupportWithXFlag() = testDisableFeatureSupport()
+
+    @Test
+    @TargetVersions("4.7+")
+    fun testDisableFeatureSupportWithXFlagModernKotlinSyntax() = testDisableFeatureSupport()
 
     @Test
     fun testEnableFeatureSupport() {
@@ -1022,6 +1180,38 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
             checkFiles(files)
         }
     }
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsCompilerOptions() {
+        addInlineClasses()
+    }
+
+
+    @Test
+    fun testEnableFeatureSupportToExistentArgumentsCompilerOptionsKts() {
+        addInlineClasses()
+    }
+
+    @Test
+    fun testChangeLanguageVersionInCompilerOptionsGroovy() {
+        changeLanguageVersion("1.6")
+    }
+
+    @Test
+    fun testChangeLanguageVersionInCompilerOptionsGroovy2() {
+        changeLanguageVersion("1.5")
+    }
+
+    @Test
+    fun testChangeLanguageVersionInKotlinOptionsGroovy() {
+        changeLanguageVersion("1.4")
+    }
+
 
     @Test
     fun testEnableFeatureSupportGSKWithoutFoundKotlinVersion() {
@@ -1098,6 +1288,10 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testEnableFeatureSupportGSKWithXFlag() = testEnableFeatureSupportGSK()
+
+    @Test
+    @TargetVersions("4.7+")
+    fun testEnableFeatureSupportGSKWithXFlagModernKotlinSyntax() = testEnableFeatureSupportGSK()
 
     @Test
     @TargetVersions("4.7+")

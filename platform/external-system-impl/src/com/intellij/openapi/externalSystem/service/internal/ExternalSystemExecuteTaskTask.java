@@ -120,17 +120,6 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
     }
   }
 
-  /**
-   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
-   */
-  @SuppressWarnings({"unchecked", "rawtypes"})
-  private void putUserDataTo(@NotNull UserDataHolder dataHolder) {
-    var userMap = getUserMap();
-    for (Key key : userMap.getKeys()) {
-      dataHolder.putUserData(key, userMap.get(key));
-    }
-  }
-
   @Override
   protected boolean doCancel() throws Exception {
     var manager = ExternalSystemFacadeManager.getInstance();

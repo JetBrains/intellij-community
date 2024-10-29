@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.CompilerConfiguration
+import com.intellij.compiler.ParallelCompilationOption
 import com.intellij.compiler.server.BuildManager
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.DefaultJavaProgramRunner
@@ -16,6 +17,7 @@ import com.intellij.openapi.compiler.options.ExcludeEntryDescription
 import com.intellij.openapi.compiler.options.ExcludesConfiguration
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
@@ -32,6 +34,7 @@ import com.intellij.testFramework.TestLoggerFactory
 import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
@@ -97,7 +100,7 @@ abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
     assertOutput("Foo", "239")
 
     setFileText(file, "class Bar {}")
-    shouldFail { make() }
+    shouldFail make()
 
     setFileText(file, barText)
     make()
@@ -316,13 +319,27 @@ class Bar extends Foo {
     def main = myFixture.addClass("public class Main { public static void main(String[] args) { new Goo().bar(); } }")
     assertEmpty(make())
 
-    touch(foo.virtualFile)
-    touch(main.containingFile.virtualFile)
-    if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
-      assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
-    }
-    else {
-      assertEmpty(make())
+    if(AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+      long oldFooStamp = findClassFile("Foo").lastModified()
+      long oldGooStamp = findClassFile("Goo").lastModified()
+      long oldMainStamp = findClassFile("Main").lastModified()
+
+      touch(foo.virtualFile)
+      touch(main.containingFile.virtualFile)
+      shouldSucceed make()
+
+      assert oldFooStamp != findClassFile("Foo").lastModified()
+      assert oldMainStamp != findClassFile("Main").lastModified()
+      assert oldGooStamp != findClassFile("Goo").lastModified()
+    } else {
+      touch(foo.virtualFile)
+      touch(main.containingFile.virtualFile)
+      if (isRebuildExpectedAfterChangeInJavaClassExtendedByGroovy()) {
+        assert make().collect { it.message } == chunkRebuildMessage('Groovy stub generator')
+      }
+      else {
+        assertEmpty(make())
+      }
     }
   }
 
@@ -609,7 +626,7 @@ class Indirect {
     }
 
     setFileText(used, 'class Used2 {}')
-    shouldFail { make() }
+    shouldFail make()
     assert findClassFile('Used') == null
 
     setFileText(used, 'class Used3 {}')
@@ -690,7 +707,7 @@ class Main {
     def barStamp = barCompiled.lastModified()
 
     setFileText(fooFile, 'class Foo ext { }')
-    shouldFail { make() }
+    shouldFail make()
     setFileText(fooFile, 'interface Foo extends Runnable { }')
     assertEmpty make()
 
@@ -760,7 +777,7 @@ public class Main {
 
     excludeFromCompilation(foo)
 
-    shouldFail { rebuild() }
+    shouldFail rebuild()
   }
 
   void "test compile groovy excluded from stub generation"() {
@@ -790,7 +807,7 @@ public class Main {
 
     def compilerTempRoot = BuildManager.instance.getProjectSystemDirectory(project).absolutePath
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), compilerTempRoot) //because compilation error points to file under 'groovyStubs' directory
-    shouldFail { make() }
+    shouldFail make()
 
     setFileText(foo, 'class Foo {}')
 
@@ -805,7 +822,7 @@ public class Main {
 
     excludeFromCompilation(foo)
 
-    shouldFail { compileModule(module) }
+    shouldFail compileModule(module)
   }
 
   void "test stubs generated while processing groovy class file dependencies"() {
@@ -866,15 +883,29 @@ string
 
     assertEmpty make()
 
-    touch bar1.virtualFile
-    touch bar3.virtualFile
-    touch using.virtualFile
+    if(AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+      long oldBar1Stamp = findClassFile("bar/Bar1").lastModified()
+      long oldBar2Stamp = findClassFile("bar/Bar2").lastModified()
+      long oldBar3Stamp = findClassFile("bar/Bar3").lastModified()
 
-    if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
-      assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
-    }
-    else {
-      assertEmpty make()
+      touch(bar1.virtualFile)
+      touch(bar3.virtualFile)
+      shouldSucceed make()
+
+      assert oldBar1Stamp != findClassFile("bar/Bar1").lastModified()
+      assert oldBar2Stamp != findClassFile("bar/Bar2").lastModified()
+      assert oldBar3Stamp != findClassFile("bar/Bar3").lastModified()
+    } else {
+      touch bar1.virtualFile
+      touch bar3.virtualFile
+      touch using.virtualFile
+
+      if (isRebuildExpectedAfterChangesInGroovyWhichUseJava()) {
+        assert make().collect { it.message } == chunkRebuildMessage('Groovy compiler')
+      }
+      else {
+        assertEmpty make()
+      }
     }
   }
 
@@ -977,6 +1008,7 @@ class AppTest {
   }
 
   void "test java depends on stub whose generation failed"() {
+    CompilerConfiguration.getInstance(project).parallelCompilationOption = ParallelCompilationOption.DISABLED
     Closure<Runnable> createFiles = { String prefix ->
       def genParam = myFixture.addFileToProject(prefix + "GenParam.java", "class GenParam {}")
       myFixture.addFileToProject(prefix + "Intf.java", "class Intf<T extends GenParam> {}")
@@ -1044,7 +1076,7 @@ class BuildContextImpl extends BuildContext {
 
     myFixture.addClass('class Foo {}')
     myFixture.addFileToProject('a.groovy', 'import goo.Goo; class Bar { }')
-    shouldFail { compileModule(module) }
+    shouldFail compileModule(module)
   }
 
   void "test honor bytecode version"() {

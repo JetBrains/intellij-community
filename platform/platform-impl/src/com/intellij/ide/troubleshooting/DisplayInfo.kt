@@ -1,9 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.ide.troubleshooting
 
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.JBUIScale
+import org.jetbrains.annotations.ApiStatus
 import java.awt.GraphicsDevice
 import java.awt.GraphicsEnvironment
 import java.awt.Insets

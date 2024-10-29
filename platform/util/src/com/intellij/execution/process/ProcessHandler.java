@@ -204,7 +204,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
       if (myState.compareAndSet(State.TERMINATING, State.TERMINATED)) {
         try {
           myExitCode = exitCode;
-          myEventMulticaster.processTerminated(new ProcessEvent(ProcessHandler.this, exitCode));
+          myEventMulticaster.processTerminated(new ProcessEvent(this, exitCode));
         }
         catch (Throwable e) {
           if (!isCanceledException(e)) {

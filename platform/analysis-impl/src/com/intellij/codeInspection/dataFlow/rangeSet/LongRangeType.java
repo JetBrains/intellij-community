@@ -60,12 +60,12 @@ public enum LongRangeType {
    *
    * @param a the first value
    * @param b the second value
-   * @return true if the addition of a and b may overflow, false otherwise
+   * @return true if the subtraction of a and b may overflow, false otherwise
    */
   public boolean subtractionMayOverflow(long a, long b) {
     if (myBytes == 8) {
       long diff = a - b;
-      // Hacker's Delight 2nd Edition, 2-13 Overflow Detection
+      // Hacker's Delight 2nd Edition, 2-12 Overflow Detection
       return ((a ^ b) & (a ^ diff)) < 0;
     }
     long diff = a - b;

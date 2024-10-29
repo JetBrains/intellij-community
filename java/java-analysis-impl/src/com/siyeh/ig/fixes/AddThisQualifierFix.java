@@ -6,9 +6,9 @@ import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -35,13 +35,13 @@ public final class AddThisQualifierFix extends PsiUpdateModCommandQuickFix {
     if (memberClass == null) {
       return false;
     }
-    PsiClass containingClass = ClassUtils.getContainingClass(memberAccessExpression);
+    PsiClass containingClass = PsiUtil.getContainingClass(memberAccessExpression);
     if (InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
       // unqualified this.
       return true;
     }
     do {
-      containingClass = ClassUtils.getContainingClass(containingClass);
+      containingClass = PsiUtil.getContainingClass(containingClass);
     }
     while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
     // qualified this needed, which is not possible on anonymous class.

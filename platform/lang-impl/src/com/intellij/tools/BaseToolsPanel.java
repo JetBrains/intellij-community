@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -219,8 +219,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
   }
 
 
-  @NotNull
-  private CheckedTreeNode addGroupNode(@NotNull ToolsGroup<T> group) {
+  private @NotNull CheckedTreeNode addGroupNode(@NotNull ToolsGroup<T> group) {
     CheckedTreeNode groupNode = new CheckedTreeNode(group);
     getTreeRoot().add(groupNode);
     for (T tool : group.getElements()) {
@@ -246,8 +245,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     myIsModified = false;
   }
 
-  @NotNull
-  private List<ToolsGroup<T>> getGroupList() {
+  private @NotNull List<ToolsGroup<T>> getGroupList() {
     MutableTreeNode root = (MutableTreeNode)myTree.getModel().getRoot();
     List<ToolsGroup<T>> result = new ArrayList<>(root.getChildCount());
     for (int i = 0; i < root.getChildCount(); i++) {
@@ -349,15 +347,13 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     return null;
   }
 
-  @Nullable
-  public Tool getSelectedTool() {
+  public @Nullable Tool getSelectedTool() {
     CheckedTreeNode node = getSelectedToolNode();
     if (node == null) return null;
     return node.getUserObject() instanceof Tool ? (Tool)node.getUserObject() : null;
   }
 
-  @Nullable
-  private ToolsGroup getSelectedToolGroup() {
+  private @Nullable ToolsGroup getSelectedToolGroup() {
     CheckedTreeNode node = getSelectedToolNode();
     if (node == null) return null;
     return node.getUserObject() instanceof ToolsGroup ? (ToolsGroup)node.getUserObject() : null;

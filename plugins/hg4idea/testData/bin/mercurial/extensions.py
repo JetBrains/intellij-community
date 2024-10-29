@@ -5,23 +5,21 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import ast
 import collections
 import functools
-import imp
+import importlib
 import inspect
 import os
+import sys
 
 from .i18n import (
     _,
     gettext,
 )
 from .pycompat import (
-    getattr,
     open,
-    setattr,
 )
 
 from . import (
@@ -74,7 +72,7 @@ def find(name):
     try:
         mod = _extensions[name]
     except KeyError:
-        for k, v in pycompat.iteritems(_extensions):
+        for k, v in _extensions.items():
             if k.endswith(b'.' + name) or k.endswith(b'/' + name):
                 mod = v
                 break
@@ -84,54 +82,52 @@ def find(name):
 
 
 def loadpath(path, module_name):
-    module_name = module_name.replace(b'.', b'_')
+    module_name = module_name.replace('.', '_')
     path = util.normpath(util.expandpath(path))
-    module_name = pycompat.fsdecode(module_name)
     path = pycompat.fsdecode(path)
     if os.path.isdir(path):
         # module/__init__.py style
-        d, f = os.path.split(path)
-        fd, fpath, desc = imp.find_module(f, [d])
-        # When https://github.com/python/typeshed/issues/3466 is fixed
-        # and in a pytype release we can drop this disable.
-        return imp.load_module(
-            module_name, fd, fpath, desc  # pytype: disable=wrong-arg-types
-        )
-    else:
-        try:
-            return imp.load_source(module_name, path)
-        except IOError as exc:
-            if not exc.filename:
-                exc.filename = path  # python does not fill this
-            raise
+        init_py_path = os.path.join(path, '__init__.py')
+        if not os.path.exists(init_py_path):
+            raise ImportError("No module named '%s'" % os.path.basename(path))
+        path = init_py_path
+
+    loader = importlib.machinery.SourceFileLoader(module_name, path)
+    spec = importlib.util.spec_from_file_location(module_name, loader=loader)
+    assert spec is not None  # help Pytype
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _importh(name):
     """import and return the <name> module"""
-    mod = __import__(pycompat.sysstr(name))
-    components = name.split(b'.')
+    mod = __import__(name)
+    components = name.split('.')
     for comp in components[1:]:
         mod = getattr(mod, comp)
     return mod
 
 
 def _importext(name, path=None, reportfunc=None):
+    name = pycompat.fsdecode(name)
     if path:
         # the module will be loaded in sys.modules
         # choose an unique name so that it doesn't
         # conflicts with other modules
-        mod = loadpath(path, b'hgext.%s' % name)
+        mod = loadpath(path, 'hgext.%s' % name)
     else:
         try:
-            mod = _importh(b"hgext.%s" % name)
+            mod = _importh("hgext.%s" % name)
         except ImportError as err:
             if reportfunc:
-                reportfunc(err, b"hgext.%s" % name, b"hgext3rd.%s" % name)
+                reportfunc(err, "hgext.%s" % name, "hgext3rd.%s" % name)
             try:
-                mod = _importh(b"hgext3rd.%s" % name)
+                mod = _importh("hgext3rd.%s" % name)
             except ImportError as err:
                 if reportfunc:
-                    reportfunc(err, b"hgext3rd.%s" % name, name)
+                    reportfunc(err, "hgext3rd.%s" % name, name)
                 mod = _importh(name)
     return mod
 
@@ -142,9 +138,9 @@ def _reportimporterror(ui, err, failed, next):
     ui.log(
         b'extension',
         b'    - could not import %s (%s): trying %s\n',
-        failed,
+        stringutil.forcebytestr(failed),
         stringutil.forcebytestr(err),
-        next,
+        stringutil.forcebytestr(next),
     )
     if ui.debugflag and ui.configbool(b'devel', b'debug.extensions'):
         ui.traceback()
@@ -157,42 +153,43 @@ def _rejectunicode(name, xs):
     elif isinstance(xs, dict):
         for k, v in xs.items():
             _rejectunicode(name, k)
-            _rejectunicode(b'%s.%s' % (name, stringutil.forcebytestr(k)), v)
-    elif isinstance(xs, type(u'')):
+            k = pycompat.sysstr(k)
+            _rejectunicode('%s.%s' % (name, k), v)
+    elif isinstance(xs, str):
         raise error.ProgrammingError(
-            b"unicode %r found in %s" % (xs, name),
+            b"unicode %r found in %s" % (xs, stringutil.forcebytestr(name)),
             hint=b"use b'' to make it byte string",
         )
 
 
 # attributes set by registrar.command
-_cmdfuncattrs = (b'norepo', b'optionalrepo', b'inferrepo')
+_cmdfuncattrs = ('norepo', 'optionalrepo', 'inferrepo')
 
 
 def _validatecmdtable(ui, cmdtable):
     """Check if extension commands have required attributes"""
-    for c, e in pycompat.iteritems(cmdtable):
+    for c, e in cmdtable.items():
         f = e[0]
-        missing = [a for a in _cmdfuncattrs if not util.safehasattr(f, a)]
+        missing = [a for a in _cmdfuncattrs if not hasattr(f, a)]
         if not missing:
             continue
-        raise error.ProgrammingError(
-            b'missing attributes: %s' % b', '.join(missing),
-            hint=b"use @command decorator to register '%s'" % c,
-        )
+        msg = b'missing attributes: %s'
+        msg %= b', '.join([stringutil.forcebytestr(m) for m in missing])
+        hint = b"use @command decorator to register '%s'" % c
+        raise error.ProgrammingError(msg, hint=hint)
 
 
 def _validatetables(ui, mod):
     """Sanity check for loadable tables provided by extension module"""
-    for t in [b'cmdtable', b'colortable', b'configtable']:
+    for t in ['cmdtable', 'colortable', 'configtable']:
         _rejectunicode(t, getattr(mod, t, {}))
     for t in [
-        b'filesetpredicate',
-        b'internalmerge',
-        b'revsetpredicate',
-        b'templatefilter',
-        b'templatefunc',
-        b'templatekeyword',
+        'filesetpredicate',
+        'internalmerge',
+        'revsetpredicate',
+        'templatefilter',
+        'templatefunc',
+        'templatekeyword',
     ]:
         o = getattr(mod, t, None)
         if o:
@@ -224,8 +221,12 @@ def load(ui, name, path, loadingtime=None):
     minver = getattr(mod, 'minimumhgversion', None)
     if minver:
         curver = util.versiontuple(n=2)
+        extmin = util.versiontuple(stringutil.forcebytestr(minver), 2)
 
-        if None in curver or util.versiontuple(minver, 2) > curver:
+        if None in extmin:
+            extmin = (extmin[0] or 0, extmin[1] or 0)
+
+        if None in curver or extmin > curver:
             msg = _(
                 b'(third party extension %s requires version %s or newer '
                 b'of Mercurial (current: %s); disabling)\n'
@@ -278,6 +279,7 @@ def loadall(ui, whitelist=None):
     result = ui.configitems(b"extensions")
     if whitelist is not None:
         result = [(k, v) for (k, v) in result if k in whitelist]
+    result = [(k, v) for (k, v) in result if b':' not in k]
     newindex = len(_order)
     ui.log(
         b'extension',
@@ -286,6 +288,8 @@ def loadall(ui, whitelist=None):
     )
     ui.log(b'extension', b'- processing %d entries\n', len(result))
     with util.timedcm('load all extensions') as stats:
+        default_sub_options = ui.configsuboptions(b"extensions", b"*")[1]
+
         for (name, path) in result:
             if path:
                 if path[0:1] == b'!':
@@ -302,18 +306,32 @@ def loadall(ui, whitelist=None):
             except Exception as inst:
                 msg = stringutil.forcebytestr(inst)
                 if path:
-                    ui.warn(
-                        _(b"*** failed to import extension %s from %s: %s\n")
-                        % (name, path, msg)
+                    error_msg = _(
+                        b'failed to import extension "%s" from %s: %s'
                     )
+                    error_msg %= (name, path, msg)
                 else:
-                    ui.warn(
-                        _(b"*** failed to import extension %s: %s\n")
-                        % (name, msg)
-                    )
-                if isinstance(inst, error.Hint) and inst.hint:
-                    ui.warn(_(b"*** (%s)\n") % inst.hint)
-                ui.traceback()
+                    error_msg = _(b'failed to import extension "%s": %s')
+                    error_msg %= (name, msg)
+
+                options = default_sub_options.copy()
+                ext_options = ui.configsuboptions(b"extensions", name)[1]
+                options.update(ext_options)
+                if stringutil.parsebool(options.get(b"required", b'no')):
+                    hint = None
+                    if isinstance(inst, error.Hint) and inst.hint:
+                        hint = inst.hint
+                    if hint is None:
+                        hint = _(
+                            b"loading of this extension was required, "
+                            b"see `hg help config.extensions` for details"
+                        )
+                    raise error.Abort(error_msg, hint=hint)
+                else:
+                    ui.warn((b"*** %s\n") % error_msg)
+                    if isinstance(inst, error.Hint) and inst.hint:
+                        ui.warn(_(b"*** (%s)\n") % inst.hint)
+                    ui.traceback()
 
     ui.log(
         b'extension',
@@ -330,7 +348,7 @@ def loadall(ui, whitelist=None):
     #
     # This one is for the list of item that must be run before running any setup
     earlyextraloaders = [
-        (b'configtable', configitems, b'loadconfigtable'),
+        ('configtable', configitems, 'loadconfigtable'),
     ]
 
     ui.log(b'extension', b'- loading configtable attributes\n')
@@ -415,14 +433,14 @@ def loadall(ui, whitelist=None):
     #   which takes (ui, extensionname, extraobj) arguments
     ui.log(b'extension', b'- loading extension registration objects\n')
     extraloaders = [
-        (b'cmdtable', commands, b'loadcmdtable'),
-        (b'colortable', color, b'loadcolortable'),
-        (b'filesetpredicate', fileset, b'loadpredicate'),
-        (b'internalmerge', filemerge, b'loadinternalmerge'),
-        (b'revsetpredicate', revset, b'loadpredicate'),
-        (b'templatefilter', templatefilters, b'loadfilter'),
-        (b'templatefunc', templatefuncs, b'loadfunction'),
-        (b'templatekeyword', templatekw, b'loadkeyword'),
+        ('cmdtable', commands, 'loadcmdtable'),
+        ('colortable', color, 'loadcolortable'),
+        ('filesetpredicate', fileset, 'loadpredicate'),
+        ('internalmerge', filemerge, 'loadinternalmerge'),
+        ('revsetpredicate', revset, 'loadpredicate'),
+        ('templatefilter', templatefilters, 'loadfilter'),
+        ('templatefunc', templatefuncs, 'loadfunction'),
+        ('templatekeyword', templatekw, 'loadkeyword'),
     ]
     with util.timedcm('load registration objects') as stats:
         _loadextra(ui, newindex, extraloaders)
@@ -558,7 +576,7 @@ def wrapcommand(table, command, wrapper, synopsis=None, docstring=None):
     '''
     assert callable(wrapper)
     aliases, entry = cmdutil.findcmd(command, table)
-    for alias, e in pycompat.iteritems(table):
+    for alias, e in table.items():
         if e is entry:
             key = alias
             break
@@ -601,11 +619,14 @@ def wrapfilecache(cls, propname, wrapper):
         raise AttributeError("type '%s' has no property '%s'" % (cls, propname))
 
 
-class wrappedfunction(object):
+class wrappedfunction:
     '''context manager for temporarily wrapping a function'''
 
     def __init__(self, container, funcname, wrapper):
         assert callable(wrapper)
+        if not isinstance(funcname, str):
+            msg = b"wrappedfunction target name should be `str`, not `bytes`"
+            raise TypeError(msg)
         self._container = container
         self._funcname = funcname
         self._wrapper = wrapper
@@ -651,6 +672,10 @@ def wrapfunction(container, funcname, wrapper):
     subclass trick.
     """
     assert callable(wrapper)
+
+    if not isinstance(funcname, str):
+        msg = b"wrapfunction target name should be `str`, not `bytes`"
+        raise TypeError(msg)
 
     origfn = getattr(container, funcname)
     assert callable(origfn)
@@ -709,33 +734,33 @@ def _disabledpaths():
     '''find paths of disabled extensions. returns a dict of {name: path}'''
     import hgext
 
+    exts = {}
+
     # The hgext might not have a __file__ attribute (e.g. in PyOxidizer) and
     # it might not be on a filesystem even if it does.
-    if util.safehasattr(hgext, '__file__'):
+    if hasattr(hgext, '__file__'):
         extpath = os.path.dirname(
             util.abspath(pycompat.fsencode(hgext.__file__))
         )
         try:
             files = os.listdir(extpath)
         except OSError:
-            return {}
-    else:
-        return {}
-
-    exts = {}
-    for e in files:
-        if e.endswith(b'.py'):
-            name = e.rsplit(b'.', 1)[0]
-            path = os.path.join(extpath, e)
+            pass
         else:
-            name = e
-            path = os.path.join(extpath, e, b'__init__.py')
-            if not os.path.exists(path):
-                continue
-        if name in exts or name in _order or name == b'__init__':
-            continue
-        exts[name] = path
-    for name, path in pycompat.iteritems(_disabledextensions):
+            for e in files:
+                if e.endswith(b'.py'):
+                    name = e.rsplit(b'.', 1)[0]
+                    path = os.path.join(extpath, e)
+                else:
+                    name = e
+                    path = os.path.join(extpath, e, b'__init__.py')
+                    if not os.path.exists(path):
+                        continue
+                if name in exts or name in _order or name == b'__init__':
+                    continue
+                exts[name] = path
+
+    for name, path in _disabledextensions.items():
         # If no path was provided for a disabled extension (e.g. "color=!"),
         # don't replace the path we already found by the scan above.
         if path:
@@ -797,7 +822,7 @@ def disabled():
 
         return {
             name: gettext(desc)
-            for name, desc in pycompat.iteritems(__index__.docs)
+            for name, desc in __index__.docs.items()
             if name not in _order
         }
     except (ImportError, AttributeError):
@@ -808,10 +833,10 @@ def disabled():
         return {}
 
     exts = {}
-    for name, path in pycompat.iteritems(paths):
+    for name, path in paths.items():
         doc = _disabledhelp(path)
         if doc and name != b'__index__':
-            exts[name] = doc.splitlines()[0]
+            exts[name] = stringutil.firstline(doc)
 
     return exts
 
@@ -821,6 +846,22 @@ def disabled_help(name):
     paths = _disabledpaths()
     if name in paths:
         return _disabledhelp(paths[name])
+    else:
+        try:
+            import hgext
+            from hgext import __index__  # pytype: disable=import-error
+
+            # The extensions are filesystem based, so either an error occurred
+            # or all are enabled.
+            if hasattr(hgext, '__file__'):
+                return
+
+            if name in _order:  # enabled
+                return
+            else:
+                return gettext(__index__.docs.get(name))
+        except (ImportError, AttributeError):
+            pass
 
 
 def _walkcommand(node):
@@ -849,16 +890,31 @@ def _disabledcmdtable(path):
     with open(path, b'rb') as src:
         root = ast.parse(src.read(), path)
     cmdtable = {}
+
+    # Python 3.12 started removing Bytes and Str and deprecate harder
+    use_constant = 'Bytes' not in vars(ast)
+
     for node in _walkcommand(root):
         if not node.args:
             continue
         a = node.args[0]
-        if isinstance(a, ast.Str):
-            name = pycompat.sysbytes(a.s)
-        elif pycompat.ispy3 and isinstance(a, ast.Bytes):
-            name = a.s
-        else:
-            continue
+        if use_constant:  # Valid since Python 3.8
+            if isinstance(a, ast.Constant):
+                if isinstance(a.value, str):
+                    name = pycompat.sysbytes(a.value)
+                elif isinstance(a.value, bytes):
+                    name = a.value
+                else:
+                    continue
+            else:
+                continue
+        else:  # Valid until 3.11
+            if isinstance(a, ast.Str):
+                name = pycompat.sysbytes(a.s)
+            elif isinstance(a, ast.Bytes):
+                name = a.s
+            else:
+                continue
         cmdtable[name] = (None, [], b'')
     return cmdtable
 
@@ -897,7 +953,7 @@ def disabledcmd(ui, cmd, strict=False):
         ext = _finddisabledcmd(ui, cmd, cmd, path, strict=strict)
     if not ext:
         # otherwise, interrogate each extension until there's a match
-        for name, path in pycompat.iteritems(paths):
+        for name, path in paths.items():
             ext = _finddisabledcmd(ui, cmd, name, path, strict=strict)
             if ext:
                 break
@@ -915,27 +971,25 @@ def enabled(shortname=True):
         assert doc is not None  # help pytype
         if shortname:
             ename = ename.split(b'.')[-1]
-        exts[ename] = doc.splitlines()[0].strip()
+        exts[ename] = stringutil.firstline(doc).strip()
 
     return exts
 
 
 def notloaded():
     '''return short names of extensions that failed to load'''
-    return [
-        name for name, mod in pycompat.iteritems(_extensions) if mod is None
-    ]
+    return [name for name, mod in _extensions.items() if mod is None]
 
 
 def moduleversion(module):
     '''return version information from given module as a string'''
-    if util.safehasattr(module, b'getversion') and callable(module.getversion):
+    if hasattr(module, 'getversion') and callable(module.getversion):
         try:
             version = module.getversion()
         except Exception:
             version = b'unknown'
 
-    elif util.safehasattr(module, b'__version__'):
+    elif hasattr(module, '__version__'):
         version = module.__version__
     else:
         version = b''

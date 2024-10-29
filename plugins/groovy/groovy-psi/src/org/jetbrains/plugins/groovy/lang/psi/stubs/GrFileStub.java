@@ -37,7 +37,7 @@ public class GrFileStub extends PsiFileStubImpl<GroovyFile> {
 
   @NotNull
   @Override
-  public IStubFileElementType getType() {
+  public IStubFileElementType<?> getType() {
     return GroovyParserDefinition.GROOVY_FILE;
   }
 

@@ -4,17 +4,20 @@ package git4idea.branch
 import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.editor.event.DocumentEvent
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.ui.validation.WHEN_DOCUMENT_CHANGED
+import com.intellij.openapi.ui.validation.WHEN_STATE_CHANGED
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.ui.EditorTextField
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.layout.*
+import com.intellij.ui.layout.ComponentPredicate
+import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor
 import com.intellij.util.textCompletion.TextCompletionProviderBase
 import com.intellij.util.textCompletion.TextFieldWithCompletion
@@ -67,6 +70,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     title = dialogTitle
     setOKButtonText(operation.text)
     init()
+
+    if (branchName.isNotEmpty()) {
+      initValidation()
+    }
   }
 
   fun showAndGetOptions(): GitNewBranchOptions? {
@@ -76,12 +83,13 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
 
   override fun createCenterPanel() = panel {
     val overwriteCheckbox = JCheckBox(GitBundle.message("new.branch.dialog.overwrite.existing.branch.checkbox"))
+    val branchNameField = TextFieldWithCompletion(project, createBranchNameCompletion(), branchName,
+                                                  /*oneLineMode*/ true,
+                                                  /*autoPopup*/ true,
+                                                  /*forceAutoPopup*/ false,
+                                                  /*showHint*/ false)
     row {
-      cell(TextFieldWithCompletion(project, createBranchNameCompletion(), branchName,
-                                   /*oneLineMode*/ true,
-                                   /*autoPopup*/ true,
-                                   /*forceAutoPopup*/ false,
-                                   /*showHint*/ false))
+      cell(branchNameField)
         .bind({ c -> c.text }, { c, v -> c.text = v }, ::branchName.toMutableProperty())
         .align(AlignX.FILL)
         .label(GitBundle.message("new.branch.dialog.branch.name"), LabelPosition.TOP)
@@ -102,9 +110,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       if (showResetOption) {
         cell(overwriteCheckbox)
           .bindSelected(::reset)
-          .applyToComponent {
-            isEnabled = false
-          }
+          .enabledIf(HasConflictingLocalBranchPredicate(branchNameField))
           .component
       }
       if (showSetTrackingOption) {
@@ -163,7 +169,6 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
     if (errorInfo != null) error(errorInfo.message)
     else {
       val localBranchConflict = conflictsWithLocalBranch(repositories, branchName)
-      overwriteCheckbox.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox.isSelected == true) null // no conflicts or ask to reset
       else if (localBranchConflict.warning && localConflictsAllowed) {
@@ -212,6 +217,22 @@ internal class GitNewBranchDialog @JvmOverloads constructor(private val project:
       else {
         return allSuggestions
       }
+    }
+  }
+
+  private inner class HasConflictingLocalBranchPredicate(val branchNameField: EditorTextField) : ComponentPredicate() {
+    override fun addListener(listener: (Boolean) -> Unit) {
+      branchNameField.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: DocumentEvent) {
+          listener(invoke())
+        }
+      })
+    }
+
+    override fun invoke(): Boolean {
+      val branchName = validator.cleanUpBranchName(branchNameField.text).trim()
+      val localBranchConflict = conflictsWithLocalBranch(repositories, branchName)
+      return localBranchConflict != null
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo
 
 import com.intellij.openapi.vcs.FilePath
@@ -6,19 +6,27 @@ import com.intellij.openapi.vfs.newvfs.events.*
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcsUtil.VcsUtil
 import com.intellij.vfs.AsyncVfsEventsListener
+import kotlinx.coroutines.ensureActive
+import kotlin.coroutines.coroutineContext
 
-class GitUntrackedDirtyScopeListener(val repositoryManager: GitRepositoryManager) : AsyncVfsEventsListener {
-  override fun filesChanged(events: List<VFileEvent>) {
-    if (repositoryManager.repositories.isEmpty()) return
+internal class GitUntrackedDirtyScopeListener(private val repositoryManager: GitRepositoryManager) : AsyncVfsEventsListener {
+  override suspend fun filesChanged(events: List<VFileEvent>) {
+    if (repositoryManager.repositories.isEmpty()) {
+      return
+    }
 
     val map = MultiMap<GitRepository, FilePath>()
 
     for (event in events) {
+      coroutineContext.ensureActive()
+
       for (filePath in getAffectedFilePaths(event)) {
         val repo = repositoryManager.getRepositoryForFileQuick(filePath) ?: continue
         map.putValue(repo, filePath)
       }
     }
+
+    coroutineContext.ensureActive()
 
     for ((repo, filePaths) in map.entrySet()) {
       repo.untrackedFilesHolder.markPossiblyUntracked(filePaths)

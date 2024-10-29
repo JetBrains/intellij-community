@@ -240,8 +240,7 @@
     "DisclosureButton": {
       "defaultBackground": "#FFFFFF12",
       "hoverOverlay": "#FFFFFF0D",
-      "pressedOverlay": "#FFFFFF1A",
-      "successBackground": "#375239"
+      "pressedOverlay": "#FFFFFF1A"
     },
 
     "Editor": {
@@ -703,7 +702,7 @@
     "ToolWindow": {
       "Header.background": "#3B4754",
       "Header.inactiveBackground": "#3C3F41",
-      "Header.height.compact": 32,
+      "Header.height.compact": 31,
       "Header.fontSizeOffset.compact": -1,
       "HeaderCloseButton.background": "#3F4146",
       "HeaderTab.selectedBackground": "#313B45",
@@ -954,6 +953,35 @@
       "LiveChart": {
         "horizontalAxisColor": "#D1D1D1"
       }
+    },
+    "CompilationCharts": {
+      "background":{
+        "odd": "#2B2D30",
+        "even": "#393B40",
+        "default": "#2B2D30"
+      },
+      "test": {
+        "enabled": "#375239",
+        "disabled": "#273828",
+        "stroke": "#57965C",
+        "selected": "#73BD79"
+      },
+      "production": {
+        "enabled": "#2E436E",
+        "disabled": "#25324D",
+        "stroke": "#3574F0",
+        "selected": "#548AF7"
+      },
+      "memory": {
+        "background": "#2E436E",
+        "stroke": "#548AF7"
+      },
+      "cpu": {
+        "background": "#375239",
+        "stroke": "#57965C"
+      },
+      "lineColor": "#1E1F22",
+      "textColor": "#B4B8BF"
     },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#363839",

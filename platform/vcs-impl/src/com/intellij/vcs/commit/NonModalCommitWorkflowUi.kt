@@ -17,6 +17,7 @@ interface NonModalCommitWorkflowUi : CommitWorkflowUi, CommitActionsUi, CommitAu
   fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext)
 }
 
+@ApiStatus.Internal
 interface CommitActionsUi {
   var defaultCommitActionName: @NlsContexts.Button String
   var isDefaultCommitActionEnabled: Boolean

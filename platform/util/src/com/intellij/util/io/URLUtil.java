@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.NlsSafe;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ThreeState;
 import com.intellij.util.lang.UrlUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public final class URLUtil {
   public static final String JRT_PROTOCOL = "jrt";
   public static final String JAR_SEPARATOR = "!/";
 
-  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset(?:=|:)[^,;]+)?(;base64)?,(.+)");
+  public static final Pattern DATA_URI_PATTERN = Pattern.compile("data:([^,;]+/[^,;]+)(;charset[=:][^,;]+)?(;base64)?,(.+)");
   public static final Pattern URL_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
   public static final Pattern URL_WITH_PARENS_PATTERN = Pattern.compile("\\b(mailto:|(news|(ht|f)tp(s?))://|((?<![\\p{L}0-9_.])(www\\.)))[-A-Za-z0-9+$&@#/%?=~_|!:,.;()]*[-A-Za-z0-9+$&@#/%=~_|()]");
   public static final Pattern FILE_URL_PATTERN = Pattern.compile("\\b(file:///)[-A-Za-z0-9+$&@#/%?=~_|!:,.;]*[-A-Za-z0-9+$&@#/%=~_|]");
@@ -38,16 +39,16 @@ public final class URLUtil {
   private URLUtil() { }
 
   /**
-   * @return if false, then the line contains no URL; if true, then more heavy {@link #URL_PATTERN} check should be used.
+   * If {@code false}, then the line contains no URL, otherwise the heavier {@link #URL_PATTERN} check should be used.
    */
   public static boolean canContainUrl(@NotNull String line) {
-    return line.contains("mailto:") || line.contains("://") || line.contains("www.");
+    return line.contains("mailto:") || line.contains(SCHEME_SEPARATOR) || line.contains("www.");
   }
 
   /**
-   * Opens a url stream. The semantics is the sames as {@link URL#openStream()}. The
-   * separate method is needed, since jar URLs open jars via JarFactory and thus keep them
-   * mapped into memory.
+   * Opens a URL stream; the semantics is the sames as {@link URL#openStream()}.
+   * The separate method is necessary,
+   * since JAR URLs open files via {@link sun.net.www.protocol.jar.JarFileFactory} and thus keep them mapped into memory.
    */
   public static @NotNull InputStream openStream(@NotNull URL url) throws IOException {
     String protocol = url.getProtocol();
@@ -129,7 +130,7 @@ public final class URLUtil {
 
   /**
    * Splits .jar URL along a separator and strips "jar" and "file" prefixes if any.
-   * Returns a pair of path to a .jar file and entry name inside a .jar, or null if the URL does not contain a separator.
+   * Returns a [path to a .jar file, entry name inside a .jar] pair, or {@code null} if the URL does not contain a separator.
    * <p/>
    * E.g. "jar:file:///path/to/jar.jar!/resource.xml" is converted into ["/path/to/jar.jar", "resource.xml"].
    * <p/>
@@ -157,7 +158,7 @@ public final class URLUtil {
         if (jarPath.startsWith(SCHEME_SEPARATOR)) {
           jarPath = jarPath.substring(SCHEME_SEPARATOR.length());
         }
-        else if (jarPath.length() != 0 && jarPath.charAt(0) == ':') {
+        else if (!jarPath.isEmpty() && jarPath.charAt(0) == ':') {
           jarPath = jarPath.substring(1);
         }
       }
@@ -192,8 +193,8 @@ public final class URLUtil {
   }
 
   /**
-   * Extracts byte array from given data:URL string.
-   * data:URL will be decoded from base64 if it contains the marker of base64 encoding.
+   * Extracts a byte array from the given data:URL string.
+   * Data:URL will be decoded from Base64 if it contains the marker of Base64 encoding.
    *
    * @param dataUrl data:URL-like string (may be quoted)
    * @return extracted byte array or {@code null} if it cannot be extracted.
@@ -262,12 +263,9 @@ public final class URLUtil {
   }
 
   /**
-   * Encodes a URI component by replacing each instance of certain characters by one, two, three,
-   * or four escape sequences representing the UTF-8 encoding of the character.
-   * Behaves similarly to standard JavaScript build-in function <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent">encodeURIComponent</a>.
-   *
-   * @param s a component of a URI
-   * @return a new string representing the provided string encoded as a URI component
+   * Encodes a component by replacing each instance of certain characters with one, two, three, or four
+   * escape sequences representing the UTF-8 encoding of the character.
+   * Behaves similarly to the <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/encodeURIComponent">standard JS function</a>.
    */
   public static @NotNull String encodeURIComponent(@NotNull String s) {
     try {
@@ -285,8 +283,8 @@ public final class URLUtil {
   }
 
   /**
-   * Finds the first range in text containing URL. This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing
-   * matched set of parentheses.
+   * Finds the first range in text containing URL.
+   * This is similar to using {@link #URL_PATTERN} matcher, but also finds URLs containing a matched set of parentheses.
    */
   public static @Nullable TextRange findUrl(@NotNull CharSequence text, int startOffset, int endOffset) {
     Matcher m = URL_WITH_PARENS_PATTERN.matcher(text);
@@ -318,11 +316,9 @@ public final class URLUtil {
   }
 
   /**
-   * Extracts path from the given URL. Path is a substring from "://" till the end of URL. If there is no "://" URL
-   * itself is returned.
-   *
-   * @param url the URL
-   * @return path
+   * Extracts a path from the given URL.
+   * A path is a substring from "://" till the end of URL.
+   * If there is no "://", the URL itself is returned.
    */
   public static @NotNull String extractPath(@NotNull String url) {
     int index = url.indexOf(SCHEME_SEPARATOR);
@@ -338,12 +334,19 @@ public final class URLUtil {
     }
   }
 
+  /** @deprecated unused; inline if needed */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval
   public static String encodeQuery(String query) {
     try {
-      return new URI(null, null, null, query, null).toASCIIString().substring(1);  // remove leading ?
+      return new URI(null, null, null, query, null).toASCIIString().substring(1);
     }
     catch (URISyntaxException e) {
       return query;
     }
+  }
+
+  public static @NotNull String addSchemaIfMissing(@NotNull String url) {
+    return url.contains(SCHEME_SEPARATOR) ? url : HTTPS_PROTOCOL + SCHEME_SEPARATOR + url;
   }
 }

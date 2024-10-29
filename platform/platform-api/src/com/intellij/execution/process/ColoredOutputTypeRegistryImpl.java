@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
@@ -110,7 +110,7 @@ public final class ColoredOutputTypeRegistryImpl extends ColoredOutputTypeRegist
    * later to print to the console
    */
   @Override
-  public @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
+  @NotNull ProcessOutputType getOutputType(@NotNull AnsiTerminalEmulator terminal, @NotNull Key streamType) {
     Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
     String ansiSerializedState = terminal.getAnsiSerializedSGRState();
     ProcessOutputType key = attrsToKeyMap.get(ansiSerializedState);

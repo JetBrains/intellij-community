@@ -31,6 +31,7 @@ import com.intellij.ui.components.TextComponentEmptyText;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.function.Function;
 
 import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.util.containers.ContainerUtil.exists;
@@ -196,6 +198,12 @@ public final class CommonJavaFragments {
     jrePathEditor.setPreferredSize(minimumSize);
     jrePathEditor.getLabel().setVisible(false);
     jrePathEditor.getComponent().getAccessibleContext().setAccessibleName(jrePathEditor.getLabel().getText());
+    return createJrePathEditorFragment(jrePathEditor, comboBox);
+  }
+
+  private static <T extends CommonJavaRunConfigurationParameters>
+  @NotNull SettingsEditorFragment<T, JrePathEditor> createJrePathEditorFragment(@NotNull JrePathEditor jrePathEditor,
+                                                                                @NotNull ComboBox<JrePathEditor.JreComboBoxItem> comboBox) {
     SettingsEditorFragment<T, JrePathEditor> jrePath =
       new SettingsEditorFragment<>(JRE_PATH, ExecutionBundle.message("run.configuration.jre.name"), null, jrePathEditor, 5,
                                    (configuration, editor) -> editor.setPathOrName(configuration.getAlternativeJrePath(),
@@ -228,16 +236,7 @@ public final class CommonJavaFragments {
     vmOptions.getEditorField().getEmptyText().setText(message);
     MacrosDialog.addMacroSupport(vmOptions.getEditorField(), MacrosDialog.Filters.ALL, hasModule);
     TextComponentEmptyText.setupPlaceholderVisibility(vmOptions.getEditorField());
-    SettingsEditorFragment<T, RawCommandLineEditor> vmParameters =
-      new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
-                                   15,
-                                   (configuration, c) -> c.setText(configuration.getVMParameters()),
-                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getText() : null),
-                                   configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
-    vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
-    vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
-    vmParameters.setEditorGetter(editor -> editor.getEditorField());
-    return vmParameters;
+    return createVmOptionsFragment(group, vmOptions, RawCommandLineEditor::getEditorField);
   }
 
   @NotNull
@@ -270,15 +269,23 @@ public final class CommonJavaFragments {
         }
       }
     };
-    SettingsEditorFragment<T, VmOptionsEditor> vmParameters =
+    return createVmOptionsFragment(group, vmOptions, VmOptionsEditor::getTextField);
+  }
+
+  private static <T extends JavaRunConfigurationBase, E extends JComponent, C extends JComponent & TextAccessor>
+  @NotNull SettingsEditorFragment<T, E> createVmOptionsFragment(@NotNull @Nls String group,
+                                                                @NotNull E vmOptions,
+                                                                @NotNull Function<E, C> textAccessorGetter) {
+    SettingsEditorFragment<T, E> vmParameters =
       new SettingsEditorFragment<>("vmParameters", ExecutionBundle.message("run.configuration.java.vm.parameters.name"), group, vmOptions,
                                    15,
-                                   (configuration, c) -> c.getTextField().setText(configuration.getVMParameters()),
-                                   (configuration, c) -> configuration.setVMParameters(c.isVisible() ? c.getTextField().getText() : null),
+                                   (configuration, c) -> textAccessorGetter.apply(c).setText(configuration.getVMParameters()),
+                                   (configuration, c) -> configuration.setVMParameters(
+                                     c.isVisible() ? textAccessorGetter.apply(c).getText() : null),
                                    configuration -> StringUtil.isNotEmpty(configuration.getVMParameters()));
     vmParameters.setHint(ExecutionBundle.message("run.configuration.java.vm.parameters.hint"));
     vmParameters.setActionHint(ExecutionBundle.message("specify.vm.options.for.running.the.application"));
-    vmParameters.setEditorGetter(VmOptionsEditor::getTextField);
+    vmParameters.setEditorGetter(textAccessorGetter);
     return vmParameters;
   }
 }

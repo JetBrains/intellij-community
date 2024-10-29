@@ -3,6 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.PlatformJarNames.APP_JAR
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
@@ -23,6 +24,7 @@ import org.jetbrains.jps.model.module.JpsModuleReference
 class PlatformLayout: BaseLayout() {
   private val projectLibraryToPolicy: MutableMap<String, ProjectLibraryPackagingPolicy> = HashMap()
 
+  @get:TestOnly
   val excludedProjectLibraries: Sequence<String>
     get() = projectLibraryToPolicy.asSequence().filter { it.value == ProjectLibraryPackagingPolicy.EXCLUDE }.map { it.key }
 
@@ -33,10 +35,6 @@ class PlatformLayout: BaseLayout() {
 
   fun isProjectLibraryExcluded(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.EXCLUDE
 
-  fun withProjectLibrary(data: ProjectLibraryData) {
-    includedProjectLibraries.add(data)
-  }
-
   internal fun alwaysPackToPlugin(names: List<String>) {
     for (name in names) {
       projectLibraryToPolicy.put(name, ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN)
@@ -45,16 +43,14 @@ class PlatformLayout: BaseLayout() {
 
   fun isLibraryAlwaysPackedIntoPlugin(name: String) = projectLibraryToPolicy.get(name) == ProjectLibraryPackagingPolicy.ALWAYS_PACK_TO_PLUGIN
 
-  override fun withModule(moduleName: String) {
-    withModule(moduleName, APP_JAR)
-  }
+  override fun getRelativeJarPath(moduleName: String) = APP_JAR
 
   fun withoutProjectLibrary(libraryName: String) {
     projectLibraryToPolicy.put(libraryName, ProjectLibraryPackagingPolicy.EXCLUDE)
   }
 
   fun collectProjectLibrariesFromIncludedModules(context: BuildContext, consumer: (JpsLibrary, JpsModule) -> Unit) {
-    val libsToUnpack = includedProjectLibraries.mapTo(HashSet(includedProjectLibraries.size)) { it.libraryName }
+    val libsToUnpack = includedProjectLibraries.mapTo(LinkedHashSet(includedProjectLibraries.size)) { it.libraryName }
     val uniqueGuard = HashSet<String>()
     for (item in includedModules) {
       // libraries are packed into product module
@@ -77,8 +73,6 @@ class PlatformLayout: BaseLayout() {
   }
 
   private fun isSkippedLibrary(library: JpsLibrary, libsToUnpack: Collection<String>): Boolean {
-    return library.createReference().parentReference is JpsModuleReference ||
-           libsToUnpack.contains(library.name) ||
-           isProjectLibraryExcluded(library.name)
+    return library.createReference().parentReference is JpsModuleReference || libsToUnpack.contains(library.name) || isProjectLibraryExcluded(library.name)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tools;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,14 +84,11 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
     });
   }
 
-  @NotNull
-  protected abstract BaseToolManager<T> getToolManager();
+  protected abstract @NotNull BaseToolManager<T> getToolManager();
 
-  @NotNull
-  protected abstract ToolSelectDialog getToolSelectDialog(@Nullable String toolIdToSelect);
+  protected abstract @NotNull ToolSelectDialog getToolSelectDialog(@Nullable String toolIdToSelect);
 
-  @NotNull
-  protected List<Object> getComboBoxElements() {
+  protected @NotNull List<Object> getComboBoxElements() {
     List<Object> result = new SmartList<>();
     BaseToolManager<T> manager = getToolManager();
     result.add(NONE_TOOL);//for empty selection
@@ -119,8 +116,7 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
     return valuableCount;
   }
 
-  @Nullable
-  public Tool selectTool(@Nullable String toolId) {
+  public @Nullable Tool selectTool(@Nullable String toolId) {
     JComboBox comboBox = getComboBox();
     if (toolId == null) {
       comboBox.setSelectedIndex(-1);
@@ -138,8 +134,7 @@ public abstract class BaseToolSelectComboBox<T extends Tool> extends ComboboxWit
     return null;
   }
 
-  @Nullable
-  public Tool getSelectedTool() {
+  public @Nullable Tool getSelectedTool() {
     Object item = getComboBox().getSelectedItem();
     return item instanceof Tool ? (Tool)item : null;
   }

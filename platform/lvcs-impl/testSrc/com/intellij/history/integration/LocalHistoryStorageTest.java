@@ -6,7 +6,7 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.io.storage.AbstractStorage;
 
 import java.io.DataInputStream;
@@ -41,7 +41,7 @@ public class LocalHistoryStorageTest extends IntegrationTestCase {
       () -> VirtualFileManager.getInstance().findFileByUrl("temp:///").createChildData(null, "testChangesAccumulationPerformance.txt")
     );
     try {
-      PerformanceTestUtil.newPerformanceTest("local history changes accumulation", () -> {
+      Benchmark.newBenchmark("local history changes accumulation", () -> {
         doChangesAccumulationPerformanceTest(f);
       }).start();
     }

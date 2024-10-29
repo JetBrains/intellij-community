@@ -13,10 +13,12 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class SmartIndentingBackspaceHandler extends AbstractIndentingBackspaceHandler {
   private static final Logger LOG = Logger.getInstance(SmartIndentingBackspaceHandler.class);
 

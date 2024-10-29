@@ -37,14 +37,14 @@ val isMacOs = Os.isFamily(Os.FAMILY_MAC)
 
 val pythonVersionMapping = mapOf(
   "2.7" to "2.7.18",
-  "3.6" to if (isWindows) "3.6.8" else "3.6.15",
-  "3.7" to "3.7.9",
   "3.8" to "3.8.10",
   "3.9" to "3.9.13",
   "3.10" to "3.10.8",
   "3.11" to "3.11.0",
   "3.12" to "3.12.0",
 )
+
+val defaultPackages = listOf("virtualenv")
 
 envs {
   bootstrapDirectory = pythonsDirectory
@@ -76,14 +76,18 @@ tasks.register("build") {
   dependsOn(tasks.matching { it.name.startsWith("setup_") }, "clean")
 }
 
-fun createPython(id: String, version: String?, packages: List<String> = listOf(),
-                 tags: List<String> = listOf(), type: PythonType = PythonType.PYTHON) {
-  check(version != null)
-
+fun createPython(
+  id: String,
+  version: String,
+  packages: List<String> = listOf(),
+  tags: List<String> = listOf(),
+  type: PythonType = PythonType.PYTHON,
+) {
   val pythonHome = File(pythonsDirectory, id)
+  val packages = packages + defaultPackages
 
   envs {
-    when(type) {
+    when (type) {
       PythonType.PYTHON -> python(id, pythonVersionMapping[version], packages)
       PythonType.CONDA -> conda(id, version, packages)
     }
@@ -106,8 +110,8 @@ fun createPython(id: String, version: String?, packages: List<String> = listOf()
     // as we have non-exact version as a key of hashMap retrieval logic from
     // the old script may be easily omitted (TBD: will we be able to keep clear mapping..?
     // maybe one will ever want to add "myCoolPythonVersion" as a key and break the logic)
-    val linkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "" ).toPath()
-    val executablePath = pythonHome.resolve( if (isWindows) "python.exe" else "bin/python$version").toPath()
+    val linkPath = pythonHome.resolve("python$version" + if (isWindows) ".exe" else "").toPath()
+    val executablePath = pythonHome.resolve(if (isWindows) "python.exe" else "bin/python$version").toPath()
 
     onlyIf { !linkPath.exists() && type == PythonType.PYTHON }
 
@@ -128,17 +132,11 @@ createPython("py312_django_latest", "3.12",
              listOf("django", "behave-django", "behave", "pytest", "untangle", "djangorestframework"),
              listOf("python3.12", "django", "django20", "behave", "behave-django", "django2", "pytest", "untangle"))
 
-if (isUnix && !isMacOs) {
-  createPython("py37",
-               "3.7",
-               listOf("pyqt5==5.12", "PySide2==5.12.1"),
-               listOf("python3.7", "qt"))
-}
-else {
-  // qt is for unix only
-  createPython("py37", "3.7",
-               listOf(),
-               listOf("python3.7"))
+val qtTags = mutableListOf<String>()
+val qtPackages = mutableListOf<String>()
+if (isUnix && !isMacOs) { //qt is for Linux only
+  qtPackages.addAll(listOf("pyqt5==5.12", "PySide2==5.12.1"))
+  qtTags.add("qt")
 }
 
 createPython("py27", "2.7",
@@ -147,9 +145,9 @@ createPython("py27", "2.7",
 
 createPython("py38", "3.8",
              listOf("ipython==7.8", "django==2.2", "behave", "jinja2", "tox>=2.0", "nose", "pytest", "django-nose", "behave-django",
-                    "pytest-xdist", "untangle", "numpy", "pandas"),
+                    "pytest-xdist", "untangle", "numpy", "pandas") + qtPackages,
              listOf("python3.8", "python3", "ipython", "ipython780", "skeletons", "django", "behave", "behave-django", "tox", "jinja2",
-                    "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas"))
+                    "packaging", "pytest", "nose", "django-nose", "behave-django", "django2", "xdist", "untangle", "pandas") + qtTags)
 
 createPython("python3.9", "3.9",
              listOf("pytest", "pytest-xdist"),
@@ -159,15 +157,15 @@ createPython("python3.10", "3.10",
              listOf("untangle"), listOf("python3.10", "untangle"))
 
 createPython("python3.11", "3.11",
-             listOf("black == 23.1.0", "joblib", "tensorflow"),
-             listOf("python3.11", "black", "joblib", "tensorflow"))
+             listOf("black == 23.1.0", "joblib", "tensorflow", "poetry"),
+             listOf("python3.11", "black", "poetry", "joblib", "tensorflow"))
 
 createPython("python3.12", "3.12",
-             listOf("teamcity-messages", "Twisted", "pytest")
-               // TODO: maybe switch to optional dependency Twisted[windows-platform]
-               // https://docs.twisted.org/en/stable/installation/howto/optional.html
-               + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
-             listOf("python3", "python3.12", "messages", "twisted", "pytest"))
+             listOf("teamcity-messages", "Twisted", "pytest", "poetry")
+             // TODO: maybe switch to optional dependency Twisted[windows-platform]
+             // https://docs.twisted.org/en/stable/installation/howto/optional.html
+             + if (isWindows) listOf("pypiwin32") else listOf(), //win32api is required for pypiwin32
+             listOf("python3", "poetry", "python3.12", "messages", "twisted", "pytest"))
 
 // set CONDA_PATH to conda binary location to be able to run tests
-createPython("conda", "Miniconda3-py310_23.3.1-0", listOf(), listOf("conda"), type = PythonType.CONDA)
+createPython("conda", "Miniconda3-py312_24.5.0-0", listOf(), listOf("conda"), type = PythonType.CONDA)

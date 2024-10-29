@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.configurable;
 
@@ -49,8 +49,9 @@ final class PatternDialog extends DialogWrapper {
 
     final TodoAttributes attrs = pattern.getAttributes();
     myPattern = pattern;
-    myIconComboBox = new ComboBox<>(new Icon[]{AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion,
-      AllIcons.General.TodoImportant});
+    myIconComboBox = new ComboBox<>(new Icon[]{
+      null, AllIcons.General.TodoDefault, AllIcons.General.TodoQuestion, AllIcons.General.TodoImportant
+    });
     myIconComboBox.setSelectedItem(attrs.getIcon());
     myIconComboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
       label.setIcon(value);
@@ -121,9 +122,8 @@ final class PatternDialog extends DialogWrapper {
     super.doOKAction();
   }
 
-  @NotNull
   @Override
-  protected List<ValidationInfo> doValidateAll() {
+  protected @NotNull List<ValidationInfo> doValidateAll() {
     String patternString = myPatternStringField.getText().trim();
     if (patternString.isEmpty()) {
       return Collections.singletonList(new ValidationInfo(IdeBundle.message("error.pattern.should.be.specified"), myPatternStringField));

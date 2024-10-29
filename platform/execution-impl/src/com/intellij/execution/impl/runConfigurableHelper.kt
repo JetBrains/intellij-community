@@ -2,6 +2,7 @@
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
+import org.jetbrains.annotations.ApiStatus
 
 internal class RunConfigurationBean {
   val settings: RunnerAndConfigurationSettings
@@ -20,6 +21,7 @@ internal class RunConfigurationBean {
   override fun toString() = settings.toString()
 }
 
+@ApiStatus.Internal
 enum class RunConfigurableNodeKind {
   CONFIGURATION_TYPE, FOLDER, CONFIGURATION, TEMPORARY_CONFIGURATION, UNKNOWN;
 

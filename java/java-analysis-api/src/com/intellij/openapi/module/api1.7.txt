@@ -65,6 +65,9 @@ sun.util.locale.provider.SPILocaleProviderAdapter.CurrencyNameProviderDelegate#g
 sun.util.locale.provider.SPILocaleProviderAdapter.LocaleNameProviderDelegate#getDisplayScript(java.lang.String;java.util.Locale;)
 sun.util.logging.PlatformLogger
 sun.util.calendar.ZoneInfo#observesDaylightTime()
+sun.security.ec.ECDSASignature
+sun.security.ec.ECDHKeyAgreement
+sun.security.ec.ECKeyPairGenerator
 sun.security.ssl.SSLEngineImpl#getHandshakeSession()
 sun.security.ssl.SSLSocketImpl#getHandshakeSession()
 sun.security.ssl.SSLServerSocketImpl#getSSLParameters()
@@ -317,7 +320,6 @@ java.lang.Character#isIdeographic(int;)
 java.lang.Character#compare(char;char;)
 java.lang.Character#getName(int;)
 java.lang.Exception#Exception(java.lang.String;java.lang.Throwable;boolean;boolean;)
-java.lang.Throwable#suppressedExceptions
 java.lang.Throwable#Throwable(java.lang.String;java.lang.Throwable;boolean;boolean;)
 java.lang.Throwable#addSuppressed(java.lang.Throwable;)
 java.lang.Throwable#getSuppressed()
@@ -398,8 +400,6 @@ java.util.Locale#toLanguageTag()
 java.util.Locale#forLanguageTag(java.lang.String;)
 java.util.Locale#getDisplayScript()
 java.util.Locale#getDisplayScript(java.util.Locale;)
-java.util.Locale#writeObject(java.io.ObjectOutputStream;)
-java.util.Locale#readObject(java.io.ObjectInputStream;)
 java.util.Locale.Category
 java.util.Locale.Builder
 java.util.Objects
@@ -528,6 +528,7 @@ sun.java2d.marlin.DMarlinRenderingEngine#strokeTo(java.awt.Shape;java.awt.geom.A
 sun.java2d.marlin.DMarlinRenderingEngine#getAATileGenerator(java.awt.Shape;java.awt.geom.AffineTransform;sun.java2d.pipe.Region;java.awt.BasicStroke;boolean;boolean;int[];)
 sun.java2d.marlin.DMarlinRenderingEngine#getAATileGenerator(double;double;double;double;double;double;double;double;sun.java2d.pipe.Region;int[];)
 sun.java2d.marlin.DMarlinRenderingEngine#getMinimumAAPenSize()
+sun.java2d.marlin.DualPivotQuicksort20191112Ext
 sun.java2d.SurfaceData#getState()
 sun.java2d.SurfaceData#getStateTracker()
 sun.java2d.StateTracker#ALWAYS_CURRENT
@@ -547,22 +548,17 @@ sun.java2d.StateTrackableDelegate#addDynamicAgent()
 sun.java2d.StateTrackableDelegate#removeDynamicAgent()
 sun.java2d.StateTrackableDelegate#markDirty()
 java.awt.font.NumericShaper.Range
-java.awt.font.NumericShaper#shapingRange
 java.awt.font.NumericShaper#getShaper(java.awt.font.NumericShaper.Range;)
 java.awt.font.NumericShaper#getContextualShaper(java.util.Set<java.awt.font.NumericShaper.Range>;)
 java.awt.font.NumericShaper#getContextualShaper(java.util.Set<java.awt.font.NumericShaper.Range>;java.awt.font.NumericShaper.Range;)
 java.awt.font.NumericShaper#shape(char[];int;int;java.awt.font.NumericShaper.Range;)
 java.awt.font.NumericShaper#getRangeSet()
-java.awt.font.NumericShaper#writeObject(java.io.ObjectOutputStream;)
 java.awt.peer.CanvasPeer#getAppropriateGraphicsConfiguration(java.awt.GraphicsConfiguration;)
 java.awt.peer.ComponentPeer#applyShape(sun.java2d.pipe.Region;)
 java.awt.peer.ComponentPeer#updateGraphicsData(java.awt.GraphicsConfiguration;)
 java.awt.event.KeyEvent#getExtendedKeyCode()
 java.awt.event.KeyEvent#getExtendedKeyCodeForChar(int;)
-java.awt.event.InputEvent#BUTTON_DOWN_MASK
-java.awt.event.InputEvent#getButtonDownMasks()
 java.awt.event.InputEvent#getMaskForButton(int;)
-java.awt.event.InvocationEvent#dispatched
 java.awt.event.InvocationEvent#isDispatched()
 java.awt.event.MouseWheelEvent#MouseWheelEvent(java.awt.Component;int;long;int;int;int;int;int;int;boolean;int;int;int;double;)
 java.awt.event.MouseWheelEvent#getPreciseWheelRotation()
@@ -571,9 +567,6 @@ java.awt.image.DataBuffer#DataBuffer(sun.java2d.StateTrackable.State;int;int;int
 java.awt.image.DataBuffer#DataBuffer(sun.java2d.StateTrackable.State;int;int;int;int;)
 java.awt.image.DataBuffer#DataBuffer(sun.java2d.StateTrackable.State;int;int;int;int[];)
 java.awt.Window.Type
-java.awt.Window#autoRequestFocus
-java.awt.Window#opacity
-java.awt.Window#shape
 java.awt.Window#setAutoRequestFocus(boolean;)
 java.awt.Window#isAutoRequestFocus()
 java.awt.Window#isValidateRoot()
@@ -590,10 +583,7 @@ java.awt.Component#revalidate()
 java.awt.Container#hasLightweightDescendants()
 java.awt.Container#isValidateRoot()
 java.awt.EventQueue#createSecondaryLoop()
-java.awt.FileDialog#files
-java.awt.FileDialog#multipleMode
 java.awt.FileDialog#getFiles()
-java.awt.FileDialog#setFiles(java.io.File[];)
 java.awt.FileDialog#setMultipleMode(boolean;)
 java.awt.FileDialog#isMultipleMode()
 java.awt.SecondaryLoop
@@ -607,7 +597,6 @@ java.awt.GraphicsConfiguration#isTranslucencyCapable()
 java.beans.Transient
 java.beans.Expression#execute()
 java.beans.XMLDecoder#XMLDecoder(org.xml.sax.InputSource;)
-java.beans.XMLDecoder#XMLDecoder(org.xml.sax.InputSource;java.lang.Object;java.beans.ExceptionListener;java.lang.ClassLoader;)
 java.beans.XMLDecoder#createHandler(java.lang.Object;java.beans.ExceptionListener;java.lang.ClassLoader;)
 java.beans.XMLEncoder#XMLEncoder(java.io.OutputStream;java.lang.String;boolean;int;)
 java.beans.Introspector#getBeanInfo(java.lang.Class<?>;java.lang.Class<?>;int;)
@@ -718,7 +707,6 @@ javax.swing.SwingUtilities#getValidateRoot(java.awt.Container;boolean;)
 java.util.logging.Logger#getGlobal()
 com.sun.tools.javac.launcher.Main.MemoryClassLoader.MemoryURLConnection#getContentLengthLong()
 com.sun.source.tree.UnionTypeTree
-sun.tools.jconsole.ThreadTab.PromptingTextField#revalidate()
 sun.tools.jconsole.ConnectDialog#revalidate()
 javax.lang.model.type.TypeKind#UNION
 javax.lang.model.type.UnionType
@@ -745,6 +733,7 @@ sun.security.ec.ECKeyPairGenerator
 com.sun.management.internal.OperatingSystemImpl#getProcessCpuLoad()
 com.sun.management.OperatingSystemMXBean#getSystemCpuLoad()
 com.sun.management.OperatingSystemMXBean#getProcessCpuLoad()
+com.sun.management.GarbageCollectionNotificationInfo
 java.lang.management.BufferPoolMXBean
 java.lang.management.ManagementFactory#getPlatformMXBean(java.lang.Class<T>;)
 java.lang.management.ManagementFactory#getPlatformMXBeans(java.lang.Class<T>;)
@@ -777,6 +766,10 @@ com.sun.nio.file.ExtendedWatchEventModifier
 com.sun.nio.file.SensitivityWatchEventModifier
 sun.misc.Unsafe#setMemory(java.lang.Object;long;long;byte;)
 sun.misc.Unsafe#copyMemory(java.lang.Object;long;java.lang.Object;long;long;)
+com.sun.security.jgss.InquireType
+com.sun.security.jgss.ExtendedGSSContext
+com.sun.security.jgss.AuthorizationDataEntry
+com.sun.security.jgss.InquireSecContextPermission
 sun.security.krb5.KrbAsReqBuilder
 sun.security.krb5.KrbServiceLocator
 javax.security.auth.kerberos.KeyTab

@@ -5,8 +5,10 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JTextField
 
+@ApiStatus.Internal
 class SliceBackwardAdditionalUi {
   lateinit var field: JTextField
   val panel: DialogPanel = panel {

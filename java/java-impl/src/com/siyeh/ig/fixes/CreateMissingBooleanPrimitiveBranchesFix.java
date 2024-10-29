@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.fixes;
 
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -52,7 +53,12 @@ public final class CreateMissingBooleanPrimitiveBranchesFix extends CreateMissin
       }
     }
     if (missed.isEmpty()) return null;
-    return new CreateMissingBooleanPrimitiveBranchesFix(block, new HashSet<>(missed));
+    return new CreateMissingBooleanPrimitiveBranchesFix(block, new LinkedHashSet<>(missed));
+  }
+
+  @Nullable
+  public static PsiBasedModCommandAction<PsiSwitchBlock> createWithNull(@NotNull PsiSwitchBlock block) {
+    return createWithNull(block, () -> createFix(block));
   }
 
   @Override

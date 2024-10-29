@@ -252,9 +252,6 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     return getFrameHelper(project ?: IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: return null)
   }
 
-  @ApiStatus.Internal
-  fun getProjectFrameRootPane(project: Project?): IdeRootPane? = projectToFrame.get(project)?.frameHelper?.rootPane
-
   override fun getIdeFrame(project: Project?): IdeFrame? {
     if (project != null) {
       return getFrameHelper(project)
@@ -280,21 +277,22 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project) {
+    assignFrame(frameHelper, project, true)
+  }
+
+  internal suspend fun assignFrame(frameHelper: ProjectFrameHelper, project: Project, withListener: Boolean) {
     withContext(Dispatchers.EDT) {
       LOG.assertTrue(!projectToFrame.containsKey(project))
 
-      val listener = FrameStateListener(defaultFrameInfoHelper)
-      frameHelper.frame.addComponentListener(listener)
-      projectToFrame.put(project, ProjectItem(frameHelper, listener))
+      if (withListener) {
+        val listener = FrameStateListener(defaultFrameInfoHelper)
+        frameHelper.frame.addComponentListener(listener)
+        projectToFrame.put(project, ProjectItem(frameHelper, listener))
+      }
+      else {
+        projectToFrame.put(project, ProjectItem(frameHelper, null))
+      }
     }
-  }
-
-  internal suspend fun lightFrameAssign(project: Project, frameHelper: ProjectFrameHelper) {
-    projectToFrame.put(project, ProjectItem(frameHelper, null))
-    frameHelper.setRawProject(project)
-    frameHelper.setProject(project)
-    frameHelper.installDefaultProjectStatusBarWidgets(project)
-    frameHelper.updateTitle(project)
   }
 
   @RequiresEdt

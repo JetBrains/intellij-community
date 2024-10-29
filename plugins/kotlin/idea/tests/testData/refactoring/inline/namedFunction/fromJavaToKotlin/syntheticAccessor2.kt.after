@@ -3,3 +3,4 @@ fun reproduceAccessorsBug() {
     println("in setter${1}")
     println("in setter${2}")
 }
+// IGNORE_K2

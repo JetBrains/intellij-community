@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:ApiStatus.Internal
 
 package com.intellij.find.actions
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -65,16 +64,16 @@ internal sealed class TargetVariant {
 }
 
 internal class SearchTargetVariant(private val target: SearchTarget) : TargetVariant() {
-  override val presentation: TargetPresentation get() = target.presentation()
+  override val presentation: TargetPresentation = target.presentation()
   override fun handle(handler: UsageVariantHandler): Unit = handler.handleTarget(target)
 }
 
 internal class PsiTargetVariant(private val element: PsiElement) : TargetVariant() {
-  override val presentation: TargetPresentation get() = targetPresentation(element)
+  override val presentation: TargetPresentation = targetPresentation(element)
   override fun handle(handler: UsageVariantHandler): Unit = handler.handlePsi(element)
 }
 
 internal class CustomTargetVariant(private val target: UsageTarget) : TargetVariant() {
-  override val presentation: TargetPresentation get() = targetPresentation(target.presentation!!)
+  override val presentation: TargetPresentation = targetPresentation(target.presentation!!)
   override fun handle(handler: UsageVariantHandler): Unit = target.findUsages()
 }

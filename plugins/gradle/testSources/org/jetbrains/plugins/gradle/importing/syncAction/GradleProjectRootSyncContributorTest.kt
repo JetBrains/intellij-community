@@ -9,18 +9,17 @@ import com.intellij.openapi.util.use
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.testFramework.utils.module.assertContentRoots
 import com.intellij.testFramework.utils.module.assertModules
+import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWrapper
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.testFramework.util.createBuildFile
 import org.jetbrains.plugins.gradle.testFramework.util.createSettingsFile
 import org.junit.Test
 
-
 class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
 
   @Test
   fun `test project root creation in the simple Gradle project`() {
-
     val projectRoot = projectRoot.toNioPath()
     val linkedProjectRoot = projectRoot.getResolvedPath("../linked-project")
     val virtualFileUrlManager = project.workspaceModel.getVirtualFileUrlManager()
@@ -86,6 +85,7 @@ class GradleProjectRootSyncContributorTest : GradlePhasedSyncTestCase() {
       createBuildFile("../linked-project") {
         withJavaPlugin()
       }
+      generateGradleWrapper(linkedProjectRoot, currentGradleVersion)
 
       val settings = GradleSettings.getInstance(project)
       val projectSettings = GradleProjectSettings(linkedProjectRoot.toCanonicalPath())

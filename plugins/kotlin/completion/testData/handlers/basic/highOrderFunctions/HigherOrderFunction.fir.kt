@@ -1,0 +1,9 @@
+// FIR_COMPARISON
+fun <T> Array<T>.filter(predicate: (element: T) -> Boolean): java.util.List<T> = throw UnsupportedOperationException()
+
+fun main(args: Array<String>) {
+    args.fil<caret>
+}
+
+// ELEMENT: filter
+// TAIL_TEXT: " { predicate: (String) -> Boolean } for Array<T> in <root>"

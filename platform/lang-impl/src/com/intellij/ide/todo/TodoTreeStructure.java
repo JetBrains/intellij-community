@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo;
 
@@ -133,15 +133,13 @@ public abstract class TodoTreeStructure extends AbstractTreeStructureBase implem
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
 
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return asyncCommitDocuments(myProject);
   }
 
-  @NotNull
   @Override
-  public final Object getRootElement() {
+  public final @NotNull Object getRootElement() {
     return myRootElement;
   }
 

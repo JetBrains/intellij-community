@@ -32,10 +32,7 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
     }
 
     protected fun performTest() {
-        val disableDirective = when (pluginMode) {
-            KotlinPluginMode.K1 -> IgnoreTests.DIRECTIVES.IGNORE_K1
-            KotlinPluginMode.K2 -> IgnoreTests.DIRECTIVES.IGNORE_K2
-        }
+        val disableDirective = IgnoreTests.DIRECTIVES.of(pluginMode)
         myFixture.configureByDefaultFile()
         templateName?.let { myFixture.type(".$it") }
 
@@ -54,6 +51,8 @@ abstract class AbstractKotlinPostfixTemplateTestBase : NewLightKotlinCodeInsight
         try {
             IgnoreTests.runTestIfNotDisabledByFileDirective(testRootPath.resolve(testMethodPath), disableDirective, "after") {
                 check(postfixTemplate != null) { "Unable to find PostfixTemplate for `$templateKey`" }
+
+                KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable) { options -> options.last() }
 
                 if (template != null) {
                     myFixture.type(template.replace("\\t", "\t"))

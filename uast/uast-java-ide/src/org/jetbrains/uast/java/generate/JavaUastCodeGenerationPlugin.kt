@@ -117,7 +117,7 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     return ptr.element?.parent.toUElementOfType()
   }
 
-  override fun initializeField(uField: UField, uParameter: UParameter): UExpression? {
+  override fun initializeField(uField: UField, uParameter: UParameter, anchor: PsiElement?, addBefore: Boolean): UExpression? {
     val uMethod = uParameter.getParentOfType(UMethod::class.java, false) ?: return null
     val psiMethod = uMethod.sourcePsi as? PsiMethod ?: return null
     val body = psiMethod.body ?: return null
@@ -125,12 +125,16 @@ internal class JavaUastCodeGenerationPlugin : UastCodeGenerationPlugin {
     val elementFactory = JavaPsiFacade.getInstance(psiMethod.project).elementFactory
     val prefix = if (uField.name == uParameter.name) "this." else ""
     val statement = elementFactory.createStatementFromText("$prefix${uField.name} = ${uParameter.name};", psiMethod)
-    val lastBodyElement = body.lastBodyElement
-    if (lastBodyElement is PsiWhiteSpace) {
-      lastBodyElement.replace(statement)
-    }
-    else {
-      body.add(statement)
+    if (anchor != null) {
+      if (addBefore) body.addBefore(statement, anchor) else body.addAfter(statement, anchor)
+    } else {
+      val lastBodyElement = body.lastBodyElement
+      if (lastBodyElement is PsiWhiteSpace) {
+        lastBodyElement.replace(statement)
+      }
+      else {
+        body.add(statement)
+      }
     }
     return statement.toUElementOfType()
   }

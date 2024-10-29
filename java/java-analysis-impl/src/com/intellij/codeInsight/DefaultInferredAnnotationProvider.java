@@ -164,6 +164,8 @@ public final class DefaultInferredAnnotationProvider implements InferredAnnotati
 
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
+    PsiType returnType = method.getReturnType();
+    if (returnType == null || returnType instanceof PsiPrimitiveType) return null;
     if (hasExplicitNullability(method)) {
       return null;
     }

@@ -4,8 +4,10 @@ package com.intellij.openapi.paths;
 import com.intellij.ide.IdeBundle;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
+@ApiStatus.Internal
 public final class WebReferenceDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public @Nls String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {

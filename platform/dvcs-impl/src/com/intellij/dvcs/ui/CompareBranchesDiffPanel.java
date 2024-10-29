@@ -43,7 +43,7 @@ import java.util.List;
 
 import static java.util.Collections.emptyList;
 
-public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
+public class CompareBranchesDiffPanel extends JPanel implements UiDataProvider {
   public static final DataKey<CompareBranchesDiffPanel> DATA_KEY = DataKey.create("com.intellij.dvcs.ui.CompareBranchesDiffPanel");
 
   private final @NlsSafe String myBranchName;
@@ -165,11 +165,8 @@ public class CompareBranchesDiffPanel extends JPanel implements DataProvider {
   }
 
   @Override
-  public @Nullable Object getData(@NotNull String dataId) {
-    if (DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, this);
   }
 
   private static class MyChangesBrowser extends SimpleAsyncChangesBrowser {

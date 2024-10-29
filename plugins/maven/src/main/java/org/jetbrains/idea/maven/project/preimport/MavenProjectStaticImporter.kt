@@ -242,7 +242,7 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
         null
       }
 
-      MavenArtifact(it.id.groupId, it.id.artifactId, it.id.version, null, MavenConstants.TYPE_JAR, it.classifier, it.scope, false, MavenConstants.TYPE_JAR,
+      MavenArtifact(it.id.groupId, it.id.artifactId, it.id.version, it.id.version, MavenConstants.TYPE_JAR, it.classifier, it.scope, false, MavenConstants.TYPE_JAR,
                     file, localRepo, true, false)
 
 
@@ -250,12 +250,13 @@ class MavenProjectStaticImporter(val project: Project, val coroutineScope: Corou
 
     applyReadStateToMavenProject(projectData.mavenModel, projectData.mavenProject)
 
-    projectData.mavenProject.updater()
-      .setDependencies(dependencies)
-      .setPlugins(projectData.plugins.values.toList())
-      .setProperties(Properties().apply {
+    projectData.mavenProject.updateState(
+      dependencies.toList(),
+      Properties().apply {
         putAll(projectData.properties)
-      })
+      },
+      projectData.plugins.values.map { MavenPluginInfo(it, null) }.toList(),
+    )
   }
 
   private fun CoroutineScope.interpolate(

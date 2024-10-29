@@ -13,10 +13,10 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.DoNotAskOption;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.SystemIndependent;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -103,7 +102,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     }
 
     @Override
-    public JComponent getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
+    public DialogPanel getAdditionalConfigurationUI(@NotNull Collection<? extends Change> changes, @Nullable String commitMessage) {
       String patchPath = StringUtil.nullize(PropertiesComponent.getInstance(myProject).getValue(VCS_PATCH_PATH_KEY));
       if (patchPath == null) {
         patchPath = VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION;
@@ -119,7 +118,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       myPanel.setReversePatch(false);
       myPanel.setReverseEnabledAndVisible(myPatchBuilder.isReverseSupported());
 
-      JComponent panel = myPanel.getPanel();
+      DialogPanel panel = myPanel.getPanel();
       panel.putClientProperty(SessionDialog.VCS_CONFIGURATION_UI_TITLE, VcsBundle.message("create.patch.settings.dialog.title"));
       return panel;
     }
@@ -186,12 +185,6 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
           configuration.SHOW_PATCH_IN_EXPLORER = showDialog(project, file);
         }
       }, null, project);
-    }
-
-    @Override
-    @Nullable
-    public ValidationInfo validateFields() {
-      return myPanel.validateFields();
     }
 
     @Override

@@ -73,7 +73,7 @@ public class InspectionCommandEx extends AbstractCommand {
   public InspectionCommandEx(@NotNull String text, int line) {
     super(text, line);
     if (text.startsWith(PREFIX)) {
-      Args.parse(myOptions, text.substring(PREFIX.length()).trim().split(" "));
+      Args.parse(myOptions, text.substring(PREFIX.length()).trim().split(" "), false);
     }
   }
 

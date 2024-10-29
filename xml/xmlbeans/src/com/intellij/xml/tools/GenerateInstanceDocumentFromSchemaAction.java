@@ -2,7 +2,10 @@
 package com.intellij.xml.tools;
 
 import com.intellij.javaee.ExternalResourceManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -38,7 +41,7 @@ final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(enabled);
     }
   }
@@ -52,6 +55,7 @@ final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   public void actionPerformed(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    if (project == null || file == null) return;
 
     final GenerateInstanceDocumentFromSchemaDialog dialog = new GenerateInstanceDocumentFromSchemaDialog(project, file);
     dialog.setOkAction(() -> doAction(project, dialog));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,8 +9,10 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @State(name = "PrintSettings", storages = @Storage("print.xml"), category = SettingsCategory.UI)
 public final class PrintSettings implements PersistentStateComponent<PrintSettings> {
   public enum Placement {
@@ -109,7 +111,7 @@ public final class PrintSettings implements PersistentStateComponent<PrintSettin
   }
 
   @Override
-  public void loadState(@NotNull final PrintSettings state) {
+  public void loadState(final @NotNull PrintSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

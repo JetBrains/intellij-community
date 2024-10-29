@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.collect.ImmutableSortedMap;
@@ -70,8 +70,7 @@ public class IndexInfrastructureVersionBase {
   }
 
 
-  @NotNull
-  public static Map<String, FileBasedIndexVersionInfo> fileBasedIndexVersions(
+  public static @NotNull Map<String, FileBasedIndexVersionInfo> fileBasedIndexVersions(
     @NotNull List<? extends FileBasedIndexExtension<?, ?>> fileBasedIndexExtensions,
     @NotNull Function<? super FileBasedIndexExtension<?, ?>, String> versionExtractor
   ) {
@@ -94,8 +93,7 @@ public class IndexInfrastructureVersionBase {
     return builder;
   }
 
-  @NotNull
-  public static Map<String, String> stubIndexVersions(@NotNull List<? extends StubIndexExtension<?, ?>> stubIndexExtensions) {
+  public static @NotNull Map<String, String> stubIndexVersions(@NotNull List<? extends StubIndexExtension<?, ?>> stubIndexExtensions) {
     var builder = new HashMap<String, String>();
 
     FileBasedIndexExtension<?, ?> stubUpdatingIndex =
@@ -119,8 +117,7 @@ public class IndexInfrastructureVersionBase {
     return builder;
   }
 
-  @NotNull
-  public static Map<String, String> getAllCompositeBinaryFileStubBuilderVersions() {
+  public static @NotNull Map<String, String> getAllCompositeBinaryFileStubBuilderVersions() {
     Map<String, String> result = new HashMap<>();
     for (Map.Entry<FileType, BinaryFileStubBuilder> entry : BinaryFileStubBuilders.INSTANCE.getAllRegisteredExtensions().entrySet()) {
       BinaryFileStubBuilder builder = entry.getValue();
@@ -135,8 +132,7 @@ public class IndexInfrastructureVersionBase {
     return result;
   }
 
-  @NotNull
-  public static String getBinaryFileStubBuilderVersion(@NotNull BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?> builder) {
+  public static @NotNull String getBinaryFileStubBuilderVersion(@NotNull BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<?> builder) {
     BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object> genericBuilder =
       (BinaryFileStubBuilder.CompositeBinaryFileStubBuilder<Object>)builder;
     return builder.getClass().getName() + ":" + builder.getStubVersion() + ";" +
@@ -145,8 +141,7 @@ public class IndexInfrastructureVersionBase {
              .sorted().collect(Collectors.joining(";"));
   }
 
-  @NotNull
-  public static Map<String, String> stubFileElementTypeVersions() {
+  public static @NotNull Map<String, String> stubFileElementTypeVersions() {
     var builder = new HashMap<String, String>();
 
     for (IFileElementType fileElementType : getAllStubFileElementTypes()) {
@@ -166,8 +161,7 @@ public class IndexInfrastructureVersionBase {
     return builder;
   }
 
-  @NotNull
-  public static List<IFileElementType> getAllStubFileElementTypes() {
+  public static @NotNull List<IFileElementType> getAllStubFileElementTypes() {
     return Arrays.stream(FileTypeManager.getInstance().getRegisteredFileTypes())
       .filter(type -> type instanceof LanguageFileType)
       .map(type -> ((LanguageFileType)type).getLanguage())
@@ -177,8 +171,7 @@ public class IndexInfrastructureVersionBase {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  public static String getStubFileElementTypeKey(@NotNull IStubFileElementType<?> fileNodeType) {
+  public static @NotNull String getStubFileElementTypeKey(@NotNull IStubFileElementType<?> fileNodeType) {
     return fileNodeType.getExternalId() + ":" + fileNodeType.getLanguage().getID();
   }
 

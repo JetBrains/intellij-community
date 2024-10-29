@@ -5,7 +5,6 @@
  */
 package com.intellij.debugger.jdi;
 
-import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -16,6 +15,7 @@ import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jdi.ReferenceTypeImpl;
 import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequestManager;
@@ -112,9 +112,10 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
         if (!candidates.isEmpty()) {
           // keep only direct nested types
+          // do not traverse all classes in vm, only the candidates list
           final Set<ReferenceType> nested2 = new HashSet<>();
           for (final ReferenceType candidate : candidates) {
-            nested2.addAll(nestedTypes(candidate));
+            addNestedTypes(candidate, candidates, nested2);
           }
           candidates.removeAll(nested2);
         }
@@ -127,6 +128,25 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
       myNestedClassesCache.put(refType, nestedTypes);
     }
     return nestedTypes;
+  }
+
+  /**
+   * Check {@link ReferenceTypeImpl#nestedTypes()}
+   */
+  @ApiStatus.Internal
+  public static void addNestedTypes(ReferenceType base, Collection<ReferenceType> classes, Collection<ReferenceType> nested) {
+    String baseName = base.name();
+    int baseLength = baseName.length();
+    classes.forEach(type -> {
+      String name = type.name();
+      int length = name.length();
+      if (length > baseLength && name.startsWith(baseName)) {
+        char c = name.charAt(baseLength);
+        if (c == '$' || c == '#') {
+          nested.add(type);
+        }
+      }
+    });
   }
 
   @Override
@@ -484,7 +504,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   @Override
-  public DebugProcess getDebugProcess() {
+  public DebugProcessImpl getDebugProcess() {
     return myDebugProcess;
   }
 
@@ -504,16 +524,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
 
   public boolean isSuspended() {
     return ContainerUtil.exists(allThreads(), thread -> thread.getSuspendCount() != 0);
-  }
-
-  public void logThreads() {
-    if (LOG.isDebugEnabled()) {
-      for (ThreadReferenceProxyImpl thread : allThreads()) {
-        if (!thread.isCollected()) {
-          LOG.debug("suspends " + thread + " " + thread.getSuspendCount() + " " + thread.isSuspended());
-        }
-      }
-    }
   }
 
   public int getModelSuspendCount() {

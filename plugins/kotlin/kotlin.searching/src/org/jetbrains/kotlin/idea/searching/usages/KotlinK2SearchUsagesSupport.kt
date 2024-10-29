@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.searching.usages
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
@@ -16,7 +17,6 @@ import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.resolution.KaDelegatedConstructorCall
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
 import org.jetbrains.kotlin.analysis.api.types.KaType
@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
 import org.jetbrains.kotlin.asJava.toLightMethods
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
@@ -151,7 +151,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
                 val receiverType = declarationSymbol.receiverType
 
                 //do not treat callable with different receivers as overloads
-                if (receiverType != null && candidateReceiverType != null && !receiverType.isEqualTo(candidateReceiverType)) {
+                if (receiverType != null && candidateReceiverType != null && !receiverType.semanticallyEquals(candidateReceiverType)) {
                     return@any false
                 }
 
@@ -258,7 +258,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
     context(KaSession)
     private fun getContainingClassType(symbol: KaCallableSymbol): KaType? {
         val containingSymbol = symbol.containingDeclaration ?: return null
-        val classSymbol = containingSymbol as? KaNamedClassOrObjectSymbol ?: return null
+        val classSymbol = containingSymbol as? KaNamedClassSymbol ?: return null
         return classSymbol.defaultType
     }
 
@@ -268,6 +268,10 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun scriptDefinitionExists(file: PsiFile): Boolean {
         return false
+    }
+
+    override fun findScriptsWithUsages(declaration: KtNamedDeclaration, processor: (KtFile) -> Boolean): Boolean {
+        return true
     }
 
     override fun getDefaultImports(file: KtFile): List<ImportPath> {
@@ -336,12 +340,9 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
 
     override fun isInheritable(ktClass: KtClass): Boolean {
         if (ApplicationManager.getApplication().isDispatchThread) {
-            return ProgressManager.getInstance().runProcessWithProgressSynchronously(
-                Runnable { runReadAction { isOverridableBySymbol(ktClass) } },
-                KotlinBundle.message("dialog.title.resolving.inheritable.status"),
-                true,
-                ktClass.project
-            )
+            return ActionUtil.underModalProgress(ktClass.project, KotlinBundle.message("dialog.title.resolving.inheritable.status")) {
+                runReadAction { isOverridableBySymbol(ktClass) }
+            }
         }
         return isOverridableBySymbol(ktClass)
     }
@@ -351,7 +352,7 @@ internal class KotlinK2SearchUsagesSupport : KotlinSearchUsagesSupport {
         if (declarationSymbol is KaValueParameterSymbol) {
             declarationSymbol = declarationSymbol.generatedPrimaryConstructorProperty
         }
-        val symbol = declarationSymbol as? KaSymbolWithModality ?: return@analyze false
+        val symbol = declarationSymbol as? KaDeclarationSymbol ?: return@analyze false
         when (symbol.modality) {
             KaSymbolModality.OPEN, KaSymbolModality.SEALED, KaSymbolModality.ABSTRACT -> true
             KaSymbolModality.FINAL -> false

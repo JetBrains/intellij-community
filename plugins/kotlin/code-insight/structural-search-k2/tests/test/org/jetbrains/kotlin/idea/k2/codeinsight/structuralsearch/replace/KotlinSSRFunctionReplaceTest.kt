@@ -59,12 +59,30 @@ class KotlinSSRFunctionReplaceTest : KotlinStructuralReplaceTest() {
         )
     }
 
+    fun testFunctionMultipleTypedParameterFormatCopy() {
+        doTest(
+            searchPattern = "fun '_ID('_PARAM* : '_TYPE)",
+            replacePattern = "fun '_ID('_PARAM : '_TYPE)",
+            match = "public fun foo(bar : Int  =  0, baz : Boolean = true)  {}",
+            result = "public fun foo(bar : Int  =  0, baz : Boolean = true)  {}"
+        )
+    }
+
     fun testFunctionDefaultParameterFormatCopy() {
         doTest(
             searchPattern = "fun '_ID('_PARAM : '_TYPE = '_INIT)",
             replacePattern = "fun '_ID('_PARAM : '_TYPE = '_INIT)",
             match = "public fun foo(bar : Int = 0)  {}",
             result = "public fun foo(bar : Int = 0)  {}"
+        )
+    }
+
+    fun testFunctionMultipleDefaultParameterFormatCopy() {
+        doTest(
+            searchPattern = "fun '_ID('_PARAM* : '_TYPE = '_INIT)",
+            replacePattern = "fun '_ID('_PARAM : '_TYPE = '_INIT)",
+            match = "public fun foo(bar : Int = 0, baz : Boolean = true)  {}",
+            result = "public fun foo(bar : Int = 0, baz : Boolean = true)  {}"
         )
     }
 

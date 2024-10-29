@@ -8,10 +8,12 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryContentRevision;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class ShelvedBinaryFilePatchInProgress extends CommonBinaryFilePatchInProgress<ShelvedBinaryFilePatch> {
   ShelvedBinaryFilePatchInProgress(ShelvedBinaryFilePatch patch, Collection<VirtualFile> autoBases, VirtualFile baseDir) {
     super(ShelvedBinaryFilePatch.patchCopy(patch), autoBases, baseDir);

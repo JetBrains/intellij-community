@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -128,6 +128,13 @@ public class FlattenStatementsHelper {
           case CATCH_ALL, TRY_CATCH -> {
             DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
+            if (stat.type == Statement.StatementType.TRY_CATCH) {
+              CatchStatement catchStat = (CatchStatement)stat;
+              if (catchStat.getTryType() == CatchStatement.CatchStatementType.RESOURCES) {
+                firstnd.exprents = catchStat.getResources();
+              }
+            }
+
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
             graph.nodes.putWithKey(firstnd, firstnd.id);
 
@@ -201,7 +208,7 @@ public class FlattenStatementsHelper {
                 }
                 sourcenode = node;
               }
-              case FOR -> {
+              case FOR, FOREACH -> {
                 DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
@@ -209,7 +216,9 @@ public class FlattenStatementsHelper {
                 graph.nodes.putWithKey(nodeinit, nodeinit.id);
 
                 DirectNode nodecond = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
-                nodecond.exprents = dostat.getConditionExprentList();
+                if (loopType != DoStatement.LoopType.FOREACH) {
+                  nodecond.exprents = dostat.getConditionExprentList();
+                }
                 graph.nodes.putWithKey(nodecond, nodecond.id);
 
                 DirectNode nodeinc = new DirectNode(DirectNodeType.INCREMENT, stat, stat.id + "_inc");
@@ -265,9 +274,11 @@ public class FlattenStatementsHelper {
               node = graph.nodes.getWithKey(mapDestinationNodes.get(stat.getFirst().id)[0]);
               mapDestinationNodes.put(stat.id, new String[]{node.id, null});
 
-              if (stat.type == StatementType.IF && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
+              if (stat.type == StatementType.IF && stat instanceof IfStatement && ((IfStatement)stat).iftype == IfStatement.IFTYPE_IF) {
                 lstSuccEdges.add(stat.getSuccessorEdges(EdgeType.DIRECT_ALL).get(0));  // exactly one edge
-                sourcenode = tailexprlst.get(0) == null ? node : graph.nodes.getWithKey(node.id + "_tail");
+                sourcenode = tailexprlst != null && !tailexprlst.isEmpty() && tailexprlst.get(0) == null
+                             ? node
+                             : graph.nodes.getWithKey(node.id + "_tail");
               }
             }
           }

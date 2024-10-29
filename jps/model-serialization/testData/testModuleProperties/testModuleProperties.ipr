@@ -2,8 +2,8 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/testModule.iml" filepath="$PROJECT_DIR$/testModule.iml" />
       <module fileurl="file://$PROJECT_DIR$/productionModule.iml" filepath="$PROJECT_DIR$/productionModule.iml" />
+      <module fileurl="file://$PROJECT_DIR$/testModule.iml" filepath="$PROJECT_DIR$/testModule.iml" />
     </modules>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" project-jdk-name="1.4" project-jdk-type="JavaSDK">

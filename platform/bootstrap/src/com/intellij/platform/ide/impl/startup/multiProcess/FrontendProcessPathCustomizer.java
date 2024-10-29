@@ -30,6 +30,11 @@ import java.util.Set;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod", "FieldCanBeLocal", "UseOfSystemOutOrSystemErr"})
 @ApiStatus.Experimental
 public final class FrontendProcessPathCustomizer implements PathCustomizer {
+  /**
+   * Name of a file which is created in the plugins directory to indicate the fact that compatible plugins from the full IDE were migrated 
+   * to the frontend.
+   */
+  public static final String PLUGINS_MIGRATED_MARKER = "frontend-plugins-migrated.txt";
   private static final String LOCK_FILE_NAME = "process.lock";
 
   private static final Set<String> FILES_TO_KEEP = ContainerUtil.newHashSet(
@@ -80,7 +85,7 @@ public final class FrontendProcessPathCustomizer implements PathCustomizer {
     String originalPluginsPath = PathManager.getPluginsPath();
     boolean customizePluginsPath = useCustomPluginsPath(originalPluginsPath);
     String pluginsPath = customizePluginsPath ? originalPluginsPath + File.separator + "frontend" : originalPluginsPath;
-    boolean migratePlugins = customizePluginsPath && !Files.exists(Paths.get(pluginsPath));
+    boolean migratePlugins = customizePluginsPath && !Files.exists(Paths.get(pluginsPath, PLUGINS_MIGRATED_MARKER));
     PerProcessPathCustomization.prepareConfig(newConfig, PathManager.getConfigDir(), migratePlugins);
 
     Path startupScriptDir = PerProcessPathCustomization.getStartupScriptDir().resolve("frontend");

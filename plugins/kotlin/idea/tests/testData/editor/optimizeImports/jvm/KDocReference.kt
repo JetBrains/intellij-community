@@ -1,4 +1,3 @@
-// IGNORE_K2
 // TODO: it is quite similar to KDocRefernece.kt for K2 except no default imported ArrayList, see KTIJ-26751
 import kotlin.concurrent.fixedRateTimer
 import kotlin.concurrent.read

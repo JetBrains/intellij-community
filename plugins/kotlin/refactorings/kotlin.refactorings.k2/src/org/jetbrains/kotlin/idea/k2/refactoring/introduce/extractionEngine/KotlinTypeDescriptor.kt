@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaAnonymousObjectSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
@@ -37,23 +36,24 @@ import org.jetbrains.kotlin.types.Variance
 class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<KaType> {
     override fun KaType.isMeaningful(): Boolean =
         analyze(data.commonParent) {
-            !this@isMeaningful.isEqualTo(builtinTypes.UNIT) && !this@isMeaningful.isEqualTo(builtinTypes.NOTHING)
+            !this@isMeaningful.semanticallyEquals(builtinTypes.unit) && !this@isMeaningful.semanticallyEquals(builtinTypes.nothing)
         }
 
     override fun KaType.isError(): Boolean {
         return this is KaErrorType
     }
 
-    override val booleanType: KaType = analyze(data.commonParent) { builtinTypes.BOOLEAN }
+    override val booleanType: KaType = analyze(data.commonParent) { builtinTypes.boolean }
 
-    override val unitType: KaType = analyze(data.commonParent) { builtinTypes.UNIT }
-    override val nothingType: KaType = analyze(data.commonParent) { builtinTypes.NOTHING }
-    override val nullableAnyType: KaType = analyze(data.commonParent) { builtinTypes.NULLABLE_ANY }
+    override val unitType: KaType = analyze(data.commonParent) { builtinTypes.unit }
+    override val nothingType: KaType = analyze(data.commonParent) { builtinTypes.nothing }
+    override val nullableAnyType: KaType = analyze(data.commonParent) { builtinTypes.nullableAny }
 
     override fun createListType(argTypes: List<KaType>): KaType {
         return analyze(data.commonParent) {
             buildClassType(StandardClassIds.List) {
-                argument(commonSuperType(argTypes) ?: builtinTypes.NULLABLE_ANY)
+                val commonSupertype = if (argTypes.isNotEmpty()) argTypes.commonSupertype else builtinTypes.nullableAny
+                argument(commonSupertype)
             }
         }
     }
@@ -63,9 +63,9 @@ class KotlinTypeDescriptor(private val data: IExtractionData) : TypeDescriptor<K
         analyze(data.commonParent) {
             val boxingClass = when (outputValues.size) {
                 1 -> return outputValues.first().valueType
-                2 -> getClassOrObjectSymbolByClassId(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
-                3 -> getClassOrObjectSymbolByClassId(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
-                else -> return builtinTypes.UNIT
+                2 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Pair")))!!
+                3 -> findClass(ClassId(StandardClassIds.BASE_KOTLIN_PACKAGE, Name.identifier("Triple")))!!
+                else -> return builtinTypes.unit
             }
             return buildClassType(boxingClass) {
                 boxingClass.typeParameters.forEachIndexed { idx, s ->
@@ -153,12 +153,11 @@ fun isResolvableInScope(typeToCheck: KaType, scope: PsiElement, typeParameters: 
             return false
         }
 
-        if (classSymbol is KaSymbolWithVisibility) {
-            val fileSymbol = (scope.containingFile as KtFile).getFileSymbol()
-            if (!isVisible(classSymbol, fileSymbol, null, scope)) {
-                return false
-            }
+        val fileSymbol = (scope.containingFile as KtFile).symbol
+        if (!isVisible(classSymbol, fileSymbol, null, scope)) {
+            return false
         }
+
         typeToCheck.typeArguments.mapNotNull { it.type }.forEach {
             if (!isResolvableInScope(it, scope, typeParameters)) return false
         }
@@ -182,7 +181,7 @@ fun approximateWithResolvableType(type: KaType?, scope: PsiElement): KaType? {
     if (!(type is KaClassType && type.symbol is KaAnonymousObjectSymbol)
         && isResolvableInScope(type, scope, mutableSetOf())
     ) return type
-    return type.getAllSuperTypes().firstOrNull {
+    return type.allSupertypes.firstOrNull {
         isResolvableInScope(it, scope, mutableSetOf())
     }
 }

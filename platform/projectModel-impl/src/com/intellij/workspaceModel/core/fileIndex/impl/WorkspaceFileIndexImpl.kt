@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.diagnostic.ThrottledLogger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -26,9 +27,11 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.PathUtil
 import com.intellij.util.Query
 import com.intellij.util.ThreeState
+import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.containers.TreeNodeProcessingResult
 import com.intellij.workspaceModel.core.fileIndex.*
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileInternalInfo.NonWorkspace
+import java.util.concurrent.TimeUnit.MINUTES
 import java.util.concurrent.atomic.AtomicReference
 
 class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexEx, Disposable.Default {
@@ -37,7 +40,8 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   private val indexDataReference = AtomicReference<WorkspaceFileIndexData>(EmptyWorkspaceFileIndexData.NOT_INITIALIZED)
-  
+  private val throttledLogger = ThrottledLogger(thisLogger(), MINUTES.toMillis(1))
+
   override var indexData: WorkspaceFileIndexData
     get() = indexDataReference.get()
     set(newValue) {
@@ -278,6 +282,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     return entity?.takeIf { it.getEntityInterface() == entityClass } as E?
   }
 
+  @RequiresReadLock
   override fun visitFileSets(visitor: WorkspaceFileSetVisitor) {
     getMainIndexData().visitFileSets(visitor)
   }
@@ -298,7 +303,7 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
     when (indexData) {
       EmptyWorkspaceFileIndexData.NOT_INITIALIZED -> {
         if (project.isDefault) {
-          thisLogger().warn("WorkspaceFileIndex must not be queried for the default project")
+          throttledLogger.warn("WorkspaceFileIndex must not be queried for the default project", Throwable())
         }
         else {
           thisLogger().error("WorkspaceFileIndex is not initialized yet, empty data is returned. Activities which use the project configuration must be postponed until the project is fully loaded.")

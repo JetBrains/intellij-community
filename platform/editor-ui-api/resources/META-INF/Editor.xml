@@ -9,6 +9,7 @@
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.ide.ui.UISettings"/>
+    <applicationSettings service="com.intellij.ide.ui.UISettings"/>
 
     <projectService
       serviceInterface="com.intellij.openapi.vcs.FileStatusManager"

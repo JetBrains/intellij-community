@@ -102,12 +102,7 @@ class TestGitImpl : GitImpl() {
       }
 
       private fun handleEditor(file: File, editor: (String) -> String): Boolean {
-        try {
-          FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
-        }
-        catch (e: Exception) {
-          LOG.error(e)
-        }
+        FileUtil.writeToFile(file, editor(FileUtil.loadFile(file)))
         return true
       }
     }
@@ -160,7 +155,7 @@ class TestGitImpl : GitImpl() {
 
   private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
     return if (rebaseShouldFail(repository)) {
-      GitRebaseCommandResult.normal(fatalResult())
+      GitRebaseCommandResult(fatalResult())
     }
     else {
       delegate()

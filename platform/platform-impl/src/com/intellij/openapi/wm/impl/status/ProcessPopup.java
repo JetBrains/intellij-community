@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -79,7 +80,7 @@ final class ProcessPopup {
   }
 
   private @NotNull Rectangle calculateBounds() {
-    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
+    JFrame frame = (JFrame)ComponentUtil.findUltimateParent(myProgressPanel.getComponent());
 
     Dimension contentSize = myContentPanel.getPreferredSize();
     int contentWidth = Math.max(contentSize.width, JBUI.scale(300));
@@ -130,7 +131,7 @@ final class ProcessPopup {
     Rectangle popupBounds = calculateBounds();
     myContentPanel.setPreferredSize(popupBounds.getSize());
     myPopupVisible = true;
-    myPopup.showInScreenCoordinates(myProgressPanel.getComponent$intellij_platform_ide_impl().getRootPane(), popupBounds.getLocation());
+    myPopup.showInScreenCoordinates(myProgressPanel.getComponent().getRootPane(), popupBounds.getLocation());
   }
 
   public boolean isShowing() {
@@ -182,11 +183,7 @@ final class ProcessPopup {
     builder.setRequestFocus(requestFocus);
     builder.setBelongsToGlobalPopupStack(false);
     builder.setMinSize(new JBDimension(300, 100));
-    Component frame = ComponentUtil.findUltimateParent(myProgressPanel.getComponent$intellij_platform_ide_impl());
-    Project project = null;
-    if (frame instanceof IdeFrame ideFrame) {
-      project = ideFrame.getProject();
-    }
+    Project project = ProjectUtil.getProjectForComponent(myProgressPanel.getComponent());
     builder.setDimensionServiceKey(project, DIMENSION_SERVICE_KEY, true);
     builder.setLocateWithinScreenBounds(false);
 

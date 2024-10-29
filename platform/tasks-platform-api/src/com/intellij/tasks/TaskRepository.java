@@ -78,6 +78,13 @@ public abstract class TaskRepository {
     myUrl = trimTrailingSlashes(url);
   }
 
+  /**
+   * Check if this repository is ready to be used for retrieving issues in "Open Task...".
+   * <p>
+   * Note that if you rely on the presence of some secret exposed through {@link com.intellij.tasks.impl.BaseRepository#getPassword()}
+   * you should access the corresponding field through {@code getPassword()}, not directly via the underlying field.
+   * Otherwise, it might not be loaded from the system password-safe by the moment of the check.
+   */
   public boolean isConfigured() {
     return StringUtil.isNotEmpty(getUrl());
   }

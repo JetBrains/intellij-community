@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -46,7 +46,7 @@ import javax.swing.tree.TreePath;
 import java.util.*;
 
 public final class ScopeChooserConfigurable extends MasterDetailsComponent implements SearchableConfigurable {
-  @NonNls public static final String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
+  public static final @NonNls String SCOPE_CHOOSER_CONFIGURABLE_UI_KEY = "ScopeChooserConfigurable.UI";
   public static final String PROJECT_SCOPES = "project.scopes";
   private final NamedScopesHolder myLocalScopesManager;
   private final NamedScopesHolder mySharedScopesManager;
@@ -260,14 +260,12 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getHelpTopic() {
+  public @NotNull @NonNls String getHelpTopic() {
     return PROJECT_SCOPES;  //todo help id
   }
 
   @Override
-  protected void updateSelection(@Nullable final NamedConfigurable configurable) {
+  protected void updateSelection(final @Nullable NamedConfigurable configurable) {
     super.updateSelection(configurable);
     if (configurable instanceof ScopeConfigurable) {
       ((ScopeConfigurable)configurable).restoreCanceledProgress();
@@ -333,9 +331,7 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
   }
 
   @Override
-  @NotNull
-  @NonNls
-  public String getId() {
+  public @NotNull @NonNls String getId() {
     return getHelpTopic();
   }
 
@@ -415,12 +411,12 @@ public final class ScopeChooserConfigurable extends MasterDetailsComponent imple
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       TreeUtil.moveSelectedRow(myTree, myDirection);
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       final TreePath selectionPath = myTree.getSelectionPath();

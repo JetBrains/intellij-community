@@ -1,17 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.evaluable
 
-import com.intellij.cce.core.Language
+import com.intellij.cce.evaluation.EvaluationEnvironment
 import com.intellij.cce.evaluation.EvaluationStep
-import com.intellij.cce.interpreter.FeatureInvoker
 import com.intellij.cce.metric.Metric
-import com.intellij.cce.processor.GenerateActionsProcessor
 import com.intellij.cce.report.FileReportGenerator
 import com.intellij.cce.report.GeneratorDirectories
+import com.intellij.cce.workspace.Config
 import com.intellij.cce.workspace.storages.FeaturesStorage
 import com.intellij.cce.workspace.storages.FullLineLogsStorage
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.project.Project
 
 /**
  * Represents a feature that can be evaluated in IDE.
@@ -26,14 +24,9 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   fun getStrategySerializer(): StrategySerializer<T>
 
   /**
-   * how to prepare the context before the feature invocation
+   * @return initialized environment which will be used during evaluation
    */
-  fun getGenerateActionsProcessor(strategy: T): GenerateActionsProcessor
-
-  /**
-   * how to call the feature
-   */
-  fun getFeatureInvoker(project: Project, language: Language, strategy: T): FeatureInvoker
+  fun prepareEnvironment(config: Config): EvaluationEnvironment
 
   /**
    * how to render the results of evaluation
@@ -52,11 +45,11 @@ interface EvaluableFeature<T : EvaluationStrategy> {
   /**
    * additional steps to set up evaluation
    */
-  fun getEvaluationSteps(language: Language, strategy: T): List<EvaluationStep>
+  fun getEvaluationSteps(config: Config): List<EvaluationStep>
 
 
   /**
-   * additional steps to set up evaluation before project is opened
+   * additional steps to set up evaluation before environment is initialized
    */
   fun getPreliminaryEvaluationSteps(): List<EvaluationStep>
 

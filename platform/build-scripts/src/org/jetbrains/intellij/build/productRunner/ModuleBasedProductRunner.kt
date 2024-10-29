@@ -15,21 +15,21 @@ internal class ModuleBasedProductRunner(private val rootModuleForModularLoader: 
   override suspend fun runProduct(args: List<String>, additionalVmProperties: VmProperties, timeout: Duration) {
     val systemProperties = VmProperties(
       mapOf(
-        "intellij.platform.runtime.repository.path" to context.originalModuleRepository.repositoryPath.pathString,
+        "intellij.platform.runtime.repository.path" to context.getOriginalModuleRepository().repositoryPath.pathString,
         "intellij.platform.root.module" to rootModuleForModularLoader,
         "intellij.platform.product.mode" to context.productProperties.productMode.id,
         "idea.vendor.name" to context.applicationInfo.shortCompanyName,
       )
     )
 
-    val loaderModule = context.originalModuleRepository.repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
+    val loaderModule = context.getOriginalModuleRepository().repository.getModule(RuntimeModuleId.module("intellij.platform.runtime.loader"))
     val ideClasspath = loaderModule.moduleClasspath.map { it.pathString }
     runApplicationStarter(
       context = context,
       classpath = ideClasspath,
       args = args,
       vmProperties = systemProperties + additionalVmProperties,
-      vmOptions = VmOptionsGenerator.computeVmOptions(context) +
+      vmOptions = VmOptionsGenerator.generate(context) +
                   //we need to unset 'jna.nounpack' (see IJ-CR-125211), otherwise the process will fail to load JNA on macOS (IJPL-150094)
                   context.productProperties.additionalIdeJvmArguments.filterNot { it == "-Djna.nounpack=true" } +
                   context.productProperties.getAdditionalContextDependentIdeJvmArguments(context),

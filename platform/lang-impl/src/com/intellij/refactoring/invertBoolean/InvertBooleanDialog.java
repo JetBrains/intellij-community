@@ -9,9 +9,11 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class InvertBooleanDialog extends RefactoringDialog {
   private JTextField myNameField;
   private JPanel myPanel;

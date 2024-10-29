@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -17,8 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class CustomInspectionActions {
-  @Nullable
-  public static DefaultActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
+  public static @Nullable DefaultActionGroup getAddActionGroup(SingleInspectionProfilePanel panel) {
     final DefaultActionGroup actionGroup = new DefaultActionGroup();
     InspectionProfileActionProvider.EP_NAME.getExtensionList().forEach(provider -> {
       final var group = provider.getAddActions(panel);

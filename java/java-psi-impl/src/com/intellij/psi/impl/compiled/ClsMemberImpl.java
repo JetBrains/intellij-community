@@ -12,17 +12,17 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class ClsMemberImpl<T extends PsiMemberStub> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
+public abstract class ClsMemberImpl<T extends PsiMemberStub<?>> extends ClsRepositoryPsiElement<T> implements PsiDocCommentOwner, PsiNameIdentifierOwner {
   private final NotNullLazyValue<PsiDocComment> myDocComment;
   private final NotNullLazyValue<PsiIdentifier> myNameIdentifier;
 
   protected ClsMemberImpl(T stub) {
     super(stub);
     myDocComment = !stub.isDeprecated() ? null : NotNullLazyValue.atomicLazy(() -> {
-      return new ClsDocCommentImpl(ClsMemberImpl.this);
+      return new ClsDocCommentImpl(this);
     });
     myNameIdentifier = NotNullLazyValue.atomicLazy(() -> {
-      return new ClsIdentifierImpl(ClsMemberImpl.this, getName());
+      return new ClsIdentifierImpl(this, getName());
     });
   }
 

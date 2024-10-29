@@ -5,11 +5,13 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.containers.ConcurrentIntObjectMap
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 /**
  * Utility class to accumulate hints. Thread-safe.
  */
+@ApiStatus.Internal
 class HintsBuffer {
   val inlineHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>> = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, HorizontalConstraints>>>()
   internal val blockBelowHints: ConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>> = ConcurrentCollectionFactory.createConcurrentIntObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>()

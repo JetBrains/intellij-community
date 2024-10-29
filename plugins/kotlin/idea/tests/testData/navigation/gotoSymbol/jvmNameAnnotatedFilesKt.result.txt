@@ -1,0 +1,44 @@
+NavigationItem:
+    name: FilesKt
+ItemPresentation:
+    presentableText: FilesKt
+    locationString: (kotlin.io)
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: // IntelliJ API Decompiler stub source generated from a class file
+QualifiedName: kotlin.io.FilesKt
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: FilesKt
+    locationString: FilePathComponents.kt in kotlin.io
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: @file:JvmName("FilesKt")
+QualifiedName: FilesKt
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: FilesKt
+    locationString: FileReadWrite.kt in kotlin.io
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: @file:JvmName("FilesKt")
+QualifiedName: FilesKt
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: FilesKt
+    locationString: FileTreeWalk.kt in kotlin.io
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: @file:JvmName("FilesKt")
+QualifiedName: FilesKt
+
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: FilesKt
+    locationString: Utils.kt in kotlin.io
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: @file:JvmName("FilesKt")
+QualifiedName: FilesKt

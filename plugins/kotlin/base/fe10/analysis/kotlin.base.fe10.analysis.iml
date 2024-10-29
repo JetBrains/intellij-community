@@ -16,7 +16,7 @@
     <orderEntry type="library" name="kotlinc.analysis-api" level="project" />
     <orderEntry type="library" name="kotlinc.analysis-api-fe10" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="library" name="javaslang" level="project" />
+    <orderEntry type="library" name="vavr" level="project" />
     <orderEntry type="library" name="javax-inject" level="project" />
     <orderEntry type="module" module-name="kotlin.base.util" />
     <orderEntry type="module" module-name="kotlin.base.psi" />
@@ -32,5 +32,6 @@
     <orderEntry type="module" module-name="intellij.java" />
     <orderEntry type="module" module-name="intellij.java.analysis" />
     <orderEntry type="module" module-name="kotlin.base.statistics" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" />
   </component>
 </module>

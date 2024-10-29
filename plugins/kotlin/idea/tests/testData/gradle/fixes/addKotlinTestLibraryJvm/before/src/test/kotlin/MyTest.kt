@@ -1,0 +1,9 @@
+// "Add 'org.jetbrains.kotlin:kotlin-test' library" "true"
+// ERROR: Unresolved reference: Test
+
+class MyTest {
+    @Test<caret>
+    fun testFoo() {
+
+    }
+}

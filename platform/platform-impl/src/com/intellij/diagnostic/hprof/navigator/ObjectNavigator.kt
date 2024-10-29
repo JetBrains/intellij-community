@@ -21,9 +21,11 @@ import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.HProfEventBasedParser
 import com.intellij.diagnostic.hprof.visitors.CreateAuxiliaryFilesVisitor
 import it.unimi.dsi.fastutil.longs.LongList
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.nio.channels.FileChannel
 
+@ApiStatus.Internal
 abstract class ObjectNavigator(val classStore: ClassStore, val instanceCount: Long) {
 
   enum class ReferenceResolution {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl;
 
 import com.intellij.framework.detection.DetectedFrameworkDescription;
@@ -17,6 +17,7 @@ import com.intellij.util.io.PersistentHashMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class DetectedFrameworksData {
   private static final Logger LOG = Logger.getInstance(DetectedFrameworksData.class);
   private PersistentHashMap<String, IntSet> myExistentFrameworkFiles;
@@ -142,8 +144,7 @@ public final class DetectedFrameworksData {
     }
   }
 
-  @NotNull
-  private static Path getDetectionDirPath() {
+  private static @NotNull Path getDetectionDirPath() {
     return PathManagerEx.getAppSystemDir().resolve("frameworks").resolve("detection");
   }
 }

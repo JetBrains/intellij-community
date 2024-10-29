@@ -36,12 +36,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     setLanguageLevel(JavaFeature.IMPLICIT_CLASSES.getMinimumLevel());
     doTest(16, "package", "public", "import", "final", "class", "interface", "abstract", "enum",
            "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
-    assertNotContainItems("default");
+    assertNotContainItems("default", "strictfp");
   }
 
   public void testFileScopeWithoutPackage2() {
     setLanguageLevel(LanguageLevel.JDK_1_8);
-    doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
+    doTest(9, "package", "public", "import", "final", "class", "interface", "abstract", "enum", "strictfp");
     assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "sealed", "non-sealed");
   }
 
@@ -66,6 +66,15 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   }
   public void testClassScope3() { doTest(0, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope4() { doTest(11, CLASS_SCOPE_KEYWORDS_2); }
+  public void testClassScope5() {
+    setLanguageLevel(JavaFeature.ALWAYS_STRICTFP.getMinimumLevel());
+    doTestContains("class", "interface", "enum", "record", "sealed", "non-sealed");
+    assertNotContainItems("default", "transient", "static", "private", "protected", "volatile", "synchronized", "strictfp");
+  }
+  public void testClassScope5WithStrictfp() {
+    setLanguageLevel(LanguageLevel.JDK_1_8);
+    doTestContains("class", "interface", "enum", "strictfp");
+  }
   public void testInnerClassScope() {
     doTest(11, CLASS_SCOPE_KEYWORDS_2); 
   }

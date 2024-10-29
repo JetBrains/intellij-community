@@ -73,7 +73,7 @@ class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: 
   }
 
   @OptIn(ExperimentalPathApi::class)
-  private fun cleanupCacheFile(file: Path, cacheFiles: HashSet<Path>, currentTime: Long, maxTimeMs: Long) {
+  private fun cleanupCacheFile(file: Path, cacheFiles: Set<Path>, currentTime: Long, maxTimeMs: Long) {
     val fileName = file.fileName.toString()
     if (fileName.endsWith(MARKED_FOR_CLEANUP_SUFFIX)) {
       val realFile = cacheDir.resolve(fileName.substring(0, fileName.length - MARKED_FOR_CLEANUP_SUFFIX.length))
@@ -104,7 +104,7 @@ class CacheDirCleanup(private val cacheDir: Path, private val maxAccessTimeAge: 
       // the file is old AND already marked for cleanup - delete
       LOG.info("CACHE-CLEANUP: Deleting file/directory '$file': it's too old and marked for cleanup")
 
-      // renaming file to a temporary name to prevent deletion of currently opened files, just in case
+      // renaming the file to a temporary name to prevent deletion of currently opened files, just in case
       val toRemove = cacheDir.resolve("$fileName.toRm.${UUID.randomUUID()}".takeLast(255))
       try {
         Files.move(file, toRemove)

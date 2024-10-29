@@ -24,11 +24,6 @@ public class JavaClassDef implements TypeConstraints.ClassDef {
   }
 
   @Override
-  public boolean isInheritor(@NotNull String superClassQualifiedName) {
-    return InheritanceUtil.isInheritor(myClass, superClassQualifiedName);
-  }
-
-  @Override
   public boolean isInheritor(@NotNull TypeConstraints.ClassDef superType) {
     return superType instanceof JavaClassDef && InheritanceUtil.isInheritorOrSelf(myClass, ((JavaClassDef)superType).myClass, true);
   }

@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import static com.intellij.concurrency.ConcurrentCollectionFactory.createConcurr
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
+@ApiStatus.Internal
 public final class SemServiceImpl extends SemService implements Disposable {
   private static final Key<SemData> SEM_CACHE_KEY = Key.create("SEM");
 

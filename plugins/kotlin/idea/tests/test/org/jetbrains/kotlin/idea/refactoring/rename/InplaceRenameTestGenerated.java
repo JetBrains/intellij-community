@@ -155,6 +155,21 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
         runTest("testData/refactoring/rename/inplace/conflicts/typeParameters/TypeParameterVsTypeAlias.kt");
     }
 
+    @TestMetadata("DisableInplaceRenameOnThis.kt")
+    public void testDisableInplaceRenameOnThis() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThis.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisExtension.kt")
+    public void testDisableInplaceRenameOnThisExtension() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThisExtension.kt");
+    }
+
+    @TestMetadata("DisableInplaceRenameOnThisWithLabel.kt")
+    public void testDisableInplaceRenameOnThisWithLabel() throws Exception {
+        runTest("testData/refactoring/rename/inplace/DisableInplaceRenameOnThisWithLabel.kt");
+    }
+
     @TestMetadata("EnumEntries.kt")
     public void testEnumEntries() throws Exception {
         runTest("testData/refactoring/rename/inplace/EnumEntries.kt");
@@ -168,6 +183,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("EraseCompanionName.kt")
     public void testEraseCompanionName() throws Exception {
         runTest("testData/refactoring/rename/inplace/EraseCompanionName.kt");
+    }
+
+    @TestMetadata("expressionsInRange.kt")
+    public void testExpressionsInRange() throws Exception {
+        runTest("testData/refactoring/rename/inplace/expressionsInRange.kt");
     }
 
     @TestMetadata("ExtensionAndNoReceiver.kt")
@@ -483,6 +503,11 @@ public class InplaceRenameTestGenerated extends AbstractInplaceRenameTest {
     @TestMetadata("InvokeToPlus.kt")
     public void testInvokeToPlus() throws Exception {
         runTest("testData/refactoring/rename/inplace/InvokeToPlus.kt");
+    }
+
+    @TestMetadata("JavaInheritor.kt")
+    public void testJavaInheritor() throws Exception {
+        runTest("testData/refactoring/rename/inplace/JavaInheritor.kt");
     }
 
     @TestMetadata("LabelFromFunction.kt")

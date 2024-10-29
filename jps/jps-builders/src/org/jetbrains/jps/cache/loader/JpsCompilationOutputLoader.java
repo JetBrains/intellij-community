@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cache.loader;
 
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.ZipUtil;
-import com.intellij.util.lang.Xxh3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -22,6 +23,7 @@ import org.jetbrains.jps.cache.model.OutputLoadResult;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -64,7 +66,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     List<AffectedModule> affectedModules = calculateAffectedModules(myContext.getCurrentSourcesState(),
                                                                     myContext.getCommitSourcesState(), true);
     myContext.checkCanceled();
-    if (affectedModules.size() > 0) {
+    if (!affectedModules.isEmpty()) {
       long start = System.currentTimeMillis();
       List<OutputLoadResult> loadResults = myClient.downloadCompiledModules(myContext, affectedModules);
       LOG.info("Download of compilation outputs took: " + (System.currentTimeMillis() - start));
@@ -169,7 +171,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     if (currentModulesState == null) {
       commitModulesState.forEach((type, map) -> {
         map.forEach((name, state) -> {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
         });
       });
       LOG.warn("Project doesn't contain metadata, force to download " + affectedModules.size() + " modules.");
@@ -184,7 +186,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     newBuildTypes.removeAll(currentModulesState.keySet());
     newBuildTypes.forEach(type -> {
       commitModulesState.get(type).forEach((name, state) -> {
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
       });
     });
 
@@ -193,7 +195,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     oldBuildTypes.removeAll(commitModulesState.keySet());
     oldBuildTypes.forEach(type -> {
       currentModulesState.get(type).forEach((name, state) -> {
-        oldModulesMap.put(name, state.getRelativePath());
+        oldModulesMap.put(name, state.relativePath);
       });
     });
 
@@ -208,7 +210,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
       newBuildModules.removeAll(currentTypeState.keySet());
       newBuildModules.forEach(name -> {
         BuildTargetState state = map.get(name);
-        affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+        affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
       });
 
       // Calculate old modules paths for remove
@@ -216,20 +218,20 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
       oldBuildModules.removeAll(map.keySet());
       oldBuildModules.forEach(name -> {
         BuildTargetState state = currentTypeState.get(name);
-        oldModulesMap.put(name, state.getRelativePath());
+        oldModulesMap.put(name, state.relativePath);
       });
 
       // In another case compare modules inside the same build type
       map.forEach((name, state) -> {
         BuildTargetState currentTargetState = currentTypeState.get(name);
         if (currentTargetState == null || !state.equals(currentTargetState)) {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), getBuildDirRelativeFile(state.getRelativePath())));
+          affectedModules.add(new AffectedModule(type, name, state.hash, getBuildDirRelativeFile(state.relativePath)));
           return;
         }
 
-        File outFile = getBuildDirRelativeFile(state.getRelativePath());
+        File outFile = getBuildDirRelativeFile(state.relativePath);
         if (checkExistance && (!outFile.exists() || ArrayUtil.isEmpty(outFile.listFiles()))) {
-          affectedModules.add(new AffectedModule(type, name, state.getHash(), outFile));
+          affectedModules.add(new AffectedModule(type, name, state.hash, outFile));
         }
       });
     });
@@ -238,7 +240,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
     myOldModulesPaths = oldModulesMap.entrySet().stream().filter(entry -> {
       for (Map.Entry<String, Map<String, BuildTargetState>> commitEntry : commitModulesState.entrySet()) {
         BuildTargetState targetState = commitEntry.getValue().get(entry.getKey());
-        if (targetState != null && targetState.getRelativePath().equals(entry.getValue())) return false;
+        if (targetState != null && targetState.relativePath.equals(entry.getValue())) return false;
       }
       return true;
     }).map(entry -> getBuildDirRelativeFile(entry.getValue()))
@@ -259,7 +261,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        String hash = calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.hash);
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_PRODUCTION)) {
@@ -268,7 +270,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        String hash = calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.hash, affectedModule.getHash());
         result.add(new AffectedModule(PRODUCTION, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(JAVA_TEST)) {
@@ -277,7 +279,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        String hash = calculateStringHash(affectedModule.getHash() + targetState.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(affectedModule.getHash(), targetState.hash);
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else if (affectedModule.getType().equals(RESOURCES_TEST)) {
@@ -286,7 +288,7 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
           result.add(affectedModule);
           return;
         }
-        String hash = calculateStringHash(targetState.getHash() + affectedModule.getHash());
+        long hash = Hashing.komihash5_0().hashLongLongToLong(targetState.hash, affectedModule.getHash());
         result.add(new AffectedModule(TEST, affectedModule.getName(), hash, affectedModule.getOutPath()));
       }
       else {
@@ -298,10 +300,6 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
 
   private File getBuildDirRelativeFile(String buildDirRelativePath) {
     return new File(buildDirRelativePath.replace("$BUILD_DIR$", myBuildDirPath));
-  }
-
-  private static String calculateStringHash(String content) {
-    return String.valueOf(Xxh3.hash(content));
   }
 
   @TestOnly
@@ -338,9 +336,9 @@ final class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoa
         context.getNettyClient().sendDescriptionStatusMessage(JpsBuildBundle.message("progress.details.extracting.compilation.outputs.for.module", affectedModule.getName()), expectedDownloads);
         LOG.debug("Downloaded JPS compiled module from: " + loadResult.getDownloadUrl());
         File tmpFolder = new File(outPath.getParent(), outPath.getName() + "_tmp");
-        File zipFile = loadResult.getZipFile();
-        ZipUtil.extract(zipFile, tmpFolder, null);
-        FileUtil.delete(zipFile);
+        Path zipFile = loadResult.getZipFile().toPath();
+        ZipUtil.extract(zipFile, tmpFolder.toPath(), null);
+        NioFiles.deleteRecursively(zipFile);
         result.put(tmpFolder, affectedModule.getName());
         //subTaskIndicator.finished();
       }

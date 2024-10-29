@@ -13,6 +13,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinDiagnosticHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinSemanticHighlightingVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighting.KotlinScriptHighlightingVisitor"/>
 
     <highlightUsagesHandlerFactory implementation="org.jetbrains.kotlin.idea.highlighting.KotlinHighlightExitPointsHandlerFactory"/>
 

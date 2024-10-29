@@ -18,6 +18,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.MouseAdapter
@@ -27,6 +28,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class RunToolbarExtraSlotPane(val project: Project, val baseWidth: () -> Int?): RWActiveListener {
   private val manager = RunToolbarSlotManager.getInstance(project)
   private val slotPane = JPanel(VerticalLayout(JBUI.scale(3))).apply {

@@ -48,8 +48,6 @@ internal class ApplicationInfoPropertiesImpl(
   override val shortCompanyName: String
   override val svgRelativePath: String?
   override val svgProductIcons: List<String>
-  @Suppress("OVERRIDE_DEPRECATION")
-  override val patchesUrl: String?
   override val launcherName: String
 
   override val releaseVersionForLicensing: String
@@ -132,7 +130,6 @@ internal class ApplicationInfoPropertiesImpl(
       .flatMap { listOf(it.getAttributeValue("svg"), it.getAttributeValue("svg-small")) }
       .filterNotNull()
       .toList()
-    patchesUrl = root.getChild("update-urls")?.getAttributeValue("patches")
   }
 }
 

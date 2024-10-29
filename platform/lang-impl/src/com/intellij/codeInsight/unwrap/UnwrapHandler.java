@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.unwrap;
 
@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.NotNullList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public class UnwrapHandler implements CodeInsightActionHandler {
   public static final int HIGHLIGHTER_LEVEL = HighlighterLayer.SELECTION + 1;
 
@@ -50,8 +52,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     selectOption(options, editor, file);
   }
 
-  @NotNull
-  private static List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
+  private static @NotNull List<MyUnwrapAction> collectOptions(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     List<MyUnwrapAction> result = new ArrayList<>();
 
     UnwrapDescriptor descriptor = getUnwrapDescription(file);
@@ -134,8 +135,7 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     private final Project myProject;
     private final Editor myEditor;
     private final Unwrapper myUnwrapper;
-    @NotNull
-    private final PsiElement myElement;
+    private final @NotNull PsiElement myElement;
 
     MyUnwrapAction(@NotNull Project project, @NotNull Editor editor, @NotNull Unwrapper unwrapper, @NotNull PsiElement element) {
       super(unwrapper.getDescription(element));

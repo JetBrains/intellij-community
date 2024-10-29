@@ -8,7 +8,7 @@ import com.amazon.ion.system.IonReaderBuilder;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.MavenRepositoryModel;
 import org.jetbrains.plugins.gradle.model.RepositoryModels;
-import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoriesModel;
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap.SimpleObjectFactory;
@@ -101,12 +101,12 @@ public class RepositoriesModelSerializationService implements SerializationServi
     reader.stepIn();
 
     RepositoryModels model =
-      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultRepositoriesModel>() {
+      context.objectMap.computeIfAbsent(readInt(reader, OBJECT_ID_FIELD), new SimpleObjectFactory<DefaultRepositoryModels>() {
 
         @Override
-        public DefaultRepositoriesModel create() {
+        public DefaultRepositoryModels create() {
           List<MavenRepositoryModel> repositories = readRepositories(reader, context);
-          return new DefaultRepositoriesModel(repositories);
+          return new DefaultRepositoryModels(repositories);
         }
       });
     reader.stepOut();
@@ -141,7 +141,7 @@ public class RepositoriesModelSerializationService implements SerializationServi
   }
 
   private static class ReadContext {
-    private final IntObjectMap<DefaultRepositoriesModel> objectMap = new IntObjectMap<>();
+    private final IntObjectMap<DefaultRepositoryModels> objectMap = new IntObjectMap<>();
     private final IntObjectMap<MavenRepositoryModel> repositoryMap = new IntObjectMap<>();
   }
 

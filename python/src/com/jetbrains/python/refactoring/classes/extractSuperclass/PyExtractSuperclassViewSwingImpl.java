@@ -56,14 +56,12 @@ class PyExtractSuperclassViewSwingImpl
     box.add(panel);
     box.add(Box.createVerticalStrut(5));
 
-    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor();
-
-
-    myFileChooserDescriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
-    myFileChooserDescriptor.withTreeRootVisible(true);
+    myFileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(getFileOrDirectory())
+      .withRoots(ProjectRootManager.getInstance(project).getContentRoots())
+      .withTreeRootVisible(true);
     myTargetDirField = new TextFieldWithBrowseButton();
-    myTargetDirField
-      .addBrowseFolderListener(getFileOrDirectory(), null, project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    myTargetDirField.addBrowseFolderListener(project, myFileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
 
     panel = new JPanel(new BorderLayout());
     final JLabel dirLabel = new JLabel();

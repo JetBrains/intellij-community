@@ -5,6 +5,7 @@ import com.intellij.find.impl.SearchEverywhereItem
 import com.intellij.ide.actions.OpenInRightSplitAction
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.lang.LangBundle
+import com.intellij.navigation.PsiElementNavigationItem
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -27,6 +28,7 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.util.concurrent.Callable
 import java.util.function.Consumer
@@ -74,7 +76,7 @@ internal class ExtendedInfoComponent(private val project: Project?, private val 
 
     val action = advertisement.rightAction.invoke(element)
     if (action != null) {
-      val actionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.ACTION_SEARCH, context(project))
+      val actionEvent = AnActionEvent.createEvent(action, context(project), null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
       action.updateIt(actionEvent)
       actionLink.update(actionEvent, action)
       shortcutLabel.updateIt(action)
@@ -130,7 +132,8 @@ internal fun createTextExtendedInfo(): ExtendedInfo {
   return createPsiExtendedInfo(project, virtualFile, psiElement)
 }
 
-internal fun createPsiExtendedInfo(): ExtendedInfo {
+@ApiStatus.Internal
+fun createPsiExtendedInfo(): ExtendedInfo {
   val psiElement: (Any) -> PsiElement? = {
     val item = (it as? PsiItemWithSimilarity<*>)?.value ?: it
     (item as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.item
@@ -138,6 +141,22 @@ internal fun createPsiExtendedInfo(): ExtendedInfo {
 
   return createPsiExtendedInfo(project = null, file = null, psiElement)
 }
+
+@ApiStatus.Internal
+fun tryGetPsiElementFromEntry(entry: Any): PsiElement? =
+  when (entry) {
+    is PsiElementNavigationItem -> entry.targetElement
+    is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> entry.item
+    is PSIPresentationBgRendererWrapper.ItemWithPresentation<*> -> when (val presUnwrapped = entry.item) {
+      is PsiItemWithSimilarity<*> -> when (val semUnwrapped = presUnwrapped.value) {
+        is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> semUnwrapped.item
+        is PsiElement -> semUnwrapped
+        else -> null
+      }
+      else -> null
+    }
+    else -> null
+  }
 
 fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
                           file: ((Any) -> VirtualFile?)? = null,
@@ -166,16 +185,16 @@ fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
   }
 
   val split: (Any) -> AnAction? = fun(item: Any): ExtendedInfoOpenInRightSplitAction? {
-    val actualFile = fileFun.invoke(item)
-    val actualProject = projectFun.invoke(item)
-    val actualPsiElement = psiElement.invoke(item)
-    if (actualFile == null || actualPsiElement == null) return null
-
     return ExtendedInfoOpenInRightSplitAction(
-      SimpleDataContext.builder()
-        .add(CommonDataKeys.PROJECT, actualProject)
-        .add(CommonDataKeys.PSI_ELEMENT, actualPsiElement)
-        .add(CommonDataKeys.VIRTUAL_FILE, actualFile).build())
+      CustomizedDataContext.withSnapshot(DataContext.EMPTY_CONTEXT) { sink ->
+        sink[CommonDataKeys.PROJECT] = projectFun.invoke(item)
+        sink.lazy(CommonDataKeys.PSI_ELEMENT) {
+          psiElement.invoke(item)
+        }
+        sink.lazy(CommonDataKeys.VIRTUAL_FILE) {
+          fileFun.invoke(item)
+        }
+      })
   }
 
   return ExtendedInfo(path, split)
@@ -189,7 +208,8 @@ private class ExtendedInfoOpenInRightSplitAction(private val dataContext: DataCo
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    ActionUtil.invokeAction(split, dataContext, ActionPlaces.ACTION_SEARCH, null, null)
+    val event = AnActionEvent.createEvent(split, dataContext, null, ActionPlaces.ACTION_SEARCH, ActionUiKind.SEARCH_POPUP, null)
+    ActionUtil.invokeAction(split, event, null)
     val seManager = SearchEverywhereManager.getInstance(dataContext.getData(CommonDataKeys.PROJECT))
     if (seManager.isShown) seManager.currentlyShownUI.closePopup()
   }

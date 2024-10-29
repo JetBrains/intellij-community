@@ -3,21 +3,24 @@
 
 package org.jetbrains.intellij.build
 
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.util.xml.dom.XmlElement
 import com.intellij.util.xml.dom.readXmlAsModel
-import io.ktor.util.decodeString
 import org.jetbrains.intellij.build.impl.ModuleItem
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.findFileInModuleSources
 import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.*
 import java.io.StringReader
 import java.nio.file.Files
+import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.io.path.extension
+
+internal val useTestSourceEnabled: Boolean = System.getProperty("idea.build.pack.test.source.enabled", "true").toBoolean()
 
 // production-only - JpsJavaClasspathKind.PRODUCTION_RUNTIME
 internal class JarPackagerDependencyHelper(private val context: BuildContext) {
@@ -32,19 +35,49 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   fun isPluginModulePackedIntoSeparateJar(module: JpsModule, layout: PluginLayout?): Boolean {
     val modulesWithExcludedModuleLibraries = layout?.modulesWithExcludedModuleLibraries ?: emptySet()
     return module.name !in modulesWithExcludedModuleLibraries &&
-           getLibraryDependencies(module).any { it.libraryReference.parentReference is JpsModuleReference }
+           getLibraryDependencies(module = module, withTests = false).any { it.libraryReference.parentReference is JpsModuleReference }
   }
 
-  fun getPluginXmlContent(pluginModule: JpsModule): String {
-    val moduleOutput = context.getModuleOutputDir(pluginModule)
-    if (moduleOutput.extension == "jar") {
+  fun isTestPluginModule(module: JpsModule): Boolean {
+    if (!useTestSourceEnabled) {
+      return false
+    }
+
+    val moduleName = module.name
+    // todo use some marker
+    if (moduleName == "intellij.rdct.testFramework" ||
+        moduleName == "intellij.platform.split.testFramework" ||
+        moduleName == "intellij.rdct.tests.distributed") {
+      return true
+    }
+
+    if (moduleName.contains(".test.")) {
+      if (module.sourceRoots.none { it.rootType.isForTests }) {
+        return false
+      }
+
+      return moduleName != "intellij.rider.test.framework" &&
+             moduleName != "intellij.rider.test.api" &&
+             moduleName != "intellij.rider.test.api.teamcity"
+    }
+    return moduleName.endsWith("._test")
+  }
+
+  suspend fun getPluginXmlContent(pluginModule: JpsModule): String {
+    var moduleOutput = context.getModuleOutputDir(pluginModule, forTests = false)
+    if (useTestSourceEnabled && Files.notExists(moduleOutput)) {
+      moduleOutput = context.getModuleOutputDir(pluginModule, forTests = true)
+    }
+
+    if (moduleOutput.toString().endsWith(".jar")) {
       return getPluginXmlContentFromJar(moduleOutput)
     }
+
     val pluginXmlFile = moduleOutput.resolve("META-INF/plugin.xml")
     try {
       return Files.readString(pluginXmlFile)
     }
-    catch (e: NoSuchFileException) {
+    catch (_: NoSuchFileException) {
       throw IllegalStateException("${pluginXmlFile.fileName} not found in ${pluginModule.name} module (file=$pluginXmlFile)")
     }
   }
@@ -53,40 +86,46 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     var pluginXmlContent: String? = null
     readZipFile(moduleJar) { name, data ->
       if (name == "META-INF/plugin.xml")
-        pluginXmlContent = data().decodeString()
+        pluginXmlContent = Charsets.UTF_8.decode(data()).toString()
     }
 
     return pluginXmlContent ?: throw IllegalStateException("META-INF/plugin.xml not found in ${moduleJar} module")
   }
 
-  fun getPluginIdByModule(pluginModule: JpsModule): String {
+  suspend fun getPluginIdByModule(pluginModule: JpsModule): String {
     // it is ok to read the plugin descriptor with unresolved x-include as the ID should be specified at the root
     val root = readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
     val element = root.getChild("id") ?: root.getChild("name") ?: throw IllegalStateException("Cannot find attribute id or name (module=$pluginModule)")
     return element.content!!
   }
 
-  fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<String> {
+  suspend fun readPluginContentFromDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
     return readPluginContentFromDescriptor(getResolvedPluginDescriptor(pluginModule, moduleOutputPatcher))
   }
 
   // plugin patcher should be executed before
-  private fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
+  private suspend fun getResolvedPluginDescriptor(pluginModule: JpsModule, moduleOutputPatcher: ModuleOutputPatcher): XmlElement {
     return moduleOutputPatcher.getPatchedPluginXmlIfExists(pluginModule.name)?.let { readXmlAsModel(it) } ?: readXmlAsModel(StringReader(getPluginXmlContent(pluginModule)))
   }
 
   // The x-include is not resolved. If the plugin.xml includes any files, the content from these included files will not be considered.
   fun readPluginIncompleteContentFromDescriptor(pluginModule: JpsModule): Sequence<String> {
-    val pluginXml = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
-    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml))
+    val pluginXml = findFileInModuleSources(pluginModule, "META-INF/plugin.xml") ?: return emptySequence()
+    return readPluginContentFromDescriptor(readXmlAsModel(pluginXml)).map { it.first  }
   }
 
-  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<String> {
+  private fun readPluginContentFromDescriptor(pluginDescriptor: XmlElement): Sequence<Pair<String, RuntimeModuleLoadingRule>> {
     return sequence {
       for (content in pluginDescriptor.children("content")) {
         for (module in content.children("module")) {
           val moduleName = module.attributes.get("name")?.takeIf { !it.contains('/') } ?: continue
-          yield(moduleName)
+          val loadingRuleString = module.attributes.get("loading")
+          val loadingRule = when (loadingRuleString) {
+            "required" -> RuntimeModuleLoadingRule.REQUIRED
+            "on-demand" -> RuntimeModuleLoadingRule.ON_DEMAND
+            else -> RuntimeModuleLoadingRule.OPTIONAL
+          }
+          yield(moduleName to loadingRule)
         }
       }
     }
@@ -95,18 +134,18 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
   private fun getModuleDependencies(module: JpsModule): Sequence<JpsModuleDependency> {
     return sequence {
       for (element in module.dependenciesList.dependencies) {
-        if (element is JpsModuleDependency && isProductionRuntime(element)) {
+        if (element is JpsModuleDependency && isProductionRuntime(element, withTests = false)) {
           yield(element)
         }
       }
     }
   }
 
-  fun getLibraryDependencies(module: JpsModule): List<JpsLibraryDependency> {
+  fun getLibraryDependencies(module: JpsModule, withTests: Boolean): List<JpsLibraryDependency> {
     return libraryCache.computeIfAbsent(module) {
       val result = mutableListOf<JpsLibraryDependency>()
       for (element in module.dependenciesList.dependencies) {
-        if (isProductionRuntime(element) && element is JpsLibraryDependency) {
+        if (isProductionRuntime(element = element, withTests = withTests) && element is JpsLibraryDependency) {
           result.add(element)
         }
       }
@@ -114,34 +153,38 @@ internal class JarPackagerDependencyHelper(private val context: BuildContext) {
     }
   }
 
-  // cool.module.core has dependency on library cool-library.
+  // cool.module.core has dependency on a library cool-library.
   // And it is a plugin.
   //
   // cool.module.part1 has dependency on cool.module.core AND on library cool-library.
   // And it is a plugin that depends on cool.module.core.
   //
   // We should include cool-library only to cool.module.core (same group).
-  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>): Boolean {
+  fun hasLibraryInDependencyChainOfModuleDependencies(dependentModule: JpsModule, libraryName: String, siblings: Collection<ModuleItem>, withTests: Boolean): Boolean {
     val parentGroup = dependentModule.name.let { it.substring(0, it.lastIndexOf('.')) }
     val prefix = "$parentGroup."
     for (dependency in getModuleDependencies(dependentModule)) {
       val moduleName = dependency.moduleReference.moduleName
       // intellij.space.kotlin depends on module intellij.space and both uses library org.apache.ivy
       if (moduleName == parentGroup) {
-        if (getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
+        if (getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
           return true
         }
       }
       else if (moduleName.startsWith(prefix) &&
           siblings.none { it.moduleName == moduleName } &&
-          getLibraryDependencies(dependency.module ?: continue).any { it.libraryReference.libraryName == libraryName }) {
+          getLibraryDependencies(dependency.module ?: continue, withTests).any { it.libraryReference.libraryName == libraryName }) {
         return true
       }
     }
     return false
   }
 
-  private fun isProductionRuntime(element: JpsDependencyElement): Boolean {
-    return javaExtensionService.getDependencyExtension(element)?.scope?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) == true
+  private fun isProductionRuntime(element: JpsDependencyElement, withTests: Boolean): Boolean {
+    val scope = javaExtensionService.getDependencyExtension(element)?.scope ?: return false
+    if (withTests && scope.isIncludedIn(JpsJavaClasspathKind.TEST_RUNTIME)) {
+      return true
+    }
+    return scope.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME)
   }
 }

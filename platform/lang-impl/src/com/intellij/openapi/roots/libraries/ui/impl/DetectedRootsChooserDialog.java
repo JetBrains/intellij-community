@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries.ui.impl;
 
 import com.intellij.lang.LangBundle;
@@ -20,6 +20,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ComboBoxCellEditor;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.*;
  * @author max
  * @author Constantine.Plotnikov
  */
+@ApiStatus.Internal
 public final class DetectedRootsChooserDialog extends DialogWrapper {
   private static final ColumnInfo<?, ?> ROOT_COLUMN = new TreeColumnInfo("");
   private static final ColumnInfo<VirtualFileCheckedTreeNode, String> ROOT_TYPE_COLUMN = new ColumnInfo<>("") {
@@ -200,9 +202,8 @@ public final class DetectedRootsChooserDialog extends DialogWrapper {
     return new TitlePanel(ProjectBundle.message("section.title.choose.roots"), myDescription);
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPane;
   }
 
@@ -210,15 +211,13 @@ public final class DetectedRootsChooserDialog extends DialogWrapper {
     return myTreeTable.getCheckedNodes(SuggestedChildRootInfo.class);
   }
 
-  @NonNls
   @Override
-  protected String getDimensionServiceKey() {
+  protected @NonNls String getDimensionServiceKey() {
     return "DetectedRootsChooserDialog";
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myTreeTable;
   }
 
@@ -239,8 +238,7 @@ public final class DetectedRootsChooserDialog extends DialogWrapper {
       return myFile;
     }
 
-    @Nullable
-    private SuggestedChildRootInfo getRootInfo() {
+    private @Nullable SuggestedChildRootInfo getRootInfo() {
       return userObject instanceof SuggestedChildRootInfo ? (SuggestedChildRootInfo)userObject : null;
     }
   }

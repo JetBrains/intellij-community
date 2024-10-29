@@ -2,17 +2,12 @@
 package org.jetbrains.kotlin.idea.gradleJava.scripting
 
 import com.intellij.openapi.application.writeAction
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.launchTracked
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.ScriptModel
-import org.jetbrains.kotlin.idea.core.script.configureGradleScriptsK2
 import org.jetbrains.kotlin.idea.gradleJava.loadGradleDefinitions
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.GradleBuildRootsManager
 import org.jetbrains.kotlin.idea.gradleJava.scripting.roots.Imported
@@ -22,13 +17,16 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener
 import java.nio.file.Paths
 
-class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListener {
+class ProjectGradleSettingsListener(
+    private val project: Project,
+    private val coroutineScope: CoroutineScope
+) : GradleSettingsListener {
 
     private val buildRootsManager: GradleBuildRootsManager = GradleBuildRootsManager.getInstanceSafe(project)
 
     override fun onProjectsLinked(settings: MutableCollection<GradleProjectSettings>) {
         settings.forEach {
-            CoroutineScopeService.getCoroutineScope(project).launch(Dispatchers.IO) {
+            coroutineScope.launchTracked(Dispatchers.IO) {
                 writeAction {
                     val newRoot = buildRootsManager.loadLinkedRoot(it)
                     buildRootsManager.add(newRoot)
@@ -40,13 +38,12 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
     override fun onProjectsLoaded(settings: Collection<GradleProjectSettings>) {
         if (KotlinPluginModeProvider.isK2Mode()) {
             settings.forEach {
-                CoroutineScopeService.getCoroutineScope(project).launch(Dispatchers.IO) {
-                    writeAction {
-                        val newRoot = buildRootsManager.loadLinkedRoot(it)
-
-                        if (newRoot is Imported) {
-                            launch { loadScriptConfigurations(newRoot, it) }
-                        }
+                coroutineScope.launchTracked(Dispatchers.IO) {
+                    val newRoot = writeAction {
+                        buildRootsManager.loadLinkedRoot(it)
+                    }
+                    if (newRoot is Imported) {
+                        loadScriptConfigurations(newRoot, it)
                     }
                 }
             }
@@ -73,30 +70,21 @@ class ProjectGradleSettingsListener(val project: Project) : GradleSettingsListen
         settings: GradleProjectSettings
     ) {
         val definitions = loadGradleDefinitions(settings.externalProjectPath, root.data.gradleHome, root.data.javaHome, project)
-        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
 
-        val scripts = root.data.models.mapNotNull {
+        val gradleScripts = root.data.models.mapNotNull {
             val path = Paths.get(it.file)
             VirtualFileManager.getInstance().findFileByNioPath(path)?.let { virtualFile ->
-                ScriptModel(
+                GradleScriptModel(
                     virtualFile,
                     it.classPath,
                     it.sourcePath,
-                    it.imports
+                    it.imports,
+                    root.data.javaHome
                 )
             }
         }.toSet()
 
-        configureGradleScriptsK2(project, scripts, root.data.javaHome, storage = null)
-    }
-
-    @ApiStatus.Internal
-    @Service(Service.Level.PROJECT)
-    class CoroutineScopeService(val coroutineScope: CoroutineScope) {
-        companion object {
-            fun getCoroutineScope(project: Project): CoroutineScope {
-                return project.service<CoroutineScopeService>().coroutineScope
-            }
-        }
+        GradleScriptDefinitionsSource.getInstance(project)?.updateDefinitions(definitions)
+        GradleScriptDependenciesSource.getInstance(project)?.updateDependenciesAndCreateModules(gradleScripts)
     }
 }

@@ -24,14 +24,12 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.components.KaCompilationResult
 import org.jetbrains.kotlin.analysis.api.components.KaCompilerTarget
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnostic
-import org.jetbrains.kotlin.codegen.ClassBuilderFactories
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.base.codeInsight.compiler.compileToDirectory
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.module
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.LOG
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
 import org.jetbrains.kotlin.idea.scratch.ScratchFile
@@ -40,6 +38,7 @@ import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 import java.io.File
 
 class KtScratchExecutionSession(
@@ -168,7 +167,7 @@ class KtScratchExecutionSession(
             }
 
             try {
-                val compilerTarget = KaCompilerTarget.Jvm(ClassBuilderFactories.BINARIES)
+                val compilerTarget = KaCompilerTarget.Jvm(isTestMode = false)
                 val allowedErrorFilter: (KaDiagnostic) -> Boolean = { false }
 
                 compileToDirectory(psiFile, configuration, compilerTarget, allowedErrorFilter, tmpDir)
@@ -203,8 +202,8 @@ class KtScratchExecutionSession(
             javaParameters.classPath.addAll(JavaParametersBuilder.getModuleDependencies(module))
         }
 
-        ScriptConfigurationManager.getInstance(originalFile.project)
-            .getConfiguration(originalFile)?.let {
+        ScriptConfigurationsProvider.getInstance(originalFile.project)
+            ?.getScriptConfiguration(originalFile)?.let {
                 javaParameters.classPath.addAll(it.dependenciesClassPath.map { f -> f.absolutePath })
             }
 

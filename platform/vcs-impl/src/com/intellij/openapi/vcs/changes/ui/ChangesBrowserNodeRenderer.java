@@ -56,7 +56,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
                                     int row,
                                     boolean hasFocus) {
     ChangesBrowserNode<?> node = (ChangesBrowserNode<?>)value;
-    node.render(this, selected, expanded, hasFocus);
+    node.render(tree, this, selected, expanded, hasFocus);
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 

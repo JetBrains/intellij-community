@@ -4,10 +4,11 @@ package org.jetbrains.intellij.build.impl
 
 import org.jetbrains.intellij.build.io.PackageIndexBuilder
 import org.jetbrains.intellij.build.io.ZipFileWriter
+import org.jetbrains.intellij.build.io.ZipIndexWriter
 import org.jetbrains.intellij.build.io.writeNewZipWithoutIndex
 import java.nio.ByteBuffer
+import java.nio.channels.GatheringByteChannel
 import java.nio.channels.SeekableByteChannel
-import java.nio.channels.WritableByteChannel
 import java.nio.file.Path
 import java.util.*
 
@@ -23,9 +24,12 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
   ).toByteArray()
 
   val buffer = ByteBuffer.allocate(128 * 1024)
-  ZipFileWriter(WritableByteChannelBackedByByteBuffer(buffer)).use { zipCreator ->
-    val packageIndexBuilder = PackageIndexBuilder()
-    zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData), packageIndexBuilder.indexWriter)
+  val packageIndexBuilder = PackageIndexBuilder()
+  ZipFileWriter(
+    channel = WritableByteChannelBackedByByteBuffer(buffer),
+    zipIndexWriter = ZipIndexWriter(indexWriter = packageIndexBuilder.indexWriter),
+  ).use { zipCreator ->
+    zipCreator.uncompressedData("META-INF/plugin.xml", ByteBuffer.wrap(pluginXmlData))
     packageIndexBuilder.addFile("META-INF/plugin.xml")
 
     packageIndexBuilder.addFile("META-INF/pluginIcon.svg")
@@ -37,7 +41,8 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
                                       "15 L28,15 L28,11 Z M22,11 L26,11 L26,15 L22,15 L22,11 Z M10,11 L14,11 L14,15 L10,15 L10,11 Z M4," +
                                       "11 L8,11 L8,15 L4,15 L4,11 Z M4,5 L8,5 L8,9 L4,9 L4,5 Z M10,5 L14,5 L14,9 L10,9 L10,5 Z M16,11 L20," +
                                       "11 L20,15 L16,15 L16,11 Z M25,21 L11,21 L11,17 L25,17 L25,21 Z\" transform=\"translate(2 7)\"/>\n" +
-                                      "</svg>\n", packageIndexBuilder.indexWriter)
+                                      "</svg>\n"
+    )
 
     packageIndexBuilder.addFile("META-INF/pluginIcon_dark.svg")
     @Suppress("SpellCheckingInspection")
@@ -48,11 +53,12 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
                                       "15 L28,15 L28,11 Z M22,11 L26,11 L26,15 L22,15 L22,11 Z M10,11 L14,11 L14,15 L10,15 L10,11 Z M4," +
                                       "11 L8,11 L8,15 L4,15 L4,11 Z M4,5 L8,5 L8,9 L4,9 L4,5 Z M10,5 L14,5 L14,9 L10,9 L10,5 Z M16,11 L20," +
                                       "11 L20,15 L16,15 L16,11 Z M25,21 L11,21 L11,17 L25,17 L25,21 Z\" transform=\"translate(2 7)\"/>\n" +
-                                      "</svg>\n", packageIndexBuilder.indexWriter)
+                                      "</svg>\n"
+    )
     for (name in keymaps) {
       val keymapFile = "keymaps/$name.xml"
       packageIndexBuilder.addFile(keymapFile)
-      zipCreator.file(keymapFile, keymapDir.resolve("$name.xml"), packageIndexBuilder.indexWriter)
+      zipCreator.file(keymapFile, keymapDir.resolve("$name.xml"))
     }
 
     packageIndexBuilder.writePackageIndex(zipCreator)
@@ -62,7 +68,7 @@ internal fun buildKeymapPlugin(keymaps: Array<String>, buildNumber: String, targ
 
   val resultFile = targetDir.resolve("${shortName}Keymap.zip")
   writeNewZipWithoutIndex(resultFile, compress = true) {
-    it.uncompressedData("${shortName}Keymap/lib/${shortName}Keymap.jar", buffer, null)
+    it.uncompressedData("${shortName}Keymap/lib/${shortName}Keymap.jar", buffer)
   }
   return Pair(resultFile, pluginXmlData)
 }
@@ -88,7 +94,7 @@ ${
 </idea-plugin>"""
 }
 
-private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuffer) : WritableByteChannel, SeekableByteChannel {
+private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuffer) : GatheringByteChannel, SeekableByteChannel {
   private var isOpen = true
 
   override fun isOpen() = isOpen
@@ -106,6 +112,16 @@ private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuff
     buffer.put(src)
     return r
   }
+
+  override fun write(srcs: Array<ByteBuffer>, offset: Int, length: Int): Long {
+    var bytesWritten: Long = 0
+    for (i in offset until (offset + length)) {
+      bytesWritten += write(srcs[i])
+    }
+    return bytesWritten
+  }
+
+  override fun write(srcs: Array<ByteBuffer>): Long = write(srcs = srcs, offset = 0, length = srcs.size)
 
   override fun position(): Long = buffer.position().toLong()
 

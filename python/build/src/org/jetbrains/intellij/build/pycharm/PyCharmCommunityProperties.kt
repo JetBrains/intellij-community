@@ -10,7 +10,7 @@ import org.jetbrains.intellij.build.io.copyFileToDir
 import java.nio.file.Files
 import java.nio.file.Path
 
-class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
+open class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPropertiesBase() {
   override val customProductCode: String
     get() = "PC"
 
@@ -22,26 +22,19 @@ class PyCharmCommunityProperties(private val communityHome: Path) : PyCharmPrope
     scrambleMainJar = false
     buildSourcesArchive = true
 
-    productLayout.mainModules = listOf("intellij.pycharm.community.main")
     productLayout.productApiModules = listOf("intellij.xml.dom")
     productLayout.productImplementationModules = listOf(
-      "intellij.xml.dom.impl",
       "intellij.platform.starter",
       "intellij.pycharm.community",
       "intellij.platform.whatsNew",
     )
-    productLayout.bundledPluginModules.addAll(
-      listOf(
+    productLayout.bundledPluginModules +=
+      sequenceOf(
         "intellij.python.community.plugin", // Python language
         "intellij.pycharm.community.customization", // Convert Intellij to PyCharm
         "intellij.vcs.github.community") +
       Files.readAllLines(communityHome.resolve("python/build/plugin-list.txt"))
-    )
 
-    productLayout.pluginLayouts = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS.addAll(listOf(
-      CommunityRepositoryModules.githubPlugin("intellij.vcs.github.community")
-    )
-    )
     productLayout.pluginModulesToPublish = persistentSetOf("intellij.python.community.plugin")
     baseDownloadUrl = "https://download.jetbrains.com/python/"
 

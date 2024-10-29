@@ -11,6 +11,8 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -65,15 +67,13 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
     val PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES: Key<Boolean> = Key.create("PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES")
 
-    private val PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY: Key<Boolean> = Key.create("PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY")
-
     fun Project.isOpenedByPlatformProcessor(): Boolean = getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean = getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
 
     fun Project.isNewProject(): Boolean = getUserData(PROJECT_NEWLY_OPENED) == true
 
-    fun Project.isTempProject(): Boolean = getUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY) == true
+    fun Project.isTempProject(): Boolean = service<OpenProjectSettingsService>().state.isLocatedInTempDirectory
 
     internal fun Project.isLoadedFromCacheButHasNoModules(): Boolean = getUserData(PROJECT_LOADED_FROM_CACHE_BUT_HAS_NO_MODULES) == true
 
@@ -118,7 +118,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         }
       },
       beforeOpen = {
-        it.putUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY, true)
+        it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
         options.beforeOpen?.invoke(it) ?: true
       })
       TrustedPaths.getInstance().setProjectPathTrusted(baseDir, true)
@@ -158,7 +158,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
           }
         },
         beforeOpen = {
-          it.putUserData(PROJECT_IS_LOCATED_IN_TEMP_DIRECTORY, true)
+          it.service<OpenProjectSettingsService>().state.isLocatedInTempDirectory = true
           options.beforeOpen?.invoke(it) ?: true
         }
       )
@@ -286,7 +286,9 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir)!!
       }
       withContext(Dispatchers.EDT) {
-        virtualFile.refresh(false, false)
+        writeIntentReadAction {
+          virtualFile.refresh(false, false)
+        }
       }
 
       for (configurator in EP_NAME.lazySequence()) {

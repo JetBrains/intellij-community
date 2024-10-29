@@ -21,9 +21,9 @@ class RemoveNullableFix(element: KtNullableType, private val typeOfError: Nullab
         PROPERTY(KotlinBundle.message("make.not.nullable"))
     }
 
-    override fun getFamilyName() = KotlinBundle.message("text.remove.question")
+    override fun getFamilyName(): String = KotlinBundle.message("text.remove.question")
 
-    override fun getText() = typeOfError.message
+    override fun getText(): String = typeOfError.message
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

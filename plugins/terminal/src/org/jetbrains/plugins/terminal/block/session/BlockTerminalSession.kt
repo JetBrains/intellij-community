@@ -16,6 +16,7 @@ import com.jediterm.terminal.*
 import com.jediterm.terminal.model.*
 import org.jetbrains.plugins.terminal.TerminalUtil
 import org.jetbrains.plugins.terminal.block.output.TerminalAlarmManager
+import org.jetbrains.plugins.terminal.block.session.util.FutureTerminalOutputStream
 import org.jetbrains.plugins.terminal.shell_integration.CommandBlockIntegration
 import org.jetbrains.plugins.terminal.util.ShellIntegration
 import java.util.concurrent.CompletableFuture
@@ -34,7 +35,20 @@ internal class BlockTerminalSession(
 ) : Disposable {
 
   val model: TerminalModel
+
+  /**
+   * Use [terminalOutputStream] whenever possible instead of this field.
+   * @see [terminalOutputStream]
+   */
   internal val terminalStarterFuture: CompletableFuture<TerminalStarter?> = CompletableFuture()
+
+  /**
+   * This stream sends input to the terminal.
+   * It ensures that any data sent to the terminal is properly
+   * handled even if the terminal's output stream
+   * isn't immediately available at the time of the request.
+   */
+  internal val terminalOutputStream: TerminalOutputStream = FutureTerminalOutputStream(terminalStarterFuture)
 
   private val executorServiceManager: TerminalExecutorServiceManager = TerminalExecutorServiceManagerImpl()
 
@@ -54,7 +68,7 @@ internal class BlockTerminalSession(
     controller = JediTerminal(ModelUpdatingTerminalDisplay(alarmManager, model, settings), textBuffer, styleState)
 
     commandManager = ShellCommandManager(this)
-    commandExecutionManager = ShellCommandExecutionManager(this, commandManager)
+    commandExecutionManager = ShellCommandExecutionManagerImpl(this, commandManager, shellIntegration, controller, this as Disposable)
     // Add AlarmManager listener now, because we can't add it in its constructor.
     // Because AlarmManager need to be created before ShellCommandManager
     commandManager.addListener(alarmManager, this)

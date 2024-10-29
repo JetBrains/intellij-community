@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
-import com.intellij.diff.DiffContext
-import com.intellij.diff.EditorDiffViewer
-import com.intellij.diff.FrameDiffTool
+import com.intellij.diff.*
 import com.intellij.diff.FrameDiffTool.DiffViewer
+import com.intellij.diff.requests.ContentDiffRequest
 import com.intellij.diff.tools.combined.search.CombinedDiffSearchContext
 import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
 import com.intellij.diff.tools.simple.SimpleDiffViewer
@@ -14,7 +13,6 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil
 import com.intellij.diff.util.DiffUtil
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -47,7 +45,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
@@ -68,7 +65,7 @@ class CombinedDiffViewer(
   private val viewState: CombinedDiffUIState
 ) : CombinedDiffNavigation,
     CombinedDiffCaretNavigation,
-    DataProvider,
+    UiDataProvider,
     Disposable {
   private val project = context.project!! // CombinedDiffContext expected
 
@@ -84,12 +81,15 @@ class CombinedDiffViewer(
     if (blockId.isCollapsed) blockHeight else maxOf(blockHeight, scrollPane.viewport.height)
   }
 
-  private val scrollPane: JBScrollPane = JBScrollPane(
+  private val scrollPane: JBScrollPane = object : JBScrollPane(
     blocksPanel,
     ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
     ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-  ).apply {
-    DataManager.registerDataProvider(this, this@CombinedDiffViewer)
+  ), UiDataProvider {
+    override fun uiDataSnapshot(sink: DataSink) {
+      DataSink.uiDataSnapshot(sink, this@CombinedDiffViewer)
+    }
+  }.apply {
     border = JBUI.Borders.empty()
     viewportBorder = JBUI.Borders.customLineTop(CombinedDiffUI.MAIN_HEADER_BACKGROUND)
     viewport.addChangeListener(ViewportChangeListener())
@@ -122,13 +122,13 @@ class CombinedDiffViewer(
   private val blockListeners = EventDispatcher.create(BlockListener::class.java)
 
   private fun updateDiffInfo(blockId: CombinedBlockId) {
-    val viewer = diffViewers[blockId] as? DiffViewerBase
-    if (viewer == null) {
+    val request = (diffViewers[blockId] as? DiffViewerBase)?.request
+    if (request !is ContentDiffRequest) {
       viewState.setDiffInfo(CombinedDiffUIState.DiffInfoState.Empty)
       return
     }
 
-    val titles = viewer.request.contentTitles.filter { it != null && it.isNotBlank() }
+    val titles = request.contentTitles.filter { it != null && it.isNotBlank() }
     val newDiffInfo = when (titles.size) {
       0 -> CombinedDiffUIState.DiffInfoState.Empty
       1 -> CombinedDiffUIState.DiffInfoState.SingleTitle(titles[0])
@@ -256,15 +256,14 @@ class CombinedDiffViewer(
   private val currentDiffIterable: CombinedDiffScrollSupport.CombinedDiffPrevNextDifferenceIterable
     get() = scrollSupport.currentPrevNextIterable
 
-  override fun getData(dataId: @NonNls String): Any? {
-    if (CommonDataKeys.PROJECT.`is`(dataId)) return project
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.`is`(dataId)) return currentDiffIterable
-    if (DiffDataKeys.NAVIGATABLE.`is`(dataId)) return getCurrentDataProvider()?.let(DiffDataKeys.NAVIGATABLE::getData)
-    if (DiffDataKeys.DIFF_VIEWER.`is`(dataId)) return getCurrentDiffViewer()
-    if (COMBINED_DIFF_VIEWER.`is`(dataId)) return this
-    if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) getCurrentDiffViewer()?.currentEditor
-
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    val diffViewer = getCurrentDiffViewer()
+    sink[CommonDataKeys.PROJECT] = project
+    sink[DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE] = currentDiffIterable
+    sink[DiffDataKeys.NAVIGATABLE] = (diffViewer as? DiffViewerEx)?.navigatable
+    sink[DiffDataKeys.DIFF_VIEWER] = diffViewer
+    sink[COMBINED_DIFF_VIEWER] = this
+    sink[DiffDataKeys.CURRENT_EDITOR] = diffViewer?.currentEditor
   }
 
   fun getMainUI() = context.getUserData(COMBINED_DIFF_MAIN_UI)!!
@@ -539,15 +538,6 @@ class CombinedDiffViewer(
       }
     }
 
-  private fun getCurrentDataProvider(): DataProvider? {
-    val currentDiffViewer = getCurrentDiffViewer()
-    if (currentDiffViewer is DataProvider) {
-      return currentDiffViewer
-    }
-
-    return currentDiffViewer?.let(DiffViewer::getComponent)?.let(DataManager::getDataProvider)
-  }
-
   override fun moveCaretToPrevBlock() {
     blockState.goPrev()
 
@@ -767,7 +757,8 @@ class CombinedDiffViewer(
 
     inner class CombinedDiffPrevNextDifferenceIterable : PrevNextDifferenceIterable {
       private fun CombinedDiffViewer.getDifferencesIterable(): PrevNextDifferenceIterable? {
-        return getCurrentDataProvider()?.let(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE::getData)
+        val currentViewer = getCurrentDiffViewer() ?: return null
+        return (currentViewer as? DiffViewerEx)?.differenceIterable
       }
 
       override fun canGoNext(): Boolean {
@@ -884,6 +875,7 @@ private fun runPreservingViewportContent(scroll: JBScrollPane, blocksPanel: Comb
   scroll.viewport.viewPosition = Point(newViewRect.x, newViewRect.y)
 }
 
+@get:ApiStatus.Internal
 val DiffViewer.currentEditor: Editor?
   get() = when (this) {
     is EditorDiffViewer -> currentEditor
@@ -926,6 +918,7 @@ private fun Rectangle.intersects(bb: BlockBounds): Boolean =
   (bb.maxY > minY && bb.maxY <= maxY) ||
   (bb.minY <= minY && bb.maxY >= maxY)
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 interface BlockListener : EventListener {
   fun blocksHidden(blockIds: Collection<CombinedBlockId>)

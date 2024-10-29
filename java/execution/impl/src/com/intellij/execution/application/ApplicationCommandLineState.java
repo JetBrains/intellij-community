@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.application;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
@@ -19,6 +20,7 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.util.ExceptionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,25 +50,36 @@ public abstract class ApplicationCommandLineState<T extends
     }
 
     final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-    ReadAction.nonBlocking((Callable<Void>)() -> {
-      final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
-      if (module.getModule() != null) {
-        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          if (mainClass == null) {
-            throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
-          }
-          int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
-                                                                  isProvidedScopeIncluded());
-          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
-        });
+    try {
+      ReadAction.nonBlocking((Callable<Void>)() -> {
+        final String jreHome = getTargetEnvironmentRequest() == null && myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
+        if (module.getModule() != null) {
+          DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
+            if (mainClass == null) {
+              throw new CantRunException(ExecutionBundle.message("no.main.class.defined.error.message"));
+            }
+            int classPathType = JavaParametersUtil.getClasspathType(module, mainClass, false,
+                                                                    isProvidedScopeIncluded());
+            JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
+          });
+        }
+        else {
+          JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        }
+        return null;
+      })
+        .expireWith(configuration.getProject())
+        .executeSynchronously();
+    }
+    catch (Exception e) {
+      ExecutionException executionException = ExceptionUtil.findCause(e, ExecutionException.class);
+      if (executionException != null) {
+        throw executionException;
       }
       else {
-        JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
+        throw e;
       }
-      return null;
-    })
-      .expireWith(configuration.getProject())
-      .executeSynchronously();
+    }
 
     setupModulePath(params, module);
 
@@ -95,8 +108,12 @@ public abstract class ApplicationCommandLineState<T extends
       if (mainModule != null) {
         boolean inLibrary = mainModule instanceof PsiCompiledElement || mainModule instanceof LightJavaModule;
         if (!inLibrary || ReadAction.compute(() -> JavaModuleGraphUtil.findNonAutomaticDescriptorByModule(module.getModule(), false)) != null) {
-          params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
-          dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
+          boolean isExcluded = CompilerConfiguration.getInstance(module.getProject())
+            .isExcludedFromCompilation(mainModule.getContainingFile().getVirtualFile());
+          if(!isExcluded) {
+            params.setModuleName(ReadAction.compute(() -> mainModule.getName()));
+            dumbService.runReadActionInSmartMode(() -> JavaParametersUtil.putDependenciesOnModulePath(params, mainModule, false));
+          }
         }
       }
     }

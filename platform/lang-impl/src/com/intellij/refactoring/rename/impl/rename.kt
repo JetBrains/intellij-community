@@ -161,7 +161,7 @@ private suspend fun processUsages(usageChannel: ReceiveChannel<UsagePointer>, ne
     usagePointers += pointer
     val forcePreview: Boolean? = readAction {
       pointer.dereference()?.let { renameUsage ->
-        renameUsage is TextRenameUsage || renameUsage.conflicts(newName).isNotEmpty()
+        renameUsage !is ModifiableRenameUsage || renameUsage is TextRenameUsage || renameUsage.conflicts(newName).isNotEmpty()
       }
     }
     if (forcePreview == true) {

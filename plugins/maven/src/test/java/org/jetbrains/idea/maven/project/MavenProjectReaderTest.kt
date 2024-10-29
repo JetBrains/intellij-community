@@ -49,7 +49,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     assertProblems(readProject(projectPom, NullProjectLocator()))
 
-    createProjectPom("""
+    updateProjectPom("""
                        <foo>
                        </bar>
                        <<groupId>test</groupId<artifactId>project</artifactId>
@@ -74,7 +74,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
 
     assertProblems(readProject(projectPom, NullProjectLocator()))
 
-    createProjectPom("<name>a" + String(byteArrayOf(0x0), StandardCharsets.UTF_8) +
+    updateProjectPom("<name>a" + String(byteArrayOf(0x0), StandardCharsets.UTF_8) +
                      "a</name><fo" + String(byteArrayOf(0x0),
                                             StandardCharsets.UTF_8) +
                      "o></foo>\n")
@@ -1239,7 +1239,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     assertEquals("pom", p.profiles[0].modules[0])
     assertEquals("pom", p.profiles[0].source)
 
-    createModulePom("module",
+    updateModulePom("module",
                     """
                       <groupId>test</groupId>
                       <artifactId>module</artifactId>
@@ -1264,7 +1264,7 @@ class MavenProjectReaderTest : MavenProjectReaderTestCase() {
     UsefulTestCase.assertEmpty("parent", p.profiles[0].modules)
     assertEquals("pom", p.profiles[0].source)
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>parent</artifactId>
                        <version>1</version>

@@ -5,7 +5,9 @@ import com.intellij.ide.IdeCoreBundle
 import com.intellij.ide.caches.CachesInvalidator
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FSRecordsCacheInvalidator : CachesInvalidator() {
   override fun getDescription(): String = IdeCoreBundle.message("checkbox.invalidate.caches.invalidates.vfs")
 

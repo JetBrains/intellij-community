@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io
 
 import com.intellij.openapi.util.IntellijInternalApi
@@ -32,6 +32,12 @@ suspend fun Process.awaitExit(): Int {
 
 /**
  * Computes and returns result of the [action] which may block for an unforeseeable amount of time.
+ *
+ * The difference with regular cancellable call is that the computation itself may be non-cooperating in regards
+ * with the cancellation: i.e. the computation may _ignore_ the cancellation request, but the wrapper provides
+ * cancellability anyway. This is implemented by 'detaching' the slow/hanging/non-cancellable computation, and
+ * leaving it running in a background. The detached computation wastes resources -- that is the price for
+ * non-cooperative behavior.
  *
  * The [action] does not inherit coroutine context from the calling coroutine, use [withContext] to install proper context if needed.
  * The [action] is executed on a special unlimited dispatcher to avoid starving [Dispatchers.IO], even if [context] is assigned

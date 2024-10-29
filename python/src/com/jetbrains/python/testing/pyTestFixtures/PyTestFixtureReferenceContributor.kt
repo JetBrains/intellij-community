@@ -15,11 +15,13 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.GENERATOR
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.ImportedResolveResult
 import com.jetbrains.python.psi.types.*
+import org.jetbrains.annotations.ApiStatus
 
 class PyTestFixtureReference(pyElement: PsiElement, fixture: PyTestFixture, private val importElement: PyElement? = null, range: TextRange? = null) : BaseReference(pyElement, range), PsiPolyVariantReference {
   private val functionRef = fixture.function?.let { SmartPointerManager.createPointer(it) }
   private val resolveRef = fixture.resolveTarget?.let { SmartPointerManager.createPointer(it) }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use new constructor")
   constructor(namedParameter: PyNamedParameter, fixture: PyTestFixture) : this(namedParameter, fixture, null)
 

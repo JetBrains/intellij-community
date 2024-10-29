@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.quarantine.importing
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.util.Computable
@@ -173,29 +174,34 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
     // import with default settings: delegate build to gradle
     importProject()
-    assertSources("project.main", path(gradleGeneratedDir))
-    assertGeneratedSources("project.main", path(gradleGeneratedDir))
+
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path(gradleGeneratedDir))
+    }
 
     currentExternalProjectSettings.delegatedBuild = false
 
     // import with build by intellij idea
     importProject()
-    assertSources("project.main", path(ideaGeneratedDir))
-    assertGeneratedSources("project.main", path(ideaGeneratedDir))
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path(ideaGeneratedDir))
+    }
 
     // subscribe to build delegation changes in current project
     (ExternalSystemApiUtil.getManager(GradleConstants.SYSTEM_ID) as GradleManager).runActivity(myProject)
     // switch delegation to gradle
     currentExternalProjectSettings.delegatedBuild = true
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(true, projectPath)
-    assertSources("project.main", path(gradleGeneratedDir))
-    assertGeneratedSources("project.main", path(gradleGeneratedDir))
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path(gradleGeneratedDir))
+    }
 
     // switch delegation to idea
     currentExternalProjectSettings.delegatedBuild = false
     GradleSettings.getInstance(myProject).publisher.onBuildDelegationChange(false, projectPath)
-    assertSources("project.main", path(ideaGeneratedDir))
-    assertGeneratedSources("project.main", path(ideaGeneratedDir))
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path(ideaGeneratedDir))
+    }
   }
 
   @Test
@@ -381,7 +387,7 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
 
   @Test
   @TargetVersions("5.6+")
-  fun `test annotation processor generated sources`() {
+  fun `test annotation processor generated sources for java-test-fixtures`() {
     val annotationProcessor = "build/generated/sources/annotationProcessor"
 
     createProjectSubDir("src/main/java")
@@ -406,39 +412,88 @@ class AnnotationProcessorConfigImportingTest: GradleImportingTestCase() {
     assertModules("project", "project.main", "project.test", "project.testFixtures")
 
     assertContentRoots("project", projectPath)
-    assertSources("project")
-    assertResources("project")
-    assertTestSources("project")
-    assertTestResources("project")
+    assertNoSourceRoots("project")
 
     assertContentRoots("project.main", path("src/main"), path("$annotationProcessor/java/main"))
-    assertSources("project.main", path("src/main/java"), path("$annotationProcessor/java/main"))
-    assertGeneratedSources("project.main", path("$annotationProcessor/java/main"))
-    assertResources("project.main", path("src/main/resources"))
-    assertGeneratedResources("project.main")
-    assertTestSources("project.main")
-    assertGeneratedTestSources("project.main")
-    assertTestResources("project.main")
-    assertGeneratedTestResources("project.main")
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path("$annotationProcessor/java/main"))
+      it.sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    }
 
     assertContentRoots("project.test", path("src/test"), path("$annotationProcessor/java/test"))
-    assertSources("project.test")
-    assertGeneratedSources("project.test")
-    assertResources("project.test")
-    assertGeneratedResources("project.test")
-    assertTestSources("project.test", path("src/test/java"), path("$annotationProcessor/java/test"))
-    assertGeneratedTestSources("project.test", path("$annotationProcessor/java/test"))
-    assertTestResources("project.test", path("src/test/resources"))
-    assertGeneratedTestResources("project.test")
+    assertSourceRoots("project.test") {
+      it.sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("$annotationProcessor/java/test"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    }
 
     assertContentRoots("project.testFixtures", path("src/testFixtures"), path("$annotationProcessor/java/testFixtures"))
-    assertSources("project.testFixtures")
-    assertGeneratedSources("project.testFixtures")
-    assertResources("project.testFixtures")
-    assertGeneratedResources("project.testFixtures")
-    assertTestSources("project.testFixtures", path("src/testFixtures/java"), path("$annotationProcessor/java/testFixtures"))
-    assertGeneratedTestSources("project.testFixtures", path("$annotationProcessor/java/testFixtures"))
-    assertTestResources("project.testFixtures", path("src/testFixtures/resources"))
-    assertGeneratedTestResources("project.testFixtures")
+    assertSourceRoots("project.testFixtures") {
+      it.sourceRoots(ExternalSystemSourceType.TEST, path("src/testFixtures/java"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("$annotationProcessor/java/testFixtures"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/testFixtures/resources"))
+    }
+  }
+
+  @Test
+  @TargetVersions("7.4+")
+  fun `test annotation processor generated sources for jvm-test-suite`() {
+    val annotationProcessor = "build/generated/sources/annotationProcessor"
+
+    createProjectSubDir("src/main/java")
+    createProjectSubDir("src/main/resources")
+    createProjectSubDir("src/test/java")
+    createProjectSubDir("src/test/resources")
+    createProjectSubDir("src/integrationTest/java")
+    createProjectSubDir("src/integrationTest/resources")
+    createProjectSubDir("$annotationProcessor/java/main")
+    createProjectSubDir("$annotationProcessor/java/test")
+    createProjectSubDir("$annotationProcessor/java/integrationTest")
+
+    importProject {
+      withJavaPlugin()
+      withMavenCentral()
+      withPlugin("jvm-test-suite")
+      addDependency("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+      addDependency("testAnnotationProcessor", "org.projectlombok:lombok:1.18.8")
+      withPostfix {
+        call("testing") {
+          call("suites") {
+            call("integrationTest", code("JvmTestSuite")) {
+              call("dependencies") {
+                call("annotationProcessor", "org.projectlombok:lombok:1.18.8")
+              }
+            }
+          }
+        }
+      }
+    }
+
+    assertModules("project", "project.main", "project.test", "project.integrationTest")
+
+    assertContentRoots("project", projectPath)
+    assertNoSourceRoots("project")
+
+    assertContentRoots("project.main", path("src/main"), path("$annotationProcessor/java/main"))
+    assertSourceRoots("project.main") {
+      it.sourceRoots(ExternalSystemSourceType.SOURCE, path("src/main/java"))
+      it.sourceRoots(ExternalSystemSourceType.SOURCE_GENERATED, path("$annotationProcessor/java/main"))
+      it.sourceRoots(ExternalSystemSourceType.RESOURCE, path("src/main/resources"))
+    }
+
+    assertContentRoots("project.test", path("src/test"), path("$annotationProcessor/java/test"))
+    assertSourceRoots("project.test") {
+      it.sourceRoots(ExternalSystemSourceType.TEST, path("src/test/java"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("$annotationProcessor/java/test"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/test/resources"))
+    }
+
+    assertContentRoots("project.integrationTest", path("src/integrationTest"), path("$annotationProcessor/java/integrationTest"))
+    assertSourceRoots("project.integrationTest") {
+      it.sourceRoots(ExternalSystemSourceType.TEST, path("src/integrationTest/java"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_GENERATED, path("$annotationProcessor/java/integrationTest"))
+      it.sourceRoots(ExternalSystemSourceType.TEST_RESOURCE, path("src/integrationTest/resources"))
+    }
   }
 }

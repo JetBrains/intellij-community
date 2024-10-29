@@ -66,7 +66,7 @@ object LambdaToAnonymousFunctionUtil {
                 param(if (parameterName.isSpecial) "_" else parameterName.asString().quoteIfNeeded(), renderType)
             }
 
-            functionSymbol.returnType.takeIf { !it.isUnit && it !is KaErrorType }?.let {
+            functionSymbol.returnType.takeIf { !it.isUnitType && it !is KaErrorType }?.let {
                 val lastStatement = bodyExpressionCopy.statements.lastOrNull()
                 if (lastStatement != null && lastStatement !is KtReturnExpression) {
                     val foldableReturns = BranchedFoldingUtils.getFoldableReturns(lastStatement)

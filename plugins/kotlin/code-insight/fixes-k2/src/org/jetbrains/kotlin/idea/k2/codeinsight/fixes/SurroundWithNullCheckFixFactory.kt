@@ -7,6 +7,9 @@ import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
+import org.jetbrains.kotlin.analysis.api.symbols.KaVariableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -69,8 +72,7 @@ internal object SurroundWithNullCheckFixFactory {
         createQuickFixIfApplicableToUnsafeCall(diagnostic)
     }
 
-    context(KaSession)
-    private fun createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
+    private fun KaSession.createQuickFixIfApplicableToUnsafeCall(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val element = when (diagnostic) {
             is KaFirDiagnostic.UnsafeCall -> diagnostic.receiverExpression
             else -> diagnostic.psi
@@ -93,8 +95,18 @@ internal object SurroundWithNullCheckFixFactory {
         val file = expressionTarget.containingKtFile
         val scope = file.scopeContext(expressionTarget).compositeScope()
 
-        val callableSymbol = scope.getCallableSymbols(referenceSymbol.name).firstOrNull() ?: return emptyList()
+        val callableSymbol = scope.callables(referenceSymbol.name).firstOrNull() ?: return emptyList()
         if (referenceSymbol != callableSymbol) return emptyList()
+
+        if (callableSymbol is KaVariableSymbol) {
+            if (callableSymbol.isVal) {
+                if ((callableSymbol as? KaPropertySymbol)?.getter?.isDefault == false) {
+                    return emptyList()
+                }
+            } else if (callableSymbol.location != KaSymbolLocation.LOCAL) {
+                return emptyList()
+            }
+        }
 
         val elementContext = ElementContext(nullableExpression.createSmartPointer())
         return listOf(
@@ -102,7 +114,6 @@ internal object SurroundWithNullCheckFixFactory {
         )
     }
 
-    context(KaSession)
     private fun createQuickFixIfApplicableToTypeMismatch(diagnostic: KaFirDiagnostic<*>): List<SurroundWithNullCheckFix> {
         val nullableExpression = diagnostic.psi as? KtReferenceExpression ?: return emptyList()
         val root = SurroundWithNullCheckUtils.getRootExpressionIfApplicable(nullableExpression) ?: return emptyList()

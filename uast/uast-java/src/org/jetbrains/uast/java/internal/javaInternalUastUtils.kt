@@ -23,6 +23,8 @@ import com.intellij.psi.tree.IElementType
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastBinaryOperator
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
 
 internal fun IElementType.getOperatorType() = when (this) {
   JavaTokenType.EQ -> UastBinaryOperator.ASSIGN
@@ -87,9 +89,14 @@ fun isJava(language: Language?): Boolean {
   return language == JavaLanguage.INSTANCE
 }
 
+@OptIn(ExperimentalContracts::class)
 @Suppress("INVISIBLE_REFERENCE", "INVISIBLE_MEMBER")
-internal inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? = this as? T
-
+inline fun <reified T : Any> Any?.asSafely(): @kotlin.internal.NoInfer T? {
+  contract {
+    returnsNotNull() implies (this@asSafely is T)
+  }
+  return this as? T
+}
 fun PsiElement?.isSemicolon(): Boolean {
   if (this !is PsiJavaToken) return false
 

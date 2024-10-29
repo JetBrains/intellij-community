@@ -18,9 +18,11 @@ package com.intellij.diff.tools.util.text;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.util.MergeConflictType;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class FineMergeLineFragmentImpl extends MergeLineFragmentImpl implements FineMergeLineFragment {
   @NotNull private final MergeConflictType myConflictType;
   @Nullable private final MergeInnerDifferences myInnerDifferences;

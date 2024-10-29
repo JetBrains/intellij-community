@@ -7,8 +7,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.richcopy.settings.RichCopySettings;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CopyAsRichTextAction extends DumbAwareAction {
   public CopyAsRichTextAction() {
     setEnabledInModalContext(true);

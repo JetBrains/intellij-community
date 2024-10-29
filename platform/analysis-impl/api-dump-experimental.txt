@@ -1,0 +1,51 @@
+*f:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
+- com.intellij.codeInsight.completion.DeclarativeInsertHandler
+- sf:INSTANCE:com.intellij.codeInsight.completion.EmptyDeclarativeInsertHandler
+*f:com.intellij.codeInsight.completion.SingleInsertionDeclarativeInsertHandler
+- com.intellij.codeInsight.completion.DeclarativeInsertHandler
+- <init>(java.lang.String,com.intellij.codeInsight.completion.DeclarativeInsertHandler$PopupOptions):V
+- handleInsert(com.intellij.codeInsight.completion.InsertionContext,com.intellij.codeInsight.lookup.LookupElement):V
+com.intellij.codeInsight.daemon.ReferenceImporter
+- *:computeAutoImportAtOffset(com.intellij.openapi.editor.Editor,com.intellij.psi.PsiFile,I,Z):java.util.function.BooleanSupplier
+*f:com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
+- <init>():V
+- s:setHighlightersToEditor(com.intellij.openapi.project.Project,com.intellij.psi.PsiFile,com.intellij.openapi.editor.Document,I,I,java.util.Collection,I):V
+com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+- *:registerFix(com.intellij.modcommand.ModCommandAction,java.util.List,java.lang.String,com.intellij.openapi.util.TextRange,com.intellij.codeInsight.daemon.HighlightDisplayKey):com.intellij.codeInsight.daemon.impl.HighlightInfo$Builder
+*a:com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentModCommandFix
+- com.intellij.modcommand.PsiUpdateModCommandQuickFix
+- com.intellij.codeInspection.ContainerBasedSuppressQuickFix
+- com.intellij.codeInspection.InjectionAwareSuppressQuickFix
+- com.intellij.openapi.util.Iconable
+- pf:myID:java.lang.String
+- <init>(java.lang.String,Z):V
+- p:applyFix(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.modcommand.ModPsiUpdater):V
+- p:createSuppression(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement,com.intellij.psi.PsiElement):V
+- p:getCommentLanguage(com.intellij.psi.PsiElement):com.intellij.lang.Language
+- p:getCommentsFor(com.intellij.psi.PsiElement):java.util.List
+- a:getContainer(com.intellij.psi.PsiElement):com.intellij.psi.PsiElement
+- getFamilyName():java.lang.String
+- getIcon(I):javax.swing.Icon
+- getName():java.lang.String
+- getText():java.lang.String
+- invoke(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):V
+- isAvailable(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):Z
+- isShouldBeAppliedToInjectionHost():com.intellij.util.ThreeState
+- isSuppressAll():Z
+- pf:replaceSuppressionComment(com.intellij.psi.PsiElement):V
+- p:replaceSuppressionComments(com.intellij.psi.PsiElement):Z
+- setShouldBeAppliedToInjectionHost(com.intellij.util.ThreeState):V
+- p:setText(java.lang.String):V
+com.intellij.codeInsight.lookup.LookupEx
+- com.intellij.codeInsight.lookup.Lookup
+- *a:setPresentation(com.intellij.codeInsight.lookup.LookupPresentation):V
+a:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper
+- *:isMine(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.vfs.VirtualFile):Z
+- *:processContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,Z,com.intellij.util.Processor):Z
+- *:processTargetContexts(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters,com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):Z
+com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceResolver
+- *:getRelativePath(com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference,com.intellij.openapi.vfs.VirtualFile,com.intellij.psi.PsiElement):java.lang.String
+*:com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSetParameters
+- a:getElement():com.intellij.psi.PsiElement
+- a:getPathString():java.lang.String
+- a:isAbsolutePathReference():Z

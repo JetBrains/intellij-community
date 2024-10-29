@@ -21,9 +21,11 @@ import com.intellij.diagnostic.hprof.parser.Type
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap
 import it.unimi.dsi.fastutil.longs.LongArrayList
 import it.unimi.dsi.fastutil.longs.LongList
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import kotlin.experimental.and
 
+@ApiStatus.Internal
 class ObjectNavigatorOnAuxFiles(
   private val roots: Long2ObjectMap<RootReason>,
   private val auxOffsets: ByteBuffer,

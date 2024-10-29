@@ -1,9 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.dynatrace.hash4j.hashing.HashSink;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -21,9 +23,9 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
   private static final Logger LOG = Logger.getInstance(FileBasedArtifactRootDescriptor.class);
   private final FileCopyingHandler myCopyingHandler;
@@ -47,9 +49,9 @@ public final class FileBasedArtifactRootDescriptor extends ArtifactRootDescripto
   }
 
   @Override
-  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
-    super.writeConfiguration(out, relativizer);
-    myCopyingHandler.writeConfiguration(out);
+  public void writeConfiguration(@NotNull HashSink hash, PathRelativizerService relativizer) {
+    super.writeConfiguration(hash, relativizer);
+    myCopyingHandler.writeConfiguration(hash);
   }
 
   @Override

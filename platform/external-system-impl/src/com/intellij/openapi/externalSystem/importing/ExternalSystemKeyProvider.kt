@@ -5,8 +5,10 @@ import com.intellij.ide.environment.EnvironmentKey
 import com.intellij.ide.environment.EnvironmentKeyProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 class ExternalSystemKeyProvider : EnvironmentKeyProvider {
   object Keys {
     val LINK_UNLINKED_PROJECT : EnvironmentKey = EnvironmentKey.create("external.system.link.unlinked.projects")

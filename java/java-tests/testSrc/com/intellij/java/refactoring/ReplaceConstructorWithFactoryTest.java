@@ -46,6 +46,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     assertNotNull(presentation);
     ModCommand command = action.perform(context);
     ModCommandExecutor.getInstance().executeInteractively(context, command, getEditor());
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     final LookupEx lookup = LookupManager.getActiveLookup(getEditor());
     assertNotNull(lookup);
     LookupElement newMain = ContainerUtil.find(lookup.getItems(), l -> l.getLookupString().equals("newMain"));
@@ -68,6 +69,8 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
   public void testNestedClass2() { runTest("NestedClass2", "InnerClass"); }
   
   public void testAnonymousInheritor() { runTest("AnonymousInheritor", "Inner"); }
+  
+  public void testAnonymousInheritor2() { runTest("AnonymousInheritor2", null); }
 
   public void testSubclassVisibility() { runTest("05", null); }
 
@@ -135,6 +138,7 @@ public class ReplaceConstructorWithFactoryTest extends LightRefactoringTestCase 
     configureByFile("/refactoring/replaceConstructorWithFactory/before" + testIndex + ".java");
     setupEditorForInjectedLanguage();
     perform(targetClassName);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     checkResultByFile("/refactoring/replaceConstructorWithFactory/after" + testIndex + ".java");
   }
 

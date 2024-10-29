@@ -391,10 +391,11 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         val moduleC = createModuleInTmpDir("c")
         val fileD = createNotUnderContentRootFile("d", "fun baz() = 10")
 
-        val trackerA = createTracker(scriptA, "script A after an out-of-block modification")
-        val trackerB = createTracker(scriptB, "script B")
-        val trackerC = createTracker(moduleC, "module C")
-        val trackerD = createTracker(fileD, "not-under-content-root file D")
+        val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
+        val trackerA = createTracker(scriptA, "script A after an out-of-block modification", allowedEventKinds)
+        val trackerB = createTracker(scriptB, "script B", allowedEventKinds)
+        val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
+        val trackerD = createTracker(fileD, "not-under-content-root file D", allowedEventKinds)
 
         scriptA.withConfiguredEditor {
             val singleFunction = (declarations.single() as KtScript).declarations.single() as KtNamedFunction
@@ -416,10 +417,11 @@ class KotlinModuleOutOfBlockModificationTest : AbstractKotlinModuleModificationE
         val moduleC = createModuleInTmpDir("c")
         val scriptD = createScript("d", "fun baz() = 10")
 
-        val trackerA = createTracker(fileA, "not-under-content-root file A after an out-of-block modification")
-        val trackerB = createTracker(fileB, "not-under-content-root file B")
-        val trackerC = createTracker(moduleC, "module C")
-        val trackerD = createTracker(scriptD, "module D")
+        val allowedEventKinds = setOf(KotlinModificationEventKind.GLOBAL_MODULE_STATE_MODIFICATION)
+        val trackerA = createTracker(fileA, "not-under-content-root file A after an out-of-block modification", allowedEventKinds)
+        val trackerB = createTracker(fileB, "not-under-content-root file B", allowedEventKinds)
+        val trackerC = createTracker(moduleC, "module C", allowedEventKinds)
+        val trackerD = createTracker(scriptD, "module D", allowedEventKinds)
 
         fileA.withConfiguredEditor {
             modify(textAfterModification = "fun foo() = hello10", getSingleFunctionBodyOffset()) {

@@ -5,9 +5,11 @@ import com.intellij.openapi.diff.DefaultFlagsProvider
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.LineMarkerRendererEx
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Rectangle
 
+@ApiStatus.Internal
 abstract class LineStatusGutterMarkerRenderer : LineMarkerRendererEx {
 
   /**

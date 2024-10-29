@@ -5,7 +5,9 @@ import com.intellij.ide.projectView.PresentationData
 import com.intellij.ide.todo.HighlightedRegionProvider
 import com.intellij.ui.HighlightedRegion
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TodoItemNodePresentationData : PresentationData() {
 
   var additionalLines: MutableList<HighlightedRegionProvider> = ContainerUtil.createConcurrentList()

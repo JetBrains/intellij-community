@@ -4,13 +4,11 @@ package com.intellij.openapi.vcs.changes.patch;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 
+@ApiStatus.Internal
 public final class PatchNameChecker {
   public final static int MAX = 100;
   private final static int MAX_PATH = 255; // Windows path len restrictions

@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttributesFilter;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,10 +38,13 @@ public final class PlatformNioHelper {
    *
    * @see NioFiles#readAttributes
    */
-  @SuppressWarnings({"UnnecessaryFullyQualifiedName", "InstanceofIncompatibleInterface"})
-  public static void visitDirectory(@NotNull Path directory, @Nullable Set<String> filter, @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer)
-  throws IOException, SecurityException {
-    try (var dirStream = Files.newDirectoryStream(directory)) {
+  @SuppressWarnings("UnnecessaryFullyQualifiedName")
+  public static void visitDirectory(
+    @NotNull Path directory,
+    @Nullable Set<String> filter,
+    @NotNull BiPredicate<Path, Result<BasicFileAttributes>> consumer
+  ) throws IOException, SecurityException {
+    try (var dirStream = directory.getFileSystem().provider().newDirectoryStream(directory, FetchAttributesFilter.ACCEPT_ALL)) {
       for (var path : dirStream) {
         if (filter != null && !filter.contains(path.getFileName().toString())) {
           continue;

@@ -337,7 +337,7 @@ public final class SideEffectChecker {
       }
     }
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
-    PsiClass aClass = classReference == null ? null : (PsiClass)classReference.resolve();
+    PsiClass aClass = classReference == null ? null : tryCast(classReference.resolve(), PsiClass.class);
     String qualifiedName = aClass == null ? null : aClass.getQualifiedName();
     if (qualifiedName == null) return ThreeState.UNSURE;
     if (ourSideEffectFreeClasses.contains(qualifiedName)) return ThreeState.NO;

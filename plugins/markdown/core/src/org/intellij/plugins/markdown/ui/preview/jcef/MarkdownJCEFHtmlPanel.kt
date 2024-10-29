@@ -1,26 +1,30 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview.jcef
 
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.BaseProjectDirectories
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLoadingPanel
+import com.intellij.ui.components.JBViewport
+import com.intellij.ui.components.Magnificator
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import com.intellij.util.application
 import com.intellij.util.net.NetUtils
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.debounce
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
 import org.cef.handler.CefRequestHandlerAdapter
@@ -32,17 +36,20 @@ import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.settings.MarkdownPreviewSettings
-import org.intellij.plugins.markdown.ui.actions.changeFontSize
+import org.intellij.plugins.markdown.settings.MarkdownSettingsConfigurable.Companion.fontSizeOptions
 import org.intellij.plugins.markdown.ui.preview.*
+import org.intellij.plugins.markdown.ui.preview.MarkdownUpdateHandler.PreviewRequest
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.*
+import org.intellij.plugins.markdown.ui.preview.jcef.zoomIndicator.PreviewZoomIndicatorManager
 import org.intellij.plugins.markdown.util.MarkdownApplicationScope
 import org.intellij.plugins.markdown.util.MarkdownPluginScope
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.BorderLayout
+import java.awt.Point
 import java.net.URL
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.math.round
 
 class MarkdownJCEFHtmlPanel(
   private val project: Project?,
@@ -91,6 +98,8 @@ class MarkdownJCEFHtmlPanel(
     styles.map { PreviewStaticServer.getStaticUrl(resourceProvider, it) }
   )
 
+  private val updateHandler = MarkdownUpdateHandler.Debounced()
+
   private fun buildIndexContent(): String {
     // language=HTML
     return """
@@ -115,18 +124,6 @@ class MarkdownJCEFHtmlPanel(
   private var previousRenderClosure: String = ""
 
   private val coroutineScope = project?.let(MarkdownPluginScope::createChildScope) ?: MarkdownApplicationScope.createChildScope()
-
-  private sealed interface PreviewRequest {
-    data class Update(
-      val content: String,
-      val initialScrollOffset: Int,
-      val document: VirtualFile?
-    ) : PreviewRequest
-
-    data class ReloadWithOffset(val offset: Int) : PreviewRequest
-  }
-
-  private val updateViewRequests = MutableSharedFlow<PreviewRequest>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   private val projectRoot = coroutineScope.async(context = Dispatchers.Default) {
     if (virtualFile != null && project != null) {
@@ -159,13 +156,24 @@ class MarkdownJCEFHtmlPanel(
     connection.subscribe(MarkdownPreviewSettings.ChangeListener.TOPIC, MarkdownPreviewSettings.ChangeListener { settings ->
       changeFontSize(settings.state.fontSize)
     })
+    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener { settings ->
+      val scale = settings.currentIdeScale
+      // language=JavaScript
+      val code = """
+      |(function() {
+      |  const styles = document.querySelector(":root").style;
+      |  styles.setProperty("${PreviewLAFThemeStyles.Variables.Scale}", "${scale}");
+      |})();
+      """.trimMargin()
+      executeJavaScript(code)
+    })
 
     coroutineScope.launch {
       val projectRoot = projectRoot.await()
       val fileSchemeResourcesProcessor = createFileSchemeResourcesProcessor(projectRoot)
 
       loadIndexContent()
-      updateViewRequests.debounce(20.milliseconds).collectLatest { request ->
+      updateHandler.requests.collectLatest { request ->
         when (request) {
           is PreviewRequest.Update -> {
             val (html, initialScrollOffset, document) = request
@@ -218,7 +226,7 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun setHtml(html: String, initialScrollOffset: Int, document: VirtualFile?) {
-    check(updateViewRequests.tryEmit(PreviewRequest.Update(content = html, initialScrollOffset, document)))
+    updateHandler.setContent(html, initialScrollOffset, document)
   }
 
   @ApiStatus.Internal
@@ -232,7 +240,7 @@ class MarkdownJCEFHtmlPanel(
   }
 
   override fun reloadWithOffset(offset: Int) {
-    check(updateViewRequests.tryEmit(PreviewRequest.ReloadWithOffset(offset)))
+    updateHandler.reloadWithOffset(offset)
   }
 
   override fun dispose() {
@@ -272,18 +280,68 @@ class MarkdownJCEFHtmlPanel(
     executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
+  private var previewInnerComponent: JComponent? = null
+  private val TEMPORARY_FONT_SIZE = Key.create<Int>("Markdown.Preview.FontSize")
+
   private fun createComponent(): JComponent {
-    val component = super.getComponent()
-    if (project == null || virtualFile == null) return component
+    previewInnerComponent = super.getComponent()
+    if (project == null || virtualFile == null) return previewInnerComponent!!
 
     val panel = JBLoadingPanel(BorderLayout(), this)
+
+    previewInnerComponent!!.putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object: Magnificator {
+      override fun magnify(scale: Double, at: Point): Point {
+        val currentSize = this@MarkdownJCEFHtmlPanel.getTemporaryFontSize() ?: PreviewLAFThemeStyles.defaultFontSize
+        var fontSize = round(currentSize * scale).toInt()
+        fontSize = maxOf(fontSize, fontSizeOptions.first())
+        fontSize = minOf(fontSize, fontSizeOptions.last())
+        changeFontSize(fontSize, temporary = true)
+
+        return at
+      }
+    })
+
+    previewInnerComponent!!.addPropertyChangeListener(TEMPORARY_FONT_SIZE.toString()) {
+      val balloon = project.service<PreviewZoomIndicatorManager>().createOrGetBalloon(this@MarkdownJCEFHtmlPanel)
+      balloon?.show(RelativePoint.getSouthOf(previewInnerComponent!!), Balloon.Position.below)
+    }
+
     coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       panel.startLoading()
-      panel.add(component)
+      val viewPort = JBViewport().apply {
+        layout = BorderLayout()
+      }
+      viewPort.add(previewInnerComponent, BorderLayout.CENTER)
+      panel.add(viewPort)
       projectRoot.await()
       panel.stopLoading()
     }
     return panel
+  }
+
+  fun getTemporaryFontSize() = getUserData(TEMPORARY_FONT_SIZE)
+
+  /**
+   * @param size Unscaled font size.
+   */
+  internal fun changeFontSize(size: Int, temporary: Boolean = false) {
+    if (temporary) {
+      val previousSize = getUserData(TEMPORARY_FONT_SIZE) ?: PreviewLAFThemeStyles.defaultFontSize
+      putUserData(TEMPORARY_FONT_SIZE, size)
+      previewInnerComponent?.firePropertyChange(TEMPORARY_FONT_SIZE.toString(), previousSize, size)
+    } else {
+      putUserData(TEMPORARY_FONT_SIZE, null)
+    }
+
+    val scaled = JBCefApp.normalizeScaledSize(size)
+    // language=JavaScript
+    val code = """
+    |(function() {
+    |  const styles = document.querySelector(":root").style;
+    |  styles.setProperty("${PreviewLAFThemeStyles.Variables.FontSize}", "${scaled}px");
+    |})();
+    """.trimMargin()
+    executeJavaScript(code)
   }
 
   private fun createFileSchemeResourcesProcessor(projectRoot: VirtualFile?): ResourceProvider? {

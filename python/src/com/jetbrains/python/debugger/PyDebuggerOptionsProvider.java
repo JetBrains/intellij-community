@@ -39,6 +39,8 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
     public boolean myDropIntoDebuggerOnFailedTests = false;
     public boolean mySupportQtDebugging = true;
     public @NonNls String myPyQtBackend = "auto";
+    public boolean myRunDebuggerInServerMode = true;
+    public int myDebuggerPort = 29781;
     public @NonNls String myAttachProcessFilter = "python";
   }
 
@@ -91,6 +93,22 @@ public final class PyDebuggerOptionsProvider implements PersistentStateComponent
 
   public void setPyQtBackend(String backend) {
     myState.myPyQtBackend = backend;
+  }
+
+  public boolean isRunDebuggerInServerMode() {
+    return myState.myRunDebuggerInServerMode;
+  }
+
+  public void setRunDebuggerInServerMode(boolean runDebuggerInServerMode) {
+    myState.myRunDebuggerInServerMode = runDebuggerInServerMode;
+  }
+
+  public int getDebuggerPort() {
+    return myState.myDebuggerPort;
+  }
+
+  public void setDebuggerPort(int port) {
+    myState.myDebuggerPort = port;
   }
 
   public String getAttachProcessFilter() {

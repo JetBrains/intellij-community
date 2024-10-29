@@ -167,6 +167,9 @@ public class JavaInheritorsGetter {
     final PsiTypeLookupItem item = PsiTypeLookupItem.createLookupItem(psiType, position).setShowPackage();
 
     if (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+        return null;
+      }
       item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
       item.setIndicateAnonymous(true);
     }

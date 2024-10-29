@@ -3,9 +3,11 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class WelcomeScreenColors {
 
   // These two for the topmost "Welcome to <product name>"

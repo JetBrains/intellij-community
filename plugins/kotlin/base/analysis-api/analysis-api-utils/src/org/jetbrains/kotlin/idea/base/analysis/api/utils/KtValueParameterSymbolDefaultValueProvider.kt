@@ -16,13 +16,12 @@ private object KtValueParameterSymbolDefaultValueProvider {
     context(KaSession)
     fun getDefaultParameterValue(parameterSymbol: KaValueParameterSymbol): KtExpression? {
         if (!parameterSymbol.hasDefaultValue) return null
-        return sequence {
-            yield(parameterSymbol)
-            yieldAll(parameterSymbol.allOverriddenSymbols.filterIsInstance<KaValueParameterSymbol>())
-        }.firstNotNullOfOrNull { parameter ->
-            val ktParameter = parameter.psi as? KtParameter ?: return@firstNotNullOfOrNull null
-            (ktParameter.navigationElement as? KtParameter ?: ktParameter).defaultValue
-        }
+        return parameterSymbol.allOverriddenSymbolsWithSelf
+            .filterIsInstance<KaValueParameterSymbol>()
+            .firstNotNullOfOrNull { parameter ->
+                val ktParameter = parameter.psi as? KtParameter ?: return@firstNotNullOfOrNull null
+                (ktParameter.navigationElement as? KtParameter ?: ktParameter).defaultValue
+            }
     }
 
 }

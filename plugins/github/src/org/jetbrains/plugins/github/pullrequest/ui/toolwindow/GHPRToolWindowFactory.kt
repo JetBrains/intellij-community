@@ -5,6 +5,7 @@ import com.intellij.collaboration.ui.toolwindow.dontHideOnEmptyContent
 import com.intellij.collaboration.ui.toolwindow.manageReviewToolwindowTabs
 import com.intellij.openapi.actionSystem.CommonShortcuts
 import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
@@ -97,10 +98,9 @@ private class GHPRToolWindowController(private val project: Project, parentCs: C
       val vm = project.serviceAsync<GHPRToolWindowViewModel>()
 
       coroutineScope {
-        toolWindow.contentManager.addDataProvider {
-          if (GHPRActionKeys.PULL_REQUESTS_PROJECT_VM.`is`(it)) vm.projectVm.value
-          else null
-        }
+        toolWindow.contentManager.addDataProvider(EdtNoGetDataProvider { sink ->
+          sink[GHPRActionKeys.PULL_REQUESTS_PROJECT_VM] = vm.projectVm.value
+        })
 
         // so it's not closed when all content is removed
         toolWindow.dontHideOnEmptyContent()

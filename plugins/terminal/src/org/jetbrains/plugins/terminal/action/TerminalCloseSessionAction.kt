@@ -25,10 +25,8 @@ internal class TerminalCloseSessionAction : TerminalPromotedDumbAwareAction(), A
     }
 
     val session = e.terminalSession ?: return
-    session.terminalStarterFuture.thenAccept {
       // send Ctrl+D to the terminal session to close it
-      it?.sendString("\u0004", false)
-    }
+    session.terminalOutputStream.sendString("\u0004", false)
   }
 
   override fun update(e: AnActionEvent) {

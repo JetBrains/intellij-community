@@ -257,9 +257,9 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         PsiElement anchor = findAnchorForLocalVariableDeclaration(body);
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(myMethod.getProject());
         PsiExpression refExpression = factory.createExpressionFromText(myParameter.getName(), anchor);
-        PsiDeclarationStatement localDeclaration = 
+        PsiDeclarationStatement localDeclaration =
           factory.createVariableDeclarationStatement(myParameter.getName(), myParameter.getType(), refExpression);
-        
+
         localDeclaration = (PsiDeclarationStatement)body.addAfter(localDeclaration, anchor);
         final PsiLocalVariable declaredVar = (PsiLocalVariable)localDeclaration.getDeclaredElements()[0];
         PsiUtil.setModifierProperty(declaredVar, PsiModifier.FINAL, myParameter.hasModifierProperty(PsiModifier.FINAL));
@@ -347,7 +347,7 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
         } else if (!PsiUtil.isAccessible((PsiMember)element, myMethod, null)) {
           myConflicts.putValue(expression, JavaRefactoringBundle.message("inline.parameter.depends.on.unavailable.value"));
         }
-      } else if (element instanceof PsiParameter && 
+      } else if (element instanceof PsiParameter &&
                  PsiTreeUtil.isAncestor(((PsiParameter)element).getDeclarationScope(), myInitializer, true)) {
         boolean bound = false;
         for (PsiParameter parameter : myMethod.getParameterList().getParameters()) {
@@ -387,7 +387,8 @@ public class InlineParameterExpressionProcessor extends BaseRefactoringProcessor
       super.visitReferenceElement(reference);
       if (myMethod.hasModifierProperty(PsiModifier.STATIC)) {
         final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiClass && !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC)) {
+        if (resolved instanceof PsiClass cls &&
+            (PsiUtil.isInnerClass(cls) || PsiUtil.isLocalClass(cls))) {
           myConflicts.putValue(reference, JavaRefactoringBundle.message("inline.parameter.depends.on.non.static.class"));
         }
       }

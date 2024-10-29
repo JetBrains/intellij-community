@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
@@ -32,6 +32,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.pom.PomModel;
 import com.intellij.pom.core.impl.PomModelImpl;
 import com.intellij.pom.tree.TreeAspect;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
@@ -139,7 +140,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
     // That's for reparse routines
     project.registerService(PomModel.class, new PomModelImpl(project));
-    Registry.markAsLoaded();
+    Registry.Companion.markAsLoaded();
     LoadingState.setCurrentState(LoadingState.PROJECT_OPENED);
   }
 
@@ -308,11 +309,23 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     return myFile;
   }
 
-  private static void doSanityChecks(PsiFile root) {
+  private void doSanityChecks(PsiFile root) {
     assertEquals("psi text mismatch", root.getViewProvider().getContents().toString(), root.getText());
     ensureParsed(root);
-    ensureCorrectReparse(root);
+    ensureCorrectReparse(root, isCheckNoPsiEventsOnReparse());
     checkRangeConsistency(root);
+  }
+
+  /**
+   * @deprecated Don't use this method in new code.
+   * <p>
+   * This method is a hack for old code to avoid failures in parsing tests when PSI machinery detects psi changes on file reparse.
+   * This should not happen because the parser must produce a stable result each time it's called.
+   * Please fix your parser instead of overriding this method. In case of doubts, consult with IntelliJ/Code Platform team.
+   */
+  @Deprecated
+  protected boolean isCheckNoPsiEventsOnReparse() {
+    return true;
   }
 
   private static void checkRangeConsistency(PsiFile file) {
@@ -531,16 +544,26 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     });
   }
 
-  public static void ensureCorrectReparse(@NotNull final PsiFile file) {
+  public static void ensureCorrectReparse(@NotNull PsiFile file) {
+    ensureCorrectReparse(file, true);
+  }
+
+  private static void ensureCorrectReparse(@NotNull PsiFile file, boolean isCheckNoPsiEventsOnReparse) {
     final String psiToStringDefault = DebugUtil.psiToString(file, true, false);
 
-    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
-                                       final String fileText = file.getText();
-                                       final DiffLog diffLog = new BlockSupportImpl().reparseRange(
-                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-                                       diffLog.performActualPsiChange(file);
-                                     });
+    TreeChangeEventImpl event = DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+      String fileText = file.getText();
+      DiffLog diffLog = new BlockSupportImpl().reparseRange(
+        file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText
+      );
+      return diffLog.performActualPsiChange(file);
+    });
 
     assertEquals(psiToStringDefault, DebugUtil.psiToString(file, true, false));
+
+    // this if-check is only for compatibility reasons! Please fix your parser instead of employing the flag!
+    if (isCheckNoPsiEventsOnReparse) {
+      assertEmpty(event.getChangedElements());
+    }
   }
 }

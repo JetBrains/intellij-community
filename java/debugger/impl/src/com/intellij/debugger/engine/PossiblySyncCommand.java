@@ -2,7 +2,6 @@
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -36,7 +35,7 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     }
     DebugProcess process = suspendContext.getDebugProcess();
     DebuggerManagerThreadImpl managerThread = ((DebuggerManagerThreadImpl)process.getManagerThread());
-    VirtualMachine virtualMachine = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).getVirtualMachine();
+    VirtualMachine virtualMachine = suspendContext.getVirtualMachineProxy().getVirtualMachine();
     if (!(virtualMachine instanceof VirtualMachineImpl) ||
         !managerThread.hasAsyncCommands() && ((VirtualMachineImpl)virtualMachine).isIdle()) {
       return false;
@@ -44,7 +43,10 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     else {
       // reschedule with a small delay
       hold();
-      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> managerThread.schedule(this), delay, TimeUnit.MILLISECONDS);
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
+        DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)process.getManagerThread();
+        return thread.schedule(this);
+      }, delay, TimeUnit.MILLISECONDS);
       return true;
     }
   }

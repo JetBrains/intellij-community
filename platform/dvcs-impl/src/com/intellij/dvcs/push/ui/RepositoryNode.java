@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,6 +28,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
   @NotNull private final RepositoryWithBranchPanel myRepositoryPanel;
   @Nullable private Future<AtomicReference<OutgoingResult>> myFuture;
 
+  @ApiStatus.Internal
   public RepositoryNode(@NotNull RepositoryWithBranchPanel repositoryPanel, @NotNull CheckBoxModel model, boolean enabled) {
     super(repositoryPanel);
     myCheckBoxModel = model;

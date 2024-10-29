@@ -28,8 +28,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.SystemProperties
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.JavaVersion
@@ -120,6 +120,39 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     })
   }
 
+  fun testNameHighlightingInsideCompiledModuleFile() {
+    myFixture.setReadEditorMarkupModel(true)
+    myFixture.openFileInEditor(getTestFile("module-info.class"))
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
+      val infos = myFixture.doHighlighting()
+        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
+      assertEquals(5, infos.size)
+      val texts = infos.map { it.text }.toSet()
+      assertContainsElements(texts,
+                             "module",
+                             "requires",
+                             "exports",
+      )
+    })
+  }
+
+  fun testNameHighlightingInsideCompiledFileWithRecords() {
+    myFixture.setReadEditorMarkupModel(true)
+    val testFile = getTestFile("RecordHighlighting.class")
+    testFile.parent.children ; testFile.parent.refresh(false, true)  // inner classes
+    myFixture.openFileInEditor(testFile)
+    IdentifierHighlighterPassFactory.doWithHighlightingEnabled(project, testRootDisposable, Runnable {
+      val infos = myFixture.doHighlighting()
+        .filter { it.severity === HighlightInfoType.SYMBOL_TYPE_SEVERITY }
+      val texts = infos.map { it.text }.toSet()
+      assertContainsElements(texts,
+                             "sealed",
+                             "record",
+                             "permits",
+      )
+    })
+  }
+
   private fun highlightUnderCaret(): List<HighlightInfo> {
     IdentifierHighlighterPassFactory.waitForIdentifierHighlighting()
     return myFixture.doHighlighting().filter { it.severity === HighlightInfoType.ELEMENT_UNDER_CARET_SEVERITY }
@@ -135,8 +168,8 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
       val mapping = file.getUserData(LineNumbersMapping.LINE_NUMBERS_MAPPING_KEY)!!
       assertEquals(11, mapping.bytecodeToSource(3))
       assertEquals(3, mapping.sourceToBytecode(11))
-      assertEquals(23, mapping.bytecodeToSource(13))
-      assertEquals(13, mapping.sourceToBytecode(23))
+      assertEquals(21, mapping.bytecodeToSource(13))
+      assertEquals(13, mapping.sourceToBytecode(21))
       assertEquals(-1, mapping.bytecodeToSource(1000))
       assertEquals(-1, mapping.sourceToBytecode(1000))
     }
@@ -147,7 +180,7 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
     val jrt = JavaVersion.current().feature >= 9
     val base = if (jrt) "jrt://${SystemProperties.getJavaHome()}!/java.desktop/" else "jar://${SystemProperties.getJavaHome()}/lib/rt.jar!/"
     val file = VirtualFileManager.getInstance().findFileByUrl(base + "javax/swing/JTable.class")!!
-    PerformanceTestUtil.newPerformanceTest("decompiling JTable.class") { decompiler.getText(file) }.start()
+    Benchmark.newBenchmark("decompiling JTable.class") { decompiler.getText(file) }.start()
   }
 
   fun testStructureView() {

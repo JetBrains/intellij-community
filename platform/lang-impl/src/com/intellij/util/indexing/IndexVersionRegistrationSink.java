@@ -3,6 +3,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class IndexVersionRegistrationSink {
   private final Map<ID<?, ?>, IndexVersion.IndexVersionDiff> indexVersionDiffs = new ConcurrentHashMap<>();
 

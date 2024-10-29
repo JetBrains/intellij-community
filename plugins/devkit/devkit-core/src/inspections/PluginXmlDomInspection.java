@@ -20,19 +20,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.search.FilenameIndex;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -54,8 +51,6 @@ import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
-import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -68,8 +63,6 @@ import static com.intellij.psi.search.GlobalSearchScope.projectScope;
 @VisibleForTesting
 @ApiStatus.Internal
 public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase {
-  @NonNls
-  private static final String PLUGIN_ICON_SVG_FILENAME = "pluginIcon.svg";
 
   private static final int MINIMAL_DESCRIPTION_LENGTH = 40;
 
@@ -112,7 +105,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
       if (module != null) {
         annotateIdeaPlugin((IdeaPlugin)element, holder, module);
         checkJetBrainsPlugin((IdeaPlugin)element, holder, module);
-        checkPluginIcon((IdeaPlugin)element, holder, module);
       }
     }
     else if (element instanceof Extension) {
@@ -235,12 +227,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
   }
 
-  private static boolean isUnderProductionSources(DomElement domElement, @NotNull Module module) {
-    VirtualFile virtualFile = DomUtil.getFile(domElement).getVirtualFile();
-    return virtualFile != null &&
-           ModuleRootManager.getInstance(module).getFileIndex().isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.PRODUCTION);
-  }
-
   private static void annotateListener(Listener listener, DomElementAnnotationHolder holder) {
     final PsiClass listenerClass = listener.getListenerClassName().getValue();
     final PsiClass topicClass = listener.getTopicClassName().getValue();
@@ -259,7 +245,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
   private static void annotateListeners(Listeners listeners, DomElementAnnotationHolder holder) {
     final Module module = listeners.getModule();
-    if (module == null || PsiUtil.isIdeaProject(module.getProject())) return;
+    if (module == null || IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) return;
 
     PluginPlatformInfo platformInfo = PluginPlatformInfo.forDomElement(listeners);
     final PluginPlatformInfo.PlatformResolveStatus resolveStatus = platformInfo.getResolveStatus();
@@ -343,6 +329,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
     checkMaxLength(ideaPlugin.getUrl(), 255, holder);
+    checkValidWebsite(ideaPlugin.getUrl(), holder);
 
     checkMaxLength(ideaPlugin.getId(), 255, holder);
 
@@ -379,7 +366,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
 
 
-    boolean isNotIdeaProject = !PsiUtil.isIdeaProject(module.getProject());
+    boolean isNotIdeaProject = !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject());
 
     if (isNotIdeaProject &&
         !DomUtil.hasXml(ideaPlugin.getVersion()) &&
@@ -399,7 +386,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkJetBrainsPlugin(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, @NotNull Module module) {
-    if (!PsiUtil.isIdeaProject(module.getProject())) return;
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) return;
 
     if (DomUtil.hasXml(ideaPlugin.getUrl())) {
       String url = ideaPlugin.getUrl().getStringValue();
@@ -453,20 +440,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (DomUtil.hasXml(ideaPlugin.getIdeaVersion())) {
       highlightRedundant(ideaPlugin.getIdeaVersion(),
                          DevKitBundle.message("inspections.plugin.xml.plugin.jetbrains.no.idea.version"), holder);
-    }
-  }
-
-  private static void checkPluginIcon(IdeaPlugin ideaPlugin, DomElementAnnotationHolder holder, Module module) {
-    if (!ideaPlugin.hasRealPluginId()) return;
-    if (!isUnderProductionSources(ideaPlugin, module)) return;
-    if (Boolean.TRUE == ideaPlugin.getImplementationDetail().getValue()) return;
-
-    Collection<VirtualFile> pluginIconFiles =
-      FilenameIndex.getVirtualFilesByName(PLUGIN_ICON_SVG_FILENAME, GlobalSearchScope.moduleScope(module));
-    if (pluginIconFiles.isEmpty()) {
-      holder.createProblem(ideaPlugin, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.no.plugin.icon.svg.file", PLUGIN_ICON_SVG_FILENAME),
-                           null);
     }
   }
 
@@ -572,9 +545,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     // skip some known offenders in IJ project
     if (name != null
         && (StringUtil.startsWith(name, "Pythonid.") ||
-            StringUtil.startsWith(name, "DevKit.")) // NON-NLS
-        && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
-      return true;
+            StringUtil.startsWith(name, "DevKit."))) {
+      if (IntelliJProjectUtil.isIntelliJPlatformProject(nameAttrValue.getManager().getProject())) {
+        return true;
+      }
     }
 
     if (StringUtil.isEmpty(name) ||
@@ -799,9 +773,11 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         highlightExperimental(extension, holder);
       }
     }
-    else if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
-             module != null && !PsiUtil.isIdeaProject(module.getProject())) {
-      highlightInternal(extension, holder);
+    else {
+      if (kind == ExtensionPoint.Status.Kind.INTERNAL_API &&
+          module != null && !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
+        highlightInternal(extension, holder);
+      }
     }
   }
 
@@ -857,7 +833,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         highlightExperimental(attributeValue, holder);
       }
       else if (psiField.hasAnnotation(ApiStatus.Internal.class.getCanonicalName()) &&
-               module != null && !PsiUtil.isIdeaProject(module.getProject())) {
+               module != null && !IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject())) {
         highlightInternal(attributeValue, holder);
       }
       else if (psiField.hasAnnotation(ApiStatus.Obsolete.class.getCanonicalName())) {
@@ -913,8 +889,10 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     checkMaxLength(vendor, 255, holder);
 
     //noinspection HttpUrlsUsage
-    checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder);
+    checkTemplateText(vendor.getUrl(), "http://www.yourcompany.com", holder); // used in old template
+    checkTemplateText(vendor.getUrl(), "https://www.yourcompany.com", holder);
     checkMaxLength(vendor.getUrl(), 255, holder);
+    checkValidWebsite(vendor.getUrl(), holder);
 
     checkTemplateText(vendor.getEmail(), "support@yourcompany.com", holder);
     checkMaxLength(vendor.getEmail(), 255, holder);
@@ -995,16 +973,23 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     PsiClass actionGroupClass = clazz.getValue();
     if (actionGroupClass == null) return;
 
-    PsiMethod canBePerformedMethod = new LightMethodBuilder(actionGroupClass.getManager(), "canBePerformed")
-      .setContainingClass(JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
-                                                                                             actionGroupClass.getResolveScope()))
+    PsiClass actionGroup = JavaPsiFacade.getInstance(actionGroupClass.getProject()).findClass(ActionGroup.class.getName(),
+                                                                                              actionGroupClass.getResolveScope());
+    if (actionGroup == null) return;
+
+    PsiMethod canBePerformedMethodTemplate = new LightMethodBuilder(actionGroupClass.getManager(), "canBePerformed")
+      .setContainingClass(actionGroup)
       .setModifiers(PsiModifier.PUBLIC)
       .setMethodReturnType(PsiTypes.booleanType())
       .addParameter("context", DataContext.class.getName());
 
-    PsiMethod overriddenCanBePerformedMethod = actionGroupClass.findMethodBySignature(canBePerformedMethod, false);
-    if (overriddenCanBePerformedMethod == null) {
-      String methodPresentation = PsiFormatUtil.formatMethod(canBePerformedMethod, PsiSubstitutor.EMPTY,
+    PsiMethod actionGroupCanBePerformed = actionGroup.findMethodBySignature(canBePerformedMethodTemplate, false);
+    if (actionGroupCanBePerformed == null) {
+      return;
+    }
+
+    if (actionGroupClass.findMethodBySignature(canBePerformedMethodTemplate, false) == null) {
+      String methodPresentation = PsiFormatUtil.formatMethod(canBePerformedMethodTemplate, PsiSubstitutor.EMPTY,
                                                              PsiFormatUtilBase.SHOW_NAME |
                                                              PsiFormatUtilBase.SHOW_PARAMETERS |
                                                              PsiFormatUtilBase.SHOW_CONTAINING_CLASS,
@@ -1203,6 +1188,17 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     if (StringUtil.isEmptyOrSpaces(value) || value.length() < MINIMAL_DESCRIPTION_LENGTH) {
       holder.createProblem(domValue,
                            DevKitBundle.message("inspections.plugin.xml.value.must.have.minimum.length", MINIMAL_DESCRIPTION_LENGTH));
+    }
+  }
+
+  private static void checkValidWebsite(@NotNull GenericDomValue<String> domValue,
+                                        DomElementAnnotationHolder holder) {
+    if (!DomUtil.hasXml(domValue)) return;
+
+    String url = domValue.getStringValue();
+    if (StringUtil.isEmptyOrSpaces(url) ||
+        (!url.startsWith("https://") && !url.startsWith("http://"))) {
+      holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.value.must.be.https.or.http.link.to.website"));
     }
   }
 

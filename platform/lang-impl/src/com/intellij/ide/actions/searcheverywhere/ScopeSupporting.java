@@ -2,9 +2,11 @@
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface ScopeSupporting {
 
   ScopeDescriptor getScope();

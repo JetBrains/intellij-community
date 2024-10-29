@@ -8,6 +8,7 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase {
 
@@ -15,22 +16,23 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
    * Inspections that are finished and intentionally disabled.
    */
   private static final List<String> DISABLED_INSPECTIONS =
-    List.of("StatisticsCollectorNotRegistered",
-            "PluginXmlI18n",
-            "SerializableCtor",
-            "UastHintedVisitorAdapterHints");
+    Stream.of("PluginXmlI18n",
+              "SerializableCtor",
+              "StatisticsCollectorNotRegistered"
+    ).sorted().toList();
 
   /**
    * Inspections which implementation is in progress
    * or are finished but not battle-tested yet and may require improvements/polishing.
    */
   private static final List<String> WIP_INSPECTIONS =
-    List.of("ExtensionClassShouldBeFinalAndNonPublic",
-            "CancellationCheckInLoops",
-            "ThreadingConcurrency",
-            "CallingMethodShouldBeRequiresBlockingContext",
-            "IncorrectProcessCanceledExceptionHandling",
-            "ReadOrWriteActionInServiceInitialization");
+    Stream.of("ExtensionClassShouldBeFinalAndNonPublic",
+              "CancellationCheckInLoops",
+              "ThreadingConcurrency",
+              "CallingMethodShouldBeRequiresBlockingContext",
+              "IncorrectCancellationExceptionHandling",
+              "PotentialDeadlockInServiceInitialization"
+    ).sorted().toList();
 
   /**
    * Validates all DevKit inspections that are disabled by default match the expected known set.
@@ -39,7 +41,7 @@ public class DevkitInspectionsRegistrationCheckTest extends BasePlatformTestCase
     List<LocalInspectionEP> devkitInspections = ContainerUtil.filter(LocalInspectionEP.LOCAL_INSPECTION.getExtensionList(), ep -> {
       return "DevKit".equals(ep.getPluginDescriptor().getPluginId().getIdString());
     });
-    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin)", 71,
+    assertEquals("Mismatch in total inspections, check classpath in test run configuration (intellij.devkit.plugin)", 73,
                  devkitInspections.size());
 
     List<LocalInspectionEP> disabledInspections = ContainerUtil.filter(devkitInspections, ep -> !ep.enabledByDefault);

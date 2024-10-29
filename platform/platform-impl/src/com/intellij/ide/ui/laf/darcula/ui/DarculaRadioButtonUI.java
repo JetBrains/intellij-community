@@ -6,6 +6,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.LafIconLookup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -75,6 +76,11 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     layout.paint(g, getDisabledTextColor(), getMnemonicIndex(button));
     paintFocus(button, g, layout.textRect);
     paintIcon(c, g, layout.iconRect);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull Rectangle getTextRect(@NotNull JRadioButton b) {
+    return createLayout(b, b.getSize()).textRect;
   }
 
   protected boolean removeInsetsBeforeLayout(AbstractButton b) {

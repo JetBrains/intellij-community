@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.coroutine
 
 import com.intellij.execution.JavaTestConfigurationWithDiscoverySupport
@@ -24,7 +24,7 @@ internal object CoroutineAgentConnector {
 
     private const val kotlinxCoroutinesCoreName = "kotlinx-coroutines-core"
     private const val kotlinStdlibName = "kotlin-stdlib"
-    private const val kotlinxCoroutinesPackageName = "kotlinx.coroutines"
+    private const val kotlinxCoroutinesPackageName = "kotlinx.coroutines.debug"
     private const val jarSeparator = "!/"
     private val versionToCompareTo = DefaultArtifactVersion("1.3.7-255")
     private val kotlinxCoroutinesCoreJarRegex = Regex(""".+\W$kotlinxCoroutinesCoreName(-jvm)?-(\d[\w.\-]+)?\.jar""")

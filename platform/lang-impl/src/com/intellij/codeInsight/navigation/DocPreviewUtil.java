@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,6 +21,7 @@ import java.util.regex.Pattern;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class DocPreviewUtil {
   private static final IntSet ALLOWED_LINK_SEPARATORS = new IntOpenHashSet();
   static {
@@ -82,10 +84,9 @@ public final class DocPreviewUtil {
    *                                   element with the given qualified name is added to the preview's end if the qName is provided then
    * @param fullText                   full documentation text (if available)
    */
-  @NotNull
-  public static @Nls String buildPreview(@NotNull @Nls final String header,
-                                         @Nullable final String qName,
-                                         @Nullable @Nls final String fullText) {
+  public static @NotNull @Nls String buildPreview(final @NotNull @Nls String header,
+                                         final @Nullable String qName,
+                                         final @Nullable @Nls String fullText) {
     if (fullText == null) {
       return header;
     }
@@ -131,8 +132,7 @@ public final class DocPreviewUtil {
    * @param name  name to process
    * @return      short name derived from the given full name if possible; {@code null} otherwise
    */
-  @Nullable
-  private static String parseShortName(@NotNull String name) {
+  private static @Nullable String parseShortName(@NotNull String name) {
     int i = name.lastIndexOf('.');
     return i > 0 && i < name.length() - 1 ? name.substring(i + 1) : null;
   }
@@ -146,8 +146,7 @@ public final class DocPreviewUtil {
    * @param address     address to process
    * @return            long name derived from the given arguments (if any); {@code null} otherwise
    */
-  @Nullable
-  private static String parseLongName(@NotNull String shortName, @NotNull String address) {
+  private static @Nullable String parseLongName(@NotNull String shortName, @NotNull String address) {
     String pureAddress = address;
     int i = pureAddress.lastIndexOf("//");
     if (i > 0 && i < pureAddress.length() - 2) {
@@ -293,7 +292,7 @@ public final class DocPreviewUtil {
 
     private static final Pattern HREF_PATTERN = Pattern.compile("href=[\"']([^\"']+)");
 
-    @NotNull private final Map<String, String> myLinks;
+    private final @NotNull Map<String, String> myLinks;
     private                String              myHref;
 
     LinksCollector(@NotNull Map<String, String> links) {

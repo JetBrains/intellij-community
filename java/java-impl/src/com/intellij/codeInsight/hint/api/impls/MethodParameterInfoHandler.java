@@ -110,7 +110,7 @@ public final class MethodParameterInfoHandler
     PsiMethod method = argumentList.getParent() instanceof PsiCall call ? call.resolveMethod() : null;
     CandidateWithPresentation[] items = ContainerUtil.map2Array(candidates, CandidateWithPresentation.class,
       c -> new CandidateWithPresentation(c,
-                                         MethodPresentation.from((PsiMethod)c.getElement(), 
+                                         MethodPresentation.from((PsiMethod)c.getElement(),
                                                     getCandidateInfoSubstitutor(c, method != null && c.getElement() == method))));
     context.setItemsToShow(items);
     return argumentList;
@@ -282,6 +282,12 @@ public final class MethodParameterInfoHandler
 
   @Override
   public void updateParameterInfo(final @NotNull PsiExpressionList o, final @NotNull UpdateParameterInfoContext context) {
+    DumbService.getInstance(o.getProject()).withAlternativeResolveEnabled(() -> {
+      updateParameterInfoInternal(o, context);
+    });
+  }
+
+  private static void updateParameterInfoInternal(@NotNull PsiExpressionList o, @NotNull UpdateParameterInfoContext context) {
     int offset = context.getOffset();
     TextRange elRange = o.getTextRange();
     int index = offset <= elRange.getStartOffset() || offset >= elRange.getEndOffset()
@@ -781,11 +787,21 @@ public final class MethodParameterInfoHandler
     return html.replaceAll("<a.*?>", "").replaceAll("</a>", "");
   }
 
-  private static void appendModifierList(@NotNull StringBuilder buffer, @NotNull PsiModifierListOwner owner) {
+  private static void appendModifierList(@NotNull StringBuilder buffer, @Nullable PsiType type, @NotNull PsiModifierListOwner owner) {
     if (DumbService.isDumb(owner.getProject())) return;
 
     int lastSize = buffer.length();
     Set<String> shownAnnotations = new HashSet<>();
+    if (type != null) {
+      PsiAnnotation[] annotations = type.getAnnotations();
+      for (PsiAnnotation annotation : annotations) {
+        final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
+        if (element != null) {
+          String referenceName = element.getReferenceName();
+          shownAnnotations.add(referenceName);
+        }
+      }
+    }
     for (PsiAnnotation annotation : AnnotationUtil.getAllAnnotations(owner, false, null, true)) {
       final PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
       if (element != null) {
@@ -794,7 +810,9 @@ public final class MethodParameterInfoHandler
           String qualifiedName = annotation.getQualifiedName();
           if (NON_DOCUMENTED_JETBRAINS_ANNOTATIONS.contains(qualifiedName)) continue;
         }
-        if (resolved instanceof PsiClass cls && !AnnotationUtil.isInferredAnnotation(annotation) &&
+        if (resolved instanceof PsiClass cls &&
+            !AnnotationUtil.isInferredAnnotation(annotation) &&
+            !AnnotationUtil.isExternalAnnotation(annotation) &&
             (!JavaDocInfoGenerator.isDocumentedAnnotationType(cls) ||
              AnnotationTargetUtil.findAnnotationTarget(cls, PsiAnnotation.TargetType.TYPE_USE) != null)) {
           continue;
@@ -872,7 +890,7 @@ public final class MethodParameterInfoHandler
   public static @NotNull PsiMethod getMethodFromCandidate(@NotNull Object object) {
     return ((CandidateWithPresentation)object).getMethod();
   }
-  
+
   public static @Nullable PsiMethod tryGetMethodFromCandidate(@NotNull Object object) {
     return object instanceof CandidateWithPresentation cwp ? cwp.getMethod() : null;
   }
@@ -889,7 +907,7 @@ public final class MethodParameterInfoHandler
       PsiType paramType = substitutor.substitute(param.getType());
       String type = paramType.getPresentableText(!DumbService.isDumb(param.getProject()));
       StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, param);
+      appendModifierList(buffer, paramType, param);
       String modifiers = buffer.toString();
       String name = param.getName();
       String javaDoc = JavaDocInfoGeneratorFactory.create(param.getProject(), param).generateMethodParameterJavaDoc();
@@ -907,7 +925,7 @@ public final class MethodParameterInfoHandler
       PsiType returnType = substitutor.substitute(method.getReturnType());
       String type = returnType == null ? "" : returnType.getPresentableText(true);
       StringBuilder buffer = new StringBuilder();
-      appendModifierList(buffer, method);
+      appendModifierList(buffer, returnType, method);
       String modifiers = buffer.toString();
       List<ParameterPresentation> parameters =
         ContainerUtil.map(method.getParameterList().getParameters(), param -> ParameterPresentation.from(param, substitutor));

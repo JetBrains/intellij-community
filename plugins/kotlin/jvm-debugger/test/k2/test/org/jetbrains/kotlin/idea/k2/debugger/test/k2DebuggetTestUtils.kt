@@ -37,19 +37,16 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
         ServiceWithImplementation(IdePackageOracleFactory::class.java, ::IdePackageOracleFactory)
     )
 
-    val additionalResolutionExtensionClasses = if (IdePlatformKindResolution.getInstances().isEmpty()) {
-        val platformKindResolutions = listOf(
+    if (IdePlatformKindResolution.getInstances().isEmpty()) {
+        listOf(
             JvmPlatformKindResolution(),
             JsPlatformKindResolution(),
             WasmJsPlatformKindResolution(),
             WasmWasiPlatformKindResolution(),
             NativePlatformKindResolution(),
             CommonPlatformKindResolution(),
-        )
-        platformKindResolutions
-            .onEach { IdePlatformKindResolution.registerExtension(it, disposable) }
-            .map { it::class.java }
-    } else emptyList()
+        ).forEach { IdePlatformKindResolution.registerExtension(it, disposable) }
+    }
 
     services.forEach { (serviceInterface, createServiceInstance) ->
         val serviceInstance = createServiceInstance(project)
@@ -77,10 +74,6 @@ internal inline fun <R> withTestServicesNeededForCodeCompilation(project: Projec
                 "Service ${serviceInterface} should be disposed"
             }
         }
-
-        val platformKindResolutionExtensionPoint = ApplicationManager.getApplication().extensionArea
-            .getExtensionPoint<IdePlatformKindResolution>(IDE_PLATFORM_KIND_RESOLUTION_EXTENSION_POINT_NAME)
-        additionalResolutionExtensionClasses.forEach(platformKindResolutionExtensionPoint::unregisterExtension)
     }
 
 }

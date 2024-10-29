@@ -3,12 +3,12 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.quickfix.ConvertStringToCharLiteralUtils
 import org.jetbrains.kotlin.psi.KtExpression
@@ -42,10 +42,9 @@ internal object ConvertStringToCharLiteralFixFactory {
         getFixes(diagnostic.psi, diagnostic.expectedType)
     }
 
-    context(KaSession)
-    private fun getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
+    private fun KaSession.getFixes(element: PsiElement?, expectedType: KaType): List<ConvertStringToCharLiteralFix> {
         if (element !is KtStringTemplateExpression) return emptyList()
-        if (!expectedType.isChar) return emptyList()
+        if (!expectedType.isCharType) return emptyList()
 
         val charLiteral = ConvertStringToCharLiteralUtils.prepareCharLiteral(element) ?: return emptyList()
         if (charLiteral.evaluate() == null) return emptyList()
@@ -58,14 +57,13 @@ internal object ConvertStringToCharLiteralFixFactory {
     private class ConvertStringToCharLiteralFix(
         element: KtStringTemplateExpression,
         private val charLiteral: KtExpression, // No need for `SmartPsiElementPointer` since the expression is created by `KtPsiFactory`
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtStringTemplateExpression, Unit>(element, Unit) {
+    ) : PsiUpdateModCommandAction<KtStringTemplateExpression>(element) {
 
         override fun getFamilyName(): String = KotlinBundle.message("convert.string.to.character.literal")
 
         override fun invoke(
             actionContext: ActionContext,
             element: KtStringTemplateExpression,
-            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             element.replace(charLiteral)

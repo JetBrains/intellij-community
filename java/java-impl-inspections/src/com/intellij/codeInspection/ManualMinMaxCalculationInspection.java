@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -75,7 +74,7 @@ public final class ManualMinMaxCalculationInspection extends AbstractBaseJavaLoc
         if (!equivalenceChecker.expressionsAreEquivalent(right, useMathMin ? model.getThenExpression() : model.getElseExpression())) return;
         IElementType tokenType = condition.getOperationTokenType();
         useMathMin ^= JavaTokenType.LT.equals(tokenType) || JavaTokenType.LE.equals(tokenType);
-        PsiClass containingClass = ClassUtils.getContainingClass(element);
+        PsiClass containingClass = PsiUtil.getContainingClass(element);
         if (containingClass != null && CommonClassNames.JAVA_LANG_MATH.equals(containingClass.getQualifiedName())) return;
         holder.registerProblem(element,
                                JavaBundle.message("inspection.manual.min.max.calculation.description", useMathMin ? "min" : "max"),

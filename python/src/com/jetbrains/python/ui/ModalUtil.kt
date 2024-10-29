@@ -2,7 +2,6 @@
 package com.jetbrains.python.ui
 
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
-import com.intellij.platform.ide.progress.withModalProgress
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.TaskCancellation
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
@@ -19,7 +18,3 @@ fun <T> pyModalBlocking(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(),
     code.invoke()
   }
 
-suspend fun <T> pyModalSuspend(modalTaskOwner: ModalTaskOwner = ModalTaskOwner.guess(), code: () -> T): T =
-  withModalProgress(modalTaskOwner, PySdkBundle.message("python.sdk.run.wait"), TaskCancellation.nonCancellable()) {
-    code.invoke()
-  }

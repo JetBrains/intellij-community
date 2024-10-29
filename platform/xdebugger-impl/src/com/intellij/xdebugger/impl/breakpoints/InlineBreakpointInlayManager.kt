@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.openapi.application.readAndWriteAction
@@ -28,7 +29,10 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XDebuggerUtil
-import com.intellij.xdebugger.breakpoints.*
+import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XBreakpointListener
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties
+import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.XSourcePositionImpl
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +45,6 @@ import java.util.concurrent.atomic.AtomicLong
 
 @Service(Service.Level.PROJECT)
 internal class InlineBreakpointInlayManager(private val project: Project, parentScope: CoroutineScope) {
-
   @OptIn(ExperimentalCoroutinesApi::class)
   private val scope = parentScope.childScope("InlineBreakpoints",
                                              if (Registry.`is`(LIMIT_REDRAW_JOBS_COUNT_KEY))
@@ -50,9 +53,10 @@ internal class InlineBreakpointInlayManager(private val project: Project, parent
                                                     Dispatchers.Default)
   private val redrawJobInternalSemaphore = Semaphore(1)
 
-  private val redrawQueue = MergingUpdateQueue(
-    "inline breakpoint inlay redraw queue",
-    300, true, null, project, null, false
+  private val redrawQueue = MergingUpdateQueue.mergingUpdateQueue(
+    name = "inline breakpoint inlay redraw queue",
+    mergingTimeSpan = 300,
+    coroutineScope = parentScope,
   ).setRestartTimerOnAdd(true)
 
   private fun areInlineBreakpointsEnabled(virtualFile: VirtualFile?) = XDebuggerUtil.areInlineBreakpointsEnabled(virtualFile)

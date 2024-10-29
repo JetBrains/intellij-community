@@ -7,10 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Utility class used to preserve index during 'map' operations
@@ -121,5 +118,19 @@ public final class ListSelection<T> {
 
   public boolean isExplicitSelection() {
     return myExplicitSelection;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ListSelection<?> selection)) return false;
+    return mySelectedIndex == selection.mySelectedIndex &&
+           myExplicitSelection == selection.myExplicitSelection &&
+           Objects.equals(myList, selection.myList);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myList, mySelectedIndex, myExplicitSelection);
   }
 }

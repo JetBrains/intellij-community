@@ -209,6 +209,7 @@ class EditorFactoryImpl(coroutineScope: CoroutineScope?) : EditorFactory() {
     afterCreation: ((EditorImpl) -> Unit)?,
   ): EditorImpl {
     val editor = EditorImpl(document, isViewer, project, kind, file, highlighter)
+    editor.putEditorId()
     // must be _before_ event firing
     afterCreation?.invoke(editor)
 

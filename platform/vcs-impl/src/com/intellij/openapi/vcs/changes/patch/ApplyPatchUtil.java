@@ -30,6 +30,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_CANN
 import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
 import static com.intellij.openapi.vcs.changes.patch.PatchFileType.isPatchFile;
 
+@ApiStatus.Internal
 public final class ApplyPatchUtil {
   private static final Logger LOG = Logger.getInstance(ApplyPatchUtil.class);
 

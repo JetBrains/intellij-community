@@ -7,11 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.base.psi.singleExpressionBody
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 class KotlinSimpleGetterProvider : SimplePropertyGetterProvider {
     override fun isInsideSimpleGetter(element: PsiElement): Boolean {
         // class A(val a: Int)
-        if (element is KtParameter) {
+        if (element.getParentOfType<KtParameter>(false) != null) {
             return true
         }
 

@@ -6,7 +6,6 @@ import com.intellij.find.editorHeaderActions.NextOccurrenceAction
 import com.intellij.find.editorHeaderActions.PrevOccurrenceAction
 import com.intellij.find.editorHeaderActions.StatusTextAction
 import com.intellij.find.editorHeaderActions.ToggleMatchCase
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.terminal.JBTerminalWidget
@@ -19,7 +18,7 @@ import java.awt.event.KeyListener
 import java.util.concurrent.CopyOnWriteArrayList
 import javax.swing.JComponent
 
-internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidget) : SearchSession, DataProvider {
+internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidget) : SearchSession {
   private val searchComponent: SearchReplaceComponent = createSearchComponent()
   private val findModel: FindModel = createFindModel()
   private var hasMatches: Boolean = false
@@ -76,17 +75,12 @@ internal class TerminalSearchSession(private val terminalWidget: JBTerminalWidge
     IdeFocusManager.getInstance(project).requestFocus(terminalWidget.terminalPanel, false)
   }
 
-  override fun getData(dataId: String): Any? {
-    return if (SearchSession.KEY.`is`(dataId)) this else null
-  }
-
   private fun createSearchComponent(): SearchReplaceComponent {
     return SearchReplaceComponent
-      .buildFor(project, terminalWidget.terminalPanel)
+      .buildFor(project, terminalWidget.terminalPanel, this)
       .addExtraSearchActions(ToggleMatchCase())
       .addPrimarySearchActions(StatusTextAction(), PrevOccurrenceAction(), NextOccurrenceAction())
       .withCloseAction { close() }
-      .withDataProvider(this)
       .build().also {
         it.addListener(object : SearchReplaceComponent.Listener {
           override fun searchFieldDocumentChanged() {

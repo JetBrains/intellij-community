@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class AAA {
     protected int myX = 42;
 

@@ -160,7 +160,7 @@ public class SwitchEvaluator implements Evaluator {
     @Override
     public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
       Object value = myValueEvaluator == null ?
-                     context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid() :
+                     context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid() :
                      myValueEvaluator.evaluate(context);
       throw new YieldException(value);
     }

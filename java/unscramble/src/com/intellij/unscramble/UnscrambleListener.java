@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.threadDumpParser.ThreadDumpParser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -35,7 +36,7 @@ class UnscrambleListener extends ClipboardAnalyzeListener {
 
   @Override
   public boolean canHandle(@NotNull String value) {
-    value = UnscrambleDialog.normalizeText(value);
+    value = ThreadDumpParser.normalizeText(value);
     int linesCount = 0;
     for (String line : value.split("\n")) {
       line = line.trim();

@@ -59,6 +59,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.absolutePathString
 
 abstract class MavenTestCase : UsefulTestCase() {
   protected var mavenProgressIndicator: MavenProgressIndicator? = null
@@ -76,7 +77,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   private var myProjectRoot: VirtualFile? = null
 
   private var myProjectPom: VirtualFile? = null
-  private val myAllPoms: MutableList<VirtualFile> = ArrayList()
+  private val myAllPoms: MutableSet<VirtualFile> = mutableSetOf()
 
   val pathTransformer: RemotePathTransformerFactory.Transformer
     get() = myPathTransformer!!
@@ -107,7 +108,7 @@ abstract class MavenTestCase : UsefulTestCase() {
     }
 
   val allPoms: List<VirtualFile>
-    get() = myAllPoms
+    get() = myAllPoms.toList()
 
   fun addPom(pom: VirtualFile) {
     myAllPoms.add(pom)
@@ -251,7 +252,9 @@ abstract class MavenTestCase : UsefulTestCase() {
     else {
       runBlockingMaybeCancellable {
         withContext(Dispatchers.EDT) {
-          tearDownFixtures()
+          writeIntentReadAction {
+            tearDownFixtures()
+          }
         }
       }
     }
@@ -374,12 +377,13 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   @Throws(IOException::class)
-  protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String?): VirtualFile {
+  protected fun updateSettingsXmlFully(@Language("XML") content: @NonNls String): VirtualFile {
     val ioFile = File(myDir, "settings.xml")
     ioFile.createNewFile()
-    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)
-    setFileContent(f, content, true)
-    mavenGeneralSettings.setUserSettingsFile(f!!.path)
+    val f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile)!!
+    setFileContent(f, content)
+    refreshFiles(listOf(f))
+    mavenGeneralSettings.setUserSettingsFile(f.path)
     return f
   }
 
@@ -406,38 +410,45 @@ abstract class MavenTestCase : UsefulTestCase() {
 
 
   protected fun createProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
-    return createPomFile(myProjectRoot, xml).also { myProjectPom = it }
+    return createPomFile(projectRoot, xml).also { myProjectPom = it }
+  }
+
+  protected fun updateProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val pom = createProjectPom(xml)
+    refreshFiles(listOf(pom))
+    return pom
   }
 
   protected fun createModulePom(relativePath: String,
-                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
+                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     return createPomFile(createProjectSubDir(relativePath), xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile?,
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
+  protected fun updateModulePom(relativePath: String,
+                                @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val pom = createModulePom(relativePath, xml)
+    refreshFiles(listOf(pom))
+    return pom
+  }
+
+  protected fun createPomFile(dir: VirtualFile,
+                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
     return createPomFile(dir, "pom.xml", xml)
   }
 
-  protected fun createPomFile(dir: VirtualFile?, fileName: String? = "pom.xml",
-                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?): VirtualFile {
-    val pomName = fileName ?: "pom.xml"
-    var f = dir!!.findChild(pomName)
-    if (f == null) {
-      try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, pomName) }
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
-      myAllPoms.add(f)
-    }
-    setPomContent(f, xml)
-    return f!!
+  protected fun createPomFile(dir: VirtualFile, fileName: String = "pom.xml",
+                              @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String): VirtualFile {
+    val filePath = Path.of(dir.path, fileName)
+    setPomContent(filePath, xml)
+    dir.refresh(false, false)
+    var f = dir.findChild(fileName) ?: throw AssertionError("can't find file ${filePath.absolutePathString()} in VFS")
+    myAllPoms.add(f)
+    refreshFiles(listOf(f))
+    return f
   }
 
   protected fun createProfilesXmlOldStyle(xml: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, xml, true)
+    return createProfilesFile(projectRoot, xml, true)
   }
 
   protected fun createProfilesXmlOldStyle(relativePath: String, xml: String): VirtualFile {
@@ -445,7 +456,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createProfilesXml(xml: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, xml, false)
+    return createProfilesFile(projectRoot, xml, false)
   }
 
   protected fun createProfilesXml(relativePath: String, xml: String): VirtualFile {
@@ -453,7 +464,7 @@ abstract class MavenTestCase : UsefulTestCase() {
   }
 
   protected fun createFullProfilesXml(content: String): VirtualFile {
-    return createProfilesFile(myProjectRoot, content)
+    return createProfilesFile(projectRoot, content)
   }
 
   protected fun createFullProfilesXml(relativePath: String, content: String): VirtualFile {
@@ -491,8 +502,15 @@ abstract class MavenTestCase : UsefulTestCase() {
   @Throws(IOException::class)
   protected fun createProjectSubFile(relativePath: String, content: String): VirtualFile {
     val file = createProjectSubFile(relativePath)
-    setFileContent(file, content, false)
+    setFileContent(file, content)
+    refreshFiles(listOf(file))
     return file
+  }
+
+  protected fun refreshFiles(files: List<VirtualFile>) {
+    val relativePaths = files.map { dir.toPath().relativize(Path.of(it.path)) }
+    MavenLog.LOG.warn("Refreshing files: $relativePaths")
+    LocalFileSystem.getInstance().refreshFiles(files)
   }
 
   protected fun ignore(): Boolean {
@@ -605,22 +623,21 @@ abstract class MavenTestCase : UsefulTestCase() {
            "</settings>\r\n"
   }
 
-  private fun createProfilesFile(dir: VirtualFile?, xml: String, oldStyle: Boolean): VirtualFile {
+  private fun createProfilesFile(dir: VirtualFile, xml: String, oldStyle: Boolean): VirtualFile {
     return createProfilesFile(dir, createValidProfiles(xml, oldStyle))
   }
 
-  private fun createProfilesFile(dir: VirtualFile?, content: String): VirtualFile {
-    var f = dir!!.findChild("profiles.xml")
-    if (f == null) {
-      try {
-        f = WriteAction.computeAndWait<VirtualFile, IOException> { dir.createChildData(null, "profiles.xml") }
-      }
-      catch (e: IOException) {
-        throw RuntimeException(e)
-      }
+  private fun createProfilesFile(dir: VirtualFile, content: String): VirtualFile {
+    val fileName = "profiles.xml"
+    val filePath = Path.of(dir.path, fileName)
+    setFileContent(filePath, content)
+    var f = dir.findChild(fileName)
+    if (null == f) {
+      refreshFiles(listOf(dir))
+      f = dir.findChild(fileName)!!
     }
-    setFileContent(f, content, true)
-    return f!!
+    refreshFiles(listOf(f))
+    return f
   }
 
   @Language("XML")
@@ -639,37 +656,22 @@ abstract class MavenTestCase : UsefulTestCase() {
            "</profilesXml>"
   }
 
-  protected fun setPomContent(file: VirtualFile?, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
-    setFileContent(file, createPomXml(xml), true)
+  protected fun setPomContent(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+    setFileContent(file, createPomXml(xml))
   }
 
-  protected fun setFileContent(file: VirtualFile?, content: String?, advanceStamps: Boolean) {
-    try {
-      WriteAction.runAndWait<IOException> {
-        doSetFileContent(file!!, content!!, advanceStamps)
-      }
-    }
-    catch (e: IOException) {
-      throw RuntimeException(e)
-    }
+  private fun setPomContent(file: Path, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String?) {
+    setFileContent(file, createPomXml(xml))
   }
 
-  protected suspend fun setPomContentAsync(file: VirtualFile, @Language(value = "XML", prefix = "<project>", suffix = "</project>") xml: String) {
-    setFileContentAsync(file, createPomXml(xml), true)
+  private fun setFileContent(file: VirtualFile, content: String) {
+    return setFileContent(file.toNioPath(), content)
   }
 
-  protected suspend fun setFileContentAsync(file: VirtualFile, content: String, advanceStamps: Boolean) {
-    writeAction {
-      doSetFileContent(file, content, advanceStamps)
-    }
-  }
-
-  private fun doSetFileContent(file: VirtualFile, content: String, advanceStamps: Boolean) {
-    val bytes = content.toByteArray(StandardCharsets.UTF_8)
-    val newModificationStamp = if (advanceStamps) -1 else file.modificationStamp
-    val newTimeStamp = if (advanceStamps) file.timeStamp + 4000 else file.timeStamp
-    MavenLog.LOG.debug("Set file content, modification stamp $newModificationStamp, time stamp $newTimeStamp, file $file")
-    file.setBinaryContent(bytes, newModificationStamp, newTimeStamp)
+  private fun setFileContent(file: Path, content: String) {
+    val relativePath = dir.toPath().relativize(file)
+    MavenLog.LOG.warn("Writing content to $relativePath")
+    Files.write(file, content.toByteArray(StandardCharsets.UTF_8))
   }
 
   protected fun <T> assertOrderedElementsAreEqual(actual: Collection<T>, expected: List<T>) {
@@ -752,6 +754,13 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   private val testMavenHome: String?
     get() = System.getProperty("idea.maven.test.home")
+
+  protected fun fileContentEqual(file1: File, file2: File): Boolean {
+    val file1Bytes = file1.readBytes()
+    val file2Bytes = file2.readBytes()
+
+    return file1Bytes.contentEquals(file2Bytes)
+  }
 
   companion object {
     val preimportTestMode: Boolean = java.lang.Boolean.getBoolean("MAVEN_TEST_PREIMPORT")

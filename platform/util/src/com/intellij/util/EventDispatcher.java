@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.lang.CompoundRuntimeException;
-import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -16,6 +15,7 @@ import org.jetbrains.annotations.TestOnly;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 
 public final class EventDispatcher<T extends EventListener> {
@@ -31,7 +31,8 @@ public final class EventDispatcher<T extends EventListener> {
     return new EventDispatcher<>(listenerClass, null);
   }
 
-  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass, @NotNull Map<String, Object> methodReturnValues) {
+  public static @NotNull <T extends EventListener> EventDispatcher<T> create(@NotNull Class<T> listenerClass,
+                                                                             @NotNull Map<String, Object> methodReturnValues) {
     assertNonVoidMethodReturnValuesAreDeclared(methodReturnValues, listenerClass);
     return new EventDispatcher<>(listenerClass, methodReturnValues);
   }
@@ -54,7 +55,7 @@ public final class EventDispatcher<T extends EventListener> {
     }
     for (Method method : declared) {
       assert method.getReturnType().equals(void.class) :
-        "Method "+method+" returns "+method.getReturnType()+" and yet you didn't specify what its proxy should return";
+        "Method " + method + " returns " + method.getReturnType() + " and yet you didn't specify what its proxy should return";
     }
   }
 
@@ -150,17 +151,33 @@ public final class EventDispatcher<T extends EventListener> {
   }
 
   private static void throwExceptions(@NotNull List<? extends Throwable> exceptions) {
-    if (exceptions.size() == 1) {
-      ExceptionUtil.rethrow(exceptions.get(0));
+    if (isEventDispatcherErrorPropagationEnabled()) {
+      if (exceptions.size() == 1) {
+        ExceptionUtil.rethrow(exceptions.get(0));
+      }
+      else {
+        for (Throwable exception : exceptions) {
+          if (exception instanceof ProcessCanceledException) {
+            throw (ProcessCanceledException)exception;
+          }
+        }
+        throw new CompoundRuntimeException(exceptions);
+      }
     }
     else {
       for (Throwable exception : exceptions) {
-        if (exception instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException)exception;
-        }
+        if (exception instanceof CancellationException) continue;
+        LOG.error(exception);
       }
-      throw new CompoundRuntimeException(exceptions);
     }
+  }
+
+  /**
+   * - `false` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being logged
+   * - `true` means exceptions from {@link com.intellij.util.EventDispatcher} listeners are being rethrown at {@link com.intellij.util.EventDispatcher#getMulticaster} usages (the old behavior)
+   */
+  private static boolean isEventDispatcherErrorPropagationEnabled() {
+    return Boolean.parseBoolean(System.getProperty("ijpl.event.dispatcher.rethrows.errors.from.listeners", "false"));
   }
 
   public void addListener(@NotNull T listener) {

@@ -46,8 +46,7 @@ f:com.intellij.openapi.actionSystem.CompositeDataProvider
 - getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.DataContext
 - sf:EMPTY_CONTEXT:com.intellij.openapi.actionSystem.DataContext
-- getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
-- a:getData(java.lang.String):java.lang.Object
+- F:getData(com.intellij.openapi.actionSystem.DataKey):java.lang.Object
 f:com.intellij.openapi.actionSystem.DataKey
 - com.intellij.openapi.util.ValueKey
 - sf:Companion:com.intellij.openapi.actionSystem.DataKey$Companion
@@ -81,7 +80,7 @@ com.intellij.openapi.actionSystem.DataSnapshotProvider
 com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.DataSnapshotProvider
-- getData(java.lang.String):java.lang.Object
+- F:getData(java.lang.String):java.lang.Object
 com.intellij.openapi.actionSystem.UiCompatibleDataProvider
 - com.intellij.openapi.actionSystem.DataProvider
 - com.intellij.openapi.actionSystem.UiDataProvider
@@ -261,21 +260,6 @@ f:com.intellij.ui.OverlaidOffsetIconsIcon
 f:com.intellij.ui.RightAlignedLabelUI
 - javax.swing.plaf.basic.BasicLabelUI
 - <init>():V
-*f:com.intellij.ui.RoundedIcon
-- com.intellij.util.ui.JBScalableIcon
-- com.intellij.ui.icons.DarkIconProvider
-- com.intellij.ui.icons.IconWithToolTip
-- <init>(java.awt.Image,D):V
-- <init>(java.awt.Image,D,Z):V
-- <init>(javax.swing.Icon,D):V
-- <init>(javax.swing.Icon,D,Z):V
-- equals(java.lang.Object):Z
-- getDarkIcon(Z):javax.swing.Icon
-- getIconHeight():I
-- getIconWidth():I
-- getToolTip(Z):java.lang.String
-- hashCode():I
-- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
 c:com.intellij.ui.RowIcon
 - com.intellij.util.ui.JBCachingScalableIcon
 - com.intellij.ui.icons.IconWithToolTip
@@ -519,7 +503,6 @@ com.intellij.util.PlatformIcons
 - sf:CUSTOM_FILE_ICON:javax.swing.Icon
 - sf:DELETE_ICON:javax.swing.Icon
 - sf:DIRECTORY_CLOSED_ICON:javax.swing.Icon
-- sf:DIRECTORY_OPEN_ICON:javax.swing.Icon
 - sf:EDIT:javax.swing.Icon
 - sf:EDIT_IN_SECTION_ICON:javax.swing.Icon
 - sf:ENUM_ICON:javax.swing.Icon

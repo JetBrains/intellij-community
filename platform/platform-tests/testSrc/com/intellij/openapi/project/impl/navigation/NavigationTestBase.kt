@@ -4,6 +4,7 @@ package com.intellij.openapi.project.impl.navigation
 import com.intellij.navigation.LocationInFile
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -49,7 +50,7 @@ abstract class NavigationTestBase {
           navigationAction()
         }
         withContext(Dispatchers.EDT) {
-          checkAction()
+          writeIntentReadAction { checkAction() }
         }
       }
     }

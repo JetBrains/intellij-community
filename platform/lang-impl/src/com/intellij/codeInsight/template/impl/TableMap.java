@@ -14,11 +14,14 @@ package com.intellij.codeInsight.template.impl;
   @version 1.4 12/17/97
  * @author Philip Milne */
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
 
+@ApiStatus.Internal
 public final class TableMap extends AbstractTableModel
                       implements TableModelListener {
     TableModel model;

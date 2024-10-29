@@ -11,8 +11,10 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ParameterInfo;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class IntroduceParameterObjectAction extends BaseRefactoringAction {
 
   @Override

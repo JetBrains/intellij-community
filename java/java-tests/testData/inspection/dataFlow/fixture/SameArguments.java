@@ -1,4 +1,5 @@
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 
 class X {
   static final char MY_CHAR = 'x';
@@ -53,5 +54,16 @@ class X {
     Integer val = 123;
     Object res = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the first argument making the call meaningless">requireNonNullElse</warning>(val, 456);
     Object r = Objects.<warning descr="Result of 'requireNonNullElse' is the same as the second argument making the call meaningless">requireNonNullElse</warning>(null, "oops");
+  }
+  
+  void testTimeUnit(TimeUnit tu, long duration, TimeUnit tu2) {
+    System.out.println(TimeUnit.MICROSECONDS.<warning descr="Result of 'convert' is the same as the first argument making the call meaningless">convert</warning>(duration, TimeUnit.MICROSECONDS));
+    System.out.println(TimeUnit.MICROSECONDS.convert(duration, TimeUnit.MILLISECONDS));
+    System.out.println(tu2.convert(duration, tu));
+    System.out.println(tu.convert(duration, tu2));
+    System.out.println(tu.<warning descr="Result of 'convert' is the same as the first argument making the call meaningless">convert</warning>(duration, tu));
+    if (tu2 == tu) {
+      System.out.println(tu.<warning descr="Result of 'convert' is the same as the first argument making the call meaningless">convert</warning>(duration, tu2));
+    }
   }
 }

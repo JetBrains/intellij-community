@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.autoimport.ExternalSystemModification
 import com.intellij.openapi.externalSystem.autoimport.changes.vfs.VirtualFileChangesListener.Companion.installAsyncVirtualFileListener
 import com.intellij.openapi.externalSystem.autoimport.settings.AsyncSupplier
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -14,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap
  * Allows to use heavy paths filer, that is defined by [filesProvider].
  * Call sequences of [changesListener]'s functions will be skipped if change events didn't happen in watched files.
  */
+@ApiStatus.Internal
 class AsyncFilesChangesListener(
   private val filesProvider: AsyncSupplier<Set<String>>,
   private val changesListener: FilesChangesListener,

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -54,7 +55,9 @@ suspend fun performAction(
       }
     }
     withContext(Dispatchers.EDT) {
-      action.actionPerformed(event)
+      writeIntentReadAction {
+        action.actionPerformed(event)
+      }
     }
   }
 }

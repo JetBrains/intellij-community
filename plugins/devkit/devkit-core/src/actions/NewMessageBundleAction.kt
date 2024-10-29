@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.actions
 
 import com.intellij.ide.actions.CreateElementActionBase
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -31,7 +32,6 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import java.util.function.Consumer
@@ -126,7 +126,7 @@ class NewMessageBundleAction : CreateElementActionBase() {
     if (!super.isAvailable(dataContext)) {
       return false
     }
-    if (!PsiUtil.isIdeaProject(dataContext.getData(CommonDataKeys.PROJECT))) return false
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(dataContext.getData(CommonDataKeys.PROJECT))) return false
 
     return CreateTemplateInPackageAction.isAvailable(dataContext, JavaModuleSourceRootTypes.SOURCES,
                                                      Predicate { JavaCreateTemplateInPackageAction.doCheckPackageExists(it) })

@@ -37,10 +37,10 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ExperimentalUI;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.net.NetUtils;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
@@ -59,6 +59,8 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +80,6 @@ import java.util.stream.Stream;
 
 import static com.jetbrains.python.actions.PyExecuteInConsole.requestFocus;
 import static com.jetbrains.python.actions.PyExecuteInConsole.selectConsoleTab;
-import static com.jetbrains.python.inspections.PyInterpreterInspection.InterpreterSettingsQuickFix.showPythonInterpreterSettings;
 
 
 public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
@@ -148,54 +149,68 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     return false;
   }
 
+  @RequiresEdt
   protected Promise<@NotNull XDebugSession> createSession(@NotNull RunProfileState state, final @NotNull ExecutionEnvironment environment) {
-    return AppUIExecutor.onUiThread()
-      .submit(FileDocumentManager.getInstance()::saveAllDocuments)
-      .thenAsync(ignored -> {
-        if (Registry.is("python.use.targets.api")) {
-          return createSessionUsingTargetsApi(state, environment);
-        }
-        if (PyRunnerUtil.isTargetBasedSdkAssigned(state)) {
-          Project project = environment.getProject();
-          Module module = PyRunnerUtil.getModule(state);
-          throw new RuntimeExceptionWithHyperlink(PyBundle.message("runcfg.error.message.python.interpreter.is.invalid.configure"),
-                                                  () -> showPythonInterpreterSettings(project, module));
-        }
-        return createSessionLegacy(state, environment);
-      });
+    FileDocumentManager.getInstance().saveAllDocuments();
+    return createSessionUsingTargetsApi(state, environment);
   }
 
   private @NotNull Promise<XDebugSession> createSessionUsingTargetsApi(@NotNull RunProfileState state,
                                                                        final @NotNull ExecutionEnvironment environment) {
     PythonCommandLineState pyState = (PythonCommandLineState)state;
     RunProfile profile = environment.getRunProfile();
-    var clientId = ClientId.getCurrentOrNull();
-    return Promises
-      .runAsync(() -> {
-        int serverLocalPort = findAvailableSocketPort();
-        try {
-          PythonDebuggerScriptTargetedCommandLineBuilder debuggerScriptCommandLineBuilder =
-            new PythonDebuggerScriptTargetedCommandLineBuilder(environment.getProject(), pyState, profile, serverLocalPort);
-          ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
-          ServerSocket serverSocket = debuggerScriptCommandLineBuilder.getServerSocketForDebugging();
-          if (serverSocket == null) {
-            LOG.error("The server socket has not been created after the target environment preparation" +
-                      ", trying to fallback and create the server socket on the loopback address");
-            serverSocket = createServerSocketOnLoopbackAddress(serverLocalPort);
+
+    if (PyDebuggerOptionsProvider.getInstance(environment.getProject()).isRunDebuggerInServerMode() &&
+        Registry.is("python.debug.use.single.port")) {
+      int port = PyDebuggerOptionsProvider.getInstance(environment.getProject()).getDebuggerPort();
+      TargetEnvironment.TargetPortBinding targetPortBinding =
+        new TargetEnvironment.TargetPortBinding(port, port);
+      return Promises
+        .runAsync(() -> {
+          try {
+            var debuggerScriptCommandLineBuilder = new PythonDebuggerServerModeTargetedCommandLineBuilder(
+              environment.getProject(), pyState, profile, targetPortBinding);
+              return pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
           }
-          return Pair.create(serverSocket, result);
-        }
-        catch (ExecutionException err) {
-          throw new RuntimeException(err.getMessage(), err);
-        }
-      })
-      .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
-        try (AccessToken ignored = ClientId.withClientId(clientId)) {
-          ServerSocket serverSocket = pair.getFirst();
-          ExecutionResult result = pair.getSecond();
-          return createXDebugSession(environment, pyState, serverSocket, result);
-        }
-      }));
+          catch (ExecutionException err) {
+            throw new RuntimeException(err);
+          }
+        })
+        .thenAsync(result -> AppUIExecutor.onUiThread().submit(() -> {
+          return createXDebugSession(environment, port, result);
+        }));
+    }
+    else {
+      var clientId = ClientId.getCurrentOrNull();
+      return Promises
+        .runAsync(() -> {
+          int serverLocalPort = findAvailableSocketPort();
+          try {
+            TargetEnvironment.LocalPortBinding localPortBinding =
+              new TargetEnvironment.LocalPortBinding(serverLocalPort, null);
+            var debuggerScriptCommandLineBuilder = new PythonDebuggerClientModeTargetedCommandLineBuilder(
+              environment.getProject(), pyState, profile, localPortBinding);
+            ExecutionResult result = pyState.execute(environment.getExecutor(), debuggerScriptCommandLineBuilder);
+            ServerSocket serverSocket = debuggerScriptCommandLineBuilder.getServerSocketForDebugging();
+            if (serverSocket == null) {
+              LOG.error("The server socket has not been created after the target environment preparation" +
+                        ", trying to fallback and create the server socket on the loopback address");
+              serverSocket = createServerSocketOnLoopbackAddress(serverLocalPort);
+            }
+            return Pair.create(serverSocket, result);
+          }
+          catch (Exception err) {
+            throw new RuntimeException(err.getMessage(), err);
+          }
+        })
+        .thenAsync(pair -> AppUIExecutor.onUiThread().submit(() -> {
+          try (AccessToken ignored = ClientId.withClientId(clientId)) {
+            ServerSocket serverSocket = pair.getFirst();
+            ExecutionResult result = pair.getSecond();
+            return createXDebugSession(environment, pyState, serverSocket, result);
+          }
+        }));
+    }
   }
 
   private static @NotNull ServerSocket createServerSocketOnLoopbackAddress(int serverLocalPort) {
@@ -225,6 +240,26 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
         public @NotNull XDebugProcess start(final @NotNull XDebugSession session) {
           PyDebugProcess pyDebugProcess = createDebugProcess(session, serverSocket, result, pyState);
 
+          createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
+          return pyDebugProcess;
+        }
+      });
+
+    if (ExperimentalUI.isNewUI()) {
+      session.getUI().getDefaults().initContentAttraction(DebuggerContentInfo.CONSOLE_CONTENT,
+                                                          XDebuggerUIConstants.LAYOUT_VIEW_FINISH_CONDITION,
+                                                          new LayoutAttractionPolicy.FocusOnce());
+    }
+    return session;
+  }
+
+  private @NotNull XDebugSession createXDebugSession(@NotNull ExecutionEnvironment environment,
+                                                     int serverPort, ExecutionResult result) throws ExecutionException {
+    XDebugSession session = XDebuggerManager.getInstance(environment.getProject()).
+      startSession(environment, new XDebugProcessStarter() {
+        @Override
+        public @NotNull XDebugProcess start(@NotNull XDebugSession session) {
+          PyDebugProcess pyDebugProcess = createDebugProcess(session, serverPort, result);
           createConsoleCommunicationAndSetupActions(environment.getProject(), result, pyDebugProcess, session);
           return pyDebugProcess;
         }
@@ -279,6 +314,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
                                                        PythonCommandLineState pyState) {
     return new PyDebugProcess(session, serverSocket, result.getExecutionConsole(), result.getProcessHandler(),
                               pyState.isMultiprocessDebug());
+  }
+
+  protected @NotNull PyDebugProcess createDebugProcess(@NotNull XDebugSession session, int serverPort, ExecutionResult result) {
+    return new PyDebugProcess(session, result.getExecutionConsole(), result.getProcessHandler(), "localhost", serverPort);
   }
 
   /**
@@ -596,7 +635,12 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     configureDebugEnvironment(project, new TargetEnvironmentController(debuggerScript.getEnvs(), request), runProfile,
                               isLocalTarget);
 
-    configureClientModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);
+    if (PyDebuggerOptionsProvider.getInstance(project).isRunDebuggerInServerMode() && Registry.is("python.debug.use.single.port")) {
+      configureServerModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);
+    }
+    else {
+      configureClientModeDebugConnectionParameters(debuggerScript, serverPortOnTarget);
+    }
 
     originalPythonScript.accept(new PythonExecution.Visitor() {
       @Override
@@ -688,21 +732,19 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
   }
 
   private static void applyRegistryFlags(@NotNull EnvironmentController environmentController) {
-    var registryManager = RegistryManager.getInstance();
-
-    if (registryManager.is("python.debug.low.impact.monitoring.api")) {
+    if (Registry.is("python.debug.low.impact.monitoring.api")) {
       environmentController.putFixedValue(USE_LOW_IMPACT_MONITORING, "True");
     }
 
-    if (!registryManager.is("python.debug.enable.cython.speedups")) {
+    if (!Registry.is("python.debug.enable.cython.speedups")) {
       environmentController.putFixedValue(PYDEVD_USE_CYTHON, "NO");
     }
 
-    if (registryManager.is("python.debug.enable.diagnostic.prints")) {
+    if (Registry.is("python.debug.enable.diagnostic.prints")) {
       environmentController.putFixedValue(PYCHARM_DEBUG, "True");
     }
 
-    if (registryManager.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
+    if (Registry.is("python.debug.halt.variable.resolve.threads.on.step.resume")) {
       environmentController.putFixedValue(HALT_VARIABLE_RESOLVE_THREADS_ON_STEP_RESUME, "True");
     }
   }
@@ -820,7 +862,7 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * The part of the legacy implementation based on {@link GeneralCommandLine}.
    */
   private static void configureDebugConnectionParameters(@NotNull ParamsGroup debugParams, int serverLocalPort) {
-    final String[] debuggerArgs = new String[]{
+    final String[] debuggerArgs = {
       CLIENT_PARAM, "127.0.0.1",
       PORT_PARAM, String.valueOf(serverLocalPort),
       FILE_PARAM
@@ -857,10 +899,10 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
    * @param serverPortOnTarget the server
    */
   static void configureServerModeDebugConnectionParameters(@NotNull PythonExecution debuggerScript,
-                                                           @NotNull Function<TargetEnvironment, Integer> serverPortOnTarget) {
+                                                           @NotNull Function<TargetEnvironment, HostPort> serverPortOnTarget) {
     // --port
     debuggerScript.addParameter(PORT_PARAM);
-    debuggerScript.addParameter(serverPortOnTarget.andThen(Object::toString));
+    debuggerScript.addParameter(serverPortOnTarget.andThen(HostPort::getPort).andThen(Object::toString));
     // --file
     debuggerScript.addParameter(FILE_PARAM);
   }
@@ -892,45 +934,25 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
     }
   }
 
-  private class PythonDebuggerScriptTargetedCommandLineBuilder implements PythonScriptTargetedCommandLineBuilder {
+  private abstract class PythonDebuggerTargetedCommandLineBuilder implements PythonScriptTargetedCommandLineBuilder {
     private final @NotNull Project myProject;
     private final @NotNull PythonCommandLineState myPyState;
     private final @NotNull RunProfile myProfile;
-    private final int myIdeDebugServerLocalPort;
-    private volatile @Nullable ServerSocket myServerSocketForDebugging;
 
-    private PythonDebuggerScriptTargetedCommandLineBuilder(@NotNull Project project,
-                                                           @NotNull PythonCommandLineState pyState,
-                                                           @NotNull RunProfile profile,
-                                                           int ideDebugServerPort) {
+    private PythonDebuggerTargetedCommandLineBuilder(@NotNull Project project,
+                                                     @NotNull PythonCommandLineState pyState,
+                                                     @NotNull RunProfile profile) {
       myProject = project;
       myPyState = pyState;
       myProfile = profile;
-      myIdeDebugServerLocalPort = ideDebugServerPort;
     }
 
     @Override
-    public @NotNull PythonExecution build(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
+    public final @NotNull PythonExecution build(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest,
                                           @NotNull PythonExecution pythonScript) {
-      TargetEnvironment.LocalPortBinding ideServerPortBinding = new TargetEnvironment.LocalPortBinding(myIdeDebugServerLocalPort, null);
-      helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(ideServerPortBinding);
-
-      helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
-        try {
-          myServerSocketForDebugging = createServerSocketForDebugging(environment, ideServerPortBinding);
-        }
-        catch (IOException e) {
-          LOG.error("Unable to create server socket for debugging", e);
-        }
-        return null;
-      });
-
-      Function<TargetEnvironment, HostPort> ideServerPortBindingValue =
-        TargetEnvironmentFunctions.getTargetEnvironmentValue(ideServerPortBinding);
-
-      PythonScriptExecution debuggerScript =
-        prepareDebuggerScriptExecution(myProject, ideServerPortBindingValue, myPyState, pythonScript, myProfile,
-                                       helpersAwareTargetRequest);
+      Function<TargetEnvironment, HostPort> portBinding = createPortBinding(helpersAwareTargetRequest);
+      PythonExecution debuggerScript = prepareDebuggerScriptExecution(myProject, portBinding, myPyState, pythonScript, myProfile,
+                                                                      helpersAwareTargetRequest);
 
       var configuredInterpreterParameters = myPyState.getConfiguredInterpreterParameters();
 
@@ -946,6 +968,9 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
 
       return debuggerScript;
     }
+
+    protected abstract @NotNull Function<TargetEnvironment, HostPort> createPortBinding(
+      @NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest);
 
     private List<String> createInterpreterParametersToPreventPycGenerationInHelpersDir(@NotNull List<String>
                                                                                          existingInterpreterParameters) {
@@ -998,6 +1023,41 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
       Files.createDirectories(pycacheDir);
       return pycacheDir.toAbsolutePath();
     }
+  }
+
+  /**
+   * Builder class for creating a command line configured for debugging Python scripts in the client mode, when
+   * the debugger process connects to an IDE.
+   */
+  private final class PythonDebuggerClientModeTargetedCommandLineBuilder extends PythonDebuggerTargetedCommandLineBuilder {
+    private final @NotNull TargetEnvironment.LocalPortBinding myLocalPortBinding;
+
+    private volatile @Nullable ServerSocket myServerSocketForDebugging;
+
+    private PythonDebuggerClientModeTargetedCommandLineBuilder(@NotNull Project project,
+                                                               @NotNull PythonCommandLineState pyState,
+                                                               @NotNull RunProfile profile,
+                                                               @NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
+      super(project, pyState, profile);
+      myLocalPortBinding = localPortBinding;
+    }
+
+    @Override
+    protected @NotNull Function<@Nullable TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().onEnvironmentPrepared((environment, indicator) -> {
+        try {
+          myServerSocketForDebugging = createServerSocketForDebugging(environment, myLocalPortBinding);
+        }
+        catch (IOException e) {
+          LOG.error("Unable to create server socket for debugging", e);
+        }
+        return Unit.INSTANCE;
+      });
+
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().getLocalPortBindings().add(myLocalPortBinding);
+      return TargetEnvironmentFunctions.getTargetEnvironmentValue(myLocalPortBinding);
+    }
 
     private static @NotNull ServerSocket createServerSocketForDebugging(@NotNull TargetEnvironment environment,
                                                                         @NotNull TargetEnvironment.LocalPortBinding ideServerPortBinding)
@@ -1024,6 +1084,29 @@ public class PyDebugRunner implements ProgramRunner<RunnerSettings> {
      */
     public @Nullable ServerSocket getServerSocketForDebugging() {
       return myServerSocketForDebugging;
+    }
+  }
+
+  /**
+   * Builder class for creating a command line configured for debugging Python scripts in the server mode, when
+   * an IDE process connects to the debugger.
+   */
+  @ApiStatus.Internal
+  public final class PythonDebuggerServerModeTargetedCommandLineBuilder extends PythonDebuggerTargetedCommandLineBuilder {
+    private final @NotNull TargetEnvironment.TargetPortBinding myTargetPortBinding;
+
+    public PythonDebuggerServerModeTargetedCommandLineBuilder(@NotNull Project project,
+                                                               @NotNull PythonCommandLineState pyState,
+                                                               @NotNull RunProfile profile,
+                                                               @NotNull TargetEnvironment.TargetPortBinding targetPortBinding) {
+      super(project, pyState, profile);
+      myTargetPortBinding = targetPortBinding;
+    }
+
+    @Override
+    public @NotNull Function<TargetEnvironment, HostPort> createPortBinding(@NotNull HelpersAwareTargetEnvironmentRequest helpersAwareTargetRequest) {
+      helpersAwareTargetRequest.getTargetEnvironmentRequest().getTargetPortBindings().add(myTargetPortBinding);
+      return TargetEnvironmentFunctions.getTargetEnvironmentValue(myTargetPortBinding);
     }
   }
 }

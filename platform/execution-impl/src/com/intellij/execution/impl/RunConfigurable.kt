@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -11,7 +11,6 @@ import com.intellij.execution.impl.RunConfigurable.Companion.collectNodesRecursi
 import com.intellij.execution.impl.RunConfigurableNodeKind.*
 import com.intellij.execution.impl.statistics.RunConfigurationOptionUsagesCollector
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.openapi.Disposable
@@ -40,7 +39,6 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.mac.touchbar.TouchbarActionCustomizations
 import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.Alarm
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.SingleAlarm
 import com.intellij.util.containers.TreeTraversal
@@ -50,6 +48,7 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.datatransfer.Transferable
@@ -77,7 +76,7 @@ internal fun getUserObjectName(userObject: Any): String {
   }
 }
 
-fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
+internal fun createRunConfigurationConfigurable(project: Project): RunConfigurable {
   return when {
     project.isDefault -> RunConfigurable(project)
     else -> ProjectRunConfigurationConfigurable(project)
@@ -108,6 +107,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
   private var dialogUpdateCallback: Runnable? = null
 
   companion object {
+    @ApiStatus.Internal
     fun collectNodesRecursively(parentNode: DefaultMutableTreeNode, nodes: MutableList<DefaultMutableTreeNode>, vararg allowed: RunConfigurableNodeKind) {
       for (i in 0 until parentNode.childCount) {
         val child = parentNode.getChildAt(i) as DefaultMutableTreeNode
@@ -118,6 +118,7 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
       }
     }
 
+    @ApiStatus.Internal
     fun getKind(node: DefaultMutableTreeNode?): RunConfigurableNodeKind {
       if (node == null) {
         return UNKNOWN
@@ -231,7 +232,6 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
       task = ::selectRunConfiguration,
       delay = 300,
       parentDisposable = parentDisposable,
-      threadToUse = Alarm.ThreadToUse.SWING_THREAD,
       modalityState = modalityState
     )
 
@@ -488,16 +488,13 @@ open class RunConfigurable constructor(protected val project: Project) : Configu
     }
 
   override fun createComponent(): JComponent? {
-    wholePanel = JPanel(BorderLayout())
-    DataManager.registerDataProvider(wholePanel!!) { dataId ->
-      when (dataId) {
-        RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
-        CommonDataKeys.PROJECT.name -> project
-        RunConfigurationCreator.KEY.name -> this
-        else -> null
+    wholePanel = object : JPanel(BorderLayout()), UiDataProvider {
+      override fun uiDataSnapshot(sink: DataSink) {
+        sink[RunConfigurationSelector.KEY] = RunConfigurationSelector { selectConfiguration(it) }
+        sink[CommonDataKeys.PROJECT] = project
+        sink[RunConfigurationCreator.KEY] = this@RunConfigurable
       }
     }
-
     if (SystemInfo.isMac) {
       val touchbarActions = DefaultActionGroup(toolbarAddAction)
       TouchbarActionCustomizations.setShowText(touchbarActions, true)

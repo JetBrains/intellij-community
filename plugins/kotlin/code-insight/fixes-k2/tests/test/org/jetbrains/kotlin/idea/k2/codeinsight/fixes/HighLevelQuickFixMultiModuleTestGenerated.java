@@ -392,8 +392,8 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation")
-    public static class AddThrowAnnotation extends AbstractHighLevelQuickFixMultiModuleTest {
+    @TestMetadata("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation")
+    public static class AddThrowsAnnotation extends AbstractHighLevelQuickFixMultiModuleTest {
         @java.lang.Override
         @org.jetbrains.annotations.NotNull
         public final KotlinPluginMode getPluginMode() {
@@ -406,22 +406,17 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
 
         @TestMetadata("common")
         public void testCommon() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/common/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/common/");
         }
 
         @TestMetadata("js")
         public void testJs() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/js/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/js/");
         }
 
         @TestMetadata("jvm")
         public void testJvm() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvm/");
-        }
-
-        @TestMetadata("jvmWithoutStdlib")
-        public void testJvmWithoutStdlib() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowAnnotation/jvmWithoutStdlib/");
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/addThrowsAnnotation/jvm/");
         }
     }
 
@@ -655,6 +650,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/function/");
         }
 
+        @TestMetadata("functionK2")
+        public void testFunctionK2() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/functionK2/");
+        }
+
         @TestMetadata("functionSameFile")
         public void testFunctionSameFile() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/functionSameFile/");
@@ -703,6 +703,11 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("property")
         public void testProperty() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/property/");
+        }
+
+        @TestMetadata("propertyK2")
+        public void testPropertyK2() throws Exception {
+            runTest("../../../idea/tests/testData/multiModuleQuickFix/createActual/propertyK2/");
         }
 
         @TestMetadata("sealed")
@@ -1422,26 +1427,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/createVarInExpectClass/");
         }
 
-        @TestMetadata("deprecatedHeader")
-        public void testDeprecatedHeader() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/deprecatedHeader/");
-        }
-
-        @TestMetadata("deprecatedHeaderImpl")
-        public void testDeprecatedHeaderImpl() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/deprecatedHeaderImpl/");
-        }
-
-        @TestMetadata("deprecatedImpl")
-        public void testDeprecatedImpl() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/deprecatedImpl/");
-        }
-
-        @TestMetadata("deprecatedImplHeader")
-        public void testDeprecatedImplHeader() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/deprecatedImplHeader/");
-        }
-
         @TestMetadata("functionTypeParameterToReceiverByHeader")
         public void testFunctionTypeParameterToReceiverByHeader() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/functionTypeParameterToReceiverByHeader/");
@@ -1615,16 +1600,6 @@ public abstract class HighLevelQuickFixMultiModuleTestGenerated extends Abstract
         @TestMetadata("notMakeAbstractFromActual")
         public void testNotMakeAbstractFromActual() throws Exception {
             runTest("../../../idea/tests/testData/multiModuleQuickFix/other/notMakeAbstractFromActual/");
-        }
-
-        @TestMetadata("orderHeader")
-        public void testOrderHeader() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/orderHeader/");
-        }
-
-        @TestMetadata("orderImpl")
-        public void testOrderImpl() throws Exception {
-            runTest("../../../idea/tests/testData/multiModuleQuickFix/other/orderImpl/");
         }
 
         @TestMetadata("safeDeleteForbiddenFromActual")

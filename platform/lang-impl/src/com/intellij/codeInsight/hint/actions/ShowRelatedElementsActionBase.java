@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.hint.ImplementationPopupManager;
@@ -21,12 +21,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import kotlin.Unit;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class ShowRelatedElementsActionBase extends DumbAwareAction implements PopupAction {
 
   public ShowRelatedElementsActionBase() {
@@ -45,7 +47,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
   }
@@ -71,11 +73,9 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
     }
   }
 
-  @NotNull
-  protected abstract List<ImplementationViewSessionFactory> getSessionFactories();
+  protected abstract @NotNull List<ImplementationViewSessionFactory> getSessionFactories();
 
-  @NotNull
-  protected abstract @NlsContexts.PopupContent String getIndexNotReadyMessage();
+  protected abstract @NotNull @NlsContexts.PopupContent String getIndexNotReadyMessage();
 
   private void updateElementImplementations(Object lookupItemObject, ImplementationViewSession session) {
     if (lookupItemObject instanceof PsiItemWithSimilarity<?> itemWithSimilarity)  {
@@ -141,8 +141,7 @@ public abstract class ShowRelatedElementsActionBase extends DumbAwareAction impl
   protected void triggerFeatureUsed(@NotNull Project project){
   }
 
-  @NotNull
-  protected abstract @NlsContexts.PopupTitle String getPopupTitle(@NotNull ImplementationViewSession session);
+  protected abstract @NotNull @NlsContexts.PopupTitle String getPopupTitle(@NotNull ImplementationViewSession session);
 
   protected abstract boolean couldPinPopup();
 

@@ -226,11 +226,10 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
-    final SourcePosition position = getSourcePosition();
-    if (position != null) {
-      final VirtualFile breakpointFile = position.getFile().getVirtualFile();
+    VirtualFile breakpointFile = getVirtualFile();
+    if (breakpointFile != null) {
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
-      if (breakpointFile != null && fileIndex.isUnderSourceRootOfType(breakpointFile, JavaModuleSourceRootTypes.SOURCES)) {
+      if (fileIndex.isUnderSourceRootOfType(breakpointFile, JavaModuleSourceRootTypes.SOURCES)) {
         if (debugProcess.getSearchScope().contains(breakpointFile)) {
           return true;
         }

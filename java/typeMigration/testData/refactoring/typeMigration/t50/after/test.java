@@ -1,5 +1,5 @@
 import java.util.*;
 class Test {
-   Set<E> c;
+   Set<JButton> c;
    Set<? extends JButton> c1 = c;
 }

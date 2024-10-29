@@ -18,16 +18,14 @@ import com.intellij.util.containers.FactoryMap;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.decorator.PyFunctoolsWrapsDecoratedFunctionTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableParameter;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
 import one.util.streamex.StreamEx;
@@ -593,6 +591,16 @@ public class PyDocumentationBuilder {
       final PsiElement resolved = resolveWithoutImplicits((PyReferenceExpression)myElement);
       if (resolved != null) {
         return resolved;
+      }
+    }
+    // Return wrapped function for functools.wraps decorated function
+    if (myElement instanceof PyFunction function) {
+      PyType type = new PyFunctoolsWrapsDecoratedFunctionTypeProvider().getCallableType(function, myContext);
+      if (type instanceof PyCallableType callableType) {
+        PyCallable callable = callableType.getCallable();
+        if (callable != null) {
+          return callable;
+        }
       }
     }
     return myElement;

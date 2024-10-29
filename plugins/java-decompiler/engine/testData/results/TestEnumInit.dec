@@ -1,0 +1,74 @@
+package pkg;
+
+public class TestEnumInit {
+   public static void main(String[] args) {
+   }// 7
+
+   static enum TestEnum {
+      A,
+      B,
+      C;
+   }
+
+   static enum TestEnum1 {
+      A(0),
+      B(1),
+      C(2);
+
+      private final int anInt;
+
+      private TestEnum1(int i) {
+         this.anInt = i;// 22
+      }// 23
+   }
+
+   static enum TestEnum2 {
+      A(0, "0"),
+      B(1, "1"),
+      C(2, "2");
+
+      private final int anInt;
+
+      private TestEnum2(int i, String s) {
+         this.anInt = i;// 35
+      }// 36
+   }
+}
+
+class 'pkg/TestEnumInit' {
+   method 'main ([Ljava/lang/String;)V' {
+      0      4
+   }
+}
+
+class 'pkg/TestEnumInit$TestEnum1' {
+   method '<init> (Ljava/lang/String;II)V' {
+      6      20
+      7      20
+      8      20
+      9      20
+      a      20
+      b      21
+   }
+}
+
+class 'pkg/TestEnumInit$TestEnum2' {
+   method '<init> (Ljava/lang/String;IILjava/lang/String;)V' {
+      6      32
+      7      32
+      8      32
+      9      32
+      a      32
+      b      33
+   }
+}
+
+Lines mapping:
+7 <-> 5
+22 <-> 21
+23 <-> 22
+35 <-> 33
+36 <-> 34
+Not mapped:
+21
+34

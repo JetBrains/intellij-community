@@ -51,12 +51,12 @@ class CyclicDependenciesSymbolResolutionTest : AbstractMultiModuleTest() {
 
         val fileA = moduleA.findSourceKtFile("a.kt")
         analyzeInModalWindow(fileA, "test") {
-            fileA.getFirstFunctionDeclaration().getBodyCallExpression().assertCalleeNameAndType(fileA, "bar", builtinTypes.INT)
+            fileA.getFirstFunctionDeclaration().getBodyCallExpression().assertCalleeNameAndType(fileA, "bar", builtinTypes.int)
         }
 
         val fileB = moduleB.findSourceKtFile("b.kt")
         analyzeInModalWindow(fileB, "test") {
-            fileB.getFirstFunctionDeclaration().getBodyCallExpression().assertCalleeNameAndType(fileB, "foo", builtinTypes.INT)
+            fileB.getFirstFunctionDeclaration().getBodyCallExpression().assertCalleeNameAndType(fileB, "foo", builtinTypes.int)
         }
     }
 

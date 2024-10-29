@@ -196,6 +196,11 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  @Override
+  public void noStateLoaded() {
+    setDefaults();
+  }
+
   private void setDefaults() {
     try {
       ReflectionUtil.copyFields(CodeInsightSettings.class.getDeclaredFields(), new CodeInsightSettings(), this,

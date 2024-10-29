@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
@@ -31,7 +31,7 @@ final class ChangeSignaturePassFactory implements TextEditorHighlightingPassFact
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull final PsiFile file, @NotNull final Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile file, final @NotNull Editor editor) {
     LanguageChangeSignatureDetector<ChangeInfo> detector =
       LanguageChangeSignatureDetectors.INSTANCE.forLanguage(file.getLanguage());
     if (detector == null) return null;

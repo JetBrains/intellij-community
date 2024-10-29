@@ -3,9 +3,9 @@ LineBreakpoint created at samInterface.kt:11 lambdaOrdinal = 1
 Run Java
 Connected to the target VM
 samInterface.kt:6
-Highlight lambda range: '{ it % 2 == 0 }'
+Highlight lambda range: 'it % 2 == 0'
 samInterface.kt:11
-Highlight lambda range: '{ println(); it % 2 == 0 }'
+Highlight lambda range: 'println(); it % 2 == 0'
 Disconnected from the target VM
 
 Process finished with exit code 0

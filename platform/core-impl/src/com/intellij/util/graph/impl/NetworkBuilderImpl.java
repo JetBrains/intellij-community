@@ -3,8 +3,10 @@ package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.MutableNetwork;
 import com.intellij.util.graph.NetworkBuilder;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class NetworkBuilderImpl<N, E> extends NetworkBuilder<N, E> {
 
   protected NetworkBuilderImpl(boolean directed) {

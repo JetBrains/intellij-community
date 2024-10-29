@@ -18,8 +18,6 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 
 import java.util.List;
 
@@ -35,18 +33,17 @@ public class MavenModificationTracker extends SimpleModificationTracker {
       }
 
       @Override
-      public void projectsIgnoredStateChanged(List<? extends MavenProject> ignored, List<? extends MavenProject> unignored, boolean fromImport) {
+      public void projectsIgnoredStateChanged(List<MavenProject> ignored, List<MavenProject> unignored, boolean fromImport) {
         incModificationCount();
       }
 
       @Override
-      public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<? extends MavenProject> deleted) {
+      public void projectsUpdated(List<? extends Pair<MavenProject, MavenProjectChanges>> updated, List<MavenProject> deleted) {
         incModificationCount();
       }
 
       @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges) {
         incModificationCount();
       }
 

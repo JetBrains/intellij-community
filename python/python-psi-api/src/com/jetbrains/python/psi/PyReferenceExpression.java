@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.ast.PyAstReferenceExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.Predicate;
 
-public interface PyReferenceExpression extends PyAstReferenceExpression, PyQualifiedExpression, PyReferenceOwner {
+public interface PyReferenceExpression extends PyAstReferenceExpression, PyQualifiedExpression, PyReferenceOwner, PsiExternalReferenceHost {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   @Override

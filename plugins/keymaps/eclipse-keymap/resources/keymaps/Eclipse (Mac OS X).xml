@@ -38,7 +38,7 @@
     <keyboard-shortcut first-keystroke="meta SUBTRACT"/>
   </action>
   <action id="CommentByBlockComment">
-    <keyboard-shortcut first-keystroke="shift control SLASH"/>  <!-- TODO -->
+    <keyboard-shortcut first-keystroke="shift meta SLASH"/>  <!-- TODO -->
   </action>
   <action id="CompileDirty">
     <keyboard-shortcut first-keystroke="meta B"/>

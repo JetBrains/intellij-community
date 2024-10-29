@@ -38,12 +38,4 @@ public interface DataConstants {
    */
   @Deprecated(forRemoval = true)
   String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
-
-  /**
-   * Returns {@link com.intellij.openapi.editor.Editor}
-   *
-   * @deprecated use {@link PlatformDataKeys#EDITOR} instead
-   */
-  @Deprecated(forRemoval = true)
-  String EDITOR = CommonDataKeys.EDITOR.getName();
 }

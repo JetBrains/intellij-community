@@ -13,11 +13,13 @@ import com.intellij.util.PathUtil
 import com.intellij.util.io.delete
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
 
+@ApiStatus.Internal
 object FileHistoryPersistence {
   private val LOG: Logger = Logger.getInstance(FileHistoryPersistence::class.java)
 

@@ -2,8 +2,10 @@
 
 package org.jetbrains.kotlin.idea.refactoring.introduce
 
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.actions.BasePlatformRefactoringAction
+import com.intellij.refactoring.actions.ExtractSuperActionBase
 import org.jetbrains.kotlin.psi.KtElement
 
 abstract class AbstractIntroduceAction : BasePlatformRefactoringAction() {
@@ -19,4 +21,9 @@ abstract class AbstractIntroduceAction : BasePlatformRefactoringAction() {
 
     override fun isEnabledOnElements(elements: Array<out PsiElement>): Boolean =
         elements.all { it is KtElement }
+
+    override fun update(e: AnActionEvent) {
+        super.update(e)
+        ExtractSuperActionBase.removeFirstWordInMainMenu(this, e)
+    }
 }

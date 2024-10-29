@@ -1,0 +1,9 @@
+class Test {
+  public static void main(String[] args) {
+    System.out.println(use());
+  }
+
+  public static String use() {
+    return Arrays.toString(new Object[]{"1", "2", "3"});
+  }
+}

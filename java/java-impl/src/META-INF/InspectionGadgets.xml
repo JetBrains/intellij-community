@@ -217,7 +217,8 @@
                      implementationClass="com.siyeh.ig.bugs.EqualsUsesNonFinalVariableInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsWhichDoesntCheckParameterClass" bundle="messages.InspectionGadgetsBundle"
                      key="equals.doesnt.check.class.parameter.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING" 
+                     suppressId="EqualsDoesntCheckParameterClass" alternativeId="EqualsWhichDoesntCheckParameterClass"
                      implementationClass="com.siyeh.ig.bugs.EqualsWhichDoesntCheckParameterClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="NonFinalFieldReferencedInHashCode" shortName="HashCodeUsesNonFinalVariable"
                      bundle="messages.InspectionGadgetsBundle" key="non.final.field.in.hashcode.display.name"
@@ -1384,7 +1385,7 @@
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.ConstantAssertArgumentMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="MisorderedAssertEqualsArguments"
                      bundle="messages.InspectionGadgetsBundle" key="misordered.assert.equals.arguments.display.name"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="false" level="WARNING"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.test.frameworks.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsInspection"/>
     <inspectionElementsMerger implementation="com.siyeh.ig.testFrameworks.MisorderedAssertEqualsArgumentsMerger"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SimplifiableAssertion" bundle="messages.InspectionGadgetsBundle"
@@ -1664,7 +1665,7 @@
                      implementationClass="com.siyeh.ig.numeric.BadOddnessInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BigDecimalEquals" bundle="messages.InspectionGadgetsBundle" key="big.decimal.equals.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.numeric.issues" enabledByDefault="false" level="WARNING"
-                     implementationClass="com.siyeh.ig.numeric.BigDecimalEqualsInspection" cleanupTool="true"/>
+                     implementationClass="com.siyeh.ig.numeric.BigDecimalEqualsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="BigDecimalMethodWithoutRoundingCalled" bundle="messages.InspectionGadgetsBundle"
                      key="big.decimal.method.without.rounding.called.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.numeric.issues" enabledByDefault="true" level="WARNING"
@@ -2675,16 +2676,12 @@
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
                      editorAttributes="NOT_USED_ELEMENT_ATTRIBUTES"
                      implementationClass="com.siyeh.ig.controlflow.UnnecessaryReturnInspection" cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantCompareToJavaTime"
+    <localInspection groupPath="Java" language="JAVA"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" key="inspection.simplifiable.compare.java.time.display.name"
-                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.intellij.codeInspection.RedundantCompareToJavaTimeInspection"
+                     enabledByDefault="true" level="WARNING" key="inspection.redundant.java.time.operation.display.name"
+                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.siyeh.ig.redundancy.RedundantJavaTimeOperationsInspection"
                      cleanupTool="true"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="RedundantExplicitChronoField"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING" key="inspection.explicit.chrono.field.display.name"
-                     bundle="messages.InspectionGadgetsBundle" implementationClass="com.siyeh.ig.redundancy.RedundantExplicitChronoFieldInspection"
-                     cleanupTool="true"/>
+    <inspectionElementsMerger implementation="com.siyeh.ig.redundancy.RedundantJavaTimeOperationMerger"/>
 
     <!--group.names.visibility.issues-->
     <localInspection groupPath="Java" language="JAVA" shortName="AmbiguousMethodCall" bundle="messages.InspectionGadgetsBundle" key="ambiguous.method.call.display.name"
@@ -2755,10 +2752,10 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids"
                      implementationClass="com.intellij.codeInspection.ForEachWithRecordPatternCanBeUsedInspection" cleanupTool="true"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA"
-                     shortName="DeconstructionCanBeUsed" enabledByDefault="false" level="INFORMATION"
+                     shortName="DeconstructionCanBeUsed" enabledByDefault="true" level="WARNING"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.deconstruction.can.be.used.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids21"
-                     implementationClass="com.intellij.codeInspection.DeconstructionCanBeUsedInspection" cleanupTool="false"/>
+                     implementationClass="com.intellij.codeInspection.DeconstructionCanBeUsedInspection" cleanupTool="true"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeReplacedWithVariable" enabledByDefault="true" level="INFORMATION"
                      bundle="messages.InspectionGadgetsBundle" key="inspection.cast.can.be.replaced.with.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"

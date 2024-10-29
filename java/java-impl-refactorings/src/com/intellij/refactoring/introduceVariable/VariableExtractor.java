@@ -25,6 +25,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.IntroduceVariableUtil;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
@@ -91,7 +92,7 @@ final class VariableExtractor {
     }
     PsiExpression initializer = RefactoringUtil.unparenthesizeExpression(newExpr);
     final SmartTypePointer selectedType = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(
-      mySettings.getSelectedType());
+      PsiTypesUtil.removeExternalAnnotations(mySettings.getSelectedType()));
     initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, selectedType.getType());
     CommentTracker commentTracker = new CommentTracker();
     commentTracker.markUnchanged(initializer);

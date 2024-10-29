@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,12 +12,6 @@ import java.util.Collection;
 
 @Deprecated
 public abstract class BreakpointPanelProvider<B> {
-
-  /**
-   * @deprecated instead register at {@link XBreakpointGroupingRule#EP}
-   */
-  @Deprecated(forRemoval = true)
-  public abstract void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules);
 
   public interface BreakpointsListener {
     void breakpointsChanged();

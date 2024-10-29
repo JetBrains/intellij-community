@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.EventDispatcher
+import com.intellij.util.SlowOperations
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcs.log.runInEdt
 import git4idea.GitVcs
@@ -95,7 +96,9 @@ open class GitStageTracker(val project: Project) : Disposable {
    */
   internal fun markDirty(file: VirtualFile) {
     if (!isStagingAreaAvailable()) return
-    val root = getRoot(project, file) ?: return
+    val root = SlowOperations.knownIssue("IJPL-162402").use {
+      getRoot(project, file) ?: return
+    }
     if (!gitRoots().contains(root)) return
     LOG.debug("Mark dirty ${file.filePath()}")
     dirtyScopeManager.fileDirty(file.filePath())

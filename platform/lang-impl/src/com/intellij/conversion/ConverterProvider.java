@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.conversion;
 
 import com.intellij.openapi.components.Storage;
@@ -27,11 +27,7 @@ public abstract class ConverterProvider {
   protected ConverterProvider() {
   }
 
-  @NlsContexts.DialogMessage
-  @NotNull
-  public abstract String getConversionDescription();
+  public abstract @NlsContexts.DialogMessage @NotNull String getConversionDescription();
 
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  @NotNull
-  public abstract ProjectConverter createConverter(@NotNull ConversionContext context);
+  public abstract @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull ProjectConverter createConverter(@NotNull ConversionContext context);
 }

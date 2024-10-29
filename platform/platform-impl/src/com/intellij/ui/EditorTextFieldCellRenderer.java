@@ -359,7 +359,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       int maxLineWidth = getWidth() - (insets != null ? insets.left + insets.right : 0);
       myDocumentTextBuilder.setLength(0);
 
-      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.1f;
+      // 'a / b < factor' is a flawed approach, but I hesitate to perform a rework. I increase the factor to get rid of the bug
+      boolean singleLineMode = myForceSingleLine || getHeight() / (float)getEditor().getLineHeight() < 1.5f;
       if (singleLineMode) {
         appendAbbreviated(myDocumentTextBuilder, myRawText, 0, myRawText.length(), fontMetrics, maxLineWidth, true, myAppendEllipsis,
                           myReturnSymbol);

@@ -6,6 +6,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import javax.swing.*;
 import javax.swing.text.Position;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class DebuggerFramesList extends JBList implements OccurenceNavigator {
   public DebuggerFramesList() {
     super(new CollectionListModel());

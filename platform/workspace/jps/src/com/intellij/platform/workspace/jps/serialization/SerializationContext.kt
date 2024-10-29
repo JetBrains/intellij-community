@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.jps.serialization
 
 import com.intellij.platform.workspace.jps.entities.ModuleSettingsFacetBridgeEntity
@@ -21,12 +21,10 @@ interface SerializationContext {
    * currently is implemented inside the platform. 
    */
   val isJavaPluginPresent: Boolean
-  
-  val isOrphanageEnabled: Boolean
-  
+
   val customModuleComponentSerializers: List<CustomModuleComponentSerializer>
   
   val customModuleRootsSerializers: List<CustomModuleRootsSerializer>
   
-  val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<ModuleSettingsFacetBridgeEntity>>
+  val customFacetRelatedEntitySerializers: List<CustomFacetRelatedEntitySerializer<*>>
 }

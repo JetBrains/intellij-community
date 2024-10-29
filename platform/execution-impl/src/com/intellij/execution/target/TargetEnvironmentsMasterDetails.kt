@@ -32,6 +32,7 @@ import com.intellij.util.text.nullize
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Point
 import javax.swing.*
@@ -39,6 +40,7 @@ import javax.swing.border.Border
 import javax.swing.border.CompoundBorder
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val project: Project,
   private val initialSelectedName: String? = null,

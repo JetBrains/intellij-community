@@ -47,12 +47,11 @@ internal object ArgumentTypeMismatchFactory {
         )
     }
 
-    context(KaSession)
-    private fun isQuickFixAvailable(diagnostic: KaFirDiagnostic.ArgumentTypeMismatch): Boolean {
+    private fun KaSession.isQuickFixAvailable(diagnostic: KaFirDiagnostic.ArgumentTypeMismatch): Boolean {
         if (PsiTreeUtil.getParentOfType(diagnostic.psi, KtAnnotationEntry::class.java) == null) return false
         val expectedType = diagnostic.expectedType
         val arrayElementType = expectedType.arrayElementType
-        return expectedType.isPrimitiveArray || (arrayElementType != null && diagnostic.actualType.isSubTypeOf(arrayElementType))
+        return expectedType.isPrimitiveArray || (arrayElementType != null && diagnostic.actualType.isSubtypeOf(arrayElementType))
     }
 
     context(KaSession)

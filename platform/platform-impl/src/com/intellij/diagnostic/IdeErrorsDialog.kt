@@ -2,7 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.CommonBundle
-import com.intellij.diagnostic.ITNProxy.fetchDevelopers
+import com.intellij.diagnostic.IdeErrorsDialog.ReportAction.entries
 import com.intellij.diagnostic.MessagePool.TooManyErrorsException
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
@@ -22,7 +22,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.ErrorReportSubmitter
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.SubmittedReportInfo
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -30,11 +29,13 @@ import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.*
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.LoadingDecorator
+import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.OptionAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
@@ -45,17 +46,17 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.*
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.SwingHelper
+import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.GridBagConstraints.*
 import java.awt.event.ActionEvent
-import java.awt.event.ItemEvent
-import java.net.SocketTimeoutException
 import java.net.URL
 import java.nio.charset.StandardCharsets
 import java.nio.file.FileVisitResult
@@ -67,21 +68,16 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
-open class IdeErrorsDialog @JvmOverloads internal constructor(
+open class IdeErrorsDialog internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
-  defaultMessage: LogMessage?,
-  private var updateControlsJob: Job = SupervisorJob()
-) : DialogWrapper(myProject, true), MessagePoolListener, UiCompatibleDataProvider {
-  private val myAssigneeVisible: Boolean =
-    (ApplicationManager.getApplication().isInternal || PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) &&
-    Registry.`is`("ea.enable.developers.list", true)
+  defaultMessage: LogMessage?
+) : DialogWrapper(myProject, true), MessagePoolListener, UiDataProvider {
   private val myAcceptedNotices: MutableSet<String>
   private val myMessageClusters: MutableList<MessageCluster> = ArrayList() // exceptions with the same stacktrace
   private var myIndex: Int
   private var myLastIndex = -1
-  private var myDevListTimestamp: Long = 0
-  private val myLoadingDeveloperListJob: Job?
+  private var myUpdateControlsJob: Job = SupervisorJob()
 
   private lateinit var myCountLabel: JLabel
   private lateinit var myInfoLabel: JTextComponent
@@ -90,12 +86,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private lateinit var myCommentArea: JBTextArea
   private lateinit var myAttachmentList: AttachmentList
   private lateinit var myAttachmentArea: JTextArea
-  private lateinit var myAssigneePanel: JPanel
   private lateinit var myPrivacyNotice: PrivacyNotice
-  private lateinit var myAssigneeCombo: ComboBox<Developer>
   private lateinit var myCredentialLabel: JTextComponent
-
-  private lateinit var loadingDecorator: LoadingDecorator
+  private lateinit var myLoadingDecorator: LoadingDecorator
 
   init {
     title = DiagnosticBundle.message("error.list.title")
@@ -103,7 +96,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     @Suppress("LeakingThis")
     init()
     setCancelButtonText(CommonBundle.message("close.action.name"))
-    myLoadingDeveloperListJob = if (myAssigneeVisible) loadDevelopersList() else null
     val rawValue = PropertiesComponent.getInstance().getValue(ACCEPTED_NOTICES_KEY, "")
     myAcceptedNotices = Collections.synchronizedSet(LinkedHashSet(rawValue.split(ACCEPTED_NOTICES_SEPARATOR)))
     updateMessages()
@@ -111,30 +103,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     updateControls()
     @Suppress("LeakingThis")
     myMessagePool.addListener(this)
-  }
-
-  private fun loadDevelopersList(): Job = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
-    runCatching {
-      val configurable = serviceAsync<ErrorReportConfigurable>()
-      val developers = configurable.getDeveloperList()
-      setDevelopers(developers)
-      if (developers.isUpToDateAt()) {
-        return@launch
-      }
-
-      val updatedDevelopers = DeveloperList(fetchDevelopers(), System.currentTimeMillis())
-      withContext(Dispatchers.EDT) {
-        configurable.setDeveloperList(updatedDevelopers)
-        setDevelopers(updatedDevelopers)
-      }
-    }.onFailure { e ->
-      when (e) {
-        is CancellationException -> throw e
-        is SocketTimeoutException -> LOG.warn(e.toString())
-        is HttpRequests.HttpStatusException -> LOG.warn(e.toString())
-        else -> LOG.warn(e)
-      }
-    }
   }
 
   private suspend fun loadCredentialsPanel(submitter: ErrorReportSubmitter) {
@@ -165,13 +133,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
           myPrivacyNotice.setPrivacyPolicy(notice)
         }
       }
-    }
-  }
-
-  private fun setDevelopers(developers: DeveloperList) {
-    UIUtil.invokeLaterIfNeeded {
-      myAssigneeCombo.model = CollectionComboBoxModel(developers.developers)
-      myDevListTimestamp = developers.timestamp
     }
   }
 
@@ -233,7 +194,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   private fun enableOkButtonIfReady() {
     val cluster = selectedCluster()
-    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && updateControlsJob.isCompleted
+    isOKActionEnabled = cluster.canSubmit() && !cluster.detailsText.isNullOrBlank() && myUpdateControlsJob.isCompleted
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -284,20 +245,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
         }
       }
     })
-    if (myAssigneeVisible) {
-      myAssigneeCombo = ComboBox()
-      myAssigneeCombo.renderer = SimpleListCellRenderer.create(DiagnosticBundle.message("errors.dialog.assignee.none"), Developer::displayText)
-      myAssigneeCombo.prototypeDisplayValue = Developer(0, "-".repeat(30))
-      myAssigneeCombo.addItemListener { e: ItemEvent ->
-        if (e.stateChange == ItemEvent.SELECTED) {
-          selectedMessage().assigneeId = (e.item as? Developer)?.id
-        }
-      }
-      myAssigneeCombo.isSwingPopup = false
-      myAssigneePanel = JPanel()
-      myAssigneePanel.add(JBLabel(DiagnosticBundle.message("label.assignee")))
-      myAssigneePanel.add(myAssigneeCombo)
-    }
     @NlsSafe val heightSample = " "
     myCredentialLabel = SwingHelper.createHtmlViewer(false, null, null, null).apply {
       text = heightSample
@@ -310,12 +257,9 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
         }
       }
     }
-    if (myAssigneeVisible) {
-      val topOffset = (myAssigneePanel.preferredSize.height - myCredentialLabel.preferredSize.height) / 2
-      myCredentialLabel.border = JBUI.Borders.emptyTop(topOffset)
-    }
-    myPrivacyNotice = PrivacyNotice(DiagnosticBundle.message("error.dialog.notice.label"),
-                                    DiagnosticBundle.message("error.dialog.notice.label.expanded"))
+    myPrivacyNotice = PrivacyNotice(
+      DiagnosticBundle.message("error.dialog.notice.label"),
+      DiagnosticBundle.message("error.dialog.notice.label.expanded"))
     val commentPanel = JPanel(BorderLayout())
     commentPanel.border = JBUI.Borders.emptyTop(5)
     commentPanel.add(scrollPane(myCommentArea, 0, 0), BorderLayout.CENTER)
@@ -327,9 +271,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     val accountRow = JPanel(GridBagLayout())
     accountRow.border = JBUI.Borders.empty(6, 0)
     accountRow.add(myCredentialLabel, GridBagConstraints(0, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBInsets.emptyInsets(), 0, 0))
-    if (myAssigneeVisible) {
-      accountRow.add(myAssigneePanel, GridBagConstraints(1, 0, 1, 1, 1.0, 0.0, NORTHEAST, NONE, JBInsets.emptyInsets(), 0, 0))
-    }
     val bottomRow = JPanel(BorderLayout())
     bottomRow.add(accountRow, BorderLayout.NORTH)
     bottomRow.add(myPrivacyNotice.panel, BorderLayout.CENTER)
@@ -341,8 +282,8 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     rootPanel.add(attachmentsPanel, BorderLayout.CENTER)
     rootPanel.add(bottomRow, BorderLayout.SOUTH)
 
-    loadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
-    return loadingDecorator.component
+    myLoadingDecorator = LoadingDecorator(rootPanel, disposable, 100, useMinimumSize = true)
+    return myLoadingDecorator.component
   }
 
   private fun scrollPane(component: JComponent, width: Int, height: Int): JScrollPane =
@@ -369,10 +310,10 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    if (myAssigneeVisible && myProject != null && !myProject.isDefault) {
-      val action = ActionManager.getInstance().getAction("Unscramble")
-      if (action != null) {
-        return arrayOf(AnalyzeAction(action))
+    if (myProject != null && !myProject.isDefault && PluginManagerCore.isPluginInstalled(PluginId.getId(ITNProxy.EA_PLUGIN_ID))) {
+      @Suppress("UnresolvedPluginConfigReference")
+      ActionManager.getInstance().getAction("Unscramble")?.let {
+        return arrayOf(AnalyzeAction(it))
       }
     }
     return emptyArray()
@@ -382,8 +323,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   override fun dispose() {
     myMessagePool.removeListener(this)
-    myLoadingDeveloperListJob?.cancel()
-    updateControlsJob.cancel()
+    myUpdateControlsJob.cancel()
     super.dispose()
   }
 
@@ -405,24 +345,21 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
   @RequiresEdt
   private fun updateControls() {
-    loadingDecorator.startLoading(false)
-    updateControlsJob.cancel(null)
-    updateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
+    myLoadingDecorator.startLoading(false)
+    myUpdateControlsJob.cancel(null)
+    myUpdateControlsJob = service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
       val cluster = selectedCluster()
       val submitter = cluster.submitter
       cluster.messages.forEach { it.isRead = true }
       updateLabels(cluster)
       updateDetails(cluster)
-      if (myAssigneeVisible) {
-        updateAssigneePanel(cluster)
-      }
       updateCredentialsPanel(submitter)
       isOKActionEnabled = cluster.canSubmit()
       setDefaultReportActionText(submitter?.reportActionText ?: DiagnosticBundle.message("error.report.impossible.action"))
       setDefaultReportActionTooltip(if (submitter != null) null else DiagnosticBundle.message("error.report.impossible.tooltip"))
-      loadingDecorator.stopLoading()
+      myLoadingDecorator.stopLoading()
     }
-    updateControlsJob.invokeOnCompletion {
+    myUpdateControlsJob.invokeOnCompletion {
       enableOkButtonIfReady()
     }
   }
@@ -520,27 +457,13 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.isVisible = true
       val vendor = plugin.vendor
-      var vendorUrl = plugin.vendorUrl?.let {
-        when {
-          isValidUrl(it) -> it
-          !it.contains(URLUtil.SCHEME_SEPARATOR) -> ("${URLUtil.HTTPS_PROTOCOL}${URLUtil.SCHEME_SEPARATOR}${it}").takeIf(::isValidUrl)
-          else -> null
-        }
-      }
-      if (vendorUrl.isNullOrBlank()) {
-        val vendorEmail = plugin.vendorEmail
-        if (!vendorEmail.isNullOrBlank()) {
-          vendorUrl = ("mailto:" + vendorEmail.removePrefix("mailto:")).takeIf(::isValidUrl)
-        }
-      }
-      if (!vendor.isNullOrEmpty() && vendorUrl != null) {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
-      }
-      else if (vendorUrl != null) {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
-      }
-      else {
-        myForeignPluginWarningLabel.text = DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown")
+      val vendorUrl =
+        plugin.vendorUrl?.trim()?.let { URLUtil.addSchemaIfMissing(it) }?.takeIf(::isValidUrl)
+        ?: plugin.vendorEmail?.trim()?.let { "mailto:" + it.removePrefix("mailto:") }?.takeIf(::isValidUrl)
+      myForeignPluginWarningLabel.text = when {
+        !vendor.isNullOrEmpty() && vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning", vendor, vendorUrl)
+        vendorUrl != null -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unnamed", vendorUrl)
+        else -> DiagnosticBundle.message("error.dialog.foreign.plugin.warning.unknown")
       }
     }
     else {
@@ -573,32 +496,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     myAttachmentList.setEditable(canReport)
   }
 
-  private fun updateAssigneePanel(cluster: MessageCluster) {
-    if (cluster.submitter is ITNReporter) {
-      myAssigneePanel.isVisible = true
-      myAssigneeCombo.isEnabled = cluster.isUnsent
-      val assignee = cluster.first.assigneeId
-      if (assignee == null) {
-        myAssigneeCombo.setSelectedIndex(-1)
-      }
-      else {
-        val assigneeIndex = getAssigneeIndex(assignee)
-        if (assigneeIndex != -1) {
-          myAssigneeCombo.setSelectedIndex(assigneeIndex)
-        }
-        else {
-          cluster.first.assigneeId = null
-        }
-      }
-    }
-    else {
-      myAssigneePanel.isVisible = false
-    }
-  }
-
-  private fun getAssigneeIndex(assigneeId: Int): Int =
-    (0 until myAssigneeCombo.itemCount).firstOrNull { assigneeId == myAssigneeCombo.getItemAt(it).id } ?: -1
- 
   private suspend fun updateCredentialsPanel(submitter: ErrorReportSubmitter?) {
     myCredentialLabel.isVisible = false
     if (submitter != null) {
@@ -609,8 +506,6 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   private fun reportMessage(cluster: MessageCluster, dialogClosed: Boolean): Boolean {
     val submitter = cluster.submitter ?: return false
     val message = cluster.first
-    message.isAssigneeVisible = myAssigneeVisible
-    message.devListTimestamp = myDevListTimestamp
     message.isSubmitting = true
 
     service<ITNProxyCoroutineScopeHolder>().coroutineScope.launch {
@@ -702,8 +597,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
     }
   }
 
-  private inner class AnalyzeAction(analyze: AnAction) : AbstractAction(ActionsBundle.actionText(
-    ActionManager.getInstance().getId(analyze))) {
+  private inner class AnalyzeAction(analyze: AnAction) : AbstractAction(ActionsBundle.actionText(ActionManager.getInstance().getId(analyze))) {
     private val myAnalyze: AnAction
 
     init {
@@ -713,7 +607,7 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
 
     override fun actionPerformed(e: ActionEvent) {
       val ctx = DataManager.getInstance().getDataContext(e.source as Component)
-      val event = AnActionEvent.createFromAnAction(myAnalyze, null, ActionPlaces.UNKNOWN, ctx)
+      val event = AnActionEvent.createEvent(myAnalyze, ctx, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
       myAnalyze.actionPerformed(event)
       doCancelAction()
     }
@@ -924,18 +818,14 @@ open class IdeErrorsDialog @JvmOverloads internal constructor(
   }
 
   companion object {
-    private val LOG = Logger.getInstance(IdeErrorsDialog::class.java)
-
     private const val STACKTRACE_ATTACHMENT = "stacktrace.txt"
     private const val ACCEPTED_NOTICES_KEY = "exception.accepted.notices"
     private const val ACCEPTED_NOTICES_SEPARATOR = ":"
     private const val DISABLE_PLUGIN_URL = "#disable"
     private const val LAST_OK_ACTION = "IdeErrorsDialog.LAST_OK_ACTION"
-    @JvmField
-    val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
 
-    @JvmField
-    val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
+    @JvmField val ERROR_HANDLER_EP: ExtensionPointName<ErrorReportSubmitter> = create("com.intellij.errorHandler")
+    @JvmField val CURRENT_TRACE_KEY: DataKey<String> = DataKey.create("current_stack_trace_key")
 
     @JvmStatic
     fun confirmDisablePlugins(project: Project?, pluginsToDisable: List<IdeaPluginDescriptor>) {

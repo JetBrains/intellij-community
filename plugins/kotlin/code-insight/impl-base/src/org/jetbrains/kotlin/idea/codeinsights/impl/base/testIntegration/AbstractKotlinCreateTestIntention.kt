@@ -6,7 +6,6 @@ import com.intellij.CommonBundle
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.lang.java.JavaLanguage
 import com.intellij.model.SideEffectGuard
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.module.Module
@@ -15,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopesCore
@@ -47,11 +45,11 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
 
     protected abstract fun isApplicableForModule(module: Module): Boolean
 
-    protected abstract fun convertJavaClass(
+    protected abstract fun convertClass(
         project: Project,
         generatedClass: PsiClass,
         existingClass: KtClassOrObject?,
-        generatedFile: PsiJavaFile,
+        generatedFile: PsiFile,
         srcModule: Module
     )
 
@@ -92,7 +90,31 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         }
     }
 
-    override fun startInWriteAction() = false
+    override fun startInWriteAction(): Boolean = false
+
+    protected open fun getTempClassName(project: Project, existingClass: KtClassOrObject): String {
+        val kotlinFile = existingClass.containingKtFile.virtualFile
+        val baseName = kotlinFile.nameWithoutExtension
+        val psiDir = kotlinFile.parent!!.toPsiDirectory(project)!!
+        return generateSequence(0) { it + 1 }
+            .map { "$baseName$it" }
+            .first {
+                psiDir.findFile("$it.java") == null &&
+                        findTestClass(project, psiDir, it) == null
+            }
+    }
+
+    // Based on the com.intellij.testIntegration.createTest.JavaTestGenerator.createTestClass()
+    private fun findTestClass(project: Project, targetDirectory: PsiDirectory, className: String): PsiElement? {
+        val psiPackage = JavaDirectoryService.getInstance()?.getPackage(targetDirectory) ?: return null
+        val scope = GlobalSearchScopesCore.directoryScope(targetDirectory, false)
+
+        findKtClassOrObject(className, project, scope)?.let { return it }
+
+        val klass = psiPackage.findClassByShortName(className, scope).firstOrNull() ?: return null
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(klass)) return null
+        return klass
+    }
 
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         val lightClass = when (element) {
@@ -101,26 +123,6 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
         } ?: return
 
         object : CreateTestAction() {
-            // Based on the com.intellij.testIntegration.createTest.JavaTestGenerator.createTestClass()
-            private fun findTestClass(project: Project, targetDirectory: PsiDirectory, className: String): PsiElement? {
-                val psiPackage = JavaDirectoryService.getInstance()?.getPackage(targetDirectory) ?: return null
-                val scope = GlobalSearchScopesCore.directoryScope(targetDirectory, false)
-
-                findKtClassOrObject(className, project, scope)?.let { return it }
-
-                val klass = psiPackage.findClassByShortName(className, scope).firstOrNull() ?: return null
-                if (!FileModificationService.getInstance().preparePsiElementForWrite(klass)) return null
-                return klass
-            }
-
-            private fun getTempJavaClassName(project: Project, kotlinFile: VirtualFile): String {
-                val baseName = kotlinFile.nameWithoutExtension
-                val psiDir = kotlinFile.parent!!.toPsiDirectory(project)!!
-                return generateSequence(0) { it + 1 }
-                    .map { "$baseName$it" }
-                    .first { psiDir.findFile("$it.java") == null && findTestClass(project, psiDir, it) == null }
-            }
-
             // Based on the com.intellij.testIntegration.createTest.CreateTestAction.CreateTestAction.invoke()
             override fun invoke(project: Project, editor: Editor?, element: PsiElement) {
                 val srcModule = ModuleUtilCore.findModuleForPsiElement(element) ?: return
@@ -170,18 +172,17 @@ abstract class AbstractKotlinCreateTestIntention : SelfTargetingRangeIntention<K
                     val generator = TestGenerators.INSTANCE.forLanguage(dialog.selectedTestFrameworkDescriptor.language)
                     project.runWithAlternativeResolveEnabled {
                         if (existingClass != null) {
-                            dialog.explicitClassName = getTempJavaClassName(project, existingClass.containingFile.virtualFile)
+                            dialog.explicitClassName = getTempClassName(project, existingClass)
                         }
                         generator.generateTest(project, dialog)
                     }
                 } as? PsiClass ?: return
 
                 project.runWhenSmart {
-                    val generatedFile = generatedClass.containingFile as? PsiJavaFile ?: return@runWhenSmart
+                    val containingFile = generatedClass.containingFile
+                    val generatedFile = containingFile as? PsiJavaFile ?: return@runWhenSmart
 
-                    if (generatedClass.language == JavaLanguage.INSTANCE) {
-                        convertJavaClass(project, generatedClass, existingClass, generatedFile, srcModule)
-                    }
+                    convertClass(project, generatedClass, existingClass, generatedFile, srcModule)
                 }
             }
         }.invoke(element.project, editor, lightClass)

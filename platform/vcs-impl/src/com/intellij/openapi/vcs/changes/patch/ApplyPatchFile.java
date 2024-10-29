@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -9,6 +10,7 @@ import java.io.File;
 /**
  * @see ApplyPatchUtil#getPatchFile(File)
  */
+@ApiStatus.Internal
 public final class ApplyPatchFile {
   private final @NotNull VirtualFile file;
 

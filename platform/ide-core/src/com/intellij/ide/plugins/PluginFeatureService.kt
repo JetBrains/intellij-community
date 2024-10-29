@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.ide.plugins
@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.mapSerializer
 import com.intellij.platform.settings.settingDescriptorFactory
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -26,7 +25,6 @@ class PluginFeatureService {
     }
 
     @Suppress("FunctionName")
-    @RequiresBlockingContext
     fun __getPluginForFeature(featureType: @NonNls String, implementationName: @NonNls String): FeaturePluginData? {
       return getInstance().getPluginForFeature(featureType, implementationName)
     }

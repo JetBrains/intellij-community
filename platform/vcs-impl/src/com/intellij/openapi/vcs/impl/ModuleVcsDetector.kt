@@ -1,13 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.diagnostic.runActivity
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.VcsDirectoryMapping
+import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsRootChecker
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG
 import com.intellij.openapi.vfs.VirtualFile
@@ -69,7 +70,13 @@ internal class ModuleVcsDetector(private val project: Project) {
     val directMappings = detectedRoots.map { it.first }.toMutableSet()
     for (rootChecker in VcsRootChecker.EXTENSION_POINT_NAME.extensionList) {
       val vcs = vcsManager.findVcsByName(rootChecker.supportedVcs.name) ?: continue
-      val detectedMappings = rootChecker.detectProjectMappings(project, contentRoots, directMappings) ?: continue
+      val detectedMappings = try {
+        rootChecker.detectProjectMappings(project, contentRoots, directMappings) ?: continue
+      }
+      catch (e: VcsException) {
+        MAPPING_DETECTION_LOG.debug("ModuleVcsDetector.autoDetectForContentRoots - exception while detecting mapping", e)
+        continue
+      }
       if (detectedMappings.isEmpty()) continue
 
       usedVcses.add(vcs)
@@ -139,8 +146,8 @@ internal class ModuleVcsDetector(private val project: Project) {
     override val order: Int
       get() = VcsInitObject.MAPPINGS.order + 10
 
-    override fun runActivity(project: Project) {
-      project.service<ModuleVcsDetector>().startDetection()
+    override suspend fun execute(project: Project) {
+      project.serviceAsync<ModuleVcsDetector>().startDetection()
     }
   }
 }

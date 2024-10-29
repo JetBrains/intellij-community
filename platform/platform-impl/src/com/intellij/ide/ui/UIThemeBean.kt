@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "SSBasedInspection")
+@file:ApiStatus.Internal
 
 package com.intellij.ide.ui
 
@@ -7,11 +8,12 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.JsonToken
 import com.intellij.ide.ui.customization.UIThemeCustomizer
+import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.ui.ExperimentalUI
 import org.intellij.lang.annotations.Language
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Color
 import java.util.*
@@ -367,11 +369,12 @@ private const val OS_WINDOWS_KEY = "os.windows"
 private const val OS_LINUX_KEY = "os.linux"
 private const val OS_DEFAULT_KEY = "os.default"
 
-private val osKey = when {
-  SystemInfoRt.isWindows -> OS_WINDOWS_KEY
-  SystemInfoRt.isMac -> OS_MACOS_KEY
-  else -> OS_LINUX_KEY
-}
+private val osKey
+  get() = when {
+    ClientSystemInfo.isWindows() -> OS_WINDOWS_KEY
+    ClientSystemInfo.isMac() -> OS_MACOS_KEY
+    else -> OS_LINUX_KEY
+  }
 
 private fun putEntry(prefix: Deque<String>,
                      result: MutableMap<String, Any?>,

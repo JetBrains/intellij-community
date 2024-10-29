@@ -29,9 +29,9 @@ import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToCommit
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.render.LabelIcon
-import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.containsAll
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
@@ -63,7 +63,7 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
 
     val dataPack = awaitFullLogDataPack(dataManager, progressIndicator) ?: return
 
-    if (filter.isSelected(COMMIT_BY_HASH) && pattern.length >= 7 && VcsLogUtil.HASH_REGEX.matcher(pattern).matches()) {
+    if (filter.isSelected(COMMIT_BY_HASH) && pattern.length >= 7 && GitUtil.isHashString(pattern, false)) {
       storage.findCommitId {
         progressIndicator.checkCanceled()
         it.hash.asString().startsWith(pattern, true) && dataPack.containsAll(listOf(it), storage)
@@ -200,8 +200,6 @@ internal class GitSearchEverywhereContributor(private val project: Project) : We
            && ProjectLevelVcsManager.getInstance(project).checkVcsIsActive(GitVcs.NAME)
            && VcsProjectLog.getInstance(project).logManager != null
   }
-
-  override fun getDataForItem(element: Any, dataId: String): Any? = null
 
   class Factory : SearchEverywhereContributorFactory<Any> {
     override fun createContributor(initEvent: AnActionEvent): GitSearchEverywhereContributor {

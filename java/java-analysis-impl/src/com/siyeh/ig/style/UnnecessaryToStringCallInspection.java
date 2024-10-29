@@ -5,11 +5,11 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.options.OptPane;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.modcommand.ModPsiUpdater;
+import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -61,7 +61,7 @@ public final class UnnecessaryToStringCallInspection extends BaseInspection impl
     @NotNull
     public String getName() {
       if (replacementText == null) {
-        return InspectionGadgetsBundle.message("inspection.redundant.string.remove.fix.name", "toString");
+        return InspectionGadgetsBundle.message("inspection.remove.redundant.call.fix.name", "toString");
       }
       return CommonQuickFixBundle.message("fix.replace.with.x", replacementText);
     }

@@ -29,12 +29,14 @@ import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerInstanceTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.evaluate.quick.common.DebuggerTreeWithHistoryPanel;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public class XInspectDialog extends DialogWrapper {
   private final DebuggerTreeWithHistoryPanel myDebuggerTreePanel;
   private final boolean myRebuildOnSessionEvents;

@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.ErrorBorderCapable
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JComboBox
 import javax.swing.border.Border
@@ -16,6 +17,7 @@ import javax.swing.plaf.UIResource
  * ComboBox border for new UI themes. Uses own rendering only if [DarculaComboBoxUI.isNewBorderSupported], otherwise uses
  * border paint from DarculaComboBoxUI itself for backward compatibility (which can be removed later)
  */
+@ApiStatus.Internal
 open class DarculaComboBoxBorder : Border, ErrorBorderCapable, UIResource {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {

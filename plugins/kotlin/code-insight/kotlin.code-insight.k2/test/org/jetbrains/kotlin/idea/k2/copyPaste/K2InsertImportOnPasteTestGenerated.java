@@ -115,6 +115,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
                 runTest("../../idea/tests/testData/copyPaste/imports/ClassWithDoc.kt");
             }
 
+            @TestMetadata("CodeFragment.kt")
+            public void testCodeFragment() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/CodeFragment.kt");
+            }
+
             @TestMetadata("Constructor.kt")
             public void testConstructor() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Constructor.kt");
@@ -308,6 +313,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
+            }
+
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/MissingClass.kt");
             }
 
             @TestMetadata("MultiCaretSelection.kt")
@@ -677,6 +687,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
                 runTest("../../idea/tests/testData/copyPaste/imports/ClassWithDoc.kt");
             }
 
+            @TestMetadata("CodeFragment.kt")
+            public void testCodeFragment() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/CodeFragment.kt");
+            }
+
             @TestMetadata("Constructor.kt")
             public void testConstructor() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Constructor.kt");
@@ -870,6 +885,11 @@ public abstract class K2InsertImportOnPasteTestGenerated extends AbstractK2Inser
             @TestMetadata("Local.kt")
             public void testLocal() throws Exception {
                 runTest("../../idea/tests/testData/copyPaste/imports/Local.kt");
+            }
+
+            @TestMetadata("MissingClass.kt")
+            public void testMissingClass() throws Exception {
+                runTest("../../idea/tests/testData/copyPaste/imports/MissingClass.kt");
             }
 
             @TestMetadata("MultiCaretSelection.kt")

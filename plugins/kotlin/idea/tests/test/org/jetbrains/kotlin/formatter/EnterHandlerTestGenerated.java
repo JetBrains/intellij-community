@@ -2329,6 +2329,11 @@ public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest
             public void testSplitStringByEnterExistingParentheses() throws Exception {
                 runTest("testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
             }
+
+            @TestMetadata("SplitStringByEnterMultiCaret.after.kt")
+            public void testSplitStringByEnterMultiCaret() throws Exception {
+                runTest("testData/editor/enterHandler/SplitStringByEnterMultiCaret.after.kt");
+            }
         }
     }
 

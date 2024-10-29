@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.refactoring.move;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -31,14 +30,11 @@ public abstract class PyBaseMoveDialog extends RefactoringDialog {
     super(project, true);
     mySourcePathField.setText(sourcePath);
     myBrowseFieldWithButton.setText(destinationPath);
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
-    descriptor.setRoots(ProjectRootManager.getInstance(project).getContentRoots());
-    descriptor.withTreeRootVisible(true);
-    myBrowseFieldWithButton.addBrowseFolderListener(PyBundle.message("refactoring.move.choose.destination.file.title"),
-                                                    null,
-                                                    project,
-                                                    descriptor,
-                                                    TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+      .withTitle(PyBundle.message("refactoring.move.choose.destination.file.title"))
+      .withRoots(ProjectRootManager.getInstance(project).getContentRoots())
+      .withTreeRootVisible(true);
+    myBrowseFieldWithButton.addBrowseFolderListener(project, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
   }
 
   @Override

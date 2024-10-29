@@ -110,13 +110,15 @@ object CodeReviewDetailsStatusComponentFactory {
     val panel = JTextPane().apply {
       name = "Code review status: merge clarification"
       isOpaque = false
+      isEditable = false
       border = JBUI.Borders.empty(0, 3)
 
       bindTextIn(scope, clarification)
-      bindVisibilityIn(scope, clarification.map { it.isNotEmpty() })
     }
     return CollaborationToolsUIUtil.wrapWithLimitedSize(panel, DimensionRestrictions.LinesHeight(panel, 2)).apply {
       border = JBUI.Borders.empty(STATUS_COMPONENT_BORDER, 0)
+      isVisible = false
+      bindVisibilityIn(scope, clarification.map { it.isNotEmpty() })
     }
   }
 

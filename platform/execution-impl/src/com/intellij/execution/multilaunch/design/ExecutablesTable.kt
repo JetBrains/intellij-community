@@ -16,6 +16,7 @@ import com.intellij.execution.multilaunch.design.popups.TableSelectorPopupContro
 import com.intellij.execution.multilaunch.design.tooltips.TableTooltipsController
 import com.intellij.icons.AllIcons
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Cursor
 import java.awt.Point
@@ -25,6 +26,7 @@ import javax.swing.JTable
 
 private const val thirdColumnWidth = 60
 
+@ApiStatus.Internal
 class ExecutablesTable(
   private val project: Project,
   private val viewModel: MultiLaunchConfigurationViewModel,

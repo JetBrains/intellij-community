@@ -23,6 +23,7 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
 import java.util.regex.Matcher;
 
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor, PossiblyDumbAware {
@@ -51,7 +52,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
-      PsiShortNamesCache.getInstance(project).processAllClassNames(processor, scope, filter);
+      getPsiShortNamesCache(project).processAllClassNames(processor, scope, filter);
     });
   }
 
@@ -61,9 +62,14 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
                                       final @NotNull FindSymbolParameters parameters) {
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
       DefaultClassProcessor defaultClassProcessor = new DefaultClassProcessor(processor, parameters, false);
-      PsiShortNamesCache.getInstance(parameters.getProject())
+      getPsiShortNamesCache(parameters.getProject())
         .processClassesWithName(name, defaultClassProcessor, parameters.getSearchScope(), parameters.getIdFilter());
     });
+  }
+
+  private static PsiShortNamesCache getPsiShortNamesCache(@NotNull Project project) {
+    Set<Language> withoutLanguages = IgnoreLanguageInDefaultProvider.getIgnoredLanguages();
+    return PsiShortNamesCache.getInstance(project).withoutLanguages(withoutLanguages);
   }
 
   public static class DefaultClassProcessor implements Processor<PsiClass> {

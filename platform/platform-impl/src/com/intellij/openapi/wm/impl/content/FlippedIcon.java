@@ -5,10 +5,13 @@
  */
 package com.intellij.openapi.wm.impl.content;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 
+@ApiStatus.Internal
 public final class FlippedIcon implements Icon {
   private final Icon myDelegate;
 

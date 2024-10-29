@@ -22,13 +22,11 @@ import java.net.InetAddress
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.EmptyCoroutineContext
 
-
 interface ProcessMediatorConnection : Closeable {
   val client: ProcessMediatorClient
 
   companion object
 }
-
 
 private val LOOPBACK_IP = InetAddress.getLoopbackAddress().hostAddress
 

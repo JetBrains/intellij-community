@@ -1,12 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
-import com.intellij.diagnostic.Developer.Companion.NULL
 import com.intellij.errorreport.error.InternalEAPException
-import com.intellij.errorreport.error.NoSuchEAPUserException
 import com.intellij.errorreport.error.UpdateAvailableException
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.components.Service
@@ -20,7 +18,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.security.CompositeX509TrustManager
 import com.intellij.util.io.DigestUtil.sha1
-import com.intellij.util.io.HttpRequests
 import com.intellij.util.net.NetUtils
 import com.intellij.util.net.ssl.CertificateUtil
 import kotlinx.coroutines.*
@@ -37,7 +34,6 @@ import java.security.KeyStore
 import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
-import java.util.*
 import java.util.zip.GZIPOutputStream
 import javax.net.ssl.*
 
@@ -56,28 +52,28 @@ internal object ITNProxy {
 
   private const val DEFAULT_USER = "idea_anonymous"
   private const val DEFAULT_PASS = "guest"
-  private const val DEVELOPERS_LIST_URL = "https://ea-report.jetbrains.com/developer/list"
-  private const val OLD_THREAD_VIEW_URL = "https://ea.jetbrains.com/browser/ea_reports/"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
+
+  private val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
   private val TEMPLATE: Map<String, String?> by lazy {
     val template = LinkedHashMap<String, String?>()
     template["protocol.version"] = "1.1"
     template["os.name"] = SystemInfo.OS_NAME
+    template["host.id"] = DEVICE_ID
     template["java.version"] = SystemInfo.JAVA_VERSION
     template["java.vm.vendor"] = SystemInfo.JAVA_VENDOR
     val appInfo = ApplicationInfoEx.getInstanceEx()
     val namesInfo = ApplicationNamesInfo.getInstance()
     val build = appInfo.build
     var buildNumberWithAllDetails = build.asString()
-    if (buildNumberWithAllDetails.startsWith(build.productCode + "-")) {
+    if (buildNumberWithAllDetails.startsWith(build.productCode + '-')) {
       buildNumberWithAllDetails = buildNumberWithAllDetails.substring(build.productCode.length + 1)
     }
     template["app.name"] = namesInfo.productName
     template["app.name.full"] = namesInfo.fullProductName
     template["app.name.version"] = appInfo.versionName
     template["app.eap"] = java.lang.Boolean.toString(appInfo.isEAP)
-    template["app.internal"] = java.lang.Boolean.toString(ApplicationManager.getApplication().isInternal)
     template["app.build"] = appInfo.apiVersion
     template["app.version.major"] = appInfo.majorVersion
     template["app.version.minor"] = appInfo.minorVersion
@@ -86,23 +82,6 @@ internal object ITNProxy {
     template["app.product.code"] = build.productCode
     template["app.build.number"] = buildNumberWithAllDetails
     template
-  }
-
-  suspend fun fetchDevelopers(): List<Developer> {
-    val context = currentCoroutineContext()
-    return HttpRequests.request(DEVELOPERS_LIST_URL).connectTimeout(3000).connect { request: HttpRequests.Request ->
-      val developers: MutableList<Developer> = ArrayList()
-      developers.add(NULL)
-      for (line in request.reader.lines()) {
-        val i = line.indexOf('\t')
-        if (i == -1) throw IOException("Protocol error")
-        val id = line.substring(0, i).toInt()
-        val name = line.substring(i + 1)
-        developers.add(Developer(id, name))
-        context.ensureActive()
-      }
-      developers
-    }
   }
 
   @JvmRecord
@@ -116,23 +95,15 @@ internal object ITNProxy {
     val previousException: Int
   )
 
-  suspend fun sendError(login: String?, password: String?, error: ErrorBean, newThreadPostUrl: String): Int {
-    val useDefault = login.isNullOrBlank()
-    val loginAdjusted = if (useDefault) DEFAULT_USER else login
-    val passwordAdjusted = if (useDefault) DEFAULT_PASS else password ?: ""
-    return postNewThread(loginAdjusted, passwordAdjusted, error, newThreadPostUrl)
-  }
-
-  fun getBrowseUrl(threadId: Int): String {
-    val isEAPluginInstalled = PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))
-    return (if (isEAPluginInstalled) NEW_THREAD_VIEW_URL else OLD_THREAD_VIEW_URL) + threadId
-  }
+  fun getBrowseUrl(threadId: Int): String? =
+    if (PluginManagerCore.isPluginInstalled(PluginId.getId(EA_PLUGIN_ID))) NEW_THREAD_VIEW_URL + threadId
+    else null
 
   private val ourSslContext: SSLContext by lazy { initContext() }
 
-  private suspend fun postNewThread(login: String?, password: String?, error: ErrorBean, url: String): Int {
+  suspend fun sendError(error: ErrorBean, newThreadPostUrl: String): Int {
     val context = currentCoroutineContext()
-    val connection = post(URL(url), createRequest(login, password, error))
+    val connection = post(URL(newThreadPostUrl), createRequest(error))
     val responseCode = connection.responseCode
     if (responseCode != HttpURLConnection.HTTP_OK) {
       throw InternalEAPException(DiagnosticBundle.message("error.http.result.code", responseCode))
@@ -143,7 +114,7 @@ internal object ITNProxy {
       response = StreamUtil.readText(reader)
     }
     if ("unauthorized" == response) {
-      throw NoSuchEAPUserException(login)
+      throw InternalEAPException("Authorization failed")
     }
     if (response.startsWith("update ")) {
       throw UpdateAvailableException(response.substring(7))
@@ -173,7 +144,7 @@ internal object ITNProxy {
     }
   }
 
-  private fun createRequest(login: String?, password: String?, error: ErrorBean): StringBuilder {
+  private fun createRequest(error: ErrorBean): StringBuilder {
     val builder = StringBuilder(8192)
     val eventData = error.event.data
     val appInfo = if (eventData is AbstractMessage) eventData.appInfo else null
@@ -184,8 +155,8 @@ internal object ITNProxy {
       appendAppInfo(builder)
     }
 
-    append(builder, "user.login", login)
-    append(builder, "user.password", password)
+    append(builder, "user.login", DEFAULT_USER)
+    append(builder, "user.password", DEFAULT_PASS)
 
     val updateSettings = UpdateSettings.getInstance()
     append(builder, "update.channel.status", updateSettings.selectedChannelStatus.code)
@@ -226,13 +197,6 @@ internal object ITNProxy {
       for (attachment in eventData.includedAttachments) {
         append(builder, "attachment.name", attachment.name)
         append(builder, "attachment.value", attachment.encodedBytes)
-      }
-      if (eventData.assigneeId != null) {
-        append(builder, "assignee.id", eventData.assigneeId!!.toString())
-      }
-      append(builder, "assignee.list.visible", java.lang.Boolean.toString(eventData.isAssigneeVisible))
-      if (eventData.devListTimestamp != null) {
-        append(builder, "assignee.list.timestamp", eventData.devListTimestamp!!.toString())
       }
     }
     return builder

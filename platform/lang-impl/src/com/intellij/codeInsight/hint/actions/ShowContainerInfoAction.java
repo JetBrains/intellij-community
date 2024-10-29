@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -11,27 +11,27 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Context info action
  */
+@ApiStatus.Internal
 public final class ShowContainerInfoAction extends BaseCodeInsightAction{
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new ShowContainerInfoHandler();
   }
 
   @Override
-  @Nullable
-  protected Editor getBaseEditor(@NotNull final DataContext dataContext, @NotNull final Project project) {
+  protected @Nullable Editor getBaseEditor(final @NotNull DataContext dataContext, final @NotNull Project project) {
     return CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
     return LanguageStructureViewBuilder.getInstance().getStructureViewBuilder(file) instanceof TreeBasedStructureViewBuilder;
   }
 }

@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.update;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManager;
-import com.intellij.diff.DiffRequestFactoryImpl;
+import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
@@ -37,6 +37,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -174,7 +176,7 @@ public class ShowUpdatedDiffActionProvider implements AnActionExtensionProvider 
           content2 = contentFactory.createFromBytes(myProject, bytes2, myFilePath);
         }
 
-        String title = DiffRequestFactoryImpl.getContentTitle(myFilePath);
+        String title = DiffRequestFactory.getInstance().getTitle(myFilePath);
         return new SimpleDiffRequest(title,
                                      content1,
                                      content2,

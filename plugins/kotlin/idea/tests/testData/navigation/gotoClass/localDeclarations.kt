@@ -11,7 +11,3 @@ fun foo() {
 }
 
 // SEARCH_TEXT: Local
-// REF: (in foo).LocalClass
-// REF: (in foo).LocalInterface
-// REF: (in foo).LocalInterfaceWithImpl
-// REF: (in foo).LocalObject

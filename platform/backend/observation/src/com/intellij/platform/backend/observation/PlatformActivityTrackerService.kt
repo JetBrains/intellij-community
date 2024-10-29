@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.backend.observation
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.components.Service
@@ -8,14 +9,15 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.BlockingJob
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
+import com.intellij.openapi.util.registry.Registry
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 
 /**
  * Allows tracking subsystem activities and getting a "dumb mode" with respect to tracked computations.
@@ -33,7 +35,10 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   private class AssociatedCounter(
     val counter: Int,
     // the job here is an imitation of java.util.concurrent.Phaser
-    val job: CompletableJob) {
+    val job: CompletableJob,
+    // the throwable here are for debugging
+    val creationTrace: Map<Any, Throwable>,
+    ) {
     override fun equals(other: Any?): Boolean {
       return other is AssociatedCounter && this.counter == other.counter && this.job === other.job
     }
@@ -61,8 +66,8 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
    * This method is cheap to use: it does not perform any complex computations, and it is essentially equivalent to `withContext`.
    */
   suspend fun <T> trackConfigurationActivity(kind: ActivityKey, action: suspend () -> T): T {
-    return withBlockingJob(kind) { blockingJob ->
-      withContext(blockingJob) {
+    return withObservationTracker(kind) { observationTracker ->
+      withContext(observationTracker) {
         action()
       }
     }
@@ -72,26 +77,26 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
    * Installs a tracker for a blocking asynchronous activity of [action].
    * This method is cheap to use: it does not add any synchronization or complex computations.
    */
-  @RequiresBlockingContext
   fun <T> trackConfigurationActivityBlocking(kind: ActivityKey, action: () -> T): T {
     val currentContext = currentThreadContext()
-    return withBlockingJob(kind) { blockingJob ->
-      installThreadContext(currentContext + blockingJob, true).use {
+    return withObservationTracker(kind) { observationTracker ->
+      installThreadContext(currentContext + observationTracker, true).use {
         action()
       }
     }
   }
 
-  private inline fun <T> withBlockingJob(kind: ActivityKey, consumer: (BlockingJob) -> T): T {
-    enterConfiguration(kind)
+
+  private inline fun <T> withObservationTracker(kind: ActivityKey, consumer: (ObservationTracker) -> T): T {
+    val key = enterConfiguration(kind)
     // new job here to track those and only those computations which are invoked under explicit `trackConfigurationActivity`
     val tracker = Job()
     tracker.invokeOnCompletion {
-      leaveConfiguration(kind)
+      leaveConfiguration(kind, key)
     }
-    val blockingJob = BlockingJob(tracker)
+    val trackingElement = ObservationTracker(tracker, tracker)
     try {
-      return consumer(blockingJob)
+      return consumer(trackingElement)
     }
     finally {
       scope.launch {
@@ -102,16 +107,34 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
     }
   }
 
-  private fun enterConfiguration(kind: ActivityKey) {
+
+  internal class ObservationTracker(private val mainJob: Job, val currentJob: CompletableJob) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+    companion object Key : CoroutineContext.Key<ObservationTracker>
+
+    override fun produceChildElement(oldContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement {
+      // we would like to know about all child computations, regardless of their relation to the current process
+      val newJob = Job(mainJob)
+      traceObservedComputation(newJob)
+      return ObservationTracker(mainJob, newJob)
+    }
+
+    override fun afterChildCompleted(context: CoroutineContext) {
+      removeObservedComputation(currentJob)
+      currentJob.complete()
+    }
+  }
+
+  private fun enterConfiguration(kind: ActivityKey) : Any {
+    val sentinel = Any()
     while (true) {
       // compare-and-swap, basically
-      val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job()))
+      val insertionResult = concurrentConfigurationCounter.putIfAbsent(kind, AssociatedCounter(1, Job(), mapOf(sentinel to Throwable())))
       if (insertionResult == null) {
         // successfully inserted
         break
       }
       else {
-        val incrementedCounter = AssociatedCounter(insertionResult.counter + 1, insertionResult.job)
+        val incrementedCounter = AssociatedCounter(insertionResult.counter + 1, insertionResult.job, insertionResult.creationTrace + (sentinel to Throwable()))
         if (concurrentConfigurationCounter.replace(kind, insertionResult, incrementedCounter)) {
           break
         }
@@ -127,9 +150,10 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
         // This can cause a blink, but it is technically correct.
       }
     }
+    return sentinel
   }
 
-  private fun leaveConfiguration(kind: ActivityKey) {
+  private fun leaveConfiguration(kind: ActivityKey, key: Any) {
     while (true) {
       // compare-and-swap, basically
       val currentCounter = concurrentConfigurationCounter[kind]
@@ -149,7 +173,7 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
       }
       else {
         // attempt to decrease key
-        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job)
+        val newCounter = AssociatedCounter(currentCounter.counter - 1, currentCounter.job, currentCounter.creationTrace - key)
         concurrentConfigurationCounter.replace(kind, currentCounter, newCounter)
       }
       if (operationSucceeded) {
@@ -185,3 +209,26 @@ internal class PlatformActivityTrackerService(private val scope: CoroutineScope)
   }
 }
 
+private val computationMap : MutableMap<Job, Throwable?> = ConcurrentHashMap()
+
+private fun dumpObservedComputations(): Set<Throwable> {
+  return computationMap.values.mapNotNullTo(HashSet()) { it }
+}
+
+internal fun dumpObservedComputationsToString(): String {
+  if (!Registry.`is`("ide.activity.tracking.enable.debug")) {
+    return "Enable 'ide.activity.tracking.enable.debug' registry option to collect activity traces"
+  }
+  return dumpObservedComputations()
+    .joinToString("\n") { it.stackTraceToString() }
+}
+
+internal fun traceObservedComputation(job: Job) {
+  if (Registry.`is`("ide.activity.tracking.enable.debug", false)) {
+    computationMap[job] = Throwable()
+  }
+}
+
+internal fun removeObservedComputation(job: Job) {
+  computationMap.remove(job)
+}

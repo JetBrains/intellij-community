@@ -25,7 +25,7 @@ class KotlinNotSurrounder : KotlinExpressionSurrounder() {
         allowAnalysisOnEdt {
             return analyze(expression) {
                 val ktType = expression.expressionType
-                ktType != null && ktType.isBoolean
+                ktType != null && ktType.isBooleanType
             }
         }
     }

@@ -73,8 +73,7 @@
                         serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
     <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"
-                        preload="true"/>
+                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
 
     <projectService serviceImplementation="com.intellij.completion.ml.common.CurrentProjectInfo"/>
 

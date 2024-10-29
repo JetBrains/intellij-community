@@ -26,10 +26,15 @@ class 'pkg/TestThrowException$1' {
 
 class 'pkg/TestThrowException' {
    method '<init> (I)V' {
+      4      6
       5      6
       c      7
+      d      7
       11      7
+      12      9
       1b      9
+      1c      9
+      1d      9
       1e      15
    }
 }

@@ -6,12 +6,13 @@ import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class OpenAlienProjectAction extends AnAction {
 
@@ -22,9 +23,10 @@ public class OpenAlienProjectAction extends AnAction {
     myDetector = detector;
   }
 
-  public void scheduleUpdate(JComponent toUpdate) {
-    toUpdate.setVisible(false);
-    myDetector.detectProjects(projects -> toUpdate.setVisible(!(myProjectPaths = projects).isEmpty()));
+  @ApiStatus.Internal
+  public final void scheduleUpdate(@NotNull Consumer<Boolean> toUpdate) {
+    toUpdate.accept(false);
+    myDetector.detectProjects(projects -> toUpdate.accept(!(myProjectPaths = projects).isEmpty()));
   }
 
   @Override

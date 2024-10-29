@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolLocation
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -45,15 +45,13 @@ internal class ShadowedCallablesFilter {
         typeArgumentsAreRequired: Boolean,
     ): FilterResult {
         // there is no need to create simplified signature if `KaCallableSignature<*>` is already processed
-        if (callable in processedSignatures) return FilterResult(excludeFromCompletion = true, options)
-        processedSignatures.add(callable)
-
-        val importingStrategy = options.importingStrategy
-        val updatedImportingStrategy = ImportStrategy.DoNothing
+        if (!processedSignatures.add(callable)) return FilterResult(excludeFromCompletion = true, options)
 
         // if callable is already imported, try updating importing strategy
-        if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope) && importingStrategy != updatedImportingStrategy) {
-            val updatedOptions = options.withImportingStrategy(updatedImportingStrategy)
+        if ((isAlreadyImported || symbolOrigin is CompletionSymbolOrigin.Scope)
+            && options.importingStrategy != ImportStrategy.DoNothing
+        ) {
+            val updatedOptions = options.withImportingStrategy(ImportStrategy.DoNothing)
             val excludeFromCompletion = processSignatureConsideringOptions(callable, updatedOptions, symbolOrigin, typeArgumentsAreRequired)
             if (!excludeFromCompletion) {
                 return FilterResult(excludeFromCompletion, updatedOptions)
@@ -162,7 +160,7 @@ internal class ShadowedCallablesFilter {
             val indexInClassHierarchy = mutableMapOf<ReceiverId, Int>()
 
             for ((receiverFromContextIndex, receiverFromContextType) in receiversFromContext.withIndex()) {
-                val selfWithSuperTypes = listOf(receiverFromContextType) + receiverFromContextType.getAllSuperTypes()
+                val selfWithSuperTypes = listOf(receiverFromContextType) + receiverFromContextType.allSupertypes
                 for ((superTypeIndex, superType) in selfWithSuperTypes.withIndex()) {
                     val receiverId = ReceiverId.create(superType) ?: continue
 
@@ -281,12 +279,12 @@ private sealed class SimplifiedSignature {
         context(KaSession)
         private fun KaCallableSymbol.getContainerFqName(): FqName? {
             val callableId = callableId ?: return null
-            return when (symbolKind) {
+            return when (location) {
                 // if a callable is in the root package, then its fully-qualified name coincides with short name
-                KaSymbolKind.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
-                KaSymbolKind.CLASS_MEMBER -> {
+                KaSymbolLocation.TOP_LEVEL -> callableId.packageName.takeIf { !it.isRoot }
+                KaSymbolLocation.CLASS -> {
                     val classId = callableId.classId ?: return null
-                    val classKind = getClassOrObjectSymbolByClassId(classId)?.classKind
+                    val classKind = findClass(classId)?.classKind
 
                     classId.asSingleFqName().takeIf { classKind?.isObject == true }
                 }
@@ -336,7 +334,7 @@ private class FunctionLikeSimplifiedSignature(
 
         with(analysisSession) {
             for (i in types1.indices) {
-                if (!types1[i].isEqualTo(types2[i])) return false
+                if (!types1[i].semanticallyEquals(types2[i])) return false
             }
             return true
         }

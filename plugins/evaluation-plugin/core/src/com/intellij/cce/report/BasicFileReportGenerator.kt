@@ -15,7 +15,7 @@ open class BasicFileReportGenerator(
   dirs: GeneratorDirectories
 ) : FileReportGenerator(featuresStorages, dirs, filterName, comparisonFilterName) {
 
-  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String {
+  override fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String {
     val sessions = fileEvaluations.map { it.sessionsInfo.sessions }
     val maxLookupOrder = sessions.flatMap { session -> session.map { it.lookups.size - 1 } }.maxOrNull() ?: 0
     return createHTML().body {
@@ -31,12 +31,15 @@ open class BasicFileReportGenerator(
         onChange = "changeLookupOrder()"
       }
       codeBlocks(text, sessions, maxLookupOrder)
-      script { src = "../res/diff.js" }
-      script { src = "../res/script.js" }
+      for (resource in scripts){
+        script { src = resource.destinationPath }
+      }
     }
   }
 
   protected open fun textToInsert(session: Session): String = session.expectedText
+
+  override val scripts: List<Resource> = listOf(Resource("/script.js", "../res/script.js"))
 
   private fun BODY.codeBlocks(text: String, sessions: List<List<Session>>, maxLookupOrder: Int) {
     div {

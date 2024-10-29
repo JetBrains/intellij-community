@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.platform.settings.*
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.junit5.TestApplication
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.Serializable
@@ -33,9 +34,6 @@ class LocalSettingsControllerTest {
     assertThat(controller.getItem(settingsDescriptor)).isNull()
     controller.setItem(settingsDescriptor, "test")
     assertThat(controller.getItem(settingsDescriptor)).isEqualTo("test")
-
-    // test compact
-    compactCacheStore()
   }
 
   @Test
@@ -104,12 +102,10 @@ class LocalSettingsControllerTest {
     assertThat(controller.getItem(settingDescriptor)).isEqualTo(map)
 
     corruptValue("test.flag", controller)
-    try {
+    val e = assertErrorLogged<Throwable> {
       controller.getItem(settingDescriptor)
     }
-    catch (e: Throwable) {
-      assertThat(e.message).startsWith("Cannot deserialize value for key com.intellij.test.flag (size=4096, value will be stored under key com.intellij.test.flag.__corrupted__) ")
-    }
+    assertThat(e.message).startsWith("Cannot deserialize value for key com.intellij.test.flag (size=4096, value will be stored under key com.intellij.test.flag.__corrupted__) ")
 
     assertThat(controller.getItem(settingDescriptor)).isNull()
     assertThat(controller.getItem(settingDescriptor("test.flag.__corrupted__", PluginManagerCore.CORE_ID, RawSettingSerializerDescriptor) {

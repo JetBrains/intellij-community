@@ -2,12 +2,14 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.EdtNoGetDataProvider
 import com.intellij.openapi.progress.withBackgroundProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.CommitMessageI
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -59,7 +61,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
     ui.addCommitAuthorListener(this, this)
     ui.addExecutorListener(this, this)
-    ui.addDataProvider(createDataProvider())
+    ui.addDataProvider(EdtNoGetDataProvider { sink -> uiDataSnapshot(sink) })
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
@@ -80,21 +82,12 @@ internal class ChangesViewCommitWorkflowHandler(
     commitMessagePolicy.init(currentChangeList, this)
   }
 
-  override fun createDataProvider(): DataProvider = object : DataProvider {
-    private val superProvider = super@ChangesViewCommitWorkflowHandler.createDataProvider()
-
-    override fun getData(dataId: String): Any? {
-      if (VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId)) {
-        return if (isActive) this@ChangesViewCommitWorkflowHandler else null
-      }
-      if (VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId)) {
-        return if (isActive) ui else null
-      }
-      if (VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId)) {
-        return if (isActive) ui.commitMessageUi else null
-      }
-      return superProvider.getData(dataId)
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    if (!isActive) return
+    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
+    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = ui
+    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = ui.commitMessageUi as? CommitMessageI
   }
 
   override fun commitOptionsCreated() {

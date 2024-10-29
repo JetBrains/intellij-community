@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.isCommitToolWindowShown
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import git4idea.index.GitStageTracker
 import git4idea.index.actions.updateStageDiffAvailability
@@ -38,6 +39,21 @@ class GitStageEditorDiffPreview(
     activate()
   }
 
-  override fun isPreviewOnDoubleClick(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
-  override fun isPreviewOnEnter(): Boolean = VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
+  override fun isPreviewOnDoubleClick(): Boolean {
+    if (isCommitToolWindowShown(project)) {
+      return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
+    }
+    else {
+      return VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK
+    }
+  }
+
+  override fun isPreviewOnEnter(): Boolean {
+    if (isCommitToolWindowShown(project)) {
+      return VcsApplicationSettings.getInstance().SHOW_EDITOR_PREVIEW_ON_DOUBLE_CLICK
+    }
+    else {
+      return VcsApplicationSettings.getInstance().SHOW_DIFF_ON_DOUBLE_CLICK
+    }
+  }
 }

@@ -18,6 +18,8 @@ class Main {
         System.out.println("The path is ../data/test.avi");
     }
 
+    String messagePart = "; fragment of one sentence. This is another sentence,";
+
     String gitCherryPickPattern = "(cherry picked from "; // hard-coding the string git outputs
     String nonGitCherryPick = "I'd like to <GRAMMAR_ERROR descr="EN_COMPOUNDS_CHERRY_PICK">cherry pick</GRAMMAR_ERROR> this";
 }

@@ -117,7 +117,11 @@ abstract class AbstractReferenceResolveTest : KotlinLightCodeInsightFixtureTestC
     override fun getDefaultProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceNoSources()
 
     protected open fun getExpectedReferences(text: String, index: Int): List<String> {
-        return getExpectedReferences(text, index, "REF")
+        val additionalPrefix = if (isFirPlugin) "_K2" else "_K1"
+        val prefix = "REF"
+        return getExpectedReferences(text, index, prefix + additionalPrefix).ifEmpty {
+            getExpectedReferences(text, index, prefix)
+        }
     }
 
     companion object {

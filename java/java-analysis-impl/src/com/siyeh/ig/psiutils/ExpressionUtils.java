@@ -946,17 +946,16 @@ public final class ExpressionUtils {
         if (memberClass.getName() == null || memberClass instanceof PsiImplicitClass) return null;
         return factory.createReferenceExpression(memberClass);
       }
-      PsiClass containingClass = ClassUtils.getContainingClass(ref);
+      PsiClass containingClass = PsiUtil.getContainingClass(ref);
       if (containingClass == null) {
         containingClass = PsiTreeUtil.getContextOfType(ref, PsiClass.class);
       }
       if (!InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
-        if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
-        containingClass = ClassUtils.getContainingClass(containingClass);
-        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true)) {
+        do {
           if (!member.hasModifierProperty(PsiModifier.STATIC) && isStaticMember(containingClass)) return null;
-          containingClass = ClassUtils.getContainingClass(containingClass);
+          containingClass = PsiUtil.getContainingClass(containingClass);
         }
+        while (containingClass != null && !InheritanceUtil.isInheritorOrSelf(containingClass, memberClass, true));
         if (containingClass != null) {
           String thisQualifier = containingClass.getQualifiedName();
           if (thisQualifier == null) {
@@ -1421,6 +1420,10 @@ public final class ExpressionUtils {
   public static boolean isVoidContext(PsiExpression expression) {
     PsiElement element = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (element instanceof PsiExpressionStatement) {
+      if (element.getParent() instanceof PsiCodeFragment && PsiTreeUtil.skipWhitespacesAndCommentsForward(element) == null) {
+        // The last statement in the code fragment could be used as fragment return value (e.g., in the debugger watch window)
+        return false;
+      }
       return !(element.getParent() instanceof PsiSwitchLabeledRuleStatement ruleStatement) ||
              !(ruleStatement.getEnclosingSwitchBlock() instanceof PsiSwitchExpression);
     }

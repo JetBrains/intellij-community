@@ -27,13 +27,13 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
     
   internal val libraryBridgeCache by lazy(LazyThreadSafetyMode.PUBLICATION) { JpsLibraryCollectionsCache(entityStorage) }
   private val modules by lazy(LazyThreadSafetyMode.PUBLICATION) { 
-    entityStorage.entities(ModuleEntity::class.java).mapTo(ArrayList()) { 
+    entityStorage.entities(ModuleEntity::class.java).sortedBy { it.name }.mapTo(ArrayList()) { 
       JpsModuleBridge(this, it)
     } 
   }
-  private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectJdkId, this)
+  private val sdkReferencesTable = JpsSdkReferencesTableBridge(additionalData.projectSdkId, this)
 
-  override fun getModules(): List<JpsModule> = modules
+  override fun getModules(): List<JpsModuleBridge> = modules
 
   override fun <P : JpsElement?> getModules(type: JpsModuleType<P>): Iterable<JpsTypedModule<P>> {
     return modules.asSequence()
@@ -60,6 +60,14 @@ internal class JpsProjectBridge(modelBridge: JpsModelBridge,
       is JpsModuleDependencyBridge -> element.javaExtension
       else -> null
     }
+  }
+
+  override fun getTestModuleProperties(module: JpsModule): JpsTestModuleProperties? {
+    return (module as? JpsModuleBridge)?.testModuleProperties
+  }
+
+  override fun isProductionOnTestDependency(element: JpsDependencyElement): Boolean {
+    return element is JpsModuleDependencyBridge && element.productionOnTest
   }
 
   override fun <P : JpsElement?, ModuleType> addModule(name: String, moduleType: ModuleType & Any): JpsModule where ModuleType : JpsModuleType<P>?, ModuleType : JpsElementTypeWithDefaultProperties<P>? {

@@ -135,14 +135,16 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
     }
 
     override fun substituteElementToRename(element: PsiElement, editor: Editor, renameCallback: Pass<in PsiElement>) {
-        if (!PsiElementRenameHandler.canRename(element.getProject(), editor, element)) return
-
         fun preprocessAndPass(substitutedJavaElement: PsiElement) {
             val elementToProcess = if (substitutedJavaElement is KtLightMethod && element is KtDeclaration) {
                 substitutedJavaElement.kotlinOrigin as? KtNamedFunction
             } else {
                 substitutedJavaElement
             }
+            (elementToProcess as? FunctionWithSupersWrapper)?.supers?.forEach {
+                if (!PsiElementRenameHandler.canRename(element.getProject(), editor, it)) return
+            }
+            if (!PsiElementRenameHandler.canRename(element.getProject(), editor, elementToProcess)) return
             renameCallback.accept(elementToProcess)
         }
 
@@ -207,7 +209,7 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
             prepareOverrideRenaming(declaration, baseName, newBaseName.quoteIfNeeded(), safeNewName, allRenames)
         }
 
-        renameRefactoringSupport.prepareForeignUsagesRenaming(element, newName, allRenames, scope)
+        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
     }
 
     private fun prepareOverrideRenaming(
@@ -252,10 +254,10 @@ class RenameKotlinFunctionProcessor : RenameKotlinPsiProcessor() {
         val simpleUsages = ArrayList<UsageInfo>(usages.size)
         val ambiguousImportUsages = SmartList<UsageInfo>()
         val simpleImportUsages = SmartList<UsageInfo>()
-        renameRefactoringSupport.processForeignUsages(element, newName, usages, fallbackHandler = { usage ->
+        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler = { usage ->
             if (usage is LostDefaultValuesInOverridingFunctionUsageInfo) {
                 usage.apply()
-                return@processForeignUsages
+                return@processAll
             }
 
             when (usage.importState()) {

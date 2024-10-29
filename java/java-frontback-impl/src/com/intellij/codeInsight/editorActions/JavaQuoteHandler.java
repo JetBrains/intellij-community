@@ -31,7 +31,7 @@ public class JavaQuoteHandler extends SimpleTokenSetQuoteHandler implements Java
                                JavaTokenType.RBRACE));
 
   public JavaQuoteHandler() {
-    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE)));
+    super(TokenSet.orSet(BASIC_TEXT_LITERALS, TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_QUOTE, JavaDocTokenType.DOC_INLINE_CODE_FENCE, JavaDocTokenType.DOC_CODE_FENCE)));
   }
 
   @Override

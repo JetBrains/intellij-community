@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct.consts;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -73,5 +73,10 @@ public class LinkConstant extends PooledConstant {
            this.elementName.equals(cn.elementName) &&
            this.descriptor.equals(cn.descriptor) &&
            (this.type != CodeConstants.CONSTANT_NameAndType || this.className.equals(cn.className));
+  }
+
+  @Override
+  public String toString() {
+    return (className == null ? "" : className + '.') + elementName + descriptor;
   }
 }

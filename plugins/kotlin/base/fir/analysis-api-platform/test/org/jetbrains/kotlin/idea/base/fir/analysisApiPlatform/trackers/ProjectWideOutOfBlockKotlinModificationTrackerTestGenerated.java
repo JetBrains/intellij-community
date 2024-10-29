@@ -30,6 +30,81 @@ public class ProjectWideOutOfBlockKotlinModificationTrackerTestGenerated extends
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("backingFieldBigInBlockChange.kt")
+    public void testBackingFieldBigInBlockChange() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigInBlockChange.kt");
+    }
+
+    @TestMetadata("backingFieldBigInBlockChangeWithBackingFieldNear.kt")
+    public void testBackingFieldBigInBlockChangeWithBackingFieldNear() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigInBlockChangeWithBackingFieldNear.kt");
+    }
+
+    @TestMetadata("backingFieldBigInBlockChangeWithBackingFieldNear2.kt")
+    public void testBackingFieldBigInBlockChangeWithBackingFieldNear2() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigInBlockChangeWithBackingFieldNear2.kt");
+    }
+
+    @TestMetadata("backingFieldBigNestedInBlockChange.kt")
+    public void testBackingFieldBigNestedInBlockChange() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigNestedInBlockChange.kt");
+    }
+
+    @TestMetadata("backingFieldBigNestedOutOfBlockChange.kt")
+    public void testBackingFieldBigNestedOutOfBlockChange() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigNestedOutOfBlockChange.kt");
+    }
+
+    @TestMetadata("backingFieldBigOutOfBlockChange.kt")
+    public void testBackingFieldBigOutOfBlockChange() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldBigOutOfBlockChange.kt");
+    }
+
+    @TestMetadata("backingFieldConflictWithPropertyFromReceiverScope.kt")
+    public void testBackingFieldConflictWithPropertyFromReceiverScope() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldConflictWithPropertyFromReceiverScope.kt");
+    }
+
+    @TestMetadata("backingFieldExplicitAddition.kt")
+    public void testBackingFieldExplicitAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldExplicitAddition.kt");
+    }
+
+    @TestMetadata("backingFieldExplicitNestedAddition.kt")
+    public void testBackingFieldExplicitNestedAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldExplicitNestedAddition.kt");
+    }
+
+    @TestMetadata("backingFieldExplicitNestedInBlockAddition.kt")
+    public void testBackingFieldExplicitNestedInBlockAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldExplicitNestedInBlockAddition.kt");
+    }
+
+    @TestMetadata("backingFieldExplicitRemoval.kt")
+    public void testBackingFieldExplicitRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldExplicitRemoval.kt");
+    }
+
+    @TestMetadata("backingFieldFalseImplicitAddition.kt")
+    public void testBackingFieldFalseImplicitAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldFalseImplicitAddition.kt");
+    }
+
+    @TestMetadata("backingFieldFalseImplicitRemoval.kt")
+    public void testBackingFieldFalseImplicitRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldFalseImplicitRemoval.kt");
+    }
+
+    @TestMetadata("backingFieldImplicitAddition.kt")
+    public void testBackingFieldImplicitAddition() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldImplicitAddition.kt");
+    }
+
+    @TestMetadata("backingFieldImplicitRemoval.kt")
+    public void testBackingFieldImplicitRemoval() throws Exception {
+        runTest("testData/outOfBlockProjectWide/backingFieldImplicitRemoval.kt");
+    }
+
     @TestMetadata("contract.kt")
     public void testContract() throws Exception {
         runTest("testData/outOfBlockProjectWide/contract.kt");

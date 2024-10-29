@@ -229,6 +229,7 @@ public final class MethodBytecodeUtil {
   }
 
   private static Method getFirstCalledMethod(Method method, @NotNull ClassesByNameProvider classesByName) {
+    Ref<Method> methodInSameClass = Ref.create();
     Ref<Method> methodRef = Ref.create();
     visit(method, new MethodVisitor(Opcodes.API_VERSION) {
       @Override
@@ -238,14 +239,19 @@ public final class MethodBytecodeUtil {
         }
         ReferenceType declaringType = method.declaringType();
         owner = Type.getObjectType(owner).getClassName();
-        ReferenceType cls = declaringType.name().equals(owner) ?
+        String declaringTypeName = declaringType.name();
+        ReferenceType cls = declaringTypeName.equals(owner) ?
                             declaringType :
                             ContainerUtil.getFirstItem(classesByName.get(owner));
-        if (cls != null) {
-          methodRef.setIfNull(DebuggerUtils.findMethod(cls, name, desc));
+        if (cls == null) return;
+        Method targetMethod = DebuggerUtils.findMethod(cls, name, desc);
+        methodRef.setIfNull(targetMethod);
+        if (owner.equals(DebuggerUtilsEx.getLambdaBaseClassName(declaringTypeName))) {
+          methodInSameClass.setIfNull(targetMethod);
         }
       }
     }, false);
+    if (methodInSameClass.get() != null) return methodInSameClass.get();
     return methodRef.get();
   }
 

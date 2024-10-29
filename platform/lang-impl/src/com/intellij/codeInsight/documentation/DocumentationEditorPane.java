@@ -10,6 +10,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBHtmlPane;
 import com.intellij.ui.components.JBHtmlPaneConfiguration;
+import com.intellij.ui.components.impl.JBHtmlPaneImageResolver;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.ExtendableHTMLViewFactory;
 import com.intellij.util.ui.UIUtil;
@@ -62,7 +63,7 @@ public abstract class DocumentationEditorPane extends JBHtmlPane implements Disp
       getDefaultDocStyleOptions(EditorColorsManager.getInstance().getGlobalScheme(), false),
       JBHtmlPaneConfiguration.builder()
         .keyboardActions(keyboardActions)
-        .imageResolverFactory(component -> new DocumentationImageProvider(component, imageResolver))
+        .imageResolverFactory(component -> new JBHtmlPaneImageResolver(component, it -> imageResolver.resolveImage(it)))
         .iconResolver(name -> iconResolver.apply(name))
         .customStyleSheetProvider(bg -> getDocumentationPaneAdditionalCssRules())
         .extensions(ExtendableHTMLViewFactory.Extensions.FIT_TO_WIDTH_IMAGES)

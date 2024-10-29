@@ -15,8 +15,10 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class RefactoringScopeElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance(RefactoringScopeElementListenerProvider.class);
 

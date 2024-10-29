@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent
 
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -23,7 +23,7 @@ object VfsDiffBuilder {
       OFFLINE_BY_DEFAULT(PersistentFS.Flags.OFFLINE_BY_DEFAULT)
     }
 
-    val status: Set<FileStatus> = FileStatus.values().filter { (it.bit and flags) != 0 }.toSortedSet().let {
+    val status: Set<FileStatus> = FileStatus.entries.filter { (it.bit and flags) != 0 }.toSortedSet().let {
       if (it.contains(FileStatus.FREE_RECORD_FLAG)) setOf(FileStatus.FREE_RECORD_FLAG)
       else it
     }
@@ -146,20 +146,20 @@ object VfsDiffBuilder {
     }
 
     var attributesChecked = 0
-    val baseAttrsStorage = baseVfs.connection().attributes as AttributesStorageOverBlobStorage
-    val targetAttrsStorage = targetVfs.connection().attributes as AttributesStorageOverBlobStorage
+    val baseAttrsStorage = baseVfs.connection().attributes() as AttributesStorageOverBlobStorage
+    val targetAttrsStorage = targetVfs.connection().attributes() as AttributesStorageOverBlobStorage
     baseAttrsStorage.forEachAttribute<Exception> { _, fileId, attributeId, baseData, _ ->
       if (diff.size >= maxDiffElements) return@forEachAttribute
       check(baseData != null)
       if (visitedIds[fileId]) {
         attributesChecked++
-        val attributeName = baseVfs.connection().enumeratedAttributes.valueOf(attributeId)!!
+        val attributeName = baseVfs.connection().attributesEnumerator().valueOf(attributeId)!!
         val targetAttrRecordId = targetVfs.getAttributeRecordId(fileId)
         if (targetAttrRecordId == 0) {
           diff.add(DiffElement.AttributeDiff(fileId, attributeName, baseData, null))
         }
         else {
-          val targetAttrId = targetVfs.connection().enumeratedAttributes.enumerate(attributeName)
+          val targetAttrId = targetVfs.connection().attributesEnumerator().enumerate(attributeName)
           if (!targetAttrsStorage.hasAttribute(targetAttrRecordId, fileId, targetAttrId)) {
             diff.add(DiffElement.AttributeDiff(fileId, attributeName, baseData, null))
           }
@@ -176,14 +176,14 @@ object VfsDiffBuilder {
       if (diff.size >= maxDiffElements) return@forEachAttribute
       check(targetData != null)
       if (visitedIds[fileId]) {
-        val attributeName = targetVfs.connection().enumeratedAttributes.valueOf(attributeId)!!
+        val attributeName = targetVfs.connection().attributesEnumerator().valueOf(attributeId)!!
         val baseAttrRecordId = baseVfs.getAttributeRecordId(fileId)
         if (baseAttrRecordId == 0) {
           attributesChecked++
           diff.add(DiffElement.AttributeDiff(fileId, attributeName, null, targetData))
         }
         else {
-          val baseAttrId = baseVfs.connection().enumeratedAttributes.enumerate(attributeName)
+          val baseAttrId = baseVfs.connection().attributesEnumerator().enumerate(attributeName)
           if (!baseAttrsStorage.hasAttribute(baseAttrRecordId, fileId, baseAttrId)) {
             attributesChecked++
             diff.add(DiffElement.AttributeDiff(fileId, attributeName, null, targetData))
@@ -204,8 +204,8 @@ object VfsDiffBuilder {
     val baseCachesDir = Path.of(args[0])
     val targetCachesDir = Path.of(args[1])
 
-    val baseVfs = FSRecordsImpl.connect(baseCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
-    val targetVfs = FSRecordsImpl.connect(targetCachesDir, emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW)
+    val baseVfs = FSRecordsImpl.connect(baseCachesDir, FSRecordsImpl.ON_ERROR_RETHROW)
+    val targetVfs = FSRecordsImpl.connect(targetCachesDir, FSRecordsImpl.ON_ERROR_RETHROW)
     val diff: DiffResult
 
     AutoCloseable {

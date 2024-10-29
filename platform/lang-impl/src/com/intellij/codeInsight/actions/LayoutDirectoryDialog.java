@@ -3,8 +3,10 @@ package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LayoutDirectoryDialog extends LayoutProjectCodeDialog implements DirectoryFormattingOptions {
   public LayoutDirectoryDialog(@NotNull Project project,
                                @NlsContexts.DialogTitle String title,

@@ -1,0 +1,7 @@
+package records;
+
+import java.util.Map;
+
+public record TestHideConstructorRecordAnnoComponentType(Map<@Anno String, String> b2) {
+}
+

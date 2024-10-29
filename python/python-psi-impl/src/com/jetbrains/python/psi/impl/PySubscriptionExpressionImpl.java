@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
@@ -59,10 +60,10 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
         .map(typedDictType::getElementType)
         .orElse(null);
     }
-    if (type instanceof PyClassType classType) {
-      PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, this, false, context);
+    if (type instanceof PyClassType) {
+      PyType parameterizedType = Ref.deref(PyTypingTypeProvider.getType(this, context));
       if (parameterizedType instanceof PyCollectionType collectionType) {
-        return collectionType;
+        return collectionType.toClass();
       }
     }
     return PyCallExpressionHelper.getCallType(this, context, key);

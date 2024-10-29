@@ -5,25 +5,14 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.RedundantSuppressInspection;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.LanguageLevelModuleExtension;
-import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.pom.java.LanguageLevel.JDK_21_PREVIEW;
+import static com.intellij.testFramework.utils.coroutines.CoroutinesTestUtilKt.waitCoroutinesBlocking;
 
 public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsightFixtureTestCase {
-
-  private static final ProjectDescriptor JDK_21_PREVIEW_WITH_ANNOTATIONS = new ProjectDescriptor(JDK_21_PREVIEW) {
-    @Override
-    public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
-      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(myLanguageLevel);
-      addJetBrainsAnnotationsWithTypeUse(model);
-    }
-  };
 
   public void testExtractMethodRecommender() {
     ExtractMethodRecommenderInspection inspection = new ExtractMethodRecommenderInspection();
@@ -65,9 +54,7 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
-    IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("intention.extract.method.text"));
-    assertNotNull(intention);
-    intention.invoke(getProject(), getEditor(), getFile());
+    invokeExtractMethodIntention();
     myFixture.checkResultByFile("after" + getTestName(false) + ".java");
   }
 
@@ -82,15 +69,20 @@ public class ExtractMethodRecommenderInspectionTest extends LightJavaCodeInsight
     myFixture.enableInspections(inspection);
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
+    invokeExtractMethodIntention();
+    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+  }
+
+  private void invokeExtractMethodIntention() {
     IntentionAction intention = myFixture.getAvailableIntention(JavaBundle.message("intention.extract.method.text"));
     assertNotNull(intention);
     intention.invoke(getProject(), getEditor(), getFile());
-    myFixture.checkResultByFile("after" + getTestName(false) + ".java");
+    waitCoroutinesBlocking(ExtractMethodService.getInstance(getProject()).getScope());
   }
 
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
-    return JDK_21_PREVIEW_WITH_ANNOTATIONS;
+    return JAVA_21;
   }
 
   @Override

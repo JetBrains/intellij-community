@@ -319,49 +319,48 @@ public final class ActionGroupPanelWrapper {
     childAction.getTemplatePresentation().putClientProperty(ACTION_GROUP_KEY, groupName);
   }
 
-  public static AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
+  public static @NotNull AnAction wrapGroups(@NotNull AnAction action, @NotNull Disposable parentDisposable) {
     if (!(action instanceof ActionGroup)) return action;
-    if (action instanceof ActionsWithPanelProvider) {
-      AtomicReference<Component> createdPanel = new AtomicReference<>();
-      final Pair<JPanel, JBList<AnAction>> panel =
-        createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
-      createdPanel.set(panel.first);
-      final Runnable onDone = () -> {
-        if (action.getTemplateText() != null) {
-          setTitle(StringUtil.removeEllipsisSuffix(action.getTemplateText()));
-        }
-        final JBList<AnAction> list = panel.second;
-        ScrollingUtil.ensureSelectionExists(list);
-        final ListSelectionListener[] listeners =
-          ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
+    if (!(action instanceof ActionsWithPanelProvider)) return action;
 
-        //avoid component cashing. This helps in case of LaF change
-        for (ListSelectionListener listener : listeners) {
-          listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
-        }
-        JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
-      };
-      panel.first.setName(action.getClass().getName());
-      final Presentation p = action.getTemplatePresentation();
-      return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
-            .attachComponent(panel.first, onDone);
-        }
+    AtomicReference<Component> createdPanel = new AtomicReference<>();
+    final Pair<JPanel, JBList<AnAction>> panel =
+      createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
+    createdPanel.set(panel.first);
+    final Runnable onDone = () -> {
+      if (action.getTemplateText() != null) {
+        setTitle(StringUtil.removeEllipsisSuffix(action.getTemplateText()));
+      }
+      final JBList<AnAction> list = panel.second;
+      ScrollingUtil.ensureSelectionExists(list);
+      final ListSelectionListener[] listeners =
+        ((DefaultListSelectionModel)list.getSelectionModel()).getListeners(ListSelectionListener.class);
 
-        @Override
-        public void update(@NotNull AnActionEvent e) {
-          action.update(e);
-        }
-        @Override
-        public @NotNull ActionUpdateThread getActionUpdateThread() {
-          return action.getActionUpdateThread();
-        }
-      };
-    }
-    return action;
+      //avoid component cashing. This helps in case of LaF change
+      for (ListSelectionListener listener : listeners) {
+        listener.valueChanged(new ListSelectionEvent(list, list.getSelectedIndex(), list.getSelectedIndex(), false));
+      }
+      JComponent toFocus = FlatWelcomeFrame.getPreferredFocusedComponent(panel);
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(toFocus, true));
+    };
+    panel.first.setName(action.getClass().getName());
+    final Presentation p = action.getTemplatePresentation();
+    return new DumbAwareAction(p.getText(), p.getDescription(), p.getIcon()) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(WelcomeScreenComponentListener.COMPONENT_CHANGED)
+          .attachComponent(panel.first, onDone);
+      }
+
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        action.update(e);
+      }
+      @Override
+      public @NotNull ActionUpdateThread getActionUpdateThread() {
+        return action.getActionUpdateThread();
+      }
+    };
   }
 
   private static void goBack(@Nullable Component parentComponent) {

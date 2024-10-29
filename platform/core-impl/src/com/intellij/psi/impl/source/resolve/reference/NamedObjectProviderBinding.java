@@ -11,6 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SharedProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /**
  * @author maxim
  */
+@ApiStatus.Internal
 public abstract class NamedObjectProviderBinding implements ProviderBinding {
   /**
    * arrays inside these maps must be copy-on-write to avoid data races, since they can be read concurrently,

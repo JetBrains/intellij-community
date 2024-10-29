@@ -6,11 +6,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.PeekableIteratorWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class StepIntersection {
   /**
    * Iterate over intersected ranges in two lists, sorted by TextRange.

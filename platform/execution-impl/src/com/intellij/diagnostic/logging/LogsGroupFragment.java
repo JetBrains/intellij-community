@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -17,7 +17,6 @@ import java.util.Arrays;
 import java.util.List;
 
 public final class LogsGroupFragment<T extends RunConfigurationBase<?>> extends NestedGroupFragment<T> {
-
   public LogsGroupFragment() {
     super("log",
           DiagnosticBundle.message("log.monitor.fragment.name"), DiagnosticBundle.message("log.monitor.fragment.group"),
@@ -25,13 +24,13 @@ public final class LogsGroupFragment<T extends RunConfigurationBase<?>> extends 
     setActionHint(ExecutionBundle.message("the.ide.will.display.the.selected.logs.in.the.run.tool.window"));
   }
 
-    @Override
+  @Override
   protected List<SettingsEditorFragment<T, ?>> createChildren() {
-    TextFieldWithBrowseButton myOutputFile = new TextFieldWithBrowseButton();
-    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
-                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
-                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var myOutputFile = new TextFieldWithBrowseButton();
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
+      .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
+    myOutputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     LabeledComponent<TextFieldWithBrowseButton> component =
       LabeledComponent.create(myOutputFile, ExecutionBundle.message("save.output.console.to.file"), BorderLayout.WEST);
     SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> fragment =

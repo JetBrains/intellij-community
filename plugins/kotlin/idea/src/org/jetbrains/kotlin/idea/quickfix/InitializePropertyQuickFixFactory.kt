@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
+import org.jetbrains.kotlin.idea.base.psi.getOrCreateBody
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.shorten.runRefactoringAndKeepDelayedRequests
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.core.getOrCreateBody
+import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.refactoring.CompositeRefactoringRunner
 import org.jetbrains.kotlin.idea.refactoring.addElement
 import org.jetbrains.kotlin.idea.refactoring.changeSignature.*
@@ -217,7 +217,7 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
         val property = diagnostic.psiElement as? KtProperty ?: return emptyList()
         if (property.receiverTypeReference != null) return emptyList()
 
-        val actions = ArrayList<IntentionAction>(2)
+        val actions = ArrayList<IntentionAction>(3)
 
         actions.add(AddInitializerFix(property))
 
@@ -226,12 +226,11 @@ object InitializePropertyQuickFixFactory : KotlinIntentionActionsFactory() {
             if (klass.primaryConstructor?.hasActualModifier() == true) return@let
 
             val secondaryConstructors by lazy { klass.secondaryConstructors.filter { it.getDelegationCallOrNull()?.isCallToThis != true } }
-            if (property.accessors.isNotEmpty() || secondaryConstructors.isNotEmpty()) {
-                if (secondaryConstructors.none { it.hasActualModifier() }) {
-                    actions.add(InitializeWithConstructorParameter(property))
-                }
-            } else {
+            if (property.accessors.isEmpty() && secondaryConstructors.isEmpty()) {
                 actions.add(MoveToConstructorParameters(property))
+            }
+            if (secondaryConstructors.none { it.hasActualModifier() }) {
+                actions.add(InitializeWithConstructorParameter(property))
             }
         }
 

@@ -149,6 +149,11 @@
       "hoverSeparatorColor": "Gray8"
     },
 
+    "Badge": {
+      "greenOutlineForeground": "Green4",
+      "greenOutlineBorderColor": "Green6"
+    },
+
     "Bookmark": {
       "Mnemonic.iconForeground": "Gray1",
       "MnemonicAvailable.borderColor": "Gray9",
@@ -169,9 +174,11 @@
       "endBorderColor": "Gray9",
       "focusedBorderColor": "Gray14",
       "minimumSize": "72,28",
+      "loadingForeground": "Gray7",
 
       "default": {
         "foreground": "Gray14",
+        "loadingForeground": "Gray10",
         "startBackground": "Blue4",
         "endBackground": "Blue4",
         "startBorderColor": "Blue4",
@@ -284,8 +291,7 @@
     "DisclosureButton": {
       "defaultBackground": "#0000000D",
       "hoverOverlay": "#0000000D",
-      "pressedOverlay": "#00000017",
-      "successBackground": "Green9"
+      "pressedOverlay": "#00000017"
     },
 
     "EditorTabs": {
@@ -786,7 +792,7 @@
           "brightness": 0.7
         }
       },
-      "FileHistory.Commit.selectedBranchBackground": "Blue11",
+      "FileHistory.Commit.selectedBranchBackground": "#EDF3FF",
       "MarkerPopup": {
         "borderColor": "Gray11"
       },
@@ -918,10 +924,15 @@
 
     "LicenseDialog": {
       "termsAndConditionsForeground": "Gray8",
+      "waitingLabelForeground": "Gray8",
       "separatorColor": "Gray12",
       "LicenseList": {
         "licenseDetailsForeground": "Gray6",
-        "separatorColor": "Gray9"
+        "licenseIdForeground": "Gray8",
+        "separatorColor": "Gray10"
+      },
+      "LicenseServer": {
+        "separatorColor": "Gray10"
       }
     },
 
@@ -1054,6 +1065,35 @@
         "horizontalAxisColor": "Gray9"
       }
     },
+    "CompilationCharts": {
+      "background":{
+        "odd": "Gray13",
+        "even": "Gray12",
+        "default": "Gray13"
+      },
+      "test": {
+        "enabled": "Green7",
+        "disabled": "Green10",
+        "stroke": "Green5",
+        "selected": "Green6"
+      },
+      "production": {
+        "enabled": "Blue8",
+        "disabled": "Blue11",
+        "stroke": "Blue4",
+        "selected": "Blue5"
+      },
+      "memory": {
+        "background": "Blue10",
+        "stroke": "Blue5"
+      },
+      "cpu": {
+        "background": "Green9",
+        "stroke": "Green7"
+      },
+      "lineColor": "Gray12",
+      "textColor": "Gray2"
+    },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#EBECF0",
       "scaleColor": "#C2D6FC",
@@ -1134,7 +1174,7 @@
       "infoForeground": "Gray3",
       "lineSeparatorColor": "Gray12"
     },
-
+    
     "DataSummary.Chart.barColor": "Blue4",
 
     "ManagedIdeBadgeBorder": "Gray5",

@@ -1,4 +1,4 @@
-// "Delete method 'test()'|->... along with other private methods used only there" "true"
+// "Delete method 'test()'|->… along with other private methods used only there" "true"
 class X {
     private void t<caret>est() {
         test1();

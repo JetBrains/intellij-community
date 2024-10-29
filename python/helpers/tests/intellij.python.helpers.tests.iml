@@ -12,6 +12,5 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.python.helpers" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="Ant" level="project" />
-    <orderEntry type="library" scope="TEST" name="org.codehaus.groovy:groovy" level="project" />
   </component>
 </module>

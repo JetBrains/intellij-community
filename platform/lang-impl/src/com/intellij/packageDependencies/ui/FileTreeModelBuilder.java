@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -151,7 +151,7 @@ public final class FileTreeModelBuilder {
     return build(project, showProgress, null);
   }
 
-  public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
+  public TreeModel build(final Project project, final boolean showProgress, final @Nullable Runnable successRunnable) {
     final Runnable buildingRunnable = () -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
@@ -303,8 +303,7 @@ public final class FileTreeModelBuilder {
     return myModuleDirNodes.containsKey(file);
   }
 
-  @Nullable
-  public DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
+  public @Nullable DefaultMutableTreeNode removeNode(final PsiElement element, PsiDirectory parent) {
     LOG.assertTrue(parent != null, element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null ? ((PsiFile)element).getVirtualFile().getPath() : element);
     final VirtualFile parentVirtualFile = parent.getVirtualFile();
     Module module = myFileIndex.getModuleForFile(parentVirtualFile);
@@ -368,8 +367,7 @@ public final class FileTreeModelBuilder {
     return parentNode != null ? parentNode : myRoot;
   }
 
-  @Nullable
-  public PackageDependenciesNode addFileNode(final PsiFile file){
+  public @Nullable PackageDependenciesNode addFileNode(final PsiFile file){
     final VirtualFile vFile = file.getVirtualFile();
     LOG.assertTrue(vFile != null);
     boolean isMarked = myMarker != null && myMarker.isMarked(vFile);
@@ -399,8 +397,7 @@ public final class FileTreeModelBuilder {
     return rootToReload;
   }
 
-  @Nullable
-  public PackageDependenciesNode addDirNode(PsiDirectory dir) {
+  public @Nullable PackageDependenciesNode addDirNode(PsiDirectory dir) {
     final VirtualFile vFile = dir.getVirtualFile();
     if (myMarker == null) return null;
     final boolean[] isMarked = new boolean[]{myMarker.isMarked(vFile)};
@@ -434,8 +431,7 @@ public final class FileTreeModelBuilder {
   }
 
 
-  @Nullable
-  public PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
+  public @Nullable PackageDependenciesNode findNode(PsiFileSystemItem file, final PsiElement psiElement) {
     if (file instanceof PsiDirectory) {
       return getModuleDirNode(file.getVirtualFile(), myFileIndex.getModuleForFile(file.getVirtualFile()), null);
     }
@@ -619,8 +615,7 @@ public final class FileTreeModelBuilder {
   }
 
 
-  @Nullable
-  private PackageDependenciesNode getModuleNode(Module module) {
+  private @Nullable PackageDependenciesNode getModuleNode(Module module) {
     if (module == null || !myShowModules) {
       return myRoot;
     }

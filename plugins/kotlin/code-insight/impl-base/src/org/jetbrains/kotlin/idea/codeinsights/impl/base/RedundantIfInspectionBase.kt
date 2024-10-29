@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.codeinsight.utils.negate
-import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
+import kotlin.collections.dropLastWhile
 
 /**
  * A parent class for K1 and K2 RedundantIfInspection.
@@ -191,13 +191,13 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
         returnAfterIf: KtExpression?,
         private val mayChangeSemantics: Boolean,
     ) : LocalQuickFix {
-        val returnExpressionAfterIf: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
+        val returnExpressionAfterIfPointer: SmartPsiElementPointer<KtExpression>? = returnAfterIf?.let(SmartPointerManager::createPointer)
 
         override fun getName(): String =
             if (mayChangeSemantics) KotlinBundle.message("remove.redundant.if.may.change.semantics.with.floating.point.types")
             else KotlinBundle.message("remove.redundant.if.text")
 
-        override fun getFamilyName() = name
+        override fun getFamilyName(): String = name
 
         override fun startInWriteAction(): Boolean = false
 
@@ -218,19 +218,37 @@ abstract class RedundantIfInspectionBase : AbstractKotlinInspection(), CleanupLo
                 else -> condition
             }
 
-            val commentSaver = CommentSaver(element)
+            val comments = element.comments().map {
+                // create a copy as all branches will be dropped
+                val text = it.text
+                if (it is PsiWhiteSpace) factory.createWhiteSpace(text) else factory.createComment(text)
+            }
+
             runWriteAction {
                 /**
                  * This is the case that we used the next expression of the if expression as the else expression.
                  * See the code and comment in [RedundancyType.of].
                  */
-                returnExpressionAfterIf?.element?.let {
+                val returnExpressionAfterIf = returnExpressionAfterIfPointer?.element
+                returnExpressionAfterIf?.let {
                     it.parent.deleteChildRange(it.prevSibling as? PsiWhiteSpace ?: it, it)
                 }
 
                 val replaced = element.replace(newExpressionOnlyWithCondition)
-                commentSaver.restore(replaced)
+                comments.reversed().forEach { replaced.parent.addAfter(it, replaced) }
             }
+        }
+
+        private fun PsiElement.comments(): List<PsiElement> {
+            val comments = LinkedHashSet<PsiElement>()
+            accept(object : PsiRecursiveElementVisitor() {
+                override fun visitComment(comment: PsiComment) {
+                    (comment.prevSibling as? PsiWhiteSpace)?.let { comments.add(it) }
+                    comments.add(comment)
+                    (comment.nextSibling as? PsiWhiteSpace)?.let { comments.add(it) }
+                }
+            })
+            return comments.toList().dropLastWhile { it is PsiWhiteSpace }
         }
 
         private fun negate(expression: KtExpression?): KtExpression? {

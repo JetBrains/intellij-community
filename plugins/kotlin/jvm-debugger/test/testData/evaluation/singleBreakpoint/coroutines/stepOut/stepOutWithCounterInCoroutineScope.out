@@ -1,32 +1,32 @@
-LineBreakpoint created at stepOutWithCounterInCoroutineScope.kt:27
+LineBreakpoint created at stepOutWithCounterInCoroutineScope.kt:28
 Run Java
 Connected to the target VM
-stepOutWithCounterInCoroutineScope.kt:27
-stepOutWithCounterInCoroutineScope.kt:14
-stepOutWithCounterInCoroutineScope.kt:12
+stepOutWithCounterInCoroutineScope.kt:28
+stepOutWithCounterInCoroutineScope.kt:15
 stepOutWithCounterInCoroutineScope.kt:13
-stepOutWithCounterInCoroutineScope.kt:27
 stepOutWithCounterInCoroutineScope.kt:14
-stepOutWithCounterInCoroutineScope.kt:12
+stepOutWithCounterInCoroutineScope.kt:28
+stepOutWithCounterInCoroutineScope.kt:15
 stepOutWithCounterInCoroutineScope.kt:13
-stepOutWithCounterInCoroutineScope.kt:27
 stepOutWithCounterInCoroutineScope.kt:14
-stepOutWithCounterInCoroutineScope.kt:12
+stepOutWithCounterInCoroutineScope.kt:28
+stepOutWithCounterInCoroutineScope.kt:15
 stepOutWithCounterInCoroutineScope.kt:13
-stepOutWithCounterInCoroutineScope.kt:27
 stepOutWithCounterInCoroutineScope.kt:14
-stepOutWithCounterInCoroutineScope.kt:12
+stepOutWithCounterInCoroutineScope.kt:28
+stepOutWithCounterInCoroutineScope.kt:15
 stepOutWithCounterInCoroutineScope.kt:13
-stepOutWithCounterInCoroutineScope.kt:27
 stepOutWithCounterInCoroutineScope.kt:14
+stepOutWithCounterInCoroutineScope.kt:28
+stepOutWithCounterInCoroutineScope.kt:15
 Compile bytecode for x
 Compile bytecode for y
-stepOutWithCounterInCoroutineScope.kt:27
-resuming stepOutWithCounterInCoroutineScope.kt:27
-resuming stepOutWithCounterInCoroutineScope.kt:27
-resuming stepOutWithCounterInCoroutineScope.kt:27
-resuming stepOutWithCounterInCoroutineScope.kt:27
-resuming stepOutWithCounterInCoroutineScope.kt:27
+stepOutWithCounterInCoroutineScope.kt:28
+resuming stepOutWithCounterInCoroutineScope.kt:28
+resuming stepOutWithCounterInCoroutineScope.kt:28
+resuming stepOutWithCounterInCoroutineScope.kt:28
+resuming stepOutWithCounterInCoroutineScope.kt:28
+resuming stepOutWithCounterInCoroutineScope.kt:28
 Disconnected from the target VM
 
 Process finished with exit code 0

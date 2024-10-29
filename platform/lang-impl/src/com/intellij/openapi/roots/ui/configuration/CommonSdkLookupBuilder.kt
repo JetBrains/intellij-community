@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
 import com.intellij.openapi.progress.ProgressIndicator
@@ -7,6 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import org.jetbrains.annotations.Nls
 
 internal data class CommonSdkLookupBuilder(
   override val project: Project? = null,
@@ -14,6 +15,8 @@ internal data class CommonSdkLookupBuilder(
   @ProgressTitle
   override val progressMessageTitle: String? = null,
   override val progressIndicator: ProgressIndicator? = null,
+  @Nls
+  override val lookupReason: String? = null,
 
   override val sdkName: String? = null,
 
@@ -35,59 +38,65 @@ internal data class CommonSdkLookupBuilder(
 
   private val lookup: (CommonSdkLookupBuilder) -> Unit
 ) : SdkLookupBuilder, SdkLookupParameters {
-  override fun withProject(project: Project?): CommonSdkLookupBuilder =
-    copy(project = project)
+  override fun withProject(project: Project?): CommonSdkLookupBuilder = copy(project = project)
 
-  override fun withProgressMessageTitle(@ProgressTitle message: String): CommonSdkLookupBuilder =
-    copy(progressMessageTitle = message)
+  override fun withProgressMessageTitle(@ProgressTitle message: String): CommonSdkLookupBuilder = copy(progressMessageTitle = message)
 
-  override fun withSdkName(name: String): CommonSdkLookupBuilder =
-    copy(sdkName = name)
+  override fun withLookupReason(@Nls message: String): CommonSdkLookupBuilder = copy(lookupReason = message)
 
-  override fun withSdkType(sdkType: SdkType): CommonSdkLookupBuilder =
-    copy(sdkType = sdkType)
+  override fun withSdkName(name: String): CommonSdkLookupBuilder = copy(sdkName = name)
 
-  override fun withVersionFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder =
-    copy(versionFilter = filter)
+  override fun withSdkType(sdkType: SdkType): CommonSdkLookupBuilder = copy(sdkType = sdkType)
 
-  override fun withSdkHomeFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder =
-    copy(sdkHomeFilter = filter)
+  override fun withVersionFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder = copy(versionFilter = filter)
 
-  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): CommonSdkLookupBuilder =
-    copy(onDownloadingSdkDetected = handler)
+  override fun withSdkHomeFilter(filter: (String) -> Boolean): CommonSdkLookupBuilder = copy(sdkHomeFilter = filter)
 
-  override fun withProgressIndicator(indicator: ProgressIndicator): CommonSdkLookupBuilder =
-    copy(progressIndicator = indicator)
+  override fun onDownloadingSdkDetected(handler: (Sdk) -> SdkLookupDownloadDecision): CommonSdkLookupBuilder {
+    return copy(onDownloadingSdkDetected = handler)
+  }
 
-  override fun testSuggestedSdksFirst(sdks: Sequence<Sdk?>): CommonSdkLookupBuilder =
-    copy(testSdkSequence = testSdkSequence + sdks)
+  override fun withProgressIndicator(indicator: ProgressIndicator): CommonSdkLookupBuilder = copy(progressIndicator = indicator)
 
-  override fun testSuggestedSdkFirst(sdk: () -> Sdk?): CommonSdkLookupBuilder =
-    copy(testSdkSequence = testSdkSequence + generateSequence(sdk) { null })
+  override fun testSuggestedSdksFirst(sdks: Sequence<Sdk?>): CommonSdkLookupBuilder = copy(testSdkSequence = testSdkSequence + sdks)
 
-  override fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision): CommonSdkLookupBuilder =
-    copy(onBeforeSdkSuggestionStarted = handler)
+  override fun testSuggestedSdkFirst(sdk: () -> Sdk?): CommonSdkLookupBuilder {
+    return copy(testSdkSequence = testSdkSequence + generateSequence(sdk) { null })
+  }
 
-  override fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder =
-    copy(onLocalSdkSuggested = handler)
+  override fun onBeforeSdkSuggestionStarted(handler: () -> SdkLookupDecision): CommonSdkLookupBuilder {
+    return copy(onBeforeSdkSuggestionStarted = handler)
+  }
 
-  override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision): CommonSdkLookupBuilder =
-    copy(onSdkFixResolved = handler)
+  override fun onLocalSdkSuggested(handler: (UnknownSdkLocalSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder {
+    return copy(onLocalSdkSuggested = handler)
+  }
 
-  override fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder =
-    copy(onDownloadableSdkSuggested = handler)
+  override fun onSdkFixResolved(handler: (UnknownSdkFixAction) -> SdkLookupDecision): CommonSdkLookupBuilder {
+    return copy(onSdkFixResolved = handler)
+  }
 
-  override fun onSdkResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder =
-    copy(onSdkResolved = this.onSdkResolved + handler)
+  override fun onDownloadableSdkSuggested(handler: (UnknownSdkDownloadableSdkFix) -> SdkLookupDecision): CommonSdkLookupBuilder {
+    return copy(onDownloadableSdkSuggested = handler)
+  }
 
-  override fun onSdkNameResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder =
-    copy(onSdkNameResolved = this.onSdkNameResolved + handler)
+  override fun onSdkResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder {
+    return copy(onSdkResolved = this.onSdkResolved + handler)
+  }
 
-  override fun executeLookup(): Unit = lookup(this)
+  override fun onSdkNameResolved(handler: (Sdk?) -> Unit): CommonSdkLookupBuilder {
+    return copy(onSdkNameResolved = this.onSdkNameResolved + handler)
+  }
+
+  override fun executeLookup() {
+    lookup(this)
+  }
 
   @JvmName("plusTUnit")
-  private operator fun <T> ( (T) -> Unit).plus(v : (T) -> Unit) : (T) -> Unit = {
-    this(it)
-    v(it)
+  private operator fun <T> ( (T) -> Unit).plus(v : (T) -> Unit) : (T) -> Unit {
+    return {
+      this(it)
+      v(it)
+    }
   }
 }

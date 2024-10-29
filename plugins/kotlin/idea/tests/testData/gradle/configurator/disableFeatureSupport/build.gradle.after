@@ -13,10 +13,10 @@ repositories {
     mavenCentral()
 }
 dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib"
 }
 compileKotlin {
-    kotlinOptions {
-        freeCompilerArgs = ["-XXLanguage:-InlineClasses"]
+    compilerOptions {
+        freeCompilerArgs.set(["-XXLanguage:-InlineClasses"])
     }
 }

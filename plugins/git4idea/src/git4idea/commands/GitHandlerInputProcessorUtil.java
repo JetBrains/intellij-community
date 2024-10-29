@@ -70,4 +70,10 @@ public final class GitHandlerInputProcessorUtil {
       }
     };
   }
+
+  public static @NotNull ThrowableConsumer<OutputStream, IOException> empty() {
+    return outputStream -> {
+      outputStream.close();
+    };
+  }
 }

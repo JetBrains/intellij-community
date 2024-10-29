@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.xml.impl;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupValueFactory;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
@@ -188,7 +188,7 @@ public class GenericDomValueReference<T> extends PsiReferenceBase<XmlElement> im
         }
       }
       for (final String string : resolvingConverter.getAdditionalVariants(convertContext)) {
-        result.add(LookupValueFactory.createLookupValue(string, null));
+        result.add(LookupElementBuilder.create(string));
       }
       return result.toArray();
     }

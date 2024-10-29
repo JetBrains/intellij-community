@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.LocalInspectionEP;
@@ -44,9 +44,9 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   private final Map<String, NamingConventionBean> myNamingConventionBeans = new LinkedHashMap<>();
   private final Map<String, Element> myUnloadedElements = new LinkedHashMap<>();
   private final Set<String> myDisabledShortNames = new HashSet<>();
-  @Nullable private final String myDefaultConventionShortName;
+  private final @Nullable String myDefaultConventionShortName;
 
-  protected AbstractNamingConventionInspection(Iterable<? extends NamingConvention<T>> extensions, @Nullable final String defaultConventionShortName) {
+  protected AbstractNamingConventionInspection(Iterable<? extends NamingConvention<T>> extensions, final @Nullable String defaultConventionShortName) {
     for (NamingConvention<T> convention : extensions) {
       registerConvention(convention);
     }
@@ -96,8 +96,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     }, disposable);
   }
 
-  @Nullable
-  protected abstract LocalQuickFix createRenameFix();
+  protected abstract @Nullable LocalQuickFix createRenameFix();
 
   private void initDisabledState() {
     myDisabledShortNames.clear();
@@ -116,8 +115,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     return myNamingConventions.keySet();
   }
 
-  @NotNull
-  protected @InspectionMessage String createErrorMessage(String name, String shortName) {
+  protected @NotNull @InspectionMessage String createErrorMessage(String name, String shortName) {
     return myNamingConventions.get(shortName).createErrorMessage(name, myNamingConventionBeans.get(shortName));
   }
 
@@ -241,9 +239,8 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     })));
   }
 
-  @NotNull
   @Override
-  public OptionController getOptionController() {
+  public @NotNull OptionController getOptionController() {
     OptionController controller = OptionController.of(
       shortName -> !myDisabledShortNames.contains(shortName),
       (shortName, value) -> setEnabled((boolean)value, shortName)

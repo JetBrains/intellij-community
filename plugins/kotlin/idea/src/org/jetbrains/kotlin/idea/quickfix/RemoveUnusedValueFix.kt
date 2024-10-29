@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.daemon.QuickFixBundle
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.cfg.pseudocode.getContainingPseudocode
 import org.jetbrains.kotlin.cfg.pseudocode.sideEffectFree
 import org.jetbrains.kotlin.diagnostics.Diagnostic
@@ -50,9 +52,12 @@ class RemoveUnusedValueFix(expression: KtBinaryExpression) : KotlinQuickFixActio
         }
     }
 
-    override fun getFamilyName() = KotlinBundle.message("remove.redundant.assignment")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.redundant.assignment")
 
-    override fun getText() = familyName
+    override fun getText(): String = familyName
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 
     private fun doRemove(mode: RemoveMode, element: KtBinaryExpression, rhs: KtExpression) {
         when (mode) {
@@ -75,7 +80,6 @@ class RemoveUnusedValueFix(expression: KtBinaryExpression) : KotlinQuickFixActio
         } else {
             doRemove(RemoveMode.REMOVE_ALL, element, rhs)
         }
-
     }
 
     companion object : KotlinSingleIntentionActionFactory() {

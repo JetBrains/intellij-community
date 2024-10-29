@@ -5,6 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.JavaBundle;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -70,6 +72,7 @@ public final class RedundantCollectionOperationInspection extends AbstractBaseJa
   private static final CallMatcher ITERABLE_ITERATOR = instanceCall(CommonClassNames.JAVA_LANG_ITERABLE, "iterator").parameterCount(0);
   private static final CallMatcher MAP_KEY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "keySet").parameterCount(0);
   private static final CallMatcher MAP_VALUES = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "values").parameterCount(0);
+  private static final CallMatcher MAP_ENTRY_SET = instanceCall(CommonClassNames.JAVA_UTIL_MAP, "entrySet").parameterCount(0);
   private static final CallMatcher MAP_PUT_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_MAP, "putAll").parameterTypes(CommonClassNames.JAVA_UTIL_MAP);
   private static final CallMatcher MAP_OF =
@@ -78,7 +81,9 @@ public final class RedundantCollectionOperationInspection extends AbstractBaseJa
       staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singletonMap").parameterCount(2));
   private static final CallMatcher COLLECTION_ADD_ALL =
     instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "addAll").parameterTypes(CommonClassNames.JAVA_UTIL_COLLECTION);
-
+  private static final CallMatcher MAP_METHODS_SAME_ON_VIEW =
+    instanceCall(CommonClassNames.JAVA_UTIL_COLLECTION, "size", "isEmpty", "clear").parameterCount(0);
+  
   private static final CallMapper<RedundantCollectionOperationHandler> HANDLERS =
     new CallMapper<RedundantCollectionOperationHandler>()
       .register(TO_ARRAY, AsListToArrayHandler::handler)
@@ -89,6 +94,7 @@ public final class RedundantCollectionOperationInspection extends AbstractBaseJa
       .register(REMOVE_BY_INDEX, RedundantIndexOfHandler::handler)
       .register(AS_LIST, RedundantAsListForIterationHandler::handler)
       .register(AS_LIST, RedundantSortAsListHandler::handler)
+      .register(anyOf(MAP_KEY_SET, MAP_VALUES, MAP_ENTRY_SET), RedundantMapViewHandler::handler)
       .register(ITERABLE_ITERATOR, RedundantEmptyIteratorHandler::handler)
       .register(MAP_PUT_ALL, call -> ReplaceNestedCallHandler.handler(call, MAP_OF, "put"))
       .register(COLLECTION_ADD_ALL, call -> ReplaceNestedCallHandler.handler(call, SINGLETON, "add"));
@@ -420,6 +426,46 @@ public final class RedundantCollectionOperationInspection extends AbstractBaseJa
       PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
       if (!SINGLETON.test(qualifierCall)) return null;
       return new SingletonContainsHandler();
+    }
+  }
+
+  private static final class RedundantMapViewHandler implements RedundantCollectionOperationHandler {
+    private final @NotNull String myName;
+
+    private RedundantMapViewHandler(@NotNull String name) {
+      this.myName = name;
+    }
+
+    @Override
+    public void performFix(@NotNull Project project, @NotNull PsiMethodCallExpression call) {
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier != null) {
+        new CommentTracker().replaceAndRestoreComments(call, qualifier);
+      }
+    }
+
+    @Override
+    public String getProblemName() {
+      return JavaBundle.message("inspection.call.message", myName);
+    }
+
+    @Override
+    public @NotNull String getFixName() {
+      return InspectionGadgetsBundle.message("inspection.remove.redundant.call.fix.name", myName);
+    }
+
+    static RedundantMapViewHandler handler(PsiMethodCallExpression call) {
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (qualifier == null || qualifier instanceof PsiThisExpression) {
+        // We are inside Map implementation
+        return null;
+      }
+      PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
+      String callName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
+      if (MAP_METHODS_SAME_ON_VIEW.test(nextCall) || COLLECTION_REMOVE.test(nextCall) && callName.equals("keySet")) {
+        return new RedundantMapViewHandler(callName);
+      }
+      return null;
     }
   }
 

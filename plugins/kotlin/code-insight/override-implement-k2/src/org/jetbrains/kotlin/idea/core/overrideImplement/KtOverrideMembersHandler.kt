@@ -10,8 +10,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KtIconProvider.getIcon
 import org.jetbrains.kotlin.idea.core.util.KotlinIdeaCoreBundle
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -27,28 +25,30 @@ open class KtOverrideMembersHandler : KtGenerateMembersHandler(false) {
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
-private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> =
-        classOrObject.getClassOrObjectSymbol()?.let { getOverridableMembers(it) }.orEmpty().map { (symbol, bodyType, containingSymbol) ->
-            @NlsSafe
-            val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
-            KtClassMember(
-                KtClassMemberInfo.create(
-                    symbol,
-                    symbol.render(renderer),
-                    getIcon(symbol),
-                    fqName,
-                    containingSymbol?.let { getIcon(it) },
-                ),
-                bodyType,
-                preferConstructorParameter = false,
-            )
-        }
+private fun collectMembers(classOrObject: KtClassOrObject): List<KtClassMember> {
+    val classSymbol = (classOrObject.symbol as? KaEnumEntrySymbol)?.enumEntryInitializer as? KaClassSymbol ?: classOrObject.classSymbol ?: return emptyList()
+    return getOverridableMembers(classSymbol).map { (symbol, bodyType, containingSymbol) ->
+        @NlsSafe
+        val fqName = containingSymbol?.classId?.asSingleFqName()?.toString() ?: containingSymbol?.name?.asString()
+        KtClassMember(
+            KtClassMemberInfo.create(
+                symbol,
+                symbol.render(renderer),
+                getIcon(symbol),
+                fqName,
+                containingSymbol?.let { getIcon(it) },
+            ),
+            bodyType,
+            preferConstructorParameter = false,
+        )
+    }
+}
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<OverrideMember> {
         return buildList {
-            classOrObjectSymbol.memberScope.getCallableSymbols().forEach { symbol ->
+            classOrObjectSymbol.memberScope.callables.forEach { symbol ->
                 if (!symbol.isVisibleInClass(classOrObjectSymbol)) return@forEach
                 val implementationStatus = symbol.getImplementationStatus(classOrObjectSymbol) ?: return@forEach
                 if (!implementationStatus.isOverridable) return@forEach
@@ -57,7 +57,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                 val symbolsToProcess = if (intersectionSymbols.size <= 1) {
                     listOf(symbol)
                 } else {
-                    val nonAbstractMembers = intersectionSymbols.filter { (it as? KaSymbolWithModality)?.modality != KaSymbolModality.ABSTRACT }
+                    val nonAbstractMembers = intersectionSymbols.filter { it.modality != KaSymbolModality.ABSTRACT }
                     // If there are non-abstract members, we only want to show override for these non-abstract members. Otherwise, show any
                     // abstract member to override.
                     nonAbstractMembers.ifEmpty {
@@ -65,10 +65,10 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                     }
                 }
 
-                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAny == true
+                val hasNoSuperTypesExceptAny = classOrObjectSymbol.superTypes.singleOrNull()?.isAnyType == true
                 for (symbolToProcess in symbolsToProcess) {
                     val originalOverriddenSymbol = symbolToProcess.fakeOverrideOriginal
-                    val containingSymbol = originalOverriddenSymbol.originalContainingClassForOverride
+                    val containingSymbol = originalOverriddenSymbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
 
                     val bodyType = when {
                         classOrObjectSymbol.classKind == KaClassKind.INTERFACE && containingSymbol?.classId == StandardClassIds.Any -> {
@@ -80,7 +80,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.NoBody
                             }
                         }
-                        (classOrObjectSymbol as? KaNamedClassOrObjectSymbol)?.isInline == true &&
+                        (classOrObjectSymbol as? KaNamedClassSymbol)?.isInline == true &&
                                 containingSymbol?.classId == StandardClassIds.Any -> {
                             if ((symbolToProcess as? KaNamedFunctionSymbol)?.name?.asString() in listOf("equals", "hashCode")) {
                                 continue
@@ -88,7 +88,7 @@ private fun getOverridableMembers(classOrObjectSymbol: KaClassSymbol): List<Over
                                 BodyType.Super
                             }
                         }
-                        (originalOverriddenSymbol as? KaSymbolWithModality)?.modality == KaSymbolModality.ABSTRACT ->
+                        originalOverriddenSymbol.modality == KaSymbolModality.ABSTRACT ->
                             BodyType.FromTemplate
                         symbolsToProcess.size > 1 ->
                             BodyType.QualifiedSuper

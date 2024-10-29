@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
-class VcsErrorViewPanel extends NewErrorTreeViewPanel {
+@ApiStatus.Internal
+public final class VcsErrorViewPanel extends NewErrorTreeViewPanel {
   VcsErrorViewPanel(Project project) {
     super(project, null);
   }

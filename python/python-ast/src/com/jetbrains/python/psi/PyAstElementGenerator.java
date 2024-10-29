@@ -8,8 +8,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.impl.PsiFileFactoryImpl;
 import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.ast.PyAstExpression;
 import com.jetbrains.python.ast.PyAstExpressionStatement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -126,4 +128,15 @@ public class PyAstElementGenerator {
   }
 
   protected void specifyFileLanguageLevel(@NotNull VirtualFile virtualFile, @Nullable LanguageLevel langLevel) { }
+
+  @NotNull
+  public PyAstExpression createExpressionFromText(@NotNull LanguageLevel languageLevel, @NotNull String text)
+    throws IncorrectOperationException {
+    final PsiFile dummyFile = createDummyFile(languageLevel, text);
+    final PsiElement element = dummyFile.getFirstChild();
+    if (element instanceof PyAstExpressionStatement expressionStatement) {
+      return expressionStatement.getExpression();
+    }
+    throw new IncorrectOperationException("could not parse text as expression: " + text);
+  }
 }

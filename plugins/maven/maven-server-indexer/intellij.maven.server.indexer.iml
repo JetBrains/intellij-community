@@ -306,200 +306,42 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library name="apache.maven.archetype.common:3.2.1" type="repository">
-        <properties maven-id="org.apache.maven.archetype:archetype-common:3.2.1">
+      <library name="apache.maven.archetype.common-no-trans:3.2.1" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.maven.archetype:archetype-common:3.2.1">
           <verification>
             <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1.jar">
               <sha256sum>7816a7d7c9a5c64b77a7fd1ebe203a1ce92b924638dd2216f81ea5bcebea6abc</sha256sum>
             </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar">
-              <sha256sum>2aa061856e5e124facf7bf16831069015f98406969a7ba534e1ee557950d6680</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/3.2.1/archetype-descriptor-3.2.1.jar">
-              <sha256sum>a20edcd3b38675827209068c544426f2ef03ed506d226f1d4c99a734948f8e36</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-all/2.4.16/groovy-all-2.4.16.jar">
-              <sha256sum>42106c60e08eb147c294722b9c26bad26a148636ef244ab8d6092f5a09fa409e</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar">
-              <sha256sum>2f4c835b52311df922f8a8eb057843de5485088b234ccd03e478b9066b5e6bfc</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/2.0.0/plexus-component-annotations-2.0.0.jar">
-              <sha256sum>405eef6fc9188241ec88579c3e473f5c8997455c69bcd62e142492aca15106bc</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6/jdom2-2.0.6.jar">
-              <sha256sum>1345f11ba606d15603d6740551a8c21947c0215640770ec67271fe78bea97cf5</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-invoker/3.0.1/maven-invoker-3.0.1.jar">
-              <sha256sum>d20e5d26c19c04199c73fd4f0b6caebf4bbdc6b872a4504c5e71a192751d9464</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0/maven-aether-provider-3.0.jar">
-              <sha256sum>1205a1f229999170dcadcfb885a278ad0bc2295540a251f4c438f887ead7bbd9</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0/maven-model-builder-3.0.jar">
-              <sha256sum>1c98a4ec9eb0cb86ecf01710aa75c0346ee3f96edc6edeabcb21ed984120e154</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar">
-              <sha256sum>7fc63378d3e84663619b9bedace9f9fe78b276c2be3c62ca2245449294c84176</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0/maven-model-3.0.jar">
-              <sha256sum>27e426d73f8662b47f60df0e43439b3dec2909c42b89175a6e4431dfed3edafd</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0/maven-repository-metadata-3.0.jar">
-              <sha256sum>c938e4d8cdf0674496749a87e6d3b29aa41b1b35a39898a1ade2bc9eae214c17</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.7/aether-api-1.7.jar">
-              <sha256sum>1c5c5ac5e8f29aefc8faa051ffa14eccd85b9e20f4bb35dc82fba7d5da50d326</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.7/aether-util-1.7.jar">
-              <sha256sum>ff690ffc550b7ada3a4b79ef4ca89bf002b24f43a13a35d10195c3bba63d7654</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.7/aether-impl-1.7.jar">
-              <sha256sum>288149850d8d131763df4151f7e443fd2739e48510a6e4cfe49ca082c76130fa</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.7/aether-spi-1.7.jar">
-              <sha256sum>f54a0a28ce3d62af0e1cfe41dde616f645c28e452e77f77b78bc36e74d5e1a69</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-artifact-transfer/0.13.1/maven-artifact-transfer-0.13.1.jar">
-              <sha256sum>1ac88accde99ed71e65253bd130868c0e654f940f01ade073b895eb2f817cf06</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0/maven-core-3.0.jar">
-              <sha256sum>ba03294ee53e7ba31838e4950f280d033c7744c6c7b31253afc75aa351fbd989</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0/maven-settings-3.0.jar">
-              <sha256sum>3b1a46b4bc26a0176acaf99312ff2f3a631faf3224b0996af546aa48bd73c647</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0/maven-settings-builder-3.0.jar">
-              <sha256sum>e17e706c6f03c453f6000599cab607c2af5f1cc6e3a3b1e6fce27e5ef4999eab</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0/maven-plugin-api-3.0.jar">
-              <sha256sum>f5ecc6eaa4a32ee0c115d31525f588f491b2cc75fdeb4ed3c0c662c12ac0c32f</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/1.4.2/sisu-inject-plexus-1.4.2.jar">
-              <sha256sum>a65e27aefbe74102d73cd7e3c5c7637021d294a9e7f33132f3c782a76714d0a3</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/1.4.2/sisu-inject-bean-1.4.2.jar">
-              <sha256sum>fb3160e1e3a7852b441016dbcc97a34e3cf4eeb8ceb9e82edf2729439858f080</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/2.1.7/sisu-guice-2.1.7-noaop.jar">
-              <sha256sum>240113a2f22fd1f0b182b32baecf0e7876b3a8e41f3c4da3335eeb9ffb24b9f4</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.2.3/plexus-classworlds-2.2.3.jar">
-              <sha256sum>7d95ad21733b060bfda2142b62439a196bde7644f9f127c299ae86d92179b518</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar">
-              <sha256sum>3b0559bb8432f28937efe6ca193ef54a8506d0075d73fd7406b9b116c6a11063</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar">
-              <sha256sum>5a15fdba22669e0fdd06e10dcce6320879e1f7398fbc910cd0677b50672a78c4</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0/maven-artifact-3.0.jar">
-              <sha256sum>759079b9cf0cddae5ba06c96fd72347d82d0bc1d903c95d398c96522b139e470</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-common-artifact-filters/3.1.0/maven-common-artifact-filters-3.1.0.jar">
-              <sha256sum>82a584c58bd6a1b13861e2d4cc194b5afc09ca0adad9fda741f16337dcda2e96</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar">
-              <sha256sum>fe30825245d2336c859dc38d60c0fc5f3668dbf29cd586828d2b5667ec355b91</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar">
-              <sha256sum>eeeae917917144a68a741d4c0dff66aa5c5c5fd85593ff217bced3fc8ca783b8</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-velocity/1.2/plexus-velocity-1.2.jar">
-              <sha256sum>b4c4a0dbeacad54306a1ae230eff5ab45d58e3ab88c86ab7245d3a0772be57ab</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7.jar">
-              <sha256sum>ec92dae810034f4b46dbb16ef4364a4013b0efb24a8c5dd67435cae46a290d8e</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4.jar">
-              <sha256sum>2c73b940c91250bc98346926270f13a6a10bb6e29d2c9316a70d134e382c873e</sha256sum>
-            </artifact>
-            <artifact url="file://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/70.1/icu4j-70.1.jar">
-              <sha256sum>2b4d8d4e098e86aa5f905ec81c46751d218b16afd3f7fc02b64f80dd20fffa20</sha256sum>
-            </artifact>
           </verification>
-          <exclude>
-            <dependency maven-id="org.codehaus.plexus:plexus-utils" />
-            <dependency maven-id="org.apache.maven.shared:maven-shared-utils" />
-            <dependency maven-id="commons-io:commons-io" />
-          </exclude>
         </properties>
         <CLASSES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/3.2.1/archetype-descriptor-3.2.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-all/2.4.16/groovy-all-2.4.16.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/2.0.0/plexus-component-annotations-2.0.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6/jdom2-2.0.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-invoker/3.0.1/maven-invoker-3.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0/maven-aether-provider-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0/maven-model-builder-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0/maven-model-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0/maven-repository-metadata-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.7/aether-api-1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.7/aether-util-1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.7/aether-impl-1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.7/aether-spi-1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-artifact-transfer/0.13.1/maven-artifact-transfer-0.13.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0/maven-core-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0/maven-settings-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0/maven-settings-builder-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0/maven-plugin-api-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/1.4.2/sisu-inject-plexus-1.4.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/1.4.2/sisu-inject-bean-1.4.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/2.1.7/sisu-guice-2.1.7-noaop.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.2.3/plexus-classworlds-2.2.3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0/maven-artifact-3.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-common-artifact-filters/3.1.0/maven-common-artifact-filters-3.1.0.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-velocity/1.2/plexus-velocity-1.2.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/70.1/icu4j-70.1.jar!/" />
         </CLASSES>
-        <JAVADOC />
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1-javadoc.jar!/" />
+        </JAVADOC>
         <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-common/3.2.1/archetype-common-3.2.1-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="apache.maven.archetype.catalog-no-trans:321" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.maven.archetype:archetype-catalog:3.2.1">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar">
+              <sha256sum>2aa061856e5e124facf7bf16831069015f98406969a7ba534e1ee557950d6680</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
           <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-catalog/3.2.1/archetype-catalog-3.2.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/archetype/archetype-descriptor/3.2.1/archetype-descriptor-3.2.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-all/2.4.16/groovy-all-2.4.16-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/ivy/ivy/2.5.0/ivy-2.5.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/2.0.0/plexus-component-annotations-2.0.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jdom/jdom2/2.0.6/jdom2-2.0.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-invoker/3.0.1/maven-invoker-3.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.0/maven-aether-provider-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.0/maven-model-builder-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.14/plexus-interpolation-1.14-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.0/maven-model-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.0/maven-repository-metadata-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-api/1.7/aether-api-1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-util/1.7/aether-util-1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-impl/1.7/aether-impl-1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/aether/aether-spi/1.7/aether-spi-1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-artifact-transfer/0.13.1/maven-artifact-transfer-0.13.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-core/3.0/maven-core-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings/3.0/maven-settings-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-settings-builder/3.0/maven-settings-builder-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-plugin-api/3.0/maven-plugin-api-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-plexus/1.4.2/sisu-inject-plexus-1.4.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-inject-bean/1.4.2/sisu-inject-bean-1.4.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/sisu/sisu-guice/2.1.7/sisu-guice-2.1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-classworlds/2.2.3/plexus-classworlds-2.2.3-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-sec-dispatcher/1.3/plexus-sec-dispatcher-1.3-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/sonatype/plexus/plexus-cipher/1.4/plexus-cipher-1.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.0/maven-artifact-3.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/shared/maven-common-artifact-filters/3.1.0/maven-common-artifact-filters-3.1.0-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/slf4j/slf4j-api/1.7.5/slf4j-api-1.7.5-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-collections/commons-collections/3.2.2/commons-collections-3.2.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-velocity/1.2/plexus-velocity-1.2-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/velocity/velocity/1.7/velocity-1.7-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/commons-lang/commons-lang/2.4/commons-lang-2.4-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/com/ibm/icu/icu4j/70.1/icu4j-70.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

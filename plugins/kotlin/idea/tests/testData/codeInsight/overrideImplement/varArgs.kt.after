@@ -8,3 +8,8 @@ class D : S() {
         <selection><caret>super.s(*v)</selection>
     }
 }
+
+// MEMBER: "s(vararg v: Int): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

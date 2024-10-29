@@ -15,9 +15,7 @@ import java.util.concurrent.CompletableFuture
 private val LOG = EventBusLoggerFactory.getLogger(LocalEventBusServer::class.java)
 
 object LocalEventBusServer : EventBusServer {
-  private val portsPool: MutableList<Int> = generateSequence(45654) { it + 10 }
-    .takeWhile { it <= 45654 + 100 }
-    .toMutableList()
+  private val portsPool: List<Int> = (45654..45754 step 10).toList()
   private var currentPortIndex = 0
   private lateinit var eventsFlowService: EventsFlowService
   private val objectMapper = jacksonObjectMapper()
@@ -77,6 +75,22 @@ object LocalEventBusServer : EventBusServer {
             val subscriberDto = objectMapper.readValue(json, SubscriberDto::class.java)
             eventsFlowService.newSubscriber(subscriberDto)
             val response = "Crated"
+            exchange.sendResponseHeaders(200, response.toByteArray().size.toLong())
+            exchange.responseBody.bufferedWriter().use { it.write(response) }
+          }
+          catch (t: Throwable) {
+            handleException(t, exchange)
+          }
+        }
+      }
+
+      server.createContext("/unsubscribe") { exchange ->
+        exchange.use {
+          try {
+            val json = exchange.requestBody.bufferedReader().use(BufferedReader::readText)
+            val subscriberDto = objectMapper.readValue(json, SubscriberDto::class.java)
+            eventsFlowService.unsubscribe(subscriberDto)
+            val response = "Unsubscribed"
             exchange.sendResponseHeaders(200, response.toByteArray().size.toLong())
             exchange.responseBody.bufferedWriter().use { it.write(response) }
           }

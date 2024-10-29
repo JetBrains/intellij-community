@@ -7,12 +7,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.Content
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 /**
  * Describes tabs and toolbar for the [SingleContentLayout].
  */
+@ApiStatus.Internal
 interface SingleContentSupplier {
 
   /**

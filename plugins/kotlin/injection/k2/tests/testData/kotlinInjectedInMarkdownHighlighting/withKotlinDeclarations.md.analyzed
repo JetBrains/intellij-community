@@ -1,0 +1,5 @@
+// INJECTED AT: (0,111)
+class A {
+  class B
+}
+fun functionC(x: Int)

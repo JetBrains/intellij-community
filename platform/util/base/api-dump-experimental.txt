@@ -1,0 +1,2 @@
+*@:com.intellij.openapi.util.NlsSafe
+- java.lang.annotation.Annotation

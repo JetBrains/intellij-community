@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal.block.completion
 import com.intellij.terminal.completion.spec.ShellCommandResult
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import org.jetbrains.plugins.terminal.block.util.ShellCompletionTestFixture
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -37,7 +38,7 @@ internal class ShellCdCommandTest : BasePlatformTestCase() {
   private fun createFixture(files: List<String>, expectedPath: String): ShellCompletionTestFixture {
     return ShellCompletionTestFixture.builder(project)
       .mockShellCommandResults { command ->
-        if (command == "__jetbrains_intellij_get_directory_files $expectedPath") {
+        if (command == "${GET_DIRECTORY_FILES.functionName} $expectedPath") {
           ShellCommandResult.create(files.joinToString("\n"), exitCode = 0)
         }
         else error("Unknown command: $command")

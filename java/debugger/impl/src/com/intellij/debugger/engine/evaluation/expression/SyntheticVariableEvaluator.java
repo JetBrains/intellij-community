@@ -33,7 +33,7 @@ public class SyntheticVariableEvaluator implements Evaluator {
     if (myTypeNameString == null && myTypeName != null) {
       myTypeNameString = myTypeName.getName(context.getDebugProcess());
     }
-    return myCodeFragmentEvaluator.getValue(myLocalName, context.getDebugProcess().getVirtualMachineProxy());
+    return myCodeFragmentEvaluator.getValue(myLocalName, context.getSuspendContext().getVirtualMachineProxy());
   }
 
   @Override

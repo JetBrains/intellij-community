@@ -79,6 +79,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
   private val localLogger: StatisticsEventLogger by lazy { createLocalLogger() }
   private val actualLogger: StatisticsEventLogger by lazy { createLogger() }
+  internal val eventLogSystemLogger: EventLogSystemCollector by lazy { EventLogSystemCollector(this) }
 
   open val logger: StatisticsEventLogger
     get() = if (isLoggingEnabled()) actualLogger else localLogger
@@ -119,7 +120,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     // Use `String?` instead of boolean flag for future expansion with other IDE modes
     val ideMode = if(AppMode.isRemoteDevHost()) "RDH" else null
     val currentProductModeId = ProductLoadingStrategy.strategy.currentModeId
-    val productMode = if (currentProductModeId != ProductMode.LOCAL_IDE.id) {
+    val productMode = if (currentProductModeId != ProductMode.MONOLITH.id) {
       currentProductModeId
     } else if (detectClionNova()) {
       "nova"
@@ -170,7 +171,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
  * */
 abstract class StatisticsEventLoggerProviderExt(recorderId: String, version: Int, sendFrequencyMs: Long,
                                                 maxFileSizeInBytes: Int, sendLogsOnIdeClose: Boolean = false) :
-  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose) {
+  StatisticsEventLoggerProvider(recorderId, version, sendFrequencyMs, maxFileSizeInBytes, sendLogsOnIdeClose, false) {
   override fun isLoggingAlwaysActive(): Boolean = StatisticsEventLogProviderUtil.forceLoggingAlwaysEnabled()
 }
 

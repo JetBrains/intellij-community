@@ -40,7 +40,13 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
   public void testIgnoreNonPublicClasses() {
     final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
     inspection.ignoreNonPublicClasses = true;
+    inspection.ignoreNotFinalField = false;
     myFixture.enableInspections(inspection);
+    changeToWarning();
+    doTest();
+  }
+
+  public void testIgnoreNotFinalField() {
     changeToWarning();
     doTest();
   }
@@ -50,6 +56,8 @@ public class LoggerInitializedWithForeignClassInspectionTest extends LightJavaIn
   protected InspectionProfileEntry getInspection() {
     final LoggerInitializedWithForeignClassInspection inspection = new LoggerInitializedWithForeignClassInspection();
     inspection.ignoreSuperClass = true;
+    String name = getTestName(false);
+    inspection.ignoreNotFinalField = name.endsWith("IgnoreNotFinalField");
     return inspection;
   }
 

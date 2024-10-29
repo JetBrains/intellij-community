@@ -23,10 +23,10 @@ fun Iterable<Double>.median(): Double {
 }
 
 /** @see medianValue */
-fun Iterable<Long>.median(): Long = this.map { it.toDouble() }.median().toLong()
+fun Iterable<Int>.median(): Int = this.map { it.toDouble() }.median().toInt()
 
 /** Returns median (NOT an average) value of a collection */
-fun Iterable<PerformanceMetrics.Metric>.medianValue(): Long = this.map { it.value.toDouble() }.median().toLong()
+fun Iterable<PerformanceMetrics.Metric>.medianValue(): Int = this.map { it.value.toDouble() }.median().toInt()
 
 // TODO: write unit tests
 /**
@@ -42,10 +42,10 @@ fun Iterable<Double>.mad(): Double {
 }
 
 /** @see mad() */
-fun Iterable<Long>.mad(): Long = this.map { it.toDouble() }.mad().toLong()
+fun Iterable<Long>.mad(): Int = this.map { it.toDouble() }.mad().toInt()
 
 /** @see mad() */
-fun Iterable<PerformanceMetrics.Metric>.madValue(): Long = this.map { it.value.toDouble() }.mad().toLong()
+fun Iterable<PerformanceMetrics.Metric>.madValue(): Int = this.map { it.value.toDouble() }.mad().toInt()
 
 /**
  * Calculates the standard deviation (std) - a measure of how spread out numbers are.
@@ -53,26 +53,34 @@ fun Iterable<PerformanceMetrics.Metric>.madValue(): Long = this.map { it.value.t
  *
  * [Standard Deviation](https://en.wikipedia.org/wiki/Standard_deviation)
  */
-fun <T : Number> Iterable<T>.standardDeviation(): Long {
+fun <T : Number> Iterable<T>.standardDeviation(): Int {
   val mean = this.map { it.toDouble() }.average()
-  return sqrt(this.map { (it.toDouble() - mean).pow(2) }.average()).toLong()
+  return sqrt(this.map { (it.toDouble() - mean).pow(2) }.average()).toInt()
 }
 
 /** @see standardDeviation */
-fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Long = this.map { it.value }.standardDeviation()
+fun Iterable<PerformanceMetrics.Metric>.standardDeviationValue(): Int = this.map { it.value }.standardDeviation()
 
 /** @see rangeValue */
-fun Iterable<Long>.range(): Long {
+fun Iterable<Int>.range(): Int {
   val sorted = this.sorted()
   return sorted.last() - sorted.first()
 }
 
 /** Difference between the smallest and the largest values */
-fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Long = this.map { it.value }.range()
+fun Iterable<PerformanceMetrics.Metric>.rangeValue(): Int = this.map { it.value }.range()
 
-// TODO: write unit tests
-/** Calculates [percentile] in the provided collection */
-fun Iterable<Long>.percentile(percentile: Byte): Long {
+/**
+ * Calculates [percentile] in the provided collection.
+ * It will return only the existing data point (not a calculated "middle point" between data points)
+ */
+fun Iterable<Int>.percentile(percentile: Byte): Int {
+  require(percentile in 0..100) { "Percentile must be between 0 and 100" }
+  require(this.count() > 0) { "Cannot calculate percentile because collection is empty" }
+
   val sorted = this.sorted()
-  return sorted[((percentile * sorted.size) / 100.0).roundToInt().coerceIn(sorted.indices)]
+  return sorted[((percentile * (sorted.size - 1)) / 100.0).roundToInt().coerceIn(sorted.indices)]
 }
+
+/** @see percentile */
+fun Iterable<PerformanceMetrics.Metric>.percentileValue(percentile: Byte): Int = this.map { it.value }.percentile(percentile)

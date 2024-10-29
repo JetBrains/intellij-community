@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.relativizer;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -19,37 +18,33 @@ import java.util.stream.Collectors;
  * {@link PathRelativizerService#toRelative} or {@link PathRelativizerService#toFull} with any path.
  */
 final class JavaSdkPathRelativizer implements PathRelativizer {
-  private @Nullable Map<String, String> myJavaSdkPathMap;
+  private final @NotNull Map<String, String> javaSdkPathMap;
 
-  JavaSdkPathRelativizer(@Nullable Set<? extends JpsSdk<?>> javaSdks) {
-    if (javaSdks != null) {
-      myJavaSdkPathMap = javaSdks.stream()
-        .collect(Collectors.toMap(sdk -> {
-          JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
-          return "$JDK_" + (version != null ? version.toString() : "0") + "$";
-        }, sdk -> PathRelativizerService.normalizePath(sdk.getHomePath()), (sdk1, sdk2) -> sdk1));
-    }
+  JavaSdkPathRelativizer(@NotNull Set<? extends JpsSdk<?>> javaSdks) {
+    javaSdkPathMap = javaSdks.stream()
+      .collect(Collectors.toMap(sdk -> {
+        JavaVersion version = JavaVersion.tryParse(sdk.getVersionString());
+        return "$JDK_" + (version == null ? "0" : version.toString()) + "$";
+      }, sdk -> PathRelativizerService.normalizePath(sdk.getHomePath()), (sdk1, sdk2) -> sdk1));
   }
 
   @Override
   public @Nullable String toRelativePath(@NotNull String path) {
-    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
-    Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(entry -> FileUtil.startsWith(path, entry.getValue())).findFirst();
-    if (optionalEntry.isEmpty()) return null;
-
-    Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
-    return javaSdkEntry.getKey() + path.substring(javaSdkEntry.getValue().length());
+    for (Map.Entry<String, String> entry : javaSdkPathMap.entrySet()) {
+      if (FileUtil.startsWith(path, entry.getValue())) {
+        return entry.getKey() + path.substring(entry.getValue().length());
+      }
+    }
+    return null;
   }
 
   @Override
   public @Nullable String toAbsolutePath(@NotNull String path) {
-    if (myJavaSdkPathMap == null || myJavaSdkPathMap.isEmpty()) return null;
-    Optional<Map.Entry<String, String>> optionalEntry = myJavaSdkPathMap.entrySet().stream()
-      .filter(it -> path.startsWith(it.getKey())).findFirst();
-    if (optionalEntry.isEmpty()) return null;
-
-    Map.Entry<String, String> javaSdkEntry = optionalEntry.get();
-    return javaSdkEntry.getValue() + path.substring(javaSdkEntry.getKey().length());
+    for (Map.Entry<String, String> it : javaSdkPathMap.entrySet()) {
+      if (path.startsWith(it.getKey())) {
+        return it.getValue() + path.substring(it.getKey().length());
+      }
+    }
+    return null;
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -18,6 +19,7 @@ import java.lang.management.MemoryType;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class LowMemoryWatcherManager {
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(LowMemoryWatcherManager.class);

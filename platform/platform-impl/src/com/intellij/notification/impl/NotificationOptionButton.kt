@@ -3,12 +3,14 @@ package com.intellij.notification.impl
 
 import com.intellij.ui.components.JBOptionButton
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import javax.swing.Action
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 open class NotificationOptionButton(action: Action?, options: Array<Action>?) : JBOptionButton(action, options) {
   init {
     addSeparator = false

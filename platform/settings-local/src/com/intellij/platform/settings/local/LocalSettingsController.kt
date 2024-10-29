@@ -18,11 +18,6 @@ fun clearCacheStore() {
   serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.clear()
 }
 
-@TestOnly
-internal fun compactCacheStore() {
-  serviceIfCreated<InternalAndCacheStorageManager>()?.storeManager?.compactStore()
-}
-
 private class LocalSettingsController : DelegatedSettingsController {
   private val storageManager = SynchronizedClearableLazy { service<InternalAndCacheStorageManager>() }
 

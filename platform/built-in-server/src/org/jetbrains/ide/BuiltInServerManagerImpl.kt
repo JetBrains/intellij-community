@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ide
 
 import com.intellij.notification.Notification
@@ -41,7 +41,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
   private var portOverride: Int? = null
 
   override val port: Int
-    get() = portOverride ?: server?.port ?: defaultPort
+    get() = portOverride ?: server?.port ?: getDefaultPort()
 
   override val serverDisposable: Disposable?
     get() = server
@@ -118,7 +118,7 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
     }
 
     try {
-      server = BuiltInServer.start(firstPort = defaultPort, portsCount = PORTS_COUNT, tryAnyPort = true)
+      server = BuiltInServer.start(firstPort = getDefaultPort(), portsCount = PORTS_COUNT, tryAnyPort = true)
       bindCustomPorts(server!!)
     }
     catch (e: CancellationException) {
@@ -160,8 +160,12 @@ class BuiltInServerManagerImpl(private val coroutineScope: CoroutineScope) : Bui
 }
 
 // the default port will be occupied by the main IDE instance - define the custom default to avoid searching for a free port
-private val defaultPort: Int
-  get() = SystemProperties.getIntProperty(PROPERTY_RPC_PORT, if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT)
+private fun getDefaultPort(): Int {
+  return SystemProperties.getIntProperty(
+    PROPERTY_RPC_PORT,
+    if (ApplicationManager.getApplication().isUnitTestMode) 64463 else BuiltInServerOptions.DEFAULT_PORT,
+  )
+}
 
 private fun bindCustomPorts(server: BuiltInServer) {
   if (ApplicationManager.getApplication().isUnitTestMode) {

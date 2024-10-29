@@ -15,7 +15,7 @@ import java.awt.event.KeyEvent;
 
 public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   @Override
-  protected boolean isEnabled(AnActionEvent e) {
+  protected boolean isEnabled(@NotNull AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return false;
 
@@ -28,7 +28,7 @@ public class ResumeAction extends XDebuggerActionBase implements DumbAware {
   }
 
   @Override
-  protected boolean isHidden(AnActionEvent event) {
+  protected boolean isHidden(@NotNull AnActionEvent event) {
     if (!PauseAction.isPauseResumeMerged()) {
       return super.isHidden(event);
     }

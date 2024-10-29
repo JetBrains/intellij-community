@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
+import com.intellij.testFramework.TestLoggerKt;
 
 /**
  * @author Roman Chernyatchik
@@ -66,7 +67,9 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
 
     enableDebugMode();
 
-    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite("some suite"));
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite("some suite"));
+    });
   }
 
   public void testPopEmptySuite_NormalMode() {
@@ -75,20 +78,22 @@ public class TestSuiteStackTest extends BaseSMTRunnerTestCase {
 
   public void testPopInconsistentSuite_DebugMode() throws Throwable {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    enableDebugMode();
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      enableDebugMode();
 
-    final String suiteName = mySuite.getName();
+      final String suiteName = mySuite.getName();
 
-    myTestSuiteStack.pushSuite(createSuiteProxy("0"));
-    myTestSuiteStack.pushSuite(mySuite);
-    myTestSuiteStack.pushSuite(createSuiteProxy("2"));
-    myTestSuiteStack.pushSuite(createSuiteProxy("3"));
+      myTestSuiteStack.pushSuite(createSuiteProxy("0"));
+      myTestSuiteStack.pushSuite(mySuite);
+      myTestSuiteStack.pushSuite(createSuiteProxy("2"));
+      myTestSuiteStack.pushSuite(createSuiteProxy("3"));
 
-    assertEquals(4, myTestSuiteStack.getStackSize());
-    assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
+      assertEquals(4, myTestSuiteStack.getStackSize());
+      assertEquals("3", myTestSuiteStack.getCurrentSuite().getName());
 
-    assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite(suiteName));
-    assertEquals(4, myTestSuiteStack.getStackSize());
+      assertThrows(Throwable.class, () -> myTestSuiteStack.popSuite(suiteName));
+      assertEquals(4, myTestSuiteStack.getStackSize());
+    });
   }
 
   public void testPopInconsistentSuite_NormalMode() {

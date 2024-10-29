@@ -26,10 +26,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface PsiFileStub<T extends PsiFile> extends StubElement<T>, UserDataHolder {
-  PsiFileStub[] EMPTY_ARRAY = new PsiFileStub[0];
+  PsiFileStub<?>[] EMPTY_ARRAY = new PsiFileStub[0];
 
   @NotNull
-  StubFileElementType getType();
+  StubFileElementType<?> getType();
 
   @Nullable
   String getInvalidationReason();

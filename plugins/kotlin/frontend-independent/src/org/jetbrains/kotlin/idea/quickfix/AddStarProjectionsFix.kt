@@ -3,8 +3,8 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtUserType
 import org.jetbrains.kotlin.utils.sure
@@ -12,12 +12,11 @@ import org.jetbrains.kotlin.utils.sure
 class AddStarProjectionsFix(
     element: KtUserType,
     private val argumentCount: Int,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtUserType, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtUserType>(element) {
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtUserType,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         assert(element.typeArguments.isEmpty())

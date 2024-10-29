@@ -79,6 +79,7 @@ public final class DfaCallArguments {
         // We assume that even pure call may modify private fields (e.g., to cache something)
         state.flushVariables(v -> v.getQualifier() == qualifier &&
                                   v.getPsiVariable() instanceof PsiMember member &&
+                                  member != method &&
                                   member.hasModifierProperty(PsiModifier.PRIVATE));
       }
       return;

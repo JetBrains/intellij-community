@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import static com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil.getEventLogProvider;
+
 public class ValidationRulesPersistedStorage implements IntellijValidationRulesStorage {
   private static final Logger LOG = Logger.getInstance(ValidationRulesPersistedStorage.class);
 
@@ -33,6 +35,7 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
   private final @NotNull EventLogMetadataPersistence myMetadataPersistence;
   private final @NotNull EventLogMetadataLoader myMetadataLoader;
   private final @NotNull AtomicBoolean myIsInitialized;
+  private final @NotNull EventLogSystemCollector eventLogSystemCollector;
 
   ValidationRulesPersistedStorage(@NotNull String recorderId) {
     myIsInitialized = new AtomicBoolean(false);
@@ -40,7 +43,8 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore = new Semaphore();
     myMetadataPersistence = new EventLogMetadataPersistence(recorderId);
     myMetadataLoader = new EventLogServerMetadataLoader(recorderId);
-    myVersion = loadValidatorsFromLocalCache(recorderId);
+    eventLogSystemCollector = getEventLogProvider(myRecorderId).getEventLogSystemLogger$intellij_platform_statistics();
+    myVersion = loadValidatorsFromLocalCache();
   }
 
   @TestOnly
@@ -52,7 +56,8 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     mySemaphore = new Semaphore();
     myMetadataPersistence = persistence;
     myMetadataLoader = loader;
-    myVersion = loadValidatorsFromLocalCache(recorderId);
+    eventLogSystemCollector = getEventLogProvider(myRecorderId).getEventLogSystemLogger$intellij_platform_statistics();
+    myVersion = loadValidatorsFromLocalCache();
   }
 
   @Override
@@ -60,16 +65,16 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
     return eventsValidators.get(groupId);
   }
 
-  private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
+  private @Nullable String loadValidatorsFromLocalCache() {
     String rawEventsScheme = myMetadataPersistence.getCachedEventsScheme();
     if (rawEventsScheme != null) {
       try {
         String newVersion = updateValidators(rawEventsScheme);
-        EventLogSystemLogger.logMetadataLoad(recorderId, newVersion);
+        eventLogSystemCollector.logMetadataLoaded(newVersion);
         return newVersion;
       }
       catch (EventLogMetadataParseException e) {
-        EventLogSystemLogger.logMetadataErrorOnLoad(myRecorderId, e);
+        eventLogSystemCollector.logMetadataLoadFailed(e);
       }
     }
     return null;
@@ -117,18 +122,18 @@ public class ValidationRulesPersistedStorage implements IntellijValidationRulesS
 
         if (version != null && !StringUtil.equals(version, myVersion)) {
           myVersion = version;
-          EventLogSystemLogger.logMetadataUpdated(myRecorderId, myVersion);
+          eventLogSystemCollector.logMetadataUpdated(myVersion);
         }
       }
     }
     catch (EventLogMetadataLoadException | EventLogMetadataParseException e) {
-      EventLogSystemLogger.logMetadataErrorOnUpdate(myRecorderId, e);
+      eventLogSystemCollector.logMetadataUpdateFailed(e);
     }
   }
 
   @Override
   public void reload() {
-    myVersion = loadValidatorsFromLocalCache(myRecorderId);
+    myVersion = loadValidatorsFromLocalCache();
   }
 
   @Override

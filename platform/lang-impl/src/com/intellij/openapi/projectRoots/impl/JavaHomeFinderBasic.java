@@ -14,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@ApiStatus.Internal
 public class JavaHomeFinderBasic {
   @SuppressWarnings("NonConstantLogger") private final Logger log = Logger.getInstance(getClass());
   private final List<Supplier<? extends Set<String>>> myFinders = new ArrayList<>();
@@ -93,8 +95,7 @@ public class JavaHomeFinderBasic {
     myFinders.add(finder);
   }
 
-  @NotNull
-  public final Set<String> findExistingJdks() {
+  public final @NotNull Set<String> findExistingJdks() {
     Set<String> result = new TreeSet<>();
 
     for (Supplier<? extends Set<String>> action : myFinders) {
@@ -159,7 +160,7 @@ public class JavaHomeFinderBasic {
     }
 
     if (myCheckUsedInstallDirs) {
-      paths.addAll(JdkInstallerStore.getInstance().listJdkInstallHomes());
+      paths.addAll(JdkInstallerStore.Companion.getInstance().listJdkInstallHomes());
     }
 
     if (myCheckConfiguredJdks) {
@@ -205,7 +206,8 @@ public class JavaHomeFinderBasic {
     try (Stream<Path> files = Files.list(folder)) {
       files.forEach(candidate -> {
         for (Path adjusted : listPossibleJdkHomesFromInstallRoot(candidate)) {
-          scanFolder(adjusted, false, result);
+          try { scanFolder(adjusted, false, result); }
+          catch (IllegalStateException ignored) {}
         }
       });
     }
@@ -213,8 +215,7 @@ public class JavaHomeFinderBasic {
     }
   }
 
-  @NotNull
-  protected List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
+  protected @NotNull List<Path> listPossibleJdkHomesFromInstallRoot(@NotNull Path path) {
     return Collections.singletonList(path);
   }
 
@@ -262,8 +263,7 @@ public class JavaHomeFinderBasic {
       .collect(Collectors.toSet());
   }
 
-  @Nullable
-  private Path findSdkManCandidatesDir() {
+  private @Nullable Path findSdkManCandidatesDir() {
     // first, try the special environment variable
     String candidatesPath = mySystemInfo.getEnvironmentVariable("SDKMAN_CANDIDATES_DIR");
     if (candidatesPath != null) {
@@ -368,8 +368,7 @@ public class JavaHomeFinderBasic {
     return safeIsDirectory(javasDir) ? scanAll(javasDir, true) : Collections.emptySet();
   }
 
-  @Nullable
-  private Path findAsdfInstallsDir() {
+  private @Nullable Path findAsdfInstallsDir() {
     // try to use environment variable for custom data directory
     // https://asdf-vm.com/#/core-configuration?id=environment-variables
     String dataDir = mySystemInfo.getEnvironmentVariable("ASDF_DATA_DIR");

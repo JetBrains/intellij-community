@@ -18,6 +18,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+
 import static com.intellij.lang.PsiBuilderUtil.*;
 import static com.intellij.lang.java.parser.BasicJavaParserUtil.*;
 import static com.intellij.psi.impl.source.BasicElementTypes.BASIC_JAVA_COMMENT_OR_WHITESPACE_BIT_SET;
@@ -305,23 +307,37 @@ public class BasicStatementParser {
 
   @NotNull
   private PsiBuilder.Marker parseIfStatement(PsiBuilder builder) {
-    PsiBuilder.Marker statement = builder.mark();
-    builder.advanceLexer();
+    ArrayList<PsiBuilder.Marker> stack = null;
+    PsiBuilder.Marker statement;
+    while (true) {
+      // replaced recursion with iteration plus stack to avoid huge call stack for extremely large else-if chains
+      statement = builder.mark();
+      builder.advanceLexer();
 
-    if (parseExprInParenth(builder)) {
-      PsiBuilder.Marker thenStatement = parseStatement(builder);
-      if (thenStatement == null) {
-        error(builder, JavaPsiBundle.message("expected.statement"));
-      }
-      else if (expect(builder, JavaTokenType.ELSE_KEYWORD)) {
-        PsiBuilder.Marker elseStatement = parseStatement(builder);
-        if (elseStatement == null) {
+      if (parseExprInParenth(builder)) {
+        if (parseStatement(builder) == null) {
           error(builder, JavaPsiBundle.message("expected.statement"));
         }
+        else if (expect(builder, JavaTokenType.ELSE_KEYWORD)) {
+          if (builder.getTokenType() == JavaTokenType.IF_KEYWORD) {
+            if (stack == null) stack = new ArrayList<>();
+            stack.add(statement);
+            continue;
+          }
+          else if (parseStatement(builder) == null) {
+            error(builder, JavaPsiBundle.message("expected.statement"));
+          }
+        }
+      }
+      break;
+    }
+    done(statement, myJavaElementTypeContainer.IF_STATEMENT, myWhiteSpaceAndCommentSetHolder);
+    if (stack != null) {
+      for (int i = stack.size() - 1; i >= 0; i--) {
+        statement = stack.get(i);
+        done(statement, myJavaElementTypeContainer.IF_STATEMENT, myWhiteSpaceAndCommentSetHolder);
       }
     }
-
-    done(statement, myJavaElementTypeContainer.IF_STATEMENT, myWhiteSpaceAndCommentSetHolder);
     return statement;
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.Disposer
@@ -183,10 +184,13 @@ internal class MostCommonUsagePatternsComponent(
             val previewComponent: UsagePreviewComponent?
             if (index < previewComponents.size) {
               previewComponent = previewComponents[index]
-              previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              //maybe readaction
+              writeIntentReadAction {
+                previewComponent.renderCluster(loadedSnippet.usageInfo, loadedSnippet.renderingData)
+              }
             }
             else {
-              previewComponent = create(usageView, loadedSnippet.usageInfo, loadedSnippet.renderingData, this)
+              previewComponent = writeIntentReadAction { create(usageView, loadedSnippet.usageInfo, loadedSnippet.renderingData, this) }
               myMainPanel.add(previewComponent)
               previewComponents.add(previewComponent)
             }

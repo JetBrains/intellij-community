@@ -9,11 +9,13 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class AbstractTraverseWindowAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   protected void doPerform(@NotNull Function<? super Window, ? extends Window> mapWindow) {

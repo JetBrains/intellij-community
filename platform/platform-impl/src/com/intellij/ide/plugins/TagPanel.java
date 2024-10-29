@@ -10,6 +10,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class TagPanel extends NonOpaquePanel {
   private final LinkListener<Object> mySearchListener;
 

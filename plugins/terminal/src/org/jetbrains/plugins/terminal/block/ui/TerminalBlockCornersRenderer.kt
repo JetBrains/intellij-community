@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer
 import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.terminal.BlockTerminalColors
 import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.terminal.block.ui.TerminalUiUtils.toFloatAndScale
 import java.awt.Graphics
@@ -44,6 +43,7 @@ internal class TerminalBlockCornersRenderer private constructor(
     strokeWidth = strokeWidth
   )
 
+  private val separatorRenderer = BlockSeparatorRenderer()
 
   override fun paint(editor: Editor, highlighter: RangeHighlighter, g: Graphics) {
     val topIns = toFloatAndScale(TerminalUi.blockTopInset)
@@ -53,11 +53,12 @@ internal class TerminalBlockCornersRenderer private constructor(
     val cornerToBlock = JBUI.scale(TerminalUi.cornerToBlockInset).toFloat()
     val gap = toFloatAndScale(TerminalUi.blocksGap)
     val arc = toFloatAndScale(TerminalUi.blockArc)
+    val selectionGap = JBUI.scale(TerminalUi.blockSelectionSeparatorGap)
 
     val visibleArea = editor.scrollingModel.visibleArea
     val width = visibleArea.width - cornerToBlock
-    val topY = editor.offsetToXY(highlighter.startOffset).y - topIns
-    val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + bottomIns
+    val topY = editor.offsetToXY(highlighter.startOffset).y - topIns + selectionGap
+    val bottomY = editor.offsetToXY(highlighter.endOffset).y + editor.lineHeight + bottomIns - selectionGap
 
     val topRect = Rectangle2D.Float(0f, topY, width, topIns)
     val bottomRect = Rectangle2D.Float(0f, bottomY - bottomIns, width, bottomIns + gap)
@@ -115,7 +116,7 @@ internal class TerminalBlockCornersRenderer private constructor(
     val g2d = g.create() as Graphics2D
     try {
       g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      g2d.color = editor.colorsScheme.getColor(BlockTerminalColors.DEFAULT_BACKGROUND)
+      g2d.color = TerminalUi.defaultBackground(editor)
       // override the selection with the default terminal background
       g2d.fill(topRect)
       g2d.fill(bottomRect)
@@ -135,5 +136,7 @@ internal class TerminalBlockCornersRenderer private constructor(
     finally {
       g2d.dispose()
     }
+
+    separatorRenderer.paint(editor, highlighter, g)
   }
 }

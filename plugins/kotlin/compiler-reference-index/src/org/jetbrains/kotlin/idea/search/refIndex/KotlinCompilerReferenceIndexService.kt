@@ -47,6 +47,7 @@ import org.jetbrains.kotlin.idea.search.declarationsSearch.searchInheritors
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
@@ -152,10 +153,11 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
     private val projectIfNotDisposed: Project? get() = project.takeUnless(Project::isDisposed)
 
     private fun compilationFinished() {
-        val compiledModules = runReadAction {
+        val (compiledModules, projectPath) = runReadAction {
             projectIfNotDisposed?.let {
                 val manager = ModuleManager.getInstance(it)
-                dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
+                val compiledModules = dirtyScopeHolder.compilationAffectedModules.mapNotNull(manager::findModuleByName)
+                compiledModules to it.basePath
             }
         } ?: return
 
@@ -170,7 +172,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
                 compilerActivityFinished(compiledModules)
             }
 
-            if (activeBuildCount == 0) openStorage()
+            if (activeBuildCount == 0) openStorage(projectPath)
         }
     }
 
@@ -202,13 +204,15 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         closeStorage()
     }
 
-    private fun openStorage() {
+    private fun openStorage(projectPath: String?) {
         if (storage != null) {
             LOG.warn("already opened – will be overridden")
             closeStorage()
         }
 
-        storage = KotlinCompilerReferenceIndexStorage.open(project)
+        storage = projectPath?.let {
+            KotlinCompilerReferenceIndexStorage.open(project, it)
+        }
     }
 
     private fun closeStorage() {
@@ -273,8 +277,10 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
 
         val isFromLibrary = projectFileIndex.isInLibrary(virtualFile)
         originalFqNames.takeIf { isFromLibrary }?.singleOrNull()?.asString()?.let { fqName ->
-            // "Any" is not in the subtypes storage
-            if (fqName.startsWith(CommonClassNames.JAVA_LANG_OBJECT) || fqName.startsWith("kotlin.Any")) {
+            // Kotlin built-in types are not in the subtypes storage
+            if (ALL_BUILT_IN_TYPES.any { fqName.startsWith(it) }) return null
+            // Java Object is also not in the subtypes storage
+            if (fqName.startsWith(CommonClassNames.JAVA_LANG_OBJECT)) {
                 return null
             }
         }
@@ -448,6 +454,7 @@ class KotlinCompilerReferenceIndexService(private val project: Project) : Dispos
         }
 
         private val LOG = logger<KotlinCompilerReferenceIndexService>()
+        private val ALL_BUILT_IN_TYPES = StandardClassIds.allBuiltinTypes.map { it.asFqNameString() }
     }
 }
 

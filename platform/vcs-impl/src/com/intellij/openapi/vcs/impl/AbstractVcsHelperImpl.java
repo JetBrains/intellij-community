@@ -12,6 +12,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -66,10 +67,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.util.List;
@@ -81,12 +79,15 @@ import static com.intellij.util.ui.ConfirmationDialog.requestForConfirmation;
 import static java.text.MessageFormat.format;
 
 public class AbstractVcsHelperImpl extends AbstractVcsHelper {
+  private static final Logger LOG = Logger.getInstance(AbstractVcsHelperImpl.class);
+
   private Consumer<VcsException> myCustomHandler = null;
 
   protected AbstractVcsHelperImpl(@NotNull Project project) {
     super(project);
   }
 
+  @ApiStatus.Internal
   public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull @NlsContexts.TabTitle String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
@@ -611,8 +612,9 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         return change;
       }
     }
-    throw new VcsException(VcsBundle.message("error.cant.load.affected.files.with.limit",
-                                             location, revision.asString(), provider.getUnlimitedCountValue(), changes.size()));
+    LOG.warn(String.format("Cannot load affected files for location '%s' in revision '%s' with limit %s (found %s)",
+                           location, revision.asString(), provider.getUnlimitedCountValue(), changes.size()), new Throwable());
+    throw new VcsException(VcsBundle.message("error.cant.load.affected.files", nonLocal.getPath(), revision.asString()));
   }
 
   @NotNull

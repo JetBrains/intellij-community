@@ -9,8 +9,11 @@ import org.jetbrains.kotlin.idea.vfilefinder.KotlinPartialPackageNamesIndex
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 
 object KotlinPackageIndexUtils {
+    private val falseValueProcessor = FileBasedIndex.ValueProcessor<Name?> { _, _ -> false }
+
     fun getSubPackageFqNames(
         packageFqName: FqName,
         scope: GlobalSearchScope,
@@ -35,13 +38,26 @@ object KotlinPackageIndexUtils {
     fun packageExists(
         packageFqName: FqName,
         searchScope: GlobalSearchScope
-    ): Boolean = !FileBasedIndex.getInstance().processValues(
-        KotlinPartialPackageNamesIndex.NAME,
-        packageFqName,
-        null,
-        FileBasedIndex.ValueProcessor { _, _ -> false },
-        searchScope
-    )
+    ): Boolean {
+        if (certainlyDoesNotExist(packageFqName, searchScope)) return false
+        return !FileBasedIndex.getInstance().processValues(
+            KotlinPartialPackageNamesIndex.NAME,
+            packageFqName,
+            null,
+            falseValueProcessor,
+            searchScope
+        )
+    }
+
+    private fun certainlyDoesNotExist(
+        packageFqName: FqName,
+        searchScope: GlobalSearchScope
+    ): Boolean {
+        val provider = searchScope as? TopPackageNamesProvider ?: return false
+        val topPackageNames = provider.topPackageNames ?: return false
+        val packageFqNameTopLevelPackage = packageFqName.asString().substringBefore(".")
+        return packageFqNameTopLevelPackage !in topPackageNames
+    }
 
     /**
      * Return all direct subpackages of package [fqName].
@@ -52,17 +68,17 @@ object KotlinPackageIndexUtils {
      * Follow the contract of [com.intellij.psi.PsiElementFinder#getSubPackages]
      */
     fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
+        if (certainlyDoesNotExist(fqName, scope)) return emptySet()
+
         val result = hashSetOf<FqName>()
 
-        FileBasedIndex.getInstance().processValues(
-            KotlinPartialPackageNamesIndex.NAME, fqName, null,
-            FileBasedIndex.ValueProcessor { _, subPackageName ->
-                if (subPackageName != null && nameFilter(subPackageName)) {
-                    result.add(fqName.child(subPackageName))
-                }
-                true
-            }, scope
-        )
+        // use getValues() instead of processValues() because the latter visits each file in the package and that could be slow if there are a lot of files
+        val values = FileBasedIndex.getInstance().getValues(KotlinPartialPackageNamesIndex.NAME, fqName, scope)
+        for (subPackageName in values) {
+            if (subPackageName != null && nameFilter(subPackageName)) {
+                result.add(fqName.child(subPackageName))
+            }
+        }
 
         return result
     }

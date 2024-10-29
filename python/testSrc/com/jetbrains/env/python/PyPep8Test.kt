@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel
+import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.jetbrains.env.EnvTestTagsRequired
 import com.jetbrains.env.PyEnvTestCase
 import com.jetbrains.env.PyExecutionFixtureTestTask
@@ -99,7 +102,15 @@ class PyPep8Test : PyEnvTestCase() {
       myFixture.module.pythonSdk = existingSdk
       myFixture.configureByText(PythonFileType.INSTANCE, text)
       myFixture.enableInspections(PyPep8Inspection::class.java)
+      setInspectionHighlightLevelToWeakWarning()
       myFixture.checkHighlighting()
+    }
+
+    private fun setInspectionHighlightLevelToWeakWarning() {
+      val profile = InspectionProfileManager.getInstance(project).currentProfile
+      val shortName = PyPep8Inspection.INSPECTION_SHORT_NAME
+      val displayKey = HighlightDisplayKey.find(shortName)!!
+      profile.setErrorLevel(displayKey, HighlightDisplayLevel.WEAK_WARNING, project)
     }
   }
 }

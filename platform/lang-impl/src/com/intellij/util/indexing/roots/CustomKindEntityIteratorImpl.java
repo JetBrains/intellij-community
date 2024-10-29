@@ -6,10 +6,11 @@ import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.indexing.roots.origin.CustomKindEntityOrigin;
 import com.intellij.util.indexing.roots.origin.CustomKindEntityOriginImpl;
 import com.intellij.util.indexing.roots.origin.IndexingRootHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-
+@ApiStatus.Internal
 public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
 
   public CustomKindEntityIteratorImpl(@NotNull EntityPointer<?> entityPointer,
@@ -24,9 +25,8 @@ public final class CustomKindEntityIteratorImpl extends RootHolderIteratorBase {
           true);
   }
 
-  @NotNull
   @Override
-  public CustomKindEntityOrigin getOrigin() {
+  public @NotNull CustomKindEntityOrigin getOrigin() {
     return new CustomKindEntityOriginImpl(myEntityPointer, roots);
   }
 }

@@ -4,14 +4,14 @@ internal class A {
     val field3: Int = TODO()
     protected val field4: Int = TODO()
 
-    private val field5: List<String> = TODO()
+    private var field5: List<String> = TODO()
     var field6: List<String> = TODO()
 
-    private val field7: Int = TODO()
+    private var field7: Int = TODO()
     var field8: Int = TODO()
 
-    private val field9: String? = TODO()
-    private val field10: String? = TODO()
+    private var field9: String? = TODO()
+    private var field10: String? = TODO()
 
     fun foo(): String {
         TODO()
@@ -27,9 +27,9 @@ internal class A {
 
     var anonymous2: I = TODO()
 
-    private val anonymous3: I = TODO()
+    private var anonymous3: I = TODO()
 
-    private val iimpl: I = TODO()
+    private var iimpl: I = TODO()
 
     fun testAnonymousObject(i: Any?) {
         TODO()

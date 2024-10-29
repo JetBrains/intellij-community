@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.rels;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -18,10 +18,7 @@ import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.IOException;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class LambdaProcessor {
   @SuppressWarnings("SpellCheckingInspection") private static final String JAVAC_LAMBDA_CLASS = "java/lang/invoke/LambdaMetafactory";
@@ -110,6 +107,8 @@ public class LambdaProcessor {
       mt.releaseResources();
     }
 
+    Collections.sort(node.nested);
+
     // build class hierarchy on lambda
     for (ClassNode nd : node.nested) {
       if (nd.type == ClassNode.CLASS_LAMBDA) {
@@ -119,6 +118,7 @@ public class LambdaProcessor {
 
           parent_class.nested.add(nd);
           nd.parent = parent_class;
+          Collections.sort(parent_class.nested);
         }
       }
     }

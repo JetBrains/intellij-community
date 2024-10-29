@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.gradle.toolingExtension.impl.telemetry;
 
-import com.intellij.util.ArrayUtilRt;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
@@ -33,6 +32,7 @@ public final class GradleOpenTelemetry {
   private @NotNull OpenTelemetry myOpenTelemetry = OpenTelemetry.noop();
   private @Nullable Scope myScope = null;
   private @Nullable FilteringSpanDataCollector mySpanDataCollector = null;
+  private @NotNull GradleTelemetryFormat myFormat = GradleTelemetryFormat.PROTOBUF;
 
   public void start(@NotNull GradleTracingContext context) {
     mySpanDataCollector = new FilteringSpanDataCollector();
@@ -47,6 +47,7 @@ public final class GradleOpenTelemetry {
       .build();
 
     myScope = injectTracingContext(myOpenTelemetry, context);
+    myFormat = getRequestedTelemetryFormat(context);
   }
 
   public @NotNull OpenTelemetry getTelemetry() {
@@ -89,7 +90,7 @@ public final class GradleOpenTelemetry {
     });
   }
 
-  public byte[] shutdown() {
+  public @NotNull TelemetryHolder shutdown() {
     try {
       if (myScope != null) {
         myScope.close();
@@ -101,13 +102,14 @@ public final class GradleOpenTelemetry {
       if (mySpanDataCollector != null) {
         Collection<SpanData> collectedSpans = mySpanDataCollector.getCollectedSpans();
         mySpanDataCollector.clear();
-        return SpanDataSerializer.serialize(collectedSpans);
+        byte[] serialized = SpanDataSerializer.serialize(collectedSpans, myFormat);
+        return new TelemetryHolder(myFormat, serialized);
       }
     }
     catch (Exception e) {
       // ignore
     }
-    return ArrayUtilRt.EMPTY_BYTE_ARRAY;
+    return TelemetryHolder.empty();
   }
 
   private static @NotNull Scope injectTracingContext(@NotNull OpenTelemetry telemetry, @NotNull GradleTracingContext context) {
@@ -116,5 +118,19 @@ public final class GradleOpenTelemetry {
       .getTextMapPropagator()
       .extract(Context.current(), context, GradleTracingContext.GETTER)
       .makeCurrent();
+  }
+
+  private static @NotNull GradleTelemetryFormat getRequestedTelemetryFormat(@NotNull GradleTracingContext context) {
+    String requestedFormat = context.get(GradleTracingContext.REQUESTED_FORMAT_KEY);
+    if (requestedFormat == null) {
+      return GradleTelemetryFormat.PROTOBUF;
+    }
+    try {
+      return GradleTelemetryFormat.valueOf(requestedFormat);
+    }
+    catch (Exception e) {
+      // ignore
+      return GradleTelemetryFormat.PROTOBUF;
+    }
   }
 }

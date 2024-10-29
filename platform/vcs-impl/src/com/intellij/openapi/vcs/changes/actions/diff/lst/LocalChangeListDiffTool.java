@@ -11,9 +11,11 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class LocalChangeListDiffTool {
   public static final Key<Boolean> ALLOW_EXCLUDE_FROM_COMMIT = Key.create("Diff.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT");
 

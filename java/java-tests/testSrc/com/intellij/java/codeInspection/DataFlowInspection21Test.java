@@ -53,11 +53,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testPatterns() {
     doTest();
   }
-  
+
   public void testDeconstructionNullability() {
     doTest();
   }
-  
+
   public void testUnnamedPatterns() {
     doTest();
   }
@@ -77,11 +77,11 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testNewStringWrongEquals() { doTest(); }
 
   public void testSwitchWhenReturnBoolean() { doTest(); }
-  
+
   public void testSkipSwitchExpressionWithThrow() { doTest(); }
 
   public void testStringTemplates() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    setupTypeUseAnnotations("typeUse", myFixture);
     doTest();
   }
 
@@ -95,6 +95,7 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
   public void testWhenPatterns() {
     doTest();
   }
+  public void testPrecalculatedTrimValue() { doTest(); }
   public void testSwitchNullability() {
     doTest();
   }
@@ -130,6 +131,13 @@ public class DataFlowInspection21Test extends DataFlowInspectionTestCase {
 
   public void testArrayElementWrappedInPureMethod() { doTest(); }
   public void testArrayAddedIntoCollection() { doTest(); }
-  
+
   public void testInstanceOfPatternAffectNullity() { doTest(); }
+
+  public void testNullabilityInEnumSwitch() { doTest(); }
+
+  public void testJetBrainsNotNullByDefault() {
+    addJetBrainsNotNullByDefault(myFixture);
+    doTest();
+  }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
@@ -36,6 +36,13 @@ public abstract class ApplicationInfo {
 
   public abstract String getMajorVersion();
 
+  /**
+   * The application's minor version string.
+   * <p><b>Might include several numbers, do not try parsing this as an integer!</b></p>
+   * <p><b>Example:</b> for IDE version 2024.2.1, <code>getMinorVersion()</code> might return <code>"2.1"</code> for some products.</p>
+   *
+   * @see #getMinorVersionMainPart()
+   */
   public abstract String getMinorVersion();
 
   public abstract String getMicroVersion();
@@ -117,13 +124,6 @@ public abstract class ApplicationInfo {
     }
     ApplicationInfo info = getInstance();
     return info != null && info.hasContextHelp();
-  }
-
-  /** @deprecated use {@link #getBuild()} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public String getBuildNumber() {
-    return getBuild().asString();
   }
 
   public boolean isEAP() {

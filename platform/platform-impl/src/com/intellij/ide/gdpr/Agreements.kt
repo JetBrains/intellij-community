@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Agreements")
+@file:ApiStatus.Internal
 
 package com.intellij.ide.gdpr
 
@@ -16,6 +17,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.AppUIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 import kotlin.system.exitProcess
@@ -47,12 +49,7 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
 
     checkBox(
       text = bundle.getString("userAgreement.dialog.checkBox"),
-      action = { checkBox ->
-        enableAcceptButton(checkBox.isSelected)
-        if (checkBox.isSelected) {
-          focusToAcceptButton()
-        }
-      }
+      action = { checkBox -> enableAcceptButton(checkBox.isSelected) }
     )
 
     if (ApplicationInfoImpl.getShadowInstance().isEAP && !isReleaseAgreementsEnabled()) {
@@ -84,7 +81,8 @@ fun showEndUserAndDataSharingAgreements(agreement: EndUserAgreement.Document) {
   }
 }
 
-internal fun showDataSharingAgreement() {
+@ApiStatus.Internal
+fun showDataSharingAgreement() {
   showAgreementUi {
     configureDataSharing(bundle = DynamicBundle.getResourceBundle(this::class.java.classLoader, "messages.AgreementsBundle", Locale.getDefault()))
   }

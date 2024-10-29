@@ -107,7 +107,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     Assertions.assertEquals(projectSettings.externalProjectPath, externalProjectPath)
     Assertions.assertTrue(settings.storeProjectFilesExternally)
     Assertions.assertTrue(projectSettings.isResolveModulePerSourceSet)
-    Assertions.assertTrue(projectSettings.isResolveExternalAnnotations)
+    Assertions.assertFalse(projectSettings.isResolveExternalAnnotations)
     Assertions.assertTrue(projectSettings.delegatedBuild)
     Assertions.assertEquals(TestRunner.GRADLE, projectSettings.testRunner)
     Assertions.assertTrue(projectSettings.isUseQualifiedModuleNames)

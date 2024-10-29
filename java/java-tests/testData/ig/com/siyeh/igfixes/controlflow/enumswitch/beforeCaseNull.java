@@ -1,4 +1,4 @@
-// "Create missing branches: 'B', and 'D'" "true"
+// "Create missing branches 'B' and 'D'" "true"
 enum Foo { A, B, C, D, E }
 
 class Test {

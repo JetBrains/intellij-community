@@ -5,7 +5,9 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MultiLaunchRunRunner : ProgramRunner<RunnerSettings> {
   override fun getRunnerId() = "MultiLaunchRunRunner"
 

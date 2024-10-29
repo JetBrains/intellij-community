@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,7 +81,7 @@ import java.util.Objects;
  *
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
-final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, ImageComponentDecorator, Disposable {
+final class ImageEditorUI extends JPanel implements UiDataProvider, CopyProvider, ImageComponentDecorator, Disposable {
   @NonNls
   private static final String IMAGE_PANEL = "image";
   @NonNls
@@ -594,53 +595,34 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return editor != null ? editor.getProject() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      return editor != null ? editor.getFile() : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return editor != null ? new VirtualFile[]{editor.getFile()} : VirtualFile.EMPTY_ARRAY;
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return this;
-    }
-    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {
-      return copyPasteSupport.getCutProvider();
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return deleteProvider;
-    }
-    else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return editor != null ? editor : this;
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return (DataProvider)slowId -> getSlowData(slowId);
-    }
-    return null;
-  }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(DATA_KEY, editor != null ? editor : this);
+    if (editor == null) return;
+    Project project = editor.getProject();
+    VirtualFile file = editor.getFile();
 
-  private @Nullable Object getSlowData(@NotNull String dataId) {
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return findPsiFile();
+    sink.set(CommonDataKeys.PROJECT, project);
+    sink.set(CommonDataKeys.VIRTUAL_FILE, file);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, new VirtualFile[]{file});
+    sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+    if (copyPasteSupport != null) {
+      sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteSupport.getCutProvider());
     }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return findPsiFile();
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      PsiElement psi = findPsiFile();
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, deleteProvider);
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      return findPsiFile(project, file);
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      PsiElement psi = findPsiFile(project, file);
       return psi != null ? new PsiElement[]{psi} : PsiElement.EMPTY_ARRAY;
-    }
-    return null;
+    });
   }
 
-  @Nullable
-  private PsiFile findPsiFile() {
-    VirtualFile file = editor != null ? editor.getFile() : null;
-    return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
+  private static @Nullable PsiFile findPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
+    return file.isValid() ? PsiManager.getInstance(project).findFile(file) : null;
   }
 
   @Override

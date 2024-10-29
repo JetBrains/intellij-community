@@ -1,12 +1,25 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.ether;
 
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.util.Set;
+
 public class ClassPropertyTest extends IncrementalTestCase {
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addImplementsPatternMatching");
+
   public ClassPropertyTest() {
     super("classProperties");
+  }
+
+  @Override
+  protected boolean shouldRunTest() {
+    if (JavaBuilderUtil.isDepGraphEnabled()) {
+      return super.shouldRunTest();
+    }
+    return !GRAPH_ONLY_TESTS.contains(getTestName(true));
   }
 
   public void testAddExtends() {
@@ -14,6 +27,10 @@ public class ClassPropertyTest extends IncrementalTestCase {
   }
 
   public void testAddImplements() {
+    doTest();
+  }
+
+  public void testAddImplementsPatternMatching() {
     doTest();
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util;
 
@@ -38,6 +38,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,7 @@ public class DirectoryChooser extends DialogWrapper {
     this(project, new DirectoryChooserModuleTreeView(project));
   }
 
+  @ApiStatus.Internal
   public DirectoryChooser(@NotNull Project project, @NotNull DirectoryChooserView view){
     super(project, true);
     myView = view;
@@ -257,8 +259,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private static String concat(String[] strings, int headLimit, int tailLimit) {
+  private static @Nullable String concat(String[] strings, int headLimit, int tailLimit) {
     if (strings.length <= headLimit + tailLimit) return null;
     StringBuilder buffer = new StringBuilder();
     String separator = "";
@@ -284,7 +285,7 @@ public class DirectoryChooser extends DialogWrapper {
     return list.toArray(new PathFragment[0]);
   }
 
-  private static abstract class FragmentBuilder {
+  private abstract static class FragmentBuilder {
     private final ArrayList<String[]> myPaths;
     private final StringBuffer myBuffer = new StringBuffer();
     private int myIndex;
@@ -297,8 +298,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     public int getIndex() { return myIndex; }
 
-    @Nullable
-    public String execute() {
+    public @Nullable String execute() {
       while (true) {
         String commonHead = getCommonFragment(myIndex);
         if (commonHead == null) break;
@@ -311,8 +311,7 @@ public class DirectoryChooser extends DialogWrapper {
 
     protected abstract void append(String fragment, StringBuffer buffer);
 
-    @Nullable
-    private String getCommonFragment(int count) {
+    private @Nullable String getCommonFragment(int count) {
       String commonFragment = null;
       for (String[] path : myPaths) {
         int index = getFragmentIndex(path, count);
@@ -545,8 +544,7 @@ public class DirectoryChooser extends DialogWrapper {
     }
   }
 
-  @Nullable
-  private static PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
+  private static @Nullable PsiDirectory getDefaultSelection(PsiDirectory[] directories, Project project) {
     final String defaultSelectionPath = PropertiesComponent.getInstance(project).getValue(DEFAULT_SELECTION);
     if (defaultSelectionPath != null) {
       final VirtualFile directoryByDefault = LocalFileSystem.getInstance().findFileByPath(defaultSelectionPath);
@@ -572,8 +570,7 @@ public class DirectoryChooser extends DialogWrapper {
                        (selectedTab == myByFilePanel.getPanel() || myByClassPanel != null && selectedTab == myByClassPanel.getPanel() || myView.getSelectedItem() != null));
   }
 
-  @Nullable
-  public PsiDirectory getSelectedDirectory() {
+  public @Nullable PsiDirectory getSelectedDirectory() {
     if (mySelection != null) {
       final PsiFile file = mySelection.getContainingFile();
       if (file != null){

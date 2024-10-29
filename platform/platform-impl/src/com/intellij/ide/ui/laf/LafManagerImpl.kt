@@ -39,7 +39,6 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.popup.ListSeparator
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
@@ -47,8 +46,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl
 import com.intellij.platform.diagnostic.telemetry.impl.span
-import com.intellij.platform.ide.bootstrap.createBaseLaF
 import com.intellij.ui.*
+import com.intellij.ui.dsl.listCellRenderer.listCellRenderer
 import com.intellij.ui.mac.MacFullScreenControlsManager
 import com.intellij.ui.popup.HeavyWeightPopup
 import com.intellij.ui.scale.JBUIScale.getFontScale
@@ -73,12 +72,15 @@ import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Supplier
 import javax.swing.*
 import javax.swing.plaf.FontUIResource
 import javax.swing.plaf.UIResource
+import javax.swing.plaf.basic.BasicLookAndFeel
 
 // A constant from Mac OS X implementation. See CPlatformWindow.WINDOW_ALPHA
 private const val WINDOW_ALPHA = "Window.alpha"
@@ -121,7 +123,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   private var preferredDarkEditorSchemeId: String? = null
 
   private val storedDefaults = HashMap<String?, MutableMap<String, Any?>>()
-  private val lafComboBoxModel = SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> {
+  private val lafComboBoxModel = SynchronizedClearableLazy {
     LafComboBoxModel(ThemeListProvider.getInstance().getShownThemes())
   }
 
@@ -163,7 +165,7 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
 
   override fun getDefaultLightLaf(): UIThemeLookAndFeelInfo = getDefaultLaf(isDark = false)
 
-  override fun getDefaultDarkLaf() = getDefaultLaf(isDark = true)
+  override fun getDefaultDarkLaf(): UIThemeLookAndFeelInfo = getDefaultLaf(isDark = true)
 
   @Suppress("removal")
   override fun addLafManagerListener(listener: LafManagerListener) {
@@ -188,7 +190,8 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     }
   }
 
-  internal suspend fun applyInitState() {
+  @Internal
+  suspend fun applyInitState() {
     span("laf initialization in EDT", RawSwingDispatcher) {
       initInEdt()
     }
@@ -492,8 +495,22 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
     LafReference(it.name, it.id)
   }
 
-  override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> =
-    LafCellRenderer(lafComboBoxModel.value as? LafComboBoxModel, component)
+  override fun getLookAndFeelCellRenderer(component: JComponent): ListCellRenderer<LafReference> {
+    return listCellRenderer {
+      text(value.name)
+      if (value.themeId.isEmpty()) {
+        separator { }
+      }
+      else {
+        val groupWithSameFirstItem = lafComboBoxModel.value.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
+        if (groupWithSameFirstItem != null) {
+          separator {
+            text = groupWithSameFirstItem.title
+          }
+        }
+      }
+    }
+  }
 
   override fun createSettingsToolbar(): JComponent {
     val group = DefaultActionGroup(PreferredLafAndSchemeAction())
@@ -1034,24 +1051,6 @@ class LafManagerImpl(private val coroutineScope: CoroutineScope) : LafManager(),
   }
 }
 
-private class LafCellRenderer(private val model: LafComboBoxModel?, component: JComponent) : GroupedComboBoxRenderer<LafReference>(component) {
-  override fun getText(item: LafReference): String {
-    return item.name
-  }
-
-  override fun separatorFor(value: LafReference): ListSeparator? {
-    model ?: return null
-    if (value.themeId.isEmpty()) return ListSeparator()
-
-    val groupWithSameFirstItem = model.groupedThemes.infos.firstOrNull { value.themeId == it.items.firstOrNull()?.id }
-    if (groupWithSameFirstItem != null) {
-      return ListSeparator(groupWithSameFirstItem.title)
-    }
-
-    return null
-  }
-}
-
 private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory() {
   companion object {
     const val WEIGHT_LIGHT: Int = 0
@@ -1081,7 +1080,7 @@ private class OurPopupFactory(private val delegate: PopupFactory) : PopupFactory
       val info = try {
         MouseInfo.getPointerInfo()
       }
-      catch (e: InternalError) {
+      catch (_: InternalError) {
         // http://www.jetbrains.net/jira/browse/IDEADEV-21390
         // may happen under Mac OSX 10.5
         return Point(x, y)
@@ -1187,25 +1186,32 @@ private fun patchHiDPI(defaults: UIDefaults) {
                                 "Slider.verticalSize",
                                 "Slider.minimumHorizontalSize",
                                 "Slider.minimumVerticalSize")
-  for (entry in defaults.entries) {
-    val value = entry.value
-    val key = entry.key.toString()
+  val valuesToScale = mutableMapOf<Any, () -> Any>()
+  // Concurrent creation of UI components can lead to the modification of the 'defaults' map.
+  // To avoid ConcurrentModificationException-s, we perform the iteration under lock ('forEach' uses it internally).
+  // And to avoid a potential deadlock, we scale the values in a separate pass (deadlock is possible as scaling itself can use UIDefaults:
+  // JBUIScale.scale → computeUserScaleFactor → computeSystemScaleFactor → getSystemFontData → computeSystemFontData → UIManager.getFont)
+  defaults.forEach { key, value ->
+    val keyAsString = key.toString()
     if (value is Dimension) {
-      if (value is UIResource || dimensionKeys.contains(key)) {
-        entry.setValue(JBDimension.size(value).asUIResource())
+      if (value is UIResource || dimensionKeys.contains(keyAsString)) {
+        valuesToScale[key] = { JBDimension.size(value).asUIResource() }
       }
     }
     else if (value is Insets) {
       if (value is UIResource) {
-        entry.setValue(JBInsets.create((value as Insets)).asUIResource())
+        valuesToScale[key] = { JBInsets.create((value as Insets)).asUIResource() }
       }
     }
     else if (value is Int) {
-      if (key.endsWith(".maxGutterIconWidth") || intKeys.contains(key)) {
+      if (keyAsString.endsWith(".maxGutterIconWidth") || intKeys.contains(keyAsString)) {
         val normValue = (value / prevScale).toInt()
-        entry.setValue(Integer.valueOf(scale(normValue)))
+        valuesToScale[key] = { Integer.valueOf(scale(normValue)) }
       }
     }
+  }
+  for ((key, valueSupplier) in valuesToScale) {
+    defaults.put(key, valueSupplier())
   }
   defaults.put("hidpi.scaleFactor", scale(1f))
 }
@@ -1220,7 +1226,7 @@ private fun patchRowHeight(defaults: UIDefaults, key: String, prevScale: Float) 
   defaults.put(key, if (custom >= 0) scale(custom) else if (rowHeight <= 0) 0 else scale((rowHeight / prevScale).toInt()))
 }
 
-fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
+private fun intSystemPropertyValue(name: String, defaultValue: Int): Int = runCatching {
   System.getProperty(name)?.toInt() ?: defaultValue
 }.getOrNull() ?: defaultValue
 
@@ -1307,9 +1313,12 @@ private fun applyDensityOnUpdateUi(uiDefaults: UIDefaults) {
   }
 
   if (newDensity == UIDensity.COMPACT) {
-    val compactValues = uiDefaults.asSequence()
-      .filter { (it.key as? String?)?.endsWith(".compact") == true }
-      .associate { (it.key as String).removeSuffix(".compact") to it.value }
+    val compactValues = mutableMapOf<String, Any>()
+    uiDefaults.forEach { key, value ->
+      if ((key as? String?)?.endsWith(".compact") == true) {
+        compactValues[key.removeSuffix(".compact")] = value
+      }
+    }
     uiDefaults.putAll(compactValues)
   }
 }
@@ -1361,14 +1370,13 @@ private fun installMacosXFonts(defaults: UIDefaults) {
   @Suppress("SpellCheckingInspection") val face = "Helvetica Neue"
   // ui font
   initFontDefaults(defaults, getFont(face, 13, Font.PLAIN))
-  for (key in java.util.List.copyOf(defaults.keys)) {
-    if (key !is String || !key.endsWith("font", ignoreCase = true)) {
-      continue
+  defaults.replaceAll { key, value ->
+    if (key is String && key.endsWith("font", ignoreCase = true) && !key.contains("Menu") &&
+        value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif")) {
+      getFont(face, value.size, value.style)
     }
-
-    val value = defaults.get(key)
-    if (value is FontUIResource && (value.family == "Lucida Grande" || value.family == "Serif") && !key.toString().contains("Menu")) {
-      defaults.put(key, getFont(face, value.size, value.style))
+    else {
+      value
     }
   }
   defaults.put("TableHeader.font", getFont(face, 11, Font.PLAIN))

@@ -2,9 +2,11 @@
 package com.intellij.execution.impl;
 
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ValidationResult {
   private final @Nls String myMessage;
   private final @NlsContexts.DialogTitle String myTitle;

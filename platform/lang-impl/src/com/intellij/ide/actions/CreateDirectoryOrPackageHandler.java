@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -33,26 +33,26 @@ import java.io.File;
 import java.util.StringTokenizer;
 
 public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
-  @Nullable private final Project myProject;
-  @NotNull private final PsiDirectory myDirectory;
+  private final @Nullable Project myProject;
+  private final @NotNull PsiDirectory myDirectory;
   private final boolean myIsDirectory;
-  @Nullable private PsiFileSystemItem myCreatedElement = null;
-  @NotNull private final String myDelimiters;
-  @Nullable private final Component myDialogParent;
+  private @Nullable PsiFileSystemItem myCreatedElement = null;
+  private final @NotNull String myDelimiters;
+  private final @Nullable Component myDialogParent;
   private @NlsContexts.DetailedDescription String myErrorText;
   private @NlsContexts.DetailedDescription String myWarningText;
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
                                          boolean isDirectory,
-                                         @NotNull final String delimiters) {
+                                         final @NotNull String delimiters) {
     this(project, directory, isDirectory, delimiters, null);
   }
 
   public CreateDirectoryOrPackageHandler(@Nullable Project project,
                                          @NotNull PsiDirectory directory,
                                          boolean isDirectory,
-                                         @NotNull final String delimiters,
+                                         final @NotNull String delimiters,
                                          @Nullable Component dialogParent) {
     myProject = project;
     myDirectory = directory;
@@ -180,8 +180,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     return myCreatedElement != null;
   }
 
-  @Nullable
-  private Boolean suggestCreatingFileInstead(String subDirName) {
+  private @Nullable Boolean suggestCreatingFileInstead(String subDirName) {
     Boolean createFile = false;
     if (StringUtil.countChars(subDirName, '.') == 1 && Registry.is("ide.suggest.file.when.creating.filename.like.directory")) {
       if (findFileTypeBoundToName(subDirName) != null) {
@@ -205,8 +204,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     return createFile;
   }
 
-  @Nullable
-  public static FileType findFileTypeBoundToName(String name) {
+  public static @Nullable FileType findFileTypeBoundToName(String name) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
     return fileType instanceof UnknownFileType ? null : fileType;
   }
@@ -255,8 +253,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     myCreatedElement = DirectoryUtil.createSubdirectories(subDirName, myDirectory, myDelimiters);
   }
 
-  @Nullable
-  public PsiFileSystemItem getCreatedElement() {
+  public @Nullable PsiFileSystemItem getCreatedElement() {
     return myCreatedElement;
   }
 }

@@ -15,7 +15,7 @@ import com.intellij.execution.multilaunch.servicesView.actions.configuration.Run
 import com.intellij.execution.multilaunch.servicesView.actions.configuration.StopMultiLaunchAction
 import javax.swing.JComponent
 
-class ConfigurationServiceContributor(
+class ConfigurationServiceContributor internal constructor(
   private val model: MultiLaunchExecutionModel
 ) : ServiceViewProvidingContributor<ExecutableExecutionModel, MultiLaunchExecutionModel> {
   override fun getViewDescriptor(project: Project) = object : SimpleServiceViewDescriptor(model.configuration.name, model.configuration.icon) {

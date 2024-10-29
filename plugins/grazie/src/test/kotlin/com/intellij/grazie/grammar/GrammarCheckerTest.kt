@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.grammar
 
+import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.grazie.jlanguage.Lang
 import org.junit.Assert
 import org.junit.Test
 
@@ -76,5 +78,15 @@ class GrammarCheckerTest : GrazieTestBase() {
     fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"))
     fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"))
     fixes[3].assertTypoIs(IntRange(5, 7), listOf("is"))
+  }
+
+  @Test
+  fun `test German text`() {
+    val text = listOf("Es ist jetzt 15:30 Uhr.")
+    assertEmpty(check(plain(text)))
+
+    GrazieConfig.update { it.copy(enabledLanguages = setOf(Lang.AMERICAN_ENGLISH, Lang.SWISS_GERMAN)) }
+    psiManager.dropPsiCaches()
+    assertOneElement(check(plain(text))).assertTypoIs(IntRange(15, 15), listOf("."))
   }
 }

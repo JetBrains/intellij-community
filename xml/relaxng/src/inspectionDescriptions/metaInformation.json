@@ -1,0 +1,8 @@
+{
+  "inspections": [
+    {
+      "id": "UnresolvedReference",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

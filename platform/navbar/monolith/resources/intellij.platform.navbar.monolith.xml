@@ -4,7 +4,6 @@
     <module name="intellij.platform.navbar.backend"/>
   </dependencies>
   <extensions defaultExtensionNs="com.intellij">
-    <!--suppress PluginXmlValidity -->
     <projectService serviceInterface="com.intellij.platform.navbar.frontend.NavBarServiceDelegate"
                     serviceImplementation="com.intellij.platform.navbar.monolith.MonolithNavbarServiceDelegate"/>
   </extensions>

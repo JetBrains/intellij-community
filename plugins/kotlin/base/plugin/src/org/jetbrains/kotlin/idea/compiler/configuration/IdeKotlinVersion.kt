@@ -11,7 +11,11 @@ import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
+import org.jetbrains.kotlin.library.KLIB_MANIFEST_FILE_NAME
+import org.jetbrains.kotlin.library.KLIB_PROPERTY_COMPILER_VERSION
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.toLowerCaseAsciiOnly
+import java.io.IOException
+import java.util.Properties
 import java.util.jar.Attributes
 
 /**
@@ -66,6 +70,22 @@ class IdeKotlinVersion private constructor(
             // "Implementation-Version" in MANIFEST.MF is sometimes written as '1.5.31-release-548(1.5.31)'
             val rawVersion = unprocessedVersion.substringBefore('(').trim()
             return opt(rawVersion)
+        }
+
+        @JvmStatic
+        fun fromKLibManifest(jarFile: VirtualFile): IdeKotlinVersion? {
+            val root = if (jarFile is FsRoot) jarFile else JarFileSystem.getInstance().getJarRootForLocalFile(jarFile) ?: return null
+            val properties = root.children.firstNotNullOfOrNull { klibManifestProperties(it) } ?: return null
+            return (properties[KLIB_PROPERTY_COMPILER_VERSION] as? String)?.let(::opt)
+        }
+
+        fun klibManifestProperties(componentFile: VirtualFile): Properties? {
+            val manifestFile = componentFile.findChild(KLIB_MANIFEST_FILE_NAME)?.takeIf { !it.isDirectory } ?: return null
+            return try {
+                manifestFile.inputStream.use { Properties().apply { load(it) } }
+            } catch (_: IOException) {
+                return null
+            }
         }
 
         private fun parseKind(kindSuffix: String, prefix: String, factory: (Int?) -> Kind): Kind? {

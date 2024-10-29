@@ -2,8 +2,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionFamilyName
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -11,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.project.builtIns
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.*
@@ -21,21 +24,30 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameOrNull
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 
-class ChangeToMutableCollectionFix(property: KtProperty, private val type: String) : KotlinQuickFixAction<KtProperty>(property) {
-    override fun getText() = KotlinBundle.message("fix.change.to.mutable.type", "Mutable$type")
+class ChangeToMutableCollectionFix(property: KtProperty, context: ElementContext) :
+    KotlinPsiUpdateModCommandAction.ElementBased<KtProperty, ChangeToMutableCollectionFix.ElementContext>(property, context) {
 
-    override fun getFamilyName() = text
+    class ElementContext(
+        val typeName: String,
+    )
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val property = element ?: return
+    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation {
+        val elementContext = getElementContext(context, element)
+        return Presentation.of(KotlinBundle.message("fix.change.to.mutable.type.text", "Mutable${elementContext.typeName}"))
+    }
+
+    override fun getFamilyName(): @IntentionFamilyName String = KotlinBundle.message("fix.change.to.mutable.type.family")
+
+    override fun invoke(actionContext: ActionContext, element: KtProperty, elementContext: ElementContext, updater: ModPsiUpdater) {
+        val property = element
         val context = property.analyze(BodyResolveMode.PARTIAL)
         val type = property.initializer?.getType(context) ?: return
         applyFix(property, type)
-        editor?.caretModel?.moveToOffset(property.endOffset)
+        updater.moveCaretTo(property.endOffset)
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtProperty>? {
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? {
             val element = Errors.NO_SET_METHOD.cast(diagnostic).psiElement as? KtArrayAccessExpression ?: return null
             val arrayExpr = element.arrayExpression ?: return null
             val context = arrayExpr.analyze(BodyResolveMode.PARTIAL)
@@ -44,7 +56,7 @@ class ChangeToMutableCollectionFix(property: KtProperty, private val type: Strin
             val property = arrayExpr.mainReference?.resolve() as? KtProperty ?: return null
             if (!isApplicable(property)) return null
             val typeName = type.constructor.declarationDescriptor?.name?.asString() ?: return null
-            return ChangeToMutableCollectionFix(property, typeName)
+            return ChangeToMutableCollectionFix(property, ElementContext(typeName)).asIntention()
         }
 
         private fun KotlinType.isReadOnlyListOrMap(builtIns: KotlinBuiltIns): Boolean {

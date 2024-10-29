@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -33,20 +33,20 @@ import java.util.*;
 public final class BuildOperations {
   private BuildOperations() { }
 
-  public static void ensureFSStateInitialized(CompileContext context, BuildTarget<?> target, boolean readOnly) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
-    final BuildTargetConfiguration configuration = pd.getTargetsState().getTargetConfiguration(target);
+  public static void ensureFSStateInitialized(@NotNull CompileContext context, @NotNull BuildTarget<?> target, boolean readOnly) throws IOException {
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    BuildTargetConfiguration configuration = projectDescriptor.getTargetsState().getTargetConfiguration(target);
     if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-      FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, true, null, null);
-      pd.fsState.markInitialScanPerformed(target);
+      StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
+      FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, true, null, null);
+      projectDescriptor.fsState.markInitialScanPerformed(target);
       if (!readOnly) {
         configuration.save(context);
       }
     }
     else {
       boolean isTargetDirty = false;
-      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!pd.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
+      if (context.getScope().isBuildForced(target) || (isTargetDirty = configuration.isTargetDirty(context.getProjectDescriptor())) || (!projectDescriptor.getBuildRootIndex().getTargetRoots(target, context).isEmpty() && configuration.outputRootWasDeleted(context))) {
         if (isTargetDirty) {
           configuration.logDiagnostics(context);
         }
@@ -56,72 +56,77 @@ public final class BuildOperations {
             // case when target build is forced, is handled separately
             IncProjectBuilder.clearOutputFiles(context, target);
           }
-          pd.dataManager.cleanTargetStorages(target);
+          projectDescriptor.dataManager.cleanTargetStorages(target);
           configuration.save(context);
         }
       }
-      else if (!pd.fsState.isInitialScanPerformed(target)) {
+      else if (!projectDescriptor.fsState.isInitialScanPerformed(target)) {
         initTargetFSState(context, target, false);
       }
     }
   }
 
   private static void initTargetFSState(CompileContext context, BuildTarget<?> target, final boolean forceMarkDirty) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
     Set<File> currentFiles = FileCollectionFactory.createCanonicalFileSet();
-    FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampsStorage, forceMarkDirty, currentFiles, null);
+    FSOperations.markDirtyFiles(context, target, CompilationRound.CURRENT, stampStorage, forceMarkDirty, currentFiles, null);
 
     // handle deleted paths
-    final BuildFSState fsState = pd.fsState;
-    final SourceToOutputMapping sourceToOutputMap = pd.dataManager.getSourceToOutputMap(target);
+    final BuildFSState fsState = projectDescriptor.fsState;
+    final SourceToOutputMapping sourceToOutputMap = projectDescriptor.dataManager.getSourceToOutputMap(target);
     for (final Iterator<String> it = sourceToOutputMap.getSourcesIterator(); it.hasNext(); ) {
       final String path = it.next();
       // can check if the file exists
       final File file = new File(path);
       if (!currentFiles.contains(file)) {
-        fsState.registerDeleted(context, target, file, stampsStorage);
+        fsState.registerDeleted(context, target, file, stampStorage);
       }
     }
-    pd.fsState.markInitialScanPerformed(target);
+    projectDescriptor.fsState.markInitialScanPerformed(target);
   }
 
   public static void markTargetsUpToDate(CompileContext context, BuildTargetChunk chunk) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    final BuildFSState fsState = pd.fsState;
+    final ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    final BuildFSState fsState = projectDescriptor.fsState;
     for (BuildTarget<?> target : chunk.getTargets()) {
-      pd.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
+      projectDescriptor.getTargetsState().getTargetConfiguration(target).storeNonexistentOutputRoots(context);
     }
-    if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
-      boolean marked = dropRemovedPaths(context, chunk);
-      for (BuildTarget<?> target : chunk.getTargets()) {
-        if (target instanceof ModuleBuildTarget) {
-          context.clearNonIncrementalMark((ModuleBuildTarget)target);
-        }
-        final StampsStorage<? extends StampsStorage.Stamp>  stampsStorage = pd.getProjectStamps().getStampStorage();
-        for (BuildRootDescriptor rd : pd.getBuildRootIndex().getTargetRoots(target, context)) {
-          marked |= fsState.markAllUpToDate(context, rd, stampsStorage);
-        }
+
+    if (Utils.errorsDetected(context) || context.getCancelStatus().isCanceled()) {
+      return;
+    }
+
+    boolean marked = dropRemovedPaths(context, chunk);
+    for (BuildTarget<?> target : chunk.getTargets()) {
+      if (target instanceof ModuleBuildTarget) {
+        context.clearNonIncrementalMark((ModuleBuildTarget)target);
       }
 
-      if (marked) {
-        context.processMessage(DoneSomethingNotification.INSTANCE);
+      StampsStorage<?> stampStorage = projectDescriptor.dataManager.getFileStampStorage(target);
+      long targetBuildStartStamp = context.getCompilationStartStamp(target);
+      for (BuildRootDescriptor buildRootDescriptor : projectDescriptor.getBuildRootIndex().getTargetRoots(target, context)) {
+        marked |= fsState.markAllUpToDate(context, buildRootDescriptor, stampStorage, targetBuildStartStamp);
       }
+    }
+
+    if (marked) {
+      context.processMessage(DoneSomethingNotification.INSTANCE);
     }
   }
 
   private static boolean dropRemovedPaths(CompileContext context, BuildTargetChunk chunk) throws IOException {
-    final Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
+    Map<BuildTarget<?>, Collection<String>> map = Utils.REMOVED_SOURCES_KEY.get(context);
     boolean dropped = false;
     if (map != null) {
       for (BuildTarget<?> target : chunk.getTargets()) {
-        final Collection<String> paths = map.remove(target);
+        Collection<String> paths = map.remove(target);
         if (paths != null) {
-          final SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+          SourceToOutputMapping storage = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
           for (String path : paths) {
             storage.remove(path);
-            dropped = true;
           }
+          dropped = true;
         }
       }
     }
@@ -156,36 +161,38 @@ public final class BuildOperations {
           else {
             targetId = idsCache.getInt(target);
           }
-          final String srcPath = file.getPath();
-          final Collection<String> outputs = srcToOut.getOutputs(srcPath);
-          if (outputs != null) {
-            final boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
-            final List<String> deletedForThisSource = new ArrayList<>(outputs.size());
-            for (String output : outputs) {
-              deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
-            }
-            deletedPaths.addAll(deletedForThisSource);
-            dataManager.getOutputToTargetRegistry().removeMapping(deletedForThisSource, targetId);
-            Set<File> cleaned = cleanedSources.get(target);
-            if (cleaned == null) {
-              cleaned = FileCollectionFactory.createCanonicalFileSet();
-              cleanedSources.put(target, cleaned);
-            }
-            cleaned.add(file);
+
+          Collection<String> outputs = srcToOut.getOutputs(file.getPath());
+          if (outputs == null) {
+            return true;
           }
+
+          boolean shouldPruneOutputDirs = target instanceof ModuleBasedTarget;
+          List<String> deletedForThisSource = new ArrayList<>(outputs.size());
+          for (String output : outputs) {
+            deleteRecursively(output, deletedForThisSource, shouldPruneOutputDirs ? dirsToDelete : null);
+          }
+
+          deletedPaths.addAll(deletedForThisSource);
+          dataManager.getOutputToTargetMapping().removeMappings(deletedForThisSource, targetId, srcToOut);
+          Set<File> cleaned = cleanedSources.get(target);
+          if (cleaned == null) {
+            cleaned = FileCollectionFactory.createCanonicalFileSet();
+            cleanedSources.put(target, cleaned);
+          }
+          cleaned.add(file);
           return true;
         }
-
       });
 
-      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
-        final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
-        if (logger.isEnabled()) {
-          logger.logDeletedFiles(deletedPaths);
-        }
-      }
-
       if (!deletedPaths.isEmpty()) {
+        if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
+          final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
+          if (logger.isEnabled()) {
+            logger.logDeletedFiles(deletedPaths);
+          }
+        }
+
         context.processMessage(new FileDeletedEvent(deletedPaths));
       }
       // attempting to delete potentially empty directories

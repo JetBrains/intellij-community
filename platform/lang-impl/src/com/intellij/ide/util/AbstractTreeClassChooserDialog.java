@@ -305,7 +305,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   @Override
-  public T getSelected() {
+  public @Nullable T getSelected() {
     return getExitCode() == OK_EXIT_CODE ? mySelectedClass : null;
   }
 

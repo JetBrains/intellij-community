@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdateInfo
-import com.intellij.openapi.application.PluginAutoUpdateRepository.PluginUpdatesData
 import com.intellij.openapi.application.PluginAutoUpdateRepository.getAutoUpdateDirPath
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -40,14 +39,10 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.nio.file.Files
 import java.nio.file.Path
-import java.util.Collections
+import java.util.*
 import javax.swing.JComponent
 import kotlin.Result
-import kotlin.io.path.absolutePathString
-import kotlin.io.path.deleteExisting
-import kotlin.io.path.exists
-import kotlin.io.path.isReadable
-import kotlin.io.path.isRegularFile
+import kotlin.io.path.*
 
 @ApiStatus.Internal
 object PluginAutoUpdateRepository {
@@ -66,7 +61,7 @@ object PluginAutoUpdateRepository {
   }
 
   @Synchronized
-  internal fun clearUpdates() {
+  fun clearUpdates() {
     if (getAutoUpdateDirPath().exists()) {
       getAutoUpdateDirPath().delete(recursively = true)
     }
@@ -204,7 +199,8 @@ private class PluginsAutoUpdateRepositoryViewAction : AnAction() {
           it?.name ?: it?.pluginId?.idString ?: "<unnamed plugin>"
         })
         ComboboxSpeedSearch.installOn(pluginCombobox.component)
-        val updateChooser = textFieldWithBrowseButton("Select Update File", project, FileChooserDescriptorFactory.createSingleFileDescriptor())
+        val descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Update File")
+        val updateChooser = textFieldWithBrowseButton(descriptor, project)
         button("Add") {
           val selectedPlugin = pluginCombobox.component.selectedItem as? IdeaPluginDescriptorImpl ?: return@button
           val updateFilePath = updateChooser.component.text

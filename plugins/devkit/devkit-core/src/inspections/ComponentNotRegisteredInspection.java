@@ -3,9 +3,6 @@ package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.options.OptPane;
-import com.intellij.lang.jvm.DefaultJvmElementVisitor;
-import com.intellij.lang.jvm.JvmClass;
-import com.intellij.lang.jvm.JvmElementVisitor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,7 +19,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterActionFix;
 import org.jetbrains.idea.devkit.inspections.quickfix.RegisterComponentFix;
@@ -35,7 +31,7 @@ import java.util.Set;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
-final class ComponentNotRegisteredInspection extends DevKitJvmInspection {
+final class ComponentNotRegisteredInspection extends DevKitJvmInspection.ForClass {
   private static final Logger LOG = Logger.getInstance(ComponentNotRegisteredInspection.class);
 
   public boolean CHECK_ACTIONS = true;
@@ -55,23 +51,8 @@ final class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     );
   }
 
-  @Nullable
   @Override
-  protected JvmElementVisitor<Boolean> buildVisitor(@NotNull Project project, @NotNull HighlightSink sink, boolean isOnTheFly) {
-    return new DefaultJvmElementVisitor<>() {
-      @Override
-      public Boolean visitClass(@NotNull JvmClass clazz) {
-        PsiElement sourceElement = clazz.getSourceElement();
-        if (!(sourceElement instanceof PsiClass)) {
-          return null;
-        }
-        checkClass(project, (PsiClass)sourceElement, sink);
-        return false;
-      }
-    };
-  }
-
-  private void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
+  protected void checkClass(@NotNull Project project, @NotNull PsiClass checkedClass, @NotNull HighlightSink sink) {
     if (checkedClass.getQualifiedName() == null ||
         checkedClass.getContainingFile().getVirtualFile() == null ||
         checkedClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
@@ -119,7 +100,8 @@ final class ComponentNotRegisteredInspection extends DevKitJvmInspection {
     }
 
     for (ComponentType componentType : ComponentType.values()) {
-      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) && checkComponentRegistration(checkedClass, sink, componentType)) {
+      if (InheritanceUtil.isInheritor(checkedClass, componentType.myClassName) &&
+          checkComponentRegistration(checkedClass, sink, componentType)) {
         return;
       }
     }

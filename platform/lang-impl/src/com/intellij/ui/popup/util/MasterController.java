@@ -15,10 +15,12 @@
  */
 package com.intellij.ui.popup.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public interface MasterController {
   ItemWrapper[] getSelectedItems();
 

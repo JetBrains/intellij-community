@@ -91,8 +91,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    T11 = TypeVar('T11', my_int, my_str)
 
                    my_list_t1 = List[T1]
-                   T22 = TypeVar('T22', int, <warning descr="Constraints cannot be parametrized by type variables">my_list_t1</warning>)
-                   T33 = TypeVar('T33', bound=<warning descr="Constraints cannot be parametrized by type variables">my_list_t1</warning>)
+                   T22 = TypeVar('T22', int, my_list_t1)
+                   T33 = TypeVar('T33', bound=my_list_t1)
 
                    my_list_int = List[int]
                    T44 = TypeVar('T44', int, my_list_int)

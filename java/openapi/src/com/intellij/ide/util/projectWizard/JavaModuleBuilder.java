@@ -76,7 +76,7 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   }
 
   @Override
-  public ModuleType getModuleType() {
+  public ModuleType<?> getModuleType() {
     return StdModuleTypes.JAVA;
   }
 

@@ -1,119 +1,115 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ijent.community.impl.nio
 
-import com.intellij.platform.ijent.IjentId
-import com.intellij.platform.ijent.fs.*
+import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2
+import com.intellij.platform.eel.path.EelPath
 import java.net.URI
 import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 
 /**
  * Such paths are supposed to be created via the corresponding nio FileSystem. [Path.of] does NOT return instances of this class.
  *
- * How to get a path:
+ * How to get a path using [IjentNioFileSystemProvider]:
  * ```kotlin
  * val ijent: IjentApi = getIjentFromSomewhere()
- * val path: Path = ijent.fs.asNioFileSystem().getPath("/usr/bin/cowsay")
+ * val fs = IjentNioFileSystemProvider.getInstance()
+ *   .getFileSystem(URI("ijent://some-id-that-you-should-know"))
+ *   .getPath("/usr/bin/cowsay")
  * ```
  */
 class IjentNioPath internal constructor(
-  val ijentPath: IjentPath,
+  val eelPath: EelPath,
   internal val nioFs: IjentNioFileSystem,
-) : Path {
-  val ijentId: IjentId get() = nioFs.ijent.fs.id
-
-  private val isWindows
-    get() = when (nioFs.ijent.fs) {
-      is IjentFileSystemPosixApi -> false
-      is IjentFileSystemWindowsApi -> true
-    }
-
-  override fun getFileSystem(): FileSystem = nioFs
+  cachedAttributes: BasicFileAttributes?,
+) : Path, BasicFileAttributesHolder2.Impl(cachedAttributes) {
+  override fun getFileSystem(): IjentNioFileSystem = nioFs
 
   override fun isAbsolute(): Boolean =
-    when (ijentPath) {
-      is IjentPath.Absolute -> true
-      is IjentPath.Relative -> false
+    when (eelPath) {
+      is EelPath.Absolute -> true
+      is EelPath.Relative -> false
     }
 
   override fun getRoot(): IjentNioPath? =
-    when (ijentPath) {
-      is IjentPath.Absolute -> ijentPath.root.toNioPath()
-      is IjentPath.Relative -> null
+    when (eelPath) {
+      is EelPath.Absolute -> eelPath.root.toNioPath()
+      is EelPath.Relative -> null
     }
 
   override fun getFileName(): IjentNioPath? =
-    IjentPath.Relative
-      .parse(ijentPath.fileName)
-      .getOrThrow()
+    EelPath.Relative
+      .parse(eelPath.fileName)
       .toNioPath()
       .takeIf { it.nameCount > 0 }
 
   override fun getParent(): IjentNioPath? =
-    ijentPath.parent?.toNioPath()
+    eelPath.parent?.toNioPath()
 
   override fun getNameCount(): Int =
-    ijentPath.nameCount
+    eelPath.nameCount
 
   override fun getName(index: Int): IjentNioPath =
-    ijentPath.getName(index).toNioPath()
+    eelPath.getName(index).toNioPath()
 
   override fun subpath(beginIndex: Int, endIndex: Int): IjentNioPath =
     TODO()
 
   override fun startsWith(other: Path): Boolean {
-    val otherIjentPath = other.toIjentPath(isWindows)
-    return when (ijentPath) {
-      is IjentPath.Absolute -> when (otherIjentPath) {
-        is IjentPath.Absolute -> ijentPath.startsWith(otherIjentPath)
-        is IjentPath.Relative -> false
+    val otherEelPath = try {
+      other.toEelPath()
+    }
+    catch (_: InvalidPathException) {
+      return false
+    }
+
+    return when (eelPath) {
+      is EelPath.Absolute -> when (otherEelPath) {
+        is EelPath.Absolute -> eelPath.startsWith(otherEelPath)
+        is EelPath.Relative -> false
       }
-      is IjentPath.Relative -> when (otherIjentPath) {
-        is IjentPath.Absolute -> false
-        is IjentPath.Relative -> ijentPath.startsWith(otherIjentPath)
+      is EelPath.Relative -> when (otherEelPath) {
+        is EelPath.Absolute -> false
+        is EelPath.Relative -> eelPath.startsWith(otherEelPath)
       }
     }
   }
 
   override fun endsWith(other: Path): Boolean =
-    when (val otherIjentPath = other.toIjentPath(isWindows)) {
-      is IjentPath.Absolute -> ijentPath == otherIjentPath
-      is IjentPath.Relative -> ijentPath.endsWith(otherIjentPath)
+    when (val otherIjentPath = other.toEelPath()) {
+      is EelPath.Absolute -> eelPath == otherIjentPath
+      is EelPath.Relative -> eelPath.endsWith(otherIjentPath)
     }
 
   override fun normalize(): IjentNioPath =
-    when (ijentPath) {
-      is IjentPath.Absolute -> ijentPath.normalize().getOrThrow().toNioPath()
-      is IjentPath.Relative -> ijentPath.normalize().toNioPath()
+    when (eelPath) {
+      is EelPath.Absolute -> eelPath.normalize().toNioPath()
+      is EelPath.Relative -> eelPath.normalize().toNioPath()
     }
 
   override fun resolve(other: Path): IjentNioPath =
-    when (val otherIjentPath = other.toIjentPath(isWindows)) {
-      is IjentPath.Absolute -> otherIjentPath.toNioPath()  // TODO is it the desired behaviour?
-      is IjentPath.Relative -> ijentPath.resolve(otherIjentPath).getOrThrow().toNioPath()
+    when (val otherIjentPath = other.toEelPath()) {
+      is EelPath.Absolute -> otherIjentPath.toNioPath()  // TODO is it the desired behaviour?
+      is EelPath.Relative -> eelPath.resolve(otherIjentPath).toNioPath()
     }
 
   override fun relativize(other: Path): IjentNioPath =
-    when (val otherIjentPath = other.toIjentPath(isWindows)) {
-      is IjentPath.Absolute -> when (ijentPath) {
-        is IjentPath.Absolute -> ijentPath.relativize(otherIjentPath).getOrThrow().toNioPath()
-        is IjentPath.Relative -> throw InvalidPathException("$this.relativize($other)",
-                                                            "Can't relativize these paths")
-      }
-      is IjentPath.Relative -> throw InvalidPathException("$this.relativize($other)",
+    when (val otherIjentPath = other.toEelPath()) {
+      is EelPath.Absolute -> when (eelPath) {
+        is EelPath.Absolute -> eelPath.relativize(otherIjentPath).toNioPath()
+        is EelPath.Relative -> throw InvalidPathException("$this.relativize($other)",
                                                           "Can't relativize these paths")
+      }
+      is EelPath.Relative -> throw InvalidPathException("$this.relativize($other)",
+                                                        "Can't relativize these paths")
     }
 
   override fun toUri(): URI =
-    when (ijentPath) {
-      is IjentPath.Absolute ->
-        URI(
-          "ijent",
-          ijentId.id,
-          ijentPath.toString(),
-          null,
-        )
+    when (eelPath) {
+      is EelPath.Absolute ->
+        nioFs.uri.resolve(eelPath.toString())
 
-      is IjentPath.Relative ->
+      is EelPath.Relative ->
         throw InvalidPathException(toString(), "Can't create a URL from a relative path") // TODO Really no way?
     }
 
@@ -127,22 +123,21 @@ class IjentNioPath internal constructor(
     }
 
   override fun toRealPath(vararg options: LinkOption): IjentNioPath =
-    when (ijentPath) {
-      is IjentPath.Absolute ->
-        ijentPath.normalize().getOrThrow()
+    when (eelPath) {
+      is EelPath.Absolute ->
+        eelPath.normalize()
           .let { normalizedPath ->
             if (LinkOption.NOFOLLOW_LINKS in options)
               normalizedPath
             else
-              nioFs
-                .fsBlocking {
-                  nioFs.ijent.fs.canonicalize(normalizedPath)
-                }
+              fsBlocking {
+                nioFs.ijentFs.canonicalize(normalizedPath)
+              }
                 .getOrThrowFileSystemException()
           }
           .toNioPath()
 
-      is IjentPath.Relative ->
+      is EelPath.Relative ->
         throw InvalidPathException(toString(), "Can't find a real path for a relative path")
     }
 
@@ -153,12 +148,13 @@ class IjentNioPath internal constructor(
   override fun compareTo(other: Path): Int =
     toString().compareTo(other.toString())
 
-  override fun toString(): String = "$ijentPath"
+  override fun toString(): String = "$eelPath"
 
-  private fun IjentPath.toNioPath(): IjentNioPath =
+  private fun EelPath.toNioPath(): IjentNioPath =
     IjentNioPath(
-      ijentPath = this,  // Don't confuse with the parent "this".
+      eelPath = this,  // Don't confuse with the parent "this".
       nioFs = nioFs,
+      cachedAttributes = null,
     )
 
   /**
@@ -168,9 +164,9 @@ class IjentNioPath internal constructor(
    */
   override fun equals(other: Any?): Boolean =
     other is IjentNioPath &&
-    ijentPath == other.ijentPath &&
+    eelPath == other.eelPath &&
     nioFs == other.nioFs
 
   override fun hashCode(): Int =
-    ijentPath.hashCode() * 31 + nioFs.hashCode()
+    eelPath.hashCode() * 31 + nioFs.hashCode()
 }

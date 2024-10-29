@@ -23,7 +23,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint);
 
   @Override
-  public void perform(@NotNull Project project, AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;

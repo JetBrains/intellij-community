@@ -29,10 +29,12 @@ import com.intellij.openapi.vcs.changes.ignore.actions.IgnoreFileActionGroup
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.tree.TreePath
 
 
+@ApiStatus.Internal
 class ChangesBrowserIgnoredFilesNode(private val project: Project,
                                      files: List<FilePath>)
   : ChangesBrowserSpecificFilePathsNode<ChangesBrowserNode.Tag>(ChangesBrowserNode.IGNORED_FILES_TAG, files,
@@ -45,8 +47,10 @@ class ChangesBrowserIgnoredFilesNode(private val project: Project,
     }
   }
 
+  @ApiStatus.Internal
   override fun canAcceptDrop(dragBean: ChangeListDragBean) = dragBean.unversionedFiles.isNotEmpty()
 
+  @ApiStatus.Internal
   override fun acceptDrop(dragOwner: ChangeListOwner, dragBean: ChangeListDragBean) {
     val tree = dragBean.sourceComponent as? Tree ?: return
 

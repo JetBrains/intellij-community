@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.service.project.wizard.groovy
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.createJavaSourcePath
+import com.intellij.ide.projectWizard.generators.AssetsJava
 import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.distribution.LocalDistributionInfo
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.groovy.config.GroovyHomeKind
 import org.jetbrains.plugins.groovy.config.wizard.*
@@ -66,7 +67,9 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkGradleProject(project) {
+      val builder = GradleJavaModuleBuilder()
+      setupBuilder(builder)
+      setupBuildScript(builder) {
         when (val groovySdk = groovySdk) {
           null -> withPlugin("groovy")
           is FrameworkLibraryDistributionInfo -> withGroovyPlugin(groovySdk.version.versionString)
@@ -85,6 +88,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         }
         withJUnit()
       }
+      setupProject(project, builder)
     }
   }
 
@@ -95,7 +99,7 @@ class GradleGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
       if (parent.addSampleCode) {
-        val sourcePath = createJavaSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
+        val sourcePath = AssetsJava.getJavaSampleSourcePath("src/main/groovy", parent.groupId, "Main.groovy")
         addTemplateAsset(sourcePath, "Groovy Sample Code", "PACKAGE_NAME" to parent.groupId)
         addFilesToOpen(sourcePath)
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.Disposable;
@@ -169,7 +169,7 @@ public final class DiscoveredTestDataHolder {
   public void removeTestTrace(@NotNull String testClassName, @NotNull String testMethodName, byte frameworkId) throws IOException {
     int testId = myTestEnumerator.tryEnumerate(createTestId(testClassName, testMethodName, frameworkId));
     if (testId != 0) {
-      myDiscoveredTestsIndex.mapInputAndPrepareUpdate(testId, null).compute();
+      myDiscoveredTestsIndex.mapInputAndPrepareUpdate(testId, null).update();
       myTestModuleIndex.removeTest(testId);
     }
   }
@@ -207,8 +207,8 @@ public final class DiscoveredTestDataHolder {
     }
 
     UsedSources usedSources = new UsedSources(result, usedVirtualFileIds);
-    myDiscoveredTestsIndex.mapInputAndPrepareUpdate(testNameId, usedSources).compute();
-    myTestFilesIndex.mapInputAndPrepareUpdate(testNameId, usedSources).compute();
+    myDiscoveredTestsIndex.mapInputAndPrepareUpdate(testNameId, usedSources).update();
+    myTestFilesIndex.mapInputAndPrepareUpdate(testNameId, usedSources).update();
     myTestModuleIndex.appendModuleData(testNameId, moduleName);
   }
 

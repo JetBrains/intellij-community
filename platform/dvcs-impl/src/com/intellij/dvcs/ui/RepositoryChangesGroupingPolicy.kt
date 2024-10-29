@@ -10,8 +10,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesGroupingPolicy
 import com.intellij.openapi.vcs.changes.ui.StaticFilePath
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 
+@ApiStatus.Internal
 class RepositoryChangesGroupingPolicy(val project: Project, model: DefaultTreeModel) : SimpleChangesGroupingPolicy<Repository>(model) {
   private val repositoryManager = VcsRepositoryManager.getInstance(project)
   private val colorManager = getColorManager(project)

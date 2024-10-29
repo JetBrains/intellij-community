@@ -7,11 +7,13 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.wm.WelcomeScreen;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class WelcomePane extends JPanel {
   public WelcomePane(ActionGroup actions, WelcomeScreen screen) {
     super(new GridBagLayout());

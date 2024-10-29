@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -56,8 +56,8 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public final class ImplementationViewComponent extends JPanel {
-  @NonNls private static final String TEXT_PAGE_KEY = "Text";
-  @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private static final @NonNls String TEXT_PAGE_KEY = "Text";
+  private static final @NonNls String BINARY_PAGE_KEY = "Binary";
   private final EditorFactory factory;
   private final Project project;
   private final DefinitionSwitcher<ImplementationViewElement> mySwitcher;
@@ -74,8 +74,7 @@ public final class ImplementationViewComponent extends JPanel {
   private @NlsContexts.TabTitle String myTitle;
   private final ActionToolbar myToolbar;
   private JPanel mySingleEntryPanel;
-  @Nullable
-  private volatile Consumer<? super ImplementationViewComponent> myShowInFindWindowProcessor;
+  private volatile @Nullable Consumer<? super ImplementationViewComponent> myShowInFindWindowProcessor;
 
   public void setHint(final JBPopup hint, @NotNull @NlsContexts.TabTitle String title) {
     myHint = hint;
@@ -288,7 +287,7 @@ public final class ImplementationViewComponent extends JPanel {
     myShowInFindWindowProcessor = showInFindWindowProcessor;
   }
 
-  public void update(@NotNull final Collection<? extends ImplementationViewElement> elements, final int index) {
+  public void update(final @NotNull Collection<? extends ImplementationViewElement> elements, final int index) {
     update(elements, (viewElements, fileDescriptors) -> {
       if (myEditor.isDisposed()) return false;
       if (viewElements.length == 0) return false;
@@ -357,8 +356,7 @@ public final class ImplementationViewComponent extends JPanel {
     fun.fun(candidates.toArray(new ImplementationViewElement[0]), files);
   }
 
-  @NotNull
-  private static TargetPresentation getPresentation(ImplementationViewElement element) {
+  private static @NotNull TargetPresentation getPresentation(ImplementationViewElement element) {
     return TargetPresentation.builder(element.getPresentableText())
       .locationText(element.getLocationText(), element.getLocationIcon())
       .containerText(element.getContainerPresentation())
@@ -476,8 +474,7 @@ public final class ImplementationViewComponent extends JPanel {
     });
   }
 
-  @Nullable
-  public static String getNewText(PsiElement elt) {
+  public static @Nullable String getNewText(PsiElement elt) {
     Project project = elt.getProject();
     PsiFile psiFile = getContainingFile(elt);
     if (psiFile == null) return null;

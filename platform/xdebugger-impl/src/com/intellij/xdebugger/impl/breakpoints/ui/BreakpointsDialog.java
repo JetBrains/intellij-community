@@ -42,6 +42,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,6 +53,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public class BreakpointsDialog extends DialogWrapper {
   @NotNull private final Project myProject;
 
@@ -365,9 +367,6 @@ public class BreakpointsDialog extends DialogWrapper {
 
   private void collectGroupingRules() {
     myRulesAvailable.addAll(XBreakpointGroupingRule.EP.getExtensionList());
-    for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      provider.createBreakpointsGroupingRules(myRulesAvailable);
-    }
     myRulesAvailable.sort(XBreakpointGroupingRule.PRIORITY_COMPARATOR);
 
     myRulesEnabled.clear();

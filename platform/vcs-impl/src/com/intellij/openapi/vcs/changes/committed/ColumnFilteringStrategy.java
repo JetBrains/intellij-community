@@ -12,6 +12,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ import javax.swing.event.ListSelectionListener;
 import java.util.*;
 
 
+@ApiStatus.Internal
 public class ColumnFilteringStrategy implements ChangeListFilteringStrategy {
   private final JScrollPane myScrollPane;
   private final JList<@Nls String> myValueList;

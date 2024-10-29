@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
-import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +22,7 @@ public final class ImplementationConflictException extends RuntimeException {
     Set<PluginId> myConflictingPluginIds = new HashSet<>();
     for (Object object : implementationObjects) {
       final ClassLoader classLoader = object.getClass().getClassLoader();
-      if (classLoader instanceof PluginAwareClassLoader) {
-        myConflictingPluginIds.add(((PluginAwareClassLoader)classLoader).getPluginId());
-      }
-      else {
-        myConflictingPluginIds.add(CORE_PLUGIN_ID);
-      }
+      myConflictingPluginIds.add(PluginUtil.getPluginId(classLoader));
     }
     return myConflictingPluginIds;
   }

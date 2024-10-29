@@ -12,8 +12,6 @@ PsiJavaFile:FirstNameMissed.java
           PsiReferenceParameterList
             <empty list>
           PsiIdentifier:value1('value1')
-      PsiErrorElement:Annotation attribute must be of the form 'name=value'
-        <empty list>
       PsiJavaToken:COMMA(',')
       PsiWhiteSpace(' ')
       PsiNameValuePair

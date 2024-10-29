@@ -25,7 +25,6 @@ import it.unimi.dsi.fastutil.ints.IntSet
 import org.jetbrains.annotations.ApiStatus
 import java.util.function.BiConsumer
 
-@ApiStatus.Internal
 class FileHistory internal constructor(internal val commitToFileStateMap: Map<Int, CommitFileState>,
                                        internal val processedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
                                        internal val unmatchedAdditionsDeletions: Set<AdditionDeletion> = emptySet(),
@@ -220,6 +219,7 @@ private fun hideTrivialMerge(collapsedGraph: CollapsedGraph, graph: LiteLinearGr
   }
 }
 
+@ApiStatus.Internal
 abstract class FileHistoryData(internal val startPaths: Collection<FilePath>) {
   // file -> (commitId -> (parent commitId -> change kind))
   private val affectedCommits = CollectionFactory.createCustomHashingStrategyMap<FilePath, Int2ObjectMap<Int2ObjectMap<ChangeKind>>>(FILE_PATH_HASHING_STRATEGY)
@@ -499,4 +499,5 @@ private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
 @JvmField
 internal val FILE_PATH_HASHING_STRATEGY: HashingStrategy<FilePath> = ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY
 
+@ApiStatus.Internal
 data class EdgeData<T>(@JvmField val parent: T, @JvmField val child: T)

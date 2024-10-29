@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.framework.detection.impl.exclude;
 
 import com.intellij.framework.FrameworkType;
@@ -25,6 +25,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class DetectionExcludesConfigurable implements Configurable {
   private final Project myProject;
   private final DetectionExcludesConfigurationImpl myConfiguration;
@@ -51,10 +53,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
     myModel = new SortedListModel<>(ExcludeListItem.COMPARATOR);
   }
 
-  @Nls
   @Override
-  @NotNull
-  public JComponent createComponent() {
+  public @Nls @NotNull JComponent createComponent() {
     myEnabledDetectionCheckBox = new JCheckBox(ProjectBundle.message("checkbox.text.enable.framework.detection"));
     myEnabledDetectionCheckBox.setBorder(new EmptyBorder(10, 10, 0, 0));
     final JBList<ExcludeListItem> excludesList = new JBList<>(myModel);
@@ -134,9 +134,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
         return value != null ? value.getIcon() : null;
       }
 
-      @NotNull
       @Override
-      public String getTextFor(FrameworkType value) {
+      public @NotNull String getTextFor(FrameworkType value) {
         return value != null ? value.getPresentableName() : ProjectBundle.message("list.item.all.frameworks");
       }
 
@@ -146,7 +145,7 @@ public final class DetectionExcludesConfigurable implements Configurable {
       }
 
       @Override
-      public PopupStep onChosen(final FrameworkType frameworkType, boolean finalChoice) {
+      public PopupStep<?> onChosen(final FrameworkType frameworkType, boolean finalChoice) {
         if (frameworkType == null) {
           return doFinalStep(() -> chooseDirectoryAndAdd(null));
         }
@@ -168,11 +167,11 @@ public final class DetectionExcludesConfigurable implements Configurable {
     return false;
   }
 
-  private PopupStep addExcludedFramework(final @NotNull FrameworkType frameworkType) {
+  private PopupStep<?> addExcludedFramework(final @NotNull FrameworkType frameworkType) {
     String projectItem = LangBundle.message("list.item.disable.framework.detection.in.whole.project");
     return new BaseListPopupStep<>(null, projectItem, LangBundle.message("list.item.disable.framework.detection.in.directory")) {
       @Override
-      public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
         if (selectedValue.equals(projectItem)) {
           addAndRemoveDuplicates(frameworkType, null);
           return FINAL_CHOICE;
@@ -271,9 +270,8 @@ public final class DetectionExcludesConfigurable implements Configurable {
     }
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ProjectBundle.message("configurable.DetectionExcludesConfigurable.display.name");
   }
 }

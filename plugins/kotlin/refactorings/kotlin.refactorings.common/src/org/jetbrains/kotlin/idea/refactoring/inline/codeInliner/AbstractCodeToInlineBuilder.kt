@@ -13,7 +13,7 @@ abstract class AbstractCodeToInlineBuilder(
     protected val fallbackToSuperCall: Boolean = false,
 ) {
     protected val psiFactory = KtPsiFactory(project)
-    protected fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {
+    protected open fun saveComments(codeToInline: MutableCodeToInline, contextDeclaration: KtDeclaration) {
         val bodyBlockExpression = contextDeclaration.safeAs<KtDeclarationWithBody>()?.bodyBlockExpression
         if (bodyBlockExpression != null) addCommentHoldersForStatements(codeToInline, bodyBlockExpression)
     }

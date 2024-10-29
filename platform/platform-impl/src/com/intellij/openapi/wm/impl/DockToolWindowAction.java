@@ -13,10 +13,12 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class DockToolWindowAction extends DumbAwareAction /*implements FusAwareAction*/ {
   public DockToolWindowAction() {
     super(ActionsBundle.messagePointer("action.DockToolWindow.text"));

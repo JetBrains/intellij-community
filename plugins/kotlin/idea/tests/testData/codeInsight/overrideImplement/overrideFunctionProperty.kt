@@ -8,3 +8,8 @@ fun some() : A {
 }
 
 // TODO: need better selection and caret
+
+// MEMBER: "method: () -> Unit?"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

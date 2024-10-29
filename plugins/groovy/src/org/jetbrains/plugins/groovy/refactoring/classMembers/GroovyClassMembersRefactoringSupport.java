@@ -23,14 +23,14 @@ import com.intellij.refactoring.classMembers.MemberInfoBase;
 /**
  * @author Max Medvedev
  */
-public final class GroovyClassMembersRefactoringSupport implements ClassMembersRefactoringSupport {
+public final class GroovyClassMembersRefactoringSupport implements ClassMembersRefactoringSupport<PsiClass> {
   @Override
-  public DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass) {
-    return new GrDependantMembersCollector((PsiClass)clazz, (PsiClass)superClass);
+  public DependentMembersCollectorBase<?, PsiClass> createDependentMembersCollector(PsiClass clazz, PsiClass superClass) {
+    return new GrDependantMembersCollector(clazz, superClass);
   }
 
   @Override
-  public boolean isProperMember(MemberInfoBase member) {
+  public boolean isProperMember(MemberInfoBase<?> member) {
     return member instanceof GrMemberInfo;
   }
 }

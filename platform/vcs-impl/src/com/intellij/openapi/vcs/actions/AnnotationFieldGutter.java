@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +42,7 @@ public abstract class AnnotationFieldGutter implements ActiveAnnotationGutter {
     return myAnnotation;
   }
 
+  @ApiStatus.Internal
   @NotNull
   public TextAnnotationPresentation getPresentation() {
     return myPresentation;

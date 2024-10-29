@@ -13,7 +13,7 @@ import com.intellij.cce.evaluable.StrategySerializer
 import com.intellij.cce.evaluable.common.getEditorSafe
 import com.intellij.cce.evaluable.completion.BaseCompletionActionsInvoker
 import com.intellij.cce.evaluation.*
-import com.intellij.cce.evaluation.step.ActionsGenerationStep
+import com.intellij.cce.evaluation.step.SetupStatsCollectorStep
 import com.intellij.cce.filter.EvaluationFilter
 import com.intellij.cce.filter.EvaluationFilterReader
 import com.intellij.cce.interpreter.FeatureInvoker
@@ -55,46 +55,54 @@ internal class ContextCollectionEvaluationCommand : CompletionEvaluationStarter.
   override fun run() {
     val feature = EvaluableFeature.forFeature(featureName) ?: error("There is no support for the $featureName")
     val config = loadConfig(Paths.get(configPath), feature.getStrategySerializer())
-    val workspace = EvaluationWorkspace.create(config)
+    val workspace = EvaluationWorkspace.create(config, SetupStatsCollectorStep.statsCollectorLogsDirectory)
     val evaluationRootInfo = EvaluationRootInfo(true)
-    loadAndApply(config.projectPath) { project ->
-      val stepFactory = object : StepFactory by BackgroundStepFactory(
-        feature = feature,
-        config = config,
-        project = project,
-        inputWorkspacePaths = null,
-        evaluationRootInfo = evaluationRootInfo
+    feature.prepareEnvironment(config).use { environment ->
+      val dataset = environment.dataset
+
+      check(dataset is ProjectActionsDataset)
+
+      val actions = dataset.config
+      val newDataset = object : ProjectActionsDataset(
+        config.strategy,
+        actions,
+        config.interpret.filesLimit,
+        config.interpret.sessionsLimit,
+        evaluationRootInfo,
+        dataset.project,
+        dataset.processor,
+        feature.name,
       ) {
-        override fun generateActionsStep(): EvaluationStep {
-          return object : ActionsGenerationStep(
-            config = config,
-            language = config.language,
-            evaluationRootInfo = evaluationRootInfo,
-            project = project,
-            processor = feature.getGenerateActionsProcessor(config.strategy),
-            featureName = feature.name
-          ) {
-            override fun runInBackground(workspace: EvaluationWorkspace, progress: Progress): EvaluationWorkspace {
-              val files = runReadAction {
-                FilesHelper.getFilesOfLanguage(project, config.actions.evaluationRoots, config.actions.ignoreFileNames, language)
-              }.sortedBy { it.name }
-              val strategy = config.strategy as CompletionContextCollectionStrategy
-              val sampled = files.shuffled(Random(strategy.samplingSeed)).take(strategy.samplesCount).sortedBy { it.name }
-              generateActions(workspace, language, sampled, evaluationRootInfo, filesLimit = null, progress)
-              return workspace
-            }
-          }
+        override fun prepare(datasetContext: DatasetContext, progress: Progress) {
+          val files = runReadAction {
+            FilesHelper.getFilesOfLanguage(project, actions.evaluationRoots, actions.ignoreFileNames, actions.language)
+          }.sortedBy { it.name }
+          val strategy = config.strategy as CompletionContextCollectionStrategy
+          val sampled = files.shuffled(Random(strategy.samplingSeed)).take(strategy.samplesCount).sortedBy { it.name }
+          generateActions(datasetContext, actions.language, sampled, evaluationRootInfo, progress)
         }
       }
-      val process = EvaluationProcess.build(
-        init = {
-          shouldGenerateActions = true
-          shouldInterpretActions = true
-          shouldGenerateReports = false
-          shouldReorderElements = config.reorder.useReordering
-        },
-        stepFactory = stepFactory
+
+      val newEnvironment = object : EvaluationEnvironment by environment {
+        override val dataset: EvaluationDataset = newDataset
+      }
+
+      val datasetContext = DatasetContext(workspace, workspace, null)
+
+      val stepFactory = BackgroundStepFactory(
+        feature = feature,
+        environment = environment,
+        config = config,
+        inputWorkspacePaths = null,
+        datasetContext = datasetContext
       )
+
+      val process = EvaluationProcess.build(newEnvironment, stepFactory) {
+        shouldGenerateActions = true
+        shouldInterpretActions = true
+        shouldGenerateReports = false
+        shouldReorderElements = config.reorder.useReordering
+      }
       process.start(workspace)
     }
   }
@@ -274,7 +282,7 @@ private class ContextCollectionStrategySerializer : StrategySerializer<Completio
 }
 
 internal class ContextCollectionFeature : EvaluableFeatureBase<CompletionContextCollectionStrategy>("completion-context") {
-  override fun getGenerateActionsProcessor(strategy: CompletionContextCollectionStrategy): GenerateActionsProcessor {
+  override fun getGenerateActionsProcessor(strategy: CompletionContextCollectionStrategy, project: Project): GenerateActionsProcessor {
     return ContextCollectionMultiLineProcessor(strategy)
   }
 

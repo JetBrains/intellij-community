@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.NoAccessDuringPsiEvents;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.FilesScanExecutor;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
@@ -76,6 +75,7 @@ public final class FileBasedIndexScanUtil {
                                               @NotNull GlobalSearchScope scope,
                                               @Nullable IdFilter idFilter) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
       ensureUpToDate(indexId);
       //noinspection unchecked
       return FSRecords.processAllNames((Processor<CharSequence>)processor);
@@ -115,17 +115,19 @@ public final class FileBasedIndexScanUtil {
                                                        @Nullable IdFilter idFilter,
                                                        @NotNull FileBasedIndex.ValueProcessor<? super V> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       FSRecords.processFilesWithNames(Set.of((String)dataKey), id -> {
-        ids.add(id);
+        if (idFilter == null || idFilter.containsFileId(id)) {
+          ids.add(id);
+        }
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();
-        if (idFilter != null && !idFilter.containsFileId(id)) continue;
         VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         if (!processor.process(file, null)) return false;
@@ -238,18 +240,20 @@ public final class FileBasedIndexScanUtil {
                                                             @Nullable Condition<? super V> valueChecker,
                                                             @NotNull Processor<? super VirtualFile> processor) {
     if (indexId == FilenameIndex.NAME && FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
+      //TODO RC: why do we need up-to-date check here? -- VFS name index is always up-to date
       ensureUpToDate(indexId);
       IntOpenHashSet ids = new IntOpenHashSet();
       //noinspection unchecked
-      FSRecords.processFilesWithNames((Set<String>)keys, id -> {
-        ids.add(id);
+      FSRecords.processFilesWithNames((Set<String>)keys, fileId -> {
+        if (idFilter == null || idFilter.containsFileId(fileId)) {
+          ids.add(fileId);
+        }
         return true;
       });
       PersistentFS fs = PersistentFS.getInstance();
       IntIterator iterator = ids.iterator();
       while (iterator.hasNext()) {
         int id = iterator.nextInt();
-        if (idFilter != null && !idFilter.containsFileId(id)) continue;
         VirtualFile file = fs.findFileById(id);
         if (file == null || !scope.contains(file)) continue;
         //noinspection unchecked
@@ -298,8 +302,8 @@ public final class FileBasedIndexScanUtil {
         Map<K, V> map = content == null ? null : indexer.map(content);
         if (unsavedDocument) return map;
         InputData<K, V> inputData = map == null || map.isEmpty() ? InputData.empty() : new InputData<>(map) {};
-        Computable<Boolean> computable = index.prepareUpdate(fileId, inputData);
-        ProgressManager.getInstance().computeInNonCancelableSection(computable::compute);
+        StorageUpdate computable = index.prepareUpdate(fileId, inputData);
+        ProgressManager.getInstance().computeInNonCancelableSection(computable::update);
         IndexingStamp.setFileIndexedStateCurrent(fileId, indexId, false);
         return map;
       }

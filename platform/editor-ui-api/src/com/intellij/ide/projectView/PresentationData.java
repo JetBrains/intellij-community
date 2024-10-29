@@ -130,26 +130,6 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myPresentableText = presentableText;
   }
 
-  /**
-   * @param closedIcon the closed icon for the node.
-   * @deprecated Different icons for open/closed no longer supported. Use setIcon instead
-   *             Sets the icon shown for the node when it is collapsed in a tree, or when it is displayed
-   *             in a non-tree view.
-   */
-  @Deprecated(forRemoval = true)
-  public void setClosedIcon(Icon closedIcon) {
-    setIcon(closedIcon);
-  }
-
-
-  /**
-   * @param ignoredOpenIcon ignored
-   * @deprecated Different icons for open/closed no longer supported. This function is no op.
-   *             Sets the icon shown for the node when it is expanded in the tree.
-   */
-  @Deprecated(forRemoval = true)
-  public void setOpenIcon(Icon ignoredOpenIcon) {
-  }
 
   /**
    * Copies the presentation parameters from the specified presentation instance.
@@ -157,8 +137,11 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
    * @param presentation the instance to copy the parameters from.
    */
   public void updateFrom(ItemPresentation presentation) {
-    if (presentation instanceof PresentationData) {
-      setBackground(((PresentationData)presentation).getBackground());
+    if (presentation instanceof PresentationData presentationData) {
+      setBackground(presentationData.getBackground());
+      for (PresentableNodeDescriptor.ColoredFragment fragment : presentationData.getColoredText()) {
+        addText(fragment);
+      }
     }
     setIcon(presentation.getIcon(false));
     setPresentableText(presentation.getPresentableText());

@@ -12,7 +12,6 @@
 
     <defaultHighlightingSettingProvider implementation="org.jetbrains.kotlin.idea.highlighter.KotlinDefaultHighlightingSettingsProvider"/>
 
-    <highlightingPassFactory implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingPass$Registrar"/>
     <problemHighlightFilter implementation="org.jetbrains.kotlin.idea.highlighter.KotlinProblemHighlightFilter"/>
     <problemFileHighlightFilter implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinProblemFileHighlightFilter"/>
 
@@ -22,9 +21,11 @@
     <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
+    <highlightVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.KotlinBeforeResolveHighlightingVisitor"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.DeclarationHighlightingExtension"/>
     <beforeResolveHighlightingVisitor implementation="org.jetbrains.kotlin.idea.base.highlighting.beforeResolve.AnnotationsHighlightingExtension"/>
   </extensions>

@@ -115,6 +115,38 @@ public final class TextIcon implements Icon {
     myTextBounds = null;
   }
 
+  public Insets getInsets() {
+    return myInsets;
+  }
+
+  public Integer getRound() {
+    return myRound;
+  }
+
+  public Boolean getWithBorders() {
+    return withBorders;
+  }
+
+  public Color getBackground() {
+    return myBackground;
+  }
+
+  public Color getForeground() {
+    return myForeground;
+  }
+
+  public Color getBorderColor() {
+    return myBorderColor;
+  }
+
+  public Font getFont() {
+    return myFont;
+  }
+
+  public String getText() {
+    return myText;
+  }
+
   @Override
   public int getIconWidth() {
     Rectangle bounds = getTextBounds();

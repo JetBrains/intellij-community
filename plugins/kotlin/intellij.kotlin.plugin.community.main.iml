@@ -72,6 +72,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.maven" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" exported="" />
@@ -95,7 +96,6 @@
     <orderEntry type="module" module-name="kotlin.core" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" exported="" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" exported="" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" exported="" />
     <orderEntry type="module" module-name="kotlin.fir" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" exported="" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" exported="" />
@@ -122,8 +122,9 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" exported="" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" exported="" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k1" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k2" exported="" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.injection.k1" exported="" />
     <orderEntry type="module" module-name="kotlin.base.injection" exported="" />
     <orderEntry type="module" module-name="kotlin.injection.k2" exported="" />
@@ -195,7 +196,7 @@
     <orderEntry type="library" exported="" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" exported="" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlinc.kotlin-script-runtime" level="project" />
-    <orderEntry type="library" scope="RUNTIME" name="javaslang" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="vavr" level="project" />
     <orderEntry type="module" module-name="intellij.markdown" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="javax-inject" level="project" />
     <orderEntry type="module" module-name="kotlin.searching.k2" exported="" />
@@ -211,5 +212,6 @@
     <orderEntry type="module" module-name="kotlin.formatter.minimal" exported="" />
     <orderEntry type="module" module-name="kotlin.ide" exported="" />
     <orderEntry type="module" module-name="kotlin.jsr223" exported="" />
+    <orderEntry type="module" module-name="kotlin.k2.internal" exported="" />
   </component>
 </module>

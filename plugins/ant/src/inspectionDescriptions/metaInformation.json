@@ -1,0 +1,12 @@
+{
+  "inspections": [
+    {
+      "id": "AntMissingPropertiesFileInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "AntDuplicateTargetsInspection",
+      "codeQualityCategory": "Sanity"
+    }
+  ]
+}

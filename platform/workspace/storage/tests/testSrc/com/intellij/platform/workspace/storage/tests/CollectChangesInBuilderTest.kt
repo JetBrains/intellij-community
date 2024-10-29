@@ -152,7 +152,7 @@ class CollectChangesInBuilderTest {
     val storage = builder.toSnapshot()
     val newBuilder = createBuilderFrom(storage)
     newBuilder.removeEntity(parent.from(newBuilder))
-    val changes = assertChangelogSize(2, newBuilder, storage)
+    val changes = assertChangelogSize(2, newBuilder)
     val childChange = changes.getValue(XChildEntity::class.java).single() as EntityChange.Removed<XChildEntity>
     val parentChange = changes.getValue(XParentEntity::class.java).single() as EntityChange.Removed<XParentEntity>
     assertEquals("to remove", childChange.oldEntity.childProperty)
@@ -170,7 +170,7 @@ class CollectChangesInBuilderTest {
     newBuilder.modifyXParentEntity(snapshot.entities(XParentEntity::class.java).single()) {
       children = emptyList()
     }
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     val childChanges = changes.getValue(XChildEntity::class.java)
     assertEquals("to remove", (childChanges.single() as EntityChange.Removed<XChildEntity>).oldEntity.childProperty)
   }
@@ -195,7 +195,7 @@ class CollectChangesInBuilderTest {
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
     assertEquals("Two", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    assertChangelogSize(3, newBuilder, snapshot)
+    assertChangelogSize(3, newBuilder)
   }
 
   @Test
@@ -218,7 +218,7 @@ class CollectChangesInBuilderTest {
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single { it.parentProperty == "Two" }.children.size)
     assertEquals("Two", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    assertChangelogSize(3, newBuilder, snapshot)
+    assertChangelogSize(3, newBuilder)
   }
 
   @Test
@@ -234,7 +234,7 @@ class CollectChangesInBuilderTest {
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
     assertEquals("One", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Replaced<*>>(changes[XParentEntity::class.java]?.single())
     assertIs<EntityChange.Added<*>>(changes[XChildEntity::class.java]?.single())
   }
@@ -254,7 +254,7 @@ class CollectChangesInBuilderTest {
     assertEquals(1, newBuilder.entities(XParentEntity::class.java).single().children.size)
     assertEquals("One", newBuilder.entities(XChildEntity::class.java).single().parentEntity.parentProperty)
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Replaced<*>>(changes[XParentEntity::class.java]?.single())
     assertIs<EntityChange.Added<*>>(changes[XChildEntity::class.java]?.single())
   }
@@ -275,7 +275,7 @@ class CollectChangesInBuilderTest {
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
     assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
@@ -296,7 +296,7 @@ class CollectChangesInBuilderTest {
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
     assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
@@ -314,7 +314,7 @@ class CollectChangesInBuilderTest {
     assertNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
     assertTrue(newBuilder.entities(OptionalOneToOneChildEntity::class.java).toList().isEmpty())
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
     assertIs<EntityChange.Removed<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
@@ -334,7 +334,7 @@ class CollectChangesInBuilderTest {
     assertNotNull(newBuilder.entities(OptionalOneToOneParentEntity::class.java).single().child)
     assertNotNull(newBuilder.entities(OptionalOneToOneChildEntity::class.java).single().parent)
 
-    val changes = assertChangelogSize(2, newBuilder, snapshot)
+    val changes = assertChangelogSize(2, newBuilder)
     assertIs<EntityChange.Added<*>>(changes[OptionalOneToOneParentEntity::class.java]?.single())
     assertIs<EntityChange.Replaced<*>>(changes[OptionalOneToOneChildEntity::class.java]?.single())
   }
@@ -369,9 +369,10 @@ class CollectChangesInBuilderTest {
     assertChangelogSize(2, builder2)
   }
 
-  private fun assertChangelogSize(size: Int,
-                                  myBuilder: MutableEntityStorage = builder,
-                                  original: ImmutableEntityStorage = initialStorage): Map<Class<*>, List<EntityChange<*>>> {
+  private fun assertChangelogSize(
+    size: Int,
+    myBuilder: MutableEntityStorage = builder
+  ): Map<Class<*>, List<EntityChange<*>>> {
     val changes = (myBuilder as MutableEntityStorageInstrumentation).collectChanges()
     assertChangelogOrdering(changes)
     assertEquals(size, changes.values.flatten().size)

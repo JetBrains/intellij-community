@@ -13,7 +13,7 @@
     <registryKey key="ide.newUsersOnboarding" defaultValue="true"
                  description="Whether to show New Users Onboarding dialog on first IDE start and corresponding action in the Help menu"/>
     <postStartupActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingStartupActivity"/>
-    <applicationInitializedListener implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
+    <applicationActivity implementation="com.intellij.platform.ide.newUsersOnboarding.NewUsersOnboardingExperiment$Initializer"/>
 
     <notificationGroup displayType="BALLOON" id="newUsersOnboarding" bundle="messages.NewUsersOnboardingBundle"
                        key="notification.group"/>

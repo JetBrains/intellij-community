@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
@@ -34,6 +34,7 @@ import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,6 +46,7 @@ import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private static final ExtensionPointName<GeneralCodeStyleOptionsProviderEP> EP_NAME = new ExtensionPointName<>("com.intellij.generalCodeStyleOptionsProvider");
 
@@ -136,8 +138,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   }
 
   @Override
-  @NotNull
-  protected FileType getFileType() {
+  protected @NotNull FileType getFileType() {
     return FileTypes.PLAIN_TEXT;
   }
 
@@ -182,8 +183,7 @@ public final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myExcludedScopesPanel = new ExcludedScopesPanel();
   }
 
-  @Nullable
-  private static Pattern compilePattern(CodeStyleSettings settings, JTextField field, String patternText) {
+  private static @Nullable Pattern compilePattern(CodeStyleSettings settings, JTextField field, String patternText) {
     try {
       return Pattern.compile(patternText);
     }

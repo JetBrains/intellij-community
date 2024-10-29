@@ -1,5 +1,5 @@
 // "Replace with ordinary assignment" "true"
-// TOOL: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection
 // ACTION: Change type to mutable
 // ACTION: Remove braces from 'if' statement
 // ACTION: Replace overloaded operator with function call
@@ -12,4 +12,5 @@ fun test(otherList: List<Int>, flag: Boolean) {
     }
 }
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ReplaceWithOrdinaryAssignmentIntention
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.codeInsight.intentions.shared.ReplaceWithOrdinaryAssignmentIntention

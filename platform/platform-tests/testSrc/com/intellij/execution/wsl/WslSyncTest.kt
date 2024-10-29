@@ -303,6 +303,36 @@ class WslSyncTest(private val linToWin: Boolean) {
   }
 
   @Test
+  fun testRetainUnmatchedFiles() = runWithJob {
+    val windowsDir = winDirRule.newDirectoryPath()
+    val srcDir = if (linToWin) linuxDirAsPath else windowsDir
+    val dstDir = if (linToWin) windowsDir else linuxDirAsPath
+
+    val sourceFiles = listOf("file1.txt", "file2.txt", "file3.txt")
+    for (fileName in sourceFiles) {
+      srcDir.resolve(fileName).writeText("Content of $fileName")
+    }
+
+    val extraFile = "extra_file.txt"
+    dstDir.resolve(extraFile).writeText("Content of $extraFile")
+    WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin, retainUnmatchedFiles = false)
+    Assert.assertFalse("Extra file should be deleted", dstDir.resolve(extraFile).exists())
+    dstDir.resolve(extraFile).writeText("Content of $extraFile")
+
+    WslSync.syncWslFolders(linuxDirRule.dir, windowsDir, wslRule.wsl, linToWin, retainUnmatchedFiles = true)
+
+    for (fileName in sourceFiles) {
+      Assert.assertTrue("Source file $fileName should be present", dstDir.resolve(fileName).exists())
+    }
+
+    Assert.assertTrue("Extra file should be retained", dstDir.resolve(extraFile).exists())
+
+    Assert.assertEquals("Content of extra file should be unchanged",
+                        "Content of $extraFile",
+                        dstDir.resolve(extraFile).readText())
+  }
+
+  @Test
   fun syncWithIncludesAndStubs() = runWithJob {
     doSyncAndAssertFilePresence(
       setOf(),

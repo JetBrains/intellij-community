@@ -1,0 +1,115 @@
+a:com.intellij.codeInspection.AbstractInspectionCmdlineOptions
+- com.intellij.codeInspection.InspectionToolCmdlineOptions
+- <init>():V
+- p:determineDirectoryToInspect(java.lang.String):java.lang.String
+- p:determineOutputPath():java.lang.String
+- p:determineProjectPath():java.lang.String
+- p:getDefaultOutputPath():java.lang.String
+- p:getDefaultProjectPath():java.lang.String
+- pa:getDirToInspectProperty():java.lang.String
+- pa:getErrorCodeRequiredProperty():java.lang.Boolean
+- pa:getOutputFormatProperty():java.lang.String
+- pa:getOutputPathProperty():java.lang.String
+- pa:getProfileNameOrPathProperty():java.lang.String
+- pa:getProjectPathProperty():java.lang.String
+- pa:getRunWithEditorSettingsProperty():java.lang.Boolean
+- pa:getXSLTSchemePathProperty():java.lang.String
+- initApplication(com.intellij.codeInspection.InspectionApplicationBase):V
+- pa:optionsBanner():java.lang.String[]
+- printHelpAndExit():V
+- validate():V
+a:com.intellij.codeInspection.AbstractInspectionToolStarter
+- com.intellij.openapi.application.ApplicationStarter
+- p:myOptions:com.intellij.codeInspection.InspectionToolCmdlineOptions
+- <init>():V
+- pa:createCmdlineOptions():com.intellij.codeInspection.AbstractInspectionCmdlineOptions
+- p:getApplication():com.intellij.codeInspection.InspectionApplicationBase
+- main(java.util.List):V
+- premain(java.util.List):V
+c:com.intellij.codeInspection.InspectionApplicationBase
+- com.intellij.ide.CommandLineInspectionProgressReporter
+- sf:LOG:com.intellij.openapi.diagnostic.Logger
+- sf:PROJECT_STRUCTURE_DIR:java.lang.String
+- myAnalyzeChanges:Z
+- myErrorCodeRequired:Z
+- myHelpProvider:com.intellij.codeInspection.InspectionToolCmdlineOptionHelpProvider
+- myInspectionProfile:com.intellij.codeInspection.ex.InspectionProfileImpl
+- myOutPath:java.lang.String
+- myOutputFormat:java.lang.String
+- myProfileName:java.lang.String
+- myProfilePath:java.lang.String
+- myProjectPath:java.lang.String
+- myRunWithEditorSettings:Z
+- mySourceDirectory:java.lang.String
+- myStubProfile:java.lang.String
+- <init>():V
+- enablePathProfiling():V
+- execute():V
+- s:getChangedFiles(com.intellij.openapi.project.Project):java.util.List
+- s:getPrefix(java.lang.String):java.lang.String
+- getProfileManager(com.intellij.openapi.project.Project):com.intellij.profile.codeInspection.InspectionProfileManager
+- getSearchScopeFromChangedFiles(com.intellij.openapi.project.Project):com.intellij.psi.search.SearchScope
+- gracefulExit():V
+- header():V
+- p:isProfileConfigInvalid():Z
+- onFailure(java.lang.String):V
+- reportError(java.lang.String):V
+- reportError(java.lang.Throwable):V
+- reportMessage(I,java.lang.String):V
+- p:reportMessageNoLineBreak(I,java.lang.String):V
+- p:run(java.nio.file.Path,com.intellij.openapi.Disposable):V
+- runAnalysisOnCodeWithoutChanges(com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.GlobalInspectionContextEx,java.lang.Runnable):com.intellij.analysis.AnalysisScope
+- setVerboseLevel(I):V
+- setupSecondAnalysisHandler(com.intellij.openapi.project.Project,com.intellij.codeInspection.ex.GlobalInspectionContextEx):V
+- startup():V
+f:com.intellij.codeInspection.InspectionApplicationException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+com.intellij.codeInspection.InspectionProfileLoader
+- a:loadProfileByName(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
+- a:loadProfileByPath(java.lang.String):com.intellij.codeInspection.ex.InspectionProfileImpl
+- tryLoadProfileByNameOrPath(java.lang.String,java.lang.String,java.lang.String,java.util.function.Consumer):com.intellij.codeInspection.ex.InspectionProfileImpl
+a:com.intellij.codeInspection.InspectionProfileLoaderBase
+- com.intellij.codeInspection.InspectionProfileLoader
+- <init>(com.intellij.openapi.project.Project):V
+- p:getProject():com.intellij.openapi.project.Project
+- p:tryLoadProfileFromYaml(java.lang.String,com.intellij.codeInspection.ex.InspectionToolsSupplier,com.intellij.profile.codeInspection.BaseInspectionProfileManager):com.intellij.codeInspection.ex.InspectionProfileImpl
+com.intellij.codeInspection.InspectionToolCmdlineOptionHelpProvider
+- a:printHelpAndExit():V
+com.intellij.codeInspection.InspectionToolCmdlineOptions
+- com.intellij.codeInspection.InspectionToolCmdlineOptionHelpProvider
+- a:beforeStartup():V
+- a:getVerboseLevelProperty():I
+- a:initApplication(com.intellij.codeInspection.InspectionApplicationBase):V
+- a:suppressHelp():Z
+- a:validate():V
+f:com.intellij.codeInspection.InspectionToolCmdlineOptions$CmdlineArgsValidationException
+- java.lang.Exception
+- <init>(java.lang.String):V
+f:com.intellij.codeInspection.inspectionProfile.InspectionCategoryGroupProviderKt
+- sf:escapeToolGroupPathElement(java.lang.String):java.lang.String
+- sf:makeCategoryId(java.lang.String[]):java.lang.String
+com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
+- a:findGroup(java.lang.String):com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
+com.intellij.codeInspection.inspectionProfile.YamlBaseConfig
+- a:getEnabled():java.lang.Boolean
+- a:getIgnore():java.util.List
+- a:getSeverity():java.lang.String
+com.intellij.codeInspection.inspectionProfile.YamlGroupConfig
+- com.intellij.codeInspection.inspectionProfile.YamlBaseConfig
+- a:getGroup():java.lang.String
+com.intellij.codeInspection.inspectionProfile.YamlInspectionConfig
+- com.intellij.codeInspection.inspectionProfile.YamlBaseConfig
+- a:getInspection():java.lang.String
+- a:getOptions():java.util.Map
+com.intellij.codeInspection.inspectionProfile.YamlInspectionGroup
+- a:getGroupId():java.lang.String
+- a:includesInspection(com.intellij.codeInspection.ex.InspectionToolWrapper):Z
+com.intellij.codeInspection.inspectionProfile.YamlInspectionProfile
+- com.intellij.codeInspection.inspectionProfile.InspectionGroupProvider
+- a:getBaseProfile():com.intellij.codeInspection.ex.InspectionProfileImpl
+- a:getConfigurations():java.util.List
+- a:getGroups():java.util.List
+- a:getInspectionProfileManager():com.intellij.profile.codeInspection.BaseInspectionProfileManager
+- a:getInspectionToolsSupplier():com.intellij.codeInspection.ex.InspectionToolsSupplier
+- a:getProfileName():java.lang.String

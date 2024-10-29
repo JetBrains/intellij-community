@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.intention;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.JavaFeature;
@@ -73,6 +74,24 @@ public class AddImportActionTest extends LightJavaCodeInsightFixtureTestCase {
                                 }
                             }
                             """);
+  }
+
+  public void testMethodReference() {
+    myFixture.configureByText(JavaFileType.INSTANCE, """
+      public class Importing {
+          void x(List<Object> list) {
+              list.stream().map(Random.class::cast).map(Ra<caret>ndom::toString).forEach(System.out::println);
+          }
+      }""");
+    importClass();
+    myFixture.checkResult("""
+                            import java.util.Random;
+                            
+                            public class Importing {
+                                void x(List<Object> list) {
+                                    list.stream().map(Random.class::cast).map(Random::toString).forEach(System.out::println);
+                                }
+                            }""");
   }
 
   public void testStringValue() {

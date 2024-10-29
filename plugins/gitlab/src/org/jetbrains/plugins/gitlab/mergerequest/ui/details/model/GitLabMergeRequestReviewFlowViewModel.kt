@@ -34,6 +34,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestSub
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.getSubmittableReview
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestReviewersUtil
 import org.jetbrains.plugins.gitlab.util.GitLabBundle
+import org.jetbrains.plugins.gitlab.util.GitLabCoroutineUtil
 
 internal interface GitLabMergeRequestReviewFlowViewModel : CodeReviewFlowViewModel<GitLabReviewerDTO> {
   val isBusy: Flow<Boolean>
@@ -104,8 +105,14 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
 
   override val isBusy: Flow<Boolean> = taskLauncher.busy
 
-  override val allowsMultipleReviewers: Flow<Boolean> = projectData.allowsMultipleReviewers
-
+  override val allowsMultipleReviewers: Flow<Boolean> = suspend {
+    try {
+      projectData.isMultipleReviewersAllowed()
+    }
+    catch (e: Exception) {
+      false
+    }
+  }.asFlow()
   override val author: GitLabUserDTO = mergeRequest.author
 
   override val reviewRequestState: SharedFlow<ReviewRequestState> = mergeRequest.details.map { it.reviewState }
@@ -168,7 +175,8 @@ internal class GitLabMergeRequestReviewFlowViewModelImpl(
   override val submittableReview: SharedFlow<SubmittableReview?> = mergeRequest.getSubmittableReview(currentUser).modelFlow(scope, LOG)
   override var submitReviewInputHandler: (suspend (GitLabMergeRequestSubmitReviewViewModel) -> Unit)? = null
 
-  override val potentialReviewers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
+  override val potentialReviewers: Flow<Result<List<GitLabUserDTO>>> =
+    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getMembersBatches)
 
   override fun submitReview() {
     scope.launch {

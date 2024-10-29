@@ -64,7 +64,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   }
 
   @Override
-  public boolean isEnabledForModuleType(@NotNull ModuleType moduleType) {
+  public boolean isEnabledForModuleType(@NotNull ModuleType<?> moduleType) {
     return false;
   }
 }

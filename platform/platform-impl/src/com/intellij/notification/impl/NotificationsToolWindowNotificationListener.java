@@ -4,12 +4,14 @@ package com.intellij.notification.impl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class NotificationsToolWindowNotificationListener implements Notifications {
   private final Project myProject;
 

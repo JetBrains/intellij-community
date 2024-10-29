@@ -65,25 +65,22 @@ public final class QueueProcessor<T> {
     this(processor, deathCondition, true);
   }
 
-  public QueueProcessor(@NotNull Consumer<? super T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
+  public QueueProcessor(@NotNull java.util.function.Consumer<? super T> processor, @NotNull Condition<?> deathCondition, boolean autostart) {
     this(wrappingProcessor(processor), autostart, ThreadToUse.POOLED, deathCondition);
   }
 
-  @NotNull
-  public static QueueProcessor<Runnable> createRunnableQueueProcessor() {
-    return new QueueProcessor<>(new RunnableConsumer());
+  public static @NotNull QueueProcessor<Runnable> createRunnableQueueProcessor() {
+    return new QueueProcessor<>(new RunnableConsumer(), Conditions.alwaysFalse(), true);
   }
 
-  @NotNull
-  public static QueueProcessor<Runnable> createRunnableQueueProcessor(@NotNull ThreadToUse threadToUse) {
+  public static @NotNull QueueProcessor<Runnable> createRunnableQueueProcessor(@NotNull ThreadToUse threadToUse) {
     return new QueueProcessor<>(wrappingProcessor(new RunnableConsumer()), true, threadToUse, Conditions.alwaysFalse());
   }
 
-  @NotNull
-  private static <T> BiConsumer<T, Runnable> wrappingProcessor(@NotNull Consumer<? super T> processor) {
+  private static @NotNull <T> BiConsumer<T, Runnable> wrappingProcessor(@NotNull java.util.function.Consumer<? super T> processor) {
     return (item, continuation) -> {
       try {
-        runSafely(() -> processor.consume(item));
+        runSafely(() -> processor.accept(item));
       }
       finally {
         continuation.run();
@@ -93,7 +90,8 @@ public final class QueueProcessor<T> {
 
   /**
    * Constructs a QueueProcessor with the given processor and autostart setting.
-   * By default QueueProcessor starts processing when it receives the first element. Pass {@code false} to alternate its behavior.
+   * By default, QueueProcessor starts processing when it receives the first element.
+   * Pass {@code false} to alternate its behavior.
    *
    * @param processor processor of queue elements.
    * @param autostart if {@code true} (which is by default), the queue will be processed immediately when it receives the first element.
@@ -298,9 +296,9 @@ public final class QueueProcessor<T> {
     }
   }
 
-  private static final class RunnableConsumer implements Consumer<Runnable> {
+  private static final class RunnableConsumer implements java.util.function.Consumer<Runnable> {
     @Override
-    public void consume(Runnable runnable) {
+    public void accept(Runnable runnable) {
       runnable.run();
     }
   }

@@ -109,7 +109,7 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return fieldValue;
     }
     catch (InternalException e) {
-      if (evaluationContext.getDebugProcess().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
+      if (evaluationContext.getSuspendContext().getVirtualMachineProxy().canBeModified()) { // do not care in read only vms
         LOG.debug(e);
       }
       else {

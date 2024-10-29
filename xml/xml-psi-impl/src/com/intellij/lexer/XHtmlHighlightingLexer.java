@@ -18,7 +18,7 @@ package com.intellij.lexer;
 /**
  * @deprecated Use or extend {@link XHtmlLexer} directly with {@code highlightMode} set to {@code true}
  */
-@Deprecated
+@Deprecated(forRemoval = true)
 public class XHtmlHighlightingLexer extends XHtmlLexer {
 
   public XHtmlHighlightingLexer() {

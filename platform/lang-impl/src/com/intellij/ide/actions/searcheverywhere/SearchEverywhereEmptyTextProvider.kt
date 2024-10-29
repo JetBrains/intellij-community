@@ -2,7 +2,9 @@
 package com.intellij.ide.actions.searcheverywhere
 
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface SearchEverywhereEmptyTextProvider {
   fun updateEmptyStatus(statusText: StatusText, rebuild: () -> Unit)
 }

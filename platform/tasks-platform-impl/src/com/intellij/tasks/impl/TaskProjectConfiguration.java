@@ -12,6 +12,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.List;
 */
 @Service(Service.Level.PROJECT)
 @State(name = "TaskProjectConfiguration")
+@ApiStatus.Internal
 public final class TaskProjectConfiguration implements PersistentStateComponent<TaskProjectConfiguration> {
   @Tag("server")
   public static class SharedServer {

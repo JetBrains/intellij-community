@@ -23,7 +23,7 @@ fun testStripeButton(id: String, manager: ToolWindowManagerImpl, shouldBeVisible
 
 private fun init(project: Project,
                  isNewUi: Boolean,
-                 taskProducer: ((Project) -> List<RegisterToolWindowTask>)? = null,
+                 taskProducer: ((Project) -> List<RegisterToolWindowTaskData>)? = null,
                  layoutCustomizer: ((DesktopLayout) -> Unit) = {}): ToolWindowManagerImpl {
   val paneId = WINDOW_INFO_DEFAULT_TOOL_WINDOW_PANE_ID
   val buttonManager = if (isNewUi) ToolWindowPaneNewButtonManager(paneId) else ToolWindowPaneOldButtonManager(paneId)

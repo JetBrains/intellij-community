@@ -185,7 +185,7 @@ class CodeFloatingToolbar(
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document)
     val elementAtOffset = psiFile?.findElementAt(editor.caretModel.primaryCaret.offset)
     val targetLanguage = elementAtOffset?.language ?: return null
-    return FloatingToolbarCustomizer.findActionGroupFor(targetLanguage)
+    return findActionGroupFor(targetLanguage)
   }
 
   private fun createConfigureGroup(customizableGroupId: String): ActionGroup {

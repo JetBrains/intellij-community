@@ -2,12 +2,14 @@
 package com.intellij.vcs.commit.message;
 
 import com.intellij.uiDesigner.core.GridConstraints;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class CommitMessageInspectionDetailsPanel {
   private JPanel mySeverityChooserPanel;
   private JPanel myMainPanel;

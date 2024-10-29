@@ -1,10 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
@@ -26,7 +25,7 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
   }
 
   @Override
-  public void beforeShown(@NotNull final LightweightWindowEvent windowEvent) {
+  public void beforeShown(final @NotNull LightweightWindowEvent windowEvent) {
     final Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
     if (activeLookup != null) {
       activeLookup.addLookupListener(new LookupListener() {

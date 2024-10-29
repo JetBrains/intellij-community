@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
@@ -39,7 +40,9 @@ import git4idea.i18n.GitBundle;
 import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
+import kotlin.text.StringsKt;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-import static com.intellij.externalProcessAuthHelper.AuthenticationMode.SILENT;
 import static com.intellij.externalProcessAuthHelper.AuthenticationMode.NONE;
+import static com.intellij.externalProcessAuthHelper.AuthenticationMode.SILENT;
 import static git4idea.config.GitIncomingCheckStrategy.Auto;
 import static git4idea.config.GitIncomingCheckStrategy.Never;
 import static git4idea.repo.GitRefUtil.addRefsHeadsPrefixIfNeeded;
@@ -80,9 +83,9 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
   private final @NotNull MergingUpdateQueue myQueue;
 
   //store map from local branch to related cached remote branch hash per repository
-  private final @NotNull Map<GitRepository, Set<GitLocalBranch>> myLocalBranchesWithIncoming = new ConcurrentHashMap<>();
+  private final @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> myLocalBranchesWithIncoming = new ConcurrentHashMap<>();
   private final @NotNull Map<GitRepository, Map<GitLocalBranch, Hash>> myLocalBranchesToFetch = new ConcurrentHashMap<>();
-  private final @NotNull Map<GitRepository, Set<GitLocalBranch>> myLocalBranchesWithOutgoing = new ConcurrentHashMap<>();
+  private final @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> myLocalBranchesWithOutgoing = new ConcurrentHashMap<>();
   private final @NotNull MultiMap<GitRepository, GitRemote> myErrorMap = MultiMap.createConcurrentSet();
   private final @NotNull Project myProject;
   private @Nullable ScheduledFuture<?> myPeriodicalUpdater;
@@ -130,6 +133,54 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
 
   public boolean hasOutgoingFor(@Nullable GitRepository repository, @NotNull String localBranchName) {
     return shouldCheckIncomingOutgoing() && getBranchesWithOutgoing(repository).contains(new GitLocalBranch(localBranchName));
+  }
+
+  /**
+   * @return the number of incoming commits for the specified branch if present.
+   * If there are no incoming commits, but it is known that something is non-fetched from a remote,
+   */
+  private @Nullable Integer getIncomingFor(@Nullable GitRepository repository, @NotNull GitLocalBranch localBranch) {
+    if (!shouldCheckIncoming()) return null;
+
+    Map<GitLocalBranch, Integer> incomingForRepo = myLocalBranchesWithIncoming.get(repository);
+    if (incomingForRepo == null) return null;
+
+    return incomingForRepo.get(localBranch);
+  }
+
+  private @Nullable Integer getOutgoingFor(@Nullable GitRepository repository, @NotNull GitLocalBranch localBranch) {
+    if (!shouldCheckIncomingOutgoing()) return null;
+
+    Map<GitLocalBranch, Integer> outgoingForRepo = myLocalBranchesWithOutgoing.get(repository);
+    if (outgoingForRepo == null) return null;
+    return outgoingForRepo.get(localBranch);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull IncomingOutgoingState getIncomingOutgoingState(@NotNull GitRepository repository,
+                                                                 @NotNull GitLocalBranch localBranch) {
+    return getIncomingOutgoingState(Collections.singleton(repository), localBranch);
+  }
+
+  @ApiStatus.Internal
+  public @NotNull IncomingOutgoingState getIncomingOutgoingState(@NotNull Collection<GitRepository> repositories,
+                                                                 @NotNull GitLocalBranch localBranch) {
+    if (repositories.isEmpty()) return IncomingOutgoingState.EMPTY;
+
+    Map<GitRepository, InOutRepoState> repoStates = repositories.stream()
+      .map(r -> {
+        Integer incoming = getIncomingFor(r, localBranch);
+        Integer outgoing = getOutgoingFor(r, localBranch);
+        if (incoming == null && outgoing == null) return null;
+
+        return new Pair<>(r, new InOutRepoState(incoming, outgoing));
+      })
+      .filter(Objects::nonNull)
+      .collect(Collectors.toMap(pair -> pair.first, pair -> pair.second));
+
+    if (repoStates.isEmpty()) return IncomingOutgoingState.EMPTY;
+
+    return new IncomingOutgoingState(repoStates);
   }
 
   public boolean shouldCheckIncoming() {
@@ -310,9 +361,8 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     return result;
   }
 
-  private @NotNull Set<GitLocalBranch> calcBranchesWithIncoming(@NotNull GitRepository repository) {
-
-    Set<GitLocalBranch> result = new HashSet<>();
+  private @NotNull Map<GitLocalBranch, Integer> calcBranchesWithIncoming(@NotNull GitRepository repository) {
+    Map<GitLocalBranch, Integer> result = new HashMap<>();
     GitBranchesCollection branchesCollection = repository.getBranches();
     Map<GitLocalBranch, Hash> cachedBranchesToFetch = myLocalBranchesToFetch.get(repository);
 
@@ -323,11 +373,15 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
       Hash localHash = branchesCollection.getHash(localBranch);
       if (localHashForRemoteBranch == null) return;
 
-      if (hasCommitsForBranch(repository, info.getLocalBranch(), localHash, localHashForRemoteBranch, true)) {
-        result.add(info.getLocalBranch());
+      Integer commits = getCommitsForBranch(repository, info.getLocalBranch(), localHash, localHashForRemoteBranch, true);
+      if (commits != null && commits > 0) {
+        result.put(info.getLocalBranch(), commits);
       }
       else if (cachedBranchesToFetch != null && localHashForRemoteBranch.equals(cachedBranchesToFetch.get(localBranch))) {
-        result.add(info.getLocalBranch());
+        // In this case, we know that the remote branch has some new commits,
+        // but they aren't fetched yet, so we can't count them
+        // TODO: fetch?
+        result.put(info.getLocalBranch(), 0);
       }
     });
     return result;
@@ -388,26 +442,27 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     return h;
   }
 
-  private @NotNull Set<GitLocalBranch> calculateBranchesWithOutgoing(@NotNull GitRepository gitRepository) {
-    Set<GitLocalBranch> branchesWithOutgoing = new HashSet<>();
+  private @NotNull Map<GitLocalBranch, Integer> calculateBranchesWithOutgoing(@NotNull GitRepository gitRepository) {
+    Map<GitLocalBranch, Integer> branchesWithOutgoing = new HashMap<>();
     GitBranchesCollection branchesCollection = gitRepository.getBranches();
     for (GitLocalBranch branch : branchesCollection.getLocalBranches()) {
       GitPushTarget pushTarget = GitPushSupport.getPushTargetIfExist(gitRepository, branch);
       Hash localHashForRemoteBranch = pushTarget != null ? branchesCollection.getHash(pushTarget.getBranch()) : null;
       Hash localHash = branchesCollection.getHash(branch);
-      if (hasCommitsForBranch(gitRepository, branch, localHash, localHashForRemoteBranch, false)) {
-        branchesWithOutgoing.add(branch);
+      Integer commits = getCommitsForBranch(gitRepository, branch, localHash, localHashForRemoteBranch, false);
+      if (commits != null && commits > 0) {
+        branchesWithOutgoing.put(branch, commits);
       }
     }
     return branchesWithOutgoing;
   }
 
-  private boolean hasCommitsForBranch(@NotNull GitRepository repository,
+  private Integer getCommitsForBranch(@NotNull GitRepository repository,
                                       @NotNull GitLocalBranch localBranch,
                                       @Nullable Hash localBranchHash, @Nullable Hash localHashForRemoteBranch,
                                       boolean incoming) {
-    if (!supportsIncomingOutgoing()) return false;
-    if (localHashForRemoteBranch == null || Objects.equals(localBranchHash, localHashForRemoteBranch)) return false;
+    if (!supportsIncomingOutgoing()) return null;
+    if (localHashForRemoteBranch == null || Objects.equals(localBranchHash, localHashForRemoteBranch)) return null;
 
     //run git rev-list --count pushTargetForBranch_or_hash..localName for outgoing ( @{push} can be used only for equal branch names)
     //see git-push help -> simple push strategy
@@ -418,17 +473,18 @@ public final class GitBranchIncomingOutgoingManager implements GitRepositoryChan
     String numberOfCommitsBetween = GitHistoryUtils.getNumberOfCommitsBetween(repository, from, to);
     if (numberOfCommitsBetween == null) {
       LOG.warn("Can't get outgoing info (git rev-list " + branchName + " failed)");
-      return false;
+      return null;
     }
-    return !StringUtil.startsWithChar(numberOfCommitsBetween, '0');
+    return StringsKt.toIntOrNull(numberOfCommitsBetween);
   }
 
   private static @NotNull Collection<GitLocalBranch> getBranches(@Nullable GitRepository repository,
-                                                                 @NotNull Map<GitRepository, Set<GitLocalBranch>> branchCollection) {
+                                                                 @NotNull Map<GitRepository, Map<GitLocalBranch, Integer>> branchCollection) {
     if (repository != null) {
-      return Objects.requireNonNullElse(branchCollection.get(repository), Collections.emptySet());
+      Map<GitLocalBranch, Integer> map = Objects.requireNonNullElse(branchCollection.get(repository), Collections.emptyMap());
+      return map.keySet();
     }
-    return StreamEx.of(branchCollection.values()).flatMap(Set::stream).collect(Collectors.toSet());
+    return StreamEx.of(branchCollection.values()).map(map -> map.keySet()).nonNull().flatMap(branches -> branches.stream()).collect(Collectors.toSet());
   }
 
   @Override

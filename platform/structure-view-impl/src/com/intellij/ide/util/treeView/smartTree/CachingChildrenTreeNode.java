@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView.smartTree;
 
+import com.intellij.ide.structureView.StructureViewModel;
+import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewElementWrapper;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
@@ -258,6 +260,15 @@ public abstract class CachingChildrenTreeNode <Value> extends AbstractTreeNode<V
   @Override
   public boolean canNavigateToSource() {
     return getValue() instanceof Navigatable && ((Navigatable)getValue()).canNavigateToSource();
+  }
+
+  @Override
+  public boolean isAutoExpandAllowed() {
+    if (myTreeModel instanceof StructureViewModel.ExpandInfoProvider expandInfoProvider
+        && getValue() instanceof StructureViewTreeElement structureViewTreeElement) {
+      return expandInfoProvider.isAutoExpand(structureViewTreeElement);
+    }
+    return super.isAutoExpandAllowed();
   }
 
   protected void clearChildren() {

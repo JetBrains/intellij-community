@@ -101,13 +101,16 @@ class KotlinEnterHandler : EnterHandlerDelegateAdapter() {
         caretAdvanceRef: Ref<Int>
     ): Boolean {
         var caretOffset = caretOffsetRef.get()
+        val doc = editor.document
+        // We commit document, so that psiFile.findElementAt returns proper value in case
+        // of multi-caret insertions
+        PsiDocumentManager.getInstance(psiFile.project).commitDocument(doc)
         val psiAtOffset = psiFile.findElementAt(caretOffset) ?: return false
         val stringTemplate = psiAtOffset.getStrictParentOfType<KtStringTemplateExpression>() ?: return false
         if (!stringTemplate.isSingleQuoted()) return false
         when (psiAtOffset.node.elementType) {
             KtTokens.CLOSING_QUOTE, KtTokens.REGULAR_STRING_PART, KtTokens.ESCAPE_SEQUENCE,
             KtTokens.SHORT_TEMPLATE_ENTRY_START, KtTokens.LONG_TEMPLATE_ENTRY_START -> {
-                val doc = editor.document
                 var caretAdvance = 1
                 if (stringTemplate.parent is KtDotQualifiedExpression) {
                     doc.insertString(stringTemplate.endOffset, ")")

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -73,7 +73,7 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent event) {
+  public void update(final @NotNull AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
@@ -90,16 +90,14 @@ public abstract class GotoActionBase extends AnAction {
     return true;
   }
 
-  @Nullable
-  public static PsiElement getPsiContext(final AnActionEvent e) {
+  public static @Nullable PsiElement getPsiContext(final AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) return file;
     Project project = e.getData(CommonDataKeys.PROJECT);
     return getPsiContext(project);
   }
 
-  @Nullable
-  public static PsiElement getPsiContext(final Project project) {
+  public static @Nullable PsiElement getPsiContext(final Project project) {
     if (project == null) return null;
     Editor selectedEditor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (selectedEditor == null) return null;
@@ -108,8 +106,7 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected abstract static class GotoActionCallback<T> {
-    @Nullable
-    protected ChooseByNameFilter<T> createFilter(@NotNull ChooseByNamePopup popup) {
+    protected @Nullable ChooseByNameFilter<T> createFilter(@NotNull ChooseByNamePopup popup) {
       return null;
     }
 
@@ -149,8 +146,7 @@ public abstract class GotoActionBase extends AnAction {
     return Pair.create("", 0);
   }
 
-  @Nullable
-  public static String getInitialTextForNavigation(@NotNull AnActionEvent e) {
+  public static @Nullable String getInitialTextForNavigation(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
     if (selectedText == null) {
@@ -173,7 +169,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
+                                         final @Nullable @Nls String findUsagesTitle,
                                          boolean useSelectionFromEditor) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, true);
   }
@@ -181,7 +177,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
+                                         final @Nullable @Nls String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
@@ -191,7 +187,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(AnActionEvent e,
                                          ChooseByNameModel model,
                                          final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
+                                         final @Nullable @Nls String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
                                          final ChooseByNameItemProvider itemProvider) {
@@ -206,13 +202,13 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
+                                         final @Nullable @Nls String findUsagesTitle,
                                          final ChooseByNamePopup popup) {
     showNavigationPopup(callback, findUsagesTitle, popup, true);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
-                                         @Nullable @Nls final String findUsagesTitle,
+                                         final @Nullable @Nls String findUsagesTitle,
                                          final ChooseByNamePopup popup,
                                          final boolean allowMultipleSelection) {
 

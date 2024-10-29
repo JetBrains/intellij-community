@@ -4,6 +4,7 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.UpdateInspectionOptionFix;
 import com.intellij.codeInspection.options.OptPane;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -27,9 +28,10 @@ import static com.intellij.codeInspection.options.OptPane.pane;
  */
 public final class EqualsWithItselfInspection extends BaseInspection {
 
+  private static final CallMatcher.Simple COMPARATOR_COMPARE = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare");
   private static final CallMatcher TWO_ARGUMENT_COMPARISON = CallMatcher.anyOf(
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_OBJECTS, "equals", "deepEquals"),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare"),
+    COMPARATOR_COMPARE,
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_ARRAYS, "equals", "deepEquals"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "compare", "compareUnsigned"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "compare", "compareUnsigned"),
@@ -84,7 +86,8 @@ public final class EqualsWithItselfInspection extends BaseInspection {
   public @NotNull OptPane getOptionsPane() {
     return pane(
       checkbox("ignoreNonFinalClassesInTest", InspectionGadgetsBundle.message(
-        "equals.with.itself.option")));
+        "equals.with.itself.option"))
+        .description(HtmlChunk.raw(InspectionGadgetsBundle.message("equals.with.itself.option.description"))));
   }
 
   @NotNull
@@ -111,16 +114,21 @@ public final class EqualsWithItselfInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (ignoreNonFinalClassesInTest &&
-          POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
-          !isFinalLibraryClassOrPrimitives(expression)) {
+      if (ignoreNonFinalClassesInTest && mayTestContract(expression)) {
         return;
       }
       if (isEqualsWithItself(expression)) {
-        registerMethodCallError(expression, !ignoreNonFinalClassesInTest &&
-                                            POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) &&
-                                            !isFinalLibraryClassOrPrimitives(expression));
+        registerMethodCallError(expression, !ignoreNonFinalClassesInTest && mayTestContract(expression));
       }
+    }
+
+    private static boolean mayTestContract(@NotNull PsiMethodCallExpression expression) {
+      if (POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(expression) && !isFinalLibraryClassOrPrimitives(expression)) return true;
+      if (COMPARATOR_COMPARE.test(expression) &&
+          PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiExpressionList list &&
+          list.getParent() instanceof PsiMethodCallExpression parent &&
+          POSSIBLE_TO_SKIP_TEST_ASSERTIONS.test(parent)) return true;
+      return false;
     }
 
     private static boolean isFinalLibraryClassOrPrimitives(PsiMethodCallExpression expression) {

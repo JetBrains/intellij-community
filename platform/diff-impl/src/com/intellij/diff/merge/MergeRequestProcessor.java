@@ -11,8 +11,6 @@ import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -43,7 +41,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -238,7 +235,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   private @NotNull BorderLayoutPanel createFeedbackToolbarPanel() {
     AnAction action = ActionManager.getInstance().getAction("Diff.Conflicts.Feedback");
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("FeedbackToolbar", (ActionGroup)action, true);
-    actionToolbar.setTargetComponent(myMainPanel);
+    actionToolbar.setTargetComponent(myContentPanel.getTargetComponent());
     return new BorderLayoutPanel().addToRight(actionToolbar.getComponent());
   }
 
@@ -271,8 +268,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
     toolbar.setShowSeparatorTitles(true);
 
-    DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
-    toolbar.setTargetComponent(toolbar.getComponent());
+    toolbar.setTargetComponent(myContentPanel.getTargetComponent());
 
     myToolbarPanel.setContent(toolbar.getComponent());
     recursiveRegisterShortcutSet(group, myMainPanel, null);
@@ -543,49 +539,25 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Helpers
   //
 
-  private class MyPanel extends JPanel implements DataProvider {
+  private class MyPanel extends JPanel implements UiDataProvider {
     MyPanel() {
       super(new BorderLayout());
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull @NonNls String dataId) {
-      Object data;
-
-      DataProvider contentProvider = DataManagerImpl.getDataProviderEx(myContentPanel.getTargetComponent());
-      if (contentProvider != null) {
-        data = contentProvider.getData(dataId);
-        if (data != null) return data;
-      }
-
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myProject;
-      }
-      else if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        if (myRequest != null && myRequest.getUserData(DiffUserDataKeys.HELP_ID) != null) {
-          return myRequest.getUserData(DiffUserDataKeys.HELP_ID);
-        }
-        else {
-          return "procedures.vcWithIDEA.commonVcsOps.integrateDiffs.resolveConflict";
-        }
-      }
-      else if (DiffDataKeys.MERGE_VIEWER.is(dataId)) {
-        return myViewer;
-      }
-
-      DataProvider requestProvider = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER) : null;
-      if (requestProvider != null) {
-        data = requestProvider.getData(dataId);
-        if (data != null) return data;
-      }
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(CommonDataKeys.PROJECT, myProject);
+      String requestHelpId = myRequest == null ? null : myRequest.getUserData(DiffUserDataKeys.HELP_ID);
+      sink.set(PlatformCoreDataKeys.HELP_ID,
+               requestHelpId != null ? requestHelpId :
+               "procedures.vcWithIDEA.commonVcsOps.integrateDiffs.resolveConflict");
+      sink.set(DiffDataKeys.MERGE_VIEWER, myViewer);
 
       DataProvider contextProvider = myContext.getUserData(DiffUserDataKeys.DATA_PROVIDER);
-      if (contextProvider != null) {
-        data = contextProvider.getData(dataId);
-        if (data != null) return data;
-      }
-      return null;
+      DataSink.uiDataSnapshot(sink, contextProvider);
+
+      DataProvider requestProvider = myRequest != null ? myRequest.getUserData(DiffUserDataKeys.DATA_PROVIDER) : null;
+      DataSink.uiDataSnapshot(sink, requestProvider);
     }
   }
 

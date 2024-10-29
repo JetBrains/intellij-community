@@ -1,13 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.model
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.concurrency.installThreadContext
 import com.intellij.openapi.diagnostic.ControlFlowException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.withContext
-
-import java.util.EnumSet
+import java.util.*
 import kotlin.coroutines.CoroutineContext
 
 
@@ -74,8 +74,10 @@ interface SideEffectGuard {
   }
 }
 
-internal class AllowedSideEffectsElement(val sideEffects: EnumSet<SideEffectGuard.EffectType>) : CoroutineContext.Element {
+internal class AllowedSideEffectsElement(val sideEffects: EnumSet<SideEffectGuard.EffectType>) : CoroutineContext.Element, IntelliJContextElement {
   companion object : CoroutineContext.Key<AllowedSideEffectsElement>
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
 
   override val key: CoroutineContext.Key<*> = AllowedSideEffectsElement
 }

@@ -7,8 +7,10 @@ import com.intellij.ide.hierarchy.LanguageCallHierarchy;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class BrowseCallHierarchyAction extends BrowseHierarchyActionBase {
   public BrowseCallHierarchyAction() {
     super(LanguageCallHierarchy.INSTANCE);

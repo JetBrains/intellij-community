@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.util.DiffPlaces;
@@ -7,12 +7,10 @@ import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -118,7 +116,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Nullable private final String myHelpId;
 
-  @NotNull private final Alarm myOKButtonUpdateAlarm = new Alarm();
+  @NotNull private final Alarm okButtonUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
   @NotNull private final Runnable myUpdateButtonsRunnable = () -> {
     updateButtons();
     updateLegend();
@@ -133,19 +131,6 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   @Deprecated
   public static boolean commitChanges(@NotNull Project project,
                                       @NotNull Collection<? extends Change> included,
-                                      @Nullable LocalChangeList initialChangeList,
-                                      @Nullable CommitExecutor executor,
-                                      @Nullable String comment) {
-    return commitChanges(project, null, included, initialChangeList, executor, comment);
-  }
-
-  /**
-   * @deprecated Prefer using {@link #commitWithExecutor} or {@link #commitVcsChanges}.
-   */
-  @Deprecated(forRemoval = true)
-  public static boolean commitChanges(@NotNull Project project,
-                                      @SuppressWarnings("unused") @Nullable Collection<? extends Change> ignored_parameter,
-                                      @NotNull Collection<?> included,
                                       @Nullable LocalChangeList initialChangeList,
                                       @Nullable CommitExecutor executor,
                                       @Nullable String comment) {
@@ -273,7 +258,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
     mySplitter = new Splitter(true);
     boolean nonFocusable = !UISettings.getInstance().getDisableMnemonicsInControls(); // Or that won't be keyboard accessible at all
-    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable);
+    myCommitOptions = new CommitOptionsPanel(myProject, () -> getDefaultCommitActionName(), nonFocusable, false);
     myCommitOptionsPanel = myCommitOptions.getComponent();
     myWarningLabel = new JBLabel();
 
@@ -308,7 +293,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   }
 
   private void beforeInit() {
-    getBrowser().setInclusionChangedListener(() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged());
+    //readaction is not enough
+    getBrowser().setInclusionChangedListener(() -> WriteIntentReadAction.run(
+      (Runnable)() -> myInclusionEventDispatcher.getMulticaster().inclusionChanged()
+    ));
 
     addInclusionListener(() -> updateButtons(), this);
     getBrowser().getViewer().addSelectionListener(() -> {
@@ -531,7 +519,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     myDisposed = true;
     Disposer.dispose(getBrowser());
     Disposer.dispose(myCommitMessageArea);
-    Disposer.dispose(myOKButtonUpdateAlarm);
+    Disposer.dispose(okButtonUpdateAlarm);
     super.dispose();
     Disposer.dispose(myDiffDetails);
     PropertiesComponent.getInstance().setValue(SPLITTER_PROPORTION_OPTION, mySplitter.getProportion(), SPLITTER_PROPORTION_OPTION_DEFAULT);
@@ -593,8 +581,8 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       myCommitAction.setEnabled(enabled);
     }
     myExecutorActions.forEach(action -> action.updateEnabled(enabled));
-    myOKButtonUpdateAlarm.cancelAllRequests();
-    myOKButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
+    okButtonUpdateAlarm.cancelAllRequests();
+    okButtonUpdateAlarm.addRequest(myUpdateButtonsRunnable, 300, ModalityState.stateForComponent(getBrowser()));
   }
 
   private void updateLegend() {
@@ -626,14 +614,12 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return getPreferredFocusedComponent();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    return StreamEx.of(myDataProviders)
-      .map(provider -> provider.getData(dataId))
-      .nonNull()
-      .findFirst()
-      .orElseGet(() -> getBrowser().getData(dataId));
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, getBrowser());
+    for (DataProvider provider : myDataProviders) {
+      DataSink.uiDataSnapshot(sink, provider);
+    }
   }
 
   @NotNull

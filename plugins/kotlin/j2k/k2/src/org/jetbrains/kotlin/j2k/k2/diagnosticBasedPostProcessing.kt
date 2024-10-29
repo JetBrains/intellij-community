@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.j2k.k2
 
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.editor.asTextRange
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS
@@ -48,7 +50,7 @@ internal class K2DiagnosticBasedPostProcessingGroup(
             }
         }
 
-        return Applier(processingDataList)
+        return Applier(processingDataList, file.project)
     }
 
     context(KaSession)
@@ -63,11 +65,13 @@ internal class K2DiagnosticBasedPostProcessingGroup(
         return ProcessingData(fix, element.createSmartPointer())
     }
 
-    private class Applier(private val processingDataList: List<ProcessingData>) : PostProcessingApplier {
+    private class Applier(private val processingDataList: List<ProcessingData>, private val project: Project) : PostProcessingApplier {
         override fun apply() {
-            for ((fix, pointer) in processingDataList) {
-                val element = pointer.element ?: continue
-                fix.apply(element)
+            CodeStyleManager.getInstance(project).performActionWithFormatterDisabled {
+                for ((fix, pointer) in processingDataList) {
+                    val element = pointer.element ?: continue
+                    fix.apply(element)
+                }
             }
         }
     }

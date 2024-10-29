@@ -7,11 +7,13 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * We need to avoid memory leaks on ide project rename. This class is responsible for that.
  */
+@ApiStatus.Internal
 public final class ProjectRenameAware {
   public static void beAware(@NotNull Project project) {
     final ExternalSystemFacadeManager facadeManager = ExternalSystemFacadeManager.getInstance();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.io.IOUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+@ApiStatus.Internal
 public final class FilesDelta {
   private static final Logger LOG = Logger.getInstance(FilesDelta.class);
   private final ReentrantLock myDataLock = new ReentrantLock();
@@ -242,13 +244,15 @@ public final class FilesDelta {
     }
   }
 
-  public Set<String> getAndClearDeletedPaths() {
+  public @NotNull Set<String> getAndClearDeletedPaths() {
     lockData();
     try {
+      if (myDeletedPaths.isEmpty()) {
+        return Set.of();
+      }
+
       try {
-        Set<String> result = CollectionFactory.createFilePathLinkedSet();
-        result.addAll(myDeletedPaths);
-        return result;
+        return CollectionFactory.createFilePathLinkedSet(myDeletedPaths);
       }
       finally {
         myDeletedPaths.clear();

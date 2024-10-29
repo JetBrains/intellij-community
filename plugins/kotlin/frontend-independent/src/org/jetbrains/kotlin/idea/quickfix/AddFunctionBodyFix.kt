@@ -14,8 +14,8 @@ import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
 class AddFunctionBodyFix(element: KtFunction) : KotlinPsiOnlyQuickFixAction<KtFunction>(element) {
-    override fun getFamilyName() = KotlinBundle.message("fix.add.function.body")
-    override fun getText() = familyName
+    override fun getFamilyName(): String = KotlinBundle.message("fix.add.function.body")
+    override fun getText(): String = familyName
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val element = element ?: return false

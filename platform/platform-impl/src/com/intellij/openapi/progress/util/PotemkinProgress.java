@@ -122,7 +122,7 @@ public final class PotemkinProgress extends ProgressWindow implements PingProgre
     if (myApp.isUnitTestMode()) return;
 
     JRootPane rootPane = getDialog().getPanel().getRootPane();
-    if (rootPane == null && now - myLastUiUpdate > myDelayInMillis && myApp.isActive()) {
+    if (rootPane == null && now - myLastUiUpdate > delayInMillis && myApp.isActive()) {
       getDialog().getRepaintRunnable().run();
       showDialog();
       rootPane = getDialog().getPanel().getRootPane();

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.visualizedtext.common
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBScrollPane
@@ -28,7 +29,7 @@ internal class HtmlTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.HTML
 
-      override fun createComponent(project: Project): JComponent {
+      override fun createComponent(project: Project, parentDisposable: Disposable): JComponent {
         val editor = JEditorPane()
         editor.isEditable = false
         editor.contentType = "text/html"

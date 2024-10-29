@@ -483,7 +483,7 @@ class InstancesView extends InstancesViewBase {
 
     @Override
     public List<JavaReferenceInfo> fetchInstances(@NotNull EvaluationContextImpl evaluationContext) {
-      final int limit = DebuggerUtils.isAndroidVM(myDebugProcess.getVirtualMachineProxy().getVirtualMachine())
+      final int limit = DebuggerUtils.isAndroidVM(evaluationContext.getSuspendContext().getVirtualMachineProxy().getVirtualMachine())
                         ? AndroidUtil.ANDROID_INSTANCES_LIMIT
                         : DEFAULT_INSTANCES_LIMIT;
       List<JavaReferenceInfo> instances = getInstances(limit);

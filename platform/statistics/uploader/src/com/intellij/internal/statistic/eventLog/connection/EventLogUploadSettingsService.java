@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
@@ -31,7 +31,7 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
                                        @NotNull EventLogApplicationInfo appInfo,
                                        long settingsCacheTimeoutMs) {
     super(
-      getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
+      () -> getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTestConfig()),
       recorderId, appInfo, settingsCacheTimeoutMs
     );
     myApplicationInfo = appInfo;

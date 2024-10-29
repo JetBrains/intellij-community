@@ -12,19 +12,23 @@ import com.intellij.openapi.wm.ToolWindowType
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.impl.ToolWindowImpl
 import com.intellij.openapi.wm.impl.WindowInfoImpl
+import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-class ToolWindowStateListener(private val project: Project) : ToolWindowManagerListener {
+internal class ToolWindowStateListener(private val project: Project) : ToolWindowManagerListener {
   override fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     project.service<ToolWindowStateCollector>().stateChanged(toolWindowManager, toolWindow, changeType)
+  }
+
+  override fun toolWindowUnregistered(id: String, toolWindow: ToolWindow) {
+    project.service<ToolWindowStateCollector>().toolWindowUnregistered(id)
   }
 }
 
@@ -32,35 +36,49 @@ class ToolWindowStateListener(private val project: Project) : ToolWindowManagerL
 @Service(Service.Level.PROJECT)
 private class ToolWindowStateCollector(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val windowsSize = ConcurrentHashMap<String, Int>()
-  private val eventFlows = mutableMapOf<String, MutableSharedFlow<Unit>>()
+  private val collectors = ConcurrentHashMap<String, Collector>()
 
   private fun reportResizeEvent(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
     val size = if (toolWindow.anchor.isHorizontal) toolWindow.component.height else toolWindow.component.width
-    if (!windowsSize.containsKey(toolWindow.id) || windowsSize[toolWindow.id] != size) { //we don't care about the changed height of vertical windows or the width of horizontal ones
+    val oldSize = windowsSize[toolWindow.id]
+    // The == null check isn't really necessary; it's simply to clearly state our intent here.
+    if (oldSize == null || oldSize != size) { //we don't care about the changed height of vertical windows or the width of horizontal ones
       val windowInfo = toolWindow.windowInfo as? WindowInfoImpl ?: return
       ToolWindowCollector.getInstance().recordResized(project, windowInfo, toolWindowManager.isMaximized(toolWindow))
       windowsSize[toolWindow.id] = size
     }
   }
 
-  @OptIn(FlowPreview::class)
   fun stateChanged(toolWindowManager: ToolWindowManager, toolWindow: ToolWindow, changeType: ToolWindowManagerListener.ToolWindowManagerEventType) {
     if (changeType == ToolWindowManagerListener.ToolWindowManagerEventType.MovedOrResized && toolWindow.type == ToolWindowType.DOCKED && toolWindow is ToolWindowImpl) {
-      val flow = eventFlows.getOrPut(toolWindow.id) {
-        MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply {
-          coroutineScope.launch(Dispatchers.EDT) {
-            debounce(DEBOUNCE_TIMEOUT_MS).collect {
-              reportResizeEvent(toolWindowManager, toolWindow)
-            }
-          }
-        }
-      }
-
-      flow.tryEmit(Unit)
+      // Do not use getOrPut here, as it may check for the existing value, not find one,
+      // create a new collector and then check again.
+      // If a new value appears in the meantime, then the created collector will be dropped and ignored.
+      collectors.computeIfAbsent(toolWindow.id) { Collector(toolWindowManager, toolWindow) }.ping()
     }
   }
 
-  companion object {
-    const val DEBOUNCE_TIMEOUT_MS = 500L
+  fun toolWindowUnregistered(id: String) {
+    collectors.remove(id)?.cancel()
+  }
+
+  @OptIn(FlowPreview::class)
+  private inner class Collector(toolWindowManager: ToolWindowManager, toolWindow: ToolWindowImpl) {
+    private val flow = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val job = coroutineScope.launch(CoroutineName("Tool window resize collector for ${toolWindow.id}") + Dispatchers.EDT) {
+      flow.debounce(DEBOUNCE_TIMEOUT_MS).collect {
+        reportResizeEvent(toolWindowManager, toolWindow)
+      }
+    }
+
+    fun ping() {
+      check(flow.tryEmit(Unit))
+    }
+
+    fun cancel() {
+      job.cancel()
+    }
   }
 }
+
+private const val DEBOUNCE_TIMEOUT_MS = 500L

@@ -35,10 +35,8 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core-fe10" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.sequence" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.eval4j" scope="TEST" />

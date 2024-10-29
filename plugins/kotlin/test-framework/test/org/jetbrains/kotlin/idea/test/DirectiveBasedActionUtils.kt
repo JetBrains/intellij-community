@@ -146,18 +146,19 @@ object DirectiveBasedActionUtils {
             actionsToExclude,
         ) { expectedActionsDirectives, actualActionsDirectives ->
             if (expectedActionsDirectives != actualActionsDirectives) {
+                val actual = fileText.let { text ->
+                    val lines = text.split('\n')
+                    val firstActionIndex = lines.indexOfFirst { it.startsWith(ACTION_DIRECTIVE) }.takeIf { it != -1 }
+                    val textWithoutActions = lines.filterNot { it.startsWith(ACTION_DIRECTIVE) }
+                    textWithoutActions.subList(0, firstActionIndex ?: 1)
+                        .plus(actualActionsDirectives)
+                        .plus(textWithoutActions.drop(firstActionIndex ?: 1))
+                        .joinToString("\n")
+                }
                 assertEqualsToFile(
-                    description = "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive",
+                    description = "Some unexpected actions available at current position. Use '$ACTION_DIRECTIVE' directive in $file",
                     expected = file,
-                    actual = fileText.let { text ->
-                        val lines = text.split('\n')
-                        val firstActionIndex = lines.indexOfFirst { it.startsWith(ACTION_DIRECTIVE) }.takeIf { it != -1 }
-                        val textWithoutActions = lines.filterNot { it.startsWith(ACTION_DIRECTIVE) }
-                        textWithoutActions.subList(0, firstActionIndex ?: 1)
-                            .plus(actualActionsDirectives)
-                            .plus(textWithoutActions.drop(firstActionIndex ?: 1))
-                            .joinToString("\n")
-                    }
+                    actual = actual
                 )
             }
         }

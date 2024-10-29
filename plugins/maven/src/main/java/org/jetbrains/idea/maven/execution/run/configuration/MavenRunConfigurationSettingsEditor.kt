@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.execution.run.configuration
 
 import com.intellij.compiler.options.CompileStepBeforeRun
@@ -495,8 +495,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.name")
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
-        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.user.settings.title")
-        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+        override val fileChooserDescriptor
+          get() = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.user.settings.title"))
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { generalSettingsOrDefault.userSettingsFile },
@@ -520,8 +520,8 @@ class MavenRunConfigurationSettingsEditor(
       override val settingsName: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.name")
       override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
 
-      override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.local.repository.title")
-      override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      override val fileChooserDescriptor
+        get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.local.repository.title"))
       override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
     },
     { generalSettingsOrDefault.localRepository },
@@ -563,8 +563,8 @@ class MavenRunConfigurationSettingsEditor(
         override val settingsGroup: String = MavenConfigurableBundle.message("maven.run.configuration.general.options.group")
         override val settingsHint: String? = null
         override val settingsActionHint: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.tooltip")
-        override val fileChooserTitle: String = MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title")
-        override val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        override val fileChooserDescriptor
+          get() = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(MavenConfigurableBundle.message("maven.run.configuration.multimoduledir.title"))
         override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
       },
       { runnerParameters.multimoduleDir ?: "" },

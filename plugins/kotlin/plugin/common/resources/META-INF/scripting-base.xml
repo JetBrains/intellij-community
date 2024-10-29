@@ -32,17 +32,6 @@
             area="IDEA_PROJECT" dynamic="true"/>
 
     <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptDefinitionContributor"
-            interface="org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor"
-            area="IDEA_PROJECT"
-            dynamic="true"/>
-
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.scriptTemplatesProvider"
-            interface="org.jetbrains.kotlin.script.ScriptTemplatesProvider"
-            area="IDEA_PROJECT"/>
-
-    <extensionPoint
             qualifiedName="org.jetbrains.kotlin.ideScriptConfigurationControlFacade"
             interface="kotlin.script.experimental.intellij.IdeScriptConfigurationControlFacade"
             area="IDEA_PROJECT"
@@ -56,7 +45,7 @@
     <projectService serviceInterface="org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager"/>
 
-    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider"
+    <projectService serviceInterface="org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.core.script.IdeScriptDependenciesProvider"/>
 
     <projectService serviceInterface="org.jetbrains.kotlin.scripting.resolve.ScriptReportSink"
@@ -76,7 +65,6 @@
 
     <workspaceModel.fileIndexContributor implementation="org.jetbrains.kotlin.idea.core.script.dependencies.KotlinScriptWorkspaceFileIndexContributor"/>
 
-    <!--suppress PluginXmlValidity -->
     <projectView.externalLibraries.workspaceModelNodesProvider implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptExternalLibrariesNodesProvider"/>
 
     <registryKey
@@ -114,9 +102,9 @@
 
     <idea.base.projectStructure.moduleInfoProviderExtension implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
-    <scriptDefinitionContributor
+    <scriptDefinitionsSource
             id="StandardScriptDefinitionContributor"
             order="last"
-            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionContributor"/>
+            implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
   </extensions>
 </idea-plugin>

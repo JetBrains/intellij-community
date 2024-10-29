@@ -148,6 +148,7 @@ cd ..
 
 mkdir -p "$ROOT/lib/bundles/terraform/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/terraform.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/terraform.tmGrammar.json"
+wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/terraform/syntaxes/hcl.tmGrammar.json"
 
 mkdir -p "$ROOT/lib/bundles/hcl/syntaxes"
 wget -q https://raw.githubusercontent.com/hashicorp/syntax/main/syntaxes/hcl.tmGrammar.json -O "$ROOT/lib/bundles/hcl/syntaxes/hcl.tmGrammar.json"

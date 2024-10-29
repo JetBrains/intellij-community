@@ -17,10 +17,16 @@ class 'TryToPreserveCast' {
    }
 
    method 'test (Ljava/nio/ByteBuffer;)V' {
+      0      8
       1      8
       2      8
+      3      8
+      4      8
+      6      9
       7      9
       8      9
+      9      9
+      a      9
       c      10
    }
 }

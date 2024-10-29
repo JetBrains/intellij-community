@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.testIntegration;
 
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public final class TestFinderHelper {
-  public static PsiElement findSourceElement(@NotNull final PsiElement from) {
+  public static PsiElement findSourceElement(final @NotNull PsiElement from) {
     for (TestFinder each : getFinders()) {
       PsiElement result = each.findSourceElement(from);
       if (result != null) return result;
@@ -26,7 +26,7 @@ public final class TestFinderHelper {
     return null;
   }
 
-  public static Collection<PsiElement> findTestsForClass(@NotNull final PsiElement element) {
+  public static Collection<PsiElement> findTestsForClass(final @NotNull PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findTestsForClass(element));
@@ -34,7 +34,7 @@ public final class TestFinderHelper {
     return result;
   }
 
-  public static Collection<PsiElement> findClassesForTest(@NotNull final PsiElement element) {
+  public static Collection<PsiElement> findClassesForTest(final @NotNull PsiElement element) {
     Collection<PsiElement> result = new LinkedHashSet<>();
     for (TestFinder each : getFinders()) {
       result.addAll(each.findClassesForTest(element));
@@ -90,7 +90,7 @@ public final class TestFinderHelper {
 
   public static List<PsiElement> getSortedElements(final List<? extends Pair<? extends PsiNamedElement, Integer>> elementsWithWeights,
                                                    final boolean weightsAscending,
-                                                   @Nullable final Comparator<? super PsiElement> sameNameComparator) {
+                                                   final @Nullable Comparator<? super PsiElement> sameNameComparator) {
     elementsWithWeights.sort((o1, o2) -> {
       int result = weightsAscending ? o1.second.compareTo(o2.second) : o2.second.compareTo(o1.second);
       if (result == 0) result = Comparing.compare(o1.first.getName(), o2.first.getName());

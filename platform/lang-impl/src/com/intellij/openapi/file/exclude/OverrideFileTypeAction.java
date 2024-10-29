@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.file.exclude;
 
 import com.intellij.idea.ActionsBundle;
@@ -72,8 +72,7 @@ final class OverrideFileTypeAction extends DumbAwareAction {
       .showInBestPositionFor(e.getDataContext());
   }
 
-  @NotNull
-  static VirtualFile @NotNull [] getContextFiles(@NotNull AnActionEvent e, @NotNull Predicate<? super VirtualFile> additionalPredicate) {
+  static @NotNull VirtualFile @NotNull [] getContextFiles(@NotNull AnActionEvent e, @NotNull Predicate<? super VirtualFile> additionalPredicate) {
     VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return VirtualFile.EMPTY_ARRAY;
     return Arrays.stream(files)

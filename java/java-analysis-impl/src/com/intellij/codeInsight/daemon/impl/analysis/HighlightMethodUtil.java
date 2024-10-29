@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
@@ -40,16 +41,12 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.Contract;
@@ -528,7 +525,7 @@ public final class HighlightMethodUtil {
     if (!resolvedMethod.isConstructor() || !resolvedMethod.getParameterList().isEmpty()) return;
     PsiClass psiClass = resolvedMethod.getContainingClass();
     if (psiClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) return;
-    PsiClass containingClass = ClassUtils.getContainingClass(methodCall);
+    PsiClass containingClass = PsiUtil.getContainingClass(methodCall);
     if (containingClass == null) return;
     PsiReferenceList extendsList = containingClass.getExtendsList();
     if (extendsList != null && extendsList.getReferenceElements().length > 0) return;
@@ -581,6 +578,7 @@ public final class HighlightMethodUtil {
         if ((parameters.length == 0 || !parameters[parameters.length - 1].isVarArgs()) &&
             parameters.length != expressions.length) {
           toolTip = createMismatchedArgumentCountTooltip(parameters.length, expressions.length);
+          description = JavaAnalysisBundle.message("arguments.count.mismatch", parameters.length, expressions.length);
         }
         else if (mismatchedExpressions.isEmpty()) {
           if (IncompleteModelUtil.isIncompleteModel(list)) return null;
@@ -630,6 +628,7 @@ public final class HighlightMethodUtil {
     PsiType argType = wrongArg != null ? wrongArg.getType() : null;
     if (argType != null) {
       int idx = ArrayUtil.find(expressions, wrongArg);
+      if (idx > parameters.length - 1 && !parameters[parameters.length - 1].isVarArgs()) return null;
       PsiType paramType = candidateInfo.getSubstitutor().substitute(PsiTypesUtil.getParameterType(parameters, idx, candidateInfo.isVarargs()));
       String errorMessage = candidateInfo.getInferenceErrorMessage();
       HtmlChunk reason = getTypeMismatchErrorHtml(errorMessage);
@@ -839,8 +838,7 @@ public final class HighlightMethodUtil {
                                                     boolean varargs) {
     List<PsiExpression> result = new ArrayList<>();
     for (int i = 0; i < Math.max(parameters.length, expressions.length); i++) {
-      if (parameters.length == 0 ||
-          !assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
+      if (parameters.length == 0 || !assignmentCompatible(i, parameters, expressions, substitutor, varargs)) {
         result.add(i < expressions.length ? expressions[i] : null);
       }
     }
@@ -904,10 +902,9 @@ public final class HighlightMethodUtil {
       PsiExpression qualifierExpression = referenceToMethod.getQualifierExpression();
 
       if (className != null) {
-        if (qualifierExpression == null &&
-            IncompleteModelUtil.isIncompleteModel(file) &&
+        if (IncompleteModelUtil.isIncompleteModel(file) &&
             IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+          return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
         description = JavaErrorBundle.message("ambiguous.method.call.no.match", referenceToMethod.getReferenceName(), className);
       }
@@ -919,7 +916,7 @@ public final class HighlightMethodUtil {
       }
       else {
         if (IncompleteModelUtil.isIncompleteModel(file) && IncompleteModelUtil.canBePendingReference(referenceToMethod)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(elementToHighlight);
+          return HighlightUtil.getPendingReferenceHighlightInfo(elementToHighlight);
         }
         description =
           JavaErrorBundle.message("cannot.resolve.method", referenceToMethod.getReferenceName() + buildArgTypesList(list, true));
@@ -1202,8 +1199,7 @@ public final class HighlightMethodUtil {
 
   @NotNull
   private static @NlsContexts.Tooltip String createMismatchedArgumentCountTooltip(int expected, int actual) {
-    return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", expected, actual))
-      .wrapWith("html").toString();
+    return HtmlChunk.text(JavaAnalysisBundle.message("arguments.count.mismatch", expected, actual)).wrapWith("html").toString();
   }
 
   @NotNull
@@ -1828,8 +1824,7 @@ public final class HighlightMethodUtil {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(project, typeResult, expression, type, classReference, javaSdkVersion, expression.getArgumentList(),
-                         errorSink);
+    checkConstructorCall(project, typeResult, expression, type, classReference, javaSdkVersion, expression.getArgumentList(), errorSink);
   }
 
   static void checkAmbiguousConstructorCall(@NotNull Project project, PsiJavaCodeReferenceElement ref,
@@ -1946,6 +1941,11 @@ public final class HighlightMethodUtil {
     }
     boolean reported = false;
     if (constructor == null) {
+      if (IncompleteModelUtil.isIncompleteModel(list) &&
+          ContainerUtil.exists(results, r -> r instanceof MethodCandidateInfo info && info.isPotentiallyCompatible() == ThreeState.YES) &&
+          ContainerUtil.exists(list.getExpressions(), e -> IncompleteModelUtil.mayHaveUnknownTypeDueToPendingReference(e))) {
+        return;
+      }
       String name = aClass.getName();
       name += buildArgTypesList(list, true);
       String description = JavaErrorBundle.message("cannot.resolve.constructor", name);

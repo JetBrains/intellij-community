@@ -25,4 +25,3 @@ this.i.intValue() -> $
 
 New expression type changes:
 Fails:
-i->java.util.concurrent.atomic.LongAdder

@@ -7,7 +7,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.profile.ProfileEx
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProfileManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated("Use 'InspectionProfile.DEFAULT_PROFILE_NAME'", replaceWith = ReplaceWith("InspectionProfile.DEFAULT_PROFILE_NAME"))
 const val DEFAULT_PROFILE_NAME: String = InspectionProfile.DEFAULT_PROFILE_NAME
 

@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.FrameInfoHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import sun.awt.AWTAccessor;
 
@@ -13,6 +14,7 @@ import java.awt.event.ComponentListener;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 
+@ApiStatus.Internal
 public class FrameState {
   private Rectangle myBounds;
   private boolean myMaximized;
@@ -95,7 +97,7 @@ public class FrameState {
   final void update(Component component) {
     Rectangle bounds = component.getBounds();
     myFullScreen = component instanceof IdeFrame
-                   && FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs$intellij_platform_ide_impl()
+                   && FrameInfoHelper.Companion.isFullScreenSupportedInCurrentOs()
                    && ((IdeFrame)component).isInFullScreen();
     myMaximized = FrameInfoHelper.isMaximized(getExtendedState(component));
     if (myBounds != null) {

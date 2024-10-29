@@ -17,12 +17,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.BasicJavaAstTreeUtil;
-import com.intellij.psi.impl.source.BasicJavaElementType;
 import com.intellij.psi.tree.ParentAwareTokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 import static com.intellij.psi.impl.source.BasicJavaElementType.*;
 
@@ -115,12 +116,14 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     if (fileType instanceof JavaFileType && c == '}') {
       // Normal RBrace handler doesn't work with \{}, because braces in string template are not separate tokens
       int offset = editor.getCaretModel().getOffset();
-      
+
       HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
       CharSequence sequence = editor.getDocument().getCharsSequence();
-      if (!iterator.atEnd() && iterator.getStart() == offset && 
-          (iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_END || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ||
-           iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_MID || iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID)) {
+      if (!iterator.atEnd() && iterator.getStart() == offset &&
+          (iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_END ||
+           iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_END ||
+           iterator.getTokenType() == JavaTokenType.STRING_TEMPLATE_MID ||
+           iterator.getTokenType() == JavaTokenType.TEXT_BLOCK_TEMPLATE_MID)) {
         if (sequence.length() > offset && sequence.charAt(offset) == '}') {
           editor.getCaretModel().moveToOffset(offset + 1);
           return Result.STOP;
@@ -143,7 +146,7 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       Document doc = editor.getDocument();
       if (!iterator.atEnd() &&
           (iterator.getTokenType() == StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN ||
-            iterator.getTokenType() == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) &&
+           iterator.getTokenType() == StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) { // "\{}" in strings
         CharSequence sequence = doc.getCharsSequence();
         if (sequence.charAt(offset - 1) == '\\' && (sequence.length() == offset || sequence.charAt(offset) != '}')) {
@@ -155,7 +158,8 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
       PsiDocumentManager.getInstance(project).commitDocument(doc);
       final PsiElement leaf = file.findElementAt(offset);
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_ARRAY_INITIALIZER_EXPRESSION, false,
-                                               ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) != null) {
+                                               ParentAwareTokenSet.orSet(ParentAwareTokenSet.create(BASIC_CODE_BLOCK), MEMBER_SET)) !=
+          null) {
         return Result.CONTINUE;
       }
       PsiElement st = leaf != null ? leaf.getParent() : null;
@@ -168,6 +172,12 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
         return processWhileAndIfStatementBody(project, editor, file);
       }
 
+      if (CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET && afterArrowInCase(leaf) &&
+          iterator.getTokenType() != JavaTokenType.LBRACKET) {
+        Result stop = processOpenBraceInOneLineCaseRule(project, editor, file, leaf);
+        if (stop != null) return stop;
+      }
+
       if (BasicJavaAstTreeUtil.getParentOfType(leaf, BASIC_CODE_BLOCK, false, MEMBER_SET) != null &&
           !shouldInsertPairedBrace(leaf)) {
         EditorModificationUtilEx.insertStringAtCaret(editor, "{");
@@ -177,6 +187,67 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
     }
 
     return Result.CONTINUE;
+  }
+
+  private static @Nullable Result processOpenBraceInOneLineCaseRule(@NotNull Project project,
+                                                                    @NotNull Editor editor,
+                                                                    @NotNull PsiFile file,
+                                                                    @NotNull PsiElement leaf) {
+    ASTNode rule = BasicJavaAstTreeUtil.getParentOfType(leaf.getNode(), BASIC_SWITCH_LABELED_RULE);
+    if(rule != null) {
+      while (true) {
+        ASTNode next = rule.getTreeNext();
+        if (next.getElementType() == TokenType.WHITE_SPACE) {
+          next = next.getTreeNext();
+        }
+        if(BasicJavaAstTreeUtil.is(next, BASIC_THROW_STATEMENT) ||
+           BasicJavaAstTreeUtil.is(next, BASIC_EXPRESSION_STATEMENT)) {
+          rule = next;
+          continue;
+        }
+        break;
+      }
+    }
+    if (rule != null) {
+      int firstOffset = editor.getCaretModel().getOffset();
+      editor.getDocument().insertString(firstOffset, "{");
+      boolean hasFirstBreakLine = true;
+      int expectedIndex = firstOffset - leaf.getTextRange().getStartOffset();
+      if (expectedIndex >= 0 && expectedIndex < leaf.getText().length()) {
+        String text = leaf.getText().substring(expectedIndex);
+        if (!text.contains("\n") &&
+            !text.contains("\r")) {
+          hasFirstBreakLine = false;
+          editor.getDocument().insertString(firstOffset + 1, "\n");
+        }
+      }
+      editor.getCaretModel().moveToOffset(firstOffset + 1);
+      int secondOffset = rule.getTextRange().getEndOffset() + (hasFirstBreakLine ? 1 : 2);
+      editor.getDocument().insertString(secondOffset, "\n}");
+      PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, secondOffset + 1);
+      if (!hasFirstBreakLine) {
+        CodeStyleManager.getInstance(project).adjustLineIndent(file, firstOffset + 2);
+      }
+      return Result.STOP;
+    }
+    return null;
+  }
+
+  private static boolean afterArrowInCase(@Nullable PsiElement leaf) {
+    if (leaf == null) return false;
+    PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(leaf);
+    if (prevLeaf == null) return false;
+    if (prevLeaf.getNode().getElementType() != JavaTokenType.ARROW) return false;
+    PsiElement parent = prevLeaf.getParent();
+    if (parent == null) return false;
+    if (!BasicJavaAstTreeUtil.is(parent.getNode().getElementType(), BASIC_SWITCH_LABELED_RULE)) return false;
+    if (StringUtil.isEmptyOrSpaces(leaf.getText())) {
+      leaf = PsiTreeUtil.nextVisibleLeaf(leaf);
+    }
+    PsiElement body = BasicJavaAstTreeUtil.getParentOfType(leaf, Set.of(BASIC_EXPRESSION_STATEMENT, BASIC_THROW_STATEMENT), false);
+    if (body == null) return false;
+    return PsiTreeUtil.isAncestor(parent, body, false);
   }
 
   private static boolean shouldInsertPairedBrace(@NotNull PsiElement leaf) {
@@ -273,9 +344,9 @@ public abstract class AbstractBasicJavaTypedHandler extends TypedHandlerDelegate
   }
 
   private static boolean handleSemicolon(@NotNull Project project,
-                                  @NotNull Editor editor,
-                                  @NotNull PsiFile file,
-                                  @NotNull FileType fileType) {
+                                         @NotNull Editor editor,
+                                         @NotNull PsiFile file,
+                                         @NotNull FileType fileType) {
     if (!(fileType instanceof JavaFileType)) return false;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) return false;

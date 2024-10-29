@@ -31,7 +31,7 @@ public class PsiJavaFileStubImpl extends PsiFileStubImpl<PsiJavaFile> implements
   }
 
   @Override
-  public @NotNull IStubFileElementType getType() {
+  public @NotNull IStubFileElementType<?> getType() {
     return JavaParserDefinition.JAVA_FILE;
   }
 

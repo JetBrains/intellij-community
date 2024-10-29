@@ -3,18 +3,17 @@ package org.jetbrains.intellij.build
 
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.intellij.build.impl.support.RepairUtilityBuilder
 import java.nio.file.Path
 
-abstract class WindowsDistributionCustomizer {
+open class WindowsDistributionCustomizer {
   /**
    * Path to 256x256 *.ico file for Windows distribution.
    */
   var icoPath: String? = null
 
   /**
-   * Path to ico file for EAP builds (if `null` [icoPath] will be used).
+   * Path to an ico file for EAP builds (if `null` [icoPath] will be used).
    */
   var icoPathForEAP: String? = null
 
@@ -58,11 +57,6 @@ abstract class WindowsDistributionCustomizer {
   var customNsiConfigurationFiles: PersistentList<String> = persistentListOf()
 
   /**
-   * Enables the use of the new cross-platform launcher (which loads launch data from `product-info.json` instead of the embedded resource table).
-   */
-  var useXPlatLauncher = true
-
-  /**
    * Name of the root directory in Windows .zip archive
    * (the method is overridden in [AndroidStudioProperties.groovy](https://bit.ly/3heXKlQ)).
    */
@@ -80,14 +74,7 @@ abstract class WindowsDistributionCustomizer {
    */
   open suspend fun copyAdditionalFiles(context: BuildContext, targetDir: Path, arch: JvmArchitecture) {
     RepairUtilityBuilder.bundle(context, OsFamily.WINDOWS, arch, targetDir)
-
-    @Suppress("DEPRECATION")
-    copyAdditionalFilesBlocking(context, targetDir, arch)
   }
-
-  @ApiStatus.ScheduledForRemoval
-  @Deprecated("Please migrate the build script to Kotlin and override `copyAdditionalFiles`")
-  open fun copyAdditionalFilesBlocking(context: BuildContext, targetDir: Path, arch: JvmArchitecture) { }
 
   /**
    * The returned name will be shown in Windows Installer and used in Registry keys.

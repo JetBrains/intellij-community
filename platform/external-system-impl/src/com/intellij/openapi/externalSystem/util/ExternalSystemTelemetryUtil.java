@@ -7,12 +7,14 @@ import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class ExternalSystemTelemetryUtil {
 
   public static @NotNull Tracer getTracer(@Nullable ProjectSystemId id) {
@@ -20,11 +22,10 @@ public final class ExternalSystemTelemetryUtil {
       .getTracer(ExternalSystemObservabilityScopesKt.forSystem(id == null ? ProjectSystemId.IDE : id));
   }
 
-  public static <T> T computeWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Function<Span, T> fn) {
-    return TraceKt.computeWithSpan(getTracer(id), spanName, span -> fn.apply(span));
-  }
-
   public static void runWithSpan(@Nullable ProjectSystemId id, @NotNull String spanName, @NotNull Consumer<Span> fn) {
-    TraceKt.runWithSpan(getTracer(id), spanName, fn);
+    TraceKt.use(getTracer(id).spanBuilder(spanName), span -> {
+      fn.accept(span);
+      return null;
+    });
   }
 }

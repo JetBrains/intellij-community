@@ -2118,7 +2118,7 @@ def foo(param: str | int) -> TypeGuard[str]:
 
   // PY-55044
   public void testTypedDictKwargsArgument() {
-    doTestByText("""  
+    doTestByText("""
                    from typing import TypedDict, Unpack
                    
                    class Movie(TypedDict):
@@ -2143,5 +2143,35 @@ def foo(param: str | int) -> TypeGuard[str]:
                   
                   PosArgsT = TypeVarTuple("PosArgsT")
                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+
+                   class MyClass:
+                     def foo(self, i: int):
+                         pass
+
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+
+                   router = Router()
+                   router.route(-2)
+                   router.route(<warning descr="Expected type 'int', got 'str' instead">""</warning>)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
   }
 }

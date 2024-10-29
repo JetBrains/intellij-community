@@ -24,13 +24,17 @@ internal class UrlEncodedTextVisualizer : TextValueVisualizer {
       override val contentTypeForStats
         get() = TextVisualizerContentType.URLEncoded
       override fun formatText() =
-        decoded!! // !! is a workaround for KT-69132, remove it after migration to Kotlin >= 2.0
+        decoded
       override val fileType
         get() = FileTypes.PLAIN_TEXT
     })
   }
 
   private fun tryParse(value: String): String? {
+    if (!value.contains('%')) {
+      // Not-URL or URL with only spaces, not so interesting but very annoying (i.e., no need to decode "123+456").
+      return null
+    }
     val decoded = try {
       URLDecoder.decode(value, Charsets.UTF_8)
     } catch (_: IllegalArgumentException) {

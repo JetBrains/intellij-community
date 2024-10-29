@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -49,7 +49,6 @@ import java.util.*;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
-@ApiStatus.NonExtendable
 public final class VcsUtil {
   private static final char[] ourCharsToBeChopped = {'/', '\\'};
   private static final Logger LOG = Logger.getInstance(VcsUtil.class);

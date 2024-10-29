@@ -1,17 +1,19 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.*;
-import com.intellij.ide.actions.CopyReferenceUtil;
+import com.intellij.ide.actions.FqnUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class FilePathMacroBase extends Macro {
 
   @Override
@@ -30,8 +32,7 @@ public abstract class FilePathMacroBase extends Macro {
     return null;
   }
 
-  @Nullable
-  protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
+  protected @Nullable TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
     return new TextResult(virtualFile.getName());
   }
 
@@ -80,7 +81,7 @@ public abstract class FilePathMacroBase extends Macro {
 
     @Override
     protected TextResult calculateResult(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-      return new TextResult(FileUtil.toSystemDependentName(CopyReferenceUtil.getVirtualFileFqn(virtualFile, project)));
+      return new TextResult(FileUtil.toSystemDependentName(FqnUtil.getVirtualFileFqn(virtualFile, project)));
     }
   }
 }

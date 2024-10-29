@@ -5,8 +5,10 @@
                     interface="org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixRegistrar"
                     dynamic="true"/>
 
-    <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
-                    interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.kotlinInjectedFilesAnalysisProvider"
+                    interface="org.jetbrains.kotlin.idea.base.analysis.KotlinIdeInjectedFilesAnalysisPromoter"
+                    dynamic="true">
+    </extensionPoint>
   </extensionPoints>
 
 </idea-plugin>

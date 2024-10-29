@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.impl;
 
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetRegistry;
@@ -14,6 +15,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class BuildTargetRegistryImpl implements BuildTargetRegistry {
   private final List<BuildTarget<?>> myAllTargets;
   private final Map<BuildTargetType<?>, List<? extends BuildTarget<?>>> myTargets;

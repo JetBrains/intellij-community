@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.icons.AllIcons;
@@ -39,9 +39,8 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
     return null;
   }
 
-  @NotNull
   @Override
-  public Collection<? extends AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
     return getFavoritesRoots(myProject, myName, this);
   }
 
@@ -52,8 +51,7 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
     presentation.setLocationString(myDescription);
   }
 
-  @NotNull
-  public static Collection<AbstractTreeNode<?>> getFavoritesRoots(Project project, String listName, final FavoritesListNode listNode) {
+  public static @NotNull Collection<AbstractTreeNode<?>> getFavoritesRoots(Project project, String listName, final FavoritesListNode listNode) {
     Collection<TreeItem<Pair<AbstractUrl, String>>> pairs = FavoritesManager.getInstance(project).getFavoritesListRootUrls(listName);
     if (pairs.isEmpty()) {
       return Collections.emptyList();
@@ -61,10 +59,9 @@ public class FavoritesListNode extends AbstractTreeNode<String> {
     return createFavoriteRoots(project, pairs, listNode);
   }
 
-  @NotNull
-  private static Collection<AbstractTreeNode<?>> createFavoriteRoots(Project project,
-                                                                     @NotNull Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
-                                                                     AbstractTreeNode<?> me) {
+  private static @NotNull Collection<AbstractTreeNode<?>> createFavoriteRoots(Project project,
+                                                                              @NotNull Collection<? extends TreeItem<Pair<AbstractUrl, String>>> urls,
+                                                                              AbstractTreeNode<?> me) {
     Collection<AbstractTreeNode<?>> result = new ArrayList<>();
     processUrls(project, urls, result, me);
     return result;

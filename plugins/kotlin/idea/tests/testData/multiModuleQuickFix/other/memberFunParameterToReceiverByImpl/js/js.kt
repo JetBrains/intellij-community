@@ -1,5 +1,4 @@
 // "Convert parameter to receiver" "true"
-// IGNORE_K2
 
 actual class Foo {
     actual fun foo(n: Int, <caret>s: String) {

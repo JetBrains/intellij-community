@@ -10,8 +10,47 @@ import org.jetbrains.plugins.gradle.testFramework.util.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
+import java.util.*
 
 class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
+
+  @Test
+  //The general availability of the Gradle Configuration Cache was announced only since Gradle 8.1
+  @TargetVersions("8.1+")
+  fun `gradle configuration cache is not corrupted between run and debug`() {
+    createGradlePropertiesFile(content = "org.gradle.configuration-cache=true".trimIndent())
+
+    val message = UUID.randomUUID().toString()
+
+    importProject {
+      withMavenCentral()
+      applyPlugin("java")
+
+      addPostfix("""
+        task myTask {
+          dependsOn 'clean'
+          dependsOn 'build'
+          doFirst {
+            System.out.println("$message")
+          }
+          outputs.cacheIf { true }
+        }
+      """.trimIndent())
+    }
+
+    val runOutput = executeRunConfiguration("myTask", isDebugServerProcess = false)
+    assertThat(runOutput)
+      .contains("Configuration cache entry stored.")
+      .contains("0 problems were found storing the configuration cache.")
+    assertTaskExecuted(message, runOutput)
+
+    val debugOutput = executeRunConfiguration("myTask", isDebugServerProcess = true)
+    assertThat(debugOutput)
+      .contains("Configuration cache entry reused.")
+      .doesNotContain("configuration cache cannot be reused")
+      .doesNotContain("Configuration cache entry stored.")
+    assertTaskExecuted(message, debugOutput)
+  }
 
   @Test
   fun `daemon is started with debug flags only if script debugging is enabled`() {
@@ -283,5 +322,11 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
     assertDebugJvmArgs(":module:printArgs", moduleArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:printArgs", compositeArgsFile, shouldBeStarted = false)
     assertDebugJvmArgs(":composite:module:printArgs", compositeModuleArgsFile)
+  }
+
+  private fun assertTaskExecuted(expectedMessage: String, output: String) {
+    assertThat(output)
+      .contains("BUILD SUCCESSFUL")
+      .contains(expectedMessage)
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.util.ElementsChooser;
@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.eventLog.events.EventId1;
 import com.intellij.internal.statistic.eventLog.events.EventId2;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 
-public final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
+final class SearchEverywhereFiltersStatisticsCollector extends CounterUsagesCollector {
 
   public enum QuickFilterButtons {
     ALL, NONE, INVERT
@@ -50,7 +50,7 @@ public final class SearchEverywhereFiltersStatisticsCollector extends CounterUsa
     return GROUP;
   }
 
-  public static abstract class BaseFilterStatisticsCollector<T> implements ElementsChooser.StatisticsCollector<T> {
+  public abstract static class BaseFilterStatisticsCollector<T> implements ElementsChooser.StatisticsCollector<T> {
     @Override
     public void selectionInverted() {
       BUTTON_PRESSED_EVENT.log(QuickFilterButtons.INVERT);

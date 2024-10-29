@@ -47,20 +47,17 @@ public final class RngCompactLanguage extends Language {
 
   public static class MyCommenter implements Commenter {
     @Override
-    @Nullable
-    public String getLineCommentPrefix() {
+    public @Nullable String getLineCommentPrefix() {
       return "#";
     }
 
     @Override
-    @Nullable
-    public String getBlockCommentPrefix() {
+    public @Nullable String getBlockCommentPrefix() {
       return null;
     }
 
     @Override
-    @Nullable
-    public String getBlockCommentSuffix() {
+    public @Nullable String getBlockCommentSuffix() {
       return null;
     }
 
@@ -117,8 +114,7 @@ public final class RngCompactLanguage extends Language {
   public static class MyDocumentationProvider implements DocumentationProvider {
 
     @Override
-    @Nullable
-    public @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
+    public @Nullable @Nls String generateDoc(PsiElement element, PsiElement originalElement) {
       if (element instanceof RncElement) {
         PsiElement comment = element.getPrevSibling();
         while (comment instanceof PsiWhiteSpace) {

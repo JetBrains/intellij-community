@@ -14,6 +14,8 @@ open class KotlinCompilerRefHelperTest : CompilerReferencesTestBase() {
         super.setUp()
         if (isFir) {
             project.enableK2Compiler()
+        } else {
+            project.enableK1Compiler()
         }
     }
 

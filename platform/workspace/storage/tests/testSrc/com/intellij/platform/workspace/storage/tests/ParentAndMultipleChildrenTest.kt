@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests
 
 import com.intellij.platform.workspace.storage.MutableEntityStorage
@@ -189,20 +189,6 @@ class ParentAndMultipleChildrenTest {
 
   @Test
   fun `adding entity via modify`() {
-    val target = createEmptyBuilder()
-    target addEntity ParentMultipleEntity("Parent", MySource)
-    val source = createBuilderFrom(target)
-    val parentToModify = source.toSnapshot().entities(ParentMultipleEntity::class.java).single()
-    source.modifyParentMultipleEntity(parentToModify) {
-      this.children = listOf(
-        ChildMultipleEntity("child1", MySource),
-        ChildMultipleEntity("child2", MySource),
-      )
-    }
-  }
-
-  @Test
-  fun `adding entity via modify 1`() {
     val target = createEmptyBuilder()
     target addEntity ParentMultipleEntity("Parent", MySource)
     val source = createBuilderFrom(target)

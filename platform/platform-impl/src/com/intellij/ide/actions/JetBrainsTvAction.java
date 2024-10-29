@@ -11,8 +11,10 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import com.intellij.util.Url;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class JetBrainsTvAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public JetBrainsTvAction() {
     getTemplatePresentation().setText(() -> ActionsBundle.message("action.Help.JetBrainsTV.templateText", ApplicationNamesInfo.getInstance().getFullProductName()));

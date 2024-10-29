@@ -43,3 +43,7 @@ val JVM: Scope = Scope("jvm", PlatformMetrics)
 @Internal
 @JvmField
 val CompletionRanking: Scope = Scope("completion.ranking.ml", PlatformMetrics)
+
+@Internal
+@JvmField
+val UI: Scope = Scope("ui", PlatformMetrics)

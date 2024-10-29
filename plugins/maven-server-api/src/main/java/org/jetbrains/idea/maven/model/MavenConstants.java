@@ -47,7 +47,7 @@ public final class MavenConstants {
   public static final List<String> BASIC_PHASES =
     Arrays.asList("clean", "validate", "compile", "test", "package", "verify", "install", "deploy", "site");
 
-  public static final String JVM_CONFIG_RELATIVE_PATH = "/.mvn/jvm.config";
-  public static final String MAVEN_CONFIG_RELATIVE_PATH = "/.mvn/maven.config";
-  public static final String MAVEN_WRAPPER_RELATIVE_PATH = "/.mvn/wrapper/maven-wrapper.properties";
+  public static final String JVM_CONFIG_RELATIVE_PATH = ".mvn/jvm.config";
+  public static final String MAVEN_CONFIG_RELATIVE_PATH = ".mvn/maven.config";
+  public static final String MAVEN_WRAPPER_RELATIVE_PATH = ".mvn/wrapper/maven-wrapper.properties";
 }

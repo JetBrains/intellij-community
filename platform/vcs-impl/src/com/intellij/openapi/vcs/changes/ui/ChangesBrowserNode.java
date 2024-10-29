@@ -28,6 +28,7 @@ import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.*;
 
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -277,6 +278,10 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
       .filter(FilePath.class);
   }
 
+  public void render(@NotNull JTree tree, @NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
+    render(renderer, selected, expanded, hasFocus);
+  }
+
   public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
     renderer.append(getTextPresentation());
     appendCount(renderer);
@@ -331,10 +336,12 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return (T)userObject;
   }
 
+  @ApiStatus.Internal
   public boolean canAcceptDrop(final ChangeListDragBean dragBean) {
     return false;
   }
 
+  @ApiStatus.Internal
   public void acceptDrop(final ChangeListOwner dragOwner, final ChangeListDragBean dragBean) {
   }
 

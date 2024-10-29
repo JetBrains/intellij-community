@@ -10,7 +10,6 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.AbstractDroppableStripe
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.LayoutData
 import com.intellij.openapi.wm.impl.SquareStripeButton
 import com.intellij.ui.ComponentUtil
@@ -139,6 +138,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
                           paneId: String,
                           override val anchor: ToolWindowAnchor,
                           override val split: Boolean = false) : AbstractDroppableStripe(paneId, VerticalFlowLayout(0, 0)) {
+    var bottomAnchorDropAreaComponent: JComponent? = null
     override val isNewStripes: Boolean
       get() = true
 
@@ -231,8 +231,7 @@ abstract class ToolWindowToolbar(private val isPrimary: Boolean, val anchor: Too
         return Rectangle(locationOnScreen.x  - toolWindowSize, locationOnScreen.y, toolWindowSize, size.height)
       }
       if (anchor == ToolWindowAnchor.BOTTOM) {
-        val rootPane = rootPane
-        val pane = if (rootPane is IdeRootPane) rootPane.getToolWindowPane() else rootPane
+        val pane = bottomAnchorDropAreaComponent ?: rootPane
         val rootBounds = Rectangle(pane.locationOnScreen, pane.size)
         val toolWindowHeight = getFirstVisibleToolWindowSize(false)
         return Rectangle(rootBounds.x, rootBounds.y + rootBounds.height - toolWindowHeight, rootBounds.width, toolWindowHeight)

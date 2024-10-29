@@ -9,6 +9,7 @@ import com.intellij.ui.ActiveComponent;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.function.Supplier;
 /**
  * @author anna
  */
+@ApiStatus.Internal
 public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private @NlsContexts.PopupTitle String myTitle = "";
   private boolean myResizable;

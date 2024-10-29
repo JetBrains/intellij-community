@@ -4,6 +4,7 @@ package com.intellij.application.options.colors
 import com.intellij.openapi.editor.colors.EditorColorSchemesSorter
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.colors.Groups
+import org.jetbrains.annotations.ApiStatus
 import java.lang.ref.WeakReference
 
 
@@ -91,6 +92,7 @@ internal class ColorAndFontOptionsModel {
   }
 }
 
+@ApiStatus.Internal
 interface ColorAndFontOptionsModelListener {
   fun onChanged()
 }

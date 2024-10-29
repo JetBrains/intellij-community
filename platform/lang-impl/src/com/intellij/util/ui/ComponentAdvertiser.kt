@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.components.ActionLink
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import java.awt.Font
 import java.util.concurrent.atomic.AtomicInteger
@@ -13,6 +14,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 open class ComponentAdvertiser {
   val component: JPanel = JPanel(FlowLayout(FlowLayout.LEFT, 0, 0))
   protected val multiPanel: MyPanel = MyPanel()

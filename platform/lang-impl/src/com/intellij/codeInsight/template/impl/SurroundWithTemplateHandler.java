@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl;
 
@@ -17,10 +17,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class SurroundWithTemplateHandler implements CodeInsightActionHandler {
   @Override
   public boolean startInWriteAction() {
@@ -28,7 +30,7 @@ public final class SurroundWithTemplateHandler implements CodeInsightActionHandl
   }
 
   @Override
-  public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(final @NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.checkModificationAllowed(editor)) return;
     if (!editor.getSelectionModel().hasSelection()) {
       SurroundWithHandler.selectLogicalLineContentsAtCaret(editor);
@@ -50,8 +52,7 @@ public final class SurroundWithTemplateHandler implements CodeInsightActionHandl
     popup.showInBestPositionFor(editor);
   }
 
-  @NotNull
-  public static List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<? super Character> usedMnemonicsSet) {
+  public static @NotNull List<AnAction> createActionGroup(@NotNull Editor editor, @NotNull PsiFile file, @NotNull Set<? super Character> usedMnemonicsSet) {
     TemplateActionContext templateActionContext = TemplateActionContext.surrounding(file, editor);
     List<CustomLiveTemplate> customTemplates = TemplateManagerImpl.listApplicableCustomTemplates(templateActionContext);
     List<TemplateImpl> templates = TemplateManagerImpl.listApplicableTemplates(templateActionContext);

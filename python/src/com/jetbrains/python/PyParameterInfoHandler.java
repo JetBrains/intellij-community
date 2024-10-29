@@ -5,6 +5,8 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.parameterInfo.ParameterFlag;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Pair;
@@ -12,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.codeInsight.parameterInfo.ParameterHints;
 import com.jetbrains.python.codeInsight.parameterInfo.PyParameterInfoUtils;
@@ -34,10 +37,10 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   private static final int MAX_PARAMETER_INFO_TO_SHOW = 20;
 
   private boolean hideOverloads = true;
+  private boolean isDisposed = false;
   private int myRealOffset = -1;
   private CreateParameterInfoContext myCreateContext;
   private Object[] myObjectsToShow;
-  private PyArgumentList myArgumentList;
 
   private static final EnumMap<ParameterFlag, ParameterInfoUIContextEx.Flag> PARAM_FLAG_TO_UI_FLAG = new EnumMap<>(Map.of(
     ParameterFlag.HIGHLIGHT, ParameterInfoUIContextEx.Flag.HIGHLIGHT,
@@ -78,6 +81,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   public void showParameterInfo(@NotNull PyArgumentList element, @NotNull CreateParameterInfoContext context) {
     // Show all overloads on second shortcut hit at the same offset
     myCreateContext = context;
+    isDisposed = false;
     int actualOffset = getRealCaretOffset(context.getEditor());
     if (actualOffset == myRealOffset) {
       hideOverloads = !hideOverloads;
@@ -98,7 +102,6 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
    */
   @Override
   public void updateParameterInfo(@NotNull PyArgumentList argumentList, @NotNull UpdateParameterInfoContext context) {
-    myArgumentList = argumentList;
     myObjectsToShow = context.getObjectsToView();
     final int allegedCursorOffset = context.getOffset(); // this is already shifted backwards to skip spaces
 
@@ -170,8 +173,19 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
     JLabel shortCut = new JLabel(showMoreShortCut);
 
     ActionLink actionLink = new ActionLink(getActionLinkText(numOfOverloads), event -> {
-      if (myArgumentList != null && myCreateContext != null) {
-        showParameterInfo(myArgumentList, myCreateContext);
+      if (myCreateContext != null) {
+        ReadAction
+          .nonBlocking(() -> {
+            return findElementForParameterInfo(myCreateContext);
+          })
+          .finishOnUiThread(ModalityState.defaultModalityState(), argumentList -> {
+            if (argumentList != null) {
+              showParameterInfo(argumentList, myCreateContext);
+            }
+          })
+          .coalesceBy(myCreateContext, this)
+          .expireWhen(() -> isDisposed)
+          .submit(AppExecutorUtil.getAppExecutorService());
       }
     });
 
@@ -216,7 +230,7 @@ public final class PyParameterInfoHandler implements ParameterInfoHandler<PyArgu
   public void dispose(@NotNull DeleteParameterInfoContext context) {
     resetDisplayState();
     myCreateContext = null;
-    myArgumentList = null;
+    isDisposed = true;
     ParameterInfoHandler.super.dispose(context);
   }
 

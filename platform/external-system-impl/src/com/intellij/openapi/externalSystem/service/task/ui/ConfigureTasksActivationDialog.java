@@ -44,6 +44,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ConfigureTasksActivationDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final ExternalSystemTaskActivator myTaskActivator;
@@ -139,7 +141,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
 
         final ChooseProjectStep projectStep = new ChooseProjectStep(popupItems);
         final List<ProjectPopupItem> projectItems = projectStep.getValues();
-        ListPopupStep step = projectItems.size() == 1 ? (ListPopupStep)projectStep.onChosen(projectItems.get(0), false) : projectStep;
+        ListPopupStep<?> step = projectItems.size() == 1 ? (ListPopupStep<?>)projectStep.onChosen(projectItems.get(0), false) : projectStep;
         assert step != null;
         JBPopupFactory.getInstance().createListPopup(step).show(
           ObjectUtils.notNull(button.getPreferredPopupPoint(), RelativePoint.getSouthEastOf(projectCombobox)));
@@ -368,10 +370,10 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
     }
 
     @Override
-    public PopupStep onChosen(final ProjectPopupItem projectPopupItem, final boolean finalChoice) {
+    public PopupStep<?> onChosen(final ProjectPopupItem projectPopupItem, final boolean finalChoice) {
       return new BaseListPopupStep<>(ExternalSystemBundle.message("popup.title.choose.activation.phase"), Phase.values()) {
         @Override
-        public PopupStep onChosen(final Phase selectedPhase, boolean finalChoice) {
+        public PopupStep<?> onChosen(final Phase selectedPhase, boolean finalChoice) {
           final Map<String, TaskActivationState> activationMap =
             ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getProjectsTasksActivationMap(myProjectSystemId);
           final String projectPath = projectPopupItem.myModuleData.getLinkedExternalProjectPath();
@@ -381,7 +383,7 @@ public final class ConfigureTasksActivationDialog extends DialogWrapper {
           tasksToSuggest.removeAll(tasks);
           return new BaseListPopupStep<>(ExternalSystemBundle.message("popup.title.choose.task"), tasksToSuggest) {
             @Override
-            public PopupStep onChosen(final String taskName, boolean finalChoice) {
+            public PopupStep<?> onChosen(final String taskName, boolean finalChoice) {
               return doFinalStep(() -> {
                 myTaskActivator.addTask(new TaskActivationEntry(myProjectSystemId, selectedPhase, projectPath, taskName));
                 updateTree(myRootNode);

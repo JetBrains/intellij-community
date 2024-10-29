@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isNull
 
 class RemoveUselessIsCheckFix(element: KtIsExpression) : KotlinPsiOnlyQuickFixAction<KtIsExpression>(element) {
-    override fun getFamilyName() = KotlinBundle.message("remove.useless.is.check")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.useless.is.check")
 
     override fun getText(): String = familyName
 

@@ -40,7 +40,7 @@ internal class TypeHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnal
 
         val color = when (symbol) {
             is KaAnonymousObjectSymbol -> KotlinHighlightInfoTypeSemanticNames.CLASS
-            is KaNamedClassOrObjectSymbol -> when (symbol.classKind) {
+            is KaNamedClassSymbol -> when (symbol.classKind) {
                 KaClassKind.CLASS -> when (symbol.modality) {
                     KaSymbolModality.FINAL, KaSymbolModality.SEALED , KaSymbolModality.OPEN -> KotlinHighlightInfoTypeSemanticNames.CLASS
                     KaSymbolModality.ABSTRACT -> KotlinHighlightInfoTypeSemanticNames.ABSTRACT_CLASS

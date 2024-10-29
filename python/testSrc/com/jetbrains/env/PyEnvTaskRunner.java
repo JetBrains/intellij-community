@@ -14,6 +14,7 @@ import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import com.jetbrains.python.sdk.VirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 
 public class PyEnvTaskRunner {
@@ -74,10 +76,10 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = PythonSdkUtil.getPythonExecutable(root);
+        final Path executable = VirtualEnvReader.getInstance().findPythonInPythonRoot(Path.of(root));
         assert executable != null : "No executable in " + root;
 
-        final Sdk sdk = getSdk(executable, testTask);
+        final Sdk sdk = getSdk(executable.toString(), testTask);
         if (skipOnFlavors != null) {
           final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
           if (ContainerUtil.exists(skipOnFlavors, o -> o.isInstance(flavor))) {
@@ -101,7 +103,7 @@ public class PyEnvTaskRunner {
           }
 
 
-          testTask.runTestOn(executable, sdk);
+          testTask.runTestOn(executable.toString(), sdk);
 
           passedRoots.add(root);
         }

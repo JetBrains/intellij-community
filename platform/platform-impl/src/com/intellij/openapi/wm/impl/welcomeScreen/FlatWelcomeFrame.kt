@@ -14,6 +14,8 @@ import com.intellij.notification.NotificationsManager
 import com.intellij.notification.impl.NotificationsManagerImpl
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.PresentationFactory
+import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
@@ -438,10 +440,12 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
     }
 
     private fun createQuickStartActionPanel(): ActionPanel {
-      val group = DefaultActionGroup()
-      val quickStart = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
-      WelcomeScreenActionsUtil.collectAllActions(group, quickStart)
-      @Suppress("SpellCheckingInspection")
+      val presentationFactory = PresentationFactory()
+      val quickStartGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART) as ActionGroup
+      val dataContext = DataManager.getInstance().getDataContext(this)
+      val visibleActions = Utils.expandActionGroup(quickStartGroup, presentationFactory, dataContext,
+                                                   ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE)
+
       val mainPanel = ActionPanel(MigLayout("ins 0, novisualpadding, gap 5, flowy", "push[pref!, center]push"))
       mainPanel.isOpaque = false
       val panel = object : JPanel(VerticalLayout(JBUI.scale(5))) {
@@ -465,43 +469,39 @@ open class FlatWelcomeFrame @JvmOverloads constructor(
       panel.isOpaque = false
       frame.extendActionsGroup(mainPanel)
       mainPanel.add(panel)
-      for (item in group.getChildren(null)) {
+      for (item in visibleActions) {
         var action = item
-        val e = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this))
-        action.update(e)
-        val presentation = e.presentation
-        if (presentation.isVisible) {
-          var text = presentation.text
-          if (text != null && text.endsWith("...")) {
-            text = text.substring(0, text.length - 3)
-          }
-          var icon = presentation.icon
-          if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
-            icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
-            icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
-          }
-          action = ActionGroupPanelWrapper.wrapGroups(action, this)
-          val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
-          link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
-          link.setPaintUnderline(false)
-          link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
-          val button = JActionLinkPanel(link)
-          button.border = JBUI.Borders.empty(8, 20)
-          if (action is WelcomePopupAction) {
-            button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
-            TouchbarActionCustomizations.setComponent(action, link)
-          }
-          WelcomeScreenFocusManager.installFocusable(
-            frame,
-            button,
-            action,
-            KeyEvent.VK_DOWN,
-            KeyEvent.VK_UP,
-            UIUtil.findComponentOfType(frame.component, JList::class.java)
-          )
-          panel.add(button)
-          mainPanel.addAction(action)
+        val presentation = presentationFactory.getPresentation(action)
+        var text = presentation.text
+        if (text != null && text.endsWith("...")) {
+          text = text.substring(0, text.length - 3)
         }
+        var icon = presentation.icon
+        if (icon == null || icon.iconHeight != JBUIScale.scale(16) || icon.iconWidth != JBUIScale.scale(16)) {
+          icon = if (icon == null) JBUIScale.scaleIcon(EmptyIcon.create(16)) else IconUtil.scale(icon, null, 16f / icon.iconWidth)
+          icon = IconUtil.colorize(icon, JBColor(0x6e6e6e, 0xafb1b3))
+        }
+        action = ActionGroupPanelWrapper.wrapGroups(action, this)
+        val link = ActionLink(text, icon, action, null, ActionPlaces.WELCOME_SCREEN)
+        link.isFocusable = false // don't allow focus, as the containing panel is going to be focusable
+        link.setPaintUnderline(false)
+        link.setNormalColor(WelcomeScreenUIManager.getLinkNormalColor())
+        val button = JActionLinkPanel(link)
+        button.border = JBUI.Borders.empty(8, 20)
+        if (action is WelcomePopupAction) {
+          button.add(WelcomeScreenComponentFactory.createArrow(link), BorderLayout.EAST)
+          TouchbarActionCustomizations.setComponent(action, link)
+        }
+        WelcomeScreenFocusManager.installFocusable(
+          frame,
+          button,
+          action,
+          KeyEvent.VK_DOWN,
+          KeyEvent.VK_UP,
+          UIUtil.findComponentOfType(frame.component, JList::class.java)
+        )
+        panel.add(button)
+        mainPanel.addAction(action)
       }
       return mainPanel
     }

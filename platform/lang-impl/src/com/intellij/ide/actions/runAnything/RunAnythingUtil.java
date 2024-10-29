@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.IdeBundle;
@@ -77,8 +77,7 @@ public final class RunAnythingUtil {
     }
   }
 
-  @NotNull
-  public static Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
+  public static @NotNull Collection<Pair<String, String>> getOrCreateWrappedCommands(@NotNull Project project) {
     Collection<Pair<String, String>> list = project.getUserData(RUN_ANYTHING_WRAPPED_COMMANDS);
     if (list == null) {
       list = new ArrayList<>();
@@ -87,8 +86,7 @@ public final class RunAnythingUtil {
     return list;
   }
 
-  @NotNull
-  public static Project fetchProject(@NotNull DataContext dataContext) {
+  public static @NotNull Project fetchProject(@NotNull DataContext dataContext) {
     return Objects.requireNonNull(CommonDataKeys.PROJECT.getData(dataContext));
   }
 
@@ -112,8 +110,7 @@ public final class RunAnythingUtil {
     }
   }
 
-  @Nullable
-  public static RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
+  public static @Nullable RunAnythingSearchListModel getSearchingModel(@NotNull JBList list) {
     ListModel model = list.getModel();
     return model instanceof RunAnythingSearchListModel ? (RunAnythingSearchListModel)model : null;
   }

@@ -2,13 +2,12 @@
 package org.jetbrains.intellij.build
 
 import com.intellij.TestCaseLoader
-import com.intellij.util.SystemProperties
 import com.intellij.util.text.nullize
 
 private val OLD_TEST_GROUP = System.getProperty("idea.test.group", TestingOptions.ALL_EXCLUDE_DEFINED_GROUP)
 private val OLD_TEST_PATTERNS = System.getProperty("idea.test.patterns")
 private val OLD_PLATFORM_PREFIX = System.getProperty("idea.platform.prefix")
-private val OLD_DEBUG_PORT = SystemProperties.getIntProperty("debug.port", 0)
+private val OLD_DEBUG_PORT = System.getProperty("debug.port")?.toIntOrNull() ?: 0
 private val OLD_SUSPEND_DEBUG_PROCESS = System.getProperty("debug.suspend", "n") == "y"
 private val OLD_JVM_MEMORY_OPTIONS = System.getProperty("test.jvm.memory")
 private val OLD_MAIN_MODULE = System.getProperty("module.to.make")
@@ -49,7 +48,7 @@ open class TestingOptions {
   /**
    * Enables debug for testing process
    */
-  var isDebugEnabled = SystemProperties.getBooleanProperty("intellij.build.test.debug.enabled", true)
+  var isDebugEnabled = getBooleanProperty("intellij.build.test.debug.enabled", true)
 
   /**
    * Specifies address on which the testing process will listen for connections, by default a localhost will be used.
@@ -57,14 +56,14 @@ open class TestingOptions {
   var debugHost: String = System.getProperty("intellij.build.test.debug.host", "localhost")
 
   /**
-   * Specifies port on which the testing process will listen for connections, by default a random port will be used.
+   * Specifies port on which the testing process will listen for connections, by default, a random port will be used.
    */
-  var debugPort = SystemProperties.getIntProperty("intellij.build.test.debug.port", OLD_DEBUG_PORT)
+  var debugPort: Int = System.getProperty("intellij.build.test.debug.port")?.toIntOrNull() ?: OLD_DEBUG_PORT
 
   /**
    * If `true` to suspend the testing process until a debugger connects to it.
    */
-  var isSuspendDebugProcess = SystemProperties.getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
+  var isSuspendDebugProcess = getBooleanProperty("intellij.build.test.debug.suspend", OLD_SUSPEND_DEBUG_PROCESS)
 
   /**
    * Custom JVM memory options (e.g. -Xmx) for the testing process.
@@ -96,7 +95,7 @@ open class TestingOptions {
    *
    * For the further information please see [IntelliJ Coverage repository](https://github.com/jetbrains/intellij-coverage).
    */
-  var isTestDiscoveryEnabled = SystemProperties.getBooleanProperty("intellij.build.test.discovery.enabled", false)
+  var isTestDiscoveryEnabled: Boolean = getBooleanProperty("intellij.build.test.discovery.enabled", false)
 
   /**
    * Specifies a path to the trace file for IntelliJ test discovery agent.
@@ -121,7 +120,7 @@ open class TestingOptions {
   /**
    * If `true` causal profiler agent will be attached to the testing process.
    */
-  var isEnableCausalProfiling = SystemProperties.getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
+  var isEnableCausalProfiling = getBooleanProperty("intellij.build.test.enable.causal.profiling", false)
 
   /**
    * Pattern to match tests in [mainModule] or default main module tests compilation outputs.
@@ -140,33 +139,33 @@ open class TestingOptions {
    */
   var isDedicatedTestRuntime: String = System.getProperty("intellij.build.test.dedicated.runtime", "false")
 
-  var isPerformanceTestsOnly = SystemProperties.getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
+  var isPerformanceTestsOnly = getBooleanProperty(PERFORMANCE_TESTS_ONLY_FLAG, false)
 
   /**
    * When running on TeamCity and this option is true, cancel the build (instead of failing it) in case
    * the build problem occurred while preparing for the test run, for example, if we failed to download
    * the compilation cache for some reason.
    */
-  var isCancelBuildOnTestPreparationFailure = SystemProperties.getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
+  var isCancelBuildOnTestPreparationFailure = getBooleanProperty("intellij.build.test.cancel.build.on.preparation.failure", false)
 
   /**
    * Number of attempts to run tests. Starting from the 2nd attempt only failed tests are re-run.
    */
-  var attemptCount = SystemProperties.getIntProperty("intellij.build.test.attempt.count", 1)
+  var attemptCount = System.getProperty("intellij.build.test.attempt.count")?.toInt() ?: 1
 
   /**
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
-  var bucketsCount: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNERS_COUNT_FLAG, 1)
+  var bucketsCount: Int = System.getProperty(TestCaseLoader.TEST_RUNNERS_COUNT_FLAG)?.toInt() ?: 1
 
   /**
    * @see [com.intellij.TestCaseLoader.matchesCurrentBucket]
    */
-  var bucketIndex: Int = SystemProperties.getIntProperty(TestCaseLoader.TEST_RUNNER_INDEX_FLAG, 0)
+  var bucketIndex: Int = System.getProperty(TestCaseLoader.TEST_RUNNER_INDEX_FLAG)?.toInt() ?: 0
 
   /**
    * Whether to use jars instead of directories with classes.
    * Better together with [BuildOptions.INTELLIJ_BUILD_COMPILER_CLASSES_ARCHIVES_UNPACK]
    */
-  val useArchivedCompiledClasses: Boolean = SystemProperties.getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
+  val useArchivedCompiledClasses: Boolean = getBooleanProperty("intellij.build.test.use.compiled.classes.archives", false)
 }

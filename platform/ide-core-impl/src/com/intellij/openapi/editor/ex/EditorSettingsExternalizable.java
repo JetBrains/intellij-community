@@ -78,7 +78,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public int CARET_BLINKING_PERIOD = BLINKING_RANGE.initial;
     public boolean IS_RIGHT_MARGIN_SHOWN = true;
     public boolean ARE_LINE_NUMBERS_SHOWN = true;
-    public boolean ARE_LINE_NUMBERS_AFTER_ICONS = false;
     public @NotNull EditorSettings.LineNumerationType LINE_NUMERATION = EditorSettings.LineNumerationType.ABSOLUTE;
     public boolean ARE_GUTTER_ICONS_SHOWN = true;
     public boolean IS_FOLDING_OUTLINE_SHOWN = true;
@@ -96,7 +95,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean IS_BLOCK_CURSOR = false;
     public boolean IS_FULL_LINE_HEIGHT_CURSOR = false;
-    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = false;
+    public boolean IS_HIGHLIGHT_SELECTION_OCCURRENCES = true;
     public boolean IS_WHITESPACES_SHOWN = false;
     public boolean IS_LEADING_WHITESPACES_SHOWN = true;
     public boolean IS_INNER_WHITESPACES_SHOWN = true;
@@ -124,6 +123,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
     public boolean ADD_CARETS_ON_DOUBLE_CTRL = true;
 
+    @ApiStatus.Internal
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
     // todo: useful? schedule for removal?
@@ -177,6 +177,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
     category = SettingsCategory.CODE
   )
+  @ApiStatus.Internal
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
@@ -213,6 +214,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     this(ApplicationManager.getApplication().getService(OsSpecificState.class));
   }
 
+  @ApiStatus.Internal
   @NonInjectable
   public EditorSettingsExternalizable(@NotNull OsSpecificState state) {
     myOsSpecificState = state;
@@ -309,10 +311,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     if (old == val) return;
     myOptions.ARE_LINE_NUMBERS_SHOWN = val;
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ARE_LINE_NUMBERS_SHOWN, old, val);
-  }
-
-  public boolean isLineNumbersAfterIcons() {
-    return myOptions.ARE_LINE_NUMBERS_AFTER_ICONS;
   }
 
   public EditorSettings.LineNumerationType getLineNumeration() {
@@ -1038,10 +1036,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_ADD_CARETS_ON_DOUBLE_CTRL, old, val);
   }
 
+  @ApiStatus.Internal
   public BidiTextDirection getBidiTextDirection() {
     return myOptions.BIDI_TEXT_DIRECTION;
   }
 
+  @ApiStatus.Internal
   public void setBidiTextDirection(BidiTextDirection direction) {
     BidiTextDirection old = myOptions.BIDI_TEXT_DIRECTION;
     if (old == direction) return;
@@ -1086,10 +1086,12 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.firePropertyChange(PropNames.PROP_SOFT_WRAP_FILE_MASKS, old, value);
   }
 
+  @ApiStatus.Internal
   public @NotNull CaretStopOptions getCaretStopOptions() {
     return myOsSpecificState.CARET_STOP_OPTIONS;
   }
 
+  @ApiStatus.Internal
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
   }

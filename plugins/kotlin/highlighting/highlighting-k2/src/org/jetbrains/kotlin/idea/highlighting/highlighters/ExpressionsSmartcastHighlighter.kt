@@ -3,12 +3,14 @@ package org.jetbrains.kotlin.idea.highlighting.highlighters
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.psi.PsiElement
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiverSmartCastKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.types.Variance
 
 context(KaSession)
 internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : KotlinSemanticAnalyzer(holder) {
@@ -16,6 +18,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
         highlightExpression(expression)
     }
 
+    @OptIn(KaExperimentalApi::class)
     private fun highlightExpression(expression: KtExpression) {
         expression.implicitReceiverSmartCasts.forEach {
             val receiverName = when (it.kind) {
@@ -42,7 +45,7 @@ internal class ExpressionsSmartcastHighlighter(holder: HighlightInfoHolder) : Ko
               KotlinHighlightInfoTypeSemanticNames.SMART_CAST_VALUE,
               KotlinBaseHighlightingBundle.message(
                 "smart.cast.to.0",
-                info.smartCastType.toString()
+                info.smartCastType.render(position = Variance.INVARIANT)
               )
             )
             if (builder != null) {

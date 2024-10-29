@@ -43,7 +43,7 @@ public abstract class MultipleFilesHyperlinkInfoBase extends HyperlinkInfoBase i
   }
 
   @Override
-  public void navigate(@NotNull final Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
+  public void navigate(final @NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
     Editor originalEditor;
     if (hyperlinkLocationPoint != null) {
       DataManager dataManager = DataManager.getInstance();
@@ -70,11 +70,10 @@ public abstract class MultipleFilesHyperlinkInfoBase extends HyperlinkInfoBase i
     }
   }
 
-  protected void showNotFound(@NotNull final Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
+  protected void showNotFound(final @NotNull Project project, @Nullable RelativePoint hyperlinkLocationPoint) {
   }
 
-  @NotNull
-  public abstract List<PsiFile> getFiles(@NotNull Project project);
+  public abstract @NotNull List<PsiFile> getFiles(@NotNull Project project);
 
   private void open(@NotNull VirtualFile file, Editor originalEditor) {
     Document document = FileDocumentManager.getInstance().getDocument(file, myProject);

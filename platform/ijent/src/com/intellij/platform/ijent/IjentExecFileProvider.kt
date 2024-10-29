@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent
 
 import com.intellij.openapi.components.serviceAsync
+import com.intellij.platform.eel.EelPlatform
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 
@@ -18,14 +19,14 @@ interface IjentExecFileProvider {
    * Gets the path to the IJent binary. Suggests to install the plugin via dialog windows, so the method may work unpredictably long.
    */
   @Throws(IjentMissingBinary::class)
-  suspend fun getIjentBinary(targetPlatform: IjentPlatform): Path
+  suspend fun getIjentBinary(targetPlatform: EelPlatform): Path
 }
 
-class IjentMissingBinary(platform: IjentPlatform) : Exception("Failed to get an IJent binary for $platform") {
+class IjentMissingBinary(platform: EelPlatform) : Exception("Failed to get an IJent binary for $platform") {
   override fun getLocalizedMessage(): String = IjentBundle.message("failed.to.get.ijent.binary")
 }
 
 internal class DefaultIjentExecFileProvider : IjentExecFileProvider {
-  override suspend fun getIjentBinary(targetPlatform: IjentPlatform): Nothing =
+  override suspend fun getIjentBinary(targetPlatform: EelPlatform): Nothing =
     throw IjentMissingBinary(targetPlatform)
 }

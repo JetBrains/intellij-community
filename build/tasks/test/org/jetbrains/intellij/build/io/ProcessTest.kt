@@ -60,7 +60,7 @@ class ProcessTest {
       runShell(code = "sleep 1", timeout = 10.milliseconds)
       throw AssertionError("Timeout had no effect")
     }
-    catch (ignore: TimeoutCancellationException) {
+    catch (_: TimeoutCancellationException) {
     }
   }
 

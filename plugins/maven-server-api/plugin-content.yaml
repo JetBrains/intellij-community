@@ -1,0 +1,3 @@
+- name: lib/maven-server.jar
+  modules:
+  - name: intellij.maven.server

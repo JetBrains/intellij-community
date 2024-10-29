@@ -75,10 +75,10 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
         "additionalProperties": false
       }""";
     String fixName = "Remove prohibited property 'b'";
-    doTest(schema, "{\"a\": 5, <warning><caret>\"b\": 6</warning>, \"c\": 7}", fixName, "{\"a\": 5,\n  \"c\": 7}");
-    doTest(schema, "{\"a\": 5, \"c\": 7, <warning><caret>\"b\": 6</warning>}", fixName, "{\"a\": 5, \"c\": 7}");
-    doTest(schema, "{<warning><caret>\"b\": 6</warning>, \"a\": 5, \"c\": 7}", fixName, "{\n  \"a\": 5, \"c\": 7}");
-    doTest(schema, "{<warning><caret>\"b\": 6</warning>}", fixName, "{}");
+    doTest(schema, "{\"a\": 5, <warning><caret>\"b\"</warning>: 6, \"c\": 7}", fixName, "{\"a\": 5,\n  \"c\": 7}");
+    doTest(schema, "{\"a\": 5, \"c\": 7, <warning><caret>\"b\"</warning>: 6}", fixName, "{\"a\": 5, \"c\": 7}");
+    doTest(schema, "{<warning><caret>\"b\"</warning>: 6, \"a\": 5, \"c\": 7}", fixName, "{\n  \"a\": 5, \"c\": 7}");
+    doTest(schema, "{<warning><caret>\"b\"</warning>: 6}", fixName, "{}");
   }
 
   public void testRemoveProhibitedPropertyInjection() {
@@ -98,7 +98,7 @@ public class JsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
     doTest(schema, """
              {"outer": "{\\"inner\\": \
              {\\"x\\": 1, <warning descr="Property 'y' is not allowed"><caret>\\"</warning><warning descr="Property 'y' is not allowed">y</warning>\
-             <warning descr="Property 'y' is not allowed">\\"</warning><warning descr="Property 'y' is not allowed">: 2</warning>}}"}""",
+             <warning descr="Property 'y' is not allowed">\\"</warning>: 2}}"}""",
            "Remove prohibited property 'y'", """
              {"outer": "{\\"inner\\": {\\"x\\": 1}}"}""");
   }

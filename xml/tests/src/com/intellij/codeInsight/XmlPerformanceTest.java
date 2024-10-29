@@ -7,7 +7,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -53,7 +53,7 @@ public class XmlPerformanceTest extends LightQuickFixTestCase {
     doHighlighting();
     getEditor().getSelectionModel().setSelection(0, getEditor().getDocument().getTextLength());
 
-    PerformanceTestUtil.newPerformanceTest("indent/unindent " + time, () -> {
+    Benchmark.newBenchmark("indent/unindent " + time, () -> {
       EditorActionManager.getInstance().getActionHandler("EditorIndentSelection").execute(getEditor(), null,
                                                                                           DataManager.getInstance().getDataContext());
 

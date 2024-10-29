@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   @Override
-  public void perform(@NotNull final Project project, final AnActionEvent event) {
+  public void perform(@NotNull Project project, @NotNull AnActionEvent event) {
     XDebugSession session = DebuggerUIUtil.getSession(event);
     if (session != null) {
       perform(session, event.getDataContext());
@@ -20,13 +20,13 @@ public abstract class XDebuggerActionHandler extends DebuggerActionHandler {
   }
 
   @Override
-  public boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {
+  public boolean isEnabled(@NotNull Project project, @NotNull AnActionEvent event) {
     if (LightEdit.owns(project)) return false;
     XDebugSession session = DebuggerUIUtil.getSession(event);
     return session != null && isEnabled(session, event.getDataContext());
   }
 
-  protected abstract boolean isEnabled(@NotNull XDebugSession session, final DataContext dataContext);
+  protected abstract boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext);
 
-  protected abstract void perform(@NotNull XDebugSession session, final DataContext dataContext);
+  protected abstract void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext);
 }

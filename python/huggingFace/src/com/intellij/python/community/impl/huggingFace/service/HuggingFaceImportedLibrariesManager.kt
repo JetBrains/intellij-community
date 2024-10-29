@@ -3,6 +3,7 @@ package com.intellij.python.community.impl.huggingFace.service
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -122,9 +123,13 @@ private class HuggingFaceFileChangesListener(private val onThresholdReached: () 
   private var fileChangesCounter = 0
 
   override fun after(events: List<VFileEvent>) {
-    if (events.any { it.file?.extension in listOf("py", "ipynb") }) {
-      fileChangesCounter++
-      if (fileChangesCounter >= HuggingFaceLibrariesManagerConfig.CHANGES_NUM_THRESHOLD) onThresholdReached()
+    try {
+      if (events.any { it.file?.extension in listOf("py", "ipynb") }) {
+        fileChangesCounter++
+        if (fileChangesCounter >= HuggingFaceLibrariesManagerConfig.CHANGES_NUM_THRESHOLD) onThresholdReached()
+      }
+    } catch (e: Exception) {
+      thisLogger().warn("Exception in HuggingFaceFileChangesListener.after", e)
     }
   }
 }

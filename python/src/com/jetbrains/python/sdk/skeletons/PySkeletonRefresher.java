@@ -118,24 +118,7 @@ public class PySkeletonRefresher {
     myIndicator = indicator;
     mySdk = sdk;
     mySkeletonsPath = skeletonsPath;
-    if (Registry.is("python.use.targets.api")) {
-      mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
-    }
-    else if (PyRunnerUtil.isTargetBased(sdk)) {
-      // when `python.use.targets.api` flag is disabled
-      throw new InvalidSdkException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
-    }
-    else if (PythonSdkUtil.isRemote(sdk)) {
-      try {
-        mySkeletonsGenerator = createRemoteSkeletonGenerator(myProject, ownerComponent, sdk, getSkeletonsPath());
-      }
-      catch (ExecutionException e) {
-        throw new InvalidSdkException(e.getMessage(), e.getCause());
-      }
-    }
-    else {
-      mySkeletonsGenerator = new PyLegacySkeletonGenerator(getSkeletonsPath(), mySdk, folder);
-    }
+    mySkeletonsGenerator = new PyTargetsSkeletonGenerator(getSkeletonsPath(), mySdk, folder, myProject);
   }
 
   public @NotNull List<String> regenerateSkeletons() throws InvalidSdkException, ExecutionException {

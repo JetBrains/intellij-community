@@ -213,7 +213,7 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(TaskBundle.message("settings.placeholders"),
                                                                                ArrayUtilRt.toStringArray(placeholders)) {
             @Override
-            public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+            public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
               WriteCommandAction.runWriteCommandAction(myProject, () -> editor.getDocument()
                 .insertString(editor.getCaretModel().getOffset(), "${" + selectedValue + "}"));
               return FINAL_CHOICE;

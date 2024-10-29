@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -8,13 +8,13 @@ import com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUiSizes;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.*;
@@ -57,7 +57,8 @@ public class ActionButtonWithText extends ActionButton {
                               @NotNull String place,
                               Supplier<? extends @NotNull Dimension> minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
+    boolean useSmallFonts = Boolean.TRUE.equals(myPresentation.getClientProperty(ActionUtil.USE_SMALL_FONT_IN_TOOLBAR));
+    setFont(useSmallFonts ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
     myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -82,7 +83,7 @@ public class ActionButtonWithText extends ActionButton {
       }
     });
     updateMnemonic(KeyEvent.VK_UNDEFINED, myPresentation.getMnemonic());
-    ComponentUtil.putClientProperty(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
+    ClientProperty.put(this, MnemonicHelper.MNEMONIC_CHECKER, keyCode -> getMnemonic() == keyCode);
   }
 
   @Override
@@ -94,8 +95,8 @@ public class ActionButtonWithText extends ActionButton {
       setForeground(ColorUtil.dimmer(JBColor.BLACK));
     }
     else {
-      AnAction action = getAction();
-      setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
+      boolean useSmallFonts = Boolean.TRUE.equals(myPresentation.getClientProperty(ActionUtil.USE_SMALL_FONT_IN_TOOLBAR));
+      setFont(useSmallFonts ? JBUI.Fonts.toolbarSmallComboBoxFont() : StartupUiUtil.getLabelFont());
     }
   }
 
@@ -108,8 +109,7 @@ public class ActionButtonWithText extends ActionButton {
     if (mnemonic == lastMnemonic) {
       return;
     }
-    InputMap windowInputMap = SwingUtilities.getUIInputMap(
-      this, JComponent.WHEN_IN_FOCUSED_WINDOW);
+    InputMap windowInputMap = SwingUtilities.getUIInputMap(this, WHEN_IN_FOCUSED_WINDOW);
 
     int mask = SystemInfo.isMac ? InputEvent.ALT_MASK | InputEvent.CTRL_MASK : InputEvent.ALT_MASK;
     if (lastMnemonic != 0 && windowInputMap != null) {
@@ -118,8 +118,7 @@ public class ActionButtonWithText extends ActionButton {
     if (mnemonic != 0) {
       if (windowInputMap == null) {
         windowInputMap = new ComponentInputMapUIResource(this);
-        SwingUtilities.replaceUIInputMap(this, JComponent.
-          WHEN_IN_FOCUSED_WINDOW, windowInputMap);
+        SwingUtilities.replaceUIInputMap(this, WHEN_IN_FOCUSED_WINDOW, windowInputMap);
       }
       windowInputMap.put(KeyStroke.getKeyStroke(mnemonic, mask, false), "doClick");
     }
@@ -169,20 +168,21 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   protected void updateToolTipText() {
     String description = myPresentation.getDescription();
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       HelpTooltip.dispose(this);
       HelpTooltip tooltip = myPresentation.getClientProperty(CUSTOM_HELP_TOOLTIP);
-      if (StringUtil.isNotEmpty(description) && tooltip == null) {
+      if (tooltip == null && !StringUtil.isEmpty(description)) {
         tooltip = new HelpTooltip().setDescription(description);
         Boolean property = myPresentation.getClientProperty(SHORTCUT_SHOULD_SHOWN);
-        if(property != null && property) {
+        if (property != null && property) {
           tooltip.setShortcut(getShortcutText());
         }
       }
       if (tooltip != null) {
         tooltip.installOn(this);
       }
-    } else {
+    }
+    else {
       setToolTipText(description);
     }
   }

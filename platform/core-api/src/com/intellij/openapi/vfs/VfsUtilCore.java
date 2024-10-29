@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -410,8 +411,8 @@ public class VfsUtilCore {
    * please prefer {@link VirtualFile#contentsToByteArray()} as more efficient.
    */
   public static byte @NotNull [] loadBytes(@NotNull VirtualFile file) throws IOException {
-    return FileUtilRt.isTooLarge(file.getLength()) ?
-           loadNBytes(file, FileUtilRt.LARGE_FILE_PREVIEW_SIZE) :
+    return VirtualFileUtil.isTooLarge(file) ?
+           loadNBytes(file, FileSizeLimit.getPreviewLimit(file.getExtension())) :
            file.contentsToByteArray();
   }
 
@@ -769,6 +770,10 @@ public class VfsUtilCore {
 
       if (v2 == null) {
         return 1;
+      }
+
+      if (v1.getParent() == null && v2.getParent() == null) {
+        return v1.getPath().compareTo(v2.getPath());
       }
 
       VirtualFile[] parents1 = getPathComponents(v1);

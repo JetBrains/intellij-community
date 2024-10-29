@@ -51,7 +51,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
     for (extension in extensions) {
       if (staticExtensions.contains(extension.name)) continue
 
-      val delegateType = createType(factory, extension.rootTypeFqn, place.resolveScope)
+      val delegateType = createType(factory, extension.typeFqn, place.resolveScope)
       if (delegateType !is PsiClassType) {
         continue
       }
@@ -77,7 +77,7 @@ class GradleProjectExtensionContributor : NonCodeMembersContributor() {
   }
 
   private fun shouldAddConfiguration(extension: GradleExtensionsSettings.GradleExtension, context: PsiElement): Boolean {
-    val clazz = JavaPsiFacade.getInstance(context.project).findClass(extension.rootTypeFqn, context.resolveScope) ?: return true
+    val clazz = JavaPsiFacade.getInstance(context.project).findClass(extension.typeFqn, context.resolveScope) ?: return true
     return !InheritanceUtil.isInheritor(clazz, "org.gradle.api.internal.catalog.AbstractExternalDependencyFactory")
   }
 

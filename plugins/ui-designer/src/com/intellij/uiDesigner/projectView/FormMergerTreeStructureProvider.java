@@ -8,10 +8,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.DeleteHandler;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassOwner;
@@ -85,26 +82,16 @@ public final class FormMergerTreeStructureProvider implements TreeStructureProvi
   }
 
   @Override
-  public Object getData(@NotNull Collection<? extends AbstractTreeNode<?>> selected, @NotNull String dataId) {
-    if (Form.DATA_KEY.is(dataId)) {
-      List<Form> result = new ArrayList<>();
-      for (AbstractTreeNode<?> node : selected) {
-        if (node instanceof FormNode) {
-          result.add(((FormNode)node).getValue());
-        }
-      }
-      if (!result.isEmpty()) {
-        return result.toArray(new Form[0]);
-      }
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      for (AbstractTreeNode<?> node : selected) {
-        if (node instanceof FormNode) {
-          return new MyDeleteProvider(selected);
-        }
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink,
+                             @NotNull Collection<? extends AbstractTreeNode<?>> selection) {
+    List<FormNode> nodes = ContainerUtil.filterIsInstance(selection, FormNode.class);
+    if (nodes.isEmpty()) return;
+    sink.lazy(Form.DATA_KEY, () -> {
+      return ContainerUtil.map2Array(nodes, Form.class, o -> o.getValue());
+    });
+    sink.lazy(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, () -> {
+      return new MyDeleteProvider(selection);
+    });
   }
 
   private static Collection<PsiFile> convertToFiles(Collection<? extends BasePsiNode<? extends PsiElement>> formNodes) {

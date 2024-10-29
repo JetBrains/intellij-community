@@ -1,9 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.trustedProjects.impl
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.confirmLoadingUntrustedProject
 import com.intellij.ide.impl.isTrusted
+import com.intellij.ide.trustedProjects.TrustedProjectsDialog
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -22,12 +22,13 @@ class UntrustedProjectNotificationProvider : EditorNotificationProvider, DumbAwa
 
     return Function {
       UntrustedProjectEditorNotificationPanel(project, it) {
-        if (confirmLoadingUntrustedProject(
-            project,
-            IdeBundle.message("untrusted.project.general.dialog.title"),
-            IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
-            IdeBundle.message("untrusted.project.dialog.trust.button"),
-            IdeBundle.message("untrusted.project.dialog.distrust.button"))
+        if (TrustedProjectsDialog.confirmLoadingUntrustedProject(
+            project = project,
+            title = IdeBundle.message("untrusted.project.general.dialog.title"),
+            message = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+            trustButtonText = IdeBundle.message("untrusted.project.dialog.trust.button"),
+            distrustButtonText = IdeBundle.message("untrusted.project.dialog.distrust.button")
+          )
         ) {
           ApplicationManager.getApplication().messageBus
             .syncPublisher(TrustedProjectsListener.TOPIC)

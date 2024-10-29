@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecificat
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class IncrementalSearchAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public IncrementalSearchAction() {
     setEnabledInModalContext(true);

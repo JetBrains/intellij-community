@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.Navigatable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.Plow;
@@ -78,18 +77,13 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
 
   @Override
   public boolean processSelectedItem(@NotNull YAMLKeyNavigationItem selected, int modifiers, @NotNull String searchText) {
-    ((Navigatable)selected).navigate(true);
+    selected.navigate(true);
     return true;
   }
 
   @Override
   public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
     return new NavigationItemListCellRenderer();
-  }
-
-  @Override
-  public Object getDataForItem(@NotNull YAMLKeyNavigationItem element, @NotNull String dataId) {
-    return null;
   }
 
   private void findKeys(@NotNull Processor<? super YAMLKeyNavigationItem> consumer, @NotNull String pattern) {

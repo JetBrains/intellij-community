@@ -4,10 +4,10 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
 import functools
 import os
+import pickle
 import re
 
 from mercurial.i18n import _
@@ -25,10 +25,8 @@ from mercurial.utils import (
     stringutil,
 )
 
-pickle = util.pickle
 
-
-class logentry(object):
+class logentry:
     """Class logentry has the following attributes:
     .author    - author name as CVS knows it
     .branch    - name of branch this revision is on
@@ -200,9 +198,9 @@ def createlog(ui, directory=None, root=b"", rlog=True, cache=None):
             oldlog = pickle.load(open(cachefile, b'rb'))
             for e in oldlog:
                 if not (
-                    util.safehasattr(e, b'branchpoints')
-                    and util.safehasattr(e, b'commitid')
-                    and util.safehasattr(e, b'mergepoint')
+                    hasattr(e, 'branchpoints')
+                    and hasattr(e, 'commitid')
+                    and hasattr(e, 'mergepoint')
                 ):
                     ui.status(_(b'ignoring old cache\n'))
                     oldlog = []
@@ -468,7 +466,7 @@ def createlog(ui, directory=None, root=b"", rlog=True, cache=None):
 
             # find the branches starting from this revision
             branchpoints = set()
-            for branch, revision in pycompat.iteritems(branchmap):
+            for branch, revision in branchmap.items():
                 revparts = tuple([int(i) for i in revision.split(b'.')])
                 if len(revparts) < 2:  # bad tags
                     continue
@@ -579,7 +577,7 @@ def createlog(ui, directory=None, root=b"", rlog=True, cache=None):
     return log
 
 
-class changeset(object):
+class changeset:
     """Class changeset has the following attributes:
     .id        - integer identifying this changeset (list index)
     .author    - author name as CVS knows it
@@ -688,7 +686,10 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
 
             files = set()
             if len(changesets) % 100 == 0:
-                t = b'%d %s' % (len(changesets), repr(e.comment)[1:-1])
+                t = b'%d %s' % (
+                    len(changesets),
+                    pycompat.byterepr(e.comment)[2:-1],
+                )
                 ui.status(stringutil.ellipsis(t, 80) + b'\n')
 
         c.entries.append(e)
@@ -834,7 +835,7 @@ def createchangeset(ui, log, fuzz=60, mergefrom=None, mergeto=None):
             # branchpoints such that it is the latest possible
             # commit without any intervening, unrelated commits.
 
-            for candidate in pycompat.xrange(i):
+            for candidate in range(i):
                 if c.branch not in changesets[candidate].branchpoints:
                     if p is not None:
                         break

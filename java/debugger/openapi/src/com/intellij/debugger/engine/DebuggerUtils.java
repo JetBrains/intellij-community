@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerContext;
@@ -34,6 +34,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +49,17 @@ public abstract class DebuggerUtils {
     "byte", "short", "int", "long", "float", "double", "boolean", "char"
   );
 
+  public enum HowToSwitchToSuspendAll {
+    IMMEDIATE_PAUSE, PAUSE_WAITING_EVALUATION, METHOD_BREAKPOINT, DISABLE
+  }
+
+  public static HowToSwitchToSuspendAll howToSwitchToSuspendAll() {
+    String howToSwitchStr = Registry.get("debugger.how.to.switch.to.suspend.all").getSelectedOption();
+    return HowToSwitchToSuspendAll.valueOf(howToSwitchStr);
+  }
+
   public static boolean isAlwaysSuspendThreadBeforeSwitch() {
-    return Registry.is("debugger.always.suspend.thread.before.switch");
+    return howToSwitchToSuspendAll() != HowToSwitchToSuspendAll.DISABLE;
   }
 
   public static boolean isNewThreadSuspendStateTracking() {
@@ -86,13 +96,14 @@ public abstract class DebuggerUtils {
         return String.valueOf(((PrimitiveValue)value).charValue());
       }
       if (value instanceof ObjectReference objRef) {
-        if (value instanceof ArrayReference arrayRef) {
-          final StringJoiner joiner = new StringJoiner(",", "[", "]");
-          for (final Value element : arrayRef.getValues()) {
-            joiner.add(getValueAsString(evaluationContext, element));
-          }
-          return joiner.toString();
-        }
+        // We can not pretty print arrays here, otherwise evaluation may fail unexpectedly, check IDEA-358202
+        //if (value instanceof ArrayReference arrayRef) {
+        //  final StringJoiner joiner = new StringJoiner(",", "[", "]");
+        //  for (final Value element : arrayRef.getValues()) {
+        //    joiner.add(getValueAsString(evaluationContext, element));
+        //  }
+        //  return joiner.toString();
+        //}
 
         final DebugProcess debugProcess = evaluationContext.getDebugProcess();
         Method toStringMethod = debugProcess.getUserData(TO_STRING_METHOD_KEY);
@@ -112,7 +123,7 @@ public abstract class DebuggerUtils {
             JavaDebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
         Method finalToStringMethod = toStringMethod;
-        return processCollectibleValue(
+        return getInstance().processCollectibleValue(
           () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0),
           result -> {
             // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
@@ -121,8 +132,8 @@ public abstract class DebuggerUtils {
               return "null";
             }
             return result instanceof StringReference ? ((StringReference)result).value() : result.toString();
-          }
-        );
+          },
+          evaluationContext);
       }
       throw EvaluateExceptionUtil.createEvaluateException(JavaDebuggerBundle.message("evaluation.error.unsupported.expression.type"));
     }
@@ -131,22 +142,11 @@ public abstract class DebuggerUtils {
     }
   }
 
-  public static <R, T extends Value> R processCollectibleValue(
+  @ApiStatus.Internal
+  public abstract <R, T extends Value> R processCollectibleValue(
     @NotNull ThrowableComputable<? extends T, ? extends EvaluateException> valueComputable,
-    @NotNull Function<? super T, ? extends R> processor) throws EvaluateException {
-    int retries = 10;
-    while (true) {
-      T result = valueComputable.compute();
-      try {
-        return processor.apply(result);
-      }
-      catch (ObjectCollectedException oce) {
-        if (--retries < 0) {
-          throw oce;
-        }
-      }
-    }
-  }
+    @NotNull Function<? super T, ? extends R> processor,
+    @NotNull EvaluationContext evaluationContext) throws EvaluateException;
 
   public static void ensureNotInsideObjectConstructor(@NotNull ObjectReference reference, @NotNull EvaluationContext context)
     throws EvaluateException {

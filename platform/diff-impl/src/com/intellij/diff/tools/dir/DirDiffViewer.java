@@ -24,13 +24,14 @@ import com.intellij.diff.contents.EmptyContent;
 import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.diff.DiffElement;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.diff.impl.dir.DirDiffPanel;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.openapi.diff.impl.dir.DirDiffWindow;
@@ -42,14 +43,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
 class DirDiffViewer implements FrameDiffTool.DiffViewer {
 
   private final DirDiffPanel myDirDiffPanel;
-  private final JPanel myPanel;
+  private final JComponent myComponent;
   private final String myHelpID;
 
   DirDiffViewer(@NotNull DiffContext context, @NotNull ContentDiffRequest request) {
@@ -82,13 +82,9 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
       }
     });
 
-    myPanel = new JPanel(new BorderLayout());
-    myPanel.add(myDirDiffPanel.getPanel(), BorderLayout.CENTER);
-    DataManager.registerDataProvider(myPanel, dataId -> {
-      if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-        return myHelpID;
-      }
-      return myDirDiffPanel.getData(dataId);
+    myComponent = UiDataProvider.wrapComponent(myDirDiffPanel.getPanel(), sink -> {
+      sink.set(PlatformCoreDataKeys.HELP_ID, myHelpID);
+      DataSink.uiDataSnapshot(sink, myDirDiffPanel);
     });
   }
 
@@ -109,7 +105,7 @@ class DirDiffViewer implements FrameDiffTool.DiffViewer {
   @NotNull
   @Override
   public JComponent getComponent() {
-    return myPanel;
+    return myComponent;
   }
 
   @Nullable

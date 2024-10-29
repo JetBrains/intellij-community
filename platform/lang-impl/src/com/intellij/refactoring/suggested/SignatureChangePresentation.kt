@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.Effect
 import com.intellij.refactoring.suggested.SignatureChangePresentationModel.TextFragment
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.font.FontRenderContext
 import java.awt.geom.Arc2D
@@ -14,6 +15,7 @@ import java.awt.geom.GeneralPath
 import java.awt.geom.Point2D
 import kotlin.math.*
 
+@ApiStatus.Internal
 class SignatureChangePresentation(
   private val model: SignatureChangePresentationModel,
   private val font: Font,

@@ -3,8 +3,9 @@ package com.intellij.packageDependencies.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,14 +19,12 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class UsagesPanel extends JPanel implements Disposable, DataProvider {
+public abstract class UsagesPanel extends JPanel implements Disposable, UiDataProvider {
   protected static final Logger LOG = Logger.getInstance(UsagesPanel.class);
 
   private final Project myProject;
@@ -104,12 +103,7 @@ public abstract class UsagesPanel extends JPanel implements Disposable, DataProv
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "ideaInterface.find";
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "ideaInterface.find");
   }
 }

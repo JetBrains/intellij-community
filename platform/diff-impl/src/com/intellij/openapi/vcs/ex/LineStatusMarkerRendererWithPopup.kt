@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.LineMarkerRenderer
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.LineStatusMarkerPopupPanel.showPopupAt
 import java.awt.Graphics
 import java.awt.Point
@@ -61,6 +62,8 @@ abstract class LineStatusMarkerRendererWithPopup(
     showPopupAt(editor, popup, mousePosition, popupDisposable)
   }
 
+  protected open fun getTooltipText(): @NlsContexts.Tooltip String? = null
+
   protected abstract fun createPopupPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable)
     : LineStatusMarkerPopupPanel
 
@@ -101,6 +104,10 @@ abstract class LineStatusMarkerRendererWithPopup(
       else {
         showHint(editor, range, e)
       }
+    }
+
+    override fun getTooltipText(): @NlsContexts.Tooltip String? {
+      return (this@LineStatusMarkerRendererWithPopup).getTooltipText()
     }
   }
 

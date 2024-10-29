@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
@@ -53,7 +53,7 @@ public final class KeymapUtil {
     return ourDefaultKeymapTextContext.getShortcutText(shortcut);
   }
 
-  public static @NotNull String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
+  public static @NotNull @NlsSafe String getMouseShortcutText(@NotNull MouseShortcut shortcut) {
     return ourDefaultKeymapTextContext.getMouseShortcutText(shortcut);
   }
 
@@ -70,8 +70,16 @@ public final class KeymapUtil {
   }
 
   public static @NotNull ShortcutSet getActiveKeymapShortcuts(@Nullable @NonNls String actionId) {
-    KeymapManager keymapManager = actionId == null ? null : KeymapManager.getInstance();
-    return keymapManager == null ? new CustomShortcutSet(Shortcut.EMPTY_ARRAY) : getActiveKeymapShortcuts(actionId, keymapManager);
+    if (actionId != null) {
+      KeymapManager keymapManager = KeymapManager.getInstance();
+      if (keymapManager != null) {
+        ActionManager actionManager = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
+        if (actionManager != null) {
+          return getActiveKeymapShortcuts(actionId, keymapManager);
+        }
+      }
+    }
+    return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
   }
 
   @ApiStatus.Internal
@@ -285,6 +293,11 @@ public final class KeymapUtil {
       toolTipText += " (" + shortcutsText + ")";
     }
     return toolTipText;
+  }
+
+  /** @return text representation of the keymap modifiers, like Ctrl+Shift */
+  public static @NotNull String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+    return ourDefaultKeymapTextContext.getModifiersText(KeymapTextContext.mapNewModifiers(modifiers), false);
   }
 
   /**

@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.actions
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -59,6 +60,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -67,7 +69,9 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        writeIntentReadAction {
+          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        }
       }
     }
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
@@ -96,6 +100,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -103,13 +108,17 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        writeIntentReadAction {
+          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        }
       }
     }
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        writeIntentReadAction {
+          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        }
       }
     }
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
@@ -159,6 +168,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     </dependencies>
                     """.trimIndent())
 
+    refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -166,7 +176,9 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
     MavenArtifactSearchDialog.ourResultForTest = listOf(MavenId("commons-io", "commons-io", "2.4"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        writeIntentReadAction {
+          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        }
       }
     }
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }
@@ -207,6 +219,7 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
                     <version>1</version>
                     """.trimIndent())
 
+    refreshFiles(listOf(f))
     fixture.configureFromExistingVirtualFile(f)
 
     val intentionAction = findAddMavenIntention()
@@ -215,7 +228,9 @@ class AddMavenDependencyQuickFixTest : MavenDomWithIndicesTestCase() {
 
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        writeIntentReadAction {
+          intentionAction.invoke(project, fixture.getEditor(), fixture.getFile())
+        }
       }
     }
     val pomText = readAction { PsiManager.getInstance(project).findFile(projectPom)!!.getText() }

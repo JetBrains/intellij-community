@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
@@ -34,8 +34,7 @@ import org.jetbrains.annotations.NotNull;
 public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   protected HierarchyNodeDescriptor myBaseDescriptor;
   private HierarchyNodeDescriptor myRoot;
-  @NotNull
-  protected final Project myProject;
+  protected final @NotNull Project myProject;
 
   protected HierarchyTreeStructure(@NotNull Project project, HierarchyNodeDescriptor baseDescriptor) {
     myBaseDescriptor = baseDescriptor;
@@ -56,8 +55,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   }
 
   @Override
-  @NotNull
-  public final NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
+  public final @NotNull NodeDescriptor createDescriptor(@NotNull Object element, NodeDescriptor parentDescriptor) {
     if (element instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)element;
     }
@@ -117,17 +115,15 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
   public final boolean hasSomethingToCommit() {
     return PsiDocumentManager.getInstance(myProject).hasUncommitedDocuments();
   }
-  @NotNull
   @Override
-  public ActionCallback asyncCommit() {
+  public @NotNull ActionCallback asyncCommit() {
     return asyncCommitDocuments(myProject);
   }
 
   protected abstract Object @NotNull [] buildChildren(@NotNull HierarchyNodeDescriptor descriptor);
 
-  @NotNull
   @Override
-  public final Object getRootElement() {
+  public final @NotNull Object getRootElement() {
     return myRoot;
   }
 
@@ -208,9 +204,8 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     }
   }
 
-  @NotNull
   @Override
-  public LeafState getLeafState(@NotNull Object element) {
+  public @NotNull LeafState getLeafState(@NotNull Object element) {
     if (isAlwaysShowPlus()) return LeafState.NEVER;
     LeafState state = super.getLeafState(element);
     return state != LeafState.DEFAULT ? state : LeafState.ASYNC;
@@ -220,8 +215,7 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return false;
   }
 
-  @NotNull
-  protected String formatBaseElementText() {
+  protected @NotNull String formatBaseElementText() {
     HierarchyNodeDescriptor descriptor = getBaseDescriptor();
     if (descriptor == null) return toString();
     PsiElement element = descriptor.getPsiElement();

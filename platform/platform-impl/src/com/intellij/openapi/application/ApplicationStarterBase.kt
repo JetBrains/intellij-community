@@ -1,14 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
 import com.intellij.configurationStore.saveSettings
 import com.intellij.ide.CliResult
+import com.intellij.ide.commandNameFromExtension
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.ide.bootstrap.LAUNCHER_INITIAL_DIRECTORY_ENV_VAR
-import com.intellij.platform.ide.bootstrap.commandNameFromExtension
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -16,9 +15,6 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.system.exitProcess
 
-/**
- * @author Konstantin Bulenkov
- */
 @Internal
 abstract class ApplicationStarterBase protected constructor(private vararg val argsCount: Int) : ModernApplicationStarter() {
   abstract val usageMessage: @NlsContexts.DialogMessage String?
@@ -29,10 +25,10 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   companion object {
     @JvmStatic
     protected fun saveIfNeeded(file: VirtualFile?) {
-      if (file == null) {
-        return
+      if (file != null) {
+        val documentManager = FileDocumentManager.getInstance()
+        documentManager.getCachedDocument(file)?.let(documentManager::saveDocument)
       }
-      FileDocumentManager.getInstance().getCachedDocument(file)?.let(FileDocumentManager.getInstance()::saveDocument)
     }
   }
 
@@ -51,9 +47,7 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     try {
       return executeCommand(args, currentDirectory)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
       e.printStackTrace() // The dialog may sometimes not be shown, e.g., in remote dev scenarios.
       val title = ApplicationBundle.message("app.command.exec.error.title", commandName)
@@ -65,9 +59,8 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
     }
   }
 
-  protected open fun checkArguments(args: List<String>): Boolean {
-    return Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
-  }
+  protected open fun checkArguments(args: List<String>): Boolean =
+    Arrays.binarySearch(argsCount, args.size - 1) >= 0 && commandNameFromExtension == args[0]
 
   protected abstract suspend fun executeCommand(args: List<String>, currentDirectory: String?): CliResult
 
@@ -81,21 +74,21 @@ abstract class ApplicationStarterBase protected constructor(private vararg val a
   final override suspend fun start(args: List<String>) {
     try {
       val exitCode: Int = try {
-        val result = executeCommand(args = args, currentDirectory = System.getenv(LAUNCHER_INITIAL_DIRECTORY_ENV_VAR))
+        val result = executeCommand(args, currentDirectory = null)
         result.message?.let(::println)
         result.exitCode
       }
       finally {
         withContext(Dispatchers.EDT) {
-          FileDocumentManager.getInstance().saveAllDocuments()
+          writeIntentReadAction {
+            FileDocumentManager.getInstance().saveAllDocuments()
+          }
         }
         saveSettings(ApplicationManager.getApplication())
       }
       exitProcess(exitCode)
     }
-    catch (e: CancellationException) {
-      throw e
-    }
+    catch (e: CancellationException) { throw e }
     catch (e: Exception) {
       e.printStackTrace()
       exitProcess(1)

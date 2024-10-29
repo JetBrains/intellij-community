@@ -42,17 +42,12 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
 
   private boolean myCurrentVersionCorrupted;
 
-  @NotNull
-  private final FileBasedIndexImpl myFileBasedIndex;
-  @NotNull
-  private final RegisteredIndexes myRegisteredIndexes;
-  @NotNull
-  private final IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
+  private final @NotNull FileBasedIndexImpl myFileBasedIndex;
+  private final @NotNull RegisteredIndexes myRegisteredIndexes;
+  private final @NotNull IntSet myStaleIds = IntSets.synchronize(new IntOpenHashSet());
   private volatile OrphanDirtyFilesQueue myOrphanDirtyFilesQueue;
-  @NotNull
-  private final IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
-  @NotNull
-  private final IndexConfiguration myState = new IndexConfiguration();
+  private final @NotNull IndexVersionRegistrationSink myRegistrationResultSink = new IndexVersionRegistrationSink();
+  private final @NotNull IndexConfiguration myState = new IndexConfiguration();
 
   FileBasedIndexDataInitialization(@NotNull FileBasedIndexImpl index, @NotNull RegisteredIndexes registeredIndexes) {
     super("file based index");
@@ -113,7 +108,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
     File[] projectQueueFiles = PersistentDirtyFilesQueue.getQueuesDir().toFile().listFiles();
     if (projectQueueFiles != null) {
       for (File file : projectQueueFiles) {
-        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), false, ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
+        dirtyFiles.addAll(PersistentDirtyFilesQueue.readProjectDirtyFilesQueue(file.toPath(), ManagingFS.getInstance().getCreationTimestamp()).getFileIds());
       }
     }
   }
@@ -143,7 +138,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       ApplicationManager.getApplication().getService(AppIndexingDependenciesService.class).invalidateAllStamps("Indexes corrupted");
     }
 
-    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), myCurrentVersionCorrupted, ManagingFS.getInstance().getCreationTimestamp());
+    myOrphanDirtyFilesQueue = PersistentDirtyFilesQueue.readOrphanDirtyFilesQueue(PersistentDirtyFilesQueue.getQueueFile(), ManagingFS.getInstance().getCreationTimestamp());
     Collection<ThrowableRunnable<?>> tasks = initAssociatedDataForExtensions(myOrphanDirtyFilesQueue);
 
     PersistentIndicesConfiguration.loadConfiguration();
@@ -155,7 +150,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
   private static class ShutdownTaskAsDisposable implements Disposable {
     @Override
     public void dispose() {
-      new FileBasedIndexImpl.MyShutDownTask(false).run();
+      new FileBasedIndexImpl.ShutDownIndexesTask(/*byShutDownHook: */ false).run();
     }
   }
 
@@ -220,9 +215,8 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<FileBa
       .notify(null);
   }
 
-  @NotNull
   @Override
-  protected String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
+  protected @NotNull String getInitializationFinishedMessage(@NotNull FileBasedIndexDataInitializationResult initializationResult) {
     return "Initialized indexes: " + initializationResult.myState.getIndexIDs() + ".";
   }
 

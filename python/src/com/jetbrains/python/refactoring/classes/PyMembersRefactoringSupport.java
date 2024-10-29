@@ -15,7 +15,7 @@ import com.jetbrains.python.refactoring.move.moduleMembers.PyDependentModuleMemb
 /**
  * @author Dennis.Ushakov
  */
-public final class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport {
+public final class PyMembersRefactoringSupport implements ClassMembersRefactoringSupport<PyElement> {
 
   public static PyMemberInfoStorage getSelectedMemberInfos(PyClass clazz, PsiElement element1, PsiElement element2) {
     final PyMemberInfoStorage infoStorage = new PyMemberInfoStorage(clazz);
@@ -28,12 +28,12 @@ public final class PyMembersRefactoringSupport implements ClassMembersRefactorin
   }
 
   @Override
-  public DependentMembersCollectorBase createDependentMembersCollector(Object clazz, Object superClass) {
-    if (clazz instanceof PyClass) {
-      return new PyDependentClassMembersCollector((PyClass)clazz, (PyClass)superClass);
+  public DependentMembersCollectorBase<?, ? extends PyElement> createDependentMembersCollector(PyElement clazz, PyElement superClass) {
+    if (clazz instanceof PyClass pyClass) {
+      return new PyDependentClassMembersCollector(pyClass, (PyClass)superClass);
     }
-    else if (clazz instanceof PyFile) {
-      return new PyDependentModuleMembersCollector(((PyFile)clazz));
+    else if (clazz instanceof PyFile pyFile) {
+      return new PyDependentModuleMembersCollector(pyFile);
     }
     return null;
   }

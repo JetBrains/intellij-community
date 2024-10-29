@@ -8,6 +8,7 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
@@ -54,8 +55,8 @@ import java.util.*
  *
  * In the end, the same project a will be active and there will be 2 window frames.
  *
- * To perform Project Leak detection, pass the fourth argument as true.
- * %openProject /tmp/a true true
+ * To perform Project Leak detection, pass the fourth argument as true but make sure that previous project is closed.
+ * %openProject /tmp/a false true
  */
 class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdapter(text, line) {
   companion object {
@@ -75,6 +76,7 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     val projectToOpen = if (arguments.size > 1) arguments[1] else ""
     val closeProjectBeforeOpening = arguments.size < 3 || arguments[2].toBoolean()
     val detectProjectLeak = arguments.size > 3 && arguments[3].toBoolean()
+    if(!closeProjectBeforeOpening && detectProjectLeak) throw IllegalArgumentException("Previous project has to be closed to perform project leak detection")
     val project = context.project
     if (projectToOpen.isEmpty() && project.isDefault) {
       throw IllegalArgumentException("Path to project to open required")
@@ -82,14 +84,16 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
 
     if (!project.isDefault) {
       withContext(Dispatchers.EDT) {
-        WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
+        writeIntentReadAction {
+          WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(project)
 
-        // for backward compatibility with older code
-        if (closeProjectBeforeOpening) {
-          // prevent the script from stopping on project close
-          context.setProject(null)
+          // for backward compatibility with older code
+          if (closeProjectBeforeOpening) {
+            // prevent the script from stopping on project close
+            context.setProject(null)
 
-          ProjectManager.getInstance().closeAndDispose(project)
+            ProjectManager.getInstance().closeAndDispose(project)
+          }
         }
       }
       RecentProjectsManager.getInstance().updateLastProjectPath()
@@ -126,17 +130,20 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
       if (shouldOpenInSmartMode(newProject)) {
         val job = CompletableDeferred<Any?>()
         DumbService.getInstance(newProject).smartInvokeLater {
-          if (detectProjectLeak) {
-            analyzeSnapshot(newProject)
-          }
           job.complete(null)
         }
         job.join()
+        if (detectProjectLeak) {
+          analyzeSnapshot(newProject)
+        }
       }
     }
     context.setProject(newProject)
   }
 
+  /**
+   * @param projectName project to exclude from analysis
+   */
   private class AnalyzeProjectGraph(analysisContext: AnalysisContext, listProvider: ListProvider, val projectName: String)
     : AnalyzeGraph(analysisContext, listProvider) {
     override fun analyze(progress: ProgressIndicator): AnalysisReport = AnalysisReport().apply {
@@ -148,7 +155,9 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
         if (classDefinition.name == ProjectImpl::class.java.name) {
           navigator.goTo(l)
           navigator.goToInstanceField(ProjectImpl::class.java.name, "cachedName")
-          if (navigator.getStringInstanceFieldValue() != projectName) {
+          val projectUnderAnalysis = navigator.getStringInstanceFieldValue()
+          if (projectUnderAnalysis != projectName) {
+            LOG.info("Analyzing GC Root for $projectUnderAnalysis")
             val gcRootPathsTree = GCRootPathsTree(analysisContext, AnalysisConfig.TreeDisplayOptions.all(showSize = false), null)
             gcRootPathsTree.registerObject(l.toInt())
             mainReport.append(gcRootPathsTree.printTree())
@@ -158,6 +167,9 @@ class OpenProjectCommand(text: String, line: Int) : PlaybackCommandCoroutineAdap
     }
   }
 
+  /**
+   * @param newProject current opened project, it will be excluded from analysis
+   */
   private fun analyzeSnapshot(newProject: Project) {
     val snapshotDate = SimpleDateFormat("dd.MM.yyyy_HH.mm.ss").format(Date())
     val snapshotFileName = "reopen-project-$snapshotDate.hprof"

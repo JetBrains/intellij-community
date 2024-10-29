@@ -6,12 +6,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 
+@ApiStatus.Internal
 public final class ScrollTreeToCenterAction extends AnAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.core.breakpoints
 
 import com.intellij.debugger.SourcePosition
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -17,6 +18,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineNumber
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INLINE_ONLY_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.idea.debugger.core.findElementAtLine
 import org.jetbrains.kotlin.idea.util.findElementsOfClassInRange
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,7 +26,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.kotlin.resolve.inline.INLINE_ONLY_ANNOTATION_FQ_NAME
 import kotlin.math.max
 import kotlin.math.min
 
@@ -46,19 +47,17 @@ fun isBreakpointApplicable(file: VirtualFile, line: Int, project: Project, check
     }
 }
 
-internal fun KtElement.hasExecutableCodeInsideOnLine(
+internal suspend fun KtElement.hasExecutableCodeInsideOnLine(
     file: VirtualFile, line: Int, project: Project, checker: (PsiElement) -> ApplicabilityResult
-): Boolean {
-    val document = FileDocumentManager.getInstance().getDocument(file) ?: return false
-    return runReadAction {
-        val minOffset = max(startOffset, document.getLineStartOffset(line))
-        val maxOffset = min(endOffset, document.getLineEndOffset(line))
+): Boolean = readAction {
+    val document = FileDocumentManager.getInstance().getDocument(file) ?: return@readAction false
+    val minOffset = max(startOffset, document.getLineStartOffset(line))
+    val maxOffset = min(endOffset, document.getLineEndOffset(line))
 
-        hasExecutableCodeImpl(checker, visitElements = { processor ->
-            (XDebuggerUtil.getInstance() as XDebuggerUtilImpl).iterateOffsetRange(project, document, minOffset, maxOffset, processor)
-        }) {
-            getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
-        }
+    hasExecutableCodeImpl(checker, visitElements = { processor ->
+        (XDebuggerUtil.getInstance() as XDebuggerUtilImpl).iterateOffsetRange(project, document, minOffset, maxOffset, processor)
+    }) {
+        getTopmostParentWithinOffsetRangeOrSelf(it, minOffset, maxOffset)
     }
 }
 

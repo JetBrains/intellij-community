@@ -35,6 +35,11 @@ public class KotlinArgumentsHintsProviderTestGenerated extends AbstractKotlinArg
         runTest("testData/codeInsight/hints/arguments/blacklisted.kt");
     }
 
+    @TestMetadata("functionalTypes.kt")
+    public void testFunctionalTypes() throws Exception {
+        runTest("testData/codeInsight/hints/arguments/functionalTypes.kt");
+    }
+
     @TestMetadata("javaParameters.kt")
     public void testJavaParameters() throws Exception {
         runTest("testData/codeInsight/hints/arguments/javaParameters.kt");

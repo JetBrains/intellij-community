@@ -7,6 +7,6 @@ abstract class A {
 
 class B : A() {
     override fun a() = doIt<Unit> {
-        1.let<Int, Unit> { it.let<Int, Unit> { it.let<Int, Unit> { it.let<Int, Unit> { null?.doDo() } } } }
+        1.let { it.let { it.let { it.let { null?.doDo() } } } }
     }
 }

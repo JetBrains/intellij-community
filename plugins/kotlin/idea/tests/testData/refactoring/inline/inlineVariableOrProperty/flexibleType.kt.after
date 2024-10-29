@@ -1,0 +1,15 @@
+class B {
+    fun getSomeFiled(): String = "1"
+    val nested: B? = null
+}
+
+class Usage(
+    val javaClass: JavaClass,
+    val b: B,
+) {
+    fun getSomeField() = javaClass.b?.getSomeFiled()
+
+    fun getSomeField2() = b.nested?.getSomeFiled()
+}
+
+// IGNORE_K1

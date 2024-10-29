@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.codeFragment.CodeFragment;
@@ -177,8 +177,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     mySignaturePreviewTextArea = new MethodSignatureComponent("", myProject, myFileType);
   }
 
-  @NotNull
-  private String getPersistenceId() {
+  private @NotNull String getPersistenceId() {
     return "visibility.combobox." + getClass().getName();
   }
 
@@ -217,9 +216,8 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     setOKActionEnabled(myValidator.isValidName(getMethodName()));
   }
 
-  @NotNull
   @Override
-  public String getMethodName() {
+  public @NotNull String getMethodName() {
     return myMethodNameTextField.getText().trim();
   }
 
@@ -228,9 +226,8 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
     return myVariableData;
   }
 
-  @Nullable
   @Override
-  public T getVisibility() {
+  public @Nullable T getVisibility() {
     return myVisibilityComboBox.getVisibility();
   }
 }

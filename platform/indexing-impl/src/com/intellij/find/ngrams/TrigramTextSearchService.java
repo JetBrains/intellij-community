@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.ngrams;
 
 import com.intellij.find.TextSearchService;
@@ -12,7 +12,6 @@ import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.IndexedFileImpl;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TrigramTextSearchService implements TextSearchService {
   @Override
   public @NotNull TextSearchResult processFilesWithText(@NotNull String text,
-                                                        Processor<? super VirtualFile> processor,
+                                                        @NotNull Processor<? super VirtualFile> processor,
                                                         @NotNull GlobalSearchScope scope) {
     IntSet keys = TrigramBuilder.getTrigrams(text);
     if (keys.isEmpty()) return TextSearchResult.NO_TRIGRAMS;

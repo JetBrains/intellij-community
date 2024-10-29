@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -56,7 +56,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, Caret caret, final DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, Caret caret, final DataContext dataContext) {
     assert caret == null : "Invocation of 'paste' operation for specific caret is not supported";
     execute(editor, dataContext, null);
   }
@@ -112,11 +112,11 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     });
   }
 
-  private static void doPaste(@NotNull final Editor editor,
-                              @NotNull final Project project,
+  private static void doPaste(final @NotNull Editor editor,
+                              final @NotNull Project project,
                               final PsiFile file,
                               final Document document,
-                              @NotNull final Transferable content) {
+                              final @NotNull Transferable content) {
     final TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
       typingActionsExtension.startPaste(project, editor);
@@ -154,8 +154,8 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
                                     final Project project,
                                     final PsiFile file,
                                     final Document document,
-                                    @NotNull final Transferable content,
-                                    @NotNull final TypingActionsExtension typingActionsExtension) {
+                                    final @NotNull Transferable content,
+                                    final @NotNull TypingActionsExtension typingActionsExtension) {
     CopyPasteManager.getInstance().stopKillRings();
 
     String text = null;

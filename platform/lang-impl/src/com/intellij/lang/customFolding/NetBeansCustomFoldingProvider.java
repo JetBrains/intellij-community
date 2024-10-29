@@ -3,10 +3,12 @@ package com.intellij.lang.customFolding;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.folding.CustomFoldingProvider;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Custom folding provider for <a href="http://ui.netbeans.org/docs/ui/code_folding/cf_uispec.html#menus">NetBeans folding conventions.</a>
  */
+@ApiStatus.Internal
 public final class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
   @Override
   public boolean isCustomRegionStart(String elementText) {

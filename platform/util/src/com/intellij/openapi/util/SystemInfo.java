@@ -208,9 +208,5 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval
   public static final boolean isMacOSLeopard = isMac;
 
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  public static final boolean isMacOSMountainLion = isMac;
   //</editor-fold>
 }

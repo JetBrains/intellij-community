@@ -1,0 +1,32 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "1.8",
+  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+kt_jvm_library(
+  name = "util-progress",
+  module_name = "intellij.platform.util.progress",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:guava",
+    "@community//platform/util",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-json-jvm",
+  ]
+)
+### auto-generated section `build` end

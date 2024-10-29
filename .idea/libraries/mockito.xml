@@ -1,15 +1,15 @@
 <component name="libraryTable">
   <library name="mockito" type="repository">
-    <properties maven-id="org.mockito:mockito-core:5.11.0">
+    <properties maven-id="org.mockito:mockito-core:5.12.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.11.0/mockito-core-5.11.0.jar">
-          <sha256sum>f076c96b1f49b8d9bc42e46b0969aaf5684c40c8b5b679d400e5d880073a0e00</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.12.0/mockito-core-5.12.0.jar">
+          <sha256sum>4a2eb29237050da749e90a46f948bce7e26ec22b671e41f59b1ac6f4b6408229</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12.jar">
-          <sha256sum>970636134d61c183b19f8f58fa631e30d2f2abca344b37848a393cac7863dd70</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.15/byte-buddy-1.14.15.jar">
+          <sha256sum>7472e3961992c12a9fd4f6d67c21de4280abe18f292704dd49d7338289f8acf5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12.jar">
-          <sha256sum>2b309a9300092e0b696f7c471fd51d9969001df784c8ab9f07997437d757ad6d</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.15/byte-buddy-agent-1.14.15.jar">
+          <sha256sum>3ef6ec7175801361170067cc6902969f966d37c72bf9353d9cd282263b184064</sha256sum>
         </artifact>
         <artifact url="file://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar">
           <sha256sum>02dfd0b0439a5591e35b708ed2f5474eb0948f53abf74637e959b8e4ef69bfeb</sha256sum>
@@ -17,16 +17,16 @@
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.11.0/mockito-core-5.11.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.12.0/mockito-core-5.12.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.15/byte-buddy-1.14.15.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.15/byte-buddy-agent-1.14.15.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.11.0/mockito-core-5.11.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.12/byte-buddy-1.14.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.12/byte-buddy-agent-1.14.12-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/mockito/mockito-core/5.12.0/mockito-core-5.12.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy/1.14.15/byte-buddy-1.14.15-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/bytebuddy/byte-buddy-agent/1.14.15/byte-buddy-agent-1.14.15-sources.jar!/" />
       <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/3.3/objenesis-3.3-sources.jar!/" />
     </SOURCES>
   </library>

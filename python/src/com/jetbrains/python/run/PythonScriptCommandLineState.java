@@ -79,7 +79,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
           @Override
           public void patchCommandLine(GeneralCommandLine commandLine) {
-            commandLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_DEBUGGER).addParameterAt(1, "--cmd-line");
+            commandLine.getParametersList().getParamsGroup(GROUP_DEBUGGER).addParameterAt(1, "--cmd-line");
           }
         }));
       }
@@ -209,10 +209,6 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
    * @see com.intellij.terminal.ProcessHandlerTtyConnector
    */
   private boolean emulateTerminal() {
-    if (PythonSdkUtil.isRemote(getSdk()) && !Registry.is("python.use.targets.api")) {
-      // do not allow to emulate terminal for legacy non-target remote interpreters logic
-      return false;
-    }
     return myConfig.emulateTerminal();
   }
 

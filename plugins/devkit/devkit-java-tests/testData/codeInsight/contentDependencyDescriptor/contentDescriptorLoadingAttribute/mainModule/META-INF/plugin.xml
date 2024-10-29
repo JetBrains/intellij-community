@@ -1,0 +1,11 @@
+<idea-plugin>
+  <id>com.intellij.myPlugin</id>
+  <vendor>JetBrains</vendor>
+  <version>1.0</version>
+
+  <content>
+    <module name="requiredModule" loading="required"/>
+    <module name="onDemandModule" loading="on-demand"/>
+    <module name="mainModule" loading="<error descr="Unknown enum value 'unknown'">unknown</error>"/>
+  </content>
+</idea-plugin>

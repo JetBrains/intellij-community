@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.module.Module;
@@ -16,7 +16,7 @@ import java.util.List;
 @ApiStatus.OverrideOnly
 public interface ModuleListener extends EventListener {
   @Topic.ProjectLevel
-  Topic<ModuleListener> TOPIC = new Topic<>(ModuleListener.class, Topic.BroadcastDirection.NONE);
+  Topic<ModuleListener> TOPIC = new Topic<>(ModuleListener.class, Topic.BroadcastDirection.NONE, true);
 
   /**
    * @deprecated Use {@link #modulesAdded(Project, List)}

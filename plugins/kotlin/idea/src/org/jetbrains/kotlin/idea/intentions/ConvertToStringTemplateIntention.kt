@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetingOffsetIndependentIntention
+import org.jetbrains.kotlin.idea.codeinsights.impl.base.containsPrefixedStringOperands
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention.Holder.buildReplacement
 import org.jetbrains.kotlin.idea.intentions.ConvertToStringTemplateIntention.Holder.isApplicableToNoParentCheck
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
@@ -32,9 +33,11 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
 ) {
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
         if (!isApplicableToNoParentCheck(element)) return false
+        if (element.left.isUnsupportedStringTemplate() || element.right.isUnsupportedStringTemplate()) return false
 
         val parent = element.parent
         if (parent is KtBinaryExpression && isApplicableToNoParentCheck(parent)) return false
+        if (element.containsPrefixedStringOperands()) return false
 
         return true
     }
@@ -45,6 +48,9 @@ open class ConvertToStringTemplateIntention : SelfTargetingOffsetIndependentInte
             element.replaced(replacement)
         }
     }
+
+    private fun KtExpression?.isUnsupportedStringTemplate(): Boolean =
+        this is KtStringTemplateExpression && interpolationPrefix != null
 
     object Holder {
         fun shouldSuggestToConvert(expression: KtBinaryExpression): Boolean {

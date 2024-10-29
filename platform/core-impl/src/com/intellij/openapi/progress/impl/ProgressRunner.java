@@ -441,7 +441,7 @@ public final class ProgressRunner<R> {
     @NotNull CompletableFuture<? extends @NotNull ProgressIndicator> progressIndicatorFuture
   ) {
     CompletableFuture<R> resultFuture = new CompletableFuture<>();
-    ChildContext childContext = Propagation.createChildContext();
+    ChildContext childContext = Propagation.createChildContext("ProgressRunner: " + task);
     CoroutineContext context = childContext.getContext();
     Job job = childContext.getJob();
     if (job != null) {
@@ -460,9 +460,10 @@ public final class ProgressRunner<R> {
       }
       Runnable runnable = new ProgressRunnable<>(resultFuture, task, progressIndicator);
       ContextAwareRunnable contextRunnable = () -> {
-        CoroutineContext effectiveContext = context.plus(asContextElement(progressIndicator.getModalityState()));
-        childContext.runAsCoroutine(() -> {
-          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, false)) {
+        childContext.runInChildContext(() -> {
+          CoroutineContext effectiveContext =
+            ThreadContext.currentThreadContext().plus(asContextElement(progressIndicator.getModalityState()));
+          try (AccessToken ignored = ThreadContext.installThreadContext(effectiveContext, true)) {
             runnable.run();
           }
         });

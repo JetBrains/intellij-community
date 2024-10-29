@@ -2,6 +2,7 @@
 package com.intellij.util.indexing
 
 import com.intellij.CacheSwitcher.switchIndexAndVfs
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.impl.cache.impl.id.IdIndex
@@ -56,6 +57,7 @@ class IndexingFlagTest {
 
   @Test
   @Ignore("Triggers `Path conflict. Existing symlink: SymlinkData{} vs. new symlink: SymlinkData{}`")
+  @IJIgnore(issue = "IJPL-149673")
   @RunsInEdt
   fun indexingFlagIsKeptThroughVFSReload() {
     val file = temp.newFile("test", "content".toByteArray())

@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
@@ -20,9 +20,7 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.wm.IdeFrame
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.file.Path
 
@@ -33,29 +31,27 @@ private var initialRefreshDone = false
 private val LOG: Logger
   get() = logger<DynamicPluginVfsListener>()
 
-private class DynamicPluginVfsListenerInitializer : ApplicationInitializedListener {
+private class DynamicPluginVfsListenerInitializer : ApplicationActivity {
   init {
     if (!java.lang.Boolean.getBoolean(AUTO_RELOAD_PLUGINS_SYSTEM_PROPERTY) || ApplicationManager.getApplication().isHeadlessEnvironment) {
       throw ExtensionNotApplicableException.create()
     }
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
-    asyncScope.launch {
-      val pluginsPath = PathManager.getPluginsPath()
-      val localFileSystem = LocalFileSystem.getInstance()
-      localFileSystem.addRootToWatch(pluginsPath, true)
-      val pluginRoot = withContext(Dispatchers.IO) {
-        localFileSystem.refreshAndFindFileByNioFile(Path.of(pluginsPath))
-      }
-      if (pluginRoot == null) {
-        LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
-      }
-      else {
-        // ensure all plugins are in VFS
-        VfsUtilCore.processFilesRecursively(pluginRoot) { true }
-        RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginRoot)
-      }
+  override suspend fun execute() {
+    val pluginsPath = PathManager.getPluginsPath()
+    val localFileSystem = LocalFileSystem.getInstance()
+    localFileSystem.addRootToWatch(pluginsPath, true)
+    val pluginRoot = withContext(Dispatchers.IO) {
+      localFileSystem.refreshAndFindFileByNioFile(Path.of(pluginsPath))
+    }
+    if (pluginRoot == null) {
+      LOG.info("Dynamic plugin VFS listener not active, couldn't find plugins root in VFS")
+    }
+    else {
+      // ensure all plugins are in VFS
+      VfsUtilCore.processFilesRecursively(pluginRoot) { true }
+      RefreshQueue.getInstance().refresh(true, true, Runnable { initialRefreshDone = true }, pluginRoot)
     }
   }
 }

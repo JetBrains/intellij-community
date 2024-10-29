@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl
 
 import com.intellij.ide.IdeBundle
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import kotlin.math.max
 
+@ApiStatus.Internal
 class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
@@ -80,8 +81,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
   private fun getPathFromUser(parent: Component): String? {
     val pathField = TextFieldWithBrowseButton(null, disposable)
     pathField.textField.columns = Messages.InputDialog.INPUT_DIALOG_COLUMNS
-    pathField.addBrowseFolderListener(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title"), null, null,
-                                      FileChooserDescriptorFactory.createSingleFolderDescriptor())
+    pathField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.file.chooser.title")))
     val ok = DialogBuilder(parent)
       .title(IdeBundle.message("trusted.hosts.settings.new.trusted.folder.dialog.title"))
       .setNorthPanel(pathField)

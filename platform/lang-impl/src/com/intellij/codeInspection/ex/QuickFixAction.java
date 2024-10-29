@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -112,7 +112,7 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   @Override
-  public void actionPerformed(@NotNull final AnActionEvent e) {
+  public void actionPerformed(final @NotNull AnActionEvent e) {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
@@ -278,9 +278,8 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
     return true;
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
@@ -307,9 +306,8 @@ public abstract class QuickFixAction extends AnAction implements CustomComponent
   }
 
   private final class PerformFixesTask extends PerformFixesModalTask {
-    @NotNull private final GlobalInspectionContextImpl myContext;
-    @NotNull
-    private final Set<? super PsiElement> myIgnoredElements;
+    private final @NotNull GlobalInspectionContextImpl myContext;
+    private final @NotNull Set<? super PsiElement> myIgnoredElements;
 
     PerformFixesTask(@NotNull Project project,
                      @NotNull List<CommonProblemDescriptor[]> descriptors,

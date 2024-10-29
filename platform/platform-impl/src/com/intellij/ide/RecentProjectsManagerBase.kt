@@ -36,6 +36,7 @@ import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer
 import com.intellij.project.stateStore
@@ -61,8 +62,6 @@ import java.util.concurrent.atomic.LongAdder
 import javax.swing.Icon
 import javax.swing.JFrame
 import kotlin.collections.Map.Entry
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.io.path.invariantSeparatorsPathString
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -84,6 +83,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
     @JvmStatic
     fun getInstanceEx(): RecentProjectsManagerBase = RecentProjectsManager.getInstance() as RecentProjectsManagerBase
 
+    @JvmName("isFileSystemPath")
     internal fun isFileSystemPath(path: String): Boolean = path.indexOf('/') != -1 || path.indexOf('\\') != -1
 
     /**
@@ -130,7 +130,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
 
   final override fun getState(): RecentProjectManagerState = state
 
-  fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
+  internal fun getProjectMetaInfo(projectStoreBaseDir: Path): RecentProjectMetaInfo? {
     val path = getProjectPath(projectStoreBaseDir) ?: return null
     synchronized(stateLock) {
       return state.additionalInfo.get(path)
@@ -566,7 +566,7 @@ open class RecentProjectsManagerBase(coroutineScope: CoroutineScope) :
           ideFrame.title = it
         }
 
-        IdeRootPane.customizeRawFrame(ideFrame)
+        CustomWindowHeaderUtil.customizeRawFrame(ideFrame)
         ideFrame.isVisible = true
         val task = Pair(path, OpenProjectTask {
           forceOpenInNewFrame = true

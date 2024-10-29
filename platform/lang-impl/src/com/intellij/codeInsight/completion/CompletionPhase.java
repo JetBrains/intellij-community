@@ -189,10 +189,9 @@ public abstract class CompletionPhase implements Disposable {
         .submit(ourExecutor);
     }
 
-    @NotNull
-    private static CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
-                                                          Editor topLevelEditor,
-                                                          @Nullable TypedEvent event) {
+    private static @NotNull CommittingDocuments getCompletionPhase(@Nullable CompletionProgressIndicator prevIndicator,
+                                                                   Editor topLevelEditor,
+                                                                   @Nullable TypedEvent event) {
       if (event != null) {
         CompletionPhase currentPhase = CompletionServiceImpl.getCompletionPhase();
         if (currentPhase instanceof CommittingDocuments committingPhase &&
@@ -225,7 +224,7 @@ public abstract class CompletionPhase implements Disposable {
 
       for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
         try {
-          ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
+          ThreeState result = confidence.shouldSkipAutopopup(editor, elementAt, psiFile, offset);
           if (result != ThreeState.UNSURE) {
             LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
             return result == ThreeState.YES;
@@ -307,7 +306,7 @@ public abstract class CompletionPhase implements Disposable {
     }
   }
 
-  public static abstract class ZombiePhase extends CompletionPhase {
+  public abstract static class ZombiePhase extends CompletionPhase {
 
     ZombiePhase(CompletionProgressIndicator indicator) {
       super(indicator);

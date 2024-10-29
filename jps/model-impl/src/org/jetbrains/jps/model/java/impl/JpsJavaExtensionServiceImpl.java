@@ -154,6 +154,9 @@ public class JpsJavaExtensionServiceImpl extends JpsJavaExtensionService {
   @Nullable
   @Override
   public JpsTestModuleProperties getTestModuleProperties(@NotNull JpsModule module) {
+    if (module.getProject() instanceof JpsJavaAwareProject) {
+      return ((JpsJavaAwareProject)module.getProject()).getTestModuleProperties(module);
+    }
     return module.getContainer().getChild(JpsTestModulePropertiesImpl.ROLE);
   }
 

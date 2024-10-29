@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
@@ -56,8 +57,10 @@ final class ModuleHighlightUtil {
       if (packageName != null) {
         PsiJavaModule origin = JavaModuleGraphUtil.findOrigin(javaModule, packageName);
         if (origin != null) {
-          String message = JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName());
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(message);
+          PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+            .range(reference)
+            .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", packageName, origin.getName()));
         }
       }
     }
@@ -79,9 +82,14 @@ final class ModuleHighlightUtil {
               if (rootForFile != null && JavaCompilerConfigurationProxy.isPatchedModuleRoot(anotherJavaModule.getName(), module, rootForFile)) {
                 return null;
               }
-              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-                .range(reference)
-                .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getName(), anotherJavaModule.getName()));
+              for (PsiPackageAccessibilityStatement export : anotherJavaModule.getExports()) {
+                String exportPackageName = export.getPackageName();
+                if (exportPackageName != null && exportPackageName.equals(pack.getQualifiedName())) {
+                  return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                    .range(reference)
+                    .descriptionAndTooltip(JavaErrorBundle.message("module.conflicting.packages", pack.getQualifiedName(), anotherJavaModule.getName()));
+                }
+              }
             }
           }
         }
@@ -269,7 +277,7 @@ final class ModuleHighlightUtil {
     switch (results.length) {
       case 0:
         if (IncompleteModelUtil.isIncompleteModel(parent)) {
-          return IncompleteModelUtil.getPendingReferenceHighlightInfo(refElement);
+          return HighlightUtil.getPendingReferenceHighlightInfo(refElement);
         } else {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF)
             .range(refElement)

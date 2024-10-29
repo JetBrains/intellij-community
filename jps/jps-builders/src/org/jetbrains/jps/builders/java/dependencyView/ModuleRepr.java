@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.util.io.DataExternalizer;
@@ -12,15 +12,12 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
-/**
- * @author Eugene Zhuravlev
- */
-public final class ModuleRepr extends ClassFileRepr {
+final class ModuleRepr extends ClassFileRepr {
   private final int myVersion;
   private final Set<ModuleRequiresRepr> myRequires; // module names
   private final Set<ModulePackageRepr> myExports; // package names
 
-  public ModuleRepr(DependencyContext context, int access, int version, int fileName, int name, Set<ModuleRequiresRepr> requires, Set<ModulePackageRepr> exports, Set<UsageRepr.Usage> usages) {
+  ModuleRepr(DependencyContext context, int access, int version, int fileName, int name, Set<ModuleRequiresRepr> requires, Set<ModulePackageRepr> exports, Set<UsageRepr.Usage> usages) {
     super(access, context.get(null), name, Collections.emptySet(), fileName, context, usages);
     myVersion = version;
     myRequires = requires;
@@ -28,7 +25,7 @@ public final class ModuleRepr extends ClassFileRepr {
     updateClassUsages(context, usages);
   }
 
-  public ModuleRepr(DependencyContext context, DataInput in) {
+  ModuleRepr(DependencyContext context, DataInput in) {
     super(context, in);
     try {
       myVersion = DataInputOutputUtil.readINT(in);

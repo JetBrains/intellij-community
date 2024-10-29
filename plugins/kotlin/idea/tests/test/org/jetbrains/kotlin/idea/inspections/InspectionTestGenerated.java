@@ -425,11 +425,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @TestMetadata("branched/ifThenToElvis/inspectionData/inspections.test")
-        public void testBranched_ifThenToElvis_inspectionData_Inspections_test() throws Exception {
-            runTest("testData/inspectionsLocal/branched/ifThenToElvis/inspectionData/inspections.test");
-        }
-
         @TestMetadata("conventionNameCalls/replaceGetOrSet/inspectionData/inspections.test")
         public void testConventionNameCalls_replaceGetOrSet_inspectionData_Inspections_test() throws Exception {
             runTest("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet/inspectionData/inspections.test");

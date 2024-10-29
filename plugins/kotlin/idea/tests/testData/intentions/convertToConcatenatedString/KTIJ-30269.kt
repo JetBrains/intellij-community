@@ -1,0 +1,22 @@
+// SKIP_ERRORS_BEFORE
+// SKIP_ERRORS_AFTER
+// SKIP_WARNINGS_AFTER
+// COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+
+fun foo() {
+    val a = "aaa"
+    val b = "bbb"
+    val k2 = $"""<caret>
+    ${'$'}a          //prints '$a'
+    ${'$'}$a         //prints '$10'
+    $a               //prints '10'
+    $$a              //prints '$10'
+    $$$a             //prints '$$10'
+    $$$              //prints '$$$'
+    ${'$'}{b.length} //prints '${b.length}'
+    ${b.length}      //prints '6'
+    $${b.length}     //prints '$6'
+    $$${b.length}    //prints '$$6'
+"""
+    val s2234 = $"1.${'$'}a 2.${'$'}$a 3.$a 4.\$$a 5.\$\$ 6.${b.length} 7.\$${b.length}"
+}

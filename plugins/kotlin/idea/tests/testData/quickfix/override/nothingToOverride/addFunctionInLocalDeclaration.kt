@@ -8,3 +8,4 @@ fun test() {
     }
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddFunctionToSupertypeFix
+/* IGNORE_K2 */

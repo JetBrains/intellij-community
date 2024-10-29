@@ -58,7 +58,7 @@ public final class AnnotateCapitalizationIntention implements IntentionAction {
     BaseListPopupStep<Nls.Capitalization> step =
       new BaseListPopupStep<>(null, Nls.Capitalization.Title, Nls.Capitalization.Sentence) {
         @Override
-        public PopupStep onChosen(final Nls.Capitalization selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(final Nls.Capitalization selectedValue, boolean finalChoice) {
           WriteCommandAction.writeCommandAction(project).run(() -> {
             String nls = Nls.class.getName();
             PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()

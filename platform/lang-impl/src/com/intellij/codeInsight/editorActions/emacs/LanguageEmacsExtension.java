@@ -2,7 +2,9 @@
 package com.intellij.codeInsight.editorActions.emacs;
 
 import com.intellij.lang.LanguageExtension;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class LanguageEmacsExtension extends LanguageExtension<EmacsProcessingHandler> {
   public static final LanguageEmacsExtension INSTANCE = new LanguageEmacsExtension();
 

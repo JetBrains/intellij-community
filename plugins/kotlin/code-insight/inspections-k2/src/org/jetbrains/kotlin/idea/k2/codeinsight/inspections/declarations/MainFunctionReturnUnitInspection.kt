@@ -28,7 +28,7 @@ internal class MainFunctionReturnUnitInspection : LocalInspectionTool() {
         if (!KotlinMainFunctionDetector.getInstance().isMain(function, detectorConfiguration)) return
 
         analyze(function) {
-            if (!function.getFunctionLikeSymbol().returnType.isUnit) {
+            if (!function.symbol.returnType.isUnitType) {
                 holder.registerProblem(
                     function.typeReference ?: function,
                     KotlinBundle.message("0.should.return.unit", "'main()'"),

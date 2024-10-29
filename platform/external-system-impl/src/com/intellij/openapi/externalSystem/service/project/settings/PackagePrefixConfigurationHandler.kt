@@ -8,8 +8,9 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.SourceFolder
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
+import org.jetbrains.annotations.ApiStatus
 
-
+@ApiStatus.Internal
 class PackagePrefixConfigurationHandler : ConfigurationHandler {
   override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     configuration.onPackagePrefixes {

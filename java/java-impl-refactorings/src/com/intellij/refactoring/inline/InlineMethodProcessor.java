@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
@@ -77,7 +77,6 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   private final Function<PsiReference, InlineTransformer> myTransformerChooser;
 
   private final PsiElementFactory myFactory;
-  private final JavaCodeStyleManager myJavaCodeStyle;
 
   private final String myDescriptiveName;
   private List<CodeBlockSurrounder.SurroundResult> mySurroundResults;
@@ -121,9 +120,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     mySearchForTextOccurrences = searchForTextOccurrences;
     myDeleteTheDeclaration = isDeleteTheDeclaration;
 
-    PsiManager manager = PsiManager.getInstance(myProject);
-    myFactory = JavaPsiFacade.getElementFactory(manager.getProject());
-    myJavaCodeStyle = JavaCodeStyleManager.getInstance(myProject);
+    myFactory = JavaPsiFacade.getElementFactory(myProject);
     myDescriptiveName = DescriptiveNameUtil.getDescriptiveName(myMethod);
   }
 
@@ -349,20 +346,21 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     });
   }
 
-  public static void addInaccessibleMemberConflicts(PsiElement element,
+  public static void addInaccessibleMemberConflicts(PsiMethod method,
                                                     UsageInfo[] usages,
                                                     ReferencedElementsCollector collector,
                                                     MultiMap<PsiElement, @DialogMessage String> conflicts) {
-    element.accept(collector);
-    final Map<PsiMember, Set<PsiMember>> containersToReferenced = getInaccessible(collector.myReferencedMembers, usages, element);
-
-    containersToReferenced.forEach((container, referencedInaccessible) -> {
-      for (PsiMember referenced : referencedInaccessible) {
-        final String referencedDescription = RefactoringUIUtil.getDescription(referenced, true);
+    PsiCodeBlock body = Objects.requireNonNull(method.getBody());
+    body.accept(collector);
+    final Map<PsiMember, Set<PsiMember>> locationsToInaccessibles = getInaccessible(collector.myReferencedMembers, usages, method);
+    String methodDescription = RefactoringUIUtil.getDescription(method, true);
+    locationsToInaccessibles.forEach((container, inaccessibles) -> {
+      for (PsiMember inaccessible : inaccessibles) {
+        final String referencedDescription = RefactoringUIUtil.getDescription(inaccessible, true);
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
-        String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
-                                                   referencedDescription, containerDescription);
-        conflicts.putValue(container, StringUtil.capitalize(message));
+        String message = RefactoringBundle.message("0.which.is.used.in.1.not.accessible.from.call.site.s.in.2",
+                                                   referencedDescription, methodDescription, containerDescription);
+        conflicts.putValue(usages.length == 1 ? inaccessible : container, StringUtil.capitalize(message));
       }
     });
   }
@@ -427,17 +425,15 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  @Nullable
   @Override
   protected String getRefactoringId() {
     return "refactoring.inline.method";
   }
 
-  @Nullable
   @Override
   protected RefactoringEventData getBeforeData() {
     final RefactoringEventData data = new RefactoringEventData();
-    data.addElement(myMethod);
+    if (myDeleteTheDeclaration) data.addElement(myMethod);
     return data;
   }
 
@@ -646,7 +642,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public void inlineMethodCall(PsiReferenceExpression ref) throws IncorrectOperationException {
+  public void inlineMethodCall(PsiReferenceExpression ref) {
     myMethodCopy = (PsiMethod)myMethod.copy();
 
     PsiMethodCallExpression methodCall = (PsiMethodCallExpression)ref.getParent();
@@ -681,8 +677,10 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       LOG.assertTrue(beforeRBraceStatement != null);
 
       firstAdded = anchorParent.addRangeBefore(firstBodyElement, beforeRBraceStatement, anchor);
+      JavaCodeStyleManager style = JavaCodeStyleManager.getInstance(myProject);
 
       for (PsiElement e = firstAdded; e != anchor; e = e.getNextSibling()) {
+        style.shortenClassReferences(e);
         if (e instanceof PsiDeclarationStatement) {
           PsiElement[] elements = ((PsiDeclarationStatement)e).getDeclaredElements();
           PsiLocalVariable var = tryCast(ArrayUtil.getFirstElement(elements), PsiLocalVariable.class);
@@ -693,7 +691,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             }
             else if (blockData.thisVar != null && name.equals(blockData.thisVar.getName())) {
               thisVar = var;
-            } else {
+            }
+            else {
               for (int i = 0; i < blockData.parmVars.length; i++) {
                 if (name.equals(blockData.parmVars[i].getName())) {
                   parmVars[i] = var;
@@ -772,8 +771,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return !sourceContainingClass.equals(targetContainingClass);
   }
 
-  private BlockData prepareBlock(PsiReferenceExpression ref, InlineMethodHelper helper)
-    throws IncorrectOperationException {
+  private BlockData prepareBlock(PsiReferenceExpression ref, InlineMethodHelper helper) {
     final PsiCodeBlock block = Objects.requireNonNull(myMethodCopy.getBody());
     PsiSubstitutor callSubstitutor = helper.getSubstitutor();
     if (callSubstitutor != PsiSubstitutor.EMPTY) {
@@ -834,7 +832,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private void addThisInitializer(PsiMethodCallExpression methodCall, PsiLocalVariable thisVar) throws IncorrectOperationException {
+  private void addThisInitializer(PsiMethodCallExpression methodCall, PsiLocalVariable thisVar) {
     if (thisVar != null) {
       PsiExpression qualifier = methodCall.getMethodExpression().getQualifierExpression();
       if (qualifier == null) {
@@ -893,7 +891,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
 
   private static final Key<PsiReferenceExpression> MARK_KEY = Key.create("MarkForSurround");
 
-  private PsiReferenceExpression[] surroundWithCodeBlock(PsiReferenceExpression[] refs) throws IncorrectOperationException {
+  private PsiReferenceExpression[] surroundWithCodeBlock(PsiReferenceExpression[] refs) {
     mySurroundResults = new ArrayList<>();
 
     for (PsiReferenceExpression ref : refs) {
@@ -1022,19 +1020,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     return false;
   }
 
-  private static class BlockData {
-    final PsiCodeBlock block;
-    final PsiLocalVariable thisVar;
-    final PsiLocalVariable[] parmVars;
-    final PsiLocalVariable resultVar;
-
-    BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {
-      this.block = block;
-      this.thisVar = thisVar;
-      this.parmVars = parmVars;
-      this.resultVar = resultVar;
-    }
-  }
+  private record BlockData(PsiCodeBlock block, PsiLocalVariable thisVar, PsiLocalVariable[] parmVars, PsiLocalVariable resultVar) {}
 
   @Override
   @NotNull

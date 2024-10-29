@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -8,7 +8,11 @@ import com.intellij.openapi.observable.util.toUiPathProperty
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
-import org.jetbrains.idea.maven.project.*
+import org.jetbrains.idea.maven.project.BundledMaven3
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle
+import org.jetbrains.idea.maven.project.MavenGeneralSettings
+import org.jetbrains.idea.maven.project.MavenProjectBundle.message
+import org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenEnvironmentSettingsDialog(private val project: Project,
@@ -56,18 +60,16 @@ class MavenEnvironmentSettingsDialog(private val project: Project,
 
   override fun createCenterPanel() = panel {
     row(MavenConfigurableBundle.message("maven.settings.environment.user.settings") + ":") {
-      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-      val browseDialogTitle = MavenProjectBundle.message("maven.select.maven.settings.file")
-      textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
+      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(message("maven.select.maven.settings.file"))
+      textFieldWithBrowseButton(fileChooserDescriptor, project)
         .bindText(userSettingsProperty)
         .applyToComponent { bindEmptyText(defaultUserSettingsProperty.toUiPathProperty()) }
         .align(AlignX.FILL)
         .columns(COLUMNS_MEDIUM)
     }
     row(MavenConfigurableBundle.message("maven.settings.environment.local.repository") + ":") {
-      val browseDialogTitle = MavenProjectBundle.message("maven.select.local.repository")
-      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-      textFieldWithBrowseButton(browseDialogTitle, project, fileChooserDescriptor)
+      val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("maven.select.local.repository"))
+      textFieldWithBrowseButton(fileChooserDescriptor, project)
         .bindText(localRepositoryProperty)
         .applyToComponent { bindEmptyText(defaultLocalRepositoryProperty.toUiPathProperty()) }
         .align(AlignX.FILL)

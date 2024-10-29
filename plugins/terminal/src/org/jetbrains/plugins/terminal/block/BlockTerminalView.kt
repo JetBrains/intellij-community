@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -155,7 +156,9 @@ internal class BlockTerminalView(
       override fun activeStateChanged(isActive: Boolean) {
         if (isActive) {
           if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-            FileDocumentManager.getInstance().saveAllDocuments()
+            WriteIntentReadAction.run {
+              FileDocumentManager.getInstance().saveAllDocuments()
+            }
           }
         }
         else {

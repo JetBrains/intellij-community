@@ -1,0 +1,39 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "ide-internal",
+  module_name = "intellij.platform.ide.internal",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@community//platform/ui.jcef:ui-jcef",
+    "@community//platform/platform-impl/bootstrap:ide-bootstrap",
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/core-ui",
+    "@community//platform/statistics",
+    "@community//platform/editor-ui-ex:editor-ex",
+    "@community//platform/analysis-impl",
+    "@community//platform/lang-api:lang",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/jbr",
+    "@community//platform/ide-core-impl",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/statistics/uploader:statistics-uploader",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/service-container:serviceContainer",
+    "@libraries//:guava",
+    "@libraries//:miglayout-swing",
+    "@libraries//:kotlinx-serialization-json-jvm",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:hash4j",
+    "@libraries//:gson",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlin-reflect",
+  ]
+)
+### auto-generated section `build` end

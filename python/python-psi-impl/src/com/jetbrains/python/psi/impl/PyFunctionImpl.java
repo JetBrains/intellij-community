@@ -223,8 +223,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
         }
         final var substitutionsWithUnresolvedReturnGenerics =
           PyTypeChecker.getSubstitutionsWithUnresolvedReturnGenerics(getParameters(context), type, substitutions, context);
-        final var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutionsWithUnresolvedReturnGenerics);
-        type = PyTypeChecker.substitute(type, substitutionsWithDefaults, context);
+        type = PyTypeChecker.substitute(type, substitutionsWithUnresolvedReturnGenerics, context);
       }
       else {
         type = null;

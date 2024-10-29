@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -7,11 +7,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.valueEditors.TextFieldValueEditor;
 import com.intellij.ui.components.fields.valueEditors.ValueEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class CommaSeparatedIdentifiersField extends ExpandableTextField {
 
   private final @NotNull MyValueEditor myValueEditor;
@@ -22,8 +24,7 @@ public final class CommaSeparatedIdentifiersField extends ExpandableTextField {
     setToolTipText(ApplicationBundle.message("settings.code.style.builder.methods.tooltip"));
   }
 
-  @NotNull
-  public ValueEditor<String> getEditor() {
+  public @NotNull ValueEditor<String> getEditor() {
     return myValueEditor;
   }
 
@@ -37,9 +38,8 @@ public final class CommaSeparatedIdentifiersField extends ExpandableTextField {
       super(field, myValueName, "");
     }
 
-    @NotNull
     @Override
-    public String parseValue(@Nullable String text) throws InvalidDataException {
+    public @NotNull String parseValue(@Nullable String text) throws InvalidDataException {
       if (text == null) return "";
       StringBuilder result = new StringBuilder();
       for(String chunk : StringUtil.split(text, ",")) {

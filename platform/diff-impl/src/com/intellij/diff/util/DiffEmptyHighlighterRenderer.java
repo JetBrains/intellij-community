@@ -8,10 +8,12 @@ import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.CommonProcessors;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public class DiffEmptyHighlighterRenderer implements CustomHighlighterRenderer {
   @NotNull private final TextDiffType myDiffType;
 

@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SurroundWithActionBase : AnAction() {
 
   private fun isMySurrounder(surrounder: Surrounder): Boolean {

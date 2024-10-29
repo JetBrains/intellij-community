@@ -80,7 +80,16 @@ private fun JsonPointerPosition.toPathItems() =
 
 private tailrec fun NestedCompletionsNode.navigate(index: Int, steps: List<String>): NestedCompletionsNode? =
   if (index !in steps.indices) this
-  else children.firstOrNull { it.matches(steps[index]) }?.node?.navigate(index + 1, steps)
+  else {
+    val matchingNodes = children.filter { it.matches(steps[index]) }
+    matchingNodes.getPreferredChild()?.node?.navigate(index + 1, steps)
+  }
+
+// some schemas provide both named and regex nodes for the same name
+// we need to prioritize named options over regex options
+private fun Collection<ChildNode>.getPreferredChild(): ChildNode? {
+  return firstOrNull { it is ChildNode.NamedChildNode } ?: firstOrNull()
+}
 
 private fun ChildNode.matches(name: String): Boolean = when (this) {
   is ChildNode.Isolated.RegexNode -> regex.matches(name)

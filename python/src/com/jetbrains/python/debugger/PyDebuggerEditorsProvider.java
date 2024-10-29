@@ -2,10 +2,12 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XNamedTreeNode;
@@ -13,11 +15,15 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.InlineDebuggerHelper;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
+import com.jetbrains.python.psi.PyImportStatementBase;
+import com.jetbrains.python.psi.impl.PyCodeFragmentWithHiddenImports;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 
 public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
@@ -32,13 +38,30 @@ public class PyDebuggerEditorsProvider extends XDebuggerEditorsProvider {
                                           final @Nullable XSourcePosition sourcePosition,
                                           @NotNull EvaluationMode mode) {
     String text = expression.getExpression().trim();
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "fragment.py", text, true);
+    final PyCodeFragmentWithHiddenImports fragment = new PyCodeFragmentWithHiddenImports(project, "fragment.py", text, true);
 
     // Bind to context
     final PsiElement element = getContextElement(project, sourcePosition);
     fragment.setContext(element);
 
+    if (expression.getCustomInfo() != null) {
+      fragment.addImportsFromStrings(expression.getCustomInfo().lines().toList());
+    }
     return PsiDocumentManager.getInstance(project).getDocument(fragment);
+  }
+
+  @Override
+  public @NotNull XExpression createExpression(@NotNull Project project,
+                                               @NotNull Document document,
+                                               @Nullable Language language,
+                                               @NotNull EvaluationMode mode) {
+    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    if (file instanceof PyCodeFragmentWithHiddenImports fragment) {
+      List<PyImportStatementBase> pseudoImports = fragment.getPseudoImports();
+      String customInfo = StringUtil.nullize(StringUtil.join(pseudoImports, PsiElement::getText, "\n"));
+      return new XExpressionImpl(fragment.getText(), language, customInfo, mode);
+    }
+    return super.createExpression(project, document, language, mode);
   }
 
   @VisibleForTesting

@@ -7,7 +7,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.lang.Language
 import com.intellij.openapi.editor.markup.InspectionsLevel
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object InspectionWidgetUsageCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("inspection.widget", 4)
   private val HIGHLIGHT_LEVEL_CHANGED = GROUP.registerEvent("highlight.level.changed", EventFields.Language,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -7,9 +7,18 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.options.OptControl;
 import com.intellij.codeInspection.options.OptionController;
 import com.intellij.modcommand.*;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class ModCommandServiceImpl implements ModCommandService {
+@ApiStatus.Internal
+public final class ModCommandServiceImpl implements ModCommandService {
   @Override
   public @NotNull IntentionAction wrap(@NotNull ModCommandAction action) {
     return new ModCommandActionWrapper(action, null);
@@ -93,5 +103,51 @@ public class ModCommandServiceImpl implements ModCommandService {
       }
     }
     return copiedTool;
+  }
+
+  @Override
+  public @Nullable ModCommandWithContext chooseFileAndPerform(@NotNull PsiFile hostFile,
+                                                              @Nullable Editor hostEditor,
+                                                              @NotNull ModCommandAction commandAction,
+                                                              int fixOffset) {
+    Project project = hostFile.getProject();
+    ThrowableComputable<ModCommandWithContext, RuntimeException> computable =
+      () -> ReadAction.nonBlocking(() -> {
+          ActionContext context = chooseContextForAction(hostFile, hostEditor, commandAction, fixOffset);
+          if (context == null) {
+            return new ModCommandWithContext(ActionContext.from(null, hostFile), ModCommand.nop());
+          }
+          return new ModCommandWithContext(context, commandAction.perform(context));
+        })
+        .expireWhen(() -> project.isDisposed())
+        .executeSynchronously();
+    //noinspection DialogTitleCapitalization
+    return ProgressManager.getInstance().
+      runProcessWithProgressSynchronously(computable, commandAction.getFamilyName(), true, project);
+  }
+
+  @Nullable
+  @RequiresBackgroundThread
+  private static ActionContext chooseContextForAction(@NotNull PsiFile hostFile,
+                                                      @Nullable Editor hostEditor,
+                                                      @NotNull ModCommandAction commandAction,
+                                                      int fixOffset) {
+    if (hostEditor == null) {
+      return ActionContext.from(null, hostFile);
+    }
+    int offset = fixOffset >= 0 ? fixOffset : hostEditor.getCaretModel().getOffset();
+    ActionContext hostContext = ActionContext.from(hostEditor, hostFile).withOffset(offset);
+    PsiFile injectedFile = InjectedLanguageUtilBase.findInjectedPsiNoCommit(hostFile, offset);
+    if (injectedFile != null) {
+      ActionContext injectedContext = hostContext.mapToInjected(injectedFile);
+      if (commandAction.getPresentation(injectedContext) != null) {
+        return injectedContext;
+      }
+    }
+
+    if (commandAction.getPresentation(hostContext) != null) {
+      return hostContext.withOffset(offset);
+    }
+    return null;
   }
 }

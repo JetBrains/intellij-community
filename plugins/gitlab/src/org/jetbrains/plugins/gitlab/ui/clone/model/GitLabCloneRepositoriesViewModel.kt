@@ -16,11 +16,11 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.platform.util.coroutines.childScope
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
+import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.GitLabApiManager
 import org.jetbrains.plugins.gitlab.api.dto.GitLabGroupMemberDTO
-import org.jetbrains.plugins.gitlab.api.dto.GitLabProjectMemberDTO
 import org.jetbrains.plugins.gitlab.api.request.getCurrentUser
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccount
 import org.jetbrains.plugins.gitlab.authentication.accounts.GitLabAccountManager
@@ -43,6 +43,8 @@ internal interface GitLabCloneRepositoriesViewModel : GitLabClonePanelViewModel 
   val selectedUrl: SharedFlow<String?>
 
   val accountDetailsProvider: GitLabAccountsDetailsProvider
+
+  val shallowCloneVm: GitShallowCloneViewModel
 
   fun selectItem(item: GitLabCloneListItem?)
 
@@ -125,6 +127,8 @@ internal class GitLabCloneRepositoriesViewModelImpl(
 
   private val directoryPath: MutableStateFlow<String> = MutableStateFlow("")
 
+  override val shallowCloneVm = GitShallowCloneViewModel()
+
   override val accountDetailsProvider = GitLabAccountsDetailsProvider(cs, accountManager) { account ->
     val token = accountManager.findCredentials(account) ?: return@GitLabAccountsDetailsProvider null
     apiManager.getClient(account.server) { token }
@@ -171,7 +175,16 @@ internal class GitLabCloneRepositoriesViewModelImpl(
     val directoryName = Paths.get(directoryPath).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(
+      project,
+      Git.getInstance(),
+      checkoutListener,
+      destinationParent,
+      selectedUrl,
+      directoryName,
+      parentDirectory,
+      shallowCloneVm.getShallowCloneOptions(),
+    )
   }
 
   private suspend fun collectRepositoriesByAccount(account: GitLabAccount): List<GitLabCloneListItem> {

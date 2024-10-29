@@ -217,7 +217,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
     finally {
@@ -235,7 +235,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -290,7 +290,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -310,7 +310,7 @@ public final class JDOMUtil {
         xmlStreamReader.close();
       }
     }
-    catch (XMLStreamException | UncheckedStreamException e) {
+    catch (XMLStreamException | UncheckedStreamException | IllegalNameException e) {
       throw new JDOMException(e.getMessage(), e);
     }
   }
@@ -373,6 +373,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #write(Element, Path, String)}
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   public static void write(@NotNull Parent element, @NotNull File file, @NotNull String lineSeparator) throws IOException {
     FileUtilRt.createParentDirs(file);

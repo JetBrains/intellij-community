@@ -19,6 +19,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 public class EditMemorySettingsDialog extends DialogWrapper {
   private static final int MIN_VALUE = 256, HEAP_INCREMENT = 512;

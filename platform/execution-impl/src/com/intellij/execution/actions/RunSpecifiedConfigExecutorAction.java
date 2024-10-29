@@ -37,20 +37,21 @@ public final class RunSpecifiedConfigExecutorAction extends ExecutorAction {
   }
 
   @Override
-  protected boolean hideDisabledExecutorButtons() {
-    // no need in a list of disabled actions in the secondary menu of the Run Configuration item in the combo box drop-down menu.
-    return true;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
 
+    Presentation presentation = e.getPresentation();
     if (myEditConfigBeforeRun) {
-      Presentation presentation = e.getPresentation();
       presentation.setText(ExecutionBundle.message("choose.run.popup.edit"));
       presentation.setDescription(ExecutionBundle.message("choose.run.popup.edit.description"));
       presentation.setIcon(!ExperimentalUI.isNewUI() ? AllIcons.Actions.EditSource : null);
+    }
+
+    // no need in a list of disabled actions in the secondary menu
+    // of the 'Current File' item in the combo box drop-down menu
+    if (!presentation.isEnabled() &&
+        presentation.getClientProperty(WOULD_BE_ENABLED_BUT_STARTING) != Boolean.TRUE) {
+      presentation.setVisible(false);
     }
   }
 

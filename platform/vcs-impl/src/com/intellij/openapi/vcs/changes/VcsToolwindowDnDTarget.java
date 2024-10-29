@@ -5,10 +5,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
 
+@ApiStatus.Internal
 public abstract class VcsToolwindowDnDTarget extends DnDActivateOnHoldTarget {
   @NotNull protected final Project myProject;
   @NotNull protected final Content myContent;

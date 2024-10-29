@@ -20,7 +20,7 @@ def get_shape(table):
 # noinspection PyUnresolvedReferences
 def get_head(table):
      # type: (datasets.arrow_dataset.Dataset) -> str
-    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True, max_cols=None))
+    return repr(__convert_to_df(table.select([0])).head().to_html(notebook=True))
 
 
 # noinspection PyUnresolvedReferences
@@ -33,24 +33,43 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, start_index=None, end_index=None, format=None):
+def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> str
 
-    def convert_data_to_html(data, max_cols):
-        return repr(data.to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_csv(data):
+        return repr(data.to_csv())
 
-    return _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+    def convert_data_to_html(data):
+        return repr(data.to_html(notebook=True))
+
+    if use_csv_serialization:
+        computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
+    else:
+        computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+    return computed_data
 
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
-def display_data(table, start_index, end_index):
+def display_data_csv(table, start_index, end_index):
      # type: (datasets.arrow_dataset.Dataset, int, int) -> None
-    def ipython_display(data, max_cols):
+    def ipython_display(data):
+        try:
+            data = data.to_csv()
+        except AttributeError:
+            pass
+        print(data)
+    _compute_sliced_data(table, ipython_display, end_index)
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data_html(table, start_index, end_index):
+    # type: (datasets.arrow_dataset.Dataset, int, int) -> None
+    def ipython_display(data):
         from IPython.display import display
         display(data)
-
-    _compute_sliced_data(table, ipython_display, start_index, end_index)
+    _compute_sliced_data(table, ipython_display, end_index)
 
 
 def __get_data_slice(table, start, end):
@@ -81,7 +100,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     else:
         table = __convert_to_df(table)
 
-    data = fun(table, max_cols)
+    data = fun(table)
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)

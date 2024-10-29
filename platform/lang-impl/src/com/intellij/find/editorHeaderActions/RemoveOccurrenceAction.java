@@ -5,8 +5,10 @@ import com.intellij.find.EditorSearchSession;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class RemoveOccurrenceAction extends OccurrenceAction {
   public RemoveOccurrenceAction() {
     super(IdeActions.ACTION_UNSELECT_PREVIOUS_OCCURENCE, AllIcons.Actions.RemoveMulticaret);

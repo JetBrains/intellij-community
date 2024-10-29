@@ -13,15 +13,13 @@ import com.intellij.util.ResourceUtil;
 import kotlin.Unit;
 import org.jdom.Element;
 import org.jdom.JDOMException;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class ProductivityFeaturesRegistryImpl extends ProductivityFeaturesRegistry {
   private static final Logger LOG = Logger.getInstance(ProductivityFeaturesRegistryImpl.class);
 

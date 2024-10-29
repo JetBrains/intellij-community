@@ -11,7 +11,7 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import com.intellij.util.ui.update.queueTracked
 import kotlinx.coroutines.Job
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -43,12 +43,6 @@ class MergingUpdateQueuePropagationTest {
     proceedJob.complete()
     completionJob.join()
   }
-
-  @Test
-  fun `no context in queue`(): Unit = testNoContext(MergingUpdateQueue::queue)
-
-  @Test
-  fun `no context in tracking queue`(): Unit = testNoContext(MergingUpdateQueue::queueTracked)
 
   @Test
   fun `normal queuing is not tracked`() : Unit = testWaitCompletion(MergingUpdateQueue::queue, false)

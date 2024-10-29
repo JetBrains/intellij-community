@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.DefaultBundleService
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -38,15 +39,15 @@ open class AbstractBundle {
     bundleClassLoader = bundleClass.classLoader
   }
 
+  @Obsolete
   protected constructor(pathToBundle: @NonNls String) {
     this.pathToBundle = pathToBundle
     bundleClassLoader = javaClass.classLoader
   }
 
   companion object {
-    @get:ApiStatus.Internal
-    val control: ResourceBundle.Control
-      get() = IntelliJResourceControl
+    @ApiStatus.Internal
+    fun getControl(): ResourceBundle.Control = IntelliJResourceControl
 
     @Contract("null, _, _, _ -> param3")
     @JvmStatic
@@ -79,7 +80,7 @@ open class AbstractBundle {
       try {
         return firstTry()
       }
-      catch (e: MissingResourceException) {
+      catch (_: MissingResourceException) {
         logger<AbstractBundle>().info("Cannot load resource bundle from *.properties file, falling back to slow class loading: $pathToBundle")
         ResourceBundle.clearCache(loader)
         return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)
@@ -90,7 +91,7 @@ open class AbstractBundle {
   @Contract(pure = true)
   // open only to preserve compatibility
   open fun getMessage(key: @NonNls String, vararg params: Any?): @Nls String {
-    return com.intellij.messageOrDefault(bundle = resourceBundle, key = key, defaultValue = null, params = params)
+    return com.intellij.messageOrDefault(bundle = getResourceBundle(bundleClassLoader), key = key, defaultValue = null, params = params)
   }
 
   /**
@@ -108,7 +109,7 @@ open class AbstractBundle {
   @Contract(pure = true)
   fun getPartialMessage(key: @NonNls String, unassignedParams: Int, vararg params: Any?): @Nls String {
     @Suppress("UNCHECKED_CAST")
-    return partialMessage(bundle = resourceBundle, key = key, unassignedParams = unassignedParams, params = params as Array<Any?>)
+    return partialMessage(bundle = getResourceBundle(bundleClassLoader), key = key, unassignedParams = unassignedParams, params = params as Array<Any?>)
   }
 
   // open only to preserve compatibility
@@ -121,18 +122,18 @@ open class AbstractBundle {
   }
 
   open fun messageOrNull(key: @NonNls String, vararg params: Any): @Nls String? {
-    return messageOrNull(bundle = resourceBundle, key = key, params = params)
+    return messageOrNull(bundle = getResourceBundle(), key = key, params = params)
   }
 
   // open only to preserve compatibility
   open fun messageOrDefault(key: @NonNls String, defaultValue: @Nls String?, vararg params: Any?): @Nls String? {
-    return messageOrDefault(bundle = resourceBundle, key = key, defaultValue = defaultValue, params = params)
+    return messageOrDefault(bundle = getResourceBundle(), key = key, defaultValue = defaultValue, params = params)
   }
 
-  fun containsKey(key: @NonNls String): Boolean = resourceBundle.containsKey(key)
+  fun containsKey(key: @NonNls String): Boolean = getResourceBundle().containsKey(key)
 
-  val resourceBundle: ResourceBundle
-    get() = getResourceBundle(bundleClassLoader)
+  @ApiStatus.Internal
+  fun getResourceBundle(): ResourceBundle = getResourceBundle(bundleClassLoader)
 
   @ApiStatus.Internal
   fun getResourceBundle(classLoader: ClassLoader): ResourceBundle {

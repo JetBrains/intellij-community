@@ -5,6 +5,7 @@ import com.intellij.lang.annotation.HighlightSeverity
 import org.jetbrains.kotlin.config.IKotlinFacetSettings
 import org.jetbrains.kotlin.gradle.multiplatformTests.AbstractKotlinMppGradleImportingTest
 import org.jetbrains.kotlin.gradle.multiplatformTests.TestConfigurationDslScope
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.GradleProjectsPublishingTestsFeature
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.AggregatedExternalLibrariesChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.contentRoots.ContentRootsChecker
 import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.facets.KotlinFacetSettingsChecker
@@ -60,7 +61,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testMppLibAndHmppConsumer() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib")
             excludeDependencies(""".*consumer.*""")
@@ -71,7 +72,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testHmppLibAndMppConsumer() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib")
             excludeDependencies(""".*consumer.*""")
@@ -89,7 +90,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     @Test
     fun testBinaryDependenciesOrderIsStable() {
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             publish("lib1")
             publish("lib2")
@@ -114,7 +115,7 @@ class KotlinMppMiscCasesImportingTests : AbstractKotlinMppGradleImportingTest() 
     fun testMismatchedAttributesDependencyBinary() {
         // NB: Variant-mismatch error is printed verbatim in stderr
         doTest {
-            onlyCheckers(OrderEntriesChecker)
+            onlyCheckers(OrderEntriesChecker, GradleProjectsPublishingTestsFeature)
 
             /* Code Highlighting requires 1.9, because of native opt-in annotation in source files */
             if (kotlinPluginVersion < KotlinToolingVersion("1.9.20-dev-6845")) {

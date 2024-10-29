@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="grpc-netty-shaded" type="repository">
-    <properties maven-id="io.grpc:grpc-netty-shaded:1.63.0">
+    <properties maven-id="io.grpc:grpc-netty-shaded:1.66.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0.jar">
-          <sha256sum>4d170c599e47214f35c8955cda3edd7cdb8171229b45795d4d61eb43dfa76402</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.66.0/grpc-netty-shaded-1.66.0.jar">
+          <sha256sum>909c3465b9e287d81a2478f8fbc0985a5c3dcfa72f98a77ef0a5dcbbe41ba2e5</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0.jar">
-          <sha256sum>b15006f22e76a6631dfb137a6930aaf9e0cb3a797499ec42394d79641fb770ee</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.66.0/grpc-util-1.66.0.jar">
+          <sha256sum>c41b69a730bbc8605351a9e1a0dd7bd9283333c48c00234ba30b4d796b38bbdd</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -19,13 +19,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.66.0/grpc-netty-shaded-1.66.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.66.0/grpc-util-1.66.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.63.0/grpc-netty-shaded-1.63.0-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.63.0/grpc-util-1.63.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-netty-shaded/1.66.0/grpc-netty-shaded-1.66.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-util/1.66.0/grpc-util-1.66.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

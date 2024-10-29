@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public class TemplateLineEndWithSelectionHandler extends TemplateLineStartEndHandler {
   public TemplateLineEndWithSelectionHandler(final EditorActionHandler originalHandler) {
     super(originalHandler, false, true);

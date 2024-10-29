@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.unwrap;
 
 import com.intellij.openapi.editor.Editor;
@@ -25,9 +25,8 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
   public void collectElementsToIgnore(@NotNull PsiElement element, @NotNull Set<PsiElement> result) {
   }
 
-  @NotNull
   @Override
-  public @Nls String getDescription(@NotNull PsiElement e) {
+  public @NotNull @Nls String getDescription(@NotNull PsiElement e) {
     return myDescription;
   }
 
@@ -44,9 +43,8 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
     }
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+  public @NotNull List<PsiElement> unwrap(@NotNull Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     C c = createContext();
     c.myIsEffective = true;
     doUnwrap(element, c);

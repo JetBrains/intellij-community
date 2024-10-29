@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.startup
 
 import com.intellij.notification.NotificationAction
@@ -22,7 +22,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.plugins.gradle.GradleManager
 import org.jetbrains.plugins.gradle.jvmcompat.GradleJvmSupportMatrix
-import org.jetbrains.plugins.gradle.service.project.GradleNotification.NOTIFICATION_GROUP
+import org.jetbrains.plugins.gradle.service.project.GradleNotification
 import org.jetbrains.plugins.gradle.service.project.GradleNotificationIdsHolder
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -30,7 +30,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import java.util.concurrent.CompletableFuture
 
-class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
+internal class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
   class UpdatedSdkStatus(val sdk: Sdk?, val sdkName: String?, val updated: Boolean)
 
   object Util {
@@ -139,7 +139,7 @@ class GradleProjectSettingsUpdater : ExternalSystemSettingsListenerEx {
     val notificationTitle = GradleBundle.message("gradle.notifications.java.home.change.title")
     val notificationContent = GradleBundle.message("gradle.notifications.java.home.change.content", gradleJvm, versionString,
                                                    presentablePath)
-    val notification = NOTIFICATION_GROUP.createNotification(notificationTitle, notificationContent, INFORMATION)
+    val notification = GradleNotification.gradleNotificationGroup.createNotification(notificationTitle, notificationContent, INFORMATION)
     notification.setDisplayId(GradleNotificationIdsHolder.jvmConfigured)
     notification.addAction(NotificationAction.createSimple(GradleBundle.message("gradle.open.gradle.settings")) {
       showGradleProjectSettings(project, externalProjectPath)

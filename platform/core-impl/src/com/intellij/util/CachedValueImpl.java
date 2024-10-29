@@ -13,6 +13,7 @@ import static com.intellij.reference.SoftReference.dereference;
 
 public class CachedValueImpl<T> extends CachedValueBase<T> implements CachedValue<T> {
   private final CachedValueProvider<T> myProvider;
+  private final boolean myTrackValue;
   private volatile SoftReference<Data<T>> myData;
 
   public CachedValueImpl(@NotNull CachedValueProvider<T> provider) {
@@ -20,8 +21,13 @@ public class CachedValueImpl<T> extends CachedValueBase<T> implements CachedValu
   }
 
   CachedValueImpl(@NotNull CachedValueProvider<T> provider, boolean trackValue) {
-    super(trackValue);
     myProvider = provider;
+    myTrackValue = trackValue;
+  }
+
+  @Override
+  protected boolean isTrackValue() {
+    return myTrackValue;
   }
 
   @Override

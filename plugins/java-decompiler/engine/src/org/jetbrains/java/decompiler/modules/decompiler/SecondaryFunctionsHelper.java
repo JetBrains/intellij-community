@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -9,8 +9,9 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.IfStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement.StatementType;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.match.IMatchable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,10 +86,10 @@ public final class SecondaryFunctionsHelper {
     while (replaced) {
       replaced = false;
 
-      List<Object> lstObjects = new ArrayList<>(stat.getExprents() == null ? stat.getSequentialObjects() : stat.getExprents());
+      List<? extends IMatchable> lstObjects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
 
       for (int i = 0; i < lstObjects.size(); i++) {
-        Object obj = lstObjects.get(i);
+        IMatchable obj = lstObjects.get(i);
 
         if (obj instanceof Statement) {
           if (identifySecondaryFunctions((Statement)obj, varProc)) {
@@ -295,7 +296,7 @@ public final class SecondaryFunctionsHelper {
                                     null),
               ConstExprent.getZeroConstant(type.getType())), null);
 
-            varProc.setVarType(new VarVersionPair(var, 0), type);
+            varProc.setVarType(new VarVersion(var, 0), type);
 
             return new FunctionExprent(FunctionExprent.FUNCTION_IIF, Arrays.asList(
               head, new ConstExprent(VarType.VARTYPE_INT, 0, null), iff), fexpr.bytecode);
@@ -416,5 +417,46 @@ public final class SecondaryFunctionsHelper {
     }
 
     return null;
+  }
+
+  // Updates assignments to make them compound assignments if possible
+  public static void updateAssignments(Statement stat) {
+    List<? extends IMatchable> objects = new ArrayList<>(stat.getExprentsOrSequentialObjects());
+
+    for (IMatchable obj : objects) {
+      if (obj instanceof Statement) {
+        updateAssignments((Statement) obj);
+      } else if (obj instanceof Exprent exprent) {
+
+        if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+          AssignmentExprent assignment = (AssignmentExprent) exprent;
+
+          List<Exprent> params = exprent.getAllExprents();
+
+          Exprent lhs = params.get(0);
+          Exprent rhs = params.get(1);
+
+          // Check for expressions that are standard assignments where the left hand side is a variable and the right hand side is a function
+          if (assignment.getCondType() == -1 && lhs.type == Exprent.EXPRENT_VAR && rhs.type == Exprent.EXPRENT_FUNCTION) {
+            VarExprent lhsVar = (VarExprent) lhs;
+            FunctionExprent rhsFunc = (FunctionExprent) rhs;
+
+            List<Exprent> funcParams = rhsFunc.getAllExprents();
+
+            // Make sure that the function is a mathematical or bitwise function and function's lhs is a variable
+            if (rhsFunc.getFuncType() <= FunctionExprent.FUNCTION_USHR && funcParams.get(0).type == Exprent.EXPRENT_VAR) {
+              VarExprent lhsVarFunc = (VarExprent) funcParams.get(0);
+
+              // Check if the left hand side of the assignment and the left hand side of the function are the same variable
+              if (lhsVar.getIndex() == lhsVarFunc.getIndex()) {
+                // If all the checks succeed, set the assignment to be a compound assignment and set the right to the right hand side of the function
+                assignment.setCondType(rhsFunc.getFuncType());
+                assignment.setRight(funcParams.get(1));
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

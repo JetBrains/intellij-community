@@ -6,7 +6,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolKind
 import org.jetbrains.kotlin.idea.base.highlighting.KotlinBaseHighlightingBundle
 import org.jetbrains.kotlin.idea.highlighter.HighlightingFactory
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightInfoTypeSemanticNames
@@ -88,7 +87,7 @@ internal class VariableReferenceHighlighter(holder: HighlightInfoHolder) : Kotli
         val hasExplicitGetterOrSetter = symbol.getter?.hasBody == true || symbol.setter?.hasBody == true
         val color = when {
             symbol.isExtension -> KotlinHighlightInfoTypeSemanticNames.EXTENSION_PROPERTY
-            symbol.symbolKind == KaSymbolKind.TOP_LEVEL -> when {
+            symbol.location == KaSymbolLocation.TOP_LEVEL -> when {
                 hasExplicitGetterOrSetter -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY_CUSTOM_PROPERTY_DECLARATION
                 else -> KotlinHighlightInfoTypeSemanticNames.PACKAGE_PROPERTY
             }

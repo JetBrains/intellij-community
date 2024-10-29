@@ -3,6 +3,8 @@
 package com.intellij.openapi.roots.ui.componentsList.layout;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.awt.*;
 
 public final class VerticalStackLayout implements LayoutManager2 {
@@ -23,6 +25,7 @@ public final class VerticalStackLayout implements LayoutManager2 {
     return result.getSum();
   }
 
+  @ApiStatus.Internal
   public static void withAllVisibleDo(Container container, ComponentOperation operation) {
     Component[] components = container.getComponents();
     for (Component component : components) {

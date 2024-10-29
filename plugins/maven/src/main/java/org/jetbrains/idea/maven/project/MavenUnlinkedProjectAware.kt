@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.project
 
+import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemProjectLinkListener
 import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
@@ -16,9 +17,9 @@ import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider
 internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
-  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean {
-    return MavenUtil.isPomFile(project, buildFile)
-  }
+  override fun buildFileExtensions(): Array<String> = arrayOf(XmlFileType.DEFAULT_EXTENSION)
+
+  override fun isBuildFile(project: Project, buildFile: VirtualFile): Boolean = MavenUtil.isPomFile(project, buildFile)
 
   override fun isLinkedProject(project: Project, externalProjectPath: String): Boolean {
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
@@ -34,6 +35,10 @@ internal class MavenUnlinkedProjectAware : ExternalSystemUnlinkedProjectAware {
 
   override suspend fun linkAndLoadProjectAsync(project: Project, externalProjectPath: String) {
     MavenOpenProjectProvider().linkToExistingProjectAsync(externalProjectPath, project)
+  }
+
+  override suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    MavenOpenProjectProvider().unlinkProject(project, externalProjectPath)
   }
 
   private class ProjectsTreeListener(project: Project, val listener: ExternalSystemProjectLinkListener) : MavenProjectsTree.Listener {

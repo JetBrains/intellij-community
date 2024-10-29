@@ -9,11 +9,13 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.shelf.SimpleBinaryContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class BinaryFilePatchInProgress extends CommonBinaryFilePatchInProgress<BinaryFilePatch> {
   BinaryFilePatchInProgress(@NotNull BinaryFilePatch patch,
                             @Nullable Collection<VirtualFile> autoBases,

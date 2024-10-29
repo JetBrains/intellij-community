@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Author: max
@@ -46,33 +46,29 @@ public class InspectionManagerEx extends InspectionManagerBase {
     }
   }
 
-  @NotNull
-  protected ContentManager getProblemsViewContentManager(@NotNull Project project) {
+  protected @NotNull ContentManager getProblemsViewContentManager(@NotNull Project project) {
     ToolWindow toolWindow = Objects.requireNonNull(ProblemsView.getToolWindow(project));
     ContentManager contentManager = toolWindow.getContentManager();
     ContentManagerWatcher.watchContentManager(toolWindow, contentManager);
     return contentManager;
   }
 
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   @NotNull final @InspectionMessage String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType,
-                                                   @Nullable final HintAction hintAction,
-                                                   boolean onTheFly,
-                                                   @NotNull LocalQuickFix @Nullable ... fixes) {
+  public @NotNull ProblemDescriptor createProblemDescriptor(final @NotNull PsiElement psiElement,
+                                                            final @NotNull @InspectionMessage String descriptionTemplate,
+                                                            final @NotNull ProblemHighlightType highlightType,
+                                                            final @Nullable HintAction hintAction,
+                                                            boolean onTheFly,
+                                                            @NotNull LocalQuickFix @Nullable ... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
   @Override
-  @NotNull
-  public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
+  public @NotNull GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
     return createNewGlobalContext();
   }
 
-  @NotNull
   @Override
-  public GlobalInspectionContextImpl createNewGlobalContext() {
+  public @NotNull GlobalInspectionContextImpl createNewGlobalContext() {
     final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
     myRunningContexts.add(inspectionContext);
     return inspectionContext;
@@ -82,14 +78,12 @@ public class InspectionManagerEx extends InspectionManagerBase {
     myRunningContexts.remove(globalInspectionContext);
   }
 
-  @NotNull
-  public Set<GlobalInspectionContextImpl> getRunningContexts() {
+  public @NotNull Set<GlobalInspectionContextImpl> getRunningContexts() {
     return myRunningContexts;
   }
 
   @TestOnly
-  @NotNull
-  public NotNullLazyValue<ContentManager> getContentManager() {
+  public @NotNull NotNullLazyValue<ContentManager> getContentManager() {
     return myContentManager;
   }
 }

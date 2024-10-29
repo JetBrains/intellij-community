@@ -11,7 +11,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotifications
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
@@ -22,33 +21,47 @@ class IdeScriptReportSink(
     private val coroutineScope: CoroutineScope
 ) : ScriptReportSink {
     override fun attachReports(scriptFile: VirtualFile, reports: List<ScriptDiagnostic>) {
-        if (getReports(scriptFile) == reports) return
+        if (getScriptReports(scriptFile) == reports) return
 
         // TODO: persist errors between launches?
         scriptFile.scriptDiagnostics = reports
 
-        if (KotlinPluginModeProvider.isK1Mode()) {
-            coroutineScope.launch {
-                readAction {
-                    PsiManager.getInstance(project).findFile(scriptFile)?.let {
-                        DaemonCodeAnalyzer.getInstance(project).restart(it)
-                    }
-
-                    EditorNotifications.getInstance(project).updateAllNotifications()
+        coroutineScope.launch {
+            readAction {
+                PsiManager.getInstance(project).findFile(scriptFile)?.let {
+                    DaemonCodeAnalyzer.getInstance(project).restart(it)
                 }
+
+                EditorNotifications.getInstance(project).updateAllNotifications()
             }
         }
     }
+}
 
-    companion object {
-        fun getReports(file: VirtualFile): List<ScriptDiagnostic> {
-            return file.scriptDiagnostics ?: emptyList()
-        }
+class KotlinScriptingReportsSink(
+    val project: Project,
+) : ScriptReportSink {
+    override fun attachReports(scriptFile: VirtualFile, reports: List<ScriptDiagnostic>) {
+        if (getScriptReports(scriptFile) == reports) return
 
-        fun getReports(file: KtFile): List<ScriptDiagnostic> {
-            return file.originalFile.virtualFile?.scriptDiagnostics ?: emptyList()
-        }
-
-        private var VirtualFile.scriptDiagnostics: List<ScriptDiagnostic>? by UserDataProperty(Key.create("KOTLIN_SCRIPT_DIAGNOSTICS"))
+        scriptFile.scriptDiagnostics = reports
     }
 }
+
+fun getScriptReports(file: VirtualFile): List<ScriptDiagnostic> {
+    return file.scriptDiagnostics ?: emptyList()
+}
+
+fun getScriptReports(file: KtFile): List<ScriptDiagnostic> {
+    return file.originalFile.virtualFile?.scriptDiagnostics ?: emptyList()
+}
+
+fun drainScriptReports(file: KtFile): List<ScriptDiagnostic> {
+    val virtualFile = file.originalFile.virtualFile
+    val diagnostics = virtualFile?.scriptDiagnostics  ?: emptyList()
+    virtualFile.scriptDiagnostics = emptyList()
+
+    return diagnostics
+}
+
+private var VirtualFile.scriptDiagnostics: List<ScriptDiagnostic>? by UserDataProperty(Key.create("KOTLIN_SCRIPT_DIAGNOSTICS"))

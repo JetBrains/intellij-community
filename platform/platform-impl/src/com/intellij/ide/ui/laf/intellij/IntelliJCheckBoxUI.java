@@ -2,10 +2,12 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 
+@ApiStatus.Internal
 public final class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})

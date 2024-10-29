@@ -488,14 +488,11 @@ public final class CyclicDependenciesPanel extends JPanel implements Disposable,
     }
   }
 
-  private static class MyTree extends Tree implements DataProvider {
+  private static class MyTree extends Tree implements UiDataProvider {
     @Override
-    public Object getData(@NotNull String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       PackageDependenciesNode node = getSelectedNode();
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return node;
-      }
-      return null;
+      sink.set(CommonDataKeys.NAVIGATABLE, node);
     }
 
     public @Nullable PackageDependenciesNode getSelectedNode() {

@@ -1,9 +1,7 @@
-from __future__ import absolute_import
-
 import collections
-import errno
 import shutil
 import struct
+import weakref
 
 from .i18n import _
 from .node import (
@@ -14,7 +12,6 @@ from .node import (
 from . import (
     error,
     filemerge,
-    pycompat,
     util,
 )
 from .utils import hashutil
@@ -97,40 +94,106 @@ LEGACY_MERGE_DRIVER_STATE = b'm'
 # This record was release in 3.7 and usage was removed in 5.6
 LEGACY_MERGE_DRIVER_MERGE = b'D'
 
+CHANGE_ADDED = b'added'
+CHANGE_REMOVED = b'removed'
+CHANGE_MODIFIED = b'modified'
 
-ACTION_FORGET = b'f'
-ACTION_REMOVE = b'r'
-ACTION_ADD = b'a'
-ACTION_GET = b'g'
-ACTION_PATH_CONFLICT = b'p'
-ACTION_PATH_CONFLICT_RESOLVE = b'pr'
-ACTION_ADD_MODIFIED = b'am'
-ACTION_CREATED = b'c'
-ACTION_DELETED_CHANGED = b'dc'
-ACTION_CHANGED_DELETED = b'cd'
-ACTION_MERGE = b'm'
-ACTION_LOCAL_DIR_RENAME_GET = b'dg'
-ACTION_DIR_RENAME_MOVE_LOCAL = b'dm'
-ACTION_KEEP = b'k'
+
+class MergeAction:
+    """represent an "action" merge need to take for a given file
+
+    Attributes:
+
+    _short: internal representation used to identify each action
+
+    no_op:  True if the action does affect the file content or tracking status
+
+    narrow_safe:
+        True if the action can be safely used for a file outside of the narrow
+        set
+
+    changes:
+        The types of changes that this actions involves. This is a work in
+        progress and not all actions have one yet. In addition, some requires
+        user changes and cannot be fully decided. The value currently available
+        are:
+
+        - ADDED: the files is new in both parents
+        - REMOVED: the files existed in one parent and is getting removed
+        - MODIFIED: the files existed in at least one parent and is getting changed
+    """
+
+    ALL_ACTIONS = weakref.WeakSet()
+    NO_OP_ACTIONS = weakref.WeakSet()
+
+    def __init__(self, short, no_op=False, narrow_safe=False, changes=None):
+        self._short = short
+        self.ALL_ACTIONS.add(self)
+        self.no_op = no_op
+        if self.no_op:
+            self.NO_OP_ACTIONS.add(self)
+        self.narrow_safe = narrow_safe
+        self.changes = changes
+
+    def __hash__(self):
+        return hash(self._short)
+
+    def __repr__(self):
+        return 'MergeAction<%s>' % self._short.decode('ascii')
+
+    def __bytes__(self):
+        return self._short
+
+    def __eq__(self, other):
+        if other is None:
+            return False
+        assert isinstance(other, MergeAction)
+        return self._short == other._short
+
+    def __lt__(self, other):
+        return self._short < other._short
+
+
+ACTION_FORGET = MergeAction(b'f', narrow_safe=True, changes=CHANGE_REMOVED)
+ACTION_REMOVE = MergeAction(b'r', narrow_safe=True, changes=CHANGE_REMOVED)
+ACTION_ADD = MergeAction(b'a', narrow_safe=True, changes=CHANGE_ADDED)
+ACTION_GET = MergeAction(b'g', narrow_safe=True, changes=CHANGE_MODIFIED)
+ACTION_PATH_CONFLICT = MergeAction(b'p')
+ACTION_PATH_CONFLICT_RESOLVE = MergeAction(b'pr')
+ACTION_ADD_MODIFIED = MergeAction(
+    b'am', narrow_safe=True, changes=CHANGE_ADDED
+)  # not 100% about the changes value here
+ACTION_CREATED = MergeAction(b'c', narrow_safe=True, changes=CHANGE_ADDED)
+ACTION_DELETED_CHANGED = MergeAction(b'dc')
+ACTION_CHANGED_DELETED = MergeAction(b'cd')
+ACTION_MERGE = MergeAction(b'm')
+ACTION_LOCAL_DIR_RENAME_GET = MergeAction(b'dg')
+ACTION_DIR_RENAME_MOVE_LOCAL = MergeAction(b'dm')
+ACTION_KEEP = MergeAction(b'k', no_op=True)
 # the file was absent on local side before merge and we should
 # keep it absent (absent means file not present, it can be a result
 # of file deletion, rename etc.)
-ACTION_KEEP_ABSENT = b'ka'
+ACTION_KEEP_ABSENT = MergeAction(b'ka', no_op=True)
 # the file is absent on the ancestor and remote side of the merge
 # hence this file is new and we should keep it
-ACTION_KEEP_NEW = b'kn'
-ACTION_EXEC = b'e'
-ACTION_CREATED_MERGE = b'cm'
-
-# actions which are no op
-NO_OP_ACTIONS = (
-    ACTION_KEEP,
-    ACTION_KEEP_ABSENT,
-    ACTION_KEEP_NEW,
+ACTION_KEEP_NEW = MergeAction(b'kn', no_op=True)
+ACTION_EXEC = MergeAction(b'e', narrow_safe=True, changes=CHANGE_MODIFIED)
+ACTION_CREATED_MERGE = MergeAction(
+    b'cm', narrow_safe=True, changes=CHANGE_ADDED
 )
 
 
-class _mergestate_base(object):
+# Used by concert to detect situation it does not like, not sure what the exact
+# criteria is
+CONVERT_MERGE_ACTIONS = (
+    ACTION_MERGE,
+    ACTION_DIR_RENAME_MOVE_LOCAL,
+    ACTION_CHANGED_DELETED,
+    ACTION_DELETED_CHANGED,
+)
+
+
+class _mergestate_base:
     """track 3-way merge state of individual files
 
     The merge state is stored on disk when needed. Two files are used: one with
@@ -298,7 +361,7 @@ class _mergestate_base(object):
     def unresolved(self):
         """Obtain the paths of unresolved files."""
 
-        for f, entry in pycompat.iteritems(self._state):
+        for f, entry in self._state.items():
             if entry[0] in (
                 MERGE_RECORD_UNRESOLVED,
                 MERGE_RECORD_UNRESOLVED_PATH,
@@ -313,16 +376,15 @@ class _mergestate_base(object):
         """return extras stored with the mergestate for the given filename"""
         return self._stateextras[filename]
 
-    def _resolve(self, preresolve, dfile, wctx):
-        """rerun merge process for file path `dfile`.
-        Returns whether the merge was completed and the return value of merge
-        obtained from filemerge._filemerge().
-        """
+    def resolve(self, dfile, wctx):
+        """run merge process for dfile
+
+        Returns the exit code of the merge."""
         if self[dfile] in (
             MERGE_RECORD_RESOLVED,
             LEGACY_RECORD_DRIVER_RESOLVED,
         ):
-            return True, 0
+            return 0
         stateentry = self._state[dfile]
         state, localkey, lfile, afile, anode, ofile, onode, flags = stateentry
         octx = self._repo[self._other]
@@ -341,90 +403,69 @@ class _mergestate_base(object):
         fla = fca.flags()
         if b'x' in flags + flo + fla and b'l' not in flags + flo + fla:
             if fca.rev() == nullrev and flags != flo:
-                if preresolve:
-                    self._repo.ui.warn(
-                        _(
-                            b'warning: cannot merge flags for %s '
-                            b'without common ancestor - keeping local flags\n'
-                        )
-                        % afile
+                self._repo.ui.warn(
+                    _(
+                        b'warning: cannot merge flags for %s '
+                        b'without common ancestor - keeping local flags\n'
                     )
+                    % afile
+                )
             elif flags == fla:
                 flags = flo
-        if preresolve:
-            # restore local
-            if localkey != self._repo.nodeconstants.nullhex:
-                self._restore_backup(wctx[dfile], localkey, flags)
-            else:
-                wctx[dfile].remove(ignoremissing=True)
-            complete, merge_ret, deleted = filemerge.premerge(
-                self._repo,
-                wctx,
-                self._local,
-                lfile,
-                fcd,
-                fco,
-                fca,
-                labels=self._labels,
-            )
+        # restore local
+        if localkey != self._repo.nodeconstants.nullhex:
+            self._restore_backup(wctx[dfile], localkey, flags)
         else:
-            complete, merge_ret, deleted = filemerge.filemerge(
-                self._repo,
-                wctx,
-                self._local,
-                lfile,
-                fcd,
-                fco,
-                fca,
-                labels=self._labels,
-            )
-        if merge_ret is None:
+            wctx[dfile].remove(ignoremissing=True)
+
+        if not fco.cmp(fcd):  # files identical?
             # If return value of merge is None, then there are no real conflict
             del self._state[dfile]
+            self._results[dfile] = None, None
             self._dirty = True
-        elif not merge_ret:
+            return None
+
+        merge_ret, deleted = filemerge.filemerge(
+            self._repo,
+            wctx,
+            self._local,
+            lfile,
+            fcd,
+            fco,
+            fca,
+            labels=self._labels,
+        )
+
+        if not merge_ret:
             self.mark(dfile, MERGE_RECORD_RESOLVED)
 
-        if complete:
-            action = None
-            if deleted:
-                if fcd.isabsent():
-                    # dc: local picked. Need to drop if present, which may
-                    # happen on re-resolves.
-                    action = ACTION_FORGET
-                else:
-                    # cd: remote picked (or otherwise deleted)
-                    action = ACTION_REMOVE
+        action = None
+        if deleted:
+            if fcd.isabsent():
+                # dc: local picked. Need to drop if present, which may
+                # happen on re-resolves.
+                action = ACTION_FORGET
             else:
-                if fcd.isabsent():  # dc: remote picked
-                    action = ACTION_GET
-                elif fco.isabsent():  # cd: local picked
-                    if dfile in self.localctx:
-                        action = ACTION_ADD_MODIFIED
-                    else:
-                        action = ACTION_ADD
-                # else: regular merges (no action necessary)
-            self._results[dfile] = merge_ret, action
+                # cd: remote picked (or otherwise deleted)
+                action = ACTION_REMOVE
+        else:
+            if fcd.isabsent():  # dc: remote picked
+                action = ACTION_GET
+            elif fco.isabsent():  # cd: local picked
+                if dfile in self.localctx:
+                    action = ACTION_ADD_MODIFIED
+                else:
+                    action = ACTION_ADD
+            # else: regular merges (no action necessary)
+        self._results[dfile] = merge_ret, action
 
-        return complete, merge_ret
-
-    def preresolve(self, dfile, wctx):
-        """run premerge process for dfile
-
-        Returns whether the merge is complete, and the exit code."""
-        return self._resolve(True, dfile, wctx)
-
-    def resolve(self, dfile, wctx):
-        """run merge process (assuming premerge was run) for dfile
-
-        Returns the exit code of the merge."""
-        return self._resolve(False, dfile, wctx)[1]
+        return merge_ret
 
     def counts(self):
         """return counts for updated, merged and removed files in this
         session"""
         updated, merged, removed = 0, 0, 0
-        for r, action in pycompat.itervalues(self._results):
+        for r, action in self._results.values():
             if r is None:
                 updated += 1
             elif r == 0:
@@ -447,7 +488,7 @@ class _mergestate_base(object):
             ACTION_ADD_MODIFIED: [],
             ACTION_GET: [],
         }
-        for f, (r, action) in pycompat.iteritems(self._results):
+        for f, (r, action) in self._results.items():
             if action is not None:
                 actions[action].append((f, None, b"merge result"))
         return actions
@@ -587,9 +628,8 @@ class mergestate(_mergestate_base):
                 else:
                     records.append((RECORD_MERGED, l[:-1]))
             f.close()
-        except IOError as err:
-            if err.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
         return records
 
     def _readrecordsv2(self):
@@ -627,9 +667,8 @@ class mergestate(_mergestate_base):
                     rtype, record = record[0:1], record[1:]
                 records.append((rtype, record))
             f.close()
-        except IOError as err:
-            if err.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
+            pass
         return records
 
     def commit(self):
@@ -647,7 +686,7 @@ class mergestate(_mergestate_base):
         # the type of state that is stored, and capital-letter records are used
         # to prevent older versions of Mercurial that do not support the feature
         # from loading them.
-        for filename, v in pycompat.iteritems(self._state):
+        for filename, v in self._state.items():
             if v[0] in (
                 MERGE_RECORD_UNRESOLVED_PATH,
                 MERGE_RECORD_RESOLVED_PATH,
@@ -671,9 +710,9 @@ class mergestate(_mergestate_base):
             else:
                 # Normal files.  These are stored in 'F' records.
                 records.append((RECORD_MERGED, b'\0'.join([filename] + v)))
-        for filename, extras in sorted(pycompat.iteritems(self._stateextras)):
+        for filename, extras in sorted(self._stateextras.items()):
             rawextras = b'\0'.join(
-                b'%s\0%s' % (k, v) for k, v in pycompat.iteritems(extras)
+                b'%s\0%s' % (k, v) for k, v in extras.items()
             )
             records.append(
                 (RECORD_FILE_VALUES, b'%s\0%s' % (filename, rawextras))
@@ -796,12 +835,13 @@ def recordupdates(repo, actions, branchmerge, getfiledata):
     for f, args, msg in actions.get(ACTION_GET, []):
         if branchmerge:
             # tracked in p1 can be True also but update_file should not care
+            old_entry = repo.dirstate.get_entry(f)
+            p1_tracked = old_entry.any_tracked and not old_entry.added
             repo.dirstate.update_file(
                 f,
-                p1_tracked=False,
-                p2_tracked=True,
+                p1_tracked=p1_tracked,
                 wc_tracked=True,
-                clean_p2=True,
+                p2_info=True,
             )
         else:
             parentfiledata = getfiledata[f] if getfiledata else None
@@ -818,8 +858,12 @@ def recordupdates(repo, actions, branchmerge, getfiledata):
         if branchmerge:
             # We've done a branch merge, mark this file as merged
             # so that we properly record the merger later
+            p1_tracked = f1 == f
             repo.dirstate.update_file(
-                f, p1_tracked=True, wc_tracked=True, merged=True
+                f,
+                p1_tracked=p1_tracked,
+                wc_tracked=True,
+                p2_info=True,
             )
             if f1 != f2:  # copy/rename
                 if move:

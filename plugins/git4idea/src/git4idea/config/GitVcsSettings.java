@@ -1,10 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.config;
 
-import com.intellij.dvcs.branch.DvcsBranchInfo;
-import com.intellij.dvcs.branch.DvcsBranchSettings;
-import com.intellij.dvcs.branch.DvcsCompareSettings;
-import com.intellij.dvcs.branch.DvcsSyncSettings;
+import com.intellij.dvcs.branch.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.SimplePersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -31,8 +28,11 @@ import java.util.Objects;
 public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsOptions> implements DvcsSyncSettings, DvcsCompareSettings {
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
-  public GitVcsSettings() {
+  private final Project project;
+
+  public GitVcsSettings(Project project) {
     super(new GitVcsOptions());
+    this.project = project;
   }
 
   public GitVcsApplicationSettings getAppSettings() {
@@ -156,6 +156,7 @@ public final class GitVcsSettings extends SimplePersistentStateComponent<GitVcsO
 
   public void setShowTags(boolean value) {
     getState().setShowTags(value);
+    project.getMessageBus().syncPublisher(DvcsBranchManager.DVCS_BRANCH_SETTINGS_CHANGED).showTagsSettingsChanged(value);
   }
 
   public boolean filterByActionInPopup() {

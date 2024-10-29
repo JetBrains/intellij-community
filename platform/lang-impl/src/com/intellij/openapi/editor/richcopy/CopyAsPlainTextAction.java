@@ -9,8 +9,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.CopyAction;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class CopyAsPlainTextAction extends EditorAction {
   public CopyAsPlainTextAction() {
     super(new CopyAction.Handler());

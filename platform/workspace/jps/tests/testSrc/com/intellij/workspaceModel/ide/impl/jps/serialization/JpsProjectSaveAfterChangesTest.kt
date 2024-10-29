@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.java.workspace.entities.*
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.workspace.jps.JpsEntitySourceFactory
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
 import com.intellij.platform.workspace.jps.JpsProjectFileEntitySource
@@ -181,16 +180,6 @@ class JpsProjectSaveAfterChangesTest {
       builder.modifyModuleEntity(utilModule) {
         this.groupPath = ModuleGroupPathEntity(listOf("group"), utilModule.entitySource)
       }
-    }
-  }
-
-  private fun unloadedHolder(unloaded: String): com.intellij.platform.workspace.jps.UnloadedModulesNameHolder {
-    val unloadedModuleNames = StringUtil.split(unloaded, ",").toSet()
-    return object : com.intellij.platform.workspace.jps.UnloadedModulesNameHolder {
-      override fun isUnloaded(name: String?) = name in unloadedModuleNames
-
-      override fun hasUnloaded() = !unloadedModuleNames.isEmpty()
-
     }
   }
 

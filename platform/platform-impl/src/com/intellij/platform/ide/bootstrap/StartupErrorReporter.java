@@ -22,13 +22,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.io.URLUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URI;
@@ -87,7 +86,7 @@ public final class StartupErrorReporter {
 
     message.append("\n-----\n").append(BootstrapBundle.message("bootstrap.error.appendix.jre", jreDetails()));
 
-    showError(title, message.toString()); //NON-NLS
+    showError(title, message.toString(), t); //NON-NLS
   }
 
   private static @NlsSafe String jreDetails() {
@@ -99,8 +98,12 @@ public final class StartupErrorReporter {
     return jre + ' ' + arch + " (" + vendor + ")\n" + home;
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   public static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message) {
+    showError(title, message, null);
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private static void showError(@Nls(capitalization = Title) String title, @Nls(capitalization = Sentence) String message, @Nullable Throwable error) {
     System.err.println();
     System.err.println("**" + title + "**");
     System.err.println();
@@ -121,17 +124,26 @@ public final class StartupErrorReporter {
     catch (Throwable ignore) { }
 
     try {
-      var options = new String[]{
+      var iconUrl = StartupErrorReporter.class.getResource("/images/questionSign.png");
+      var learnMore = iconUrl != null ? new JLabel(new ImageIcon(iconUrl)) : new JLabel("?");
+      learnMore.setToolTipText(BootstrapBundle.message("bootstrap.error.option.support"));
+      learnMore.setCursor(new Cursor(Cursor.HAND_CURSOR));
+      learnMore.addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseClicked(MouseEvent e) {
+          supportCenter();
+        }
+      });
+      var options = new Object[]{
         BootstrapBundle.message("bootstrap.error.option.close"),
         BootstrapBundle.message("bootstrap.error.option.reset"),
         BootstrapBundle.message("bootstrap.error.option.report"),
-        BootstrapBundle.message("bootstrap.error.option.support")
+        learnMore
       };
       var choice = JOptionPane.showOptionDialog(JOptionPane.getRootFrame(), prepareMessage(message), title, JOptionPane.DEFAULT_OPTION, JOptionPane.ERROR_MESSAGE, null, options, options[0]);
       switch (choice) {
         case 1 -> cleanStart();
-        case 2 -> reportProblem(title, message);
-        case 3 -> supportCenter();
+        case 2 -> reportProblem(title, message, error);
       }
     }
     catch (Throwable t) {
@@ -151,11 +163,15 @@ public final class StartupErrorReporter {
     }
   }
 
-  private static void reportProblem(String title, String message) {
+  private static void reportProblem(String title, String message, @Nullable Throwable error) {
+    if (error != null) {
+      title += " (" + error.getClass().getSimpleName() + ": " + error.getMessage() + ')';
+    }
     try {
-      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$")
+      var url = System.getProperty(REPORT_URL_PROPERTY, "https://youtrack.jetbrains.com/newissue?project=IJPL&clearDraft=true&summary=$TITLE$&description=$DESCR$&c=$SUBSYSTEM$")
         .replace("$TITLE$", URLUtil.encodeURIComponent(title))
-        .replace("$DESCR$", URLUtil.encodeURIComponent(message));
+        .replace("$DESCR$", URLUtil.encodeURIComponent(message))
+        .replace("$SUBSYSTEM$", URLUtil.encodeURIComponent("Subsystem: IDE. Startup"));
       Desktop.getDesktop().browse(new URI(url));
     }
     catch (Throwable t) {
@@ -172,7 +188,8 @@ public final class StartupErrorReporter {
     }
     catch (Throwable t) {
       var message = BootstrapBundle.message("bootstrap.error.message.reset.failed", t);
-      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);    }
+      JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, BootstrapBundle.message("bootstrap.error.title.reset"), JOptionPane.ERROR_MESSAGE);
+    }
   }
 
   private static void showBrowserError(Throwable t) {
@@ -225,7 +242,7 @@ public final class StartupErrorReporter {
         PluginManagerCore.getLogger().error(t);
       }
       catch (Throwable ignore) { }
-      // workaround for SOE on parsing PAC file (JRE-247)
+      // workaround for SOE on parsing a PAC file (JRE-247)
       if (t instanceof StackOverflowError && "Nashorn AST Serializer".equals(Thread.currentThread().getName())) {
         return;
       }

@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.cellvalidators.TableCellValidator;
@@ -45,7 +45,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Dennis.Ushakov
  */
-public abstract class AbstractMemberSelectionTable<T extends PsiElement, M extends MemberInfoBase<T>> extends JBTable implements DataProvider {
+public abstract class AbstractMemberSelectionTable<T extends PsiElement, M extends MemberInfoBase<T>>
+  extends JBTable implements UiCompatibleDataProvider {
+
   protected static final int CHECKED_COLUMN = 0;
   protected static final int DISPLAY_NAME_COLUMN = 1;
   protected static final int ABSTRACT_COLUMN = 2;
@@ -130,15 +132,13 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     TableSpeedSearch.installOn(this);
   }
 
-  @NotNull
-  private CancellablePromise<List<MemberInfoData>> updatePresentation() {
+  private @NotNull CancellablePromise<List<MemberInfoData>> updatePresentation() {
     return ReadAction.nonBlocking(() -> ContainerUtil.map(myMemberInfos, this::calculateMemberInfoData))
       .submit(AppExecutorUtil.getAppExecutorService())
       .onSuccess(data -> SwingUtilities.invokeLater(() -> repaint()));
   }
 
-  @NotNull
-  private MemberInfoData calculateMemberInfoData(M memberInfo) {
+  private @NotNull MemberInfoData calculateMemberInfoData(M memberInfo) {
     RowIcon icon = IconManager.getInstance().createRowIcon(3);
     icon.setIcon(getMemberIcon(memberInfo, 0), MEMBER_ICON_POSITION);
     setVisibilityIcon(memberInfo, icon);
@@ -219,22 +219,13 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      M item = ContainerUtil.getFirstItem(getSelectedMemberInfos());
-      if (item == null) return null;
-      return (DataProvider)slowId -> getSlowData(slowId, item);
-    }
-    return null;
-  }
-
-  private @Nullable Object getSlowData(@NotNull String dataId, @NotNull M item) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    M item = ContainerUtil.getFirstItem(getSelectedMemberInfos());
+    if (item == null) return;
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return item.getMember();
-    }
-    return null;
+    });
   }
 
   public void scrollSelectionInView() {
@@ -259,8 +250,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     myCancellablePromise.cancel();
   }
 
-  @Nullable
-  protected abstract Object getAbstractColumnValue(M memberInfo);
+  protected abstract @Nullable Object getAbstractColumnValue(M memberInfo);
 
   protected abstract boolean isAbstractColumnEditable(int rowIndex);
 

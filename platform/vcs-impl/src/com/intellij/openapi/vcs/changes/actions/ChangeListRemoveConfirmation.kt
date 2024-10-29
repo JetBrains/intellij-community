@@ -20,7 +20,9 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ThreeState
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object ChangeListRemoveConfirmation {
   fun checkCanDeleteChangelist(project: Project,
                                list: LocalChangeList,

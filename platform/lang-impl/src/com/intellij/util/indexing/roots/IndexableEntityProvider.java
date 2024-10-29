@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.roots;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -31,8 +31,7 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   @NotNull
   Class<E> getEntityClass();
 
-  @NotNull
-  default Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
+  default @NotNull Collection<DependencyOnParent<? extends WorkspaceEntity>> getDependencies() {
     return Collections.emptyList();
   }
 
@@ -54,8 +53,7 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
   /**
    * Provides builders of iterators to index files after {@code entity} was removed
    */
-  @NotNull
-  default Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull E entity,
+  default @NotNull Collection<? extends IndexableIteratorBuilder> getRemovedEntityIteratorBuilders(@NotNull E entity,
                                                                                           @NotNull Project project) {
     return Collections.emptyList();
   }
@@ -92,31 +90,6 @@ public interface IndexableEntityProvider<E extends WorkspaceEntity> {
       }
       return new MyDependency();
     }
-  }
-
-  /**
-   * @deprecated This interface is deprecated and will be removed in a future release. For creation of iterators
-   * for existing {@link WorkspaceEntity} {@link com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor} is used.
-   */
-  @Deprecated(forRemoval = true)
-  interface Existing<E extends WorkspaceEntity> extends IndexableEntityProvider<E> {
-
-    /**
-     * Provides builders for iterators to index files when just project is indexed, no events given
-     */
-    @NotNull
-    default Collection<? extends IndexableIteratorBuilder> getExistingEntityIteratorBuilder(@NotNull E entity,
-                                                                                            @NotNull Project project) {
-      return getAddedEntityIteratorBuilders(entity, project);
-    }
-
-    /**
-     * Provides builders for iterators to index files belonging to a module when just module content is indexed, no events given
-     */
-    @NotNull
-    Collection<? extends IndexableIteratorBuilder> getIteratorBuildersForExistingModule(@NotNull ModuleEntity entity,
-                                                                                        @NotNull EntityStorage entityStorage,
-                                                                                        @NotNull Project project);
   }
 
   /**

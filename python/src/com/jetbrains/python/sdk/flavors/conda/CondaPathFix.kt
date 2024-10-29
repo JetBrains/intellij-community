@@ -15,6 +15,7 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.isExecutable
 
+private val LOG = Logger.getInstance("CondaLogger")
 /**
  * Workaround for cases like ``https://github.com/conda/conda/issues/11795`` and warnings (see [addEnvVars])
  *
@@ -29,7 +30,7 @@ fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk: Sdk) {
   val condaData = (sdk.getOrCreateAdditionalData().flavorAndData.data as? PyCondaFlavorData) ?: return
   val pythonHomePath = sdk.homePath
   if (pythonHomePath == null) {
-    Logger.getInstance("Conda").warn("No home path for $this, will skip 'venv activation'")
+    LOG.warn("No home path for $this, will skip 'venv activation'")
     return
   }
   addEnvVars(PySdkUtil.activateVirtualEnv(sdk), condaData.env.fullCondaPathOnTarget)
@@ -38,14 +39,13 @@ fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(sdk: Sdk) {
 fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(condaPathOnTarget: FullPathOnTarget) {
   if (!localOnWindows) return
   val condaPath = Path.of(condaPathOnTarget)
-  val logger = Logger.getInstance("Conda")
   if (!condaPath.exists()) {
-    logger.warn("$condaPath doesn't exist")
+    LOG.warn("$condaPath doesn't exist")
     return
   }
   val activateBat = condaPath.resolveSibling("activate.bat")
   if (!activateBat.isExecutable()) {
-    logger.warn("$activateBat doesn't exist or can't be read")
+    LOG.warn("$activateBat doesn't exist or can't be read")
     return
   }
   try {
@@ -53,7 +53,7 @@ fun TargetedCommandLineBuilder.fixCondaPathEnvIfNeeded(condaPathOnTarget: FullPa
     addEnvVars(envs, condaPathOnTarget)
   }
   catch (e: IOException) {
-    logger.warn("Can't read env vars", e)
+    LOG.warn("Can't read env vars", e)
   }
 }
 
@@ -75,9 +75,9 @@ private val TargetedCommandLineBuilder.localOnWindows: Boolean
 private fun TargetedCommandLineBuilder.addEnvVars(envs: Map<String, String>, condaPathOnTarget: FullPathOnTarget) {
   val extraPath = Path.of(condaPathOnTarget).parent?.parent?.resolve("Library")?.resolve("Bin")
   if (extraPath == null || !extraPath.exists() || !extraPath.isDirectory()) {
-    Logger.getInstance("Conda").warn("$extraPath doesn't exist")
+    LOG.warn("$extraPath doesn't exist")
   }
-
+  LOG.info("Patching envs")
   for ((k, v) in envs) {
     val fixedVal = if (k.equals("Path", ignoreCase = true) && extraPath != null) {
       v + request.targetPlatform.platform.pathSeparator + extraPath

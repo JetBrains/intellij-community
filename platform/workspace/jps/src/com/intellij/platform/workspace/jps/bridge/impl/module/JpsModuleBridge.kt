@@ -5,6 +5,7 @@ import com.intellij.java.workspace.entities.javaSettings
 import com.intellij.platform.workspace.jps.bridge.impl.JpsProjectBridge
 import com.intellij.platform.workspace.jps.bridge.impl.JpsUrlListBridge
 import com.intellij.platform.workspace.jps.bridge.impl.java.JpsJavaModuleExtensionBridge
+import com.intellij.platform.workspace.jps.bridge.impl.java.JpsTestModulePropertiesBridge
 import com.intellij.platform.workspace.jps.bridge.impl.reportModificationAttempt
 import com.intellij.platform.workspace.jps.entities.*
 import org.jetbrains.jps.model.*
@@ -22,8 +23,13 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader
 import org.jetbrains.jps.model.serialization.module.JpsModulePropertiesSerializer
 
 internal class JpsModuleBridge(private val project: JpsProjectBridge,
-                               private val entity: ModuleEntity) 
+                               val entity: ModuleEntity) 
   : JpsNamedCompositeElementBase<JpsModuleBridge>(entity.name), JpsTypedModule<JpsElement> {
+  
+  init {
+    parent = project
+  }  
+    
   private val contentRoots by lazy(LazyThreadSafetyMode.PUBLICATION) {
     JpsUrlListBridge(entity.contentRoots.map { it.url }, this)
   }
@@ -46,13 +52,16 @@ internal class JpsModuleBridge(private val project: JpsProjectBridge,
     JpsSdkReferencesTableBridge(sdkId, this) 
   }
   private val moduleProperties by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    //todo store content of custom components from *.iml file in workspace model and use them here (it's also needed for IJPL-16008)
+    //todo store content of custom components from *.iml file in workspace model and use them here (IJPL-157852)
     getSerializer(entity.type?.name).loadProperties(null)
   }
-  val javaModuleExtension by lazy(LazyThreadSafetyMode.PUBLICATION) {
-    entity.javaSettings?.let { JpsJavaModuleExtensionBridge(it, this) }
+  val javaModuleExtension: JpsJavaModuleExtensionBridge? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    JpsJavaModuleExtensionBridge(entity.javaSettings, this)
   }
-    
+  val testModuleProperties: JpsTestModuleProperties? by lazy(LazyThreadSafetyMode.PUBLICATION) {
+    entity.testProperties?.let { JpsTestModulePropertiesBridge(it, this) }
+  }
+
   override fun getContentRootsList(): JpsUrlList = contentRoots
 
   override fun getExcludeRootsList(): JpsUrlList = excludeRoots

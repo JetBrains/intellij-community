@@ -207,22 +207,22 @@ object GitStashOperations {
         if (hash != null) refreshUnstashedChanges(project, hash, root)
         GitRepositoryManager.getInstance(project).getRepositoryForFileQuick(root)?.repositoryFiles?.refreshIndexFile()
 
-        if (indexConflictDetector.hasHappened()) {
+        if (indexConflictDetector.isDetected) {
           // index conflicts could only be resolved manually
           VcsNotifier.getInstance(project).notifyError(UNSTASH_FAILED,
                                                        GitBundle.message("notification.title.unstash.failed.index.conflict"),
                                                        result.errorOutputAsHtmlString, true)
           return false
         }
-        if (conflictDetector.hasHappened()) {
+        if (conflictDetector.isDetected) {
           return conflictResolver.merge()
         }
-        if (untrackedFilesDetector.wasMessageDetected()) {
+        if (untrackedFilesDetector.isDetected) {
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, root, untrackedFilesDetector.relativeFilePaths,
                                                                     GitBundle.message("unstash.operation.name"), null)
           return false
         }
-        if (localChangesDetector.wasMessageDetected()) {
+        if (localChangesDetector.isDetected) {
           LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, STASH_LOCAL_CHANGES_DETECTED, root,
                                                                      GitBundle.message("unstash.operation.name"),
                                                                      localChangesDetector.relativeFilePaths)
@@ -292,12 +292,12 @@ object GitStashOperations {
   fun showSuccessNotification(project: Project, successfulRoots: Collection<VirtualFile>, hasErrors: Boolean) {
     val actions = buildList {
       if (isStashTabAvailable()) {
-        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project) })
+        add(NotificationAction.createSimple(GitBundle.message("stash.view.stashes.link")) { showStashes(project, successfulRoots.firstOrNull()) })
       }
       else if (isStagingAreaAvailable(project)) {
         add(NotificationAction.createSimpleExpiring(GitBundle.message("stash.enable.stashes.link")) {
           stashToolWindowRegistryOption().setValue(true)
-          showStashes(project)
+          showStashes(project, successfulRoots.firstOrNull())
         })
       }
     }

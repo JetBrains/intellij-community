@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public class SelectFilteringAction extends LabeledComboBoxAction implements DumbAware {
 
   @NotNull private final Project myProject;

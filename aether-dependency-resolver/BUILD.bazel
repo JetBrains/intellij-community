@@ -1,0 +1,34 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "java-aetherDependencyResolver",
+  module_name = "intellij.java.aetherDependencyResolver",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:httpmime",
+    "@libraries//:commons-logging",
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14",
+    "@libraries//:maven-resolver-provider",
+    "@libraries//:maven-resolver-transport-file",
+    "@libraries//:maven-resolver-transport-http",
+    "@libraries//:maven-resolver-connector-basic",
+    "@libraries//:commons-lang3",
+    "@libraries//:plexus-utils",
+    "@libraries//:commons-codec",
+    "@community//platform/util",
+  ],
+  exports = [
+    "@libraries//:httpmime",
+    "@libraries//:commons-logging",
+    "@libraries//:slf4j-api",
+    "@libraries//:slf4j-jdk14",
+    "@libraries//:maven-resolver-provider",
+  ]
+)
+### auto-generated section `build` end

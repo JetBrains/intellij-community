@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -37,10 +37,7 @@ import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -54,6 +51,7 @@ import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public class VcsStructureChooser extends DialogWrapper {
   private static final int MAX_FOLDERS = 100;
   public static final Border BORDER = IdeBorderFactory.createBorder(SideBorder.TOP | SideBorder.LEFT);
@@ -134,18 +132,14 @@ public class VcsStructureChooser extends DialogWrapper {
     myTree.setRootVisible(false);
     myTree.setExpandableItemsEnabled(false);
 
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, true, true, true, false, true) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        if (!super.isFileVisible(file, showHiddenFiles)) return false;
-        if (myRoots.contains(file)) return false;
-        ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-        return !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file);
-      }
-    };
-    descriptor.withRoots(new ArrayList<>(myRoots)).withShowHiddenFiles(true).withHideIgnored(true);
-    MyCheckboxTreeCellRenderer cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
-    FileSystemTreeImpl fileSystemTree = new MyFileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, myModulesSet);
+    var changeListManager = ChangeListManager.getInstance(myProject);
+    var descriptor = new FileChooserDescriptor(true, true, true, true, false, true)
+      .withFileFilter(file -> !myRoots.contains(file) && !changeListManager.isIgnoredFile(file) && !changeListManager.isUnversioned(file))
+      .withRoots(new ArrayList<>(myRoots))
+      .withShowHiddenFiles(true)
+      .withHideIgnored(true);
+    var cellRenderer = new MyCheckboxTreeCellRenderer(mySelectionManager, myModulesSet, myProject, myTree, myRoots);
+    var fileSystemTree = new MyFileSystemTreeImpl(myProject, descriptor, myTree, cellRenderer, myModulesSet);
     Disposer.register(myDisposable, fileSystemTree);
 
     new ClickListener() {

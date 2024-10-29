@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -57,9 +57,9 @@ public final class TypedHandlerUtil {
   }
 
   public static boolean isAfterClassLikeIdentifierOrDot(final int offset,
-                                                        @NotNull final Editor editor,
-                                                        @NotNull final IElementType dot,
-                                                        @NotNull final IElementType identifier,
+                                                        final @NotNull Editor editor,
+                                                        final @NotNull IElementType dot,
+                                                        final @NotNull IElementType identifier,
                                                         boolean allowAfterDot) {
     HighlighterIterator iterator = editor.getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
@@ -70,9 +70,9 @@ public final class TypedHandlerUtil {
   }
 
   public static boolean isClassLikeIdentifier(final int offset,
-                                              @NotNull final Editor editor,
-                                              @NotNull final HighlighterIterator iterator,
-                                              @NotNull final IElementType idType) {
+                                              final @NotNull Editor editor,
+                                              final @NotNull HighlighterIterator iterator,
+                                              final @NotNull IElementType idType) {
     if (iterator.getTokenType() == idType && iterator.getEnd() == offset) {
       final CharSequence chars = editor.getDocument().getCharsSequence();
       final char startChar = chars.charAt(iterator.getStart());
@@ -87,10 +87,10 @@ public final class TypedHandlerUtil {
     return false;
   }
 
-  public static void handleAfterGenericLT(@NotNull final Editor editor,
-                                          @NotNull final IElementType lt,
-                                          @NotNull final IElementType gt,
-                                          @NotNull final TokenSet invalidInsideReference) {
+  public static void handleAfterGenericLT(final @NotNull Editor editor,
+                                          final @NotNull IElementType lt,
+                                          final @NotNull IElementType gt,
+                                          final @NotNull TokenSet invalidInsideReference) {
     //need custom handler, since brace matcher cannot be used
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return;
     int offset = editor.getCaretModel().getOffset();
@@ -100,10 +100,10 @@ public final class TypedHandlerUtil {
     }
   }
 
-  public static boolean handleGenericGT(@NotNull final Editor editor,
-                                        @NotNull final IElementType lt,
-                                        @NotNull final IElementType gt,
-                                        @NotNull final TokenSet invalidInsideReference) {
+  public static boolean handleGenericGT(final @NotNull Editor editor,
+                                        final @NotNull IElementType lt,
+                                        final @NotNull IElementType gt,
+                                        final @NotNull TokenSet invalidInsideReference) {
     //need custom handler, since brace matcher cannot be used
     if (!CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) return false;
 
@@ -118,11 +118,11 @@ public final class TypedHandlerUtil {
     return true;
   }
 
-  public static void handleGenericLTDeletion(@NotNull final Editor editor,
+  public static void handleGenericLTDeletion(final @NotNull Editor editor,
                                              final int offset,
-                                             @NotNull final IElementType lt,
-                                             @NotNull final IElementType gt,
-                                             @NotNull final TokenSet invalidInsideReference) {
+                                             final @NotNull IElementType lt,
+                                             final @NotNull IElementType gt,
+                                             final @NotNull TokenSet invalidInsideReference) {
     if (computeBracesBalance(editor, offset, lt, gt, invalidInsideReference, true) < 0) {
       editor.getDocument().deleteString(offset, offset + 1);
     }

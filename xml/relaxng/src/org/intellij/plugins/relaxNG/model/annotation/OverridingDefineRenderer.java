@@ -51,8 +51,7 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.OverridingMethod;
   }
 
@@ -62,14 +61,12 @@ class OverridingDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @Nullable AnAction getClickAction() {
     return new MyClickAction();
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return myMessage;
   }
 

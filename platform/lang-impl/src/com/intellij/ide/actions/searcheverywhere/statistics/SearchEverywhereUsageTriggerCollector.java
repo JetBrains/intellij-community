@@ -111,8 +111,7 @@ public final class SearchEverywhereUsageTriggerCollector extends CounterUsagesCo
     return GROUP;
   }
 
-  @NotNull
-  public static String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
+  public static @NotNull String getReportableContributorID(@NotNull SearchEverywhereContributor<?> contributor) {
     //noinspection rawtypes
     Class<? extends SearchEverywhereContributor> clazz = contributor.getClass();
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -1780,12 +1780,13 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       return;
     }
 
-    PsiExpression[] operands = expression.getOperands();
-    if (operands.length <= 1) {
+    if (PsiUtilCore.hasErrorElementChild(expression)) {
       pushUnknown();
       finishElement(expression);
       return;
     }
+
+    PsiExpression[] operands = expression.getOperands();
     IElementType op = expression.getOperationTokenType();
     if (op == JavaTokenType.ANDAND) {
       generateShortCircuitAndOr(expression, operands, expression.getType(), true);
@@ -1929,7 +1930,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       addInstruction(new WrapDerivedVariableInstruction(DfTypes.typedObject(boxedType, Nullability.NOT_NULL), SpecialField.UNBOX));
     }
-    else if (actualType != expectedType &&
+    else if (!Objects.equals(actualType, expectedType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(actualType) &&
              TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
              TypeConversionUtil.isNumericType(actualType) &&

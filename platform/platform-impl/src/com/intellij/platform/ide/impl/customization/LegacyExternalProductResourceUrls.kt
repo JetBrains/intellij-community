@@ -12,8 +12,10 @@ import com.intellij.ui.LicensingFacade
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.regex.Pattern
 
+@ApiStatus.Internal
 @Suppress("DEPRECATION")
 class LegacyExternalProductResourceUrls : ExternalProductResourceUrls {
   override val updateMetadataUrl: Url?

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.libraries;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -45,8 +31,7 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
     myKind = kind;
   }
 
-  @NotNull
-  public LibraryKind getKind() {
+  public @NotNull LibraryKind getKind() {
     return myKind;
   }
 
@@ -54,27 +39,23 @@ public abstract class LibraryPresentationProvider<P extends LibraryProperties> {
    * @deprecated override {@link #getIcon(LibraryProperties)} instead
    */
   @Deprecated
-  @Nullable
-  public Icon getIcon() {
+  public @Nullable Icon getIcon() {
     return null;
   }
 
-  @Nullable
-  public Icon getIcon(@Nullable P properties) {
+  public @Nullable Icon getIcon(@Nullable P properties) {
     return getIcon();
   }
 
   /**
    * @return description of a library to be shown in 'Library Editor' in 'Project Structure' dialog
    */
-  @Nullable
-  public @Nls String getDescription(@NotNull P properties) {
+  public @Nullable @Nls String getDescription(@NotNull P properties) {
     return null;
   }
 
   /**
    * Returns non-null value if a library with classes roots {@code classesRoots} is of a kind described by this provider.
    */
-  @Nullable
-  public abstract P detect(@NotNull List<VirtualFile> classesRoots);
+  public abstract @Nullable P detect(@NotNull List<VirtualFile> classesRoots);
 }

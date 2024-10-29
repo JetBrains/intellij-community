@@ -13,6 +13,8 @@ import java.util.function.Function;
 
 public final class NameUtil {
   private static final int MAX_LENGTH = 40;
+  //heuristics: 15 can take 10-20 ms in some cases, while 10 works in 1-5 ms
+  private static final int TYPO_AWARE_PATTERN_LIMIT = 13;
 
   private NameUtil() {}
 
@@ -295,7 +297,7 @@ public final class NameUtil {
     }
 
     public MatcherBuilder typoTolerant() {
-      this.typoTolerant = true;
+      this.typoTolerant = pattern.length() <= TYPO_AWARE_PATTERN_LIMIT;
       return this;
     }
 

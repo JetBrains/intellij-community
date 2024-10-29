@@ -22,6 +22,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,7 @@ import java.util.*;
 /**
  * @author Vassiliy Kudryashov
  */
+@ApiStatus.Internal
 public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;

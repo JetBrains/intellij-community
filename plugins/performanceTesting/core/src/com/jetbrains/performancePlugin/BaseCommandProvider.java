@@ -34,6 +34,7 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(MemoryDumpCommand.PREFIX, MemoryDumpCommand::new),
       Map.entry(CleanCaches.PREFIX, CleanCaches::new),
       Map.entry(FindUsagesCommand.PREFIX, FindUsagesCommand::new),
+      Map.entry(FindUsagesInBackgroundCommand.PREFIX, FindUsagesInBackgroundCommand::new),
       Map.entry(IdeEditorKeyCommand.PREFIX, IdeEditorKeyCommand::new),
       Map.entry(ShowAltEnter.PREFIX, ShowAltEnter::new),
       Map.entry(SelectCommand.PREFIX, SelectCommand::new),
@@ -59,7 +60,6 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(SearchEverywhereCommand.PREFIX, SearchEverywhereCommand::new),
       Map.entry(SelectFileInProjectViewCommand.PREFIX, SelectFileInProjectViewCommand::new),
       Map.entry(ExpandProjectMenuCommand.PREFIX, ExpandProjectMenuCommand::new),
-      Map.entry(DoHighlighting.PREFIX, DoHighlighting::new),
       Map.entry(ReloadFilesCommand.PREFIX, ReloadFilesCommand::new),
       Map.entry(AddFileCommand.PREFIX, AddFileCommand::new),
       Map.entry(RenameFileCommand.PREFIX, RenameFileCommand::new),
@@ -119,7 +119,12 @@ public final class BaseCommandProvider implements CommandProvider {
       Map.entry(RenameModuleCommand.PREFIX, RenameModuleCommand::new),
       Map.entry(WaitForProjectViewCommand.PREFIX, WaitForProjectViewCommand::new),
       Map.entry(ExpandProjectViewCommand.PREFIX, ExpandProjectViewCommand::new),
-      Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new)
+      Map.entry(DebugToggleBreakpointCommand.PREFIX, DebugToggleBreakpointCommand::new),
+      Map.entry(MoveFilesCommand.PREFIX, MoveFilesCommand::new),
+      Map.entry(GCCommand.PREFIX, GCCommand::new),
+      Map.entry(SetupInlineCompletionListenerCommand.PREFIX, SetupInlineCompletionListenerCommand::new),
+      Map.entry(CallInlineCompletionCommand.PREFIX, CallInlineCompletionCommand::new),
+      Map.entry(HandleSpanCommand.PREFIX, HandleSpanCommand::new)
     );
   }
 }

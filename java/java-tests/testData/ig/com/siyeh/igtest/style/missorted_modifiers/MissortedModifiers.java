@@ -43,7 +43,7 @@ class MissortedModifiers {
 
   //@Type(type = "org.joda.time.contrib.hibernate.PersistentYearMonthDay")
   //@Column(name = "current_month")
-  <warning descr="Missorted modifiers 'final public @Nullable @NotNull'">final</warning>
+  <warning descr="Missorted modifiers 'final public'">final</warning>
   public
   @Nullable
   // commment

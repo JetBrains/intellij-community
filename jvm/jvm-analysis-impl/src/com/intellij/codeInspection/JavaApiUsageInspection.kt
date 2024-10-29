@@ -23,9 +23,9 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.uast.UastVisitorAdapter
 import org.jdom.Element
-import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.uast.*
 
 private val logger = logger<JavaApiUsageInspection>()
@@ -45,7 +45,6 @@ private const val EFFECTIVE_LL = "effectiveLL"
  *   </li>
  * </ol>
  */
-@VisibleForTesting
 class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
   override fun getDefaultLevel(): HighlightDisplayLevel = HighlightDisplayLevel.ERROR
 
@@ -166,11 +165,19 @@ class JavaApiUsageInspection : AbstractBaseUastLocalInspectionTool() {
     override fun processReference(sourceNode: UElement, target: PsiModifierListOwner, qualifier: UExpression?) {
       val sourcePsi = sourceNode.sourcePsi ?: return
       if (target !is PsiMember) return
-      val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi) ?: return
-      var languageLevel = getEffectiveLanguageLevel(module)
-      if (languageLevel.isUnsupported) {
-        languageLevel = languageLevel.nonPreviewLevel
+      var languageLevel: LanguageLevel? = null
+      val module = ModuleUtilCore.findModuleForPsiElement(sourcePsi)
+      if (module != null) {
+        languageLevel = getEffectiveLanguageLevel(module)
+        if (languageLevel.isUnsupported) {
+          languageLevel = languageLevel.nonPreviewLevel
+        }
       }
+      else if (sourcePsi.containingFile.virtualFile is LightVirtualFile) {
+        //it is necessary for generated files (for example, check completions)
+        languageLevel = sourcePsi.containingFile.getUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY)
+      }
+      if (languageLevel == null) return
       val lastIncompatibleLevel = LanguageLevelUtil.getLastIncompatibleLanguageLevel(target, languageLevel)
       if (lastIncompatibleLevel != null) {
         if (shouldReportSinceLevelForElement(lastIncompatibleLevel, sourcePsi) == true) return

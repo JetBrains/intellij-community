@@ -26,12 +26,7 @@ import org.junit.Test
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
-import kotlin.io.path.createDirectories
-import kotlin.io.path.deleteIfExists
-import kotlin.io.path.inputStream
-import kotlin.io.path.readText
-import kotlin.io.path.writeBytes
-import kotlin.io.path.writeText
+import kotlin.io.path.*
 
 /**
  * Functionality without stream providers is covered, ICS has own test suite.
@@ -564,7 +559,9 @@ class SchemeManagerTest {
 
   @Test fun `path must be system-independent`() {
     DefaultLogger.disableStderrDumping(disposableRule.disposable)
-    assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor())}.hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    rethrowLoggedErrorsIn {
+      assertThatThrownBy { SchemeManagerFactory.getInstance().create("foo\\bar", TestSchemeProcessor()) }.hasMessage("Path must be system-independent, use forward slash instead of backslash")
+    }
   }
 
   private fun createSchemeManager(dir: Path): SchemeManagerImpl<TestScheme, TestScheme> {

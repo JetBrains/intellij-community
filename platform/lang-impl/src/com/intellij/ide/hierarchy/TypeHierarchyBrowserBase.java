@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.hierarchy;
 
@@ -51,8 +51,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     trees.put(getSubtypesHierarchyType(), tree3);
   }
 
-  @NotNull
-  protected BaseOnThisTypeAction createBaseOnThisAction() {
+  protected @NotNull BaseOnThisTypeAction createBaseOnThisAction() {
     return new BaseOnThisTypeAction();
   }
 
@@ -88,8 +87,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  @NotNull
-  protected String getActionPlace() {
+  protected @NotNull String getActionPlace() {
     return ActionPlaces.TYPE_HIERARCHY_VIEW_TOOLBAR;
   }
 
@@ -100,14 +98,12 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  @NotNull
-  protected String getPrevOccurenceActionNameImpl() {
+  protected @NotNull String getPrevOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.type.prev.occurence.name");
   }
 
   @Override
-  @NotNull
-  protected String getNextOccurenceActionNameImpl() {
+  protected @NotNull String getNextOccurenceActionNameImpl() {
     return IdeBundle.message("hierarchy.type.next.occurence.name");
   }
 
@@ -153,8 +149,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    @Nls
-    protected String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
+    protected @Nls String correctViewType(@NotNull HierarchyBrowserBaseEx browser, @Nls String viewType) {
       if (((TypeHierarchyBrowserBase)browser).myIsInterface && getTypeHierarchyType().equals(viewType)) {
         return getSubtypesHierarchyType();
       }
@@ -167,8 +162,7 @@ public abstract class TypeHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     return IdeBundle.message("title.hierarchy.class");
   }
 
-  @Nls
-  public static @NotNull String getSubtypesHierarchyType() {
+  public static @Nls @NotNull String getSubtypesHierarchyType() {
     //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.subtypes");
   }

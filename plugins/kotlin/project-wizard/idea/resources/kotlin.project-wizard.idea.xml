@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.tools.projectWizard">
   <dependencies>
     <plugin id="com.intellij.gradle"/>
+    <module name="kotlin.base.external-build-system"/>
   </dependencies>
 
   <extensionPoints>
@@ -25,14 +26,14 @@
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.DependencyVersionStore"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore"/>
-    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.CoroutinesLibraryCompatibilityStore"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore"/>
     <newProjectWizard.languageGenerator implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
 
     <newProjectWizard.kotlin.buildSystem implementation="org.jetbrains.kotlin.tools.projectWizard.IntelliJKotlinNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
-    <libraryVersionProvider implementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.libraries.DefaultKotlinLibraryVersionProvider"/>
+    <libraryVersionProvider implementation="org.jetbrains.kotlin.tools.projectWizard.compatibility.DefaultKotlinLibraryVersionProvider"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">

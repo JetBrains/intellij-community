@@ -8,14 +8,17 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ex.ClipboardUtil;
 import com.intellij.openapi.client.ClientAppSession;
 import com.intellij.openapi.client.ClientSessionsManager;
+import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.testFramework.LightVirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +26,9 @@ import javax.swing.*;
 import java.awt.event.KeyEvent;
 import java.util.Collections;
 
+import static com.intellij.openapi.vcs.VcsNotificationIdsHolder.PATCH_APPLY_NOT_PATCH_FILE;
+
+@ApiStatus.Internal
 public class ApplyPatchFromClipboardAction extends DumbAwareAction {
 
   @Override
@@ -51,7 +57,12 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     String clipboardText = StringUtil.notNullize(ClipboardUtil.getTextInClipboard());
-    new MyApplyPatchFromClipboardDialog(project, clipboardText).show();
+    if (PatchReader.isPatchContent(clipboardText)) {
+      new MyApplyPatchFromClipboardDialog(project, clipboardText).show();
+    }
+    else {
+      VcsNotifier.getInstance(project).notifyWeakError(PATCH_APPLY_NOT_PATCH_FILE, VcsBundle.message("patch.apply.not.patch.clipboard"));
+    }
   }
 
   public static class MyApplyPatchFromClipboardDialog extends ApplyPatchDifferentiatedDialog {

@@ -8,11 +8,13 @@ import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.panels.ListLayout
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 class VendorInfoPanel : JPanel(ListLayout.horizontal(JBUI.scale(5))) {
   private val name = JBLabel()
   private val verifiedIcon = ContextHelpLabel.create(IdeBundle.message("plugin.verified.organization"))

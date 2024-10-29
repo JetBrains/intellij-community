@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +19,13 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.concurrent.atomic.AtomicReference;
 
+@ApiStatus.Internal
 public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBase {
-  @NotNull
-  protected abstract Sdk applyLocalFix();
+  protected abstract @NotNull Sdk applyLocalFix();
 
-  @NotNull
-  protected abstract String getSuggestedSdkHome();
+  protected abstract @NotNull String getSuggestedSdkHome();
 
-  @NotNull
-  private Sdk runWithEvents() {
+  private @NotNull Sdk runWithEvents() {
     ThreadingAssertions.assertEventDispatchThread();
 
     Listener multicaster = getMulticaster();
@@ -67,9 +66,8 @@ public abstract class UnknownSdkFixActionLocalBase extends UnknownSdkFixActionBa
     }.queue();
   }
 
-  @NotNull
   @Override
-  public final Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
+  public final @NotNull Sdk applySuggestionBlocking(@NotNull ProgressIndicator indicator) {
     refreshVfs();
 
     var sdk = new AtomicReference<Sdk>(null);

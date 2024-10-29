@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.ui
 
+import com.intellij.debugger.JavaDebuggerBundle
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.memory.ui.SizedReferenceInfo.SizedValueDescriptor
 import com.intellij.openapi.util.NlsContexts
@@ -56,21 +57,21 @@ class InstancesViewTreeTableModel(val tree: InstancesTree) : DefaultTreeModel(tr
     NODE {
       override fun getValue(node: Any?): Any? = null
       override fun getColumnClass(): Class<*> = TreeTableModel::class.java
-      override fun getColumnName(): String = "Instances"
+      override fun getColumnName(): String = JavaDebuggerBundle.message("column.name.instances")
     },
     SHALLOW_SIZE {
       override fun getValue(node: Any?): Long? =
         node?.getSizedValueDescriptor()?.shallowSize
 
       override fun getColumnClass(): Class<*> = java.lang.Long::class.java
-      override fun getColumnName(): String = "Shallow Size"
+      override fun getColumnName(): String = JavaDebuggerBundle.message("column.name.shallow.size")
     },
     RETAINED_SIZE {
       override fun getValue(node: Any?): Long? =
         node?.getSizedValueDescriptor()?.retainedSize
 
       override fun getColumnClass(): Class<*> = java.lang.Long::class.java
-      override fun getColumnName(): String = "Retained Size"
+      override fun getColumnName(): String = JavaDebuggerBundle.message("column.name.retained.size")
     };
 
     abstract fun getValue(node: Any?): Any?

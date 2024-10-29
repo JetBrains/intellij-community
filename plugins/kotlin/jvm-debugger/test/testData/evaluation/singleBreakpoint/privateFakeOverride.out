@@ -1,0 +1,9 @@
+LineBreakpoint created at privateFakeOverride.kt:11
+Run Java
+Connected to the target VM
+privateFakeOverride.kt:11
+Compile bytecode for child.privateVal
+Compile bytecode for child.privateFun()
+Disconnected from the target VM
+
+Process finished with exit code 0

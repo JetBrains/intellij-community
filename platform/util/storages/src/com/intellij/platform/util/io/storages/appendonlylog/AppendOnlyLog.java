@@ -36,7 +36,7 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
    * returned false definitely means id is not valid -- but returned true means 'id _looks_ like a valid record id',
    * because some implementations can't say for sure is id a valid record id or not.
    */
-  boolean isValidId(long id);
+  boolean isValidId(long id) throws IOException;
 
   /**
    * @return true if all the records were read, false if reader stops the reading prematurely (by
@@ -51,7 +51,7 @@ public interface AppendOnlyLog extends Closeable, Flushable, CleanableStorage {
   void flush() throws IOException;
 
   /** @return true if there are no records in the log */
-  boolean isEmpty();
+  boolean isEmpty() throws IOException;
 
   /** @return number of records appended to the log */
   int recordsCount() throws IOException;

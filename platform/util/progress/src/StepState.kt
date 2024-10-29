@@ -2,7 +2,9 @@
 package com.intellij.platform.util.progress;
 
 import com.intellij.platform.util.progress.impl.ProgressText
+import kotlinx.serialization.Serializable
 
+@Serializable
 internal data class StepState(
   override val fraction: Double?,
   override val text: ProgressText?,

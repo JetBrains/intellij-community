@@ -24,9 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class CurrentFileTodosTreeStructure extends TodoTreeStructure {
   /**
    * Current {@code VirtualFile} for which the structure is built. If {@code myFile} is {@code null}

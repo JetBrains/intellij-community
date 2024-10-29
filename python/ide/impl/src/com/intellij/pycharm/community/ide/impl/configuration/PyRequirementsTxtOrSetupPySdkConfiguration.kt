@@ -29,6 +29,7 @@ import com.intellij.pycharm.community.ide.impl.configuration.PySdkConfigurationC
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import com.jetbrains.extensions.failure
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.PyPackageManager
@@ -36,7 +37,7 @@ import com.jetbrains.python.packaging.PyPackageUtil
 import com.jetbrains.python.packaging.PyTargetEnvironmentPackageManager
 import com.jetbrains.python.requirements.RequirementsFileType
 import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvFromFilePanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvFromFilePanel
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfigurationExtension
 import com.jetbrains.python.sdk.configuration.createVirtualEnvSynchronously
 import java.awt.BorderLayout
@@ -59,7 +60,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
 
     val data = askForEnvData(module, existingSdks, source)
     if (data == null) {
-      return Result.failure(Throwable("askForEnvData is null"))
+      return failure("askForEnvData is null")
     }
 
     val (location, chosenBaseSdk, requirementsTxtOrSetupPy) = data
@@ -74,7 +75,7 @@ class PyRequirementsTxtOrSetupPySdkConfiguration : PyProjectSdkConfigurationExte
           PyTemporarilyIgnoredFileProvider.ignoreRoot(systemIndependentLocation, it)
           createVirtualEnvSynchronously(chosenBaseSdk!!, existingSdks, location, projectPath, module.project, module)
         }
-      }.getOrElse { return Result.failure(it) }
+      }
 
       invokeAndWaitIfNeeded {
         thisLogger().debug("Adding associated virtual environment: ${sdk.homePath}, ${module.basePath}")

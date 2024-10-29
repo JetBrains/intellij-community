@@ -10,6 +10,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
@@ -347,9 +348,22 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
     var nioFile = convertToNioFileAndCheck(file, true);
-    var len = file.getLength();
-    if (FileUtilRt.isTooLarge(len)) throw new FileTooBigException(file.getPath());
-    if (len < 0) throw new IOException("Invalid file length: " + len + ", " + file);
+    return readIfNotTooLarge(nioFile);
+  }
+
+  protected static byte @NotNull [] readIfNotTooLarge(Path nioFile) throws IOException {
+    //MAYBE RC: The only reason to get file size here is to check it is not too big. We could skip this check, and start
+    //          to load the file, and throw the exception if _loaded_ size exceeds the limit -- huge files are infrequent
+    //          cases, so this approach optimizes the fast path.
+    //          ...but this is probably an overkill: nioFile.size is requested inside Files.readAllBytes() anyway,
+    //          and OSes cache file-system requests, so 2 file.size() requests one after another cost almost the same
+    //          as a first file.size() request alone. So that optimization needs to be carefully benchmarked to prove it
+    //          does provide anything -- and my guess: it probably doesn't
+    var length = Files.size(nioFile);
+
+    if (FileSizeLimit.isTooLarge(length, FileUtilRt.getExtension(nioFile.getFileName().toString()))) {
+      throw new FileTooBigException("File " + nioFile.toAbsolutePath() + " is too large (=" + length + " b)");
+    }
     return Files.readAllBytes(nioFile);
   }
 
@@ -504,17 +518,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       if (SystemInfo.isWindows) {
         return nioFile.toRealPath(LinkOption.NOFOLLOW_LINKS).getFileName().toString();
       }
-      else {
-        // Handle one common case as quickly as possible: compute the file's realpath, resolving links
-        // (to avoid quadratic behaviour from directory listing). In general this is not a suitable canonical name for the
-        // file, because links have been resolved, but if the result compares with case-insensitive equality with the given
-        // file's path, then the return value is suitable for use as a canonical name.
-        var resolvedRealPath = nioFile.toRealPath();
-        if (resolvedRealPath.toString().equalsIgnoreCase(file.getPath())) {
-          return resolvedRealPath.getFileName().toString();
-        }
+      // `toRealPath(NOFOLLOW_LINKS)` is too slow on Unix; `toRealPath()` works when there are no symlinks
+      var realPath = nioFile.toRealPath();
+      if (realPath.toString().equalsIgnoreCase(file.getPath())) {
+        return realPath.getFileName().toString();
       }
-      // `Path#toRealPath` resolves the whole path starting from the root, but only the last component is necessary
+      // last resort: listing files in the parent directory
       try (var stream = Files.newDirectoryStream(convertToNioFileAndCheck(parent, false))) {
         for (var path : stream) {
           var name = path.getFileName().toString();

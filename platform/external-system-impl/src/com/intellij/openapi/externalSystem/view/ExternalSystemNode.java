@@ -22,10 +22,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -135,6 +132,7 @@ public abstract class ExternalSystemNode<T> extends SimpleNode implements Compar
     return myExternalProjectsView.getStructure();
   }
 
+  @ApiStatus.Internal
   protected ExternalSystemShortcutsManager getShortcutsManager() {
     return myExternalProjectsView.getShortcutsManager();
   }

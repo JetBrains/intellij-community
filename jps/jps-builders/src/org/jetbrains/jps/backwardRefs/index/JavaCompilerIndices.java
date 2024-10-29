@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.backwardRefs.index;
 
 import com.intellij.openapi.util.io.DataInputOutputUtilRt;
@@ -23,7 +23,7 @@ import java.util.List;
 
 public final class JavaCompilerIndices {
   //TODO manage version separately
-  public static final int VERSION = 7;
+  public static final int VERSION = 8;
 
   public static final IndexId<CompilerRef, Integer> BACK_USAGES = IndexId.create("back.refs");
   public static final IndexId<CompilerRef, Collection<CompilerRef>> BACK_HIERARCHY = IndexId.create("back.hierarchy");

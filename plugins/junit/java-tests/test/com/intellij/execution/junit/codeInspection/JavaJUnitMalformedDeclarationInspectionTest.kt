@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInspection
 
 import com.intellij.junit.testFramework.JUnitMalformedDeclarationInspectionTestBase
@@ -500,7 +500,7 @@ class JavaJUnitMalformedDeclarationInspectionTest {
       class ValueSourcesTest { 
         @org.junit.jupiter.params.ParameterizedTest
         @org.junit.jupiter.params.provider.ValueSource(strings = "foo")
-        void <error descr="Multiple parameters are not supported by this source">testWithMultipleParams</error>(String argument, int i) { }
+        void <error descr="Only a single parameter can be provided by '@ValueSource'">testWithMultipleParams</error>(String argument, int i) { }
       }
     """.trimIndent())
     }
@@ -831,6 +831,35 @@ class JavaJUnitMalformedDeclarationInspectionTest {
         public static void beforeAll(String foo) { }
       }
     """.trimIndent())
+    }
+    fun `test non-malformed with multiple extensions inside extensions annotation`() {
+      myFixture.testHighlighting(JvmLanguage.JAVA, """
+        class TestNonParameterResolver implements org.junit.jupiter.api.extension.Extension { }
+
+        class TestParameterResolver implements org.junit.jupiter.api.extension.ParameterResolver {
+            @Override
+            public boolean supportsParameter(
+              org.junit.jupiter.api.extension.ParameterContext parameterContext,
+              org.junit.jupiter.api.extension.ExtensionContext extensionContext
+            ) { return false; }
+
+            @Override
+            public Object resolveParameter(
+              org.junit.jupiter.api.extension.ParameterContext parameterContext,
+              org.junit.jupiter.api.extension.ExtensionContext extensionContext
+            ) { return null; }
+        }
+
+        @org.junit.jupiter.api.extension.Extensions({
+            @org.junit.jupiter.api.extension.ExtendWith(TestNonParameterResolver.class),
+            @org.junit.jupiter.api.extension.ExtendWith(TestParameterResolver.class)
+        })
+        class ParameterResolver {
+            @org.junit.jupiter.api.BeforeAll
+            public static void beforeAll(String foo) { }
+        }
+
+      """.trimIndent())
     }
     fun `test malformed before class highlighting`() {
       myFixture.testHighlighting(JvmLanguage.JAVA, """

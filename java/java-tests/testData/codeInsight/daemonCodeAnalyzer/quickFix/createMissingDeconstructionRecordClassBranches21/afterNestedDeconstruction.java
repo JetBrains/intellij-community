@@ -1,4 +1,4 @@
-// "Create missing switch branch 'Pair<Box,Box>(Box b1, Box b2)'" "true-preview"
+// "Create missing branch 'Pair<Box,Box>(Box b1, Box b2)'" "true-preview"
 
 record Rec(L1 l1) {}
 

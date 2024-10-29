@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.actionSystem.*;
@@ -394,9 +394,8 @@ public class AutomaticRenamingDialog extends DialogWrapper {
           return checkInput(inputString);
         }
 
-        @Nullable
         @Override
-        public String getErrorText(@NlsSafe String inputString) {
+        public @Nullable String getErrorText(@NlsSafe String inputString) {
           final int selectedRow = myTable.getSelectedRow();
           if (!isValidName(inputString, selectedRow)) {
             return RefactoringBundle.message("text.identifier.invalid", inputString);

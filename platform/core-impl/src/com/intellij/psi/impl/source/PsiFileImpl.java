@@ -38,6 +38,7 @@ import com.intellij.testFramework.ReadOnlyLightVirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.indexing.IndexingDataKeys;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,6 +52,17 @@ import java.util.function.Supplier;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiFileWithStubSupport, Queryable, Cloneable {
+  private static final CharTable NON_INTERNING_CHAR_TABLE = new CharTable() {
+    @Override
+    public @NotNull CharSequence intern(@NotNull CharSequence text) {
+      return text;
+    }
+
+    @Override
+    public @NotNull CharSequence intern(@NotNull CharSequence baseText, int startOffset, int endOffset) {
+      return new CharSequenceSubSequence(baseText, startOffset, endOffset);
+    }
+  };
   private static final Logger LOG = Logger.getInstance(PsiFileImpl.class);
   static final @NonNls String STUB_PSI_MISMATCH = "stub-psi mismatch";
 
@@ -282,6 +294,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     if (contentLeaf instanceof FileElement) {
       treeElement = (FileElement)contentLeaf;
+      if (getUserData(IndexingDataKeys.VIRTUAL_FILE) != null) {
+        treeElement.setCharTable(NON_INTERNING_CHAR_TABLE);
+      }
     }
     else {
       CompositeElement xxx = ASTFactory.composite(myElementType);
@@ -496,7 +511,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public boolean isPhysical() {
-    // TODO[ik] remove this shit with dummy file system
     return getViewProvider().isEventSystemEnabled();
   }
 
@@ -595,7 +609,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   /**
    * @return a root stub of {@link #getStubTree()}, or null if the file is not stub-based or AST has been loaded.
    */
-  public @Nullable StubElement getStub() {
+  public @Nullable StubElement<?> getStub() {
     StubTree stubHolder = getStubTree();
     return stubHolder != null ? stubHolder.getRoot() : null;
   }
@@ -708,14 +722,14 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     ObjectStubTree<?> tree = StubTreeLoader.getInstance().readOrBuild(getProject(), vFile, this);
     if (!(tree instanceof StubTree)) return Pair.empty();
     FileViewProvider viewProvider = getViewProvider();
-    List<Pair<IStubFileElementType, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
+    List<Pair<IStubFileElementType<?>, PsiFile>> roots = StubTreeBuilder.getStubbedRoots(viewProvider);
 
     try {
       synchronized (myPsiLock) {
         FileElement treeElementOnLock = getTreeElement();
-        StubTree derefdOnLock = derefStub();
-        if (derefdOnLock != null || treeElementOnLock != null) {
-          return Pair.create(derefdOnLock, treeElementOnLock);
+        StubTree dereferencedOnLock = derefStub();
+        if (dereferencedOnLock != null || treeElementOnLock != null) {
+          return Pair.create(dereferencedOnLock, treeElementOnLock);
         }
 
         PsiFileStubImpl<?> baseRoot = (PsiFileStubImpl<?>)((StubTree)tree).getRoot();
@@ -774,7 +788,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   protected PsiFileImpl cloneImpl(FileElement treeElementClone) {
     PsiFileImpl clone = (PsiFileImpl)super.clone();
-    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because cloned file still have VirtualFile (SCR17963)
+    clone.setTreeElementPointer(treeElementClone); // should not use setTreeElement here because the cloned file still has VirtualFile (SCR17963)
     treeElementClone.setPsi(clone);
     return clone;
   }
@@ -814,7 +828,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
   @Override
   public PsiElement @NotNull [] getChildren() {
-    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, PsiElement.ARRAY_FACTORY);
+    return calcTreeElement().getChildrenAsPsiElements((TokenSet)null, ARRAY_FACTORY);
   }
 
   @Override

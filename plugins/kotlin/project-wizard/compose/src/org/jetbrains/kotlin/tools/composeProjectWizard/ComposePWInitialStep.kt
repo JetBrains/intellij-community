@@ -7,7 +7,7 @@ import com.intellij.ide.starters.shared.hyperLink
 import com.intellij.ui.dsl.builder.Panel
 
 private const val DESKTOP_TEMPLATE_LINK = "https://jb.gg/idea-wizard-compose-desktop-template"
-private const val MULTIPLATFORM_TEMPLATE_LINK = "https://jb.gg/idea-wizard-compose-multiplatform-template"
+private const val MULTIPLATFORM_WIZARD_LINK = "https://kotl.in/idea-compose-wizard"
 
 class ComposePWInitialStep(contextProvider: StarterContextProvider) : StarterInitialStep(contextProvider) {
 
@@ -18,7 +18,7 @@ class ComposePWInitialStep(contextProvider: StarterContextProvider) : StarterIni
         layout.separator()
         layout.row {
             comment(
-                comment = ComposeProjectWizardBundle.message("compose.multiplatform.template", MULTIPLATFORM_TEMPLATE_LINK),
+                comment = ComposeProjectWizardBundle.message("compose.multiplatform.wizard", MULTIPLATFORM_WIZARD_LINK),
                 maxLineLength = 50
             )
         }

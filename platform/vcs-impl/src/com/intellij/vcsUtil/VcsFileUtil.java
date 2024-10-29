@@ -11,14 +11,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThrowableConsumer;
-import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
@@ -489,11 +487,4 @@ public final class VcsFileUtil {
     }
     return rc.toString();
   }
-
-  /**
-   * @deprecated Use {@link ChangesUtil#CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY}
-   */
-  @Deprecated(forRemoval = true)
-  public static final HashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
-    ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 }

@@ -1,4 +1,5 @@
 // "Create class 'Foo'" "true"
+// K2 TODO: improve generated class type arguments when "expected type" is fixed
 open class A
 interface I
 

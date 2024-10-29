@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.execution.Location
@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.client.currentSession
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.Companion.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.fileTypes.FileTypes
@@ -36,7 +37,6 @@ import com.intellij.ui.tree.AsyncTreeModel
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.StructureTreeModel
 import com.intellij.ui.tree.TreeVisitor
-import com.intellij.util.Alarm.ThreadToUse
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.SingleAlarm
@@ -64,10 +64,16 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val state = BookmarksViewState.getInstance(project)
   private val preview = DescriptorPreview(this, false, project.currentSession)
 
-  private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, this, ThreadToUse.SWING_THREAD, stateForComponent(this))
+  private val selectionAlarm = SingleAlarm(
+    //maybe readaction
+    task = { WriteIntentReadAction.run(this::selectionChanged) },
+    delay = 50,
+    parentDisposable = this,
+    modalityState = stateForComponent(this),
+  )
 
   private val structure = BookmarksTreeStructure(this)
-  val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
+  internal val model: StructureTreeModel<BookmarksTreeStructure> = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree: DnDAwareTree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()

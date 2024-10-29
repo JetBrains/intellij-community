@@ -8,7 +8,9 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DirtyFiles {
   private val myDirtyFiles = ContainerUtil.createLockFreeCopyOnWriteList<Pair<Project, ProjectDirtyFiles>>()
   private val myDirtyFilesWithoutProject = ProjectDirtyFiles()
@@ -77,6 +79,7 @@ class DirtyFiles {
   }
 }
 
+@ApiStatus.Internal
 class ProjectDirtyFiles {
   private val filesSet: ConcurrentBitSet = ConcurrentBitSet.create()
 

@@ -3,6 +3,7 @@ package com.intellij.ide.lightEdit;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -26,6 +27,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,7 @@ import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class LightEditorManagerImpl implements LightEditorManager, Disposable {
   private static final Logger LOG = Logger.getInstance(LightEditorManagerImpl.class);
 
@@ -81,7 +84,7 @@ public final class LightEditorManagerImpl implements LightEditorManager, Disposa
         ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(@NotNull Editor editor) {
-            checkUpdate(editor);
+            WriteIntentReadAction.run((Runnable)() -> checkUpdate(editor));
           }
         }, this);
       }

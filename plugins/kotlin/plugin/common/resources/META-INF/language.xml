@@ -2,8 +2,6 @@
   <extensions defaultExtensionNs="com.intellij">
     <lang.braceMatcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinPairedBraceMatcher"/>
 
-    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
-
     <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
 
     <inspection.basicVisitor class="org.jetbrains.kotlin.psi.KtVisitorVoid"/>

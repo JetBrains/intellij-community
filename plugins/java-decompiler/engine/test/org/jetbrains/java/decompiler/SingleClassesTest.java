@@ -1,31 +1,16 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
-import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.jetbrains.java.decompiler.DecompilerTestFixture.assertFilesEqual;
-import static org.junit.Assert.assertTrue;
-
-public class SingleClassesTest {
-  private DecompilerTestFixture fixture;
-
+public class SingleClassesTest extends SingleClassesTestBase {
   /*
    * Set individual test duration time limit to 60 seconds.
    * This will help us to test bugs hanging decompiler.
@@ -33,24 +18,23 @@ public class SingleClassesTest {
   @Rule
   public Timeout globalTimeout = Timeout.seconds(60);
 
-  @Before
-  public void setUp() throws IOException {
-    fixture = new DecompilerTestFixture();
-    fixture.setUp(Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                         IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
-                         IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
-                         IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
-                         IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1",
-                         IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1"
-    ));
+  @Override
+  protected Map<String, String> getDecompilerOptions() {
+    return Map.of(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
+                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1",
+                  IFernflowerPreferences.VERIFY_ANONYMOUS_CLASSES, "1",
+                  IFernflowerPreferences.CONVERT_PATTERN_SWITCH, "1",
+                  IFernflowerPreferences.CONVERT_RECORD_PATTERN, "1",
+                  IFernflowerPreferences.INLINE_SIMPLE_LAMBDAS, "1",
+                  IFernflowerPreferences.CHECK_CLOSABLE_INTERFACE, "0",
+                  IFernflowerPreferences.HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "0"
+                  //IFernflowerPreferences.INCLUDE_ENTIRE_CLASSPATH, "1"
+    );
   }
 
-  @After
-  public void tearDown() throws IOException {
-    fixture.tearDown();
-    fixture = null;
-  }
-
+  @Test public void testGenerics() { doTest("pkg/TestGenerics"); }
+  @Test public void testEnhancedForLoops() { doTest("pkg/TestEnhancedForLoops"); }
   @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
@@ -71,6 +55,7 @@ public class SingleClassesTest {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("pkg/TestConstants");
   }
+
   @Test public void testInteger() {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("java/lang/Integer");
@@ -181,6 +166,7 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+  @Test public void testTryWithResources() { doTest("pkg/TestTryWithResources"); }
   @Test public void testRootWithClassInner() { doTest("sealed/RootWithClassInner"); }
   @Test public void testRootWithInterfaceInner() { doTest("sealed/RootWithInterfaceInner"); }
   @Test public void testRootWithClassOuter() { doTest("sealed/RootWithClassOuter",
@@ -254,56 +240,18 @@ public class SingleClassesTest {
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }
-
   @Test public void testSwitchOnStatic() { doTest("pkg/SwitchOnStatic"); }
-
+  @Test public void testCompoundAssignment() { doTest("pkg/TestCompoundAssignment"); }
   @Test public void testTryToPreserveCast() { doTest("pkg/TryToPreserveCast"); }
 
   @Test public void testPreserveAssignmentToRecord() { doTest("pkg/PreserveAssignmentToRecord"); }
   @Test public void testPreserveAssignmentToRecord2() { doTest("pkg/PreserveAssignmentToRecord2"); }
+  @Test public void testLambda() { doTest("pkg/TestLambda"); }
+  @Test public void testCustomSyntheticRecords() { doTest("pkg/TestCustomSyntheticRecords"); }
+  @Test public void testFinally() { doTest("pkg/TestFinally"); }
+  @Test public void testEnumInit() { doTest("pkg/TestEnumInit"); }
+  @Test public void testGenericInit() { doTest("pkg/TestInitGeneric"); }
+  @Test public void testNotNullRecord() { doTest("pkg/TestNotNullRecord"); }
+  @Test public void testNestedInheritor() { doTest("pkg/TestNestedInheritor"); }
 
-  private void doTest(String testFile, String... companionFiles) {
-    var decompiler = fixture.getDecompiler();
-
-    var classFile = fixture.getTestDataDir().resolve("classes/" + testFile + ".class");
-    assertThat(classFile).isRegularFile();
-    for (var file : collectClasses(classFile)) {
-      decompiler.addSource(file.toFile());
-    }
-
-    for (String companionFile : companionFiles) {
-      var companionClassFile = fixture.getTestDataDir().resolve("classes/" + companionFile + ".class");
-      assertThat(companionClassFile).isRegularFile();
-      for (var file : collectClasses(companionClassFile)) {
-        decompiler.addSource(file.toFile());
-      }
-    }
-
-    decompiler.decompileContext();
-
-    var decompiledFile = fixture.getTargetDir().resolve(classFile.getFileName().toString().replace(".class", ".java"));
-    assertThat(decompiledFile).isRegularFile();
-    assertTrue(Files.isRegularFile(decompiledFile));
-    var referenceFile = fixture.getTestDataDir().resolve("results/" + classFile.getFileName().toString().replace(".class", ".dec"));
-    assertThat(referenceFile).isRegularFile();
-    assertFilesEqual(referenceFile, decompiledFile);
-  }
-
-  static List<Path> collectClasses(Path classFile) {
-    var files = new ArrayList<Path>();
-    files.add(classFile);
-
-    var parent = classFile.getParent();
-    if (parent != null) {
-      var glob = classFile.getFileName().toString().replace(".class", "$*.class");
-      try (DirectoryStream<Path> inner = Files.newDirectoryStream(parent, glob)) {
-        inner.forEach(files::add);
-      }
-      catch (IOException e) {
-        throw new UncheckedIOException(e);
-      }
-    }
-
-    return files;
-  }
 }

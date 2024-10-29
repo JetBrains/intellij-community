@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -24,14 +25,12 @@ import com.intellij.uiDesigner.compiler.AlienFormFileException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.DataInput;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
 
@@ -79,11 +78,17 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       final BindingsCache bindingsCache = new BindingsCache(project);
 
+      ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(context.getProject());
+
       try {
         final HashMap<String, VirtualFile> class2form = new HashMap<>();
 
         for (final VirtualFile formFile : formFiles) {
           if (compilerManager.isExcludedFromCompilation(formFile)) {
+            continue;
+          }
+
+          if (!fileIndex.isUnderSourceRootOfType(formFile, Set.of(JavaSourceRootType.SOURCE, JavaSourceRootType.TEST_SOURCE))) {
             continue;
           }
 

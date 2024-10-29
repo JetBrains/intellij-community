@@ -2,10 +2,12 @@
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CompressedIntList implements IntList {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 

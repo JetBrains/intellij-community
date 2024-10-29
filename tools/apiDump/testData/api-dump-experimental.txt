@@ -1,0 +1,45 @@
+*f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion
+- *sf:Companion:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
+*f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
+f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion
+- *sf:Companion:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion$Companion
+*f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion$Companion
+*c:com.intellij.tools.apiDump.testData.JExperimentalClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.JExperimentalClass$ExperimentalClass
+- <init>():V
+*pc:com.intellij.tools.apiDump.testData.JExperimentalClass$ProtectedClass
+- p:<init>():V
+*c:com.intellij.tools.apiDump.testData.JExperimentalClass$PublicClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$ExperimentalClassD
+- <init>():V
+*pc:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$ProtectedClass
+- p:<init>():V
+*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$PublicClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$ExperimentalClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.JInners$PublicClass$ExperimentalClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.KtApiExperimentalClass
+*f:com.intellij.tools.apiDump.testData.KtApiExperimentalClass$ApiExperimentalClass
+*f:com.intellij.tools.apiDump.testData.KtApiExperimentalClass$PublicClass
+f:com.intellij.tools.apiDump.testData.KtFieldAnnotations
+- *f:apiExperimentalField:java.lang.Object
+- *f:getApiExperimentalProperty():java.lang.Object
+- *f:getApiExperimentalPropertyGetter():java.lang.Object
+- *f:getApiExperimentalPropertyGetterSetter():java.lang.Object
+- *f:setApiExperimentalPropertyGetterSetter(java.lang.Object):V
+- *f:setApiExperimentalPropertySetter(java.lang.Object):V
+*f:com.intellij.tools.apiDump.testData.KtPublicClass$ApiExperimentalClass
+*c:com.intellij.tools.apiDump.testData.experimental.JPublicClass
+- <init>():V
+*c:com.intellij.tools.apiDump.testData.experimental.JPublicClass$PublicClass
+- <init>():V
+*f:com.intellij.tools.apiDump.testData.experimental.KPublicClass
+- <init>():V
+*f:com.intellij.tools.apiDump.testData.experimental.KPublicClass$PublicClass
+- <init>():V

@@ -2,10 +2,12 @@
 package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.IntList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.vcs.log.graph.utils.impl.ByteArrayUtils.*;
 
+@ApiStatus.Internal
 public final class SmartDeltaCompressor implements IntList {
 
   @NotNull

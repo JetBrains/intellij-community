@@ -4,9 +4,9 @@ package com.siyeh.ig;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
@@ -91,6 +91,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doTest(final String testName, final String hint) {
     myFixture.configureByFile(getRelativePath() + "/" + testName + ".java");
+    IndexingTestUtil.waitUntilIndexesAreReady(getProject());
     IntentionAction action = myFixture.getAvailableIntention(hint);
     if (action == null) {
       fail("No action '"+hint+"' found among "+

@@ -427,7 +427,7 @@ public abstract class CoverageEngine {
   /**
    * @deprecated Is not used
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @Nullable
   public CoverageSuite createCoverageSuite(@NotNull CoverageRunner covRunner,
                                            @NotNull String name,

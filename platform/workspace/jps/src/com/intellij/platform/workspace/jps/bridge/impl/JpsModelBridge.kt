@@ -15,7 +15,7 @@ internal class JpsModelBridge(
   private val project: JpsProjectBridge = JpsProjectBridge(this, projectStorage, projectAdditionalData);
   private val global: JpsGlobalBridge = JpsGlobalBridge(this, globalStorage);
 
-  override fun getProject(): JpsProject = project
+  override fun getProject(): JpsProjectBridge = project
 
-  override fun getGlobal(): JpsGlobal = global
+  override fun getGlobal(): JpsGlobalBridge = global
 }

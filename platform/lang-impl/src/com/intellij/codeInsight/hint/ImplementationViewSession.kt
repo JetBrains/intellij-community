@@ -15,6 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 
 interface ImplementationViewSession : Disposable {
   val factory: ImplementationViewSessionFactory
@@ -58,6 +59,7 @@ interface ImplementationViewSessionFactory {
   }
 }
 
+@ApiStatus.Internal
 class PsiImplementationSessionViewFactory : ImplementationViewSessionFactory {
   override fun createSession(
     dataContext: DataContext,

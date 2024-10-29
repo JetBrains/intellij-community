@@ -89,7 +89,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
   /**
    * @deprecated Use {@link BaseCoverageSuite#BaseCoverageSuite(String, Project, CoverageRunner, CoverageFileProvider, long)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public BaseCoverageSuite(String name, @Nullable CoverageFileProvider fileProvider, long timestamp,
                            boolean coverageByTestEnabled, boolean branchCoverage, boolean trackTestFolders, CoverageRunner coverageRunner) {
     this(name, fileProvider, timestamp, coverageByTestEnabled, branchCoverage, trackTestFolders, coverageRunner, null);
@@ -319,7 +319,7 @@ public abstract class BaseCoverageSuite implements CoverageSuite, JDOMExternaliz
   /**
    * @deprecated Is not used
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   protected void setRunner(CoverageRunner runner) {
     myRunner = runner;
   }

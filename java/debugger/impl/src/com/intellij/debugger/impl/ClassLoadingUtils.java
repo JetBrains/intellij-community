@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.impl;
 
-import com.intellij.debugger.engine.DebugProcess;
-import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.debugger.engine.JVMNameUtil;
+import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -43,7 +40,7 @@ public final class ClassLoadingUtils {
                                  DebugProcess process,
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
-      VirtualMachineProxyImpl proxy = (VirtualMachineProxyImpl)process.getVirtualMachineProxy();
+      VirtualMachineProxyImpl proxy = ((SuspendContextImpl)context.getSuspendContext()).getVirtualMachineProxy();
       Method defineMethod =
         DebuggerUtils.findMethod(classLoader.referenceType(), "defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;");
       ((DebugProcessImpl)process).invokeInstanceMethod(context, classLoader, defineMethod,

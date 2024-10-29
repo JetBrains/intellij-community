@@ -218,31 +218,24 @@ public final class ClassUtils {
   }
 
   public static boolean isInnerClass(PsiClass aClass) {
-    final PsiClass parentClass = getContainingClass(aClass);
+    final PsiClass parentClass = PsiUtil.getContainingClass(aClass);
     return parentClass != null;
   }
 
   /**
    * @return containing class for {@code element} ignoring {@link PsiAnonymousClass} if {@code element} is located in corresponding expression list
+   * @deprecated use {@link PsiUtil#getContainingClass(PsiElement)}
    */
   @Nullable
+  @Deprecated
   public static PsiClass getContainingClass(PsiElement element) {
-    PsiClass currentClass;
-    while (true) {
-      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-      if (currentClass instanceof PsiAnonymousClass &&
-          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, false)) {
-        element = currentClass;
-      } else {
-        return currentClass;
-      }
-    }
+    return PsiUtil.getContainingClass(element);
   }
 
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {
     PsiClass outerClass = aClass;
     while (true) {
-      final PsiClass containingClass = getContainingClass(outerClass);
+      final PsiClass containingClass = PsiUtil.getContainingClass(outerClass);
       if (containingClass != null) {
         outerClass = containingClass;
       }

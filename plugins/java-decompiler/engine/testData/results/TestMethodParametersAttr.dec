@@ -26,28 +26,14 @@ public class TestMethodParametersAttr {
 
    }// 25
 
-   static enum E1 {
-      private E1(int p71) {
-         System.out.print(p71);// 44
+   class C1 {
+      C1(int p11) {
+         System.out.print(p11);
+      }// 10
+
+      void m(int p12) {
+         System.out.print(p12);// 11
       }
-   }
-
-   abstract static class C4 {
-      abstract void m1(int p61);
-
-      abstract void m2(final int p62);
-   }
-
-   abstract class C3 {
-      abstract void m1(int p51);
-
-      abstract void m2(final int p52);
-   }
-
-   interface I1 {
-      void m1(int p41);
-
-      void m2(final int p42);
    }
 
    static class C2 {
@@ -64,33 +50,62 @@ public class TestMethodParametersAttr {
       }
    }
 
-   class C1 {
-      C1(int p11) {
-         System.out.print(p11);
-      }// 10
+   abstract class C3 {
+      abstract void m1(int p51);
 
-      void m(int p12) {
-         System.out.print(p12);// 11
+      abstract void m2(final int p52);
+   }
+
+   abstract static class C4 {
+      abstract void m1(int p61);
+
+      abstract void m2(final int p62);
+   }
+
+   static enum E1 {
+      private E1(int p71) {
+         System.out.print(p71);// 44
       }
+   }
+
+   interface I1 {
+      void m1(int p41);
+
+      void m2(final int p42);
    }
 }
 
 class 'pkg/TestMethodParametersAttr' {
    method '<init> (I)V' {
       4      4
+      5      4
+      6      4
+      7      4
       8      4
+      9      4
+      a      4
       b      5
    }
 
    method 'm1 (I)V' {
       0      8
+      1      8
+      2      8
+      3      8
       4      8
+      5      8
+      6      8
       7      9
    }
 
    method 'm2 (I)V' {
       0      12
+      1      12
+      2      12
+      3      12
       4      12
+      5      12
+      6      12
       7      13
    }
 
@@ -102,56 +117,96 @@ class 'pkg/TestMethodParametersAttr' {
 class 'pkg/TestMethodParametersAttr$1Local' {
    method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
       9      18
+      a      18
+      b      18
+      c      18
       d      18
+      e      18
+      f      18
       10      19
    }
 
    method 'm (I)V' {
       0      22
+      1      22
+      2      22
+      3      22
       4      22
+      5      22
+      6      22
       7      23
-   }
-}
-
-class 'pkg/TestMethodParametersAttr$E1' {
-   method '<init> (Ljava/lang/String;II)V' {
-      6      30
-      a      30
-      d      31
-   }
-}
-
-class 'pkg/TestMethodParametersAttr$C2' {
-   method '<init> (I)V' {
-      4      54
-      8      54
-      b      55
-   }
-
-   method 'm1 (I)V' {
-      0      58
-      4      58
-      7      59
-   }
-
-   method 'm2 (I)V' {
-      0      62
-      4      62
-      7      63
    }
 }
 
 class 'pkg/TestMethodParametersAttr$C1' {
    method '<init> (Lpkg/TestMethodParametersAttr;I)V' {
-      9      68
-      d      68
-      10      69
+      9      30
+      a      30
+      b      30
+      c      30
+      d      30
+      e      30
+      f      30
+      10      31
    }
 
    method 'm (I)V' {
-      0      72
-      4      72
-      7      73
+      0      34
+      1      34
+      2      34
+      3      34
+      4      34
+      5      34
+      6      34
+      7      35
+   }
+}
+
+class 'pkg/TestMethodParametersAttr$C2' {
+   method '<init> (I)V' {
+      4      40
+      5      40
+      6      40
+      7      40
+      8      40
+      9      40
+      a      40
+      b      41
+   }
+
+   method 'm1 (I)V' {
+      0      44
+      1      44
+      2      44
+      3      44
+      4      44
+      5      44
+      6      44
+      7      45
+   }
+
+   method 'm2 (I)V' {
+      0      48
+      1      48
+      2      48
+      3      48
+      4      48
+      5      48
+      6      48
+      7      49
+   }
+}
+
+class 'pkg/TestMethodParametersAttr$E1' {
+   method '<init> (Ljava/lang/String;II)V' {
+      6      66
+      7      66
+      8      66
+      9      66
+      a      66
+      b      66
+      c      66
+      d      67
    }
 }
 
@@ -159,12 +214,12 @@ Lines mapping:
 5 <-> 5
 6 <-> 9
 7 <-> 13
-10 <-> 70
-11 <-> 73
-15 <-> 55
-16 <-> 59
-17 <-> 63
+10 <-> 32
+11 <-> 35
+15 <-> 41
+16 <-> 45
+17 <-> 49
 22 <-> 20
 23 <-> 23
 25 <-> 27
-44 <-> 31
+44 <-> 67

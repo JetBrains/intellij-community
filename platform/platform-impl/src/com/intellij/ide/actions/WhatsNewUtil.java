@@ -7,6 +7,7 @@ import com.intellij.openapi.updateSettings.UpdateStrategyCustomization;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
 import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class WhatsNewUtil {
   @ApiStatus.Internal
   public static boolean isWhatsNewAvailable() {

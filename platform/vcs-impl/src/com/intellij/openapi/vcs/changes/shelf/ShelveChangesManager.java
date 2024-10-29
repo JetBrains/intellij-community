@@ -44,6 +44,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
@@ -56,6 +57,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.vcs.ShelveTitlePatch;
+import com.intellij.vcs.ShelveTitleProvider;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
@@ -65,11 +68,13 @@ import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.*;
 
+import java.awt.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -85,8 +90,6 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.getPredefinedChang
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.createShelvedChangesFromFilePatches;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.SHELF;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.computeWithSpan;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.computeWithSpanThrows;
 import static com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil.runWithSpanThrows;
 
@@ -364,9 +367,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     LOG.debug("Shelving of " + changes.size() + " changes...");
 
     try {
-      return computeWithSpanThrows(myTracer, Shelve.TotalShelving.getName(), (span) -> {
-        span.setAttribute("changesSize", changes.size());
-
+      return computeWithSpanThrows(myTracer.spanBuilder(Shelve.TotalShelving.getName()).setAttribute("changesSize", changes.size()), __ -> {
         Path schemePatchDir = generateUniqueSchemePatchDir(commitMessage, true);
         List<Change> textChanges = new ArrayList<>();
         final List<ShelvedBinaryFile> binaryFiles = new ArrayList<>();
@@ -393,6 +394,11 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         ShelvedChangeList changeList = new ShelvedChangeList(patchFile, commitMessage.replace('\n', ' '), binaryFiles,
                                                              createShelvedChangesFromFilePatches(myProject, patchFile, patches));
         changeList.markToDelete(markToBeDeleted);
+
+        if (Registry.is("llm.vcs.shelve.title.generation")) {
+          suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
+        }
+
         changeList.setName(schemePatchDir.getFileName().toString());
         ProgressManager.checkCanceled();
         schemeManager.addScheme(changeList, false);
@@ -404,6 +410,14 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
     catch (Exception e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private void suggestBetterName(@NotNull ShelveTitlePatch patch, @NotNull Consumer<String> rename) {
+    for (@NotNull ShelveTitleProvider provider : ShelveTitleProvider.Companion.getEP_NAME().getExtensionList()) {
+      if (provider.suggestTitle(myProject, patch, rename)) {
+        return;
+      }
     }
   }
 
@@ -424,32 +438,30 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
       batchIndex++;
       int finalBatchIndex = batchIndex;
       try {
-        runWithSpanThrows(myTracer, Shelve.BatchShelving.getName(), (span) -> {
-          span.setAttribute("batch", finalBatchIndex);
-
+        runWithSpanThrows(myTracer.spanBuilder(Shelve.BatchShelving.getName()).setAttribute("batch", finalBatchIndex), ignored -> {
           try {
             if (baseContentsPreloadSize > 0) {
-              runWithSpan(myTracer, Shelve.PreloadingBaseRevisions.getName(), (preloadSpan) -> {
-                preloadSpan.setAttribute("changesSize", list.size());
+              TraceKt.use(myTracer.spanBuilder(Shelve.PreloadingBaseRevisions.getName()).setAttribute("changesSize", list.size()), __ -> {
                 preloadBaseRevisions(list);
+                return null;
               });
             }
 
             ProgressManager.checkCanceled();
-            runWithSpanThrows(myTracer, Shelve.BuildingPatches.getName(), (__) -> {
+            runWithSpanThrows(myTracer.spanBuilder(Shelve.BuildingPatches.getName()), __ -> {
               patches.addAll(IdeaTextPatchBuilder
                                .buildPatch(myProject, list, ProjectKt.getStateStore(myProject).getProjectBasePath(), false,
                                            honorExcludedFromCommit));
             });
             ProgressManager.checkCanceled();
 
-            CommitContext commitContext = computeWithSpan(myTracer, Shelve.StoringBaseRevision.getName(), (__) -> {
+            CommitContext commitContext = TraceKt.use(myTracer.spanBuilder(Shelve.StoringBaseRevision.getName()), __ -> {
               CommitContext context = new CommitContext();
               baseRevisionsOfDvcsIntoContext(list, context);
               return context;
             });
 
-            runWithSpanThrows(myTracer, Shelve.StoringPathFile.getName(), (__) -> {
+            runWithSpanThrows(myTracer.spanBuilder(Shelve.StoringPathFile.getName()), __ -> {
               savePatchFile(myProject, patchFile, patches, null, commitContext);
             });
           }
@@ -495,9 +507,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   private void rollbackChangesAfterShelve(@NotNull Collection<? extends Change> changes, boolean honorExcludedFromCommit) {
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
-    runWithSpan(myTracer, Shelve.RollbackAfterShelve.getName(), (__) -> {
+    TraceKt.use(myTracer.spanBuilder(Shelve.RollbackAfterShelve.getName()), __ -> {
       new RollbackWorker(myProject, operationName, modalContext)
         .doRollback(changes, true, null, VcsBundle.message("activity.name.shelve"), VcsActivity.Shelve, honorExcludedFromCommit);
+      return null;
     });
   }
 
@@ -835,6 +848,12 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         }
       }
     }.queue();
+  }
+
+  public void showGotItTooltip(@NotNull Project project, @Nullable Component component) {
+    if (component != null) {
+      ShelveTitleProvider.showGotItTooltip(project, component);
+    }
   }
 
   private void rememberShelvingFiles(@NotNull Collection<? extends Change> changes) {
@@ -1342,6 +1361,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return textFilePatches;
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   public static void unshelveSilentlyWithDnd(@NotNull Project project,
                                              @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,

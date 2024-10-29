@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.restructuredtext.spellchecker;
 
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
@@ -13,7 +14,7 @@ import com.intellij.spellchecker.tokenizer.Tokenizer;
 import org.jetbrains.annotations.NotNull;
 
 
-public class RestSpellcheckerStrategy extends SpellcheckingStrategy {
+public class RestSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
   private static final Tokenizer<PsiElement> REST_ELEMENT_TOKENIZER = new Tokenizer<>() {
     @Override
     public void tokenize(@NotNull PsiElement element, @NotNull TokenConsumer consumer) {

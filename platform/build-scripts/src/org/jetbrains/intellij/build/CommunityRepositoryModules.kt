@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import org.jetbrains.intellij.build.impl.*
@@ -16,6 +15,8 @@ import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.copyFileToDir
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 import org.jetbrains.intellij.build.python.PythonCommunityPluginModules
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.nio.file.Path
 import java.util.*
@@ -25,6 +26,9 @@ object CommunityRepositoryModules {
    * Specifies non-trivial layout for all plugins that sources are located in 'community' and 'contrib' repositories
    */
   val COMMUNITY_REPOSITORY_PLUGINS: PersistentList<PluginLayout> = persistentListOf(
+    pluginAuto("intellij.json") { spec ->
+      spec.withModule("intellij.json.split", "json-split.jar")
+    },
     pluginAuto("intellij.yaml") { spec ->
       spec.withModule("intellij.yaml.editing", "yaml-editing.jar")
     },
@@ -86,6 +90,7 @@ object CommunityRepositoryModules {
       spec.withModuleLibrary("RMI Stubs", "intellij.xslt.debugger.rt", "rmi-stubs.jar")
     },
     plugin("intellij.maven") { spec ->
+      spec.withModule("intellij.idea.community.build.dependencies")
       spec.withModule("intellij.maven.jps")
       spec.withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
       spec.withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
@@ -98,7 +103,9 @@ object CommunityRepositoryModules {
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
       spec.withModuleLibrary(libraryName = "apache.maven.wagon.provider.api:3.5.2", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
-      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common:3.2.1", moduleName = "intellij.maven.server.indexer",
+      spec.withModuleLibrary(libraryName = "apache.maven.archetype.common-no-trans:3.2.1", moduleName = "intellij.maven.server.indexer",
+                             relativeOutputPath = "intellij.maven.server.indexer/lib")
+      spec.withModuleLibrary(libraryName = "apache.maven.archetype.catalog-no-trans:321", moduleName = "intellij.maven.server.indexer",
                              relativeOutputPath = "intellij.maven.server.indexer/lib")
 
       spec.withModule("intellij.maven.artifactResolver.m31", "artifact-resolver-m31.jar")
@@ -208,7 +215,8 @@ object CommunityRepositoryModules {
         "intellij.driver.client"
       )
     ),
-    pluginAuto(listOf("intellij.performanceTesting.ui"))
+    pluginAuto(listOf("intellij.performanceTesting.ui")),
+    githubPlugin("intellij.vcs.github.community", kind = "community"),
   )
 
   val CONTRIB_REPOSITORY_PLUGINS: List<PluginLayout> = java.util.List.of(
@@ -273,10 +281,12 @@ object CommunityRepositoryModules {
     SupportedDistribution(os = OsFamily.LINUX, arch = JvmArchitecture.x64),
   )
 
-  private fun createAndroidPluginLayout(mainModuleName: String,
-                                        additionalModulesToJars: Map<String, String> = emptyMap(),
-                                        allPlatforms: Boolean,
-                                        addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?): PluginLayout =
+  private fun createAndroidPluginLayout(
+    mainModuleName: String,
+    additionalModulesToJars: Map<String, String> = emptyMap(),
+    allPlatforms: Boolean,
+    addition: ((PluginLayout.PluginLayoutSpec) -> Unit)?,
+  ): PluginLayout =
     pluginAutoWithDeprecatedCustomDirName(mainModuleName) { spec ->
       spec.directoryName = "android"
       spec.mainJarName = "android.jar"
@@ -296,8 +306,7 @@ object CommunityRepositoryModules {
       // modules:
       // adt-ui.jar
       spec.withModule("intellij.android.adt.ui.compose", "adt-ui.jar")
-      spec.withModuleLibrary("jetbrains-jewel-int-ui-standalone", "intellij.android.adt.ui.compose", "jewel-int-ui-standalone.jar")
-      spec.withModuleLibrary("jetbrains-jewel-ide-laf-bridge", "intellij.android.adt.ui.compose", "jewel-ide-laf-bridge.jar")
+      spec.withModuleLibrary("jewel-markdown-ide-laf-bridge-styling-242", "intellij.android.adt.ui.compose", "jewel-markdown-ide-laf-bridge-styling-242.jar")
       spec.withModule("intellij.android.adt.ui.model", "adt-ui.jar")
       spec.withModule("intellij.android.adt.ui", "adt-ui.jar")
 
@@ -342,6 +351,8 @@ object CommunityRepositoryModules {
       //tools/adt/idea/connection-assistant:connection-assistant <= REMOVED
       spec.withModule("intellij.android.adb", "android.jar")
       spec.withModule("intellij.android.adb.ui", "android.jar")
+      spec.withModule("intellij.android.backup", "android.jar")
+      spec.withModule("intellij.android.backup.api", "android.jar")
       spec.withModule("intellij.android.lint", "android.jar")
       spec.withModule("intellij.android.templates", "android.jar")
       spec.withModule("intellij.android.apkanalyzer", "android.jar")
@@ -426,6 +437,7 @@ object CommunityRepositoryModules {
       //tools/adt/idea/whats-new-assistant:whats-new-assistant <= REMOVED
       spec.withModule("intellij.android.app-inspection.inspectors.network.ide", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.model", "android.jar")
+      spec.withModuleLibrary("brotli-dec", "intellij.android.app-inspection.inspectors.network.model", "android.jar")
       spec.withModule("intellij.android.app-inspection.inspectors.network.view", "android.jar")
       spec.withModule("intellij.android.server-flags", "android.jar")
       spec.withModule("intellij.android.codenavigation", "android.jar")
@@ -633,13 +645,16 @@ object CommunityRepositoryModules {
     }
   }
 
-  fun githubPlugin(mainModuleName: String): PluginLayout {
+  fun githubPlugin(mainModuleName: String, kind: String): PluginLayout {
     return plugin(mainModuleName) { spec ->
-      spec.directoryName = "vcs-github"
+      spec.directoryName = "vcs-github-$kind"
       spec.mainJarName = "vcs-github.jar"
       spec.withModules(listOf(
         "intellij.vcs.github"
       ))
+      spec.withCustomVersion { _, version, _ ->
+        PluginVersionEvaluatorResult(pluginVersion = "$version-$kind")
+      }
     }
   }
 
@@ -670,7 +685,7 @@ object CommunityRepositoryModules {
 
 private suspend fun copyAnt(pluginDir: Path, context: BuildContext): List<DistributionFileEntry> {
   val antDir = pluginDir.resolve("dist")
-  return TraceManager.spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).useWithScope {
+  return spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()).use {
     val sources = ArrayList<ZipSource>()
     val libraryData = ProjectLibraryData(libraryName = "Ant", packMode = LibraryPackMode.MERGED, reason = "ant")
     copyDir(

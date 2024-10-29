@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -129,14 +129,13 @@ public final class BatchEvaluator {
         return false;
       }
 
-      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
-      DebuggerUtilsEx.setValuesNoCheck(argArray, values);
-      String value = DebuggerUtils.processCollectibleValue(
+      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values, evaluationContext);
+      String value = DebuggerUtils.getInstance().processCollectibleValue(
         () -> ((DebugProcessImpl)debugProcess).invokeMethod(
           evaluationContext, myBatchEvaluatorClass, myBatchEvaluatorMethod, Collections.singletonList(argArray),
           MethodImpl.SKIP_ASSIGNABLE_CHECK, true),
-        result -> result instanceof StringReference ? ((StringReference)result).value() : null
-      );
+        result -> result instanceof StringReference ? ((StringReference)result).value() : null,
+        evaluationContext);
       if (value != null) {
         byte[] bytes = value.getBytes(StandardCharsets.ISO_8859_1);
         try (DataInputStream dis = new DataInputStream(new ByteArrayInputStream(bytes))) {
@@ -164,7 +163,7 @@ public final class BatchEvaluator {
         return true;
       }
     }
-    catch (ClassNotLoadedException | ObjectCollectedException | EvaluateException | InvalidTypeException e) {
+    catch (ObjectCollectedException | EvaluateException e) {
       LOG.debug(e);
     }
     return false;

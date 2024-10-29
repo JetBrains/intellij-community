@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.fileTemplates.actions;
 
 import com.intellij.openapi.util.Pair;
@@ -22,7 +22,7 @@ public final class AttributesDefaults {
   private final Map<String, Pair<String, TextRange>> myNamesToValueAndRangeMap = new HashMap<>();
   private Properties myDefaultProperties = null;
   private boolean myFixedName;
-  @Nullable private Map<String, @Nls String> myAttributesVisibleNames = null;
+  private @Nullable Map<String, @Nls String> myAttributesVisibleNames = null;
 
   public AttributesDefaults() {
     this(null, null);
@@ -37,13 +37,11 @@ public final class AttributesDefaults {
     myDefaultRange = defaultRange;
   }
 
-  @Nullable
-  public String getDefaultFileName() {
+  public @Nullable String getDefaultFileName() {
     return myDefaultName;
   }
 
-  @Nullable
-  public TextRange getDefaultFileNameSelection() {
+  public @Nullable TextRange getDefaultFileNameSelection() {
     return myDefaultRange;
   }
 
@@ -66,14 +64,12 @@ public final class AttributesDefaults {
     return myDefaultProperties;
   }
 
-  @Nullable
-  public TextRange getRangeFor(@NotNull String attributeKey) {
+  public @Nullable TextRange getRangeFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return Pair.getSecond(valueAndRange);
   }
 
-  @Nullable
-  public String getDefaultValueFor(@NotNull String attributeKey) {
+  public @Nullable String getDefaultValueFor(@NotNull String attributeKey) {
     final Pair<String, TextRange> valueAndRange = myNamesToValueAndRangeMap.get(attributeKey);
     return Pair.getFirst(valueAndRange);
   }
@@ -82,8 +78,7 @@ public final class AttributesDefaults {
     myAttributesVisibleNames = visibleNames;
   }
 
-  @Nullable
-  public Map<String, @Nls String> getAttributeVisibleNames() {
+  public @Nullable Map<String, @Nls String> getAttributeVisibleNames() {
     return myAttributesVisibleNames;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.openapi.project.Project;
@@ -22,15 +22,13 @@ public final class ChooseByNameLanguageFilter extends ChooseByNameFilter<Languag
     return value.getDisplayName();
   }
 
-  @Nullable
   @Override
-  protected Icon iconForFilterValue(@NotNull LanguageRef value) {
+  protected @Nullable Icon iconForFilterValue(@NotNull LanguageRef value) {
     return value.getIcon();
   }
 
-  @NotNull
   @Override
-  protected Collection<LanguageRef> getAllFilterValues() {
+  protected @NotNull Collection<LanguageRef> getAllFilterValues() {
     return LanguageRef.forAllLanguages();
   }
 }

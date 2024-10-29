@@ -1,7 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
+import com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.openapi.actionSystem.DataContext
@@ -11,12 +12,12 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.util.PsiUtilBase
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
 import kotlin.random.Random
 
@@ -54,42 +55,121 @@ sealed interface TypingEvent {
 }
 
 /**
- * Be aware that creating your own event is unsafe for a while and might face compatibility issues
+ * Represents an event that occurs in the editor and directly affects inline completion.
+ *
+ * The `InlineCompletionEvent` interface serves two primary purposes:
+ * 1. To invoke inline completion and create a new session. See [InlineCompletionProvider.isEnabled].
+ * 2. To update the currently rendered inline completion. See [InlineCompletionSuggestionUpdateManager].
+ *
+ * Some events may have restrictions (either natural or technical) and might not be usable for both purposes.
+ *
+ * **Note:** Please do not extend this interface outside the IntelliJ platform. If custom functionality is needed,
+ * use [ManualCall] instead. At some point, this interface might become `sealed`.
  */
+@ApiStatus.NonExtendable
 interface InlineCompletionEvent {
 
-  @RequiresBlockingContext
   fun toRequest(): InlineCompletionRequest?
 
   /**
-   * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
+   * Indicates that this event can trigger only a provider with [providerId].
+   * Other providers will not be asked for this event.
    */
-  class DirectCall(
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  sealed interface WithSpecificProvider {
+    // Inheritors should not leak this to the public API as the way we 'filter' providers may change in the future.
+    @get:ApiStatus.Internal
+    val providerId: InlineCompletionProviderID
+  }
+
+  /**
+   * A class representing a direct call in the code editor by [InsertInlineCompletionAction].
+   *
+   * Please do not invoke it directly as it has some additional semantics.
+   * Like the 'no suggestions' tooltip if providers have nothing to propose.
+   * It should be used only when a user explicitly invokes the inline completion.
+   *
+   * Use [ManualCall] instead as it guarantees that exactly your provider is going to be called.
+   */
+  class DirectCall @ApiStatus.Internal constructor(
     val editor: Editor,
     val caret: Caret,
     val context: DataContext? = null,
   ) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val offset = runReadAction { caret.offset }
-      val project = editor.project ?: return null
-      val file = getPsiFile(caret, project) ?: return null
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset)
+      return getRequest(event = this, editor = editor, specificCaret = caret)
     }
   }
 
   /**
-   * Represents a non-dummy not empty document event call in the editor.
+   * Event for manually calling a specific provider.
+   *
+   * This event should be the sole event called manually. [additionalData] (not stable) can be used to differentiate
+   * various purposes for manual calls.
+   *
+   * Only the provider with [providerId] will be asked, no other providers.
+   *
+   * Remote Development policy: TBD.
+   *
+   * Implementation notes: you still need to support this event in [InlineCompletionProvider.isEnabled].
+   *
+   * @param editor The editor instance.
+   * @param providerId The ID of the specific provider to be triggered.
+   * @param additionalData The data context for the call (not stable).
+   */
+  @ApiStatus.Experimental
+  class ManualCall(
+    val editor: Editor,
+
+    @ApiStatus.Internal
+    override val providerId: InlineCompletionProviderID,
+
+    @ApiStatus.Experimental
+    val additionalData: UserDataHolder,
+  ) : InlineCompletionEvent, WithSpecificProvider {
+
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+
+    @ApiStatus.Internal
+    companion object
+  }
+
+  /**
+   * Represents a typing in an editor.
    *
    * Since document changes are hard to correctly track, it's forbidden to create them outside this module.
    */
   class DocumentChange @ApiStatus.Internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val project = editor.project ?: return null
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
+      return getRequest(
+        event = this,
+        editor = editor,
+        specificStartOffset = typing.range.startOffset,
+        specificEndOffset = typing.range.endOffset
+      )
+    }
+  }
 
-      val file = getPsiFile(caretModel.currentCaret, project) ?: return null
-      return InlineCompletionRequest(this, file, editor, editor.document, typing.range.startOffset, typing.range.endOffset)
+  /**
+   * Represents a backspace hit for removal of characters in an editor. Backspace is allowed if:
+   * * There is no selection
+   * * There is only one caret
+   * * Only one character is removed
+   *
+   * More or fewer cases may be supported in the future.
+   *
+   * It is triggered after the backspace is processed.
+   *
+   * **Note**: for now, it's impossible to update a session with this event. Inline Completion will be hidden once a backspace is pressed.
+   */
+  @ApiStatus.Experimental
+  class Backspace internal constructor(val editor: Editor) : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? {
+      // TODO offset?
+      return getRequest(event = this, editor = editor)
     }
   }
 
@@ -101,7 +181,7 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  class LookupChange(override val event: LookupEvent) : InlineLookupEvent {
+  class LookupChange @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent {
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -112,23 +192,53 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
-  class LookupCancelled(override val event: LookupEvent) : InlineLookupEvent
+  class LookupCancelled @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent
 
   sealed interface InlineLookupEvent : InlineCompletionEvent {
+
     val event: LookupEvent
+
     override fun toRequest(): InlineCompletionRequest? {
       val editor = runReadAction { event.lookup?.editor } ?: return null
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
+      return getRequest(
+        event = this,
+        editor = editor,
+        getLookupElement = { event.item }
+      )
+    }
+  }
 
-      val project = editor.project ?: return null
+  /**
+   * Indicates that another Inline Completion suggestion is inserted.
+   *
+   * Cannot be used as an 'update event' in
+   * [com.intellij.codeInsight.inline.completion.suggestion.InlineCompletionSuggestionUpdateManager],
+   * because this event means that a session is finished.
+   *
+   * For now, only [providerId] can start a session with this event **by design**. This decision may be changed later.
+   *
+   * @param providerId the provider whose completion is inserted.
+   */
+  @ApiStatus.Experimental
+  class SuggestionInserted internal constructor(
+    val editor: Editor,
 
-      val (file, offset) = runReadAction {
-        getPsiFile(caretModel.currentCaret, project) to caretModel.offset
-      }
-      if (file == null) return null
+    @ApiStatus.Internal
+    override val providerId: InlineCompletionProviderID,
+  ) : InlineCompletionEvent, WithSpecificProvider {
 
-      return InlineCompletionRequest(this, file, editor, editor.document, offset, offset, event.item)
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
+    }
+  }
+
+  /**
+   * Triggered by insertion of templates, like Live Templates.
+   */
+  @ApiStatus.Experimental
+  class TemplateInserted internal constructor(val editor: Editor) : InlineCompletionEvent {
+    override fun toRequest(): InlineCompletionRequest? {
+      return getRequest(event = this, editor = editor)
     }
   }
 
@@ -136,18 +246,9 @@ interface InlineCompletionEvent {
   @ApiStatus.Experimental
   sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
     override fun toRequest(): InlineCompletionRequest? {
-      val caretModel = editor.caretModel
-      if (caretModel.caretCount != 1) return null
       val session = InlineCompletionSession.getOrNull(editor) ?: return null
-      return InlineCompletionRequest(
-        this,
-        session.request.file,
-        editor,
-        editor.document,
-        caretModel.offset,
-        caretModel.offset, // It depends on specific insertion implementation, so no way to guess it here
-        lookupElement = null
-      )
+      // Offset depends on specific insertion implementation, so no way to guess it here
+      return getRequest(event = this, editor = editor, specificFile = session.request.file)
     }
   }
 
@@ -170,7 +271,6 @@ interface InlineCompletionEvent {
   class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
 }
 
-@RequiresBlockingContext
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
   return runReadAction {
     val file = PsiDocumentManager.getInstance(project).getPsiFile(caret.editor.document) ?: return@runReadAction null
@@ -190,4 +290,33 @@ private fun getPsiFile(caret: Caret, project: Project): PsiFile? {
 
 private fun PsiFile.isLoadedInMemory(): Boolean {
   return (this as? PsiFileImpl)?.treeElement != null
+}
+
+private inline fun getRequest(
+  event: InlineCompletionEvent,
+  editor: Editor,
+  specificFile: PsiFile? = null,
+  specificCaret: Caret? = null,
+  specificStartOffset: Int? = null,
+  specificEndOffset: Int? = null,
+  crossinline getLookupElement: () -> LookupElement? = { null },
+): InlineCompletionRequest? {
+  return runReadAction {
+    if (editor.caretModel.caretCount != 1) {
+      return@runReadAction null
+    }
+    val caret = specificCaret ?: editor.caretModel.currentCaret
+    val project = editor.project ?: return@runReadAction null
+    val file = specificFile ?: getPsiFile(caret, project) ?: return@runReadAction null
+    val offset = caret.offset
+    InlineCompletionRequest(
+      event = event,
+      file = file,
+      editor = editor,
+      document = editor.document,
+      startOffset = specificStartOffset ?: offset,
+      endOffset = specificEndOffset ?: offset,
+      lookupElement = getLookupElement()
+    )
+  }
 }

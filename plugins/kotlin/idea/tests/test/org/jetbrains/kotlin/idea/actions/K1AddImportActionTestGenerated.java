@@ -167,6 +167,16 @@ public abstract class K1AddImportActionTestGenerated extends AbstractK1AddImport
             runTest("testData/idea/actions/kotlinAddImportAction/Nullable3.kt");
         }
 
+        @TestMetadata("operatorGetValueAndSetValueExtension.kt")
+        public void testOperatorGetValueAndSetValueExtension() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/operatorGetValueAndSetValueExtension.kt");
+        }
+
+        @TestMetadata("operatorGetValueExtension.kt")
+        public void testOperatorGetValueExtension() throws Exception {
+            runTest("testData/idea/actions/kotlinAddImportAction/operatorGetValueExtension.kt");
+        }
+
         @TestMetadata("OverloadsPresent.kt")
         public void testOverloadsPresent() throws Exception {
             runTest("testData/idea/actions/kotlinAddImportAction/OverloadsPresent.kt");

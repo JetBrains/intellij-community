@@ -8,7 +8,9 @@ import com.intellij.framework.detection.impl.FrameworkDetectorRegistry
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DetectionExcludesConfigImporter: ConfigurationHandler {
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
     val excludedIds = configuration.find("frameworkDetectionExcludes") as? List<*> ?: return

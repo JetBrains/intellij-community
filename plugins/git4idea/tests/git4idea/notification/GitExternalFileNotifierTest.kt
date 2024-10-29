@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.notification
 
+import com.intellij.idea.IJIgnore
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsBundle
@@ -41,6 +42,7 @@ class GitExternalFileNotifierTest : GitSingleRepoTest() {
     assertNotificationByMessage(VcsBundle.message("external.files.add.notification.message", vcs.displayName))
   }
 
+  @IJIgnore(issue = "IJPL-158905")
   fun `test no notification after branch checkout`() {
     val worker = GitBranchWorker(project, git, GitBranchWorkerTest.TestUiHandler(project))
 

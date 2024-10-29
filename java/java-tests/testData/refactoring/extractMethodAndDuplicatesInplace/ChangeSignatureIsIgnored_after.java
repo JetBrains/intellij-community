@@ -1,10 +1,10 @@
 class SomeClass {
 
     public boolean test(String filePath) {
-        return isaBoolean(filePath);
+        return isABoolean(filePath);
     }
 
-    private static boolean isaBoolean(String filePath) {
+    private static boolean isABoolean(String filePath) {
         return FileUtilRt.extensionEquals(filePath, "jar") ||
                 FileUtilRt.extensionEquals(filePath, "zip");
     }

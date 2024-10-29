@@ -9,7 +9,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 
-class ConfigAction(val controller: ImportSettingsController) : DumbAwareAction() {
+internal class ConfigAction(val controller: ImportSettingsController) : DumbAwareAction() {
   val service = SettingsService.getInstance().getJbService()
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

@@ -15,6 +15,7 @@
  */
 package git4idea.revert
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.vcs.log.VcsFullCommitDetails
@@ -23,9 +24,9 @@ import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.GitContentRevision.createRevision
 import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
-import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.test.*
+import org.junit.Test
 import java.nio.charset.Charset
 
 /**
@@ -57,7 +58,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertErrorNotification("Revert failed", """
       ${commit.id.toShortString()} ${commit.subject}
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert"))
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"))
     assertEquals("File content shouldn't change", "initial\nsecond\n", file.read())
     assertEquals("No new commits should have been created", commit.id.asString(), last())
   }
@@ -96,7 +97,7 @@ class GitRevertTest : GitSingleRepoTest() {
 
     assertErrorNotification("Revert failed","""
       ${commit1.id.toShortString()} ${commit1.subject}
-      """ + GitBundle.message("apply.changes.would.be.overwritten", "revert") + """
+      """ + GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve") + """
       """ + GitBundle.message("apply.changes.operation.successful.for.commits", "revert", 1) + """
       ${commit2.id.toShortString()} ${commit2.subject}""")
     assertFalse("File should have been deleted", rFile.exists())
@@ -260,6 +261,19 @@ class GitRevertTest : GitSingleRepoTest() {
     }
   }
 
+  fun `test staged changes prevent revert with auto-commit`() {
+    val commit = file("a.txt").create().addCommit("fix #1").details()
+    file("c.txt").create().add()
+
+    revertAutoCommit(commit)
+
+    assertErrorNotification("Revert failed",
+                            GitBundle.message("warning.your.local.changes.would.be.overwritten.by", "revert", "shelve"),
+                            listOf(IdeBundle.message("action.show.files"),
+                                   GitBundle.message("apply.changes.save.and.retry.operation", "Shelve"))
+    )
+  }
+
   private fun commitMessageForRevert(commit: VcsFullCommitDetails): String {
     return """
         Revert "${commit.subject}"
@@ -276,11 +290,11 @@ class GitRevertTest : GitSingleRepoTest() {
 
   private fun revertAutoCommit(vararg commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertOperation(project, listOf(*commit), true).execute()
+    GitRevertProcess(project, listOf(*commit), true).execute()
   }
 
   private fun `revert without auto-commit`(commit: VcsFullCommitDetails) {
     updateChangeListManager()
-    GitRevertOperation(project, listOf(commit), false).execute()
+    GitRevertProcess(project, listOf(commit), false).execute()
   }
 }

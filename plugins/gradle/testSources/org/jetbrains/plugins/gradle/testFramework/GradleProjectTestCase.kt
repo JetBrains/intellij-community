@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.testFramework
 import com.intellij.gradle.toolingExtension.util.GradleVersionUtil
 import com.intellij.openapi.externalSystem.util.runWriteActionAndGet
 import com.intellij.openapi.externalSystem.util.runWriteActionAndWait
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
@@ -23,6 +24,7 @@ abstract class GradleProjectTestCase : GradleProjectBaseTestCase() {
 
   @get:JvmName("myProject")
   val project: Project get() = gradleFixture.project
+  val module: Module get() = gradleFixture.module
   val projectRoot: VirtualFile get() = gradleFixture.fileFixture.root
   val projectPath: String get() = projectRoot.path
 

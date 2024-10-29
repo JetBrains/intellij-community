@@ -24,6 +24,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +35,7 @@ import java.util.Set;
 import static com.intellij.configurationStore.XmlSerializer.getJdomSerializer;
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
 
+@ApiStatus.Internal
 @State(
   name = "FeatureUsageStatistics",
   storages = {
@@ -259,6 +261,7 @@ public final class FeatureUsageTrackerImpl extends FeatureUsageTracker implement
     }
   }
 
+  @ApiStatus.Internal
   public static final class ProductivityUtilValidator extends CustomValidationRule {
     @Override
     public @NotNull String getRuleId() {

@@ -679,16 +679,13 @@ jQuery.cookie = function(name, value, options) {
       <xsl:if test="count(./output) > 0">
         <ul>
           <xsl:for-each select="output">
-            <xsl:variable name="displayText">
-              <xsl:for-each select="str:tokenize(text(), '&#10;')">
-                <xsl:value-of select="."/>
-                <xsl:text>&lt;br/&gt;</xsl:text>
-              </xsl:for-each>
-            </xsl:variable>
             <li class="text">
               <xsl:variable name="output-type" select="@type"/>
               <span class="{$output-type}">
-                <xsl:value-of disable-output-escaping="yes" select="$displayText"/>
+                <xsl:for-each select="str:tokenize(text(), '&#10;')">
+                  <xsl:value-of select="." />
+                  <xsl:value-of disable-output-escaping="yes" select="'&lt;br/&gt;'"/>
+                </xsl:for-each>
               </span>
             </li>
           </xsl:for-each>

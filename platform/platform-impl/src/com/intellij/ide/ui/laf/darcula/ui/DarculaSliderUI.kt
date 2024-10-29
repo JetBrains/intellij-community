@@ -5,6 +5,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.geom.GeneralPath
 import javax.swing.JComponent
@@ -13,6 +14,7 @@ import javax.swing.LookAndFeel
 import javax.swing.SwingConstants
 import javax.swing.plaf.basic.BasicSliderUI
 
+@ApiStatus.Internal
 public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JSlider) {
   companion object {
     @JvmStatic
@@ -270,6 +272,7 @@ public open class DarculaSliderUI(b: JComponent? = null) : BasicSliderUI(b as JS
 
 }
 
+@ApiStatus.Internal
 public class DarculaSliderUIThemes {
   val thumbHalfWidth: Int = JBUI.scale(7)
   val thumbHeight: Int = JBUI.scale(24)

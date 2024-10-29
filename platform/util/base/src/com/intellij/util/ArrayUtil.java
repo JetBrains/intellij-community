@@ -802,21 +802,47 @@ public final class ArrayUtil {
     return newArray(getComponentType(sample), count);
   }
 
+  /**
+   * Returns the first element of the given array, or null if the array is null or empty.
+   *
+   * @param array the array from which to retrieve the first element, may be null.
+   * @return the first element of the array, or null if the array is null or empty.
+   */
   @Contract(value = "null -> null", pure = true)
-  public static @Nullable <T> T getFirstElement(T @Nullable [] array) {
+  public static <T> @Nullable T getFirstElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[0] : null;
   }
 
+  /**
+   * Returns the last element of the provided array.
+   *
+   * @param array the array from which the last element is requested. It can be null.
+   * @return the last element of the array, or null if the array is null or empty.
+   */
   @Contract(value = "null -> null", pure=true)
-  public static <T> T getLastElement(T @Nullable [] array) {
+  public static <T> @Nullable T getLastElement(T @Nullable [] array) {
     return array != null && array.length > 0 ? array[array.length - 1] : null;
   }
 
+  /**
+   * Returns the last element of the given array. If the array is null or empty,
+   * the default value is returned.
+   *
+   * @param array the array from which to get the last element
+   * @param defaultValue the value to be returned if the array is null or empty
+   * @return the last element of the array, or the default value if the array is null or empty
+   */
   @Contract(pure=true)
   public static int getLastElement(int @Nullable [] array, int defaultValue) {
     return array == null || array.length == 0 ? defaultValue : array[array.length - 1];
   }
 
+  /**
+   * Checks if the given array is null or has no elements.
+   *
+   * @param array the array to check
+   * @return true if the array is null or empty, false otherwise
+   */
   @Contract(value = "null -> true", pure=true)
   public static <T> boolean isEmpty(T @Nullable [] array) {
     return array == null || array.length == 0;
@@ -990,7 +1016,7 @@ public final class ArrayUtil {
   /**
    * Checks the equality of two arrays, according to a custom condition. Like {@code Arrays#equals} but doesn't
    * require a comparator.
-   * 
+   *
    * @param arr1 first array
    * @param arr2 second array
    * @param equalityCondition BiPredicate that returns true if two elements are considered to be equal. Must return true

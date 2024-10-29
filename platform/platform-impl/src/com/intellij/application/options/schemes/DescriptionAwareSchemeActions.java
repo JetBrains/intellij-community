@@ -8,11 +8,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class DescriptionAwareSchemeActions<T extends Scheme> extends AbstractSchemeActions<T> {
   protected DescriptionAwareSchemeActions(@NotNull AbstractDescriptionAwareSchemesPanel<T> schemesPanel) {
     super(schemesPanel);

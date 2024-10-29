@@ -37,8 +37,10 @@ abstract class AutomaticTestMethodRenamerFactory : AutomaticRenamerFactory {
       val classPattern = Pattern.compile(".*$className.*")
       val methodPattern = Pattern.compile(".*$oldMethodName.*", Pattern.CASE_INSENSITIVE)
 
+      var count = 0
       for (eachName in ContainerUtil.newHashSet(*cache.getAllClassNames())) {
         if (classPattern.matcher(eachName).matches()) {
+          if (count ++ > 1000) break
           for (eachClass in cache.getClassesByName(eachName, moduleScope)) {
             if (TestFrameworks.detectFramework(eachClass) != null) {
               eachClass.methods.forEach {

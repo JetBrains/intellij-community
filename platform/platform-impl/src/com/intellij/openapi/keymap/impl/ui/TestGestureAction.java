@@ -3,8 +3,10 @@ package com.intellij.openapi.keymap.impl.ui;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class TestGestureAction extends AnAction implements KeyboardGestureAction, DumbAware {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

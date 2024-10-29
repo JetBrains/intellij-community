@@ -148,16 +148,6 @@ fun findPythonSdkAndModule(project: Project, contextModule: Module?): Pair<Sdk?,
   return Pair.create(sdk, module)
 }
 
-fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<String>,
-                                        workingDir: String?,
-                                        command: String): String {
-  if (workingDir != null) {
-    pythonPath.add(workingDir)
-  }
-  val path = pythonPath.joinToString(separator = ", ", transform = String::toStringLiteral)
-  return command.replace(PydevConsoleRunnerImpl.WORKING_DIR_AND_PYTHON_PATHS, path)
-}
-
 fun constructPyPathAndWorkingDirCommand(pythonPath: MutableCollection<Function<TargetEnvironment, String>>,
                                         workingDirFunction: TargetEnvironmentFunction<String>?,
                                         command: String): TargetEnvironmentFunction<String> {

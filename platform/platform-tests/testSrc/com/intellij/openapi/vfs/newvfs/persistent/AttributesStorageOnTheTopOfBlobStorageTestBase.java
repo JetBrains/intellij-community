@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import com.intellij.util.IntPair;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
@@ -165,8 +165,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
     final Long2ObjectMap<AttributeRecord> recordsReadWithForEach = readAllRecordsWithForEach(attributesStorage);
     assertEquals(
       "1 record must be read",
-      recordsReadWithForEach.size(),
-      1
+      1,
+      recordsReadWithForEach.size()
     );
 
     final AttributeRecord recordRead = recordsReadWithForEach.get(insertedRecord.uniqueId());
@@ -223,8 +223,8 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
 
     assertEquals(
       "Expect to read same version as was written",
-      attributesStorage.getVersion(),
-      version
+      version,
+      attributesStorage.getVersion()
     );
 
     for (AttributeRecord insertedRecord : insertedRecords) {
@@ -565,7 +565,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
   //TODO RC: make AttributeRecord inner class of Attributes, hence methods .store() and .delete()
   //         could be invoked through AttributeRecord itself
   //@Immutable
-  protected static class AttributeRecord {
+  public static class AttributeRecord {
     private final int attributesRecordId;
     private final int fileId;
     private final int attributeId;
@@ -685,7 +685,7 @@ public abstract class AttributesStorageOnTheTopOfBlobStorageTestBase {
    * and maintains it during insertions/updates/deletions -- this is why all modifications should go
    * through it
    */
-  protected static class Attributes {
+  public static class Attributes {
     private final Int2IntMap fileIdToAttributeRecordId = new Int2IntOpenHashMap();
 
     public AttributeRecord insertOrUpdateRecord(final AttributeRecord record,

@@ -21,7 +21,7 @@ dependencies {
 
 tasks.compileJava {
   @Suppress("SpellCheckingInspection")
-  options.compilerArgs = listOf("--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
+  options.compilerArgs = listOf("-source", "17", "-target", "17", "--add-modules=jdk.jcmd", "--add-exports=jdk.jcmd/sun.tools.jps=ALL-UNNAMED")
 }
 
 task("fatJar", type = Jar::class) {

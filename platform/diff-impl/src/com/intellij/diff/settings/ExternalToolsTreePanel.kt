@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.settings
 
 import com.intellij.diff.tools.external.ExternalDiffSettings
@@ -250,8 +250,7 @@ internal class ExternalToolsTreePanel(private val models: ExternalToolsModels) {
       })
     }
     private val programPathField = TextFieldWithBrowseButton().apply {
-      addBrowseFolderListener(DiffBundle.message("select.external.program.dialog.title"), null, null,
-                              FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor())
+      addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(DiffBundle.message("select.external.program.dialog.title")))
       textField.document.addDocumentListener(object : DocumentListener {
         override fun insertUpdate(event: DocumentEvent) {
           if (isAutocompleteToolName) {

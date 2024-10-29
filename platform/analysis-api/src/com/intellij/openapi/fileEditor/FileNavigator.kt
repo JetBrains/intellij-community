@@ -2,11 +2,9 @@
 package com.intellij.openapi.fileEditor
 
 import com.intellij.openapi.components.service
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 
 interface FileNavigator {
   companion object {
-    @RequiresBlockingContext
     @JvmStatic
     fun getInstance(): FileNavigator = service<FileNavigator>()
   }

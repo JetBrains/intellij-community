@@ -11,6 +11,7 @@ import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixUpdater;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.Language;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -151,7 +152,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     });
 
     if (!hasAvailableAction[0] && unavailableAction[0] != null) {
-      HighlightInfo.IntentionActionDescriptor emptyActionDescriptor = unavailableAction[0].copyWithEmptyAction();
+      HighlightInfo.IntentionActionDescriptor emptyActionDescriptor = unavailableAction[0].withEmptyAction();
       if (emptyActionDescriptor != null) {
         outList.add(emptyActionDescriptor);
       }
@@ -243,7 +244,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
     TemplateState state = TemplateManagerImpl.getTemplateState(myEditor);
-    if (state != null && !state.isFinished() || myEditor.isDisposed()) {
+    if (state != null && !state.isFinished() || myEditor.isDisposed() || InlinePrompt.isInlinePromptShown(myEditor)) {
       return;
     }
     IntentionsInfo intentionsInfo = new IntentionsInfo();
@@ -302,7 +303,10 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
     List<HighlightInfo> additionalInfos = new ArrayList<>();
     Document document = hostEditor.getDocument();
     int line = document.getLineNumber(offset);
-    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, 0, document.getTextLength(), info -> {
+    int lineStartOffset = document.getLineStartOffset(line);
+    int lineEndOffset = document.getLineEndOffset(line);
+    // assumption: HighlightInfo.fixRange does not extend beyond that the containing lines, otherwise it would look silly, and searching for these infos would be expensive
+    DaemonCodeAnalyzerEx.processHighlights(document, hostFile.getProject(), HighlightSeverity.INFORMATION, lineStartOffset, lineEndOffset, info -> {
       if (info.containsOffset(offset, true)) {
         infos.add(info);
       }
@@ -322,7 +326,6 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
         boolean added = false;
         for (HighlightInfo.IntentionActionDescriptor fix : additionalFixes) {
           if (!ContainerUtil.exists(fixes, descriptor -> descriptor.getAction().getText().equals(fix.getAction().getText()))) {
-            fix.setFixRange(info.getFixTextRange());
             fixes.add(fix);
             added = true;
           }
@@ -387,7 +390,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass impleme
           enableDisableIntentionAction.add(new AssignShortcutToIntentionAction(action));
         }
         HighlightInfo.IntentionActionDescriptor descriptor =
-          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null);
+          new HighlightInfo.IntentionActionDescriptor(action, enableDisableIntentionAction, null, null, null, null, null, null);
         if (!currentFixes.contains(descriptor)) {
           intentions.intentionsToShow.add(descriptor);
         }

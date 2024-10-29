@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingChooseContextAction;
@@ -26,39 +26,33 @@ import java.util.List;
  * This class provides ability to run an arbitrary activity for matched 'Run Anything' input text
  */
 public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<V> {
-  @NotNull
   @Override
-  public Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @NotNull Collection<V> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return ContainerUtil.emptyList();
   }
 
   @Override
-  @Nullable
-  public V findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @Nullable V findMatchingValue(@NotNull DataContext dataContext, @NotNull String pattern) {
     return getValues(dataContext, pattern).stream().filter(value -> StringUtil.equals(pattern, getCommand(value))).findFirst().orElse(null);
   }
 
   @Override
-  @Nullable
-  public Icon getIcon(@NotNull V value) {
+  public @Nullable Icon getIcon(@NotNull V value) {
     return null;
   }
 
   @Override
-  @Nullable
-  public String getAdText() {
+  public @Nullable String getAdText() {
     return null;
   }
 
-  @NotNull
   @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
+  public @NotNull RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull V value) {
     return new RunAnythingItemBase(getCommand(value), getIcon(value));
   }
 
-  @Nullable
   @Override
-  public RunAnythingHelpItem getHelpItem(@NotNull DataContext dataContext) {
+  public @Nullable RunAnythingHelpItem getHelpItem(@NotNull DataContext dataContext) {
     String placeholder = getHelpCommandPlaceholder();
     String commandPrefix = getHelpCommand();
     if (placeholder == null || commandPrefix == null) {
@@ -68,36 +62,29 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
   }
 
   @Override
-  @Nullable
-  public String getCompletionGroupTitle() {
+  public @Nullable String getCompletionGroupTitle() {
     return null;
   }
 
-  @Nullable
   @Override
-  public Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @Nullable Matcher getMatcher(@NotNull DataContext dataContext, @NotNull String pattern) {
     return null;
   }
 
-  @NotNull
   @Override
-  public List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return RunAnythingChooseContextAction.Companion.allContexts(RunAnythingUtil.fetchProject(dataContext));
   }
 
-  @Nullable
-  public Icon getHelpIcon() {
+  public @Nullable Icon getHelpIcon() {
     return EmptyIcon.ICON_16;
   }
 
-  @Nullable
-  @Nls
-  public @NlsContexts.DetailedDescription String getHelpDescription() {
+  public @Nullable @Nls @NlsContexts.DetailedDescription String getHelpDescription() {
     return null;
   }
 
-  @Nullable
-  public @NlsSafe String getHelpCommandPlaceholder() {
+  public @Nullable @NlsSafe String getHelpCommandPlaceholder() {
     return getHelpCommand();
   }
 
@@ -105,8 +92,7 @@ public abstract class RunAnythingProviderBase<V> implements RunAnythingProvider<
    * Null means no help command
    *
    */
-  @Nullable
-  public @NlsSafe String getHelpCommand() {
+  public @Nullable @NlsSafe String getHelpCommand() {
     return null;
   }
 }

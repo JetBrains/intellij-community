@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -19,7 +19,7 @@ long array - value offset and size pairs
 int - key data size
 int - entry count
 
-Value offsets are not sequential because MPH sorts the array but values are written in a user order.
+Value offsets are not sequential because MPH sorts the array, but values are written in a user order.
 So, besides offset, we have to store size.
 MPH does not sort values to ensure that we will map the file to memory efficiently
  (assume that the user's order groups related values together).
@@ -86,26 +86,6 @@ public abstract class Ikv implements AutoCloseable {
     }
   }
 
-  public static final class SizeUnawareIkv extends Ikv {
-    private final StrippedIntToIntMap index;
-
-    private SizeUnawareIkv(int[] metadata, ByteBuffer mappedBuffer) {
-      super(mappedBuffer);
-
-      this.index = new StrippedIntToIntMap(metadata);
-    }
-
-    // if size is known by the reader
-    public ByteBuffer getUnboundedValue(int key) {
-      int offset = index.get(key);
-      return offset == -1 ? null : getMappedBufferAt(offset).order(ByteOrder.LITTLE_ENDIAN);
-    }
-  }
-
-  public static @NotNull SizeUnawareIkv loadSizeUnawareIkv(@NotNull Path file) throws IOException {
-    return (SizeUnawareIkv)loadIkv(file);
-  }
-
   public static @NotNull SizeAwareIkv loadSizeAwareIkv(@NotNull Path file) throws IOException {
     return (SizeAwareIkv)loadIkv(file);
   }
@@ -145,16 +125,9 @@ public abstract class Ikv implements AutoCloseable {
       throw new MissingIkvException("Buffer position is negative: " + newPosition);
     }
     mappedBuffer.position(newPosition);
-    if (withSize) {
-      long[] metadata = new long[entryCount * 2];
-      mappedBuffer.asLongBuffer().get(metadata);
-      return new SizeAwareIkv(metadata, mappedBuffer);
-    }
-    else {
-      int[] metadata = new int[entryCount * 2];
-      mappedBuffer.asIntBuffer().get(metadata);
-      return new SizeUnawareIkv(metadata, mappedBuffer);
-    }
+    long[] metadata = new long[entryCount * 2];
+    mappedBuffer.asLongBuffer().get(metadata);
+    return new SizeAwareIkv(metadata, mappedBuffer);
   }
 
   @Override

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ProblemHighlightFilter {
   public static final ExtensionPointName<ProblemHighlightFilter> EP_NAME = ExtensionPointName.create("com.intellij.problemHighlightFilter");
+  private static final Logger LOG = Logger.getInstance(ProblemHighlightFilter.class);
 
   /**
    * @param psiFile file to decide about
@@ -33,6 +35,10 @@ public abstract class ProblemHighlightFilter {
   }
 
   private static boolean shouldProcess(@NotNull PsiFile psiFile, boolean onTheFly) {
-    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile));
+    return ContainerUtil.all(EP_NAME.getExtensionList(), filter -> {
+      var shouldHighlight = onTheFly ? filter.shouldHighlight(psiFile) : filter.shouldProcessInBatch(psiFile);
+      LOG.debug("shouldProcess highlight: ", shouldHighlight, " filter type: ", filter.getClass().getSimpleName());
+      return shouldHighlight;
+    });
   }
 }

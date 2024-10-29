@@ -16,12 +16,14 @@ import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.externalizer.StringCollectionExternalizer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class FrameworkDetectionIndex extends ScalarIndexExtension<String> {
   private static final Logger LOG = Logger.getInstance(FrameworkDetectionIndex.class);
   public static final ID<String, Void> NAME = ID.create("FrameworkDetectionIndex");

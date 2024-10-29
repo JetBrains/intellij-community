@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import java.util.concurrent.Callable
 
 interface BuildMessages: System.Logger {
@@ -29,10 +28,15 @@ interface BuildMessages: System.Logger {
   /**
    * Use [spanBuilder]
    */
-  @Obsolete
+  @Deprecated(message = "Use [org.jetbrains.intellij.build.telemetry.block]")
   fun block(blockName: String, task: Callable<Unit>)
 
+  /**
+   * Use [CompilationContext.notifyArtifactBuilt] instead since it respects [BuildOptions.TEAMCITY_ARTIFACTS_PUBLICATION_STEP]
+   */
   fun artifactBuilt(relativeArtifactPath: String)
+
+  fun startWritingFileToBuildLog(artifactPath: String)
 
   fun reportStatisticValue(key: String, value: String)
 
@@ -43,6 +47,4 @@ interface BuildMessages: System.Logger {
   fun getDebugLog(): String?
 
   fun close()
-
-  fun startWritingFileToBuildLog(artifactPath: String)
 }

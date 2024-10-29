@@ -14,7 +14,6 @@ import org.jetbrains.idea.maven.model.MavenArtifactNode
 import org.jetbrains.idea.maven.model.MavenArtifactState
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 
@@ -23,8 +22,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
     val projectsManager = MavenProjectsManager.getInstance(project)
     projectsManager.addProjectsTreeListener(object : MavenProjectsTree.Listener {
-      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>,
-                                   nativeMavenProject: NativeMavenProjectHolder?) {
+      override fun projectResolved(projectWithChanges: Pair<MavenProject, MavenProjectChanges>) {
         listener()
       }
     }, parentDisposable)

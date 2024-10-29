@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -19,7 +19,6 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -34,7 +33,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,8 +46,9 @@ import javax.swing.tree.TreePath;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
+import java.util.function.Function;
 
-public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
+public class XDebuggerTree extends DnDAwareTree implements UiCompatibleDataProvider, Disposable {
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
     public void componentMoved(ComponentEvent e) {
@@ -66,7 +66,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }, 100, this);
 
-  private static final Convertor<TreePath, String> SPEED_SEARCH_CONVERTER = o -> {
+  private static final Function<TreePath, String> SPEED_SEARCH_CONVERTER = o -> {
     String text = null;
     if (o != null) {
       final Object node = o.getLastPathComponent();
@@ -131,6 +131,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final TreeExpansionListener myTreeExpansionListener;
   private final XDebuggerPinToTopManager myPinToTopManager;
   private XDebuggerTreeRestorer myCurrentRestorer;
+  private @Nullable TreeSpeedSearch myTreeSpeedSearch;
 
   public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -244,19 +245,27 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   /**
+   * Called to find an element with this name in the tree and request its focus.
+   */
+  @ApiStatus.Internal
+  public void findElementAndRequestFocus(String searchQuery) {
+    if (myTreeSpeedSearch == null) return;
+    myTreeSpeedSearch.findAndSelectElement(searchQuery);
+  }
+
+  /**
    * Called from the tree constructor during initialization. Override if the speed search is not required for a derived class.
    */
   protected void installSpeedSearch() {
     if (Registry.is("debugger.variablesView.rss")) {
-      XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
+      myTreeSpeedSearch = XDebuggerTreeSpeedSearch.installOn(this, SPEED_SEARCH_CONVERTER);
     }
     else {
-      TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
+      myTreeSpeedSearch = TreeSpeedSearch.installOn(this, false, SPEED_SEARCH_CONVERTER);
     }
   }
 
-  @NotNull
-  private MouseEvent dummyMouseClickEvent() {
+  private @NotNull MouseEvent dummyMouseClickEvent() {
     return new MouseEvent(this, 0, 0, 0, 0, 0, 1, false);
   }
 
@@ -310,8 +319,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return (XDebuggerTreeNode)myTreeModel.getRoot();
   }
 
-  @Nullable
-  public XSourcePosition getSourcePosition() {
+  public @Nullable XSourcePosition getSourcePosition() {
     return mySourcePosition;
   }
 
@@ -319,23 +327,20 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     mySourcePosition = sourcePosition;
   }
 
-  @NotNull
-  public XDebuggerEditorsProvider getEditorsProvider() {
+  public @NotNull XDebuggerEditorsProvider getEditorsProvider() {
     return myEditorsProvider;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
-  @Nullable
-  public XValueMarkers<?, ?> getValueMarkers() {
+  public @Nullable XValueMarkers<?, ?> getValueMarkers() {
     return myValueMarkers;
   }
 
-  @NotNull
-  public XDebuggerPinToTopManager getPinToTopManager() {
+  @ApiStatus.Internal
+  public @NotNull XDebuggerPinToTopManager getPinToTopManager() {
     return myPinToTopManager;
   }
 
@@ -344,21 +349,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls final String dataId) {
-    if (XDEBUGGER_TREE_KEY.is(dataId)) {
-      return this;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    XValueNodeImpl[] selection = getSelectedNodes(XValueNodeImpl.class, null);
+    sink.set(XDEBUGGER_TREE_KEY, this);
+    sink.set(SELECTED_NODES, List.of(selection));
+    if (selection.length == 1 && selection[0].getFullValueEvaluator() == null) {
+      sink.set(PlatformDataKeys.PREDEFINED_TEXT, DebuggerUIUtil.getNodeRawValue(selection[0]));
     }
-    if (SELECTED_NODES.is(dataId)) {
-      return List.of(getSelectedNodes(XValueNodeImpl.class, null));
-    }
-    if (PlatformDataKeys.PREDEFINED_TEXT.is(dataId)) {
-      XValueNodeImpl[] selectedNodes = getSelectedNodes(XValueNodeImpl.class, null);
-      if (selectedNodes.length == 1 && selectedNodes[0].getFullValueEvaluator() == null) {
-        return DebuggerUIUtil.getNodeRawValue(selectedNodes[0]);
-      }
-    }
-    return null;
   }
 
   public void rebuildAndRestore(final XDebuggerTreeState treeState) {
@@ -433,8 +430,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     DebuggerUIUtil.registerActionOnComponent(XDebuggerActions.EVALUATE_EXPRESSION, this, this);
   }
 
-  @Nullable
-  public static XDebuggerTree getTree(final AnActionEvent e) {
+  public static @Nullable XDebuggerTree getTree(final AnActionEvent e) {
     return e.getData(XDEBUGGER_TREE_KEY);
   }
 

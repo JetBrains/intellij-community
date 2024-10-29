@@ -35,6 +35,11 @@ internal object MetadataStorageImpl: MetadataStorageBase() {
         
         addMetadata(typeMetadata)
         
+        typeMetadata = FinalClassMetadata.ClassMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.VFUEntitySource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false),
+OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "vfu", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = false, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
+        
+        addMetadata(typeMetadata)
+        
         typeMetadata = FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource", properties = listOf(OwnPropertyMetadata(isComputable = false, isKey = false, isOpen = false, name = "virtualFileUrl", valueType = ValueTypeMetadata.SimpleType.CustomType(isNullable = true, typeMetadata = FinalClassMetadata.KnownClass(fqName = "com.intellij.platform.workspace.storage.url.VirtualFileUrl")), withDefault = false)), supertypes = listOf("com.intellij.platform.workspace.storage.EntitySource"))
         
         addMetadata(typeMetadata)
@@ -1524,11 +1529,12 @@ FinalClassMetadata.ObjectMetadata(fqName = "com.intellij.platform.workspace.stor
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClass\$FirstSubsetSealedClassObject", metadataHash = 1315739634)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClass\$SecondSubsetSealedClassDataClass", metadataHash = -1154137807)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.currentVersion.SubsetSealedClass\$SecondSubsetSealedClassObject", metadataHash = 2030799620)
-        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -207660048)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.EntitySource", metadataHash = -755268838)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.AnotherSource", metadataHash = 1783283309)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MyDummyParentSource", metadataHash = -1458866609)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.MySource", metadataHash = -866848740)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.SampleEntitySource", metadataHash = 494124466)
+        addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.testEntities.entities.VFUEntitySource", metadataHash = 1082694884)
         addMetadataHash(typeFqn = "com.intellij.platform.workspace.storage.SymbolicEntityId", metadataHash = 2091941909)
     }
 

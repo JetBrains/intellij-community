@@ -134,7 +134,7 @@ private object Holder {
                         val singleArgument = valueArguments.single().getArgumentExpression()
                         if (singleArgument != null) {
                             analyze(call) {
-                              singleArgument.expressionType?.isChar
+                              singleArgument.expressionType?.isCharType
                             } == true
                         } else {
                             false

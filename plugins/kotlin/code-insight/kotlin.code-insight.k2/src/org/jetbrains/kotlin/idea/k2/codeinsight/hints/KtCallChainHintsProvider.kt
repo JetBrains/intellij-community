@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
+import com.intellij.codeInsight.hints.declarative.HintColorKind
+import com.intellij.codeInsight.hints.declarative.HintFormat
 import com.intellij.codeInsight.hints.declarative.InlayTreeSink
 import com.intellij.codeInsight.hints.declarative.InlineInlayPosition
 import com.intellij.psi.PsiElement
@@ -45,7 +47,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
                             // Show type for expression in call chain on the first line only if it's dot qualified
                             expressionWithType.expression.skipParenthesesAndPostfixOperatorsDown() is KtQualifiedExpression
                         } else {
-                            !expressionWithType.type.isEqualTo(prevExpressionWithType.type) ||
+                            !expressionWithType.type.semanticallyEquals(prevExpressionWithType.type) ||
                                     prevExpressionWithType.expression.skipParenthesesAndPostfixOperatorsDown() !is KtQualifiedExpression
                         }
                     }
@@ -61,7 +63,7 @@ class KtCallChainHintsProvider : AbstractKtInlayHintsProvider() {
             for ((expression, type) in reversedChain) {
                 sink.addPresentation(
                     InlineInlayPosition(expression.textRange.endOffset, relatedToPrevious = true),
-                    hasBackground = true,
+                    hintFormat = HintFormat.default,
                 ) {
                     printKtType(type)
                 }

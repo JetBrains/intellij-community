@@ -8,6 +8,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.io.DigestUtil
@@ -19,7 +20,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import java.util.concurrent.TimeUnit
 
@@ -75,7 +75,7 @@ private class CompileHttpRequestHandler : HttpRequestHandler() {
       return true
     }
 
-    if (!PsiUtil.isIdeaProject(project)) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       LOG.info("Build requests are currently handled for 'intellij' project only, so request won't be processed (query=$query)")
       HttpResponseStatus.FORBIDDEN.send(channel, request)
       return true

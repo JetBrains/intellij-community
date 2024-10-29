@@ -31,7 +31,7 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
   private val deferred = AtomicReference<Deferred<T>?>(null)
 
   val isComputed: Boolean
-    get() = true == deferred.get()?.isCompleted
+    get() = true == deferred.get()?.isCompletedNormally()
 
   /**
    * Identical to `this.getValueOrElse(null)`.
@@ -55,7 +55,7 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
     while (true) {
       val oldDeferred = deferred.get()
       return when {
-        oldDeferred == null || oldDeferred.isCompleted && oldDeferred.getCompletionExceptionOrNull() != null -> {
+        oldDeferred == null || oldDeferred.isCompletedExceptionally() -> {
           val newDeferred = CompletableDeferred<T>()
           when {
             !deferred.compareAndSet(oldDeferred, newDeferred) -> {
@@ -81,6 +81,13 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
                   newDeferred.completeWith(result)
                   // According to current logic, the error will never be re-thrown, so it should be logged explicitly.
                   result.getOrLogException(LOG)
+                }
+              }.invokeOnCompletion { cause: Throwable? ->
+                if (cause != null && !newDeferred.isCompleted) {
+                  newDeferred.completeExceptionally(cause)
+                  if (LOG.isDebugEnabled) {
+                    LOG.debug("Caching exceptional result to avoid hanging deferred", cause)
+                  }
                 }
               }
               notYet
@@ -114,6 +121,12 @@ class WslDistributionSafeNullableLazyValue<T> private constructor(private val co
       }
     }
   }
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun Deferred<T>.isCompletedNormally() = isCompleted && getCompletionExceptionOrNull() == null
+
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private fun Deferred<T>.isCompletedExceptionally() = isCompleted && getCompletionExceptionOrNull() != null
 
   companion object {
     private val LOG = logger<WslDistributionSafeNullableLazyValue<*>>()

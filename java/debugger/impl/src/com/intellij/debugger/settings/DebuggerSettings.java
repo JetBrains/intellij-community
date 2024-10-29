@@ -66,7 +66,6 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   @OptionTag("DEBUGGER_TRANSPORT")
   private int DEBUGGER_TRANSPORT;
 
-  public boolean DISABLE_JIT;
   public boolean SHOW_ALTERNATIVE_SOURCE = true;
   public volatile boolean ENABLE_MEMORY_AGENT =
     ApplicationManager.getApplication().isEAP() && !ApplicationManager.getApplication().isUnitTestMode();
@@ -80,6 +79,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
   public String RUN_HOTSWAP_AFTER_COMPILE = RUN_HOTSWAP_ASK;
   public boolean COMPILE_BEFORE_HOTSWAP = true;
   public boolean HOTSWAP_HANG_WARNING_ENABLED = false;
+  public boolean HOTSWAP_SHOW_FLOATING_BUTTON = true;
 
   public volatile boolean WATCH_RETURN_VALUES = false;
   public volatile boolean AUTO_VARIABLES_MODE = false;
@@ -169,7 +169,6 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
       TRACING_FILTERS_ENABLED == secondSettings.TRACING_FILTERS_ENABLED &&
       DEBUGGER_TRANSPORT == secondSettings.DEBUGGER_TRANSPORT &&
       StringUtil.equals(EVALUATE_FINALLY_ON_POP_FRAME, secondSettings.EVALUATE_FINALLY_ON_POP_FRAME) &&
-      DISABLE_JIT == secondSettings.DISABLE_JIT &&
       SHOW_ALTERNATIVE_SOURCE == secondSettings.SHOW_ALTERNATIVE_SOURCE &&
       KILL_PROCESS_IMMEDIATELY == secondSettings.KILL_PROCESS_IMMEDIATELY &&
       ALWAYS_DEBUG == secondSettings.ALWAYS_DEBUG &&

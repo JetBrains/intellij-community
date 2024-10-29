@@ -100,7 +100,7 @@ internal class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
   override fun update(event: AnActionEvent) {
     val originalIcon = event.presentation.icon
     super.update(event)
-    if (ActionPlaces.isPopupPlace(event.place)) {
+    if (event.isFromContextMenu) {
       // Restore original icon, as it will be disabled in popups, and we still want to show in GeneratePopup
       event.presentation.icon = originalIcon
     }

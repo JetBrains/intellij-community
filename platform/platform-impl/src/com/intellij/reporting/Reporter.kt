@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:ApiStatus.Internal
+
 package com.intellij.reporting
 
 import com.google.common.net.HttpHeaders
@@ -6,6 +8,7 @@ import com.google.gson.Gson
 import com.intellij.openapi.application.PermanentInstallationID
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.io.HttpRequests
+import org.jetbrains.annotations.ApiStatus
 import java.io.ByteArrayOutputStream
 import java.util.*
 import java.util.zip.GZIPOutputStream
@@ -18,6 +21,7 @@ private class StatsServerInfo(@JvmField var status: String,
 
 private val gson by lazy { Gson() }
 
+@ApiStatus.Internal
 object StatsSender {
   private const val infoUrl = "https://www.jetbrains.com/config/features-service-status.json"
   private val LOG = Logger.getInstance(StatsSender::class.java)

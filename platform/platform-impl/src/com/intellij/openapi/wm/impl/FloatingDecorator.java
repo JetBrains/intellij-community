@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -18,6 +18,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.JBInsets;
 import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,14 +42,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   private static final int DELAY = 15; // Delay between frames
   private static final int TOTAL_FRAME_COUNT = 7; // Total number of frames in animation sequence
 
-  private final MyUISettingsListener myUISettingsListener;
+  private final MyUISettingsListener uiSettingsListener;
   private final @NotNull InternalDecoratorImpl myDecorator;
   private WindowInfo myInfo;
   private final @NotNull ToolWindowExternalDecoratorBoundsHelper myBoundsHelper = new ToolWindowExternalDecoratorBoundsHelper(this);
 
-  private final Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable disposable = Disposer.newDisposable();
   private boolean myDisposed = false;
-  private final Alarm myDelayAlarm; // Determines moment when tool window should become transparent
+  private final SingleEdtTaskScheduler delayAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler(); // determines a moment when a tool window should become transparent
   private final Alarm myFrameTicker; // Determines moments of rendering of next frame
   private final MyAnimator myAnimator; // Renders alpha ratio
   private int myCurrentFrame; // current frame in transparency animation
@@ -89,8 +90,8 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
         if (LOG.isDebugEnabled()) {
           LOG.debug("Updating floating window " + toolWindow.getId() + " bounds because it's closed: " + getBounds());
         }
-        toolWindow.getToolWindowManager().movedOrResized(decorator);
-        toolWindow.getToolWindowManager().hideToolWindow(toolWindow.getId(), false);
+        toolWindow.toolWindowManager.movedOrResized(decorator);
+        toolWindow.toolWindowManager.hideToolWindow(toolWindow.getId(), false);
       }
     });
     addComponentListener(new ComponentAdapter() {
@@ -106,21 +107,20 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       // resize is handled by the internal decorator
     });
 
-    myDelayAlarm = new Alarm();
-    myFrameTicker = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    myFrameTicker = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, disposable);
     myAnimator = new MyAnimator();
     myCurrentFrame = 0;
     myStartRatio = 0.0f;
     myEndRatio = 0.0f;
 
-    myUISettingsListener = new MyUISettingsListener();
+    uiSettingsListener = new MyUISettingsListener();
 
     IdeGlassPaneImpl ideGlassPane = new IdeGlassPaneImpl(getRootPane(), true);
     getRootPane().setGlassPane(ideGlassPane);
 
     //workaround: we need to add this IdeGlassPane instance as dispatcher in IdeEventQueue
     ideGlassPane.addMousePreprocessor(new MouseAdapter() {
-    }, myDisposable);
+    }, disposable);
 
     if (SystemInfo.isWindows && WindowRoundedCornersManager.isAvailable()) {
       WindowRoundedCornersManager.setRoundedCorners(this);
@@ -131,7 +131,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   public void show(){
     ComponentUtil.decorateWindowHeader(rootPane);
     ToolbarService.Companion.getInstance().setTransparentTitleBar(this, rootPane, runnable -> {
-      Disposer.register(myDisposable, () -> runnable.run());
+      Disposer.register(disposable, () -> runnable.run());
       return Unit.INSTANCE;
     });
     boolean isActive = myInfo.isActiveOnStart();
@@ -158,14 +158,14 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     // this prevents annoying flick
     paint(getGraphics());
 
-    ApplicationManager.getApplication().getMessageBus().connect(myDelayAlarm).subscribe(UISettingsListener.TOPIC, myUISettingsListener);
+    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(UISettingsListener.TOPIC, uiSettingsListener);
   }
 
   @Override
   public void dispose(){
     if (ScreenUtil.isStandardAddRemoveNotify(getParent())) {
-      Disposer.dispose(myDelayAlarm);
-      Disposer.dispose(myDisposable);
+      delayAlarm.dispose();
+      Disposer.dispose(disposable);
     }
     else if (isShowing()) {
       SwingUtilities.invokeLater(() -> show());
@@ -250,7 +250,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       return;
     }
 
-    myDelayAlarm.cancelAllRequests();
+    delayAlarm.cancel();
     if (info.isActiveOnStart()) {
       // make window non transparent
       myFrameTicker.cancelAllRequests();
@@ -263,7 +263,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
     }
     else {
       // make window transparent
-      myDelayAlarm.addRequest(() -> {
+      delayAlarm.request(uiSettings.getState().getAlphaModeDelay(), () -> {
         myFrameTicker.cancelAllRequests();
         myStartRatio = getCurrentAlphaRatio();
         if (myCurrentFrame > 0) {
@@ -271,7 +271,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
         }
         myEndRatio = uiSettings.getState().getAlphaModeRatio();
         myFrameTicker.addRequest(myAnimator, DELAY);
-      }, uiSettings.getState().getAlphaModeDelay());
+      });
     }
   }
 
@@ -484,7 +484,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
       LOG.assertTrue(isDisplayable());
       LOG.assertTrue(isShowing());
       WindowManager windowManager = WindowManager.getInstance();
-      myDelayAlarm.cancelAllRequests();
+      delayAlarm.cancel();
       if (uiSettings.getState().getEnableAlphaMode()) {
         if (!isActive()) {
           windowManager.setAlphaModeEnabled(FloatingDecorator.this, true);

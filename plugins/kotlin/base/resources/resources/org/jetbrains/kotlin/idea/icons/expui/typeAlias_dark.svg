@@ -1,4 +1,4 @@
-<!-- Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
+<!-- Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. -->
 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M10 10H14.6445L12.6748 11.9697C12.3819 12.2626 12.3819 12.7374 12.6748 13.0303L14.6445 15H10V10Z" fill="#2F2936"/>
 <path fill-rule="evenodd" clip-rule="evenodd" d="M9 10C9 9.44771 9.44772 9 10 9H15.248C15.9162 9 16.2508 9.80786 15.7783 10.2803L13.5587 12.5L15.7783 14.7197C16.2508 15.1921 15.9162 16 15.248 16H10C9.44772 16 9 15.5523 9 15V10ZM14.6445 10L10 10V15H14.6445L12.6748 13.0303C12.3819 12.7374 12.3819 12.2626 12.6748 11.9697L14.6445 10Z" fill="#A571E6"/>

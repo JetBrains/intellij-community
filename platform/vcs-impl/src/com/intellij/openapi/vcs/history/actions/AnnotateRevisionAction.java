@@ -37,9 +37,11 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class AnnotateRevisionAction extends AnnotateRevisionActionBase implements DumbAware {
   public AnnotateRevisionAction() {
     super(VcsBundle.messagePointer("annotate.action.name"),

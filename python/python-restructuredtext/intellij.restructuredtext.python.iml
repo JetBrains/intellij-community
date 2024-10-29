@@ -19,5 +19,6 @@
     <orderEntry type="library" name="jcef" level="project" />
     <orderEntry type="module" module-name="intellij.spellchecker" scope="PROVIDED" />
     <orderEntry type="module" module-name="intellij.restructuredtext" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
   </component>
 </module>

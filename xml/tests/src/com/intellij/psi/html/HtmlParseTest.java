@@ -13,7 +13,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.testFramework.ExtensionTestUtil;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -524,7 +524,7 @@ public class HtmlParseTest extends LightIdeaTestCase {
     ExtensionTestUtil.maskExtensions(ExtensionPointName.create("com.intellij.html.scriptContentProvider"),
                                      ContainerUtil.emptyList(), getTestRootDisposable());
     final Ref<String> result = Ref.create();
-    PerformanceTestUtil.newPerformanceTest("Parsing", () -> result.set(getTreeTextByFile("index-all.html"))).start();
+    Benchmark.newBenchmark("Parsing", () -> result.set(getTreeTextByFile("index-all.html"))).start();
     assertResult("Performance.txt", result.get());
   }
 

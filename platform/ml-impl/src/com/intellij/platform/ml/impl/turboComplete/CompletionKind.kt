@@ -2,6 +2,7 @@
 package com.intellij.platform.ml.impl.turboComplete
 
 import com.intellij.platform.ml.Tier
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Data class representing a kind of [SuggestionGenerator]'s suggestions.
@@ -10,6 +11,8 @@ import com.intellij.platform.ml.Tier
  * The completion kind's name is defined statically, it should be unique among
  * the corresponding [KindVariety].
  */
+@ApiStatus.Internal
 data class CompletionKind(val name: Enum<*>, val variety: KindVariety)
 
+@ApiStatus.Internal
 object TierCompletionKind : Tier<CompletionKind>()

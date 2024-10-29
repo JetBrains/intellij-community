@@ -8,11 +8,13 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.jcef.JCEFHtmlPanel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class TestRubberDuckDebuggerAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val bgColor = ColorUtil.toHtmlColor(EditorColorsManager.getInstance().globalScheme.defaultBackground)

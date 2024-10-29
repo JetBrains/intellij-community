@@ -3,7 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 import kotlinx.collections.immutable.*
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.intellij.build.BuildContext
@@ -31,31 +31,28 @@ sealed class BaseLayout {
   internal var resourcePaths: PersistentList<ModuleResourceData> = persistentListOf()
 
   /** module name to entries which should be excluded from its output */
-  var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
+  internal var moduleExcludes: PersistentMap<String, MutableList<String>> = persistentMapOf()
     private set
 
-  @Suppress("SSBasedInspection")
   @JvmField
-  @PublishedApi
-  internal val includedProjectLibraries: ObjectOpenHashSet<ProjectLibraryData> = ObjectOpenHashSet()
-  val includedModuleLibraries: MutableSet<ModuleLibraryData> = LinkedHashSet()
+  internal val includedProjectLibraries: ObjectLinkedOpenHashSet<ProjectLibraryData> = ObjectLinkedOpenHashSet()
 
-  /** module name to name of the library */
-  @JvmField
-  internal val excludedLibraries: MutableMap<String?, MutableList<String>> = HashMap()
+  internal var includedModuleLibraries = persistentSetOf<ModuleLibraryData>()
+    private set
 
-  @JvmField
-  internal var modulesWithExcludedModuleLibraries: Set<String> = persistentSetOf()
+  fun withModuleLibraries(list: Sequence<ModuleLibraryData>) {
+    includedModuleLibraries += list
+  }
 
   internal var patchers: PersistentList<LayoutPatcher> = persistentListOf()
     private set
 
   fun withPatch(patcher: LayoutPatcher) {
-    patchers = patchers.add(patcher)
+    patchers += patcher
   }
 
   fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
-    patchers = patchers.add { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
+    patchers += { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
   }
 
   fun hasLibrary(name: String): Boolean = includedProjectLibraries.any { it.libraryName == name }
@@ -63,22 +60,19 @@ sealed class BaseLayout {
   fun findProjectLibrary(name: String): ProjectLibraryData? = includedProjectLibraries.firstOrNull { it.libraryName == name }
 
   @TestOnly
-  fun isLibraryExcluded(name: String): Boolean = excludedLibraries.get(null)?.contains(name) ?: false
-
-  @TestOnly
   fun includedProjectLibraryNames(): Sequence<String> = includedProjectLibraries.asSequence().map { it.libraryName }
 
   fun filteredIncludedModuleNames(excludedRelativeJarPath: String, includeFromSubdirectories: Boolean = true): Sequence<String> {
-    return _includedModules.asSequence().filter { 
+    return _includedModules.asSequence().filter {
       it.relativeOutputFile != excludedRelativeJarPath && (includeFromSubdirectories || !it.relativeOutputFile.contains('/')) 
     }.map { it.moduleName }
   }
 
-  fun withModules(items: Collection<ModuleItem>) {
+  fun withModules(items: Sequence<ModuleItem>) {
     for (item in items) {
       checkNotExists(item)
+      _includedModules.add(item)
     }
-    _includedModules.addAll(items)
   }
 
   private fun checkNotExists(item: ModuleItem) {
@@ -102,17 +96,34 @@ sealed class BaseLayout {
     )
   }
 
-  abstract fun withModule(moduleName: String)
+  fun withModule(moduleName: String) {
+    withModule(moduleName = moduleName, relativeJarPath = getRelativeJarPath(moduleName), reason = "withModule at \n    ${getStacktrace()}")
+  }
+
+  protected abstract fun getRelativeJarPath(moduleName: String): String
 
   fun withModules(names: Iterable<String>) {
-    names.forEach(::withModule)
+    val reason = "withModules at \n    ${getStacktrace()}"
+    for (name in names) {
+      withModule(moduleName = name, relativeJarPath = getRelativeJarPath(name), reason = reason)
+    }
   }
 
   fun withModule(moduleName: String, relativeJarPath: String) {
+    withModule(moduleName = moduleName, relativeJarPath = relativeJarPath, reason = "withModule at \n    ${getStacktrace()}")
+  }
+
+  private fun withModule(moduleName: String, relativeJarPath: String, reason: String) {
     require(!moduleName.isEmpty()) {
       "Module name must be not empty"
     }
 
+    val item = ModuleItem(moduleName = moduleName, relativeOutputFile = relativeJarPath, reason = "withModule at \n    $reason")
+    checkNotExists(item)
+    _includedModules.add(item)
+  }
+
+  private fun getStacktrace(): String? {
     val stackTrace = StackWalker.getInstance(Option.RETAIN_CLASS_REFERENCE).walk { stream ->
       stream.use {
         stream.asSequence()
@@ -127,17 +138,16 @@ sealed class BaseLayout {
           .joinToString(separator = "\n    ")
       }
     }
-
-    val item = ModuleItem(moduleName = moduleName, relativeOutputFile = relativeJarPath, reason = "withModule at \n    $stackTrace")
-    checkNotExists(item)
-    _includedModules.add(item)
+    return stackTrace
   }
 
   fun withProjectLibrary(libraryName: String, jarName: String, reason: String? = null) {
-    includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName,
-                                                    packMode = LibraryPackMode.STANDALONE_MERGED,
-                                                    outPath = jarName,
-                                                    reason = reason))
+    includedProjectLibraries.add(ProjectLibraryData(
+      libraryName = libraryName,
+      packMode = LibraryPackMode.STANDALONE_MERGED,
+      outPath = jarName,
+      reason = reason,
+    ))
   }
 
   fun excludeFromModule(moduleName: String, excludedPattern: String) {
@@ -158,7 +168,7 @@ sealed class BaseLayout {
     )
   }
 
-  internal fun withProjectLibraries(libraryNames: List<String>, outPath: String? = null) {
+  internal fun withProjectLibraries(libraryNames: Sequence<String>, outPath: String? = null) {
     for (libraryName in libraryNames) {
       includedProjectLibraries.add(
         ProjectLibraryData(
@@ -171,10 +181,6 @@ sealed class BaseLayout {
     }
   }
 
-  fun withProjectLibraries(libraryNames: Iterable<String>) {
-    libraryNames.forEach(::withProjectLibrary)
-  }
-
   fun withProjectLibrary(libraryName: String, packMode: LibraryPackMode) {
     includedProjectLibraries.add(ProjectLibraryData(libraryName = libraryName, packMode = packMode, reason = "withProjectLibrary"))
   }
@@ -185,13 +191,13 @@ sealed class BaseLayout {
    * their module libraries are included in the layout automatically.
    * @param relativeOutputPath target path relative to 'lib' directory
    */
-  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String, extraCopy: Boolean = false) {
-    includedModuleLibraries.add(ModuleLibraryData(
+  fun withModuleLibrary(libraryName: String, moduleName: String, relativeOutputPath: String = "", extraCopy: Boolean = false) {
+    includedModuleLibraries += ModuleLibraryData(
       moduleName = moduleName,
       libraryName = libraryName,
       relativeOutputPath = relativeOutputPath,
-      extraCopy = extraCopy
-    ))
+      extraCopy = extraCopy,
+    )
   }
 
   /**
@@ -199,10 +205,12 @@ sealed class BaseLayout {
    * @param relativeOutputPath target path relative to the plugin root directory
    */
   fun withResourceFromModule(moduleName: String, resourcePath: String, relativeOutputPath: String) {
-    resourcePaths = resourcePaths.add(ModuleResourceData(moduleName = moduleName,
-                                                         resourcePath = resourcePath,
-                                                         relativeOutputPath = relativeOutputPath,
-                                                         packToZip = false))
+    resourcePaths += ModuleResourceData(
+      moduleName = moduleName,
+      resourcePath = resourcePath,
+      relativeOutputPath = relativeOutputPath,
+      packToZip = false
+    )
   }
 }
 

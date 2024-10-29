@@ -1,5 +1,4 @@
 // "Opt in for 'RequiresOptIn' in module 'light_idea_test_case'" "true"
-// IGNORE_K2
 // COMPILER_ARGUMENTS: -version -opt-in=AnotherMarker
 // COMPILER_ARGUMENTS_AFTER: -version -opt-in=AnotherMarker -opt-in=kotlin.RequiresOptIn
 // DISABLE-ERRORS
@@ -9,4 +8,5 @@
 @RequiresOptIn<caret>
 annotation class MyExperimentalAPI
 
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.MakeModuleOptInFix
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModuleOptInFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddModuleOptInFix

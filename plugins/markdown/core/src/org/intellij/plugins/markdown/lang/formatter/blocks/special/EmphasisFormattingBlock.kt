@@ -30,14 +30,12 @@ internal class EmphasisFormattingBlock(
       }
     }
   }
+}
 
-  companion object {
-    private fun ASTNode.isLast(): Boolean {
-      return treeNext == null
-    }
+private fun ASTNode.isLast(): Boolean {
+  return treeNext == null
+}
 
-    private fun ASTNode.isFirstContentElement(): Boolean {
-      return treePrev?.hasType(MarkdownTokenTypes.EMPH) == true
-    }
-  }
+private fun ASTNode.isFirstContentElement(): Boolean {
+  return treePrev?.hasType(MarkdownTokenTypes.EMPH) == true
 }

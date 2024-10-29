@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -175,7 +175,7 @@ public final class ExitHelper {
   private static Statement isExitEdge(StatEdge edge) {
     Statement dest = edge.getDestination();
 
-    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge))) {
+    if (edge.getType() == EdgeType.BREAK && dest.type == StatementType.BASIC_BLOCK && edge.explicit && (edge.labeled || isOnlyEdge(edge)) && edge.canInline) {
       List<Exprent> data = dest.getExprents();
 
       if (data != null && data.size() == 1) {

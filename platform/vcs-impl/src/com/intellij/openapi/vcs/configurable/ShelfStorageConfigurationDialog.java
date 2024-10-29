@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +19,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import static com.intellij.openapi.vcs.configurable.ShelfProjectConfigurable.get
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ui.UIUtil.*;
 
+@ApiStatus.Internal
 public class ShelfStorageConfigurationDialog extends DialogWrapper {
   @NotNull private final Project myProject;
   @NotNull private final VcsConfiguration myVcsConfiguration;
@@ -53,10 +55,9 @@ public class ShelfStorageConfigurationDialog extends DialogWrapper {
     }
     myUseDefaultShelfDirectory = new JBRadioButton(VcsBundle.message("change.shelves.location.dialog.default.label"), true);
     myShelfDirectoryPath = new TextFieldWithBrowseButton();
-    myShelfDirectoryPath.addBrowseFolderListener(VcsBundle.message("shelf.tab"),
-                                                 VcsBundle.message("change.shelves.location.dialog.location.browser.title"),
-                                                 myProject,
-                                                 FileChooserDescriptorFactory.createSingleFolderDescriptor());
+    myShelfDirectoryPath.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(VcsBundle.message("shelf.tab"))
+      .withDescription(VcsBundle.message("change.shelves.location.dialog.location.browser.title")));
     myMoveShelvesCheckBox = new JBCheckBox(VcsBundle.message("vcs.shelf.move.text"));
     setOKButtonText(VcsBundle.message("change.shelves.location.dialog.action.button"));
     initComponents();

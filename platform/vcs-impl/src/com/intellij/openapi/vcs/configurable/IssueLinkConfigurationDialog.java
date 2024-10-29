@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.IssueNavigationLink;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 
 
+@ApiStatus.Internal
 public class IssueLinkConfigurationDialog extends DialogWrapper {
   private JPanel myPanel;
   private JTextField myIssueIDTextField;

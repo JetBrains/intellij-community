@@ -5,6 +5,7 @@ import com.intellij.build.events.EventResult;
 import com.intellij.build.events.impl.FinishEventImpl;
 import com.intellij.build.events.impl.ProgressBuildEventImpl;
 import com.intellij.build.events.impl.StartEventImpl;
+import com.intellij.gradle.toolingExtension.util.GradleVersionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -126,13 +127,13 @@ public final class GradleProgressEventConverter {
     var descriptor = convertTestDescriptor(event);
 
     if (event instanceof TestStartEvent) {
-      var esEvent = new ExternalSystemStartEventImpl<>(eventId, parentEventId, descriptor);
+      var esEvent = new ExternalSystemStartEvent<>(eventId, parentEventId, descriptor);
       return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     if (event instanceof TestFinishEvent finishEvent) {
       var result = finishEvent.getResult();
       var operationResult = convertTestProgressEventResult(result);
-      var esEvent = new ExternalSystemFinishEventImpl<>(eventId, parentEventId, descriptor, operationResult);
+      var esEvent = new ExternalSystemFinishEvent<>(eventId, parentEventId, descriptor, operationResult);
       return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     if (event instanceof TestOutputEvent outputEvent) {
@@ -141,7 +142,7 @@ public final class GradleProgressEventConverter {
       var isStdOut = destination == Destination.StdOut;
       var message = outputDescriptor.getMessage();
       var description = (isStdOut ? "StdOut" : "StdErr") + message;
-      var esEvent = new ExternalSystemMessageEventImpl<>(eventId, parentEventId, descriptor, isStdOut, message, description);
+      var esEvent = new ExternalSystemMessageEvent<>(eventId, parentEventId, descriptor, isStdOut, message, description);
       return new ExternalSystemTaskExecutionEvent(taskId, esEvent);
     }
     return null;
@@ -151,17 +152,17 @@ public final class GradleProgressEventConverter {
     var startTime = result.getStartTime();
     var endTime = result.getEndTime();
     if (result instanceof TestSuccessResult) {
-      return new SuccessResultImpl(startTime, endTime, false);
+      return new com.intellij.openapi.externalSystem.model.task.event.SuccessResult(startTime, endTime, false);
     }
     if (result instanceof TestFailureResult failureResult) {
       var failures = ContainerUtil.map(failureResult.getFailures(), it -> convertTestFailure(it));
-      return new FailureResultImpl(startTime, endTime, failures);
+      return new com.intellij.openapi.externalSystem.model.task.event.FailureResult(startTime, endTime, failures);
     }
     if (result instanceof TestSkippedResult) {
-      return new SkippedResultImpl(startTime, endTime);
+      return new com.intellij.openapi.externalSystem.model.task.event.SkippedResult(startTime, endTime);
     }
     LOG.warn("Undefined test operation result " + result.getClass().getName());
-    return new DefaultOperationResult(startTime, endTime);
+    return new com.intellij.openapi.externalSystem.model.task.event.OperationResult(startTime, endTime);
   }
 
   private static @NotNull Failure convertTestFailure(@NotNull org.gradle.tooling.Failure failure) {
@@ -207,7 +208,7 @@ public final class GradleProgressEventConverter {
       return new TestFailure(exceptionName, message, stackTrace, description, causes, false);
     }
     LOG.warn("Undefined test failure type " + failure.getClass().getName());
-    return new FailureImpl(message, description, Collections.emptyList());
+    return new com.intellij.openapi.externalSystem.model.task.event.Failure(message, description, Collections.emptyList());
   }
 
   private static @NotNull TestOperationDescriptor convertTestDescriptor(@NotNull ProgressEvent event) {
@@ -218,9 +219,9 @@ public final class GradleProgressEventConverter {
       var suiteName = jvmDescriptor.getSuiteName();
       var className = jvmDescriptor.getClassName();
       var methodName = jvmDescriptor.getMethodName();
-      return new TestOperationDescriptorImpl(displayName, eventTime, suiteName, className, methodName);
+      return new com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor(displayName, eventTime, suiteName, className, methodName);
     }
-    return new TestOperationDescriptorImpl(displayName, eventTime, null, null, null);
+    return new com.intellij.openapi.externalSystem.model.task.event.TestOperationDescriptor(displayName, eventTime, null, null, null);
   }
 
   public static @Nullable ExternalSystemTaskNotificationEvent legacyConvertProgressBuildEvent(

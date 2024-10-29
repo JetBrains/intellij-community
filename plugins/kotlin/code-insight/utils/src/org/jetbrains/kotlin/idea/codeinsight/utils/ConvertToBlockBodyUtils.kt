@@ -48,11 +48,11 @@ object ConvertToBlockBodyUtils {
         val bodyType = body.expressionType ?: return null
 
         return ConvertToBlockBodyContext(
-            returnTypeIsUnit = returnType.isUnit,
-            returnTypeIsNothing = returnType.isNothing && !returnType.isMarkedNullable,
+            returnTypeIsUnit = returnType.isUnitType,
+            returnTypeIsNothing = returnType.isNothingType && !returnType.isMarkedNullable,
             returnTypeString = returnType.render(position = Variance.OUT_VARIANCE),
-            bodyTypeIsUnit = bodyType.isUnit,
-            bodyTypeIsNothing = bodyType.isNothing && !bodyType.isMarkedNullable,
+            bodyTypeIsUnit = bodyType.isUnitType,
+            bodyTypeIsNothing = bodyType.isNothingType && !bodyType.isMarkedNullable,
             reformat = reformat,
             shortenReferences = shortenReferences
         )

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public abstract class SourceRootHolderIteratorBase implements IndexableFilesIterator {
+abstract class SourceRootHolderIteratorBase implements IndexableFilesIterator {
   protected final @NotNull EntityPointer<?> myEntityPointer;
   private final @NotNull IndexableIteratorPresentation presentation;
   protected final @NotNull IndexingSourceRootHolder roots;

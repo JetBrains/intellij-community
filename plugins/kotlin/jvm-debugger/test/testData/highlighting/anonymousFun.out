@@ -4,13 +4,13 @@ LineBreakpoint created at anonymousFun.kt:16 lambdaOrdinal = -1
 Run Java
 Connected to the target VM
 anonymousFun.kt:7
-Highlight lambda range: '{ boo() }'
+Highlight lambda range: 'boo()'
 anonymousFun.kt:11
-Highlight lambda range: 'fun() { boo() }'
+Highlight lambda range: '{ boo() }'
 anonymousFun.kt:16
 Highlight whole line
 anonymousFun.kt:16
-Highlight lambda range: 'fun() = boo()'
+Highlight lambda range: 'boo()'
 Disconnected from the target VM
 
 Process finished with exit code 0

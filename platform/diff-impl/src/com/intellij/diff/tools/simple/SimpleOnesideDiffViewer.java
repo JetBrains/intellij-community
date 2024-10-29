@@ -32,6 +32,7 @@ import com.intellij.diff.util.LineRange;
 import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diff.DiffNavigationContext;
 import com.intellij.openapi.editor.Document;
@@ -41,7 +42,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -188,14 +188,10 @@ public class SimpleOnesideDiffViewer extends OnesideTextDiffViewer {
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      int lineCount = getLineCount(getEditor().getDocument());
-      return new LineRange(0, lineCount);
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(0, getLineCount(getEditor().getDocument())));
   }
 
   private class MyInitialScrollHelper extends MyInitialScrollPositionHelper {

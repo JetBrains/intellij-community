@@ -15,9 +15,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class DeclarativeHintsProviderSettingsModel(
   private val providerDescription: InlayHintsProviderExtensionBean,
   isEnabled: Boolean,

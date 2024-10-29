@@ -34,23 +34,42 @@ def get_column_types(table):
 
 # used by pydevd
 # noinspection PyUnresolvedReferences
-def get_data(table, start_index=None, end_index=None, format=None):
+def get_data(table, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
 
-    def convert_data_to_html(data, max_cols):
-        return repr(__convert_to_df(data).to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_csv(data):
+        return repr(__convert_to_df(data).to_csv())
 
-    return _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+    def convert_data_to_html(data):
+        return repr(__convert_to_df(data).to_html(notebook=True))
+
+    if use_csv_serialization:
+        computed_data = _compute_sliced_data(table, convert_data_to_csv, start_index, end_index, format)
+    else:
+        computed_data = _compute_sliced_data(table, convert_data_to_html, start_index, end_index, format)
+    return computed_data
 
 
 # used by DSTableCommands
 # noinspection PyUnresolvedReferences
-def display_data(table, start_index, end_index):
+def display_data_csv(table, start_index, end_index):
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
-    def ipython_display(data, max_cols):
+    def ipython_display(data):
+        try:
+            data = data.to_csv()
+        except AttributeError:
+            pass
+        print(__convert_to_df(data))
+    _compute_sliced_data(table, ipython_display, start_index, end_index)
+
+
+# used by DSTableCommands
+# noinspection PyUnresolvedReferences
+def display_data_html(table, start_index, end_index):
+    # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
+    def ipython_display(data):
         from IPython.display import display
         display(__convert_to_df(data))
-
     _compute_sliced_data(table, ipython_display, start_index, end_index)
 
 
@@ -81,7 +100,7 @@ def _compute_sliced_data(table, fun, start_index=None, end_index=None, format=No
     if start_index is not None and end_index is not None:
         table = __get_data_slice(table, start_index, end_index)
 
-    data = fun(table, max_cols)
+    data = fun(table)
 
     pd.set_option('display.max_columns', _jb_max_cols)
     pd.set_option('display.max_colwidth', _jb_max_colwidth)

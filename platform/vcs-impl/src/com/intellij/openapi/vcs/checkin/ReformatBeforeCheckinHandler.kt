@@ -12,12 +12,14 @@ import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.getPsiFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.formatter.FormatterUtil.getReformatBeforeCommitCommandName
+import org.jetbrains.annotations.ApiStatus
 
 class ReformatCheckinHandlerFactory : CheckinHandlerFactory() {
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     ReformatBeforeCheckinHandler(panel.project)
 }
 
+@ApiStatus.Internal
 class ReformatBeforeCheckinHandler(project: Project) : CodeProcessorCheckinHandler(project) {
   override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent =
     BooleanCommitOption.create(project, this, disableWhenDumb = true,

@@ -4,61 +4,77 @@ package org.jetbrains.kotlin.idea.completion.checkers
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.utils.fqname.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
-internal fun interface CompletionVisibilityChecker {
-    context(KaSession)
-    fun isVisible(symbol: KaSymbolWithVisibility): Boolean
+@OptIn(KaExperimentalApi::class)
+internal class CompletionVisibilityChecker(
+    private val basicContext: FirBasicCompletionContext,
+    private val positionContext: KotlinRawPositionContext
+) {
+    fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
+        if (basicContext.parameters.invocationCount >= 2) return false
+        if (basicContext.originalKtFile is KtCodeFragment) return false
 
-    context(KaSession)
-    fun isVisible(symbol: KaCallableSymbol): Boolean {
-        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
-    }
-
-    context(KaSession)
-    fun isVisible(symbol: KaClassifierSymbol): Boolean {
-        return symbol !is KaSymbolWithVisibility || isVisible(symbol as KaSymbolWithVisibility)
-    }
-
-    companion object {
-        @OptIn(KaExperimentalApi::class)
-        fun create(
-            basicContext: FirBasicCompletionContext,
-            positionContext: KotlinRawPositionContext
-        ): CompletionVisibilityChecker = object : CompletionVisibilityChecker {
-            context(KaSession)
-            override fun isVisible(symbol: KaSymbolWithVisibility): Boolean {
-                if (positionContext is KDocNameReferencePositionContext) return true
-
-                // Don't offer any deprecated items that could lead to compile errors.
-                if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
-
-                if (basicContext.parameters.invocationCount > 1) return true
-
-                if (symbol is KaClassLikeSymbol) {
-                    val classId = (symbol as? KaClassLikeSymbol)?.classId
-                    if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
-                }
-
-                if (basicContext.originalKtFile is KtCodeFragment) return true
-
-                return isVisible(
-                    symbol,
-                    basicContext.originalKtFile.getFileSymbol(),
-                    (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
-                    positionContext.position
-                )
+        val declarationContainingFile = declaration.containingKtFile
+        if (declaration.isPrivate()) {
+            if (declarationContainingFile != basicContext.originalKtFile && declarationContainingFile != basicContext.fakeKtFile) {
+                return true
             }
         }
+        if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
+            return !canAccessInternalDeclarationsFromFile(declarationContainingFile)
+        }
+
+        return false
+    }
+
+    private fun canAccessInternalDeclarationsFromFile(file: KtFile): Boolean {
+        if (file.isCompiled) {
+            return false
+        }
+        val useSiteModule = basicContext.useSiteModule
+
+        val declarationModule = KaModuleProvider.getModule(basicContext.project, file, useSiteModule = useSiteModule)
+
+        return declarationModule == useSiteModule ||
+                declarationModule in basicContext.useSiteModule.directFriendDependencies
+    }
+
+    context(KaSession)
+    fun isVisible(symbol: KaDeclarationSymbol): Boolean {
+        if (positionContext is KDocNameReferencePositionContext) return true
+
+        // Don't offer any deprecated items that could lead to compile errors.
+        if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
+
+        if (basicContext.parameters.invocationCount > 1) return true
+
+        if (symbol is KaClassLikeSymbol) {
+            val classId = (symbol as? KaClassLikeSymbol)?.classId
+            if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
+        }
+
+        if (basicContext.originalKtFile is KtCodeFragment) return true
+
+        return isVisible(
+            symbol,
+            basicContext.originalKtFile.symbol,
+            (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
+            positionContext.position
+        )
     }
 }

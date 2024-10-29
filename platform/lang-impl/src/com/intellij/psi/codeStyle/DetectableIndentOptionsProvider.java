@@ -31,6 +31,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -46,6 +47,7 @@ import static com.intellij.psi.codeStyle.DetectAndAdjustIndentOptionsTask.getDef
 /**
  * @author Rustam Vishnyakov
  */
+@ApiStatus.Internal
 public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private boolean myIsEnabledInTest;
   private final Map<VirtualFile, IndentOptions> myDiscardedOptions = new WeakHashMap<>();

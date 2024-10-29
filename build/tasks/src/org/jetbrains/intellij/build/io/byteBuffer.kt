@@ -1,21 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.io
 
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
-import java.nio.LongBuffer
 
 // not thread-safe, intended only for single thread for one time use
-class ByteBufferAllocator : AutoCloseable {
-  private var directByteBuffer: ByteBuffer? = null
+internal class ByteBufferAllocator() : AutoCloseable {
+  private var byteBuffer: ByteBuffer? = null
 
   fun allocate(size: Int): ByteBuffer {
-    var result = directByteBuffer
+    var result = byteBuffer
     if (result != null && result.capacity() < size) {
       // clear references to object to make sure that it can be collected by GC
-      directByteBuffer = null
+      byteBuffer = null
       unmapBuffer(result)
       result = null
     }
@@ -23,7 +22,7 @@ class ByteBufferAllocator : AutoCloseable {
     if (result == null) {
       result = ByteBuffer.allocateDirect(roundUpInt(size, 65_536))!!
       result.order(ByteOrder.LITTLE_ENDIAN)
-      directByteBuffer = result
+      byteBuffer = result
     }
     result.rewind()
     result.limit(size)
@@ -31,7 +30,7 @@ class ByteBufferAllocator : AutoCloseable {
   }
 
   override fun close() {
-    directByteBuffer?.let { unmapBuffer(it) }
+    byteBuffer?.let { unmapBuffer(it) }
   }
 }
 
@@ -43,15 +42,11 @@ private val unmap by lazy {
 }
 
 fun unmapBuffer(buffer: ByteBuffer) {
-  unmap.invokeExact(buffer)
+  if (buffer.isDirect) {
+    unmap.invokeExact(buffer)
+  }
 }
 
 private fun roundUpInt(x: Int, @Suppress("SameParameterValue") blockSizePowerOf2: Int): Int {
   return x + blockSizePowerOf2 - 1 and -blockSizePowerOf2
-}
-
-internal inline fun useAsLongBuffer(buffer: ByteBuffer, task: (LongBuffer) -> Unit) {
-  val longBuffer = buffer.asLongBuffer()
-  task(longBuffer)
-  buffer.position(buffer.position() + (longBuffer.position() * Long.SIZE_BYTES))
 }

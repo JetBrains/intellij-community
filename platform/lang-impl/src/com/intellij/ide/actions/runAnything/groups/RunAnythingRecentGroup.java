@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.groups;
 
 import com.intellij.ide.IdeBundle;
@@ -15,15 +15,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class RunAnythingRecentGroup extends RunAnythingGroupBase {
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return IdeBundle.message("run.anything.recent.group.title");
   }
 
-  @NotNull
   @Override
-  public Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @NotNull Collection<RunAnythingItem> getGroupItems(@NotNull DataContext dataContext, @NotNull String pattern) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
 

@@ -15,6 +15,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public class SyncHeightComponent extends JPanel {
   private SyncHeightComponent(@NotNull SyncHeightHolder syncHeightHolder, @Nullable JComponent component) {
     super(new SyncHeightLayout(syncHeightHolder, component));

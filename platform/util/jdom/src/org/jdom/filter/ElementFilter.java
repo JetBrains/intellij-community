@@ -59,6 +59,8 @@ package org.jdom.filter;
 import org.jdom.Element;
 import org.jdom.Namespace;
 
+import java.util.Objects;
+
 /**
  * @deprecated Use {@link org.jdom.filter2.ElementFilter}
  */
@@ -139,12 +141,7 @@ public final class ElementFilter extends AbstractFilter<Element> {
     if (!(obj instanceof ElementFilter)) return false;
 
     final ElementFilter filter = (ElementFilter)obj;
-
-    //noinspection StringEquality
-    if (!((name == filter.name) || (name != null && ((Object)name).equals(filter.name)))) return false;
-    if (!((namespace == filter.namespace) || (namespace != null && ((Object)namespace).equals(filter.namespace)))) return false;
-
-    return true;
+    return Objects.equals(name, filter.name) && Objects.equals(namespace, filter.namespace);
   }
 
   public int hashCode() {

@@ -10,12 +10,14 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.tabs.impl.MorePopupAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen.
  */
+@ApiStatus.Internal
 public final class TabListAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -52,12 +52,23 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
     this(new ExtendableTextField(10 /*to prevent infinite resize in grid-box layouts*/), browseActionListener, parent);
   }
 
-  public void addBrowseFolderListener(@Nullable @NlsContexts.DialogTitle String title,
-                                      @Nullable @NlsContexts.Label String description,
-                                      @Nullable Project project,
-                                      FileChooserDescriptor fileChooserDescriptor) {
-    addBrowseFolderListener(title, description, project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+  public void addBrowseFolderListener(@Nullable Project project, @NotNull FileChooserDescriptor fileChooserDescriptor) {
+    addBrowseFolderListener(project, fileChooserDescriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     installPathCompletion(fileChooserDescriptor);
+  }
+
+  /**
+   * @deprecated use {@link #addBrowseFolderListener(Project, FileChooserDescriptor)}
+   * together with {@link FileChooserDescriptor#withTitle} and {@link FileChooserDescriptor#withDescription}
+   */
+  @Deprecated(forRemoval = true)
+  public void addBrowseFolderListener(
+    @Nullable @NlsContexts.DialogTitle String title,
+    @Nullable @NlsContexts.Label String description,
+    @Nullable Project project,
+    FileChooserDescriptor fileChooserDescriptor
+  ) {
+    addBrowseFolderListener(project, fileChooserDescriptor.withTitle(title).withDescription(description));
   }
 
   public void addBrowseFolderListener(@NotNull TextBrowseFolderListener listener) {

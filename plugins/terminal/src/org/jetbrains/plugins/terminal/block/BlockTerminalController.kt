@@ -18,7 +18,7 @@ import org.jetbrains.plugins.terminal.block.output.*
 import org.jetbrains.plugins.terminal.block.output.BlockTerminalSearchSession.Companion.isSearchInBlock
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptController
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptRenderingInfo
-import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetUndoRedoStack
+import org.jetbrains.plugins.terminal.block.prompt.clearCommandAndResetChangesHistory
 import org.jetbrains.plugins.terminal.block.session.BlockTerminalSession
 import org.jetbrains.plugins.terminal.block.session.CommandFinishedEvent
 import org.jetbrains.plugins.terminal.block.session.ShellCommandListener
@@ -99,7 +99,7 @@ internal class BlockTerminalController(
   @RequiresEdt
   fun startCommandExecution(command: String) {
     if (command.isBlank()) {
-      promptController.model.clearCommandAndResetUndoRedoStack()
+      promptController.model.clearCommandAndResetChangesHistory()
       outputController.insertEmptyLine()
     }
     else {
@@ -135,7 +135,7 @@ internal class BlockTerminalController(
     session.model.isCommandRunning = false
 
     invokeLater(getDisposed(), ModalityState.any()) {
-      promptController.model.clearCommandAndResetUndoRedoStack()
+      promptController.model.clearCommandAndResetChangesHistory()
       promptController.promptIsVisible = true
     }
   }

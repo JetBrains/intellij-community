@@ -2,10 +2,7 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButtonUtil
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
@@ -102,15 +99,16 @@ abstract class NonModalCommitPanel(
   override fun getComponent(): JComponent = this
   override fun getPreferredFocusableComponent(): JComponent = commitMessage.editorField
 
-  override fun getData(dataId: String): Any? {
-    return getDataFromProviders(dataId) ?: commitMessage.getData(dataId)
+  override fun uiDataSnapshot(sink: DataSink) {
+    DataSink.uiDataSnapshot(sink, commitMessage)
+    uiDataSnapshotFromProviders(sink)
   }
 
-  fun getDataFromProviders(dataId: String): Any? {
-    for (dataProvider in dataProviders) {
-      return dataProvider.getData(dataId) ?: continue
+  @Deprecated("Use UiDataRule instead")
+  fun uiDataSnapshotFromProviders(sink: DataSink) {
+    dataProviders.forEach {
+      DataSink.uiDataSnapshot(sink, it)
     }
-    return null
   }
 
   override fun addDataProvider(provider: DataProvider) {
@@ -142,7 +140,7 @@ abstract class NonModalCommitPanel(
   }
 
   override fun showCommitOptions(options: CommitOptions, actionName: @Nls String, isFromToolbar: Boolean, dataContext: DataContext) {
-    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false)
+    val commitOptionsPanel = CommitOptionsPanel(project, actionNameSupplier = { actionName }, nonFocusable = false, nonModalCommit = true)
     commitOptionsPanel.setOptions(options)
 
     val commitOptionsComponent = commitOptionsPanel.component.apply {
@@ -175,15 +173,20 @@ abstract class NonModalCommitPanel(
     showCommitOptions(commitOptionsPopup, isFromToolbar, dataContext)
   }
 
-  protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) =
+  protected open fun showCommitOptions(popup: JBPopup, isFromToolbar: Boolean, dataContext: DataContext) {
     if (isFromToolbar) {
-      popup.showAbove(commitActionsPanel.getShowCommitOptionsButton() ?: commitActionsPanel)
+      VcsUIUtil.showPopupAbove(popup, commitActionsPanel.getShowCommitOptionsButton() ?: commitActionsPanel,
+                               scale(COMMIT_OPTIONS_POPUP_MINIMUM_SIZE))
     }
-    else popup.showInBestPositionFor(dataContext)
+    else {
+      popup.showInBestPositionFor(dataContext)
+    }
+  }
 
   companion object {
     internal const val COMMIT_TOOLBAR_PLACE: String = "ChangesView.CommitToolbar"
     internal const val COMMIT_EDITOR_PLACE: String = "ChangesView.Editor"
+    internal val COMMIT_OPTIONS_POPUP_MINIMUM_SIZE = 300
 
     @Deprecated("Extracted to a separate file",
                 replaceWith = ReplaceWith("showAbove(component)", "com.intellij.vcsUtil.showAbove"))

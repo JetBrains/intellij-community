@@ -144,11 +144,11 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
    * @return true if the member is not from an implicit class or if place and member are both in the same implicit class, false otherwise.
    */
   private static boolean fromImplicitClassOutsideThisClass(@NotNull PsiMember member, @NotNull PsiElement place) {
-    PsiImplicitClass implicitClass = PsiTreeUtil.getParentOfType(member, PsiImplicitClass.class);
+    PsiImplicitClass implicitClass = PsiTreeUtil.getContextOfType(member, PsiImplicitClass.class);
     if (implicitClass == null) {
       return false;
     }
-    PsiImplicitClass placeImplicitClass = PsiTreeUtil.getParentOfType(place, PsiImplicitClass.class);
+    PsiImplicitClass placeImplicitClass = PsiTreeUtil.getContextOfType(place, PsiImplicitClass.class);
     if (placeImplicitClass == null) {
       return true;
     }

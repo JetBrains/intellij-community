@@ -8,7 +8,6 @@ import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.util.JdomKt;
 import kotlin.Lazy;
 import kotlin.LazyKt;
-import kotlin.jvm.functions.Function0;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -18,11 +17,12 @@ import java.util.List;
 import java.util.Map;
 
 public final class TemplateContext {
-  private final Map<String, Boolean> myContextStates = new HashMap<>();
+  private volatile Map<String, Boolean> myContextStates = Map.of();
 
+  @NotNull
   public TemplateContext createCopy() {
     TemplateContext cloneResult = new TemplateContext();
-    cloneResult.myContextStates.putAll(myContextStates);
+    cloneResult.myContextStates = myContextStates;
     return cloneResult;
   }
 
@@ -36,7 +36,7 @@ public final class TemplateContext {
                                                      @NotNull TemplateContext thisContext,
                                                      @NotNull TemplateContext defaultContext) {
     for (LiveTemplateContext value : allContexts.getLiveTemplateContexts()) {
-      if (isEnabled(allContexts, thisContext, value) != isEnabled(allContexts, defaultContext, value)) {
+      if (thisContext.isEnabled(allContexts, value) != defaultContext.isEnabled(allContexts, value)) {
         return value;
       }
     }
@@ -53,29 +53,23 @@ public final class TemplateContext {
     return null;
   }
 
-  public boolean isEnabled(@NotNull TemplateContextType contextType) {
+  public synchronized boolean isEnabled(@NotNull TemplateContextType contextType) {
     LiveTemplateContextsSnapshot allContexts = LiveTemplateContextService.getInstance().getSnapshot();
-    synchronized (myContextStates) {
-      return isEnabledNoSync(this, allContexts, contextType.getContextId());
-    }
+    return isEnabledNoSync(allContexts, contextType.getContextId());
   }
 
-  private static boolean isEnabled(@NotNull LiveTemplateContextsSnapshot allContexts,
-                                   @NotNull TemplateContext thisContext,
+  private synchronized boolean isEnabled(@NotNull LiveTemplateContextsSnapshot allContexts,
                                    @NotNull LiveTemplateContext contextType) {
-    synchronized (thisContext.myContextStates) {
-      return isEnabledNoSync(thisContext, allContexts, contextType.getContextId());
-    }
+    return isEnabledNoSync(allContexts, contextType.getContextId());
   }
 
-  private static boolean isEnabledNoSync(@NotNull TemplateContext thisContext,
-                                         @NotNull LiveTemplateContextsSnapshot allContexts,
-                                         @NotNull String contextTypeId) {
-    Boolean storedValue = thisContext.getOwnValueNoSync(contextTypeId);
+  private boolean isEnabledNoSync(@NotNull LiveTemplateContextsSnapshot allContexts,
+                                  @NotNull String contextTypeId) {
+    Boolean storedValue = getOwnValueNoSync(contextTypeId);
     if (storedValue == null) {
       LiveTemplateContext liveTemplateContext = allContexts.getLiveTemplateContext(contextTypeId);
       String baseContextTypeId = liveTemplateContext != null ? liveTemplateContext.getBaseContextId() : null;
-      return baseContextTypeId != null && isEnabledNoSync(thisContext, allContexts, baseContextTypeId);
+      return baseContextTypeId != null && !baseContextTypeId.equals(contextTypeId) && isEnabledNoSync(allContexts, baseContextTypeId);
     }
     return storedValue.booleanValue();
   }
@@ -84,44 +78,43 @@ public final class TemplateContext {
     return getOwnValue(contextType.getContextId());
   }
 
-  private @Nullable Boolean getOwnValue(String contextTypeId) {
-    synchronized (myContextStates) {
-      return getOwnValueNoSync(contextTypeId);
-    }
+  private synchronized @Nullable Boolean getOwnValue(String contextTypeId) {
+    return getOwnValueNoSync(contextTypeId);
   }
 
   private @Nullable Boolean getOwnValueNoSync(String contextTypeId) {
     return myContextStates.get(contextTypeId);
   }
 
-  public void setEnabled(TemplateContextType contextType, boolean value) {
-    synchronized (myContextStates) {
-      myContextStates.put(contextType.getContextId(), value);
-    }
+  public synchronized void setEnabled(@NotNull TemplateContextType contextType, boolean value) {
+    Map<String, Boolean> map = new HashMap<>(myContextStates);
+    map.put(contextType.getContextId(), value);
+    myContextStates = Map.copyOf(map);
   }
 
   // used during initialization => no sync
   @VisibleForTesting
-  public void setDefaultContext(@NotNull TemplateContext defContext) {
-    Map<String, Boolean> copy = new HashMap<>(myContextStates);
-    myContextStates.clear();
-    myContextStates.putAll(defContext.myContextStates);
-    myContextStates.putAll(copy);
+  public synchronized void setDefaultContext(@NotNull TemplateContext defContext) {
+    Map<String, Boolean> copy = new HashMap<>(defContext.myContextStates);
+    copy.putAll(myContextStates);
+    myContextStates = Map.copyOf(copy);
   }
 
   // used during initialization => no sync
   @ApiStatus.Internal
   public void readTemplateContext(@NotNull Element element, @NotNull LiveTemplateContextService ltContextService) {
+    Map<String, Boolean> result = new HashMap<>();
     Map<String, String> internMap = ltContextService.getInternalIds();
     for (Element option : element.getChildren("option")) {
       String name = option.getAttributeValue("name");
       String value = option.getAttributeValue("value");
       if (name != null && value != null) {
-        myContextStates.put(internMap.getOrDefault(name, name), Boolean.parseBoolean(value));
+        result.put(internMap.getOrDefault(name, name), Boolean.parseBoolean(value));
       }
     }
-
-    myContextStates.putAll(makeInheritanceExplicit(this, ltContextService.getSnapshot()));
+    myContextStates = result; // makeInheritanceExplicit needs this
+    result.putAll(makeInheritanceExplicit(this, ltContextService.getSnapshot()));
+    myContextStates = Map.copyOf(result);
   }
 
   @VisibleForTesting
@@ -144,7 +137,7 @@ public final class TemplateContext {
   }
 
   private boolean isDisabledByInheritance(TemplateContext thisContext, LiveTemplateContextsSnapshot allContexts, LiveTemplateContext type) {
-    if (!thisContext.hasOwnValue(type) && !isEnabled(allContexts, thisContext, type)) {
+    if (!thisContext.hasOwnValue(type) && !thisContext.isEnabled(allContexts, type)) {
       LiveTemplateContext context = type;
       while (context != null) {
         if (hasOwnValue(context)) {
@@ -194,15 +187,12 @@ public final class TemplateContext {
   }
 
   public static @NotNull Lazy<Map<String, TemplateContextType>> getIdToType() {
-    return LazyKt.lazy(new Function0<>() {
-      @Override
-      public Map<String, TemplateContextType> invoke() {
-        Map<String, TemplateContextType> idToType = new HashMap<>();
-        for (LiveTemplateContext type : LiveTemplateContextService.getInstance().getLiveTemplateContexts()) {
-          idToType.put(type.getContextId(), type.getTemplateContextType());
-        }
-        return idToType;
+    return LazyKt.lazy(() -> {
+      Map<String, TemplateContextType> idToType = new HashMap<>();
+      for (LiveTemplateContext type : LiveTemplateContextService.getInstance().getLiveTemplateContexts()) {
+        idToType.put(type.getContextId(), type.getTemplateContextType());
       }
+      return idToType;
     });
   }
 

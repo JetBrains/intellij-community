@@ -12,8 +12,10 @@ import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class CloseAllEditorsAction extends AnAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public void actionPerformed(final @NotNull AnActionEvent e) {

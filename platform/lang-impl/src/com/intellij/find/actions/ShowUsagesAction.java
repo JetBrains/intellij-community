@@ -79,7 +79,7 @@ import com.intellij.usages.impl.*;
 import com.intellij.usages.rules.UsageFilteringRuleProvider;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -502,9 +502,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     showElementUsagesWithResult(parameters, actionHandler);
   }
 
-  @NotNull
-  private static Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
-                                                                       @NotNull ShowUsagesActionHandler actionHandler) {
+  private static @NotNull Future<Collection<Usage>> showElementUsagesWithResult(@NotNull ShowUsagesParameters parameters,
+                                                                                @NotNull ShowUsagesActionHandler actionHandler) {
     ThreadingAssertions.assertEventDispatchThread();
     Project project = parameters.project;
     UsageViewImpl usageView = actionHandler.createUsageView(project);
@@ -528,7 +527,10 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
     AtomicBoolean manuallyResized = new AtomicBoolean();
     Ref<UsageNode> preselectedRow = new Ref<>();
 
-    Predicate<? super Usage> originUsageCheck = originUsageCheck(parameters.editor);
+    Predicate<? super Usage> originUsageCheck;
+    try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162330")) {
+      originUsageCheck = originUsageCheck(parameters.editor);
+    }
     ShowUsagesTableCellRenderer renderer = new ShowUsagesTableCellRenderer(originUsageCheck, outOfScopeUsages, searchScope);
     ShowUsagesTable table = new ShowUsagesTable(renderer, usageView);
 
@@ -586,12 +588,12 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
       Disposer.register(popup, indicator::cancel);
 
       // show popup only if find usages takes more than 300ms, otherwise it would flicker needlessly
-      EdtScheduledExecutorService.getInstance().schedule(() -> {
+      EdtScheduler.getInstance().schedule(ourPopupDelayTimeout, () -> {
         if (!usageView.isDisposed()) {
           showPopupIfNeedTo(popup, parameters.popupPosition, popupShownTimeRef);
           popupSpan.end();
         }
-      }, ourPopupDelayTimeout, TimeUnit.MILLISECONDS);
+      });
     }
 
     UsageNode USAGES_OUTSIDE_SCOPE_NODE = new UsageNode(null, table.USAGES_OUTSIDE_SCOPE_SEPARATOR);
@@ -766,10 +768,9 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
   }
 
   private static @NotNull AnActionEvent fakeEvent(@NotNull ToggleAction action) {
-    return new AnActionEvent(
-      null, DataContext.EMPTY_CONTEXT, "",
-      action.getTemplatePresentation().clone(), ActionManager.getInstance(), 0
-    );
+    return AnActionEvent.createEvent(
+      DataContext.EMPTY_CONTEXT,
+      action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionUiKind.NONE, null);
   }
 
   private static @NotNull Predicate<? super Usage> originUsageCheck(@Nullable Editor editor) {
@@ -1415,6 +1416,8 @@ public final class ShowUsagesAction extends AnAction implements PopupAction, Hin
                                    @NotNull IntRef minWidth,
                                    boolean showCodePreview,
                                    int dataSize) {
+
+    if (Registry.is("find.usages.disable.smart.size", false)) return;
 
     if (isCodeWithMeClientInstance(popup)) return;
 

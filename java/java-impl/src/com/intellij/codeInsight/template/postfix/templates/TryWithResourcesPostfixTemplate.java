@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -63,8 +64,13 @@ public class TryWithResourcesPostfixTemplate extends PostfixTemplate implements 
     MacroCallNode name = new MacroCallNode(new SuggestVariableNameMacro());
 
     DumbService dumbService = DumbService.getInstance(project);
-    PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
-    template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);
+    if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+        PsiUtil.isAvailable(JavaFeature.LVTI, expression)) {
+      template.addVariable("type", new TextExpression(PsiKeyword.VAR), false);
+    } else {
+      PsiType type = dumbService.computeWithAlternativeResolveEnabled(expression::getType);
+      template.addVariable("type", new TypeExpression(project, new PsiType[]{type}), false);
+    }
     template.addTextSegment(" ");
     template.addVariable("name", name, name, true);
     template.addTextSegment(" = ");

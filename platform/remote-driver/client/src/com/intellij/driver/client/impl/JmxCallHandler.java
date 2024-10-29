@@ -1,5 +1,7 @@
 package com.intellij.driver.client.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.management.MBeanServerConnection;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.MalformedObjectNameException;
@@ -12,6 +14,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.net.MalformedURLException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -27,7 +30,7 @@ public class JmxCallHandler implements InvocationHandler {
       this.mbeanName = new ObjectName(objectName);
     }
     catch (MalformedObjectNameException e) {
-      throw new RuntimeException("Incorrect JMX object name", e);
+      throw new RuntimeException("Incorrect JMX object name: " + objectName, e);
     }
   }
 
@@ -53,7 +56,7 @@ public class JmxCallHandler implements InvocationHandler {
       }
       catch (IOException e) {
         this.currentConnector = null;
-        throw new JmxCallException("Unable to connect to JMX host", e);
+        throw new JmxCallException("Unable to connect to JMX host: " + getServiceTextURL(), e);
       }
       finally {
         Thread.currentThread().setContextClassLoader(originalClassLoader);
@@ -67,17 +70,18 @@ public class JmxCallHandler implements InvocationHandler {
       return wrappedHandler.invoke(proxy, method, args);
     }
     catch (IOException e) {
-      throw new JmxCallException("Unable to perform JMX call", e);
+      throw new JmxCallException("Unable to perform JMX call: " + method + "(" + (args != null ? Arrays.asList(args) : "null") + ")", e);
     }
   }
 
   public JMXConnector getConnector() throws IOException {
     JMXServiceURL url;
+    var textUrl = getServiceTextURL();
     try {
-      url = new JMXServiceURL("service:jmx:rmi:///jndi/rmi://" + hostInfo.getAddress() + "/jmxrmi");
+      url = new JMXServiceURL(textUrl);
     }
     catch (MalformedURLException e) {
-      throw new RuntimeException("Incorrect service URL", e);
+      throw new RuntimeException("Incorrect service URL: " + textUrl, e);
     }
 
     Map<String, Object> properties = new HashMap<>();
@@ -86,6 +90,10 @@ public class JmxCallHandler implements InvocationHandler {
     }
 
     return JMXConnectorFactory.connect(url, properties);
+  }
+
+  private @NotNull String getServiceTextURL() {
+    return "service:jmx:rmi:///jndi/rmi://" + hostInfo.getAddress() + "/jmxrmi";
   }
 
   public static <T> T jmx(Class<T> clazz) {
@@ -99,7 +107,7 @@ public class JmxCallHandler implements InvocationHandler {
       throw new RuntimeException("There is no @JmxName annotation for " + clazz);
     }
 
-    if ("".equals(jmxName.value())) {
+    if (jmxName.value().isEmpty()) {
       throw new RuntimeException("JmxName.value is empty for " + clazz);
     }
 

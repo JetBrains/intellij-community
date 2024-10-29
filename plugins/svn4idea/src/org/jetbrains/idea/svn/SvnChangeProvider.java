@@ -26,10 +26,7 @@ import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.find;
 import static com.intellij.util.containers.ContainerUtil.map2SetNotNull;
@@ -52,11 +49,9 @@ public class SvnChangeProvider implements ChangeProvider {
     try {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
       final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs);
-      final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
-      statusReceiver.addListener(context);
-      statusReceiver.addListener(nestedCopiesBuilder);
+      final StatusReceiver statusReceiver = new CombinedStatusReceiver(Arrays.asList(context, nestedCopiesBuilder));
 
-      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver.getMulticaster(), progress);
+      final SvnRecursiveStatusWalker walker = new SvnRecursiveStatusWalker(myVcs, statusReceiver, progress);
 
       for (FilePath path : dirtyScope.getRecursivelyDirtyDirectories()) {
         walker.go(path, Depth.INFINITY);
@@ -66,7 +61,7 @@ public class SvnChangeProvider implements ChangeProvider {
         walker.go(path, Depth.IMMEDIATES);
       }
 
-      statusReceiver.getMulticaster().finish();
+      statusReceiver.finish();
 
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);

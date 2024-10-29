@@ -39,6 +39,7 @@ import com.intellij.xdebugger.frame.presentation.XRegularValuePresentation;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -54,13 +55,13 @@ import java.util.concurrent.RejectedExecutionException;
 
 public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements ValueDescriptor {
   protected final Project myProject;
+  private final CompletableFuture<Void> myInitFuture;
 
   NodeRenderer myRenderer = null;
 
   NodeRenderer myAutoRenderer = null;
 
   private Value myValue;
-  private volatile boolean myValueReady;
 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
@@ -90,15 +91,16 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   protected ValueDescriptorImpl(Project project, Value value) {
     myProject = project;
     myValue = value;
-    myValueReady = true;
+    myInitFuture = CompletableFuture.completedFuture(null);
   }
 
   protected ValueDescriptorImpl(Project project) {
     myProject = project;
+    myInitFuture = new CompletableFuture<>();
   }
 
   private void assertValueReady() {
-    if (!myValueReady) {
+    if (!isValueReady()) {
       LOG.error("Value is not yet calculated for " + getClass());
     }
   }
@@ -157,7 +159,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean isValueReady() {
-    return myValueReady;
+    return myInitFuture.isDone();
   }
 
   @Override
@@ -238,7 +240,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       myIsExpandable = false;
     }
     finally {
-      myValueReady = true;
+      myInitFuture.complete(null);
     }
 
     myIsNew = false;
@@ -254,6 +256,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public void setOnDemandPresentationProvider(@NotNull OnDemandPresentationProvider onDemandPresentationProvider) {
     myOnDemandPresentationProvider = onDemandPresentationProvider;
+  }
+
+  @ApiStatus.Internal
+  public CompletableFuture<Void> getInitFuture() {
+    return myInitFuture;
   }
 
   @Nullable
@@ -294,11 +301,11 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public void setAncestor(NodeDescriptor oldDescriptor) {
     super.setAncestor(oldDescriptor);
     myIsNew = false;
-    if (!myValueReady) {
+    if (!isValueReady()) {
       ValueDescriptorImpl other = (ValueDescriptorImpl)oldDescriptor;
-      if (other.myValueReady) {
+      if (other.isValueReady()) {
         myValue = other.getValue();
-        myValueReady = true;
+        myInitFuture.complete(null);
       }
     }
   }
@@ -735,7 +742,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canSetValue() {
-    return myValueReady && isLvalue();
+    return isValueReady() && isLvalue();
   }
 
   public XValueModifier getModifier(JavaValue value) {
@@ -773,7 +780,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   }
 
   public boolean canMark() {
-    if (!myValueReady) {
+    if (!isValueReady()) {
       return false;
     }
     return getValue() instanceof ObjectReference;

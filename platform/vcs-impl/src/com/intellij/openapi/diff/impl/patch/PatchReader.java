@@ -92,7 +92,7 @@ public final class PatchReader {
     ListIterator<String> iterator = myLines.listIterator();
     if (!iterator.hasNext()) {
       myPatches = Collections.emptyList();
-      return;
+      throw new NotAPatchException();
     }
 
     String next;
@@ -139,6 +139,9 @@ public final class PatchReader {
       }
     }
     myPatches = myPatchContentParser.getResult();
+    if (myPatches.isEmpty()) {
+      throw new NotAPatchException();
+    }
     myPatchFileInfo = PatchFileHeaderParser.parseHeader(Iterables.limit(myLines, headerLineNum).iterator());
   }
 

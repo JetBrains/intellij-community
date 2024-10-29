@@ -1,6 +1,11 @@
-from __future__ import absolute_import
-
 import os
+import winreg  # pytype: disable=import-error
+
+from typing import (
+    List,
+    TYPE_CHECKING,
+    Tuple,
+)
 
 from . import (
     encoding,
@@ -9,19 +14,14 @@ from . import (
     win32,
 )
 
-try:
-    import _winreg as winreg  # pytype: disable=import-error
-
-    winreg.CloseKey
-except ImportError:
-    # py2 only
-    import winreg  # pytype: disable=import-error
+if TYPE_CHECKING:
+    from . import ui as uimod
 
 # MS-DOS 'more' is the only pager available by default on Windows.
 fallbackpager = b'more'
 
 
-def systemrcpath():
+def systemrcpath() -> List[bytes]:
     '''return default os-specific hgrc search path'''
     rcpath = []
     filename = win32.executablepath()
@@ -29,7 +29,7 @@ def systemrcpath():
     progrc = os.path.join(os.path.dirname(filename), b'mercurial.ini')
     rcpath.append(progrc)
 
-    def _processdir(progrcd):
+    def _processdir(progrcd: bytes) -> None:
         if os.path.isdir(progrcd):
             for f, kind in sorted(util.listdir(progrcd)):
                 if f.endswith(b'.rc'):
@@ -54,7 +54,11 @@ def systemrcpath():
 
     # next look for a system rcpath in the registry
     value = util.lookupreg(
-        b'SOFTWARE\\Mercurial', None, winreg.HKEY_LOCAL_MACHINE
+        # pytype: disable=module-attr
+        b'SOFTWARE\\Mercurial',
+        None,
+        winreg.HKEY_LOCAL_MACHINE
+        # pytype: enable=module-attr
     )
     if value and isinstance(value, bytes):
         value = util.localpath(value)
@@ -66,7 +70,7 @@ def systemrcpath():
     return rcpath
 
 
-def userrcpath():
+def userrcpath() -> List[bytes]:
     '''return os-specific hgrc search path to the user dir'''
     home = _legacy_expanduser(b'~')
     path = [os.path.join(home, b'mercurial.ini'), os.path.join(home, b'.hgrc')]
@@ -77,7 +81,7 @@ def userrcpath():
     return path
 
 
-def _legacy_expanduser(path):
+def _legacy_expanduser(path: bytes) -> bytes:
     """Expand ~ and ~user constructs in the pre 3.8 style"""
 
     # Python 3.8+ changed the expansion of '~' from HOME to USERPROFILE.  See
@@ -109,5 +113,5 @@ def _legacy_expanduser(path):
     return userhome + path[i:]
 
 
-def termsize(ui):
+def termsize(ui: "uimod.ui") -> Tuple[int, int]:
     return win32.termsize()

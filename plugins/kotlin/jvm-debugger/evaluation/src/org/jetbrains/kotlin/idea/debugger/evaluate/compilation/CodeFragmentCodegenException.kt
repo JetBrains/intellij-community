@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import com.intellij.debugger.jdi.StackFrameProxyImpl
@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.psi.KtCodeFragment
 
 class CodeFragmentCodegenException(val reason: Throwable) : Exception()
 
-internal fun reportErrorWithAttachments(
+fun reportErrorWithAttachments(
     executionContext: ExecutionContext,
     codeFragment: KtCodeFragment,
     reason: Throwable,
@@ -38,6 +38,7 @@ internal fun reportErrorWithAttachments(
             project: $projectName
             session: $sessionName
             location: ${frameToLocation(selectedFrame)}
+            suspend context: ${suspendContext}
         """.trimIndent()
 
     val suspendStackTrace = suspendContext.thread?.frames()?.joinToString(System.lineSeparator()) { frame ->

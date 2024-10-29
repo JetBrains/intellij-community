@@ -18,6 +18,7 @@ import com.intellij.ui.HoverHyperlinkLabel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -26,6 +27,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class AppFontPanel implements Disposable {
 
   private final @NotNull AppFontOptionsPanel myOptionsPanel;

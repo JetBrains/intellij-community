@@ -3,6 +3,8 @@
  */
 package com.intellij.openapi.editor.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -14,6 +16,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.ui.components.JBTextArea;
+import org.junit.jupiter.api.Assertions;
 
 import java.awt.datatransfer.StringSelection;
 
@@ -416,6 +419,21 @@ public class EditorActionTest extends AbstractEditorTest {
     initText("<selection>line1\nline2\nli<caret></selection>ne3");
     executeAction(IdeActions.ACTION_EDITOR_ADD_CARET_PER_SELECTED_LINE);
     checkResultByText("line1<caret>\nline2<caret>\nline3<caret>");
+  }
+
+  public void testEscapeRemovesSelection() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    executeAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    checkResultByText("line1\nline2\nli<caret>ne3");
+  }
+
+  public void testEscapeActionIsDisabledByDefault() {
+    initText("<selection>line1\nline2\nli<caret></selection>ne3");
+    AnAction escapeAction = ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_ESCAPE);
+    Assertions.assertTrue(EditorTestUtil.checkActionIsEnabled(getEditor(), escapeAction));
+
+    initText("line1\nline2\nli<caret>ne3");
+    Assertions.assertFalse(EditorTestUtil.checkActionIsEnabled(getEditor(), escapeAction));
   }
 
   public void testTextComponentEditor() {

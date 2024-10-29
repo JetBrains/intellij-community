@@ -7,28 +7,11 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" name="ktor-client-cio" level="project" />
+    <orderEntry type="library" exported="" name="ktor-client-core" level="project" />
+    <orderEntry type="library" exported="" name="ktor-client-java" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-encoding" level="project" />
     <orderEntry type="library" exported="" name="ktor-client-content-negotiation" level="project" />
     <orderEntry type="library" exported="" name="ktor-serialization-kotlinx-json" level="project" />
-    <orderEntry type="module-library" exported="">
-      <library name="ktor-client-java-engine" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:2.3.8">
-          <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.8/ktor-client-java-jvm-2.3.8.jar">
-              <sha256sum>c17d8f1ac1d6bcfe3c164e9efd92aaeeab0cbedad54f4c269451fce38d4de3ef</sha256sum>
-            </artifact>
-          </verification>
-        </properties>
-        <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.8/ktor-client-java-jvm-2.3.8.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.8/ktor-client-java-jvm-2.3.8-sources.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
     <orderEntry type="library" exported="" name="ktor-client-auth" level="project" />
   </component>
 </module>

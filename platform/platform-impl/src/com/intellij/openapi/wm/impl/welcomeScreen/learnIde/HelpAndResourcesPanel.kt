@@ -3,7 +3,10 @@ package com.intellij.openapi.wm.impl.welcomeScreen.learnIde
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.*
+import com.intellij.ide.actions.HelpTopicsAction
+import com.intellij.ide.actions.JetBrainsTvAction
+import com.intellij.ide.actions.OnlineDocAction
+import com.intellij.ide.actions.WhatsNewAction
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
@@ -11,12 +14,16 @@ import com.intellij.openapi.actionSystem.impl.Utils
 import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.coursesInProgress.createTitlePanel
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Dimension
 import javax.swing.*
+import javax.swing.Box.Filler.LEFT_ALIGNMENT
+import javax.swing.JPanel.LEFT_ALIGNMENT
 import javax.swing.plaf.ComponentUI
 
+@ApiStatus.Internal
 class HelpAndResourcesPanel : JPanel() {
   private val helpAndResourcesHeader: JTextPane = createTitlePanel(IdeBundle.message("welcome.screen.learnIde.help.and.resources.text"))
 
@@ -56,7 +63,8 @@ class HelpAndResourcesPanel : JPanel() {
   private fun addHelpActions() {
     val presentationFactory = PresentationFactory()
     val helpActionsGroup = ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_LEARN_IDE) as ActionGroup
-    val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.WELCOME_SCREEN)
+    val helpActions = Utils.expandActionGroup(helpActionsGroup, presentationFactory, DataContext.EMPTY_CONTEXT,
+                                              ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE)
     helpActions.forEach {
       val presentation = presentationFactory.getPresentation(it)
       if (!presentation.isEnabledAndVisible) {

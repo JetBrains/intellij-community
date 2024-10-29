@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options;
 
+import com.intellij.ide.IdeCoreBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
-import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,58 +15,43 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Set;
+import java.util.Locale;
 
 public final class SchemeImportUtil {
-  public static @Nullable VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
-                                                         @NotNull Component parent,
-                                                         @Nullable VirtualFile preselect,
-                                                         @Nullable @NlsContexts.Label String description) {
-    final Set<String> extensions = Set.of(sourceExtensions);
-    FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return
-          (file.isDirectory() || isFileSelectable(file)) &&
-          (showHiddenFiles || !FileElement.isFileHidden(file));
-      }
-
-      @Override
-      public boolean isFileSelectable(@Nullable VirtualFile file) {
-        return file != null && !file.isDirectory() && file.getExtension() != null && extensions.contains(file.getExtension());
-      }
-    };
+  public static @Nullable VirtualFile selectImportSource(
+    @NotNull String @NotNull [] sourceExtensions,
+    @NotNull Component parent,
+    @Nullable VirtualFile preselect,
+    @Nullable @NlsContexts.Label String description
+  ) {
+    var descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false);
+    if (sourceExtensions.length == 1) {
+      descriptor.withExtensionFilter(sourceExtensions[0]);
+    }
+    else if (sourceExtensions.length > 1) {
+      descriptor.withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", sourceExtensions[0].toUpperCase(Locale.ROOT)), sourceExtensions);
+    }
     if (description != null) {
       descriptor.setDescription(description);
     }
-    FileChooserDialog fileChooser = FileChooserFactory.getInstance()
-      .createFileChooser(descriptor, null, parent);
-    final VirtualFile[] preselectFiles;
-    if (preselect != null) {
-      preselectFiles = new VirtualFile[1];
-      preselectFiles[0] = preselect;
-    }
-    else {
-      preselectFiles = VirtualFile.EMPTY_ARRAY;
-    }
-    final VirtualFile[] virtualFiles = fileChooser.choose(null, preselectFiles);
+    var fileChooser = FileChooserFactory.getInstance().createFileChooser(descriptor, null, parent);
+    var preselectFiles = preselect != null ? new VirtualFile[]{preselect} : VirtualFile.EMPTY_ARRAY;
+    var virtualFiles = fileChooser.choose(null, preselectFiles);
     if (virtualFiles.length != 1) return null;
     virtualFiles[0].refresh(false, false);
     return virtualFiles[0];
   }
 
-  private static boolean canSelectJarFile(String @NotNull [] sourceExtensions) {
+  private static boolean canSelectJarFile(String[] sourceExtensions) {
     return ArrayUtil.contains("jar", sourceExtensions);
   }
 
   public static @NotNull Element loadSchemeDom(@NotNull VirtualFile file) throws SchemeImportException {
-    try (InputStream inputStream = file.getInputStream()) {
+    try (var inputStream = file.getInputStream()) {
       return JDOMUtil.load(inputStream);
     }
     catch (IOException | JDOMException e) {
       throw new SchemeImportException();
     }
   }
-
 }

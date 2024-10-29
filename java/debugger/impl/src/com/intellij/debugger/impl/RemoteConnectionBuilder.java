@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.intellij.build.BuildDependenciesJps;
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot;
-import org.jetbrains.intellij.build.dependencies.BuildDependenciesConstants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -131,32 +130,8 @@ public class RemoteConnectionBuilder {
         addDebuggerAgent(parameters, myProject, true);
       }
 
-      final boolean forceNoJIT = DebuggerSettings.getInstance().DISABLE_JIT;
-      final String debugKey = System.getProperty(DEBUG_KEY_NAME, "-Xdebug");
-      final boolean needDebugKey = forceNoJIT || !"-Xdebug".equals(debugKey) /*the key is non-standard*/;
-
-      if (forceNoJIT || needDebugKey) {
-        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "-Xrunjdwp:" + _debuggeeRunProperties);
-      }
-      else {
-        // use newer JVMTI if available
-        parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
-        parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
-      }
-
-      if (forceNoJIT) {
-        parameters.getVMParametersList().replaceOrPrepend("-Djava.compiler=", "-Djava.compiler=NONE");
-        parameters.getVMParametersList().replaceOrPrepend("-Xnoagent", "-Xnoagent");
-      }
-
-      if (needDebugKey) {
-        parameters.getVMParametersList().replaceOrPrepend(debugKey, debugKey);
-      }
-      else {
-        // deliberately skip outdated parameter because it can disable full-speed debugging for some jdk builds
-        // see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6272174
-        parameters.getVMParametersList().replaceOrPrepend("-Xdebug", "");
-      }
+      parameters.getVMParametersList().replaceOrPrepend("-Xrunjdwp:", "");
+      parameters.getVMParametersList().replaceOrPrepend("-agentlib:jdwp=", "-agentlib:jdwp=" + _debuggeeRunProperties);
     });
 
     return new RemoteConnection(useSockets, DebuggerManagerImpl.LOCALHOST_ADDRESS_FALLBACK, address, myServer);
@@ -180,7 +155,6 @@ public class RemoteConnectionBuilder {
   }
 
   private static final String AGENT_JAR_NAME = "debugger-agent.jar";
-  private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
   public static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project, boolean checkJdkVersion) {
     if (AsyncStacksUtils.isAgentEnabled()) {
@@ -216,7 +190,7 @@ public class RemoteConnectionBuilder {
             Path downloadedAgent = BuildDependenciesJps.getModuleLibrarySingleRoot(
               iml,
               "debugger-agent",
-              BuildDependenciesConstants.INTELLIJ_DEPENDENCIES_URL,
+              "https://cache-redirector.jetbrains.com/intellij-dependencies",
               new BuildDependenciesCommunityRoot(Path.of(PathManager.getCommunityHomePath())));
 
             Files.copy(downloadedAgent, agentArtifactPath);
@@ -237,15 +211,24 @@ public class RemoteConnectionBuilder {
             try (AccessToken ignore = SlowOperations.knownIssue("IDEA-307303, EA-835503")) {
               parametersList.add(prefix + agentPath + generateAgentSettings(project));
             }
+            if (Registry.is("debugger.async.stacks.coroutines", false)) {
+              parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
+              parametersList.addProperty("debugger.agent.enable.coroutines", "true");
+              if (Registry.is("debugger.async.stacks.flows", false)) {
+                parametersList.addProperty("kotlinx.coroutines.debug.enable.flows.stack.trace", "true");
+              }
+              if (Registry.is("debugger.async.stacks.state.flows", false)) {
+                parametersList.addProperty("kotlinx.coroutines.debug.enable.mutable.state.flows.stack.trace", "true");
+              }
+            }
+            if (!Registry.is("debugger.async.stack.trace.for.exceptions.printing", false)) {
+              parametersList.addProperty("debugger.agent.support.throwable", "false");
+            }
           }
         }
         else {
           LOG.error("Capture agent not found: " + agentArtifactPath);
         }
-      }
-      if (Registry.is("debugger.async.stacks.coroutines", false)) {
-        parametersList.addProperty("kotlinx.coroutines.debug.enable.creation.stack.trace", "false");
-        parametersList.addProperty("debugger.agent.enable.coroutines", "true");
       }
     }
   }

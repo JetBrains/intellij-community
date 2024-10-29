@@ -19,6 +19,7 @@ interface Editor {
   fun offsetToVisualPosition(offset: Int): VisualPosition
   fun visualPositionToXY(visible: VisualPosition): Point
   fun getInlayModel(): InlayModel
+  fun getColorsScheme(): EditorColorsScheme
 }
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
@@ -36,6 +37,7 @@ interface CaretModel {
   fun moveToLogicalPosition(position: LogicalPosition)
   fun moveToVisualPosition(pos: VisualPosition)
   fun getLogicalPosition(): LogicalPosition
+  fun moveToOffset(offset: Int)
 }
 
 @Remote("com.intellij.openapi.editor.InlayModel")
@@ -91,6 +93,11 @@ interface FileEditorManager {
   fun getSelectedTextEditor(): Editor?
 }
 
+@Remote("com.intellij.openapi.editor.colors.EditorColorsScheme")
+interface EditorColorsScheme {
+  fun getEditorFontSize(): Int
+}
+
 fun Driver.openEditor(file: VirtualFile, project: Project? = null): Array<FileEditor> {
   return withContext(OnDispatcher.EDT) {
     service<FileEditorManager>(project ?: singleProject()).openFile(file, true, false)
@@ -103,14 +110,14 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     if (fileToOpen == null) {
       throw IllegalArgumentException("Fail to find file $relativePath")
     }
-    openEditor(file = fileToOpen)
+    openEditor(fileToOpen, project)
     fileToOpen
   }
   else {
     val service = service(GuestNavigationService::class, project)
     withContext(OnDispatcher.EDT) {
       service.navigateViaBackend(relativePath, 0)
-      waitFor(errorMessage = "Fail to open file $relativePath", duration = 30.seconds,
+      waitFor(message = "File is opened: $relativePath", timeout = 30.seconds,
               getter = {
                 service<FileEditorManager>(project).getSelectedTextEditor()?.getVirtualFile()
               },
@@ -121,6 +128,6 @@ fun Driver.openFile(relativePath: String, project: Project = singleProject(), wa
     }
   }
   if (waitForCodeAnalysis) {
-    waitForCodeAnalysis(file = openedFile)
+    waitForCodeAnalysis(project, openedFile)
   }
 }

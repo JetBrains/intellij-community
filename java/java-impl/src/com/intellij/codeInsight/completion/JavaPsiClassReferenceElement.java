@@ -17,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   private final String myQualifiedName;
   private String myForcedPresentableName;
   private final String myPackageDisplayName;
+  private final @Nullable Icon myIcon;
+  private final boolean myStrikeout;
   private PsiSubstitutor mySubstitutor = PsiSubstitutor.EMPTY;
 
   public JavaPsiClassReferenceElement(@NotNull PsiClass psiClass) {
@@ -35,6 +38,18 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
     setInsertHandler(AllClassesGetter.TRY_SHORTENING);
     setTailType(TailTypes.noneType());
     myPackageDisplayName = PsiFormatUtil.getPackageDisplayName(psiClass);
+    myIcon = DefaultLookupItemRenderer.getRawIcon(this);
+    myStrikeout = JavaElementLookupRenderer.isToStrikeout(this);
+  }
+
+  @Override
+  public boolean isToStrikeout() {
+    return myStrikeout;
+  }
+
+  @Override
+  public @Nullable Icon getIcon() {
+    return myIcon;
   }
 
   public String getForcedPresentableName() {
@@ -115,19 +130,19 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   public static void renderClassItem(LookupElementPresentation presentation, LookupElement item, PsiClass psiClass, boolean diamond,
                                      @NotNull String locationString, @NotNull PsiSubstitutor substitutor) {
     if (!(psiClass instanceof PsiTypeParameter)) {
-      presentation.setIcon(DefaultLookupItemRenderer.getRawIcon(item));
+      presentation.setIcon(item instanceof TypedLookupItem typed ? typed.getIcon() : DefaultLookupItemRenderer.getRawIcon(item));
     }
 
-    boolean strikeout = JavaElementLookupRenderer.isToStrikeout(item);
+    boolean strikeout = item instanceof TypedLookupItem typed ? typed.isToStrikeout() : JavaElementLookupRenderer.isToStrikeout(item);
     presentation.setItemText(getName(psiClass, item, diamond, substitutor));
     presentation.setStrikeout(strikeout);
 
     String tailText = locationString;
 
-    if (item instanceof PsiTypeLookupItem) {
-      if (((PsiTypeLookupItem)item).isIndicateAnonymous() &&
+    if (item instanceof PsiTypeLookupItem typeLookupItem) {
+      if (typeLookupItem.isIndicateAnonymous() &&
           (psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT)) ||
-          ((PsiTypeLookupItem)item).isAddArrayInitializer()) {
+          typeLookupItem.isAddArrayInitializer()) {
         tailText = "{...}" + tailText;
       }
     }
@@ -143,8 +158,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   private static String getName(final PsiClass psiClass, final LookupElement item, boolean diamond, @NotNull PsiSubstitutor substitutor) {
-    String forced = item instanceof JavaPsiClassReferenceElement ? ((JavaPsiClassReferenceElement)item).getForcedPresentableName() :
-                    item instanceof PsiTypeLookupItem ? ((PsiTypeLookupItem)item).getForcedPresentableName() :
+    String forced = item instanceof JavaPsiClassReferenceElement referenceElement ? referenceElement.getForcedPresentableName() :
+                    item instanceof PsiTypeLookupItem lookupItem ? lookupItem.getForcedPresentableName() :
                     null;
     if (forced != null) {
       return forced;
@@ -175,8 +190,8 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
       if(type == null){
         return "";
       }
-      if (type instanceof PsiClassType && ((PsiClassType)type).getParameters().length > 0) {
-        buffer.append(((PsiClassType)type).rawType().getPresentableText()).append("<...>");
+      if (type instanceof PsiClassType classType && classType.getParameters().length > 0) {
+        buffer.append(classType.rawType().getPresentableText()).append("<...>");
       } else {
         buffer.append(type.getPresentableText());
       }

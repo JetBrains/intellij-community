@@ -13,7 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.ui.playback.commands.KeyCodeTypeCommand;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
 import com.jetbrains.performancePlugin.utils.EditorUtils;
@@ -58,7 +58,7 @@ public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor != null) {
       ApplicationManager.getApplication().runWriteAction(Context.current().wrap(() -> {
-        TraceUtil.runWithSpanThrows(PerformanceTestSpan.TRACER, DelayTypeCommand.SPAN_NAME, span -> {
+        TraceKt.use(PerformanceTestSpan.TRACER.spanBuilder(DelayTypeCommand.SPAN_NAME), span -> {
           AnAction action = ActionManagerEx.getInstanceEx().getAction(actionID);
           AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, null, "", EditorUtils.createEditorContext(editor));
           ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
@@ -67,6 +67,7 @@ public class IdeEditorKeyCommand extends KeyCodeTypeCommand {
             }, "", null, editor.getDocument());
           });
           span.addEvent("Typing " + actionID);
+          return null;
         });
       }));
     }

@@ -13,6 +13,8 @@
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinSuperClassIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex"/>
+    <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex"/>
     <stubIndex implementation="org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex"/>
@@ -79,9 +81,6 @@
     <registryKey key="kotlin.indices.timing.threshold.batch"
                  defaultValue="5000"
                  description="Time threshold in ms to report slow index batch (processAll-like) access" />
-    <registryKey key="kotlin.indices.short.names.filtering.enabled" defaultValue="true"
-                 description="Filter irrelevant Kotlin FQNames by short name index"
-                 restartRequired="true"/>
 
     <notificationGroup
             id="Recover Kotlin Indices"

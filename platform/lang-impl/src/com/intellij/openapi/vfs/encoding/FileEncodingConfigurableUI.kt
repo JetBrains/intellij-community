@@ -9,9 +9,11 @@ import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl.BOMForNewUTF
 import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ItemListener
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class FileEncodingConfigurableUI {
 
   lateinit var transparentNativeToAsciiCheckBox: JBCheckBox

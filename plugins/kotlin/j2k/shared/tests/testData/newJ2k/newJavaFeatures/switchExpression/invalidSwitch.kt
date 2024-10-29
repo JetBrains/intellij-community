@@ -1,5 +1,5 @@
 fun foo() {
-    val a: Int = when (a) {
+    var a: Int = when (a) {
         -> {
             println("1")
             println("2")

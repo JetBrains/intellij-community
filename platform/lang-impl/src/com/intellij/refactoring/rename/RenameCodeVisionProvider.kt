@@ -7,12 +7,12 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionPredefinedActionEn
 import com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry
 import com.intellij.codeInsight.hints.InlayHintsUtils
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
-import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.UndoConfirmationPolicy
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.findPsiFile
@@ -26,8 +26,10 @@ import com.intellij.refactoring.suggested.REFACTORING_DATA_KEY
 import com.intellij.refactoring.suggested.SuggestedRenameData
 import com.intellij.refactoring.suggested.performSuggestedRefactoring
 import com.intellij.util.concurrency.annotations.RequiresReadLock
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
   companion object {
     internal const val ID: String = "Rename refactoring"
@@ -114,7 +116,7 @@ class RenameCodeVisionProvider : CodeVisionProvider<Unit> {
     get() = PlatformCodeVisionIds.RENAME.key
 
   override fun isAvailableFor(project: Project): Boolean {
-    return CoreFileTypeRegistry.getInstance().registeredFileTypes.any {
+    return FileTypeManager.getInstance().registeredFileTypes.any {
       RefactoringCodeVisionSupport.isRenameCodeVisionEnabled(it)
     }
   }

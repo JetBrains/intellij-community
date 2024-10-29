@@ -51,7 +51,9 @@ class KotlinCompletionEvaluationVisitor : EvaluationVisitor, KtTreeVisitorVoid()
   }
 
   override fun visitPackageDirective(directive: KtPackageDirective) = Unit
+  override fun visitPackageDirective(directive: KtPackageDirective, data: Void?): Void? = null
   override fun visitImportList(importList: KtImportList) = Unit
+  override fun visitImportAlias(importAlias: KtImportAlias, data: Void?): Void? = null
   override fun visitImportAlias(importAlias: KtImportAlias) = Unit
   override fun visitImportDirective(importDirective: KtImportDirective) = Unit
   override fun visitStringTemplateEntry(entry: KtStringTemplateEntry) = Unit

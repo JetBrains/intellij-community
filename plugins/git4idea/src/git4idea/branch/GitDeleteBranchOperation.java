@@ -98,7 +98,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
         refresh(repository);
         markSuccessful(repository);
       }
-      else if (notFullyMergedDetector.hasHappened()) {
+      else if (notFullyMergedDetector.isDetected()) {
         String baseBranch = notMergedToUpstreamDetector.getBaseBranch();
         if (baseBranch == null) { // GitBranchNotMergedToUpstreamDetector didn't happen
           baseBranch = myCurrentHeads.get(repository);

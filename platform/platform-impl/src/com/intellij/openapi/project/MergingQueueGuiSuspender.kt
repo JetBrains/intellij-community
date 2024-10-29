@@ -7,9 +7,11 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.impl.ProgressSuspender
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
+@ApiStatus.Internal
 @VisibleForTesting
 class MergingQueueGuiSuspender {
   @Volatile

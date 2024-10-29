@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.injected.editor.EditorWindow;
@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,9 +171,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     markupModel.addRangeHighlighterAndChangeAttributes(attributesKey, start, end, OCCURRENCE_LAYER,
                                                        HighlighterTargetArea.EXACT_RANGE, false, highlighter -> {
 
-        Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
-        highlighters.add(highlighter);
-        setHideFlags(highlighter, flags);
+        addEditorHighlighterWithHideFlags(editor, highlighter, flags);
 
         highlighter.setVisibleIfFolded(true);
         if (outHighlighters != null) {
@@ -187,6 +186,15 @@ public final class HighlightManagerImpl extends HighlightManager {
           highlighter.setErrorStripeMarkColor(scrollMarkColor);
         }
       });
+  }
+
+  @ApiStatus.Internal
+  public static void addEditorHighlighterWithHideFlags(@NotNull Editor editor,
+                                                       @NotNull RangeHighlighter highlighter,
+                                                       @HideFlags @Nullable Integer flags) {
+    Set<RangeHighlighter> highlighters = getEditorHighlighters(editor, true);
+    highlighters.add(highlighter);
+    setHideFlags(highlighter, flags);
   }
 
   @Override
@@ -255,15 +263,6 @@ public final class HighlightManagerImpl extends HighlightManager {
   @Override
   public void addOccurrenceHighlights(@NotNull Editor editor,
                                       PsiElement @NotNull [] elements,
-                                      @NotNull TextAttributes attributes,
-                                      boolean hideByTextChange,
-                                      @Nullable Collection<? super RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, elements, attributes, null, hideByTextChange, outHighlighters);
-  }
-
-  @Override
-  public void addOccurrenceHighlights(@NotNull Editor editor,
-                                      PsiElement @NotNull [] elements,
                                       @NotNull TextAttributesKey attributesKey,
                                       boolean hideByTextChange,
                                       @Nullable Collection<? super RangeHighlighter> outHighlighters) {
@@ -303,8 +302,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     return Math.min(offset, textLength);
   }
 
-  @Nullable
-  private static Color getScrollMarkColor(@Nullable TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
+  private static @Nullable Color getScrollMarkColor(@Nullable TextAttributes attributes, @NotNull EditorColorsScheme colorScheme) {
     if (attributes == null) return null;
     if (attributes.getErrorStripeColor() != null) return attributes.getErrorStripeColor();
     if (attributes.getBackgroundColor() != null) {

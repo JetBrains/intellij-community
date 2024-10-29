@@ -3,10 +3,12 @@ package com.intellij.find.findUsages;
 
 import com.intellij.usages.ConfigurableUsageTarget;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class UsageHistory {
   // the last element is the most recent
   private final Reference2ObjectLinkedOpenHashMap<ConfigurableUsageTarget, String> myHistory = new Reference2ObjectLinkedOpenHashMap<>();

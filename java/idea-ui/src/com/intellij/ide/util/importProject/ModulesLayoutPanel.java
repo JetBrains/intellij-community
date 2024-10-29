@@ -12,13 +12,13 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
+class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   private final LibraryFilter myLibrariesFilter;
 
   public interface LibraryFilter {
     boolean isLibraryChosen(LibraryDescriptor libDescriptor);
   }
-  public ModulesLayoutPanel(ModuleInsight insight, final LibraryFilter libFilter) {
+  ModulesLayoutPanel(ModuleInsight insight, final LibraryFilter libFilter) {
     super(insight);
     myLibrariesFilter = libFilter;
   }
@@ -40,8 +40,8 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  protected Collection getDependencies(final ModuleDescriptor entry) {
-    final List<Object> deps = new ArrayList<>(entry.getDependencies());
+  protected Collection<Dependency> getDependencies(final ModuleDescriptor entry) {
+    final List<Dependency> deps = new ArrayList<>(entry.getDependencies());
     final Collection<LibraryDescriptor> libDependencies = getInsight().getLibraryDependencies(entry);
     for (LibraryDescriptor libDependency : libDependencies) {
       if (myLibrariesFilter.isLibraryChosen(libDependency)) {

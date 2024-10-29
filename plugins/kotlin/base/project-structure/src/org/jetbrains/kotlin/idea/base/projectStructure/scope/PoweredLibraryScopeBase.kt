@@ -8,25 +8,22 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import org.jetbrains.kotlin.resolve.jvm.TopPackageNamesProvider
 
-internal open class PoweredLibraryScopeBase(project: Project, classes: Array<VirtualFile>, sources: Array<VirtualFile>) :
-    LibraryScopeBase(project, classes, sources), TopPackageNamesProvider {
+internal open class PoweredLibraryScopeBase(
+    project: Project,
+    classes: Array<VirtualFile>,
+    sources: Array<VirtualFile>,
+    override val topPackageNames: Set<String>?,
+    private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>?
+) : LibraryScopeBase(project, classes, sources), TopPackageNamesProvider {
 
-    private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>? = run {
-        val fileSystems = mutableSetOf<NewVirtualFileSystem>()
-        for (file in classes + sources) {
-            val newVirtualFile = file as? NewVirtualFile ?: return@run null
-            fileSystems.add(newVirtualFile.fileSystem)
-        }
-        fileSystems
-    }
-
-    override val topPackageNames: Set<String> by lazy {
-        (classes + sources)
-            .flatMap { it.children.toList() }
-            .filter(VirtualFile::isDirectory)
-            .map(VirtualFile::getName)
-            .toSet() + "" // empty package is always present
-    }
+    @Deprecated("Use the primary constructor", level = DeprecationLevel.HIDDEN)
+    constructor(project: Project, classes: Array<VirtualFile>, sources: Array<VirtualFile>) : this(
+        project,
+        classes,
+        sources,
+        (classes + sources).calculateTopPackageNames(),
+        (classes + sources).calculateEntriesVirtualFileSystems()
+    )
 
     override fun contains(file: VirtualFile): Boolean {
         ((file as? NewVirtualFile)?.fileSystem)?.let {
@@ -36,4 +33,20 @@ internal open class PoweredLibraryScopeBase(project: Project, classes: Array<Vir
         }
         return super.contains(file)
     }
+}
+
+internal fun Array<VirtualFile>.calculateTopPackageNames(): Set<String> =
+    this.flatMap { it.children.toList() }
+        .filter(VirtualFile::isDirectory)
+        .map(VirtualFile::getName)
+        .toSet() + "" // empty package is always present
+
+internal fun Array<VirtualFile>.calculateEntriesVirtualFileSystems(): Set<NewVirtualFileSystem>? {
+    val fileSystems = hashSetOf<NewVirtualFileSystem>()
+    // optimization to use NewVirtualFileSystem is applicable iff all the library files are archives
+    for (file in this) {
+        val newVirtualFile = file as? NewVirtualFile ?: return null
+        fileSystems.add(newVirtualFile.fileSystem)
+    }
+    return fileSystems
 }

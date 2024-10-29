@@ -15,6 +15,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.testFramework.TestModeFlags;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  * This searcher does the job for various console and fragment editors and other non-physical files.
  * We need this because ScopeEnlarger functionality will not work for nonphysical files.
  */
+@ApiStatus.Internal
 public final class NonPhysicalReferenceSearcher extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
 
   public static final Key<Boolean> ENABLE_IN_TESTS = Key.create("enable.NonPhysicalReferenceSearcher.in.tests");

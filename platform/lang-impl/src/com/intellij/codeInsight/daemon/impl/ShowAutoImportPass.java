@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.ReferenceImporter;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.HintAction;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.inlinePrompt.InlinePrompt;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -18,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -67,6 +69,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
 
   @Override
   public void doCollectInformation(@NotNull ProgressIndicator progress) {
+    if (isInlinePromptShown()) {
+      return;
+    }
+
     Document document = myEditor.getDocument();
     List<HighlightInfo> infos = new ArrayList<>();
     List<BooleanSupplier> result = new ArrayList<>();
@@ -99,16 +105,26 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (!UIUtil.hasFocus(myEditor.getContentComponent())) {
         return;
       }
-      if (DumbService.isDumb(myProject) || !myFile.isValid()) {
+      if (DumbService.isDumb(myProject)) {
         return;
       }
-      if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
+
+      if (isInlinePromptShown()) {
         return;
+      }
+
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162974")) {
+        if (!myFile.isValid()) {
+          return;
+        }
+        if (myEditor.isDisposed() || myEditor instanceof EditorWindow window && !window.isValid()) {
+          return;
+        }
       }
 
       int caretOffset = myEditor.getCaretModel().getOffset();
       importUnambiguousImports();
-      if (isImportHintEnabled()) {
+      if (isImportHintEnabled() && !(myEditor instanceof ImaginaryEditor)) {
         List<HighlightInfo> visibleHighlights = getVisibleHighlights(myVisibleRange, myProject, myEditor, hasDirtyTextRange);
         // sort by distance to the caret
         visibleHighlights.sort(Comparator.comparingInt(info -> Math.abs(info.getActualStartOffset() - caretOffset)));
@@ -123,13 +139,17 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
     }, myProject.getDisposed());
   }
 
+  private boolean isInlinePromptShown() {
+    return InlinePrompt.isInlinePromptShown(myEditor) || InlinePrompt.isInlinePromptGenerating(myEditor);
+  }
+
   private void importUnambiguousImports() {
     ThreadingAssertions.assertEventDispatchThread();
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-335057, EA-843299")) {
       if (!mayAutoImportNow(myFile, true, ThreeState.UNSURE)) return;
-    }
-    for (BooleanSupplier autoImportAction : autoImportActions) {
-      autoImportAction.getAsBoolean();
+      for (BooleanSupplier autoImportAction : autoImportActions) {
+        autoImportAction.getAsBoolean();
+      }
     }
   }
 
@@ -165,9 +185,10 @@ public final class ShowAutoImportPass extends TextEditorHighlightingPass {
       if (!isDirty && !info.containsOffset(offset, true)) {
         return true;
       }
-      if (info.hasHint() && !editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
-        highlights.add(info);
+      if (!info.hasHint() || editor.getFoldingModel().isOffsetCollapsed(info.startOffset)) {
+        return true;
       }
+      highlights.add(info);
       return true;
     });
     return highlights;

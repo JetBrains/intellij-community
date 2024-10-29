@@ -93,7 +93,7 @@ private fun getUnloadedModuleByContentRoot(project: Project, file: VirtualFile):
   return ModuleManager.getInstance(project).getUnloadedModuleDescription(moduleName)
 }
 
-fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
+internal fun getSelectedLibrary(userObjectsPath: Array<out Any?>?): LibraryOrderEntry? {
   if (userObjectsPath == null) {
     return null
   }

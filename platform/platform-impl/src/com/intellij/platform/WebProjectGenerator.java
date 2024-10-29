@@ -3,6 +3,7 @@ package com.intellij.platform;
 
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +30,6 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
   }
 
   @Override
-  public boolean isPrimaryGenerator() {
-    return true;
-  }
-
-  @Override
   public abstract @DetailedDescription String getDescription();
 
   /**
@@ -43,7 +39,7 @@ public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBa
   public interface GeneratorPeer<T> extends ProjectGeneratorPeer<T> {
     @Override
     @NotNull
-    JComponent getComponent();
+    JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField, @NotNull Runnable checkValid);
 
     @Override
     void buildUI(@NotNull SettingsStep settingsStep);

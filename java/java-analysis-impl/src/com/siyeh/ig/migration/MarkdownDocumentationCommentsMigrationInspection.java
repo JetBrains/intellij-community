@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.PsiElement;
@@ -26,7 +27,7 @@ import java.util.regex.Pattern;
 /**
  * @author Bas Leijdekkers
  */
-final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection {
+final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspection implements DumbAware {
   @Override
   protected @NotNull String buildErrorString(Object... infos) {
     return InspectionGadgetsBundle.message("markdown.documentation.comments.migration.display.name");
@@ -53,7 +54,7 @@ final class MarkdownDocumentationCommentsMigrationInspection extends BaseInspect
     }
   }
 
-  private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix {
+  private static class MarkdownDocumentationCommentsMigrationFix extends PsiUpdateModCommandQuickFix implements DumbAware {
 
     private static final TokenSet SKIP_TOKENS = TokenSet.create(JavaDocTokenType.DOC_COMMENT_START, JavaDocTokenType.DOC_COMMENT_END);
     private static final Pattern HEADING = Pattern.compile("[hH]([1-6])");

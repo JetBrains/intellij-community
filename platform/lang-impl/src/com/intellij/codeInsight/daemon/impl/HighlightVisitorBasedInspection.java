@@ -14,6 +14,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.platform.diagnostic.telemetry.IJTracer;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -26,7 +27,6 @@ import java.util.List;
 
 import static com.intellij.codeInsight.util.HighlightVisitorScopeKt.HighlightVisitorScope;
 import static com.intellij.codeInspection.options.OptPane.checkbox;
-import static com.intellij.platform.diagnostic.telemetry.helpers.TraceKt.runWithSpan;
 
 public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectionTool {
   public static final String SHORT_NAME = HighlightInfo.ANNOTATOR_INSPECTION_SHORT_NAME;
@@ -122,9 +122,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
     IJTracer tracer = TelemetryManager.Companion.getTracer(HighlightVisitorScope);
 
     for (TextEditorHighlightingPass pass : List.of(ghp, ighp)) {
-      runWithSpan(tracer, pass.getClass().getSimpleName(), span -> {
-        span.setAttribute("file", fileName);
-
+      TraceKt.use(tracer.spanBuilder(pass.getClass().getSimpleName()).setAttribute("file", fileName), __ -> {
         pass.doCollectInformation(daemonProgressIndicator);
         List<HighlightInfo> infos = pass.getInfos();
         for (HighlightInfo info : infos) {
@@ -133,6 +131,7 @@ public final class HighlightVisitorBasedInspection extends GlobalSimpleInspectio
             result.add(info);
           }
         }
+        return null;
       });
     }
 

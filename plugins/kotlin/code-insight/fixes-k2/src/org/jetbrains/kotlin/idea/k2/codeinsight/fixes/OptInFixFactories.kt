@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotation
 import org.jetbrains.kotlin.analysis.api.annotations.KaAnnotationValue
+import org.jetbrains.kotlin.analysis.api.annotations.KaNamedAnnotationValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.fir.utils.getActualAnnotationTargets
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -33,6 +34,14 @@ internal object OptInFixFactories {
     }
 
     val optInUsageErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInUsageError ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInToInheritanceFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritance ->
+        createQuickFix(diagnostic)
+    }
+
+    val optInToInheritanceErrorFactory = KotlinQuickFixFactory.IntentionBased { diagnostic: KaFirDiagnostic.OptInToInheritanceError ->
         createQuickFix(diagnostic)
     }
 
@@ -102,15 +111,26 @@ private object OptInGeneralUtils : OptInGeneralUtilsBase() {
                 val typeReference = it.typeReference
                 val resolvedClass = typeReference?.type?.expandedSymbol ?: return false
                 val classAnnotation = resolvedClass.annotations[OptInNames.SUBCLASS_OPT_IN_REQUIRED_CLASS_ID].firstOrNull()
-                classAnnotation != null && findMarkerClassId(classAnnotation)?.asSingleFqName() == annotationFqName
+                classAnnotation != null && annotationFqName.isInSubclassArguments(classAnnotation)
             }
         }
     }
 
-    private fun findMarkerClassId(annotation: KaAnnotation): ClassId? {
-        val argument = annotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return null
-        val value = argument.expression as? KaAnnotationValue.ClassLiteralValue ?: return null
-        val type = value.type as? KaClassType ?: return null
-        return type.classId.takeUnless { it.isLocal }
+    private fun FqName.isInSubclassArguments(subclassOptInAnnotation: KaAnnotation): Boolean {
+        val argument = subclassOptInAnnotation.arguments.find { arg -> arg.name == OptInNames.OPT_IN_ANNOTATION_CLASS } ?: return false
+        val classIds = getSubclassArgClassIds(argument)
+        return classIds.any {
+            !it.isLocal && it.asSingleFqName() == this
+        }
+    }
+
+    private fun getSubclassArgClassIds(argument: KaNamedAnnotationValue): List<ClassId> {
+        return when (val expression = argument.expression) {
+            // @SubclassOptInRequired for stdlib versions below 2.1
+            is KaAnnotationValue.ClassLiteralValue -> listOfNotNull((expression.type as? KaClassType)?.classId)
+            // @SubclassOptInRequired for stdlib versions 2.1 and above
+            is KaAnnotationValue.ArrayValue -> expression.values.mapNotNull { (it as? KaAnnotationValue.ClassLiteralValue)?.classId }
+            else -> emptyList()
+        }
     }
 }

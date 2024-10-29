@@ -13,7 +13,7 @@ public abstract class ForStatementEvaluatorBase extends LoopEvaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object value = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
+    Object value = context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid();
     value = evaluateInitialization(context, value);
 
     while (true) {

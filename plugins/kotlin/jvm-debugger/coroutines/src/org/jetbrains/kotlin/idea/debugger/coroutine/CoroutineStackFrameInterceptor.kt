@@ -10,9 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.impl.DebuggerUtilsImpl
 import com.intellij.debugger.jdi.StackFrameProxyImpl
-import com.intellij.execution.ui.layout.impl.RunnerContentUi
-import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl
-import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.rt.debugger.ExceptionDebugHelper
@@ -24,13 +21,16 @@ import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.DefaultExecutionCon
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLineNumber
 import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
+import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.StackFrameInterceptor
 import org.jetbrains.kotlin.idea.debugger.core.stepping.CoroutineFilter
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.SuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.SkipCoroutineStackFrameProxyImpl
-import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.*
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.CoroutineStackFrameLight
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugMetadata
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.mirror.DebugProbesImplCoroutineOwner
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.*
-import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 
 class CoroutineStackFrameInterceptor : StackFrameInterceptor {
@@ -56,7 +56,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             }
 
             if (Registry.`is`("debugger.kotlin.auto.show.coroutines.view")) {
-                showCoroutinePanel(debugProcess)
+                showOrHideCoroutinePanel(debugProcess, true)
             }
 
             val resumeWithFrame = stackFrame.threadPreCoroutineFrames.firstOrNull()
@@ -68,14 +68,6 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
             return listOf(stackFrame)
         }
         return null
-    }
-
-    private fun showCoroutinePanel(debugProcess: DebugProcessImpl) {
-        val ui = debugProcess.session.xDebugSession?.ui.safeAs<RunnerLayoutUiImpl>() ?: return
-        val runnerContentUi = RunnerContentUi.KEY.getData(ui) ?: return
-        runInEdt {
-            runnerContentUi.findOrRestoreContentIfNeeded(CoroutineDebuggerContentInfo.XCOROUTINE_THREADS_CONTENT)
-        }
     }
 
     override fun extractCoroutineFilter(suspendContext: SuspendContextImpl): CoroutineFilter? {
@@ -266,6 +258,14 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
         }
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             (nextCoroutineFilter is CoroutineIdFilter && coroutinesRunningOnCurrentThread.intersect(nextCoroutineFilter.coroutinesRunningOnCurrentThread).isNotEmpty())
+
+        override val coroutineFilterName: String get() {
+            coroutinesRunningOnCurrentThread.singleOrNull()?.let {
+                return KotlinDebuggerCoreBundle.message("stepping.filter.coroutine.name", "#$it")
+            }
+            val ids = coroutinesRunningOnCurrentThread.toList().sortedBy { it }.joinToString(", ") { "#$it" }
+            return KotlinDebuggerCoreBundle.message("stepping.filter.several.coroutines.name", ids)
+        }
     }
 
     /**
@@ -274,5 +274,7 @@ class CoroutineStackFrameInterceptor : StackFrameInterceptor {
     private data class ContinuationObjectFilter(val reference: ObjectReference) : CoroutineFilter {
         override fun canRunTo(nextCoroutineFilter: CoroutineFilter): Boolean =
             this == nextCoroutineFilter
+
+        override val coroutineFilterName: String get() = reference.toString()
     }
 }

@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "ReplaceJavaStaticMethodWithKotlinAnalog", "OVERRIDE_DEPRECATION")
 
 package com.intellij.openapi.actionSystem.impl
 
@@ -7,7 +7,6 @@ import com.intellij.AbstractBundle
 import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.codeWithMe.ClientId
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.concurrency.installThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
@@ -27,7 +26,7 @@ import com.intellij.internal.statistic.collectors.fus.actions.persistence.Action
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.*
-import com.intellij.openapi.actionSystem.ex.ActionUtil.getUnavailableMessage
+import com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage
 import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer.LightCustomizeStrategy
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.impl.RawSwingDispatcher
@@ -92,6 +91,7 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
 import javax.swing.Icon
+import javax.swing.JLabel
 import kotlin.coroutines.ContinuationInterceptor
 import kotlin.coroutines.resume
 import kotlin.time.Duration
@@ -134,10 +134,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
                       actionRegistrar = actionPreInitRegistrar)
 
     coroutineScope.launch {
-      val schema = CustomActionsSchema.getInstanceAsync()
-      for (url in schema.getActions()) {
-        schema.incrementModificationStamp()
-      }
+      CustomActionsSchema.getInstanceAsync().incrementModificationStamp()
     }
 
     this.keymapToOperations = keymapToOperations
@@ -239,6 +236,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   internal fun getKeymapPendingOperations(keymapName: String): List<KeymapShortcutOperation> {
+    @Suppress("RemoveRedundantQualifierName")
     return keymapToOperations.get(keymapName) ?: java.util.List.of()
   }
 
@@ -248,7 +246,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     }
 
     if (timer == null) {
-      timer = MyTimer(coroutineScope.childScope())
+      timer = MyTimer(coroutineScope.childScope(toString() + " timer"))
     }
 
     val wrappedListener = if (AppExecutorUtil.propagateContext() && listener !is CapturingListener) {
@@ -1104,14 +1102,20 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     for (listener in actionListeners) {
       listener.beforeEditorTyping(c, dataContext)
     }
-    publisher().beforeEditorTyping(c, dataContext)
+    //maybe readaction
+    WriteIntentReadAction.run {
+      publisher().beforeEditorTyping(c, dataContext)
+    }
   }
 
   override fun fireAfterEditorTyping(c: Char, dataContext: DataContext) {
     for (listener in actionListeners) {
       listener.afterEditorTyping(c, dataContext)
     }
-    publisher().afterEditorTyping(c, dataContext)
+    //maybe readaction
+    WriteIntentReadAction.run {
+      publisher().afterEditorTyping(c, dataContext)
+    }
   }
 
   val actionIds: Set<String>
@@ -1188,10 +1192,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
       result.failureCause is IndexNotReadyException -> {
         LOG.info(result.failureCause)
         if (project != null) {
-          //see com.intellij.openapi.actionSystem.ex.ActionUtil.getActionUnavailableMessage, will be fixed in 2024.3
-          val actionName = StringUtilRt.notNullize(event.presentation.text, "This action")
           val dumbServiceImpl = DumbService.getInstance(project) as DumbServiceImpl
-          dumbServiceImpl.showDumbModeNotificationForFailedAction(getUnavailableMessage(actionName, false), getId(action))
+          dumbServiceImpl.showDumbModeNotificationForFailedAction(getActionUnavailableMessage(event.presentation.text), getId(action))
         }
       }
       else -> throw result.failureCause
@@ -1229,7 +1231,7 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     else {
       service<CoreUiCoroutineScopeHolder>().coroutineScope.launch(Dispatchers.EDT) {
         try {
-          tryToExecuteSuspend(action, place, contextComponent, inputEvent, result)
+          tryToExecuteSuspend(action, place, contextComponent, inputEvent, this@ActionManagerImpl, result)
         }
         finally {
           if (!result.isProcessed) {
@@ -1254,7 +1256,6 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
     val listeners: MutableList<TimerListener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
     private var lastTimePerformed = 0
-    private val clientId = ClientId.current
 
     init {
       val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
@@ -1303,11 +1304,8 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
 
       _timerEvents.tryEmit(Unit)
 
-      @Suppress("ForbiddenInSuspectContextMethod")
-      withClientId(clientId).use {
-        for (listener in listeners) {
-          runListenerAction(listener)
-        }
+      for (listener in listeners) {
+        runListenerAction(listener)
       }
     }
   }
@@ -1353,7 +1351,7 @@ private fun tryToExecuteNow(action: AnAction,
   val componentAdjusted = PlatformDataKeys.CONTEXT_COMPONENT.getData(wrappedContext) ?: contextComponent
   val actionProcessor = object : ActionProcessor() {}
   val inputEventAdjusted = inputEvent ?: KeyEvent(
-    componentAdjusted, KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
+    componentAdjusted ?: JLabel(), KeyEvent.KEY_PRESSED, 0L, 0, KeyEvent.VK_UNDEFINED, '\u0000')
   val event = Utils.runWithInputEventEdtDispatcher(componentAdjusted) block@{
     Utils.runUpdateSessionForInputEvent(
       listOf(action), inputEventAdjusted, wrappedContext, place, actionProcessor, presentationFactory) { rearranged, updater, events ->
@@ -1376,6 +1374,7 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
                                         place: String,
                                         contextComponent: Component?,
                                         inputEvent: InputEvent?,
+                                        actionManager: ActionManagerImpl,
                                         result: ActionCallback) {
   (if (contextComponent != null) IdeFocusManager.findInstanceByComponent(contextComponent)
   else IdeFocusManager.getGlobalInstance()).awaitFocusSettlesDown()
@@ -1385,28 +1384,28 @@ private suspend fun tryToExecuteSuspend(action: AnAction,
   }
   val wrappedContext = Utils.createAsyncDataContext(dataContext)
 
+  val uiKind = ActionUiKind.NONE
   val presentationFactory = PresentationFactory()
-  Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, wrappedContext, place, false, false)
+  Utils.expandActionGroupSuspend(DefaultActionGroup(action), presentationFactory, wrappedContext, place, uiKind, false)
   val presentation = presentationFactory.getPresentation(action)
   val event = if (presentation.isEnabled) AnActionEvent(
-    inputEvent, wrappedContext, place, presentation, ActionManager.getInstance(), 0, false, false)
+    wrappedContext, presentation, place, uiKind, inputEvent, 0, actionManager)
   else null
   if (event != null && event.presentation.isEnabled) {
-    blockingContext {
+    //todo fix all clients and move locks into them
+    writeIntentReadAction {
       doPerformAction(action, event, result)
     }
   }
 }
 
 private class CapturingListener(@JvmField val timerListener: TimerListener) : TimerListener by timerListener {
-  val childContext: ChildContext = createChildContext()
+  val childContext: ChildContext = createChildContext("ActionManager: $timerListener")
 
   override fun run() {
     // this is periodic runnable that is invoked on timer; it should not complete a parent job
-    childContext.runAsCoroutine(completeOnFinish = false, {
-      installThreadContext(childContext.context, true).use {
-        timerListener.run()
-      }
+    childContext.runInChildContext(completeOnFinish = false, {
+      timerListener.run()
     })
   }
 }
@@ -1465,7 +1464,7 @@ private fun <T> instantiate(stubClassName: String,
   catch (e: ProcessCanceledException) {
     throw e
   }
-  catch (e: ExtensionNotApplicableException) {
+  catch (_: ExtensionNotApplicableException) {
     return null
   }
   catch (e: Throwable) {

@@ -1,0 +1,80 @@
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: Int.test
+    locationString: (in foo.bar.PrivateTopLevelDeclarationsKt)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Private])
+TargetElement: private val Int.test: Int
+QualifiedName: foo.bar.PrivateTopLevelDeclarationsKt.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: Int.test
+    locationString: (privateTopLevelDeclarations.kt in foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Private])
+TargetElement: private val Int.test: Int
+QualifiedName: Int.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: Int.test()
+    locationString: (in foo.bar.PrivateTopLevelDeclarationsKt)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: private fun Int.test() = 1
+QualifiedName: foo.bar.PrivateTopLevelDeclarationsKt.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: Int.test()
+    locationString: (privateTopLevelDeclarations.kt in foo.bar)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: private fun Int.test() = 1
+QualifiedName: Int.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: test
+    locationString: (in foo.bar.PrivateTopLevelDeclarationsKt)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Private])
+TargetElement: private val test = 4
+QualifiedName: foo.bar.PrivateTopLevelDeclarationsKt.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: test
+    locationString: (privateTopLevelDeclarations.kt in foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/classKotlin.svg, Private])
+TargetElement: private class test
+QualifiedName: foo.bar.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: test
+    locationString: (privateTopLevelDeclarations.kt in foo.bar)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/field_value.svg, Private])
+TargetElement: private val test = 4
+QualifiedName: (privateTopLevelDeclarations.kt in foo.bar).test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: test()
+    locationString: (in foo.bar.PrivateTopLevelDeclarationsKt)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: private fun test() = 2
+QualifiedName: foo.bar.PrivateTopLevelDeclarationsKt.test
+
+NavigationItem:
+    name: test
+ItemPresentation:
+    presentableText: test()
+    locationString: (privateTopLevelDeclarations.kt in foo.bar)
+    icon: RowIcon(icons=[Function, Private])
+TargetElement: private fun test() = 2
+QualifiedName: (privateTopLevelDeclarations.kt in foo.bar).test

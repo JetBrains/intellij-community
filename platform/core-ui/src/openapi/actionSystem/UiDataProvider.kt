@@ -41,6 +41,7 @@ fun interface UiDataProvider {
       return object : JPanel(BorderLayout()), UiDataProvider {
         init {
           add(component, BorderLayout.CENTER)
+          isOpaque = component.isOpaque
         }
 
         override fun uiDataSnapshot(sink: DataSink) {

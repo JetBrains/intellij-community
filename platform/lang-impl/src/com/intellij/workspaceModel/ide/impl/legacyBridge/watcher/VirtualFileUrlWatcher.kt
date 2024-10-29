@@ -16,8 +16,10 @@ import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.impl.indices.VirtualFileIndex
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
+@ApiStatus.Internal
 open class VirtualFileUrlWatcher(val project: Project) {
   private val virtualFileManager = WorkspaceModel.getInstance(project).getVirtualFileUrlManager()
   internal var isInsideFilePointersUpdate: Boolean = false
@@ -127,6 +129,7 @@ open class VirtualFileUrlWatcher(val project: Project) {
   }
 }
 
+@ApiStatus.Internal
 data class EntityWithVirtualFileUrl(val entity: WorkspaceEntity, val virtualFileUrl: VirtualFileUrl, val propertyName: String)
 
 private interface LegacyFileWatcher {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.highlighting
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -14,6 +14,7 @@ import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase
 import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.concurrency.JobLauncher
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -44,21 +45,28 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
     private val javaInspection: UnusedDeclarationInspectionBase = UnusedDeclarationInspectionBase()
 
     init {
-        val profile = InspectionProjectProfileManager.getInstance(ktFile.project).getCurrentProfile().let { p ->
-            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(p)?.inspectionProfile ?: p
+        val project = ktFile.project
+        val profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile().let {
+            InspectionProfileWrapper.getCustomInspectionProfileWrapper(ktFile)?.apply(it)?.inspectionProfile ?: it
         }
         deadCodeKey = HighlightDisplayKey.find("UnusedSymbol")
         deadCodeInspection = profile.getUnwrappedTool("UnusedSymbol", ktFile) as? LocalInspectionTool
 
-        deadCodeInfoType = if (deadCodeKey == null) null else
+        deadCodeInfoType = if (deadCodeKey == null) {
+            null
+        } else {
+            val editorAttributes = profile.getEditorAttributes(deadCodeKey.shortName, ktFile)
             HighlightInfoType.HighlightInfoTypeImpl(
-              profile.getErrorLevel(deadCodeKey, ktFile).severity,
-                ((profile.getEditorAttributes(deadCodeKey.toString(), ktFile)) ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey())
+                profile.getErrorLevel(deadCodeKey, ktFile).severity,
+                editorAttributes ?: HighlightInfoType.UNUSED_SYMBOL.getAttributesKey()
             )
+        }
         enabled = deadCodeInspection != null
-                  && deadCodeInfoType != null
-                  && profile.isToolEnabled(deadCodeKey, ktFile)
-                  && HighlightingLevelManager.getInstance(ktFile.project).shouldInspect(ktFile)
+                && deadCodeInfoType != null
+                && profile.isToolEnabled(deadCodeKey, ktFile)
+                && HighlightingLevelManager.getInstance(project).shouldInspect(ktFile) &&
+                !InjectedLanguageManager.getInstance(project).isInjectedViewProvider(ktFile.viewProvider)
+
     }
 
     context(KaSession)
@@ -151,7 +159,7 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
                                   deadCodeInfoType: HighlightInfoType.HighlightInfoTypeImpl,
                                   deadCodeKey: HighlightDisplayKey,
                                   holder: HighlightInfoHolder) {
-        if (!KotlinUnusedSymbolUtil.isApplicableByPsi(declaration)) return
+        if (!K2UnusedSymbolUtil.isApplicableByPsi(declaration)) return
         if (refHolder.isUsedLocally(declaration)) return // even for non-private declarations our refHolder might have usage info
         val mustBeLocallyReferenced = declaration is KtParameter && !(declaration.hasValOrVar()) ||
                                       declaration.hasModifier(KtTokens.PRIVATE_KEYWORD) ||
@@ -168,13 +176,13 @@ class KotlinUnusedHighlightingVisitor(private val ktFile: KtFile) {
         ) {
             nameIdentifier ?: (declaration as? KtConstructor<*>)?.getConstructorKeyword() ?: declaration
         } else {
-            KotlinUnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
+            K2UnusedSymbolUtil.getPsiToReportProblem(declaration, javaInspection)
         }
         if (problemPsiElement == null) return
         val description = declaration.describe() ?: return
         val message = KotlinBaseHighlightingBundle.message("inspection.message.never.used", description)
         val builder = UnusedSymbolUtil.createUnusedSymbolInfoBuilder(problemPsiElement, message, deadCodeInfoType, null)
-        val fixes = KotlinUnusedSymbolUtil.createQuickFixes(declaration)
+        val fixes = K2UnusedSymbolUtil.createQuickFixes(declaration)
         fixes.forEach { builder.registerFix(it, null, null, null, deadCodeKey) }
         holder.add(builder.create())
     }

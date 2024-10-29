@@ -11,7 +11,6 @@ import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.Modifier;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.project.Project;
@@ -58,7 +57,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
     ClassLoaderReference classLoader = ClassLoadingUtils.getClassLoader(autoLoadContext, process);
     autoLoadContext.setClassLoader(classLoader);
 
-    JavaSdkVersion version = JavaSdkVersion.fromVersionString(((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).version());
+    JavaSdkVersion version = JavaSdkVersion.fromVersionString(autoLoadContext.getSuspendContext().getVirtualMachineProxy().version());
     Collection<ClassObject> classes = compile(version);
     defineClasses(classes, autoLoadContext, process, classLoader);
 
@@ -71,7 +70,7 @@ public abstract class CompilingEvaluator implements ExpressionEvaluator {
             TextWithImports callCode = getCallCode();
             PsiElement copyContext = myData.getAnchor();
             CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(callCode, copyContext);
-            return factory.getEvaluatorBuilder().build(factory.createCodeFragment(callCode, copyContext, myProject),
+            return factory.getEvaluatorBuilder().build(factory.createPsiCodeFragment(callCode, copyContext, myProject),
                                                        // can not use evaluation position here, it does not match classes then
                                                        SourcePosition.createFromElement(copyContext));
           }

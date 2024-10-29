@@ -613,10 +613,12 @@ public final class SoftWrapModelImpl extends InlayModel.SimpleAdapter
     return applianceManager;
   }
 
-  @TestOnly
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
   public void setSoftWrapPainter(SoftWrapPainter painter) {
     myPainter = painter;
     applianceManager.setSoftWrapPainter(painter);
+    reinitSettings();
   }
 
   @Override

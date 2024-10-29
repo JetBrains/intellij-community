@@ -17,9 +17,11 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.concurrent.atomic.AtomicReference
 
+@ApiStatus.Internal
 class ProjectAware(
   private val project: Project,
   override val projectId: ExternalSystemProjectId,

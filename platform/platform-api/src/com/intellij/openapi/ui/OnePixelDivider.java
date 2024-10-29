@@ -2,6 +2,8 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.client.ClientSystemInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
@@ -78,10 +80,10 @@ public class OnePixelDivider extends Divider {
 
   @Override
   public void removeNotify() {
-    super.removeNotify();
     if (myDisposable != null && !Disposer.isDisposed(myDisposable)) {
       Disposer.dispose(myDisposable);
     }
+    super.removeNotify();
   }
 
   protected boolean myDragging = false;
@@ -221,6 +223,10 @@ public class OnePixelDivider extends Divider {
   private void init() {
     myGlassPane = IdeGlassPaneUtil.find(this);
     myDisposable = Disposer.newDisposable();
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      Disposer.register(application, myDisposable);
+    }
     myGlassPane.addMouseMotionPreprocessor(myListener, myDisposable);
     myGlassPane.addMousePreprocessor(myListener, myDisposable);
   }

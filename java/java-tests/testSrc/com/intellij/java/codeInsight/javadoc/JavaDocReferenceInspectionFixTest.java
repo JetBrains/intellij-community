@@ -1,8 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight.javadoc;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection;
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
@@ -32,6 +33,7 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
     myFixture.checkHighlighting();
     IntentionAction action = myFixture.findSingleIntention("Add qualifier");
     myFixture.launchAction(action);
+    NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
     myFixture.checkResult("""
                             import java.util.ArrayList;
                                                         
@@ -53,7 +55,7 @@ public class JavaDocReferenceInspectionFixTest extends LightJavaCodeInsightFixtu
       }
       """);
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention("Change to ...");
+    IntentionAction action = myFixture.findSingleIntention("Change to …");
     myFixture.launchAction(action);
     myFixture.checkResult("""
                             class Test {

@@ -129,7 +129,7 @@ public final class FxmlReferencesContributor extends PsiReferenceContributor {
     }
 
     @Override
-    public PsiReference @NotNull [] getReferencesByString(String str,
+    public PsiReference @NotNull [] getReferencesByString(@NotNull String str,
                                                           final @NotNull PsiElement position,
                                                           int offsetInPosition) {
       if (str.length() == 0) return PsiReference.EMPTY_ARRAY;

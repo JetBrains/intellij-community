@@ -2,7 +2,6 @@
 package com.intellij.util.indexing.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -12,7 +11,6 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.MapReduceIndex;
@@ -33,20 +31,28 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
   private final boolean mySingleEntryIndex;
 
   protected MapReduceIndexBase(@NotNull IndexExtension<Key, Value, FileContent> extension,
-                               @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storage,
-                               @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndex,
+                               @NotNull ThrowableComputable<? extends IndexStorage<Key, Value>, ? extends IOException> storageFactory,
+                               @Nullable ThrowableComputable<? extends ForwardIndex, ? extends IOException> forwardIndexFactory,
                                @Nullable ForwardIndexAccessor<Key, Value> forwardIndexAccessor) throws IOException {
-    super(extension, storage, forwardIndex, forwardIndexAccessor);
-    if (!(myIndexId instanceof ID<?, ?>)) {
-      throw new IllegalArgumentException("myIndexId should be instance of com.intellij.util.indexing.ID");
+    super(extension, storageFactory, forwardIndexFactory, forwardIndexAccessor);
+    IndexId<Key, Value> indexId = super.indexId();
+    if (!(indexId instanceof ID<?, ?>)) {
+      throw new IllegalArgumentException("extension.getName() (=" + indexId + ") should be instance of com.intellij.util.indexing.ID");
     }
     mySingleEntryIndex = extension instanceof SingleEntryFileBasedIndexExtension;
   }
 
   @Override
-  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) throws StorageException {
+  public ID<Key, Value> indexId() {
+    //ctor checks it is always an ID:
+    return (ID<Key, Value>)super.indexId();
+  }
+
+  @Override
+  public boolean processAllKeys(@NotNull Processor<? super Key> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter)
+    throws StorageException {
     return ConcurrencyUtil.withLock(getLock().readLock(), () ->
-      ((VfsAwareIndexStorage<Key, Value>)myStorage).processKeys(processor, scope, idFilter)
+      ((VfsAwareIndexStorage<Key, Value>)getStorage()).processKeys(processor, scope, idFilter)
     );
   }
 
@@ -76,7 +82,7 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       Ref<Map<Key, Value>> result = new Ref<>(Collections.emptyMap());
       ValueContainer<Value> container = getData(key);
       container.forEach((id, value) -> {
-        boolean acceptNullValues = ((SingleEntryIndexer<?>)myIndexer).isAcceptNullValues();
+        boolean acceptNullValues = ((SingleEntryIndexer<?>)indexer()).isAcceptNullValues();
         if (value != null || acceptNullValues) {
           result.set(Collections.singletonMap(key, value));
         }
@@ -88,24 +94,13 @@ public abstract class MapReduceIndexBase<Key, Value, FileCache> extends MapReduc
       ByteArraySequence serializedInputData = getForwardIndex().get(fileId);
       return forwardIndexAccessor.convertToInputDataMap(fileId, serializedInputData);
     }
-    getLogger().error("Can't fetch indexed data for index " + myIndexId.getName());
+    getLogger().error("Can't fetch indexed data for index " + indexId().getName());
     return null;
   }
 
   @Override
   public void checkCanceled() {
     ProgressManager.checkCanceled();
-  }
-
-  @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
-    try {
-      super.updateWithMap(updateData);
-    }
-    catch (ProcessCanceledException e) {
-      getLogger().error("ProcessCanceledException is not expected here!", e);
-      throw e;
-    }
   }
 
   @Override

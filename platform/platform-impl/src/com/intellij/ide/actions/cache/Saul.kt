@@ -178,6 +178,7 @@ sealed interface RecoveryScope {
 
 data class ProjectRecoveryScope(override val project: Project) : RecoveryScope
 
+@ApiStatus.Internal
 data class FilesRecoveryScope(override val project: Project, val files: Collection<VirtualFile>) : RecoveryScope
 
 data class AsyncRecoveryResult(val scope: RecoveryScope, val problems: List<CacheInconsistencyProblem>)
@@ -186,6 +187,7 @@ interface CacheInconsistencyProblem {
   val message: String
 }
 
+@ApiStatus.Internal
 class ExceptionalCompletionProblem(private val e: Throwable): CacheInconsistencyProblem {
   override val message: String
     get() = """Exception: ${e.javaClass} with message ${e.message}"""

@@ -1,53 +1,51 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.uast.kotlin.psi
 
-import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.psi.PsiAnnotation
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiParameter
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
-import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 
+/**
+ * Kotlin PSI parameter that can be used when the parameter doesn't exist in light classes.
+ */
 @ApiStatus.Internal
 class UastKotlinPsiParameter internal constructor(
-    private val baseResolveProviderService: BaseKotlinUastResolveProviderService,
     name: String,
-    type: PsiType,
     parent: PsiElement,
-    language: Language,
     isVarArgs: Boolean,
     ktDefaultValue: KtExpression?,
-    ktParameter: KtParameter
-) : UastKotlinPsiParameterBase<KtParameter>(name, type, parent, ktParameter, language, isVarArgs, ktDefaultValue) {
-
+    val ktParameter: KtParameter
+) : UastKotlinPsiParameterBase<KtParameter>(name, parent, ktParameter, isVarArgs, ktDefaultValue, {
+    val containing = (if (parent is PsiParameterList) parent.parent else parent) as? PsiModifierListOwner
+    val baseResolveService = ApplicationManager.getApplication()
+        .getService(BaseKotlinUastResolveProviderService::class.java)
+    val type = baseResolveService.getType(ktParameter, containing, isForFake = true) ?: UastErrorType
+    type.toEllipsisTypeIfNeeded(isVarArgs)
+}) {
     private val annotationsPart = UastLazyPart<Array<PsiAnnotation>>()
 
-    override val _annotations: Array<PsiAnnotation>
-        get() = annotationsPart.getOrBuild {
-            val annotations = SmartList<PsiAnnotation>()
-
-            val hasInheritedGenericType = baseResolveProviderService.hasInheritedGenericType(ktParameter)
+    override fun getAnnotations(): Array<PsiAnnotation> {
+        return annotationsPart.getOrBuild {
+            val annotations = mutableListOf<PsiAnnotation>()
+            val baseResolveService = ApplicationManager.getApplication()
+                .getService(BaseKotlinUastResolveProviderService::class.java)
+            val hasInheritedGenericType = baseResolveService.hasInheritedGenericType(ktParameter)
             if (!hasInheritedGenericType) {
-                val nullability = baseResolveProviderService.nullability(ktParameter)
+                val nullability = baseResolveService.nullability(ktParameter)
                 if (nullability != null && nullability != KaTypeNullability.UNKNOWN) {
-                    annotations.add(
-                        UastFakeLightNullabilityAnnotation(nullability, this)
-                    )
+                    annotations.add(UastFakeLightNullabilityAnnotation(nullability, this))
                 }
             }
             ktParameter.annotationEntries.mapTo(annotations) { entry ->
                 KtLightAnnotationForSourceEntry(
                     name = entry.shortName?.identifier,
-                    lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
+                    lazyQualifiedName = { baseResolveService.qualifiedAnnotationName(entry) },
                     kotlinOrigin = entry,
                     parent = ktParameter,
                 )
@@ -55,29 +53,23 @@ class UastKotlinPsiParameter internal constructor(
 
             annotations.toTypedArray()
         }
+    }
 
     companion object {
-        fun create(
+        internal fun create(
             parameter: KtParameter,
             parent: PsiElement,
             containingElement: UElement,
             index: Int
         ): PsiParameter {
-            val service = ApplicationManager.getApplication().getService(BaseKotlinUastResolveProviderService::class.java)
             val psiParent = containingElement.getParentOfType<UDeclaration>()?.javaPsi ?: parent
             return UastKotlinPsiParameter(
-                service,
                 parameter.name ?: "p$index",
-                service.getType(parameter, containingElement) ?: UastErrorType,
                 psiParent,
-                KotlinLanguage.INSTANCE,
                 parameter.isVarArg,
                 parameter.defaultValue,
                 parameter
             )
         }
     }
-
-    val ktParameter: KtParameter get() = ktOrigin
-
 }

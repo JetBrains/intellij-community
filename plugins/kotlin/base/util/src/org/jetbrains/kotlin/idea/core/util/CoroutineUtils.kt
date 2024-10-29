@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.core.util
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.idea.util.application.isDispatchThread
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
 
+@Deprecated("Use Dispatchers.EDT instead", replaceWith = ReplaceWith("Dispatchers.EDT"))
 object EDT : CoroutineDispatcher() {
     override fun isDispatchNeeded(context: CoroutineContext): Boolean = !isDispatchThread()
 
@@ -23,7 +25,10 @@ object EDT : CoroutineDispatcher() {
         ApplicationManager.getApplication().invokeLater(block, modalityState)
     }
 
-    class ModalityStateElement(val modalityState: ModalityState) : AbstractCoroutineContextElement(Key) {
+    class ModalityStateElement(val modalityState: ModalityState) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+
+        override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
         companion object Key : CoroutineContext.Key<ModalityStateElement>
     }
 

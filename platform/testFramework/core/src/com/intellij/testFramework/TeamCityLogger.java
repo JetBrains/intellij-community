@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.PathManager;
@@ -11,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 
 public final class TeamCityLogger {
   private static final Logger LOG = Logger.getInstance(TeamCityLogger.class);
@@ -23,7 +24,7 @@ public final class TeamCityLogger {
     return new File(PathManager.getHomePath() + "/reports/report.txt");
   }
 
-  public static void info(String message) {
+  public static void info(@NotNull String message) {
     if (isUnderTC) {
       tcLog(message, null);
     }
@@ -32,10 +33,10 @@ public final class TeamCityLogger {
     }
   }
 
-  public static void warning(String message) {
+  public static void warning(@NotNull String message) {
     warning(message, new Throwable());
   }
-  public static void warning(String message, @Nullable Throwable throwable) {
+  public static void warning(@NotNull String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "WARNING");
     } else {
@@ -43,10 +44,10 @@ public final class TeamCityLogger {
     }
   }
 
-  public static void error(String message) {
+  public static void error(@NotNull String message) {
     error(message, new Throwable());
   }
-  public static void error(String message, @Nullable Throwable throwable) {
+  public static void error(@NotNull String message, @Nullable Throwable throwable) {
     if (isUnderTC) {
       tcLog(message, "ERROR");
     } else {
@@ -54,7 +55,7 @@ public final class TeamCityLogger {
     }
   }
 
-  private static void tcLog(String message, String level) {
+  private static void tcLog(@NotNull String message, String level) {
     if (message.isEmpty()) return;
     try {
       while (message.charAt(0) == '\n') message = message.substring(1);
@@ -77,6 +78,11 @@ public final class TeamCityLogger {
     else {
       runnable.run();
     }
+  }
+
+  public static void publishArtifact(@NotNull Path artifactPath, @Nullable String artifactName) {
+    String suffix = artifactName != null ? "=>" + artifactName : "";
+    System.out.println("##teamcity[publishArtifacts '" + escapeTeamcityServiceMessage(artifactPath.toString()) + suffix + "']");
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.impl
 
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
@@ -144,14 +144,13 @@ class ContentRootWithExcludedPatternsInProjectFileIndexTest {
 
   private fun addExcludePattern(pattern: String) {
     ModuleRootModificationUtil.updateModel(module) { model ->
-      MarkRootActionBase.findContentEntry(model, moduleDir)!!.addExcludePattern(pattern)
+      MarkRootsManager.findContentEntry(model, moduleDir)!!.addExcludePattern(pattern)
     }
   }
 
   private fun removeExcludePattern(pattern: String) {
     ModuleRootModificationUtil.updateModel(module) { model ->
-      MarkRootActionBase.findContentEntry(model, moduleDir)!!.removeExcludePattern(pattern)
+      MarkRootsManager.findContentEntry(model, moduleDir)!!.removeExcludePattern(pattern)
     }
   }
-
 }

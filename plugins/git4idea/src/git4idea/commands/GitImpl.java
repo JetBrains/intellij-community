@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
+import git4idea.GitUtil;
 import git4idea.branch.GitRebaseParams;
 import git4idea.config.GitExecutable;
 import git4idea.config.GitExecutableManager;
@@ -180,8 +180,12 @@ public class GitImpl extends GitImplBase {
   }
 
   @Override
-  public @NotNull GitCommandResult clone(final @Nullable Project project, final @NotNull File parentDirectory, final @NotNull String url,
-                                         final @NotNull String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
+  public @NotNull GitCommandResult clone(final @Nullable Project project,
+                                         final @NotNull File parentDirectory,
+                                         final @NotNull String url,
+                                         final @NotNull String clonedDirectoryName,
+                                         final @Nullable GitShallowCloneOptions shallowCloneOptions,
+                                         final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       // do not use per-project executable for 'clone' command
       Project defaultProject = ProjectManager.getInstance().getDefaultProject();
@@ -194,6 +198,12 @@ public class GitImpl extends GitImplBase {
       if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project, handler.getExecutable()) &&
           AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
+      }
+      if (shallowCloneOptions != null) {
+        Integer depth = shallowCloneOptions.getDepth();
+        if (depth != null) {
+          handler.addParameters("--depth=" + depth);
+        }
       }
       handler.addParameters(url);
       handler.endOptions();
@@ -238,7 +248,8 @@ public class GitImpl extends GitImplBase {
   @Override
   public @NotNull GitCommandResult stashSave(@NotNull GitRepository repository, @NotNull String message) {
     final GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.STASH);
-    h.addParameters("save");
+    h.addParameters("push");
+    h.addParameters("-m");
     h.addParameters(message);
     return runCommand(h);
   }
@@ -685,7 +696,7 @@ public class GitImpl extends GitImplBase {
       }
       return runWithEditor(handler, editorHandler);
     }
-    return GitRebaseCommandResult.normal(runCommand(handler));
+    return new GitRebaseCommandResult(runCommand(handler));
   }
 
   @Override
@@ -693,7 +704,7 @@ public class GitImpl extends GitImplBase {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
     handler.addParameters("--abort");
     addListeners(handler, listeners);
-    return GitRebaseCommandResult.normal(runCommand(handler));
+    return new GitRebaseCommandResult(runCommand(handler));
   }
 
   @Override
@@ -720,9 +731,7 @@ public class GitImpl extends GitImplBase {
   private @NotNull GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(handler, editorHandler)) {
       GitCommandResult result = runCommand(handler);
-      if (editorHandler.wasCommitListEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitList(result);
-      if (editorHandler.wasUnstructuredEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitMessage(result);
-      return GitRebaseCommandResult.normal(result);
+      return new GitRebaseCommandResult(result, editorHandler.getEditingResult());
     }
   }
 
@@ -757,7 +766,7 @@ public class GitImpl extends GitImplBase {
     GitCommandResult result = Git.getInstance().runCommand(handler);
     String output = result.getOutputAsJoinedString();
     if (result.success()) {
-      if (VcsLogUtil.HASH_REGEX.matcher(output).matches()) {
+      if (GitUtil.isHashString(output, false)) {
         return HashImpl.build(output);
       }
       else {

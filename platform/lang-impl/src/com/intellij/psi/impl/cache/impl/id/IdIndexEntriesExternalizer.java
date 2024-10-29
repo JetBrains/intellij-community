@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.openapi.util.ThreadLocalCachedIntArray;
@@ -21,21 +21,28 @@ final class IdIndexEntriesExternalizer implements DataExternalizer<Collection<Id
     int size = value.size();
     final int[] values = spareBufferLocal.getBuffer(size);
     int ptr = 0;
-    for(IdIndexEntry ie:value) {
+    for (IdIndexEntry ie : value) {
       values[ptr++] = ie.getWordHashCode();
     }
-    Arrays.sort(values, 0, size);
+    save(out, values, size);
+  }
+
+  static void save(@NotNull DataOutput out,
+                   int[] idHashes,
+                   int size) throws IOException {
+    Arrays.sort(idHashes, 0, size);
     DataInputOutputUtil.writeINT(out, size);
     int prev = 0;
-    for(int i = 0; i < size; ++i) {
-      DataInputOutputUtil.writeLONG(out, (long)values[i] - prev);
-      prev = values[i];
+    for (int i = 0; i < size; ++i) {
+      DataInputOutputUtil.writeLONG(out, (long)idHashes[i] - prev);
+      prev = idHashes[i];
     }
   }
 
   @Override
   public Collection<IdIndexEntry> read(@NotNull DataInput in) throws IOException {
     int length = DataInputOutputUtil.readINT(in);
+    //TODO RC: create implementation of List<IdIndexEntry> that stores int[] inside
     ArrayList<IdIndexEntry> entries = new ArrayList<>(length);
     int prev = 0;
     while(length-- > 0) {

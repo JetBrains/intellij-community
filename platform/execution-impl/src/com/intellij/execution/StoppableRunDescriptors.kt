@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project
  * Stopping a descriptor is supposed to stop a session of the corresponding [RunnerAndConfigurationSettings]. Not every descriptor may have
  * an associated run configuration.
  */
-fun getStoppableDescriptors(project: Project): List<Pair<RunContentDescriptor, RunnerAndConfigurationSettings?>> {
+internal fun getStoppableDescriptors(project: Project): List<Pair<RunContentDescriptor, RunnerAndConfigurationSettings?>> {
   val manager = ExecutionManagerImpl.getInstanceIfCreated(project) ?: return emptyList()
   val allDescriptors = ExecutionManagerImpl.getAllDescriptors(project).asReversed()
   val map = mutableMapOf<ExecutionEnvironment, MutableList<RunContentDescriptor>>()

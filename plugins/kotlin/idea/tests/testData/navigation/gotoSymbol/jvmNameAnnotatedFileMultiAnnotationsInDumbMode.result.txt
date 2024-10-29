@@ -1,0 +1,8 @@
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: MyDumbModeFacade
+    locationString: jvmNameAnnotatedFileMultiAnnotationsInDumbMode.kt in <root>
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: JvmName("MyDumbModeFacade")
+QualifiedName: MyDumbModeFacade

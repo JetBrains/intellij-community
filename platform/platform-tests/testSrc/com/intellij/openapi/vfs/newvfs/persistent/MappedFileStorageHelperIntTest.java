@@ -124,7 +124,7 @@ public class MappedFileStorageHelperIntTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ fileId);
@@ -142,7 +142,7 @@ public class MappedFileStorageHelperIntTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       int valueReadBack = storageHelper.readIntField(fileId, FIELD_1_OFFSET_IN_ROW);
@@ -156,7 +156,7 @@ public class MappedFileStorageHelperIntTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       vfs.createRecord();
     }
-    int maxAllocatedID = vfs.connection().getRecords().maxAllocatedID();
+    int maxAllocatedID = vfs.connection().records().maxAllocatedID();
 
     for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
       storageHelper.writeIntField(fileId, FIELD_1_OFFSET_IN_ROW, /*value: */ fileId);

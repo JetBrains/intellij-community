@@ -28,12 +28,10 @@ import com.intellij.openapi.roots.JavaModuleExternalPaths;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ItemRemovable;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -140,12 +138,7 @@ public class JavadocEditor extends ModuleElementsEditor {
       .setButtonComparator(CommonBundle.message("button.add"), JavaUiBundle.message("module.javadoc.add.url.button"),
                              CommonBundle.message("button.remove")).createPanel();
 
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.add(tablePanel, BorderLayout.CENTER);
-    mainPanel.add(
-      new JBLabel(JavaUiBundle.message("project.roots.javadoc.tab.description"), UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER),
-      BorderLayout.NORTH);
-    return mainPanel;
+    return new JavadocEditorUi().createPanel(tablePanel);
   }
 
   @NotNull

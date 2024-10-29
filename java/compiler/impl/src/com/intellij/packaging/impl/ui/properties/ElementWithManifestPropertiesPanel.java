@@ -3,7 +3,7 @@ package com.intellij.packaging.impl.ui.properties;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
@@ -86,15 +86,10 @@ public abstract class ElementWithManifestPropertiesPanel<E extends CompositeElem
   }
 
   private void chooseManifest() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        return super.isFileVisible(file, showHiddenFiles) && (file.isDirectory() ||
-               file.getName().equalsIgnoreCase(ManifestFileUtil.MANIFEST_FILE_NAME));
-      }
-    };
-    descriptor.setTitle(JavaCompilerBundle.message("specify.path.to.manifest.mf.file"));
-    final VirtualFile file = FileChooser.chooseFile(descriptor, myContext.getProject(), null);
+    var descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor("MF")
+      .withFileFilter(file -> file.getName().equalsIgnoreCase(ManifestFileUtil.MANIFEST_FILE_NAME))
+      .withTitle(JavaCompilerBundle.message("specify.path.to.manifest.mf.file"));
+    var file = FileChooser.chooseFile(descriptor, myContext.getProject(), null);
     if (file == null) return;
 
     ManifestFileUtil.addManifestFileToLayout(file.getPath(), myContext, myElement);

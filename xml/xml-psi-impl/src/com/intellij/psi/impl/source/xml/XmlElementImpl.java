@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.xml;
 
@@ -92,7 +92,7 @@ public abstract class XmlElementImpl extends CompositePsiElement implements XmlE
           return true;
         }
       }, name.getPsi());
-      if (builder.length() > 0) return builder.toString();
+      if (!builder.isEmpty()) return builder.toString();
     }
     return null;
   }

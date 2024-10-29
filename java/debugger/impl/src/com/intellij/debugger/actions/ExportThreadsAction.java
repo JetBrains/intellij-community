@@ -16,7 +16,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.unscramble.ThreadState;
+import com.intellij.threadDumpParser.ThreadState;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

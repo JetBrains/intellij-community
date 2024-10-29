@@ -9,7 +9,9 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class FilesProcessorWithNotificationImpl(
   project: Project,
   parentDisposable: Disposable

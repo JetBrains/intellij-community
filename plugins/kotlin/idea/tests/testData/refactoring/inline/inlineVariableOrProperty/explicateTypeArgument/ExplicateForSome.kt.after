@@ -4,4 +4,3 @@ fun f() {
     val copy1: List<Int> = ArrayList(listOf())
     val copy2 = ArrayList(listOf<Int>())
 }
-// IGNORE_K2

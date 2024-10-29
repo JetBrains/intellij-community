@@ -3,6 +3,7 @@
 
 package org.editorconfig.configmanagement
 
+import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.configurationStore.SettingsSavingComponent
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,10 +14,12 @@ import com.intellij.openapi.project.ProjectLocator
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileEvent
 import com.intellij.openapi.vfs.VirtualFileListener
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter
 import com.intellij.platform.settings.CacheTag
 import com.intellij.platform.settings.SettingsController
 import com.intellij.platform.settings.settingDescriptorFactory
+import com.intellij.util.containers.ConcurrentIntObjectMap
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import org.editorconfig.Utils
@@ -29,23 +32,38 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @Service
 internal class EditorConfigEncodingCache : SettingsSavingComponent {
-  private val charsetMap: ConcurrentHashMap<String, CharsetData>
+  private val idCharsetMap: ConcurrentIntObjectMap<CharsetData>
+  private val urlCharsetMap: ConcurrentHashMap<String, CharsetData> // only for files without Int id
+
   private val isChanged = AtomicBoolean()
 
-  @Suppress("SpellCheckingInspection")
-  private val setting = settingDescriptorFactory(PluginId.getId("org.editorconfig.editorconfigjetbrains")).let { factory ->
-    factory.settingDescriptor("encodings", factory.mapSerializer(String::class.java, CharsetData::class.java)) {
+  private val urlsSetting = settingDescriptorFactory(PluginId.getId("org.editorconfig.editorconfigjetbrains")).let { factory ->
+    factory.settingDescriptor("encodingsUrls", factory.mapSerializer(String::class.java, CharsetData::class.java)) {
+      tags = listOf(CacheTag)
+    }
+  }
+  private val idsSetting = settingDescriptorFactory(PluginId.getId("org.editorconfig.editorconfigjetbrains")).let { factory ->
+    factory.settingDescriptor("encodingsIds", factory.mapSerializer(Int::class.java, CharsetData::class.java)) {
       tags = listOf(CacheTag)
     }
   }
 
   init {
-    charsetMap = ConcurrentHashMap(service<SettingsController>().getItem(setting) ?: emptyMap())
+    val service = service<SettingsController>()
+    urlCharsetMap = ConcurrentHashMap(service.getItem(urlsSetting) ?: emptyMap())
+
+    val idsCharsets = service.getItem(idsSetting) ?: emptyMap()
+    idCharsetMap = ConcurrentCollectionFactory.createConcurrentIntObjectMap<CharsetData>(idsCharsets.size, 0.75f, 2)
+    for (entry in idsCharsets) {
+      idCharsetMap.put(entry.key, entry.value)
+    }
   }
 
   override suspend fun save() {
     if (isChanged.compareAndSet(true, false)) {
-      serviceAsync<SettingsController>().setItem(setting, TreeMap(charsetMap))
+      serviceAsync<SettingsController>().setItem(urlsSetting, TreeMap(urlCharsetMap))
+      val idsMap = idCharsetMap.entrySet().associate { it.key to it.value }
+      serviceAsync<SettingsController>().setItem(idsSetting, TreeMap<Int, CharsetData>(idsMap))
     }
   }
 
@@ -67,10 +85,17 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
   }
 
   fun computeAndCacheEncoding(project: Project, virtualFile: VirtualFile) {
+    val intKey = getIntKey(virtualFile)
     val key = getKey(virtualFile)
     val charsetData = getCharsetData(project = project, virtualFile = virtualFile, withCache = false)
     if (charsetData != null) {
-      charsetMap.put(key, charsetData)
+      if (intKey > 0) {
+        idCharsetMap.put(intKey, charsetData)
+      }
+      else {
+        urlCharsetMap.put(key, charsetData)
+      }
+
       isChanged.set(true)
       charsetData.getCharset()?.let {
         virtualFile.charset = it
@@ -83,7 +108,12 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
     return if (charsetData == null || charsetData.isIgnored) null else charsetData.getCharset()
   }
 
-  private fun getCachedCharsetData(virtualFile: VirtualFile): CharsetData? = charsetMap[getKey(virtualFile)]
+  private fun getCachedCharsetData(virtualFile: VirtualFile): CharsetData? {
+    val intKey = getIntKey(virtualFile)
+    if (intKey > 0) return idCharsetMap[intKey]
+
+    return urlCharsetMap[getKey(virtualFile)]
+  }
 
   fun isIgnored(virtualFile: VirtualFile): Boolean = getCachedCharsetData(virtualFile).let { it != null && it.isIgnored }
 
@@ -92,7 +122,15 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
     if (charsetData == null) {
       charsetData = CharsetData(charset = CharsetRef(id = null))
       charsetData.isIgnored = true
-      charsetMap.put(getKey(virtualFile), charsetData)
+
+      val intKey = getIntKey(virtualFile)
+      if (intKey > 0) {
+        idCharsetMap.put(intKey, charsetData)
+      }
+      else {
+        urlCharsetMap.put(getKey(virtualFile), charsetData)
+      }
+
       isChanged.set(true)
     }
     else {
@@ -101,7 +139,8 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
   }
 
   fun reset() {
-    charsetMap.clear()
+    idCharsetMap.clear()
+    urlCharsetMap.clear()
     isChanged.set(true)
   }
 
@@ -125,6 +164,13 @@ internal class EditorConfigEncodingCache : SettingsSavingComponent {
       val charsetRef = CharsetRef(charsetStr)
       charsetRef.charset = charset
       return CharsetData(charset = charsetRef)
+    }
+
+    private fun getIntKey(virtualFile: VirtualFile): Int {
+      if (virtualFile is VirtualFileWithId) {
+        return virtualFile.id
+      }
+      return -1
     }
 
     private fun getKey(virtualFile: VirtualFile): String = virtualFile.url

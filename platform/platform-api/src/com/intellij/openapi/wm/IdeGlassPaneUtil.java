@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,28 +38,34 @@ public final class IdeGlassPaneUtil {
   }
 
   public static void installPainter(@NotNull JComponent target, @NotNull Painter painter, @NotNull Disposable parent) {
-    final UiNotifyConnector connector = UiNotifyConnector.installOn(target, new Activatable() {
-      private IdeGlassPane myPane;
-      private Disposable myPanePainterListeners = Disposer.newDisposable();
+    Activatable listeners = createPainterActivatable(target, painter);
+    UiNotifyConnector connector = UiNotifyConnector.installOn(target, listeners);
+    Disposer.register(parent, connector);
+  }
+
+  @ApiStatus.Internal
+  public static @NotNull Activatable createPainterActivatable(@NotNull JComponent target, @NotNull Painter painter) {
+    return new Activatable() {
+      private Disposable panePainterListeners;
 
       @Override
       public void showNotify() {
         IdeGlassPane pane = find(target);
-        if (myPane != null && myPane != pane) {
-          Disposer.dispose(myPanePainterListeners);
+        if (panePainterListeners != null) {
+          Disposer.dispose(panePainterListeners);
         }
-        myPane = pane;
-        myPanePainterListeners = Disposer.newDisposable("PanePainterListeners");
-        Disposer.register(parent, myPanePainterListeners);
-        myPane.addPainter(target, painter, myPanePainterListeners);
+
+        panePainterListeners = Disposer.newDisposable("PanePainterListeners");
+        pane.addPainter(target, painter, panePainterListeners);
       }
 
       @Override
       public void hideNotify() {
-        Disposer.dispose(myPanePainterListeners);
+        if (panePainterListeners != null) {
+          Disposer.dispose(panePainterListeners);
+        }
       }
-    });
-    Disposer.register(parent, connector);
+    };
   }
 
   public static boolean canBePreprocessed(@NotNull MouseEvent e) {

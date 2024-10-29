@@ -1,1 +1,3213 @@
-{"data":[{"traceID":"fd8f1a88651b5187e2b8d9ac7c16a5c9","processes":{"p1":{"serviceName":"PhpStorm","tags":[{"key":"time","type":"string","value":"Tue, 14 Jun 2022 17:45:07 +0200"},{"key":"service.version","type":"string","value":"223.SNAPSHOT"},{"key":"service.namespace","type":"string","value":"PS"}]}},"spans":[{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"89e4fa71b78af51f","operationName":"execute projectOpened handlers","processID":"p1","startTime":1655221509433874,"duration":144856,"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"94e2560d623255ab"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a5ab76406db6eb6c","operationName":"run activity","processID":"p1","startTime":1655221509579476,"duration":7,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.roots.impl.ProjectRootManagerComponent$$Lambda$865/0x0000000300943d68"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"d2d0639d63a96e48","operationName":"run activity","processID":"p1","startTime":1655221509581103,"duration":233,"tags":[{"key":"class","type":"string","value":"com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ad6a6c2574234454","operationName":"run activity","processID":"p1","startTime":1655221509581853,"duration":428,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"143d5aabcb825c3b","operationName":"run activity","processID":"p1","startTime":1655221509582718,"duration":3491,"tags":[{"key":"class","type":"string","value":"com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"6a102bf3274fa0b5","operationName":"run activity","processID":"p1","startTime":1655221509590321,"duration":2820,"tags":[{"key":"class","type":"string","value":"com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"dae5b11e3e61ee78","operationName":"run activity","processID":"p1","startTime":1655221509593591,"duration":1326521,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.fileEditor.impl.OpenFilesActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fb22cf114d5f9ebb","operationName":"run activity","processID":"p1","startTime":1655221510923267,"duration":509,"tags":[{"key":"class","type":"string","value":"com.intellij.toolWindow.InitToolWindowSetActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a0a5d3df06677f7e","operationName":"run activity","processID":"p1","startTime":1655221510924402,"duration":599,"tags":[{"key":"class","type":"string","value":"com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"21d68323367356bc","operationName":"run activity","processID":"p1","startTime":1655221510925056,"duration":2077,"tags":[{"key":"class","type":"string","value":"com.jetbrains.performancePlugin.ProjectLoaded"},{"key":"plugin","type":"string","value":"com.jetbrains.performancePlugin"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"7eaf76723cc6cbb6","operationName":"run activity","processID":"p1","startTime":1655221510927472,"duration":28557,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c7ad6aa8aedcf7f2","operationName":"run startup activities","processID":"p1","startTime":1655221509579418,"duration":1376642,"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fe9449fc5b6d7b92"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fe9449fc5b6d7b92","operationName":"StartupManager.projectOpened","processID":"p1","startTime":1655221509579312,"duration":1379883,"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"94e2560d623255ab"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"94e2560d623255ab","operationName":"open project","processID":"p1","startTime":1655221509230000,"duration":1730759,"tags":[{"key":"project","type":"string","value":"symfony-demo-5"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a9d1665bca50009a","operationName":"run activity","processID":"p1","startTime":1655221511008661,"duration":262,"tags":[{"key":"class","type":"string","value":"com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManagerStartupActivity"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"d13c3e5d2b675184","operationName":"run activity","processID":"p1","startTime":1655221511010560,"duration":811,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"80f20d5d3856bdba","operationName":"run activity","processID":"p1","startTime":1655221511026233,"duration":339,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$EncodingProjectManagerStartUpActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a2d8e8a92536a19d","operationName":"run activity","processID":"p1","startTime":1655221511030984,"duration":11,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.actions.PowerSaveModeNotifier"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ca76da1f4c7d178e","operationName":"run activity","processID":"p1","startTime":1655221511034225,"duration":1705,"tags":[{"key":"class","type":"string","value":"com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ea7f9e63a08ddd43","operationName":"run activity","processID":"p1","startTime":1655221511036248,"duration":8,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"cb3ec2673ac4125a","operationName":"run activity","processID":"p1","startTime":1655221511037110,"duration":1652,"tags":[{"key":"class","type":"string","value":"com.intellij.execution.startup.ProjectStartupRunner"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"671dfdf6e7d25d57","operationName":"run activity","processID":"p1","startTime":1655221511039305,"duration":47,"tags":[{"key":"class","type":"string","value":"com.intellij.diagnostic.AnalyzePendingSnapshotActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"0d4eee6d01a839c1","operationName":"run activity","processID":"p1","startTime":1655221511039963,"duration":28,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8690f11bc9b198d8","operationName":"run activity","processID":"p1","startTime":1655221511040323,"duration":368,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.folding.impl.FoldingHintPostStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"1b3a2c7bbbdb6827","operationName":"run activity","processID":"p1","startTime":1655221511041507,"duration":11,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.bookmark.BookmarksStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ae97c4db9c301993","operationName":"run activity","processID":"p1","startTime":1655221511042181,"duration":3421,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.highlighting.BackgroundHighlighter"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c68f2eb2bc7e482f","operationName":"run activity","processID":"p1","startTime":1655221511046415,"duration":23665,"tags":[{"key":"class","type":"string","value":"com.intellij.execution.services.ServiceViewStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"55fa4a0582763dbc","operationName":"run activity","processID":"p1","startTime":1655221511074019,"duration":7281,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"f46ea8e053ff5a39","operationName":"run activity","processID":"p1","startTime":1655221511082880,"duration":8491,"tags":[{"key":"class","type":"string","value":"com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"937a37f9e3d17e0e","operationName":"run activity","processID":"p1","startTime":1655221511092942,"duration":4337,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ffe51156111d779b","operationName":"run activity","processID":"p1","startTime":1655221511099110,"duration":8638,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c1460322a9f497a5","operationName":"run activity","processID":"p1","startTime":1655221511109274,"duration":6032,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"9fa2d00af6b245bf","operationName":"run activity","processID":"p1","startTime":1655221511117151,"duration":294,"tags":[{"key":"class","type":"string","value":"com.intellij.platform.PlatformVcsDetector"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"267d423ad027daf8","operationName":"run activity","processID":"p1","startTime":1655221511119122,"duration":1722,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"e48d6db2d6418ca0","operationName":"run activity","processID":"p1","startTime":1655221511122830,"duration":13422,"tags":[{"key":"class","type":"string","value":"com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"da9e88af25d9e65a","operationName":"run activity","processID":"p1","startTime":1655221511138172,"duration":28504,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"7743d0ab63a17334","operationName":"run activity","processID":"p1","startTime":1655221511168651,"duration":3431,"tags":[{"key":"class","type":"string","value":"com.intellij.spellchecker.settings.SettingsTransferActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"b243ad2f4d3859c0","operationName":"run activity","processID":"p1","startTime":1655221511173947,"duration":37730,"tags":[{"key":"class","type":"string","value":"com.intellij.space.components.SpaceAutoLoginStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.space"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"e653f2992004b223","operationName":"run activity","processID":"p1","startTime":1655221511213403,"duration":3393,"tags":[{"key":"class","type":"string","value":"com.jetbrains.plugins.webDeployment.conflicts.RemoteChangeNotifier$MyStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.plugins.webDeployment"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"583995a97be3e67b","operationName":"run activity","processID":"p1","startTime":1655221511218559,"duration":7545,"tags":[{"key":"class","type":"string","value":"com.intellij.plugins.watcher.FwStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij.plugins.watcher"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"93c3c685b7b476fd","operationName":"run activity","processID":"p1","startTime":1655221511227904,"duration":228,"tags":[{"key":"class","type":"string","value":"com.intellij.cloudConfig.StatusBarInfoManager$MyStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij.CloudConfig"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"746734a730acf48c","operationName":"run activity","processID":"p1","startTime":1655221511230088,"duration":9078,"tags":[{"key":"class","type":"string","value":"com.intellij.indexing.shared.download.IndexDownloadServiceProjectStartupActivity"},{"key":"plugin","type":"string","value":"intellij.indexing.shared.core"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c60a0818d59deb71","operationName":"run activity","processID":"p1","startTime":1655221511240798,"duration":31,"tags":[{"key":"class","type":"string","value":"com.intellij.indexing.shared.platform.impl.BundledSharedIndexPostStartupActivity"},{"key":"plugin","type":"string","value":"intellij.indexing.shared.core"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"76b7314cd3c80f40","operationName":"run activity","processID":"p1","startTime":1655221511242568,"duration":52553,"tags":[{"key":"class","type":"string","value":"com.intellij.tasks.impl.TaskManagerImpl$Activity"},{"key":"plugin","type":"string","value":"com.intellij.tasks"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"e7d98764c6724eb9","operationName":"run activity","processID":"p1","startTime":1655221511297654,"duration":872,"tags":[{"key":"class","type":"string","value":"git4idea.stash.ui.GitStashStartupActivity"},{"key":"plugin","type":"string","value":"Git4Idea"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"9dd64b0cf16e456d","operationName":"run activity","processID":"p1","startTime":1655221511300198,"duration":16759,"tags":[{"key":"class","type":"string","value":"com.intellij.space.vcs.SpaceVcsContextActivator"},{"key":"plugin","type":"string","value":"com.jetbrains.space"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"226ad056d6c16706","operationName":"run activity","processID":"p1","startTime":1655221511319072,"duration":22407,"tags":[{"key":"class","type":"string","value":"com.intellij.lang.javascript.buildTools.base.JsbtStartupActivity"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"367dd09732709a3a","operationName":"run activity","processID":"p1","startTime":1655221511347006,"duration":2478,"tags":[{"key":"class","type":"string","value":"com.intellij.lang.javascript.linter.PackageJsonForLintersConfigChangeTracker"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"bf750cb4fd0c16bc","operationName":"run activity","processID":"p1","startTime":1655221511351173,"duration":281,"tags":[{"key":"class","type":"string","value":"com.intellij.javascript.nodejs.packageJson.PackageJsonFileManager$MyStartupActivity"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8e1863ac34ab5653","operationName":"run activity","processID":"p1","startTime":1655221511353009,"duration":3231,"tags":[{"key":"class","type":"string","value":"com.intellij.lang.javascript.modules.remote.JSRemoteModulesLibraryManager$JSRemoteModulesLibraryManagerStartupActivity"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"0495aea547fe09f4","operationName":"run activity","processID":"p1","startTime":1655221511359846,"duration":16,"tags":[{"key":"class","type":"string","value":"org.jetbrains.vuejs.lang.html.psi.arrangement.VueArrangementSettingsMigration"},{"key":"plugin","type":"string","value":"org.jetbrains.plugins.vue"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"99065034b4459032","operationName":"run activity","processID":"p1","startTime":1655221511365973,"duration":41069,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.debug.listener.PhpListenDebugRestoringActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ea118e88483cdd5c","operationName":"run activity","processID":"p1","startTime":1655221511408881,"duration":69711,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.config.library.PhpLibraryStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"b42bfa257d95699f","operationName":"run activity","processID":"p1","startTime":1655221511480425,"duration":4195,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.wordpress.WPStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php.wordPress"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"65b430285e05a60f","operationName":"run activity","processID":"p1","startTime":1655221511486351,"duration":4009,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.drupal.DrupalStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php.drupal"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2225519deef1b04a","operationName":"run activity","processID":"p1","startTime":1655221511492065,"duration":15540,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.behat.BehatConfigurationStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php.behat"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"bc841a65e36e2f25","operationName":"run activity","processID":"p1","startTime":1655221511509004,"duration":1239,"tags":[{"key":"class","type":"string","value":"com.intellij.database.autoconfig.DatabaseConfigFileWatcher"},{"key":"plugin","type":"string","value":"com.intellij.database"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"9036cd6a6fe38754","operationName":"run activity","processID":"p1","startTime":1655221511510519,"duration":1137,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.joomla.JoomlaStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php.joomla"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"4e6d620a9d09a7e8","operationName":"run activity","processID":"p1","startTime":1655221511512273,"duration":379,"tags":[{"key":"class","type":"string","value":"com.intellij.docker.DockerStartupActivity"},{"key":"plugin","type":"string","value":"Docker"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"00a6f01d0c2ef34c","operationName":"run activity","processID":"p1","startTime":1655221511513548,"duration":2734,"tags":[{"key":"class","type":"string","value":"com.intellij.execution.ui.ExecutionReasonableHistoryManager"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"01da2402bd38afe1","operationName":"run activity","processID":"p1","startTime":1655221511516355,"duration":25537,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.ui.OptionsTopHitProvider$Activity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"688d00af63bf617e","operationName":"run activity","processID":"p1","startTime":1655221511542523,"duration":263,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.cds.CDSStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"573a5efcbc3154ac","operationName":"run activity","processID":"p1","startTime":1655221511543285,"duration":278,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.CheckProjectActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ca6411b28616ab16","operationName":"run activity","processID":"p1","startTime":1655221511543901,"duration":5516,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"f872666997e3d519","operationName":"run activity","processID":"p1","startTime":1655221511551230,"duration":2880,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.script.IdeStartupScripts"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8859e0809a77d9f7","operationName":"run activity","processID":"p1","startTime":1655221511556228,"duration":4784,"tags":[{"key":"class","type":"string","value":"com.intellij.database.editor.DatabaseStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij.database"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a12422fd8ba1c76a","operationName":"run activity","processID":"p1","startTime":1655221511562367,"duration":237,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.vcs.impl.FileStatusManagerImpl$$Lambda$1190/0x0000000300b92a30"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0c3bb66f62df2d","operationName":"run activity","processID":"p1","startTime":1655221511564084,"duration":1671,"tags":[{"key":"class","type":"string","value":"com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"84c41e3868a28dba","operationName":"run activity","processID":"p1","startTime":1655221511567180,"duration":44,"tags":[{"key":"class","type":"string","value":"com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"020ff89210c15363","operationName":"run activity","processID":"p1","startTime":1655221511568617,"duration":32,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"0643d0a6d28d9411","operationName":"run activity","processID":"p1","startTime":1655221511569945,"duration":11,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"6ce66af9ee490c18","operationName":"run activity","processID":"p1","startTime":1655221511571257,"duration":279,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$$Lambda$1481/0x0000000300f64e88"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"dcd3f9e1d1e60384","operationName":"run activity","processID":"p1","startTime":1655221511572828,"duration":11,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"531bf7b341a3f663","operationName":"run activity","processID":"p1","startTime":1655221511574132,"duration":12,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"598db7d9aad23ad0","operationName":"run activity","processID":"p1","startTime":1655221511575453,"duration":10,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"062f4b1e934510e3","operationName":"run activity","processID":"p1","startTime":1655221511576706,"duration":20,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"d423fbc2f4fa4582","operationName":"run activity","processID":"p1","startTime":1655221511577767,"duration":15,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"53d0e5b1b4d11d68","operationName":"run activity","processID":"p1","startTime":1655221511579067,"duration":13,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"1ecba0461b140601","operationName":"run activity","processID":"p1","startTime":1655221511580384,"duration":19,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"7b8f704278ddf740","operationName":"run activity","processID":"p1","startTime":1655221511581723,"duration":12741,"tags":[{"key":"class","type":"string","value":"com.intellij.profile.codeInspection.ProjectInspectionProfileManager$initializeComponent$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"b2fdb1bce5fee41c","operationName":"run activity","processID":"p1","startTime":1655221511595788,"duration":18,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2944ad5830a69ff5","operationName":"run activity","processID":"p1","startTime":1655221511597106,"duration":20,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8935346b8150c873","operationName":"run activity","processID":"p1","startTime":1655221511598478,"duration":28,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fd27adaeb46f884a","operationName":"run activity","processID":"p1","startTime":1655221511599958,"duration":67,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"40ab405fec11da6c","operationName":"run activity","processID":"p1","startTime":1655221511601347,"duration":12,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"852d2f27ce7c8e54","operationName":"run activity","processID":"p1","startTime":1655221511602751,"duration":87,"tags":[{"key":"class","type":"string","value":"com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"b975e92633c70a7e","operationName":"run activity","processID":"p1","startTime":1655221511604145,"duration":21,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"056d603b1529b963","operationName":"run activity","processID":"p1","startTime":1655221511605579,"duration":22,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"34d257da3e40a402","operationName":"run activity","processID":"p1","startTime":1655221511606937,"duration":17,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"71c197c895be3768","operationName":"run activity","processID":"p1","startTime":1655221511608262,"duration":31,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2c6a9c57df5835b7","operationName":"run activity","processID":"p1","startTime":1655221511608326,"duration":56,"tags":[{"key":"class","type":"string","value":"com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fc0fd76eb96a091c","operationName":"run post-startup dynamically registered activities","processID":"p1","startTime":1655221511561066,"duration":47331,"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15","operationName":"run post-startup activities","processID":"p1","startTime":1655221511004408,"duration":653361,"tags":[{"key":"thread.name","type":"string","value":"JobScheduler FJ pool 2/9"},{"key":"thread.id","type":"long","value":"15"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"fe9449fc5b6d7b92"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a78dfe1fe81d21ef","operationName":"run activity","processID":"p1","startTime":1655221513484050,"duration":2777,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"257e471a4da5d275","operationName":"run activity","processID":"p1","startTime":1655221513487060,"duration":1706,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8bee7ccd56bab753","operationName":"run activity","processID":"p1","startTime":1655221513488797,"duration":12,"tags":[{"key":"class","type":"string","value":"com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"9f08b88738889e39","operationName":"run activity","processID":"p1","startTime":1655221513488820,"duration":1420,"tags":[{"key":"class","type":"string","value":"com.intellij.formatting.visualLayer.VisualFormattingLayerStartup"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"66a1536c7f1a3adc","operationName":"run activity","processID":"p1","startTime":1655221513490277,"duration":314,"tags":[{"key":"class","type":"string","value":"com.intellij.usages.impl.rules.UsageFilteringRulesActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"ed8b4e0c180cd35e","operationName":"run activity","processID":"p1","startTime":1655221513490609,"duration":35,"tags":[{"key":"class","type":"string","value":"com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"8c9b7ee169971e02","operationName":"run activity","processID":"p1","startTime":1655221513490654,"duration":1724,"tags":[{"key":"class","type":"string","value":"com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"556b7974cf44767c","operationName":"run activity","processID":"p1","startTime":1655221513492410,"duration":1220,"tags":[{"key":"class","type":"string","value":"com.intellij.notification.impl.RemindLaterActivity"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"7649c9e2da5a0ac9","operationName":"run activity","processID":"p1","startTime":1655221513493656,"duration":17,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"c033e90f143c65b0","operationName":"run activity","processID":"p1","startTime":1655221513493685,"duration":814,"tags":[{"key":"class","type":"string","value":"com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"f52367c926d6e4e4","operationName":"run activity","processID":"p1","startTime":1655221513494522,"duration":306,"tags":[{"key":"class","type":"string","value":"com.intellij.codeInsight.documentation.DocumentationSettingsListener"},{"key":"plugin","type":"string","value":"com.intellij"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"00cedfecc163a7cd","operationName":"run activity","processID":"p1","startTime":1655221513494848,"duration":13,"tags":[{"key":"class","type":"string","value":"com.intellij.javascript.web.webTypes.nodejs.PackageJsonWebTypesRegistryManagerStartup"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"a8bcf2f0938306ee","operationName":"run activity","processID":"p1","startTime":1655221513494872,"duration":28346,"tags":[{"key":"class","type":"string","value":"com.intellij.lsp.LspServerManager$Starter"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"32582eba10bcf71d","operationName":"run activity","processID":"p1","startTime":1655221513523264,"duration":2833,"tags":[{"key":"class","type":"string","value":"com.intellij.lang.typescript.settings.exclude.TypeScriptStartupActivity"},{"key":"plugin","type":"string","value":"JavaScript"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"6f376a03eea60af2","operationName":"run activity","processID":"p1","startTime":1655221513526139,"duration":490,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.PhpChangeDefaultLanguageLevelPostStartupActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"711a604b833b668d","operationName":"run activity","processID":"p1","startTime":1655221513526655,"duration":8138,"tags":[{"key":"class","type":"string","value":"com.jetbrains.php.PhpPluginSuggestionsActivity"},{"key":"plugin","type":"string","value":"com.jetbrains.php"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"73736e4426178351f63bcac554ce52dd","spanID":"bb1aa3035374ce73","operationName":"run post-startup dynamically registered dumb-unaware activities","processID":"p1","startTime":1655221513546367,"duration":44,"tags":[{"key":"count","type":"long","value":"0"}],"references":[{"refType":"CHILD_OF","traceID":"73736e4426178351f63bcac554ce52dd","spanID":"2fa46c3b49c6db15"}]},{"traceID":"c0e55e762749be74592336a498ecd1ef","spanID":"04037549bf43a0a8","operationName":"FindUsagesManager.startProcessUsages","processID":"p1","startTime":1655221523211812,"duration":509932,"tags":[{"key":"number_of_found_usages","type":"long","value":"1"}],"references":[{"refType":"CHILD_OF","traceID":"c0e55e762749be74592336a498ecd1ef","spanID":"5981974ab8e36c32"}]},{"traceID":"1c2a1ca9cd38e8d92e4fe4420a9080a7","spanID":"e4d5b7ad6de1761d","operationName":"Timer [default]","processID":"p1","startTime":1655221523212000,"duration":509981,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"22"},{"key":"Average Responsiveness","type":"long","value":"3"}]},{"traceID":"c0e55e762749be74592336a498ecd1ef","spanID":"5981974ab8e36c32","operationName":"%findUsages","processID":"p1","startTime":1655221523191000,"duration":530859,"logs":[{"timestamp":1655221523208891,"fields":[{"key":"event","type":"string","value":"Finding declaration"}]},{"timestamp":1655221523209941,"fields":[{"key":"event","type":"string","value":"Command find usages is called on element MethodImpl: redirect"}]}]},{"traceID":"9936b47a3d51e5383965f5d0d6de8983","spanID":"d05240c3d44a0cfe","operationName":"Timer [default]","processID":"p1","startTime":1655221523170000,"duration":563145,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"20"},{"key":"Average Responsiveness","type":"long","value":"2"}]},{"traceID":"b6643ba6f0fc82511fad54963f8b3120","spanID":"fedb3eb57d81f0bd","operationName":"FindUsagesManager.startProcessUsages","processID":"p1","startTime":1655221532800069,"duration":4106886,"tags":[{"key":"number_of_found_usages","type":"long","value":"549"}],"references":[{"refType":"CHILD_OF","traceID":"b6643ba6f0fc82511fad54963f8b3120","spanID":"72f0e6024c31a2d4"}]},{"traceID":"aa700018019c0e1896d595fe619f9382","spanID":"6e3142307ce53e99","operationName":"Timer [default]","processID":"p1","startTime":1655221532800000,"duration":4106915,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"22"},{"key":"Average Responsiveness","type":"long","value":"1"}]},{"traceID":"b6643ba6f0fc82511fad54963f8b3120","spanID":"72f0e6024c31a2d4","operationName":"%findUsages","processID":"p1","startTime":1655221532797000,"duration":4109994,"logs":[{"timestamp":1655221532797146,"fields":[{"key":"event","type":"string","value":"Finding declaration"}]},{"timestamp":1655221532797732,"fields":[{"key":"event","type":"string","value":"Command find usages is called on element PhpClass: Response"}]}]},{"traceID":"4abd1018fbd7d442a0b77e2be372e69a","spanID":"c8fa686d367b3a5e","operationName":"Timer [default]","processID":"p1","startTime":1655221532775000,"duration":4215311,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"22"},{"key":"Average Responsiveness","type":"long","value":"0"}]},{"traceID":"736f172278182d7c36bddf0d9ff62f2a","spanID":"29531026a2158f47","operationName":"FindUsagesManager.startProcessUsages","processID":"p1","startTime":1655221548571870,"duration":3088487,"tags":[{"key":"number_of_found_usages","type":"long","value":"844"}],"references":[{"refType":"CHILD_OF","traceID":"736f172278182d7c36bddf0d9ff62f2a","spanID":"6ee572f62e2401f9"}]},{"traceID":"5c0332e117a2498228933deed46c55f5","spanID":"b9268faa22a96509","operationName":"Timer [default]","processID":"p1","startTime":1655221548572000,"duration":3088512,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"15"},{"key":"Average Responsiveness","type":"long","value":"0"}]},{"traceID":"736f172278182d7c36bddf0d9ff62f2a","spanID":"6ee572f62e2401f9","operationName":"%findUsages","processID":"p1","startTime":1655221548570000,"duration":3090393,"logs":[{"timestamp":1655221548570116,"fields":[{"key":"event","type":"string","value":"Finding declaration"}]},{"timestamp":1655221548570174,"fields":[{"key":"event","type":"string","value":"Command find usages is called on element PhpClass: Request"}]}]},{"traceID":"70c37b7c73a48934b11d2f475009467c","spanID":"cffb1214754e5f58","operationName":"Timer [default]","processID":"p1","startTime":1655221548552000,"duration":3249409,"tags":[{"key":"Maximum Responsiveness","type":"long","value":"18"},{"key":"Average Responsiveness","type":"long","value":"1"}]}]}]}
+{
+  "exporterVersion": 1,
+  "data": [
+    {
+      "traceID": "fd8f1a88651b5187e2b8d9ac7c16a5c9",
+      "processes": {
+        "p1": {
+          "serviceName": "PhpStorm",
+          "tags": [
+            {
+              "key": "time",
+              "type": "string",
+              "value": "Tue, 14 Jun 2022 17:45:07 +0200"
+            },
+            {
+              "key": "service.version",
+              "type": "string",
+              "value": "223.SNAPSHOT"
+            },
+            {
+              "key": "service.namespace",
+              "type": "string",
+              "value": "PS"
+            }
+          ]
+        }
+      },
+      "spans": [
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "89e4fa71b78af51f",
+          "operationName": "execute projectOpened handlers",
+          "processID": "p1",
+          "startTime": 1655221509433874,
+          "duration": 144856,
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "94e2560d623255ab"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a5ab76406db6eb6c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509579476,
+          "duration": 7,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.roots.impl.ProjectRootManagerComponent$$Lambda$865/0x0000000300943d68"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "d2d0639d63a96e48",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509581103,
+          "duration": 233,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ad6a6c2574234454",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509581853,
+          "duration": 428,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.plugins.DynamicPluginEnabler$Companion$EnableDisablePluginsActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "143d5aabcb825c3b",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509582718,
+          "duration": 3491,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "6a102bf3274fa0b5",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509590321,
+          "duration": 2820,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.diagnostic.IdeHeartbeatEventReporter$Loader"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "dae5b11e3e61ee78",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221509593591,
+          "duration": 1326521,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.fileEditor.impl.OpenFilesActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "fb22cf114d5f9ebb",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221510923267,
+          "duration": 509,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.toolWindow.InitToolWindowSetActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a0a5d3df06677f7e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221510924402,
+          "duration": 599,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.find.impl.TextSearchContributor$Companion$TextSearchActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "21d68323367356bc",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221510925056,
+          "duration": 2077,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.performancePlugin.ProjectLoaded"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.performancePlugin"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "7eaf76723cc6cbb6",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221510927472,
+          "duration": 28557,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "c7ad6aa8aedcf7f2"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "c7ad6aa8aedcf7f2",
+          "operationName": "run startup activities",
+          "processID": "p1",
+          "startTime": 1655221509579418,
+          "duration": 1376642,
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fe9449fc5b6d7b92"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "fe9449fc5b6d7b92",
+          "operationName": "StartupManager.projectOpened",
+          "processID": "p1",
+          "startTime": 1655221509579312,
+          "duration": 1379883,
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "94e2560d623255ab"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "94e2560d623255ab",
+          "operationName": "open project",
+          "processID": "p1",
+          "startTime": 1655221509230000,
+          "duration": 1730759,
+          "tags": [
+            {
+              "key": "project",
+              "type": "string",
+              "value": "symfony-demo-5"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a9d1665bca50009a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511008661,
+          "duration": 262,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.javascript.nodejs.interpreter.NodeJsInterpreterManagerStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "d13c3e5d2b675184",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511010560,
+          "duration": 811,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "80f20d5d3856bdba",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511026233,
+          "duration": 339,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl$EncodingProjectManagerStartUpActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a2d8e8a92536a19d",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511030984,
+          "duration": 11,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.actions.PowerSaveModeNotifier"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ca76da1f4c7d178e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511034225,
+          "duration": 1705,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.xml.breadcrumbs.BreadcrumbsInitializingActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ea7f9e63a08ddd43",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511036248,
+          "duration": 8,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.fileEditor.impl.EditorHistoryManager$EditorHistoryManagerStartUpActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "cb3ec2673ac4125a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511037110,
+          "duration": 1652,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.execution.startup.ProjectStartupRunner"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "671dfdf6e7d25d57",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511039305,
+          "duration": 47,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.diagnostic.AnalyzePendingSnapshotActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "0d4eee6d01a839c1",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511039963,
+          "duration": 28,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.util.registry.RegistryToAdvancedSettingsMigration"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8690f11bc9b198d8",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511040323,
+          "duration": 368,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.folding.impl.FoldingHintPostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "1b3a2c7bbbdb6827",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511041507,
+          "duration": 11,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.bookmark.BookmarksStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ae97c4db9c301993",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511042181,
+          "duration": 3421,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.highlighting.BackgroundHighlighter"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "c68f2eb2bc7e482f",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511046415,
+          "duration": 23665,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.execution.services.ServiceViewStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "55fa4a0582763dbc",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511074019,
+          "duration": 7281,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.projectRoots.impl.UnknownSdkStartupChecker"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "f46ea8e053ff5a39",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511082880,
+          "duration": 8491,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "937a37f9e3d17e0e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511092942,
+          "duration": 4337,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vcs.impl.VcsInitialization$StartUpActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ffe51156111d779b",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511099110,
+          "duration": 8638,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$PostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "c1460322a9f497a5",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511109274,
+          "duration": 6032,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager$PostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "9fa2d00af6b245bf",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511117151,
+          "duration": 294,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.platform.PlatformVcsDetector"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "267d423ad027daf8",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511119122,
+          "duration": 1722,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vcs.update.RestoreUpdateTree$MyStartUpActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "e48d6db2d6418ca0",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511122830,
+          "duration": 13422,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.vcs.log.impl.VcsProjectLog$InitLogStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "da9e88af25d9e65a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511138172,
+          "duration": 28504,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "7743d0ab63a17334",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511168651,
+          "duration": 3431,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.spellchecker.settings.SettingsTransferActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "b243ad2f4d3859c0",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511173947,
+          "duration": 37730,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.space.components.SpaceAutoLoginStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.space"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "e653f2992004b223",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511213403,
+          "duration": 3393,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.plugins.webDeployment.conflicts.RemoteChangeNotifier$MyStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.plugins.webDeployment"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "583995a97be3e67b",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511218559,
+          "duration": 7545,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.plugins.watcher.FwStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij.plugins.watcher"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "93c3c685b7b476fd",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511227904,
+          "duration": 228,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.cloudConfig.StatusBarInfoManager$MyStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij.CloudConfig"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "746734a730acf48c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511230088,
+          "duration": 9078,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.indexing.shared.download.IndexDownloadServiceProjectStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "intellij.indexing.shared.core"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "c60a0818d59deb71",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511240798,
+          "duration": 31,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.indexing.shared.platform.impl.BundledSharedIndexPostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "intellij.indexing.shared.core"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "76b7314cd3c80f40",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511242568,
+          "duration": 52553,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.tasks.impl.TaskManagerImpl$Activity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij.tasks"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "e7d98764c6724eb9",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511297654,
+          "duration": 872,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "git4idea.stash.ui.GitStashStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "Git4Idea"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "9dd64b0cf16e456d",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511300198,
+          "duration": 16759,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.space.vcs.SpaceVcsContextActivator"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.space"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "226ad056d6c16706",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511319072,
+          "duration": 22407,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lang.javascript.buildTools.base.JsbtStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "367dd09732709a3a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511347006,
+          "duration": 2478,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lang.javascript.linter.PackageJsonForLintersConfigChangeTracker"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "bf750cb4fd0c16bc",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511351173,
+          "duration": 281,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.javascript.nodejs.packageJson.PackageJsonFileManager$MyStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8e1863ac34ab5653",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511353009,
+          "duration": 3231,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lang.javascript.modules.remote.JSRemoteModulesLibraryManager$JSRemoteModulesLibraryManagerStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "0495aea547fe09f4",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511359846,
+          "duration": 16,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "org.jetbrains.vuejs.lang.html.psi.arrangement.VueArrangementSettingsMigration"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "org.jetbrains.plugins.vue"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "99065034b4459032",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511365973,
+          "duration": 41069,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.debug.listener.PhpListenDebugRestoringActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ea118e88483cdd5c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511408881,
+          "duration": 69711,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.config.library.PhpLibraryStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "b42bfa257d95699f",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511480425,
+          "duration": 4195,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.wordpress.WPStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php.wordPress"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "65b430285e05a60f",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511486351,
+          "duration": 4009,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.drupal.DrupalStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php.drupal"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "2225519deef1b04a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511492065,
+          "duration": 15540,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.behat.BehatConfigurationStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php.behat"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "bc841a65e36e2f25",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511509004,
+          "duration": 1239,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.database.autoconfig.DatabaseConfigFileWatcher"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij.database"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "9036cd6a6fe38754",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511510519,
+          "duration": 1137,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.joomla.JoomlaStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php.joomla"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "4e6d620a9d09a7e8",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511512273,
+          "duration": 379,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.docker.DockerStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "Docker"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "00a6f01d0c2ef34c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511513548,
+          "duration": 2734,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.execution.ui.ExecutionReasonableHistoryManager"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "01da2402bd38afe1",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511516355,
+          "duration": 25537,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.ui.OptionsTopHitProvider$Activity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "688d00af63bf617e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511542523,
+          "duration": 263,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.cds.CDSStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "573a5efcbc3154ac",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511543285,
+          "duration": 278,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.CheckProjectActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ca6411b28616ab16",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511543901,
+          "duration": 5516,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "f872666997e3d519",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511551230,
+          "duration": 2880,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.script.IdeStartupScripts"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8859e0809a77d9f7",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511556228,
+          "duration": 4784,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.database.editor.DatabaseStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij.database"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a12422fd8ba1c76a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511562367,
+          "duration": 237,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.vcs.impl.FileStatusManagerImpl$$Lambda$1190/0x0000000300b92a30"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "fc0c3bb66f62df2d",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511564084,
+          "duration": 1671,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "84c41e3868a28dba",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511567180,
+          "duration": 44,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "020ff89210c15363",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511568617,
+          "duration": 32,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "0643d0a6d28d9411",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511569945,
+          "duration": 11,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "6ce66af9ee490c18",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511571257,
+          "duration": 279,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl$$Lambda$1481/0x0000000300f64e88"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "dcd3f9e1d1e60384",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511572828,
+          "duration": 11,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "531bf7b341a3f663",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511574132,
+          "duration": 12,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "598db7d9aad23ad0",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511575453,
+          "duration": 10,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "062f4b1e934510e3",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511576706,
+          "duration": 20,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "d423fbc2f4fa4582",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511577767,
+          "duration": 15,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "53d0e5b1b4d11d68",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511579067,
+          "duration": 13,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "1ecba0461b140601",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511580384,
+          "duration": 19,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "7b8f704278ddf740",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511581723,
+          "duration": 12741,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.profile.codeInspection.ProjectInspectionProfileManager$initializeComponent$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "b2fdb1bce5fee41c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511595788,
+          "duration": 18,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "2944ad5830a69ff5",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511597106,
+          "duration": 20,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8935346b8150c873",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511598478,
+          "duration": 28,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "fd27adaeb46f884a",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511599958,
+          "duration": 67,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "40ab405fec11da6c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511601347,
+          "duration": 12,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.project.DumbServiceImpl$$Lambda$1458/0x0000000300f16300"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "852d2f27ce7c8e54",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511602751,
+          "duration": 87,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.configurationStore.schemeManager.SchemeManagerFactoryBase$ProjectSchemeManagerFactory$createFileChangeSubscriber$1$1"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "b975e92633c70a7e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511604145,
+          "duration": 21,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "056d603b1529b963",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511605579,
+          "duration": 22,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "34d257da3e40a402",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511606937,
+          "duration": 17,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "71c197c895be3768",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511608262,
+          "duration": 31,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "2c6a9c57df5835b7",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221511608326,
+          "duration": 56,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.ide.startup.impl.StartupManagerImpl$runWhenProjectIsInitialized$2"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fc0fd76eb96a091c"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "fc0fd76eb96a091c",
+          "operationName": "run post-startup dynamically registered activities",
+          "processID": "p1",
+          "startTime": 1655221511561066,
+          "duration": 47331,
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "2fa46c3b49c6db15",
+          "operationName": "run post-startup activities",
+          "processID": "p1",
+          "startTime": 1655221511004408,
+          "duration": 653361,
+          "tags": [
+            {
+              "key": "thread.name",
+              "type": "string",
+              "value": "JobScheduler FJ pool 2/9"
+            },
+            {
+              "key": "thread.id",
+              "type": "long",
+              "value": "15"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "fe9449fc5b6d7b92"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a78dfe1fe81d21ef",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513484050,
+          "duration": 2777,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "257e471a4da5d275",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513487060,
+          "duration": 1706,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8bee7ccd56bab753",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513488797,
+          "duration": 12,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "9f08b88738889e39",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513488820,
+          "duration": 1420,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.formatting.visualLayer.VisualFormattingLayerStartup"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "66a1536c7f1a3adc",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513490277,
+          "duration": 314,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.usages.impl.rules.UsageFilteringRulesActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "ed8b4e0c180cd35e",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513490609,
+          "duration": 35,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "8c9b7ee169971e02",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513490654,
+          "duration": 1724,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "556b7974cf44767c",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513492410,
+          "duration": 1220,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.notification.impl.RemindLaterActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "7649c9e2da5a0ac9",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513493656,
+          "duration": 17,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.hints.ParameterHintsSettingsMigration"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "c033e90f143c65b0",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513493685,
+          "duration": 814,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lang.documentation.ide.impl.DocumentationAutoPopup"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "f52367c926d6e4e4",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513494522,
+          "duration": 306,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.codeInsight.documentation.DocumentationSettingsListener"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.intellij"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "00cedfecc163a7cd",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513494848,
+          "duration": 13,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.javascript.web.webTypes.nodejs.PackageJsonWebTypesRegistryManagerStartup"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "a8bcf2f0938306ee",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513494872,
+          "duration": 28346,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lsp.LspServerManager$Starter"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "32582eba10bcf71d",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513523264,
+          "duration": 2833,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.intellij.lang.typescript.settings.exclude.TypeScriptStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "JavaScript"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "6f376a03eea60af2",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513526139,
+          "duration": 490,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.PhpChangeDefaultLanguageLevelPostStartupActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "711a604b833b668d",
+          "operationName": "run activity",
+          "processID": "p1",
+          "startTime": 1655221513526655,
+          "duration": 8138,
+          "tags": [
+            {
+              "key": "class",
+              "type": "string",
+              "value": "com.jetbrains.php.PhpPluginSuggestionsActivity"
+            },
+            {
+              "key": "plugin",
+              "type": "string",
+              "value": "com.jetbrains.php"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "73736e4426178351f63bcac554ce52dd",
+          "spanID": "bb1aa3035374ce73",
+          "operationName": "run post-startup dynamically registered dumb-unaware activities",
+          "processID": "p1",
+          "startTime": 1655221513546367,
+          "duration": 44,
+          "tags": [
+            {
+              "key": "count",
+              "type": "long",
+              "value": "0"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "73736e4426178351f63bcac554ce52dd",
+              "spanID": "2fa46c3b49c6db15"
+            }
+          ]
+        },
+        {
+          "traceID": "c0e55e762749be74592336a498ecd1ef",
+          "spanID": "04037549bf43a0a8",
+          "operationName": "FindUsagesManager.startProcessUsages",
+          "processID": "p1",
+          "startTime": 1655221523211812,
+          "duration": 509932,
+          "tags": [
+            {
+              "key": "number_of_found_usages",
+              "type": "long",
+              "value": "1"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "c0e55e762749be74592336a498ecd1ef",
+              "spanID": "5981974ab8e36c32"
+            }
+          ]
+        },
+        {
+          "traceID": "1c2a1ca9cd38e8d92e4fe4420a9080a7",
+          "spanID": "e4d5b7ad6de1761d",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221523212000,
+          "duration": 509981,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "22"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "3"
+            }
+          ]
+        },
+        {
+          "traceID": "c0e55e762749be74592336a498ecd1ef",
+          "spanID": "5981974ab8e36c32",
+          "operationName": "%findUsages",
+          "processID": "p1",
+          "startTime": 1655221523191000,
+          "duration": 530859,
+          "logs": [
+            {
+              "timestamp": 1655221523208891,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Finding declaration"
+                }
+              ]
+            },
+            {
+              "timestamp": 1655221523209941,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Command find usages is called on element MethodImpl: redirect"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "traceID": "9936b47a3d51e5383965f5d0d6de8983",
+          "spanID": "d05240c3d44a0cfe",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221523170000,
+          "duration": 563145,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "20"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "2"
+            }
+          ]
+        },
+        {
+          "traceID": "b6643ba6f0fc82511fad54963f8b3120",
+          "spanID": "fedb3eb57d81f0bd",
+          "operationName": "FindUsagesManager.startProcessUsages",
+          "processID": "p1",
+          "startTime": 1655221532800069,
+          "duration": 4106886,
+          "tags": [
+            {
+              "key": "number_of_found_usages",
+              "type": "long",
+              "value": "549"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "b6643ba6f0fc82511fad54963f8b3120",
+              "spanID": "72f0e6024c31a2d4"
+            }
+          ]
+        },
+        {
+          "traceID": "aa700018019c0e1896d595fe619f9382",
+          "spanID": "6e3142307ce53e99",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221532800000,
+          "duration": 4106915,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "22"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "1"
+            }
+          ]
+        },
+        {
+          "traceID": "b6643ba6f0fc82511fad54963f8b3120",
+          "spanID": "72f0e6024c31a2d4",
+          "operationName": "%findUsages",
+          "processID": "p1",
+          "startTime": 1655221532797000,
+          "duration": 4109994,
+          "logs": [
+            {
+              "timestamp": 1655221532797146,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Finding declaration"
+                }
+              ]
+            },
+            {
+              "timestamp": 1655221532797732,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Command find usages is called on element PhpClass: Response"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "traceID": "4abd1018fbd7d442a0b77e2be372e69a",
+          "spanID": "c8fa686d367b3a5e",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221532775000,
+          "duration": 4215311,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "22"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "traceID": "736f172278182d7c36bddf0d9ff62f2a",
+          "spanID": "29531026a2158f47",
+          "operationName": "FindUsagesManager.startProcessUsages",
+          "processID": "p1",
+          "startTime": 1655221548571870,
+          "duration": 3088487,
+          "tags": [
+            {
+              "key": "number_of_found_usages",
+              "type": "long",
+              "value": "844"
+            }
+          ],
+          "references": [
+            {
+              "refType": "CHILD_OF",
+              "traceID": "736f172278182d7c36bddf0d9ff62f2a",
+              "spanID": "6ee572f62e2401f9"
+            }
+          ]
+        },
+        {
+          "traceID": "5c0332e117a2498228933deed46c55f5",
+          "spanID": "b9268faa22a96509",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221548572000,
+          "duration": 3088512,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "15"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "0"
+            }
+          ]
+        },
+        {
+          "traceID": "736f172278182d7c36bddf0d9ff62f2a",
+          "spanID": "6ee572f62e2401f9",
+          "operationName": "%findUsages",
+          "processID": "p1",
+          "startTime": 1655221548570000,
+          "duration": 3090393,
+          "logs": [
+            {
+              "timestamp": 1655221548570116,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Finding declaration"
+                }
+              ]
+            },
+            {
+              "timestamp": 1655221548570174,
+              "fields": [
+                {
+                  "key": "event",
+                  "type": "string",
+                  "value": "Command find usages is called on element PhpClass: Request"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "traceID": "70c37b7c73a48934b11d2f475009467c",
+          "spanID": "cffb1214754e5f58",
+          "operationName": "Timer [default]",
+          "processID": "p1",
+          "startTime": 1655221548552000,
+          "duration": 3249409,
+          "tags": [
+            {
+              "key": "Maximum Responsiveness",
+              "type": "long",
+              "value": "18"
+            },
+            {
+              "key": "Average Responsiveness",
+              "type": "long",
+              "value": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

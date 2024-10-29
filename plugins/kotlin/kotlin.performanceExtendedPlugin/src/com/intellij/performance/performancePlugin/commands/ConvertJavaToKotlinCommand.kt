@@ -3,14 +3,16 @@ package com.intellij.performance.performancePlugin.commands
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.platform.diagnostic.telemetry.Scope
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
-import com.intellij.platform.diagnostic.telemetry.helpers.runWithSpan
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.PsiJavaFile
 import com.jetbrains.performancePlugin.commands.OpenFileCommand
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
+import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.idea.actions.JavaToKotlinAction
@@ -31,8 +33,18 @@ class ConvertJavaToKotlinCommand(text: String, line: Int) : PerformanceCommandCo
             val javaFile = readAction { OpenFileCommand.findFile(filePath, project)?.toPsiFile(project) as? PsiJavaFile }
                 ?: throw IllegalArgumentException("There is no file $filePath")
 
-            runWithSpan(TelemetryManager.getTracer(Scope("javaToKotlin")), NAME) {
-                JavaToKotlinAction.Handler.convertFiles(listOf(javaFile), project, module, false, false, false)
+            TelemetryManager.getTracer(Scope("javaToKotlin")).spanBuilder(NAME).use {
+                //readaction is not enough
+                writeIntentReadAction {
+                    JavaToKotlinAction.Handler.convertFiles(
+                        files = listOf(javaFile),
+                        project = project,
+                        module = module,
+                        enableExternalCodeProcessing = false,
+                        askExternalCodeProcessing = false,
+                        forceUsingOldJ2k = false
+                    )
+                }
             }
         }
     }

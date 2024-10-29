@@ -4,7 +4,7 @@ package com.intellij.dvcs.ignore
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.projectView.actions.MarkExcludeRootAction
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionUpdateThread
@@ -52,18 +52,23 @@ import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import java.util.function.Function
 import javax.swing.JComponent
 
 private val LOG = logger<IgnoredToExcludedSynchronizer>()
 
-private val excludeAction = object : MarkExcludeRootAction() {
-  fun exclude(module: Module, dirs: Collection<VirtualFile>) = runInEdt { modifyRoots(module, dirs.toTypedArray()) }
+private fun exclude(module: Module, dirs: Collection<VirtualFile>) {
+  runInEdt {
+    MarkRootsManager.modifyRoots(module, dirs.toTypedArray()) { vFile, entry ->
+      entry.addExcludeFolder(vFile)
+    }
+  }
 }
 
 /**
- * Shows [EditorNotifications] in .ignore files with suggestion to exclude ignored directories.
+ * Shows [EditorNotifications] in .ignore files with a suggestion to exclude ignored directories.
  * Silently excludes them if [VcsConfiguration.MARK_IGNORED_AS_EXCLUDED] is enabled.
  *
  * Not internal service. Can be used directly in related modules.
@@ -135,7 +140,14 @@ class IgnoredToExcludedSynchronizer(project: Project, cs: CoroutineScope) : File
 
   override fun needDoForCurrentProject() = VcsConfiguration.getInstance(project).MARK_IGNORED_AS_EXCLUDED
 
-  fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
+  fun onIgnoredFilesUpdate(ignoredFilePaths: Set<FilePath>, previouslyIgnoredFilePaths: Set<FilePath>) {
+    val addedIgnored = ignoredFilePaths.filter { it !in previouslyIgnoredFilePaths }
+    if (!addedIgnored.isEmpty()) {
+      ignoredUpdateFinished(addedIgnored)
+    }
+  }
+
+  private fun ignoredUpdateFinished(ignoredPaths: Collection<FilePath>) {
     ProgressManager.checkCanceled()
     if (synchronizationTurnOff()) return
     if (mutedForCurrentProject()) return
@@ -172,7 +184,7 @@ private fun markIgnoredAsExcluded(project: Project, files: Collection<VirtualFil
   }
 
   for ((module, ignoredDirs) in ignoredDirsByModule) {
-    excludeAction.exclude(module!!, ignoredDirs)
+    exclude(module!!, ignoredDirs)
   }
 }
 
@@ -211,6 +223,7 @@ private fun selectFilesToExclude(project: Project, ignoredDirs: List<VirtualFile
 private fun allowShowNotification() = Registry.`is`("vcs.propose.add.ignored.directories.to.exclude", true)
 private fun synchronizationTurnOff() = !Registry.`is`("vcs.enable.add.ignored.directories.to.exclude", true)
 
+@ApiStatus.Internal
 class IgnoredToExcludeNotificationProvider : EditorNotificationProvider, DumbAware {
   private fun canCreateNotification(project: Project, file: VirtualFile): Boolean {
     return file.fileType is IgnoreFileType &&
@@ -292,7 +305,7 @@ internal class CheckIgnoredToExcludeAction : DumbAwareAction() {
 // do not use SelectFilesDialog.init because it doesn't provide clear statistic: what exactly dialog shown/closed, action clicked
 private class IgnoredToExcludeSelectDirectoriesDialog(
   project: Project?,
-  files: List<VirtualFile>
+  files: List<VirtualFile>,
 ) : SelectFilesDialog(project, files, message("ignore.to.exclude.notification.notice"), null, true, true) {
   init {
     title = message("ignore.to.exclude.view.dialog.title")

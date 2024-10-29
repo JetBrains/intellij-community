@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -23,12 +23,9 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   private static final int UNINDEXED_STATE = -2;
   private static final int NULL_SUB_INDEXER = -3;
 
-  @NotNull
-  private final PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
-  @NotNull
-  private final IntFileAttribute myFileAttribute;
-  @NotNull
-  private final CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> myIndexer;
+  private final @NotNull PersistentSubIndexerVersionEnumerator<SubIndexerVersion> myPersistentVersionEnumerator;
+  private final @NotNull IntFileAttribute myFileAttribute;
+  private final @NotNull CompositeDataIndexer<?, ?, SubIndexerType, SubIndexerVersion> myIndexer;
 
   public PersistentSubIndexerRetriever(@NotNull ID<?, ?> id,
                                 int indexVersion,
@@ -115,8 +112,7 @@ public final class PersistentSubIndexerRetriever<SubIndexerType, SubIndexerVersi
   }
 
   @Override
-  @Nullable
-  public SubIndexerVersion getVersion(@NotNull IndexedFile file) {
+  public @Nullable SubIndexerVersion getVersion(@NotNull IndexedFile file) {
     SubIndexerType type = myIndexer.calculateSubIndexer(file);
     if (type == null) return null;
     return myIndexer.getSubIndexerVersion(type);

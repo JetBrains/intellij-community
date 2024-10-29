@@ -4,10 +4,13 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.testFramework.common.DEFAULT_TEST_TIMEOUT
+import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.write
+import kotlinx.coroutines.CoroutineScope
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
@@ -17,6 +20,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.hours
 
 internal val TIMEOUT_UNIT = TimeUnit.SECONDS
 
@@ -49,7 +54,7 @@ internal abstract class SettingsSyncTestBase {
       TestRemoteCommunicator()
     }
     else {
-      MockRemoteCommunicator()
+      MockRemoteCommunicator().apply {this.isConnected = true  }
     }
 
     val serverState = remoteCommunicator.checkServerState()
@@ -61,12 +66,25 @@ internal abstract class SettingsSyncTestBase {
 
   @AfterEach
   fun cleanup() {
+    remoteCommunicator.deleteAllFiles()
     if (::bridge.isInitialized) {
       bridge.waitForAllExecuted()
+      bridge.stop()
     }
-
-    remoteCommunicator.deleteAllFiles()
   }
+
+  protected fun <T> timeoutRunBlockingAndStopBridge(
+    timeout: Duration = DEFAULT_TEST_TIMEOUT,
+    coroutineName: String? = null,
+    action: suspend CoroutineScope.() -> T,
+  ): T {
+    return timeoutRunBlocking(timeout, coroutineName) {
+      val retval = action()
+      cleanup()
+      retval
+    }
+  }
+
 
   protected fun writeToConfig(build: SettingsSnapshotBuilder.() -> Unit) {
     val builder = SettingsSnapshotBuilder()
@@ -82,6 +100,12 @@ internal abstract class SettingsSyncTestBase {
     assertEquals(expectedContent, file.readText(), "File $file has unexpected content")
   }
 
+  protected fun assertIdeCrossSync(expectedIdeCrossSyncState: Boolean?) {
+    val actualIdeCrossSyncState = remoteCommunicator.ideCrossSyncState()
+
+    assertEquals(expectedIdeCrossSyncState, actualIdeCrossSyncState, "Unexpected IDE cross sync state $actualIdeCrossSyncState, expected $actualIdeCrossSyncState")
+  }
+
   protected fun assertServerSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     assertNotNull(pushedSnapshot, "Nothing has been pushed")
@@ -91,13 +115,14 @@ internal abstract class SettingsSyncTestBase {
   }
 
   protected fun executeAndWaitUntilPushed(testExecution: () -> Unit): SettingsSnapshot {
-    return remoteCommunicator.awaitForPush(testExecution)
+    val snapshot = remoteCommunicator.awaitForPush {
+      testExecution()
+      bridge.waitForAllExecuted()
+    }
+    return snapshot
   }
 }
 
-internal fun SettingsSyncBridge.waitForAllExecuted() {
-  this.waitForAllExecuted(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
-}
 
 internal fun CountDownLatch.wait(): Boolean {
   return this.await(getDefaultTimeoutInSeconds(), TIMEOUT_UNIT)
@@ -105,4 +130,4 @@ internal fun CountDownLatch.wait(): Boolean {
 
 private fun isTestingAgainstRealCloudServer() = System.getenv("SETTINGS_SYNC_TEST_CLOUD") == "real"
 
-private fun getDefaultTimeoutInSeconds(): Long = 10
+private fun getDefaultTimeoutInSeconds(): Long = 2

@@ -4,10 +4,7 @@ package com.intellij.platform.ide.menu
 import com.intellij.diagnostic.UILatencyLogger
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
-import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator.decorateTextIfNeeded
 import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.impl.Utils
@@ -17,7 +14,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.icons.getMenuBarIcon
-import com.intellij.ui.mac.foundation.NSDefaults
 import com.intellij.ui.mac.screenmenu.Menu
 import javax.swing.JFrame
 
@@ -36,16 +32,14 @@ internal fun createMacNativeActionMenu(context: DataContext?,
   }
   menuPeer.setOnOpen(frame) {
     try {
-      Utils.fillMenu(group = groupRef.getAction(),
-                     component = frame,
-                     nativePeer = menuPeer,
+      Utils.fillMenu(uiKind = FrameMenuUiKind(frame, menuPeer),
+                     group = groupRef.getAction(),
                      enableMnemonics = isMnemonicEnabled,
                      presentationFactory = presentationFactory,
                      context = context ?: getDataContext(frame),
                      place = place,
-                     isWindowMenu = true,
-                     useDarkIcons = NSDefaults.isDarkMenuBar(),
-                     expire = { !menuPeer.isOpened })
+                     progressPoint = null
+      ) { !menuPeer.isOpened }
     }
     catch (e: ProcessCanceledException) {
       // a possible fix is to update PotemkinProgress.isUrgentInvocationEvent()
@@ -80,4 +74,6 @@ private fun getDataContext(frame: JFrame): DataContext {
   return context
 }
 
-
+internal class FrameMenuUiKind(val frame: JFrame, val peer: Menu) : ActionUiKind.Popup {
+  override fun isMainMenu(): Boolean = true
+}

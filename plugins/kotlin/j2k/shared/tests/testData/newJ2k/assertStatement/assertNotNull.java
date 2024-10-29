@@ -1,4 +1,3 @@
-// IGNORE_K2
 abstract class C {
     String mMemberVariable;
 

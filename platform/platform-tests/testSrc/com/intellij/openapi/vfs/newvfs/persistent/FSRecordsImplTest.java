@@ -1,26 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.util.io.DataOutputStream;
+import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
+import com.intellij.util.io.DataOutputStream;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class FSRecordsImplTest {
 
@@ -72,7 +74,7 @@ public class FSRecordsImplTest {
 
     assertEquals(
       uniqueContentsCount,
-      vfs.connection().getContents().getRecordsCount(),
+      vfs.connection().contents().getRecordsCount(),
       "Only " + uniqueContentsCount + " unique contents should be stored"
     );
   }
@@ -96,7 +98,7 @@ public class FSRecordsImplTest {
     for (int i = 0; i < contentsToInsert; i++) {
       int fileId = fileIds[i];
       String expectedContent = "testContent_" + (i % uniqueContentsCount);
-      try (DataInputStream stream = new DataInputStream(vfs.readContent(fileId))){
+      try (DataInputStream stream = new DataInputStream(vfs.readContent(fileId))) {
         String actualContent = stream.readUTF();
         assertEquals(
           expectedContent,
@@ -147,9 +149,46 @@ public class FSRecordsImplTest {
     }
   }
 
+
+  @Test
+  public void fileRecordModCountChanges_ifFileAttributeWritten_regardlessOfActualValueChange() throws IOException {
+    FileAttribute fileAttribute = new FileAttribute("X");
+    ThreadLocalRandom rnd = ThreadLocalRandom.current();
+    String[] randomAttributeValues = Stream.generate(
+        () -> StorageTestingUtils.randomString(rnd, rnd.nextInt(0, 128))
+      )
+      .limit(1024)
+      .toArray(String[]::new);
+
+    int fileId = vfs.createRecord();
+
+    String previousAttributeValue = "";
+    try (DataOutputStream stream = vfs.writeAttribute(fileId, fileAttribute)) {
+      stream.writeUTF(previousAttributeValue);
+    }
+    for (int attempt = 0; attempt < 1024; attempt++) {
+      int modCountBefore = vfs.getModCount(fileId);
+      String attributeValue = randomAttributeValues[rnd.nextInt(randomAttributeValues.length)];
+      try (DataOutputStream stream = vfs.writeAttribute(fileId, fileAttribute)) {
+        stream.writeUTF(attributeValue);
+      }
+      int modCountAfter = vfs.getModCount(fileId);
+
+      //'+1' is a bit of over-specification: modCount 'after' must be more than 'before' -- but it doesn't really
+      // matter how much more. But I also don't want to grow modCount without a reason, so I check the minimum
+      // increment:
+      assertEquals(
+        modCountAfter, modCountBefore + 1,
+        "[" + previousAttributeValue + "]->[" + attributeValue + "]:" +
+        "modCountAfter(" + modCountAfter + ") most be modCountBefore(" + modCountBefore + ")+1"
+      );
+      previousAttributeValue = attributeValue;
+    }
+  }
+
   @BeforeEach
   void setUp(@TempDir Path vfsDir) {
-    vfs = FSRecordsImpl.connect(vfsDir, Collections.emptyList(), false, FSRecordsImpl.ON_ERROR_RETHROW);
+    vfs = FSRecordsImpl.connect(vfsDir, FSRecordsImpl.ON_ERROR_RETHROW);
   }
 
   @AfterEach

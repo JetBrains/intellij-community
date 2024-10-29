@@ -2,6 +2,7 @@
   <dependencies>
     <plugin id="org.intellij.groovy"/>
     <plugin id="com.intellij.gradle"/>
+    <module name="kotlin.base.external-build-system"/>
     <module name="kotlin.gradle.gradle-tooling"/>
     <module name="kotlin.gradle.gradle"/>
     <module name="kotlin.gradle.code-insight-common"/>

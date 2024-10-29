@@ -9,6 +9,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.constrainedReadAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.components.serviceOrNull
@@ -378,7 +379,7 @@ private class EditorSelectInContext(
           LOG.debug("Not selecting anything because the editor is disposed")
           break
         }
-        val offset = editor.caretModel.offset
+        val offset = writeIntentReadAction { editor.caretModel.offset }
         if (LOG.isDebugEnabled) {
           LOG.debug("Looking for the element at offset $offset")
         }
@@ -391,7 +392,8 @@ private class EditorSelectInContext(
         if (LOG.isDebugEnabled) {
           LOG.debug("The element is $element")
         }
-        if (editor.caretModel.offset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
+        val newOffset = writeIntentReadAction { editor.caretModel.offset }
+        if (newOffset == offset && PsiDocumentManager.getInstance(project).isCommitted(editor.document)) {
           super.selectInCurrentTarget(requestFocus)
           break
         }

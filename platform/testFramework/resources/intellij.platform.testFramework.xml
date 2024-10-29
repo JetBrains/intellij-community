@@ -1,0 +1,12 @@
+<idea-plugin>
+  <dependencies>
+    <module name="intellij.platform.testFramework.common" />
+    <module name="intellij.platform.testFramework.core" />
+    <module name="intellij.platform.testFramework.impl" />
+  </dependencies>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.project.ProjectManager"
+                        testServiceImplementation="com.intellij.project.TestProjectManager"
+                        overrides="true"/>
+  </extensions>
+</idea-plugin>

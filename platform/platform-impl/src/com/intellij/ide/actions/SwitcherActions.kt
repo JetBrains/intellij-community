@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.util.BitUtil.isSet
 import com.intellij.util.ui.accessibility.ScreenReader
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
@@ -24,6 +25,7 @@ private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDow
 
 internal class ShowSwitcherForwardAction : BaseSwitcherAction(true)
 internal class ShowSwitcherBackwardAction : BaseSwitcherAction(false)
+@ApiStatus.Internal
 abstract class BaseSwitcherAction(val forward: Boolean?) : DumbAwareAction() {
   private fun isControlTab(event: KeyEvent?) = event?.run { isControlDown && keyCode == KeyEvent.VK_TAB } ?: false
   private fun isControlTabDisabled(event: AnActionEvent) = ScreenReader.isActive() && isControlTab(event.inputEvent as? KeyEvent)
@@ -183,6 +185,7 @@ internal class SwitcherListFocusAction(val fromList: JList<*>, val toList: JList
 }
 
 
+@ApiStatus.Internal
 class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Consumer<InputEvent>) : KeyAdapter() {
   private val wasAltDown = true == event?.isAltDown
   private val wasAltGraphDown = true == event?.isAltGraphDown

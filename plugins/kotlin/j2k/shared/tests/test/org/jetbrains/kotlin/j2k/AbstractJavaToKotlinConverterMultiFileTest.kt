@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.j2k
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -57,7 +59,11 @@ abstract class AbstractJavaToKotlinConverterMultiFileTest : AbstractJavaToKotlin
             psiFile
         }
 
-        val (results, externalCodeProcessor) = convertFilesToKotlin(psiFilesToConvert)
+        var r: FilesResult? = null
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(
+            { r = convertFilesToKotlin(psiFilesToConvert) }, "", true, project)
+
+        val (results, externalCodeProcessor) = r!!
         val externalUsagesFixerProcess = externalCodeProcessor?.prepareWriteOperation(progress = null)
 
         fun expectedResultFile(i: Int) = File(filesToConvert[i].path.replace(".java", ".kt"))

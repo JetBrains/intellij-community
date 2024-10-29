@@ -48,6 +48,13 @@ abstract class ClientAwareComponentManager: ComponentManagerImpl {
                    "Host implementation will be returned, but calling code has to be fixed: either set/promote ClientId " +
                    "or mark the service as non per-client")
     }
+    if (service == null && session?.type == ClientType.FRONTEND) {
+      // if current ClientId is a frontend one and Frontend session doesn't have the service,
+      // we need to try looking in the local session as a fallback
+      // use case: coroutine has a frontend ClientId -> some code requests for a service registered as 'local' in the xml
+      val localSession = sessionManager.getSession(ClientId.localId) as? ClientSessionImpl ?: return null
+      localSession.doGetService(serviceClass = serviceClass, createIfNeeded = createIfNeeded, fallbackToShared = false)
+    }
     return service
   }
 

@@ -5,8 +5,10 @@ import com.intellij.vcs.log.data.VcsCommitExternalStatus
 import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable
 import com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.table.TableCellRenderer
 
+@ApiStatus.Internal
 abstract class VcsLogExternalStatusColumn<T : VcsCommitExternalStatus> : VcsLogCustomColumn<T> {
 
   override val isDynamic = true

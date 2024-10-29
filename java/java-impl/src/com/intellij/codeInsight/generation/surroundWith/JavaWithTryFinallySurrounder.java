@@ -4,13 +4,11 @@ package com.intellij.codeInsight.generation.surroundWith;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModPsiNavigator;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +23,7 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsModCommandSurrou
   protected void surroundStatements(@NotNull ActionContext context,
                                     @NotNull PsiElement container,
                                     @NotNull PsiElement @NotNull [] statements,
-                                    @NotNull ModPsiUpdater updater) throws IncorrectOperationException {
+                                    @NotNull ModPsiUpdater updater) {
     Project project = context.project();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
@@ -51,6 +49,6 @@ public class JavaWithTryFinallySurrounder extends JavaStatementsModCommandSurrou
     if (finallyBlock == null) return;
     TextRange range = finallyBlock.getStatements()[0].getTextRange();
     finallyBlock.getContainingFile().getFileDocument().deleteString(range.getStartOffset(), range.getEndOffset());
-    ((ModPsiNavigator)updater).select(TextRange.from(range.getStartOffset(), 0));
+    updater.select(TextRange.from(range.getStartOffset(), 0));
   }
 }

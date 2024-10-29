@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -31,15 +31,12 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     super(project, value, viewSettings);
   }
 
-  @NotNull
-  protected abstract AbstractTreeNode createModuleNode(@NotNull Module module) throws
+  protected abstract @NotNull AbstractTreeNode createModuleNode(@NotNull Module module) throws
                                                                       InstantiationException, IllegalAccessException, InvocationTargetException, NoSuchMethodException;
-  @NotNull
-  protected abstract ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
+  protected abstract @NotNull ModuleGroupNode createModuleGroupNode(@NotNull ModuleGroup moduleGroup);
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     final Collection<ModuleGroup> childGroups = getValue().childGroups(getProject());
     final List<AbstractTreeNode<?>> result = new ArrayList<>();
     for (final ModuleGroup childGroup : childGroups) {
@@ -58,9 +55,8 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return result;
   }
 
-  @NotNull
   @Override
-  public Collection<VirtualFile> getRoots() {
+  public @NotNull Collection<VirtualFile> getRoots() {
     Collection<AbstractTreeNode<?>> children = getChildren();
     Set<VirtualFile> result = new HashSet<>();
     for (AbstractTreeNode each : children) {
@@ -120,8 +116,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     return getValue() != null;
   }
 
-  @NotNull
-  protected abstract List<Module> getModulesByFile(@NotNull VirtualFile file);
+  protected abstract @NotNull List<Module> getModulesByFile(@NotNull VirtualFile file);
 
   @Override
   public void update(@NotNull PresentationData presentation) {
@@ -129,8 +124,7 @@ public abstract class ModuleGroupNode extends ProjectViewNode<ModuleGroup> imple
     presentation.setIcon(PlatformIcons.CLOSED_MODULE_GROUP_ICON);
   }
 
-  @NotNull
-  private String getPresentableName() {
+  private @NotNull String getPresentableName() {
     return StringUtil.join(getRelativeGroupPath(), ".");
   }
 

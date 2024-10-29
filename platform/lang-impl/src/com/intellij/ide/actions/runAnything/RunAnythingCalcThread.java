@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything;
 
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
@@ -16,9 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 final class RunAnythingCalcThread implements Computable<RunAnythingSearchListModel> {
-  @NotNull private final String myPattern;
-  @NotNull private final DataContext myDataContext;
-  @NotNull private final Project myProject;
+  private final @NotNull String myPattern;
+  private final @NotNull DataContext myDataContext;
+  private final @NotNull Project myProject;
 
   RunAnythingCalcThread(@NotNull Project project, @NotNull DataContext context, @NotNull String pattern) {
     myProject = project;
@@ -88,8 +88,7 @@ final class RunAnythingCalcThread implements Computable<RunAnythingSearchListMod
     }
   }
 
-  @NotNull
-  private List<RunAnythingItem> buildHelpGroups(@NotNull RunAnythingSearchListModel.RunAnythingHelpListModel model) {
+  private @NotNull List<RunAnythingItem> buildHelpGroups(@NotNull RunAnythingSearchListModel.RunAnythingHelpListModel model) {
     List<RunAnythingItem> items = new ArrayList<>();
 
     model.getGroups().forEach(group -> {
@@ -99,8 +98,7 @@ final class RunAnythingCalcThread implements Computable<RunAnythingSearchListMod
     return items;
   }
 
-  @NotNull
-  private List<RunAnythingItem> buildAllGroups(@NotNull RunAnythingSearchListModel model) {
+  private @NotNull List<RunAnythingItem> buildAllGroups(@NotNull RunAnythingSearchListModel model) {
     List<RunAnythingItem> items = new ArrayList<>();
     if (myPattern.trim().length() == 0) {
       RunAnythingGroup recentGroup =

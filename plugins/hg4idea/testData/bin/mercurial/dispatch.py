@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import, print_function
 
 import errno
 import getopt
@@ -19,7 +18,6 @@ import traceback
 
 
 from .i18n import _
-from .pycompat import getattr
 
 from hgdemandimport import tracing
 
@@ -54,7 +52,7 @@ from .utils import (
 )
 
 
-class request(object):
+class request:
     def __init__(
         self,
         args,
@@ -108,7 +106,7 @@ class request(object):
 def _flushstdio(ui, err):
     status = None
     # In all cases we try to flush stdio streams.
-    if util.safehasattr(ui, b'fout'):
+    if hasattr(ui, 'fout'):
         assert ui is not None  # help pytype
         assert ui.fout is not None  # help pytype
         try:
@@ -117,7 +115,7 @@ def _flushstdio(ui, err):
             err = e
             status = -1
 
-    if util.safehasattr(ui, b'ferr'):
+    if hasattr(ui, 'ferr'):
         assert ui is not None  # help pytype
         assert ui.ferr is not None  # help pytype
         try:
@@ -150,93 +148,76 @@ def run():
     sys.exit(status & 255)
 
 
-if pycompat.ispy3:
+def initstdio():
+    # stdio streams on Python 3 are io.TextIOWrapper instances proxying another
+    # buffer. These streams will normalize \n to \r\n by default. Mercurial's
+    # preferred mechanism for writing output (ui.write()) uses io.BufferedWriter
+    # instances, which write to the underlying stdio file descriptor in binary
+    # mode. ui.write() uses \n for line endings and no line ending normalization
+    # is attempted through this interface. This "just works," even if the system
+    # preferred line ending is not \n.
+    #
+    # But some parts of Mercurial (e.g. hooks) can still send data to sys.stdout
+    # and sys.stderr. They will inherit the line ending normalization settings,
+    # potentially causing e.g. \r\n to be emitted. Since emitting \n should
+    # "just work," here we change the sys.* streams to disable line ending
+    # normalization, ensuring compatibility with our ui type.
 
-    def initstdio():
-        # stdio streams on Python 3 are io.TextIOWrapper instances proxying another
-        # buffer. These streams will normalize \n to \r\n by default. Mercurial's
-        # preferred mechanism for writing output (ui.write()) uses io.BufferedWriter
-        # instances, which write to the underlying stdio file descriptor in binary
-        # mode. ui.write() uses \n for line endings and no line ending normalization
-        # is attempted through this interface. This "just works," even if the system
-        # preferred line ending is not \n.
-        #
-        # But some parts of Mercurial (e.g. hooks) can still send data to sys.stdout
-        # and sys.stderr. They will inherit the line ending normalization settings,
-        # potentially causing e.g. \r\n to be emitted. Since emitting \n should
-        # "just work," here we change the sys.* streams to disable line ending
-        # normalization, ensuring compatibility with our ui type.
+    if sys.stdout is not None:
+        # write_through is new in Python 3.7.
+        kwargs = {
+            "newline": "\n",
+            "line_buffering": sys.stdout.line_buffering,
+        }
+        if hasattr(sys.stdout, "write_through"):
+            # pytype: disable=attribute-error
+            kwargs["write_through"] = sys.stdout.write_through
+            # pytype: enable=attribute-error
+        sys.stdout = io.TextIOWrapper(
+            sys.stdout.buffer, sys.stdout.encoding, sys.stdout.errors, **kwargs
+        )
 
-        if sys.stdout is not None:
-            # write_through is new in Python 3.7.
-            kwargs = {
-                "newline": "\n",
-                "line_buffering": sys.stdout.line_buffering,
-            }
-            if util.safehasattr(sys.stdout, "write_through"):
-                # pytype: disable=attribute-error
-                kwargs["write_through"] = sys.stdout.write_through
-                # pytype: enable=attribute-error
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.buffer,
-                sys.stdout.encoding,
-                sys.stdout.errors,
-                **kwargs
-            )
+    if sys.stderr is not None:
+        kwargs = {
+            "newline": "\n",
+            "line_buffering": sys.stderr.line_buffering,
+        }
+        if hasattr(sys.stderr, "write_through"):
+            # pytype: disable=attribute-error
+            kwargs["write_through"] = sys.stderr.write_through
+            # pytype: enable=attribute-error
+        sys.stderr = io.TextIOWrapper(
+            sys.stderr.buffer, sys.stderr.encoding, sys.stderr.errors, **kwargs
+        )
 
-        if sys.stderr is not None:
-            kwargs = {
-                "newline": "\n",
-                "line_buffering": sys.stderr.line_buffering,
-            }
-            if util.safehasattr(sys.stderr, "write_through"):
-                # pytype: disable=attribute-error
-                kwargs["write_through"] = sys.stderr.write_through
-                # pytype: enable=attribute-error
-            sys.stderr = io.TextIOWrapper(
-                sys.stderr.buffer,
-                sys.stderr.encoding,
-                sys.stderr.errors,
-                **kwargs
-            )
-
-        if sys.stdin is not None:
-            # No write_through on read-only stream.
-            sys.stdin = io.TextIOWrapper(
-                sys.stdin.buffer,
-                sys.stdin.encoding,
-                sys.stdin.errors,
-                # None is universal newlines mode.
-                newline=None,
-                line_buffering=sys.stdin.line_buffering,
-            )
-
-    def _silencestdio():
-        for fp in (sys.stdout, sys.stderr):
-            if fp is None:
-                continue
-            # Check if the file is okay
-            try:
-                fp.flush()
-                continue
-            except IOError:
-                pass
-            # Otherwise mark it as closed to silence "Exception ignored in"
-            # message emitted by the interpreter finalizer.
-            try:
-                fp.close()
-            except IOError:
-                pass
+    if sys.stdin is not None:
+        # No write_through on read-only stream.
+        sys.stdin = io.TextIOWrapper(
+            sys.stdin.buffer,
+            sys.stdin.encoding,
+            sys.stdin.errors,
+            # None is universal newlines mode.
+            newline=None,
+            line_buffering=sys.stdin.line_buffering,
+        )
 
 
-else:
-
-    def initstdio():
-        for fp in (sys.stdin, sys.stdout, sys.stderr):
-            procutil.setbinary(fp)
-
-    def _silencestdio():
-        pass
+def _silencestdio():
+    for fp in (sys.stdout, sys.stderr):
+        if fp is None:
+            continue
+        # Check if the file is okay
+        try:
+            fp.flush()
+            continue
+        except IOError:
+            pass
+        # Otherwise mark it as closed to silence "Exception ignored in"
+        # message emitted by the interpreter finalizer.
+        try:
+            fp.close()
+        except IOError:
+            pass
 
 
 def _formatargs(args):
@@ -253,7 +234,7 @@ def dispatch(req):
         status = -1
 
     ret = _flushstdio(req.ui, err)
-    if ret:
+    if ret and not status:
         status = ret
     return status
 
@@ -287,7 +268,7 @@ def _rundispatch(req):
             ferr.write(inst.format())
             return -1
 
-        msg = _formatargs(req.args)
+        formattedargs = _formatargs(req.args)
         starttime = util.timer()
         ret = 1  # default of Python exit code on unhandled exception
         try:
@@ -308,9 +289,8 @@ def _rundispatch(req):
                 # maybe pager would quit without consuming all the output, and
                 # SIGPIPE was raised. we cannot print anything in this case.
                 pass
-            except IOError as inst:
-                if inst.errno != errno.EPIPE:
-                    raise
+            except BrokenPipeError:
+                pass
             ret = -1
         finally:
             duration = util.timer() - starttime
@@ -326,7 +306,7 @@ def _rundispatch(req):
             req.ui.log(
                 b"commandfinish",
                 b"%s exited %d after %0.2f seconds\n",
-                msg,
+                formattedargs,
                 return_code,
                 duration,
                 return_code=return_code,
@@ -350,7 +330,7 @@ def _runcatch(req):
 
         ui = req.ui
         try:
-            for name in b'SIGBREAK', b'SIGHUP', b'SIGTERM':
+            for name in 'SIGBREAK', 'SIGHUP', 'SIGTERM':
                 num = getattr(signal, name, None)
                 if num:
                     signal.signal(num, catchterm)
@@ -386,12 +366,18 @@ def _runcatch(req):
                 # shenanigans wherein a user does something like pass
                 # --debugger or --config=ui.debugger=1 as a repo
                 # name. This used to actually run the debugger.
+                nbargs = 4
+                hashiddenaccess = b'--hidden' in cmdargs
+                if hashiddenaccess:
+                    nbargs += 1
                 if (
-                    len(req.args) != 4
+                    len(req.args) != nbargs
                     or req.args[0] != b'-R'
                     or req.args[1].startswith(b'--')
                     or req.args[2] != b'serve'
                     or req.args[3] != b'--stdio'
+                    or hashiddenaccess
+                    and req.args[4] != b'--hidden'
                 ):
                     raise error.Abort(
                         _(b'potentially unsafe serve --stdio invocation: %s')
@@ -427,7 +413,7 @@ def _runcatch(req):
                     # debugging has been requested
                     with demandimport.deactivated():
                         try:
-                            debugmod = __import__(debugger)
+                            debugmod = __import__(pycompat.sysstr(debugger))
                         except ImportError:
                             pass  # Leave debugmod = pdb
 
@@ -533,7 +519,7 @@ def _callcatch(ui, func):
 def aliasargs(fn, givenargs):
     args = []
     # only care about alias 'args', ignore 'args' set by extensions.wrapfunction
-    if not util.safehasattr(fn, b'_origfunc'):
+    if not hasattr(fn, '_origfunc'):
         args = getattr(fn, 'args', args)
     if args:
         cmd = b' '.join(map(procutil.shellquote, args))
@@ -575,7 +561,7 @@ def aliasinterpolate(name, args, cmd):
     return r.sub(lambda x: replacemap[x.group()], cmd)
 
 
-class cmdalias(object):
+class cmdalias:
     def __init__(self, ui, name, definition, cmdtable, source):
         self.name = self.cmd = name
         self.cmdname = b''
@@ -590,7 +576,7 @@ class cmdalias(object):
 
         try:
             aliases, entry = cmdutil.findcmd(self.name, cmdtable)
-            for alias, e in pycompat.iteritems(cmdtable):
+            for alias, e in cmdtable.items():
                 if e is entry:
                     self.cmd = alias
                     break
@@ -721,7 +707,7 @@ class cmdalias(object):
         }
         if name not in adefaults:
             raise AttributeError(name)
-        if self.badalias or util.safehasattr(self, b'shell'):
+        if self.badalias or hasattr(self, 'shell'):
             return adefaults[name]
         return getattr(self.fn, name)
 
@@ -747,7 +733,7 @@ class cmdalias(object):
             self.name,
             self.definition,
         )
-        if util.safehasattr(self, b'shell'):
+        if hasattr(self, 'shell'):
             return self.fn(ui, *args, **opts)
         else:
             try:
@@ -758,7 +744,7 @@ class cmdalias(object):
                 raise
 
 
-class lazyaliasentry(object):
+class lazyaliasentry:
     """like a typical command entry (func, opts, help), but is lazy"""
 
     def __init__(self, ui, name, definition, cmdtable, source):
@@ -971,14 +957,22 @@ def _getlocal(ui, rpath, wd=None):
 
     Takes paths in [cwd]/.hg/hgrc into account."
     """
+    try:
+        cwd = encoding.getcwd()
+    except OSError as e:
+        raise error.Abort(
+            _(b"error getting current working directory: %s")
+            % encoding.strtolocal(e.strerror)
+        )
+
+    # If using an alternate wd, temporarily switch to it so that relative
+    # paths are resolved correctly during config loading.
+    oldcwd = None
     if wd is None:
-        try:
-            wd = encoding.getcwd()
-        except OSError as e:
-            raise error.Abort(
-                _(b"error getting current working directory: %s")
-                % encoding.strtolocal(e.strerror)
-            )
+        wd = cwd
+    else:
+        oldcwd = cwd
+        os.chdir(wd)
 
     path = cmdutil.findrepo(wd) or b""
     if not path:
@@ -991,12 +985,16 @@ def _getlocal(ui, rpath, wd=None):
             lui.readconfig(os.path.join(path, b".hg", b"hgrc-not-shared"), path)
 
     if rpath:
-        path = urlutil.get_clone_path(lui, rpath)[0]
+        path_obj = urlutil.get_clone_path_obj(lui, rpath)
+        path = path_obj.rawloc
         lui = ui.copy()
         if rcutil.use_repo_hgrc():
             _readsharedsourceconfig(lui, path)
             lui.readconfig(os.path.join(path, b".hg", b"hgrc"), path)
             lui.readconfig(os.path.join(path, b".hg", b"hgrc-not-shared"), path)
+
+    if oldcwd:
+        os.chdir(oldcwd)
 
     return path, lui
 
@@ -1025,7 +1023,7 @@ def _checkshellalias(lui, ui, args):
     cmd = aliases[0]
     fn = entry[0]
 
-    if cmd and util.safehasattr(fn, b'shell'):
+    if cmd and hasattr(fn, 'shell'):
         # shell alias shouldn't receive early options which are consumed by hg
         _earlyopts, args = _earlysplitopts(args)
         d = lambda: fn(ui, *args[1:])

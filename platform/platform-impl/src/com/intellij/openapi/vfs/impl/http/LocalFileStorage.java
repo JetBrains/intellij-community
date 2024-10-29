@@ -6,11 +6,13 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.Url;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public final class LocalFileStorage {
   private final File myStorageIODirectory;
 

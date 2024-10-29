@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.xdebugger.impl.ui.tree.SetValueInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class XSetValueAction extends XDebuggerTreeActionBase {
   @Override
   public @NotNull ActionUpdateThread getActionUpdateThread() {

@@ -24,28 +24,15 @@ import kotlin.time.Duration
 abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
   private val jobCall = AtomicReference<Job?>(null)
 
-  @Deprecated(
-    message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
-    replaceWith = ReplaceWith("getDebounceDelay(request)"),
-    level = DeprecationLevel.WARNING
-  )
-  protected open val delay: Duration
-    @ScheduledForRemoval
-    @Deprecated(
-      message = "Please, use more flexible method: getDebounceDelay. This method is going to be removed soon.",
-      replaceWith = ReplaceWith("getDebounceDelay(request)"),
-      level = DeprecationLevel.WARNING
-    )
-    get() = throw UnsupportedOperationException("Please, use more flexible method: getDebounceDelay.")
-
   /**
    * Retrieves the delay duration for debouncing code completion requests.
    * This function gives the time interval for which input events are delayed before
    * the completion suggestions are calculated.
    */
   protected open suspend fun getDebounceDelay(request: InlineCompletionRequest): Duration {
-    @Suppress("DEPRECATION")
-    return delay
+    // This method is not abstract because it initially replaced another method and was not abstract from the start.
+    // So making this method abstract will break backwards compatibility with older versions.
+    throw NotImplementedError("Please override getDebounceDelay.")
   }
 
   /**
@@ -60,19 +47,29 @@ abstract class DebouncedInlineCompletionProvider : InlineCompletionProvider {
    *
    * @return `true` if the inline completion need to be forced, `false` otherwise.
    */
+  @Deprecated(
+    message = "Please, use getDebounceDelay(event). This method is going to be removed soon.",
+    level = DeprecationLevel.WARNING,
+  )
+  @ScheduledForRemoval
   open fun shouldBeForced(request: InlineCompletionRequest): Boolean {
     return request.event is InlineCompletionEvent.DirectCall
   }
 
   override suspend fun getSuggestion(request: InlineCompletionRequest): InlineCompletionSuggestion {
     replaceJob()
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isUnitTestMode || request.event is InlineCompletionEvent.DirectCall) {
       return getSuggestionDebounced(request)
     }
 
     return if (shouldBeForced(request)) getSuggestionDebounced(request) else debounce(request)
   }
 
+  @Deprecated(
+    message = "This method is going to become private. No need to use it outside of the provider implementation.",
+    level = DeprecationLevel.WARNING,
+  )
+  @ScheduledForRemoval
   suspend fun debounce(request: InlineCompletionRequest): InlineCompletionSuggestion {
     delay(getDebounceDelay(request))
     return getSuggestionDebounced(request)

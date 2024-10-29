@@ -8,6 +8,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiImportStatementBase;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,6 +40,8 @@ public final class PreviewFeatureInspection extends LocalInspectionTool {
 
     @Override
     protected void registerProblem(PsiElement element, String description, JavaFeature feature, PsiAnnotation annotation) {
+      // Do not report warnings in imports, because they cannot be suppressed and javac doesn't report them
+      if (element.getParent() instanceof PsiImportStatementBase) return;
       myHolder.registerProblem(element, description);
     }
   }

@@ -2,7 +2,9 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class Diagnostic {
   public static void trace(String category, String message) {
     Logger.getInstance(category).debug(message);

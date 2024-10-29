@@ -33,5 +33,5 @@ object ExecutableRowSnapshotFactory {
   fun createCompositeId(type: String, uniqueId: String) = "$type:$uniqueId"
 }
 
-fun ExecutableRow.toSnapshot() =
+internal fun ExecutableRow.toSnapshot(): ExecutableRowSnapshot =
   ExecutableRowSnapshotFactory.create(this)

@@ -12,7 +12,10 @@ import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.actions.RunDashboardActionUtils;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +36,7 @@ final class CopyConfigurationAction extends AnAction {
     boolean enabled = node != null && RunManager.getInstance(project).hasSettings(node.getConfigurationSettings());
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
-    boolean popupPlace = ActionPlaces.isPopupPlace(e.getPlace());
+    boolean popupPlace = e.isFromContextMenu();
     presentation.setVisible(enabled || !popupPlace);
     if (popupPlace) {
       presentation.setText(getTemplatePresentation().getText() + "...");

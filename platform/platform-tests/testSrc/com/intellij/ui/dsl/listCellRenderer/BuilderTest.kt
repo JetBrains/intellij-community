@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
+import com.intellij.ui.dsl.listCellRenderer.impl.LcrRowImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.UIUtil
 import org.junit.Before
@@ -15,8 +16,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class BuilderTest {
-
-  private val DEFAULT_GAP = JBUIScale.scale(4)
 
   @Before
   fun before() {
@@ -55,7 +54,7 @@ class BuilderTest {
     val c = findTextComponent(component, "C")
 
     assertTrue(a.x >= 0)
-    assertEquals(a.x + a.width + DEFAULT_GAP, b.x)
+    assertEquals(a.x + a.width + JBUIScale.scale(LcrRowImpl.DEFAULT_GAP), b.x)
     assertEquals(b.x + b.width, c.x)
   }
 

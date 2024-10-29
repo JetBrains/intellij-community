@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -155,9 +155,6 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     setVerticalStretch(2);
     setTitle(applyPatchMode.getTitle());
 
-    final FileChooserDescriptor descriptor = createSelectPatchDescriptor();
-    descriptor.setTitle(VcsBundle.message("patch.apply.select.title"));
-
     myProject = project;
     myPatches = new ArrayList<>();
     myRecentPathFileChange = new AtomicReference<>();
@@ -197,7 +194,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myChangesTreeLoadingPanel.add(myChangesTreeList, BorderLayout.CENTER);
     myShouldUpdateChangeListName = defaultList == null && externalCommitMessage == null;
     myPatchFile = new TextFieldWithBrowseButton();
-    myPatchFile.addBrowseFolderListener(VcsBundle.message("patch.apply.select.title"), "", project, descriptor);
+    myPatchFile.addBrowseFolderListener(project, createSelectPatchDescriptor().withTitle(VcsBundle.message("patch.apply.select.title")));
     myPatchFile.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -876,9 +873,9 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         return null;
       }
       final List<AbstractFilePatchInProgress.PatchChange> selectedChanges = myChangesTreeList.getSelectedChanges();
-      if (selectedChanges.size() >= 1) {
+      if (!selectedChanges.isEmpty()) {
         for (AbstractFilePatchInProgress.PatchChange patchChange : selectedChanges) {
-          final AbstractFilePatchInProgress patch = patchChange.getPatchInProgress();
+          final AbstractFilePatchInProgress<?> patch = patchChange.getPatchInProgress();
           patch.setNewBase(selectedValue);
         }
         updateTree(false);
@@ -1006,7 +1003,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @Override
     public void decorate(@NotNull Change change, @NotNull SimpleColoredComponent component, boolean isShowFlatten) {
       if (change instanceof AbstractFilePatchInProgress.PatchChange patchChange) {
-        final AbstractFilePatchInProgress patchInProgress = patchChange.getPatchInProgress();
+        final AbstractFilePatchInProgress<?> patchInProgress = patchChange.getPatchInProgress();
         if (patchInProgress.getCurrentStrip() > 0) {
           component.append(VcsBundle.message("patch.apply.stripped.description", patchInProgress.getCurrentStrip()),
                            SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES);

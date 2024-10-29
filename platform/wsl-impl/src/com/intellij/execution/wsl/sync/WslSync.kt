@@ -4,16 +4,14 @@ package com.intellij.execution.wsl.sync
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.execution.wsl.AbstractWslDistribution
 import com.intellij.execution.wsl.sync.WslHashFilters.Companion.EMPTY_FILTERS
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.blockingContext
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.async
 import kotlinx.coroutines.future.asCompletableFuture
 import java.nio.file.Path
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Executor
 import java.util.concurrent.Future
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -33,7 +31,8 @@ private val LOGGER = Logger.getInstance(WslSync::class.java)
 class WslSync<SourceFile, DestFile> private constructor(private val source: FileStorage<SourceFile, DestFile>,
                                                         private val dest: FileStorage<DestFile, SourceFile>,
                                                         private val filters: WslHashFilters,
-                                                        private val useStubs: Boolean) {
+                                                        private val useStubs: Boolean,
+                                                        private val retainUnmatchedFiles: Boolean = false) {
 
   companion object {
 
@@ -42,6 +41,7 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
      * [linToWinCopy] determines the sync direction.
      * [filters] allow you to specify which files to include/exclude.
      * [useStubs] dictates whether empty stubs should be created for filtered out files.
+     * [retainUnmatchedFiles] prevents files that exist only in the destination from being removed during sync.
      */
     @JvmOverloads
     fun syncWslFolders(linuxDir: String,
@@ -49,15 +49,16 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
                        distro: AbstractWslDistribution,
                        linToWinCopy: Boolean = true,
                        filters: WslHashFilters = EMPTY_FILTERS,
-                       useStubs: Boolean = false) {
+                       useStubs: Boolean = false,
+                       retainUnmatchedFiles: Boolean = false) {
       LOGGER.info("Sync " + if (linToWinCopy) "$linuxDir -> $windowsDir" else "$windowsDir -> $linuxDir")
       val win = WindowsFileStorage(windowsDir, distro)
       val lin = LinuxFileStorage(linuxDir, distro)
       if (linToWinCopy) {
-        WslSync(lin, win, filters, useStubs)
+        WslSync(lin, win, filters, useStubs, retainUnmatchedFiles)
       }
       else {
-        WslSync(win, lin, filters, useStubs)
+        WslSync(win, lin, filters, useStubs, retainUnmatchedFiles)
         val execFile = windowsDir.resolve("exec.txt")
         if (execFile.exists()) {
           // TODO: Support non top level files
@@ -68,6 +69,9 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
       }
     }
   }
+
+  @Service
+  private class CoroutineScopeService(coroutineScope: CoroutineScope) : CoroutineScope by coroutineScope
 
   init {
     if (dest.isEmpty()) { //Shortcut: no need to sync anything, just copy everything
@@ -102,46 +106,47 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
     dest.removeFiles(stubsToRemove)
   }
 
-  private fun <T> supplyAsync(body: () -> T, executor: Executor): CompletableFuture<T> =
-    (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope()
-      .async(executor.asCoroutineDispatcher()) {
-        blockingContext { body() }
+  private fun syncFoldersInternal() {
+    val sourceSyncDataFuture = service<CoroutineScopeService>()
+      .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+        source.calculateSyncData(filters, false, useStubs)
       }
       .asCompletableFuture()
-
-  private inline fun runAsync(crossinline body: () -> Unit, executor: Executor): CompletableFuture<Unit> =
-    supplyAsync({ body() }, executor)
-
-  private fun syncFoldersInternal() {
-    val sourceSyncDataFuture = supplyAsync({
-                                             source.calculateSyncData(filters, false, useStubs)
-                                           }, ProcessIOExecutorService.INSTANCE)
-    val destSyncDataFuture = supplyAsync({
-                                           dest.calculateSyncData(filters, false, useStubs)
-                                         }, ProcessIOExecutorService.INSTANCE)
+    val destSyncDataFuture = service<CoroutineScopeService>()
+      .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+        dest.calculateSyncData(filters, false, useStubs)
+      }
+      .asCompletableFuture()
 
     val sourceSyncData = sourceSyncDataFuture.get()
     val sourceHashes = sourceSyncData.hashes.associateBy { it.fileLowerCase }.toMutableMap()
     val destSyncData = destSyncDataFuture.get()
     val destHashes = destSyncData.hashes
 
-    val destFilesToRemove = ArrayList<FilePathRelativeToDir>(AVG_NUM_FILES)
+    val filesToCopy = mutableListOf<FilePathRelativeToDir>()
+    val destFilesToRemove = mutableListOf<FilePathRelativeToDir>()
+
     for (destRecord in destHashes) {
-      // Lowercase is to ignore case when comparing files since Win is case-insensitive
       val sourceHashAndName = sourceHashes[destRecord.fileLowerCase]
-      if (sourceHashAndName != null && sourceHashAndName.hash == destRecord.hash) {
-        // Dest file matches Source file
-        // Remove this record, so at the end there will be a list of files to copy from SRC to DST
+
+      if (sourceHashAndName != null) {
+        if (sourceHashAndName.hash != destRecord.hash) {
+          filesToCopy.add(sourceHashAndName.file)
+        }
         sourceHashes.remove(destRecord.fileLowerCase)
-      }
-      else if (sourceHashAndName == null) {
-        // No such file on Source, remove it from Dest
-        destFilesToRemove.add(destRecord.file) // Lin is case-sensitive so we must use real file name, not lowerecased as we used for cmp
+      } else if (!retainUnmatchedFiles) {
+        destFilesToRemove.add(destRecord.file)
       }
     }
 
-    copyFilesInParallel(sourceHashes.values.map { it.file })
-    dest.removeFiles(destFilesToRemove)
+    // Add remaining files from source that don't exist in dest
+    filesToCopy.addAll(sourceHashes.values.map { it.file })
+
+    copyFilesInParallel(filesToCopy)
+    if (!retainUnmatchedFiles) {
+      dest.removeFiles(destFilesToRemove)
+    }
+
     syncLinks(sourceSyncData.links, destSyncData.links)
     syncStubs(sourceSyncData.stubs, destSyncData.stubs)
   }
@@ -167,9 +172,11 @@ class WslSync<SourceFile, DestFile> private constructor(private val source: File
       LOGGER.info("Split to $parts chunks")
       val futures = ArrayList<Future<*>>(parts)
       for (chunk in filesToCopy.chunked(chunkSize)) {
-        futures += runAsync({
-                              copyFilesToOtherSide(chunk)
-                            }, ProcessIOExecutorService.INSTANCE)
+        futures += service<CoroutineScopeService>()
+          .async(ProcessIOExecutorService.INSTANCE.asCoroutineDispatcher()) {
+            copyFilesToOtherSide(chunk)
+          }
+          .asCompletableFuture()
       }
       futures.forEach { it.get() }
     }

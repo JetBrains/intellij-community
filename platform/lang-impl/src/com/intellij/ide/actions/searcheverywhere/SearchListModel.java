@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -65,13 +65,11 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
       .collect(Collectors.toList());
   }
 
-  @NotNull
-  protected List<SearchEverywhereContributor> contributors() {
+  protected @NotNull List<SearchEverywhereContributor> contributors() {
     return Lists.transform(listElements, info -> info.getContributor());
   }
 
-  @NotNull
-  protected List<Object> values() {
+  protected @NotNull List<Object> values() {
     return Lists.transform(listElements, info -> info.getElement());
   }
 
@@ -107,14 +105,12 @@ public abstract class SearchListModel extends AbstractListModel<Object> {
     return getElementAt(index) == MORE_ELEMENT;
   }
 
-  @Nullable
-  public <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
+  public @Nullable <Item> SearchEverywhereContributor<Item> getContributorForIndex(int index) {
     //noinspection unchecked
     return (SearchEverywhereContributor<Item>)listElements.get(index).getContributor();
   }
 
-  @NotNull
-  public List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
+  public @NotNull List<SearchEverywhereFoundElementInfo> getFoundElementsInfo() {
     return ContainerUtil.filter(listElements, info -> info.element != MORE_ELEMENT
                                                       && !(info.element instanceof ResultsNotificationElement));
   }

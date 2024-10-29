@@ -4,10 +4,12 @@ package com.intellij.ide.projectView.impl;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class ModuleGroupUtil {
   private ModuleGroupUtil() {
   }

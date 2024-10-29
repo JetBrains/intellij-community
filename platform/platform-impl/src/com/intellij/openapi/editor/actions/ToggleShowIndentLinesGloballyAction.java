@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ToggleShowIndentLinesGloballyAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

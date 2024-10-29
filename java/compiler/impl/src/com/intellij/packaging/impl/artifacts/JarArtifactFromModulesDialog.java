@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.compiler.JavaCompilerBundle;
@@ -61,7 +61,7 @@ public class JarArtifactFromModulesDialog extends DialogWrapper {
     myCopyJarsRadioButton.addActionListener(actionListener);
 
     updateManifestDirField();
-    myManifestDirField.addBrowseFolderListener(null, null, project, ManifestFileUtil.createDescriptorForManifestDirectory());
+    myManifestDirField.addBrowseFolderListener(project, ManifestFileUtil.createDescriptorForManifestDirectory());
 
     setupModulesCombobox(context);
     init();

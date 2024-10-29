@@ -53,36 +53,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return this
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
-  @ApiStatus.ScheduledForRemoval
-  fun cell(component: JComponent,
-           width: Int = 1,
-           horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-           verticalAlign: VerticalAlign = defaultVerticalAlign,
-           baselineAlign: Boolean = defaultBaselineAlign,
-           resizableColumn: Boolean = false,
-           gaps: Gaps = Gaps.EMPTY,
-           visualPaddings: Gaps = Gaps.EMPTY,
-           widthGroup: String? = null,
-           componentHelper: ComponentHelper? = null): RowsGridBuilder {
-    return cell(component, width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn,
-                gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
-  }
-
-  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
-  fun cell(component: JComponent,
-           width: Int = 1,
-           horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-           verticalAlign: VerticalAlign = defaultVerticalAlign,
-           baselineAlign: Boolean = defaultBaselineAlign,
-           resizableColumn: Boolean = false,
-           widthGroup: String? = null,
-           componentHelper: ComponentHelper? = null): RowsGridBuilder {
-    return cell(component, width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn,
-                UnscaledGaps.EMPTY, UnscaledGaps.EMPTY, widthGroup, componentHelper)
-  }
-
   fun cell(component: JComponent,
            width: Int = 1,
            horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
@@ -108,32 +78,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return skip(width)
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
-  @ApiStatus.ScheduledForRemoval
-  fun constraints(width: Int = 1,
-                  horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-                  verticalAlign: VerticalAlign = defaultVerticalAlign,
-                  baselineAlign: Boolean = defaultBaselineAlign,
-                  gaps: Gaps = Gaps.EMPTY,
-                  visualPaddings: Gaps = Gaps.EMPTY,
-                  widthGroup: String? = null,
-                  componentHelper: ComponentHelper? = null): Constraints {
-    return constraints(width, horizontalAlign, verticalAlign, baselineAlign,
-                       gaps.toUnscaled(), visualPaddings.toUnscaled(), widthGroup, componentHelper)
-  }
-
-  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
-  fun constraints(width: Int = 1,
-                  horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-                  verticalAlign: VerticalAlign = defaultVerticalAlign,
-                  baselineAlign: Boolean = defaultBaselineAlign,
-                  widthGroup: String? = null,
-                  componentHelper: ComponentHelper? = null): Constraints {
-    return constraints(width, horizontalAlign, verticalAlign, baselineAlign,
-                       UnscaledGaps.EMPTY, UnscaledGaps.EMPTY, widthGroup, componentHelper)
-  }
-
   fun constraints(width: Int = 1,
                   horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
                   verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -155,19 +99,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
     return result
   }
 
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
-  @ApiStatus.ScheduledForRemoval
-  fun subGrid(width: Int = 1,
-              horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-              verticalAlign: VerticalAlign = defaultVerticalAlign,
-              baselineAlign: Boolean = defaultBaselineAlign,
-              resizableColumn: Boolean = false,
-              gaps: Gaps = Gaps.EMPTY,
-              visualPaddings: Gaps = Gaps.EMPTY): Grid {
-    return subGrid(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, gaps.toUnscaled(), visualPaddings.toUnscaled())
-  }
-
   fun subGrid(width: Int = 1,
               horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
               verticalAlign: VerticalAlign = defaultVerticalAlign,
@@ -185,30 +116,6 @@ class RowsGridBuilder(private val panel: JComponent, grid: Grid? = null) {
       gaps = gaps, visualPaddings = visualPaddings)
     skip(width)
     return layout.addLayoutSubGrid(constraints)
-  }
-
-  @Suppress("DeprecatedCallableAddReplaceWith")
-  @Deprecated("Use the overloaded function with UnscaledGaps in parameters")
-  @ApiStatus.ScheduledForRemoval
-  fun subGridBuilder(width: Int = 1,
-                     horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-                     verticalAlign: VerticalAlign = defaultVerticalAlign,
-                     baselineAlign: Boolean = defaultBaselineAlign,
-                     resizableColumn: Boolean = false,
-                     gaps: Gaps = Gaps.EMPTY,
-                     visualPaddings: Gaps = Gaps.EMPTY): RowsGridBuilder {
-    return subGridBuilder(width, horizontalAlign, verticalAlign, baselineAlign,
-                          resizableColumn, gaps.toUnscaled(), visualPaddings.toUnscaled())
-  }
-
-
-  // todo needed only while migration Gaps to UnscaledGaps. Should be removed later
-  fun subGridBuilder(width: Int = 1,
-                     horizontalAlign: HorizontalAlign = defaultHorizontalAlign,
-                     verticalAlign: VerticalAlign = defaultVerticalAlign,
-                     baselineAlign: Boolean = defaultBaselineAlign,
-                     resizableColumn: Boolean = false): RowsGridBuilder {
-    return subGridBuilder(width, horizontalAlign, verticalAlign, baselineAlign, resizableColumn, UnscaledGaps.EMPTY, UnscaledGaps.EMPTY)
   }
 
   fun subGridBuilder(width: Int = 1,

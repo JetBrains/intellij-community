@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -100,11 +100,12 @@ public abstract class VcsRootChecker {
    * @param mappedDirs   - roots that have an explicit mappings, and should not be included into detection
    * @return Detected vcs root mappings for the project
    * or null if default logic should be used instead (relying on {@link #isRoot} calls).
+   * @throws VcsException - when detection of project mappings failed (e.g., no internet connection for VCSs that require it).
    */
   @Nullable
   public Collection<VirtualFile> detectProjectMappings(@NotNull Project project,
                                                        @NotNull Collection<VirtualFile> projectRoots,
-                                                       @NotNull Set<VirtualFile> mappedDirs) {
+                                                       @NotNull Set<VirtualFile> mappedDirs) throws VcsException {
     return null;
   }
 }

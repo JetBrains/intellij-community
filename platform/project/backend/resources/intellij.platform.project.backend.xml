@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.platform.project.backend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.backend"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- IJPL-149684 -->
+    <!--suppress PluginXmlRegistrationCheck -->
+    <applicationService serviceInterface="com.intellij.platform.project.ProjectEntitiesStorage"
+                        serviceImplementation="com.intellij.platform.project.backend.BackendProjectEntitiesStorage"/>
+  </extensions>
+</idea-plugin>

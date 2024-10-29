@@ -56,8 +56,16 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testGenericTypesSeveralMethods()
     }
 
+    override fun testSuspendOverride() {
+        super.testSuspendOverride()
+    }
+
     override fun testJavaInterfaceMethod() {
         super.testJavaInterfaceMethod()
+    }
+
+    override fun testJavaClassWithField() {
+        super.testJavaClassWithField()
     }
 
     override fun testJavaInterfaceMethodInCorrectOrder() {
@@ -244,6 +252,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
         super.testValueClass()
     }
 
+    override fun testLongPackageName() {
+        super.testLongPackageName()
+    }
+
     override fun testVarArgs() {
         super.testVarArgs()
     }
@@ -382,6 +394,10 @@ internal class FirOverrideImplementTest : OverrideImplementTest<KtClassMember>()
 
     override fun testEnumClass4() {
         super.testEnumClass4()
+    }
+
+    override fun testEnumEntry() {
+        super.testEnumEntry()
     }
 
     override fun testOverrideExternalFunction() {

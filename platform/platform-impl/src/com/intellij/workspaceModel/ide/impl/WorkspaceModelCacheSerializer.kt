@@ -59,7 +59,8 @@ class WorkspaceModelCacheSerializer(vfuManager: VirtualFileUrlManager, urlRelati
         }
       }
       .onFailure {
-        LOG.warn("Could not deserialize cache from $file", it)
+        LOG.warn("Could not deserialize cache from $file. ${it.message}")
+        LOG.debug(it)
       }
       .getOrNull()
 

@@ -23,7 +23,7 @@ class EditorActionsListener : AnActionListener {
     FeatureSuggesterSettings.instance().updateWorkingDays()
     if (!action.isSupportedAction()) return
     val (project, editor, psiFile) = getCachedEventData(event)
-    if (project == null || editor == null || psiFile == null) return
+    if (project == null || editor == null) return
     if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {
@@ -125,7 +125,7 @@ class EditorActionsListener : AnActionListener {
   override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (!action.isSupportedAction()) return
     val (project, editor, psiFile) = getCachedEventData(event)
-    if (project == null || editor == null || psiFile == null) return
+    if (project == null || editor == null) return
     if (!SuggestingUtils.isActionsProcessingEnabled(project)) return
     when (action) {
       is CopyAction -> {

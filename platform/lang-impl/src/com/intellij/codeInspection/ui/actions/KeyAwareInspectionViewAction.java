@@ -20,6 +20,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
@@ -30,6 +31,7 @@ import java.util.function.Supplier;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public abstract class KeyAwareInspectionViewAction extends InspectionViewActionBase {
   private static final Logger LOG = Logger.getInstance(KeyAwareInspectionViewAction.class);
 

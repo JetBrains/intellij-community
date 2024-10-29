@@ -1,8 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "LeakingThis", "ReplaceJavaStaticMethodWithKotlinAnalog")
+@file:Internal
 
 package com.intellij.serviceContainer
 
+import com.intellij.codeWithMe.ClientIdContextElement
+import com.intellij.codeWithMe.ClientIdContextElementPrecursor
 import com.intellij.concurrency.currentTemporaryThreadContextOrNull
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.withThreadLocal
@@ -16,6 +19,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.AppMode.isLightEdit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.*
+import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.ServiceDescriptor.PreloadMode
 import com.intellij.openapi.components.impl.stores.ComponentStoreOwner
@@ -31,16 +35,15 @@ import com.intellij.openapi.extensions.impl.createExtensionPoints
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.platform.instanceContainer.internal.*
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.concurrency.ThreadingAssertions
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.containers.UList
 import com.intellij.util.messages.*
 import com.intellij.util.messages.impl.MessageBusEx
 import com.intellij.util.messages.impl.MessageBusImpl
+import com.intellij.util.messages.impl.MessageDeliveryListener
 import com.intellij.util.runSuppressing
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -54,8 +57,6 @@ import java.lang.reflect.Modifier
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.streams.asSequence
@@ -158,9 +159,14 @@ abstract class ComponentManagerImpl(
     }
   }
 
+  @OptIn(DelicateCoroutinesApi::class)
   private val scopeHolder = ScopeHolder(
     parentScope = parentScope,
-    additionalContext = additionalContext + this.asContextElement(),
+    additionalContext = (additionalContext + this.asContextElement()).let { context ->
+      val clientIdContextElement = context[ClientIdContextElement.Key]
+      return@let if (clientIdContextElement == null) context + ClientIdContextElementPrecursor
+      else context
+    },
     containerName = debugString(short = true),
   )
 
@@ -336,7 +342,7 @@ abstract class ComponentManagerImpl(
               continue
             }
 
-            if (listener.os != null && !isSuitableForOs(listener.os)) {
+            if (listener.os != null && !listener.os.isSuitableForOs()) {
               continue
             }
 
@@ -437,7 +443,7 @@ abstract class ComponentManagerImpl(
     val registrationScope = if (pluginClassLoader is PluginAwareClassLoader) pluginClassLoader.pluginCoroutineScope else null
     val registrar = componentContainer.startRegistration(registrationScope)
     for (descriptor in components) {
-      if (descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+      if (descriptor.os != null && !descriptor.os.isSuitableForOs()) {
         continue
       }
       if (!isComponentSuitable(descriptor)) {
@@ -583,7 +589,7 @@ abstract class ComponentManagerImpl(
     val registrar = serviceContainer.startRegistration(registrationScope)
     val app = getApplication()!!
     for (descriptor in services) {
-      if (!isServiceSuitable(descriptor) || descriptor.os != null && !isSuitableForOs(descriptor.os)) {
+      if (!isServiceSuitable(descriptor) || (descriptor.os != null && !descriptor.os.isSuitableForOs())) {
         continue
       }
 
@@ -685,7 +691,6 @@ abstract class ComponentManagerImpl(
     }
   }
 
-  @RequiresBlockingContext
   final override fun <T : Any> getService(serviceClass: Class<T>): T? {
     return doGetService(serviceClass, true) ?: return postGetService(serviceClass, createIfNeeded = true)
   }
@@ -769,6 +774,16 @@ abstract class ComponentManagerImpl(
     return result
   }
 
+  private class StartUpMessageDeliveryListener(private val messageBus: MessageBusImpl, private val logMessageBusDeliveryFunction: (Topic<*>, String, Any, Long) -> Unit): MessageDeliveryListener {
+    override fun messageDelivered(topic: Topic<*>, messageName: String, handler: Any, durationNanos: Long) {
+      if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
+        messageBus.removeMessageDeliveryListener(this)
+        return
+      }
+      logMessageBusDeliveryFunction(topic, messageName, handler, durationNanos)
+    }
+  }
+
   @Synchronized
   private fun getOrCreateMessageBusUnderLock(): MessageBus {
     var messageBus = this.messageBus
@@ -779,14 +794,7 @@ abstract class ComponentManagerImpl(
     @Suppress("RetrievingService", "SimplifiableServiceRetrieving")
     messageBus = getApplication()!!.getService(MessageBusFactory::class.java).createMessageBus(this, parent?.messageBus) as MessageBusImpl
     if (StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-      messageBus.setMessageDeliveryListener { topic, messageName, handler, duration ->
-        if (!StartUpMeasurer.isMeasuringPluginStartupCosts()) {
-          messageBus.setMessageDeliveryListener(null)
-          return@setMessageDeliveryListener
-        }
-
-        logMessageBusDelivery(topic = topic, messageName = messageName, handler = handler, duration = duration)
-      }
+      messageBus.addMessageDeliveryListener(StartUpMessageDeliveryListener(messageBus, ::logMessageBusDelivery))
     }
 
     registerServiceInstance(MessageBus::class.java, messageBus, fakeCorePluginDescriptor)
@@ -796,7 +804,7 @@ abstract class ComponentManagerImpl(
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginAwareClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
+    val pluginId = PluginUtil.getPluginId(loader).idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
@@ -808,9 +816,10 @@ abstract class ComponentManagerImpl(
     implementation: Class<*>,
     pluginDescriptor: PluginDescriptor,
     override: Boolean,
+    clientKind: ClientKind? = null
   ) {
     val descriptor = ServiceDescriptor(serviceInterface.name, implementation.name, null, null, false,
-                                       null, PreloadMode.FALSE, null, null)
+                                       null, PreloadMode.FALSE, clientKind, null)
     serviceContainer.registerInitializer(
       keyClass = serviceInterface,
       initializer = ServiceClassInstanceInitializer(
@@ -1031,7 +1040,7 @@ abstract class ComponentManagerImpl(
     val asyncServices = mutableListOf<ServiceDescriptor>()
     for (plugin in modules) {
       for (service in getContainerDescriptor(plugin).services) {
-        if (!isServiceSuitable(service) || (service.os != null && !isSuitableForOs(service.os))) {
+        if (!isServiceSuitable(service) || (service.os != null && !service.os.isSuitableForOs())) {
           continue
         }
 
@@ -1362,17 +1371,6 @@ abstract class ComponentManagerImpl(
       ?: serviceContainer.getInstanceHolder(keyClass = componentKey)
     }
     return holder != null || parent?.hasComponent(componentKey) == true
-  }
-
-  final override fun isSuitableForOs(os: ExtensionDescriptor.Os): Boolean {
-    return when (os) {
-      ExtensionDescriptor.Os.mac -> SystemInfoRt.isMac
-      ExtensionDescriptor.Os.linux -> SystemInfoRt.isLinux
-      ExtensionDescriptor.Os.windows -> SystemInfoRt.isWindows
-      ExtensionDescriptor.Os.unix -> SystemInfoRt.isUnix
-      ExtensionDescriptor.Os.freebsd -> SystemInfoRt.isFreeBSD
-      else -> throw IllegalArgumentException("Unknown OS '$os'")
-    }
   }
 
   fun instanceCoroutineScope(pluginClass: Class<*>): CoroutineScope {

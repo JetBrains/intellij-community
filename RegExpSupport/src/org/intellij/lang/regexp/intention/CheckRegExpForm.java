@@ -72,7 +72,7 @@ public final class CheckRegExpForm {
   /**
    * @deprecated Use {{@link Keys#CHECK_REG_EXP_EDITOR} instead.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static final Key<Boolean> CHECK_REG_EXP_EDITOR = Keys.CHECK_REG_EXP_EDITOR;
 
   public static final class Keys {

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ignore
 
 import com.intellij.configurationStore.saveSettings
@@ -11,12 +11,12 @@ import com.intellij.openapi.vcs.VcsApplicationSettings
 import com.intellij.openapi.vcs.changes.VcsIgnoreManagerImpl
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.util.TimeoutUtil
 import com.intellij.vcsUtil.VcsImplUtil
 import com.intellij.vfs.AsyncVfsEventsPostProcessorImpl
 import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.test.GitSingleRepoTest
 import java.io.File
+import java.util.concurrent.TimeUnit
 
 class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private lateinit var moduleContentRoot: VirtualFile
@@ -139,17 +139,12 @@ class ConvertExcludedToGitIgnoredTest : GitSingleRepoTest() {
   private fun generateIgnoreFileAndWaitHoldersUpdate() {
     AsyncVfsEventsPostProcessorImpl.waitEventsProcessed()
     flushIgnoreHoldersQueue()
-    val waiter = repo.ignoredFilesHolder.createWaiter()
+    val waiter = repo.untrackedFilesHolder.createWaiter()
     VcsImplUtil.generateIgnoreFileIfNeeded(project, vcs, projectRoot)
     waiter.waitFor()
   }
 
   private fun flushIgnoreHoldersQueue() {
-    with(VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue) {
-      flush()
-      while (isFlushing) {
-        TimeoutUtil.sleep(100)
-      }
-    }
+    VcsIgnoreManagerImpl.getInstanceImpl(project).ignoreRefreshQueue.waitForAllExecuted(10, TimeUnit.MINUTES)
   }
 }

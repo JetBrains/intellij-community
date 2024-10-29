@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.storage;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -13,7 +13,6 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +22,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+/** In-memory index, with persistent index as a 'backend' storage -- so it is not really 'transient' */
 @Internal
 public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwareMapReduceIndex.IndexerIdHolder>
   extends VfsAwareMapReduceIndex<Key, Value, FileCachedData> {
@@ -45,6 +45,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
             @Override
             public void clearIndexData() {
+              //TODO why we don't clear TransientChangesIndexStorage's in-memory cache?
               indexStorageLayout.clearIndexData();
             }
 
@@ -61,9 +62,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     installMemoryModeListener();
   }
 
-  @NotNull
   @Override
-  protected InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
+  protected @NotNull InputDataDiffBuilder<Key, Value> getKeysDiffBuilder(int inputId) throws IOException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
       if (keysAndValues != null) {
@@ -75,8 +75,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
   @Override
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
-    if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-      LOG.info("updateForwardIndex,inputId=" + myIndexId + ",index=" + myIndexId + ",inMemory=" + myInMemoryMode.get());
+    if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+      LOG.info("updateForwardIndex,inputId=" + indexId() + ",index=" + indexId() + ",inMemory=" + myInMemoryMode.get());
     }
 
     if (myInMemoryMode.get()) {
@@ -88,8 +88,7 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   }
 
   @Override
-  @Nullable
-  protected Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
+  protected @Nullable Map<Key, Value> getNullableIndexedData(int fileId) throws IOException, StorageException {
     if (myInMemoryMode.get()) {
       Map<Key, Value> map = myInMemoryKeysAndValues.get(fileId);
       if (map != null) return map;
@@ -109,8 +108,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
 
           @Override
           public void memoryStorageCleared() {
-            if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-              LOG.info("memoryStorageCleared,index=" + myIndexId);
+            if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+              LOG.info("memoryStorageCleared,index=" + indexId());
             }
             myInMemoryKeysAndValues.clear();
           }
@@ -130,8 +129,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
     }
     getLock().writeLock().lock();
     try {
-      if (FileBasedIndexEx.doTraceStubUpdates(myIndexId)) {
-        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + myIndexId);
+      if (FileBasedIndexEx.doTraceStubUpdates(indexId())) {
+        LOG.info("removeTransientDataForFile,inputId=" + inputId + ",index=" + indexId());
       }
       Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
       if (keyValueMap == null) return;
@@ -183,6 +182,8 @@ public class TransientFileContentIndex<Key, Value, FileCachedData extends VfsAwa
   @Override
   public void cleanupForNextTest() {
     IndexStorage<Key, Value> memStorage = getStorage();
+    //TODO RC: why readLock is used for update operation?
+    //         Other modifications (e.g.removeTransientDataForFile) are protected with writeLock!
     ConcurrencyUtil.withLock(getLock().readLock(), () -> memStorage.clearCaches());
   }
 

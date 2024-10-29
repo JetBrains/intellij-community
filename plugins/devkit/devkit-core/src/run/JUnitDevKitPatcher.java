@@ -4,17 +4,24 @@ package org.jetbrains.idea.devkit.run;
 import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -22,21 +29,21 @@ import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.JavaModuleOptions;
 import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.system.OS;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
 import org.jetbrains.idea.devkit.projectRoots.Sandbox;
 import org.jetbrains.idea.devkit.requestHandlers.BuiltInServerConnectionData;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
 
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
@@ -52,7 +59,7 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
 
     ParametersList vm = javaParameters.getVMParametersList();
 
-    if (PsiUtil.isIdeaProject(project)) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       BuiltInServerConnectionData.passDataAboutBuiltInServer(javaParameters, project);
       
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY) && !vm.getList().contains("--add-modules")) {
@@ -81,8 +88,6 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     if (jdk == null) {
       return;
     }
-
-    @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
 
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
       //non-optional dependencies of 'idea.load.plugin.id' are automatically enabled (see com.intellij.ide.plugins.PluginManagerCore.detectReasonToNotLoad)
@@ -123,18 +128,20 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
       }
     }
 
-    javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
-    javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
-    javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
+    var libPath = jdk.getHomePath() + File.separator + "lib" + File.separator;
+    javaParameters.getClassPath().addFirst(libPath + "idea.jar");
+    javaParameters.getClassPath().addFirst(libPath + "resources.jar");
   }
 
   static void appendAddOpensWhenNeeded(@NotNull Project project, @NotNull Sdk jdk, @NotNull ParametersList vm) {
-    var sdkVersion = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
+    var sdkVersion = jdk.getSdkType() instanceof JavaSdk javaSdk ? javaSdk.getVersion(jdk) : null;
     if (sdkVersion != null && sdkVersion.isAtLeast(JavaSdkVersion.JDK_17)) {
       var scope = ProjectScope.getContentScope(project);
       var files = ReadAction.compute(() -> FilenameIndex.getVirtualFilesByName("OpenedPackages.txt", scope));
       if (files.size() > 1) {
-        LOG.error("expecting 1 file, found: " + files);
+        var list = files.stream().map(VirtualFile::getPresentableUrl).collect(Collectors.joining("\n"));
+        var message = DevKitBundle.message("notification.message.duplicate.packages.file", list);
+        new Notification("DevKit Errors", message, NotificationType.ERROR).notify(project);
       }
       else if (!files.isEmpty()) {
         var file = files.iterator().next();

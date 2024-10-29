@@ -3,8 +3,10 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class PreserveIndentOnPasteBean {
   public static final ExtensionPointName<PreserveIndentOnPasteBean> EP_NAME = ExtensionPointName.create("com.intellij.preserveIndentOnPaste");
 

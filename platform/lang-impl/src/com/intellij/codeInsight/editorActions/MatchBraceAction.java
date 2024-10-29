@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * <li>Otherwise moves from the caret position to the beginning of the file and finds first opening brace not closed before the caret position</li>
  * </ul>
  **/
+@ApiStatus.Internal
 public final class MatchBraceAction extends EditorAction {
   public MatchBraceAction() {
     super(new MyHandler());

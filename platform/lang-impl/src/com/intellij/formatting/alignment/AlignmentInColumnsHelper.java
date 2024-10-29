@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.alignment;
 
 import com.intellij.lang.ASTNode;
@@ -124,8 +124,7 @@ public final class AlignmentInColumnsHelper {
    * @return previous node to the given base node that has that same type and is adjacent to it if possible;
    *         {@code null} otherwise
    */
-  @Nullable
-  private static ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode,
+  private static @Nullable ASTNode getPreviousAdjacentNodeOfTargetType(ASTNode baseNode,
                                                              AlignmentInColumnsConfig config,
                                                              final double blankLinesToBeKeptOnReformat) {
     ASTNode nodeOfTargetType = deriveNodeOfTargetType(baseNode, config.getTargetDeclarationTypes());
@@ -172,8 +171,7 @@ public final class AlignmentInColumnsHelper {
    *         {@link AlignmentInColumnsConfig#getTargetDeclarationTypes() target type} target type if the one if found;
    *         {@code null} otherwise
    */
-  @Nullable
-  private static ASTNode deriveNodeOfTargetType(ASTNode baseNode, TokenSet targetTypes) {
+  private static @Nullable ASTNode deriveNodeOfTargetType(ASTNode baseNode, TokenSet targetTypes) {
     if (targetTypes.contains(baseNode.getElementType())) {
       return baseNode;
     }
@@ -243,7 +241,7 @@ public final class AlignmentInColumnsHelper {
     return false;
   }
 
-  private static abstract class NodeProcessor {
+  private abstract static class NodeProcessor {
     public boolean targetTypeFound(ASTNode node) {
       return false;
     }
@@ -253,8 +251,7 @@ public final class AlignmentInColumnsHelper {
     }
   }
 
-  @Nullable
-  private static ASTNode getSubNodeThatStartsNewLine(@Nullable ASTNode startNode, AlignmentInColumnsConfig config) {
+  private static @Nullable ASTNode getSubNodeThatStartsNewLine(@Nullable ASTNode startNode, AlignmentInColumnsConfig config) {
     if (startNode == null) {
       return null;
     }

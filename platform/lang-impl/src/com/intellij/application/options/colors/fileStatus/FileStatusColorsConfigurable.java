@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -9,21 +9,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.FileStatusManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class FileStatusColorsConfigurable implements SearchableConfigurable, Configurable.NoScroll, Configurable.VariableProjectAppLevel {
 
-  private final static String FILE_STATUS_COLORS_ID = "file.status.colors";
+  private static final String FILE_STATUS_COLORS_ID = "file.status.colors";
 
-  @Nullable private FileStatusColorsPanel myPanel;
+  private @Nullable FileStatusColorsPanel myPanel;
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return FILE_STATUS_COLORS_ID;
   }
 
@@ -32,15 +33,13 @@ public final class FileStatusColorsConfigurable implements SearchableConfigurabl
     return "reference.versionControl.highlight";
   }
 
-  @Nls
   @Override
-  public String getDisplayName() {
+  public @Nls String getDisplayName() {
     return ApplicationBundle.message("title.file.status.colors");
   }
 
-  @Nullable
   @Override
-  public JComponent createComponent() {
+  public @Nullable JComponent createComponent() {
     if (myPanel == null) {
       myPanel = new FileStatusColorsPanel(FileStatusFactory.getInstance().getAllFileStatuses());
     }

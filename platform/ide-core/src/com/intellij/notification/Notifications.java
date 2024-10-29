@@ -12,7 +12,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -53,22 +52,6 @@ public interface Notifications {
 
   final class Bus {
     private Bus() { }
-
-    /**
-     * Registration is OPTIONAL: BALLOON display type will be used by default.
-     *
-     * @deprecated use {@link NotificationGroup}
-     */
-    @Deprecated(forRemoval = true)
-    public static void register(@NotNull String groupId, @NotNull NotificationDisplayType defaultDisplayType) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return;
-      SwingUtilities.invokeLater(() -> {
-        Application app = ApplicationManager.getApplication();
-        if (!app.isDisposed()) {
-          app.getMessageBus().syncPublisher(TOPIC).register(groupId, defaultDisplayType);
-        }
-      });
-    }
 
     /**
      * Use {@link #notify(Notification, Project)} when project is known to show it in its associated frame.

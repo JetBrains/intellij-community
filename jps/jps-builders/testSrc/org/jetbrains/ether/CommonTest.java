@@ -13,7 +13,7 @@ import org.jetbrains.jps.model.module.JpsModule;
 import java.util.Set;
 
 public class CommonTest extends IncrementalTestCase {
-  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addClassHidingImportedClass", "addClassHidingImportedClass2");
+  private static final Set<String> GRAPH_ONLY_TESTS = Set.of("addClassHidingImportedClass", "addClassHidingImportedClass2", "deletePermittedClass", "deleteSealedPermission");
 
   public CommonTest() {
     super("common");
@@ -104,6 +104,14 @@ public class CommonTest extends IncrementalTestCase {
 
   public void testDeleteClass4() {
     doTest();
+  }
+
+  public void testDeletePermittedClass() {
+    doTest().assertFailed();
+  }
+
+  public void testDeleteSealedPermission() {
+    doTest().assertFailed();
   }
 
   public void testDeleteInnerClass() {

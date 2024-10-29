@@ -5,7 +5,6 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightParameterListBuilder
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.KtParameter
-import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
 
@@ -27,16 +26,8 @@ internal class UastFakeSourceLightDefaultAccessorForConstructorParameter(
                     val parameterList = this
 
                     if (isSetter) {
-                        val type =
-                            baseResolveProviderService.getType(
-                                original,
-                                this@UastFakeSourceLightDefaultAccessorForConstructorParameter,
-                                isForFake = true
-                            ) ?: UastErrorType
                         val nullability = baseResolveProviderService.nullability(original)
-                        this.addParameter(
-                            UastKotlinPsiSetterParameter(type, parameterList, original, nullability)
-                        )
+                        addParameter(UastKotlinPsiSetterParameter(parameterList, original, nullability))
                     }
                 }
             }

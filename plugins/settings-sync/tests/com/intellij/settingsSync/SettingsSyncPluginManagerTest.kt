@@ -1,22 +1,24 @@
 package com.intellij.settingsSync
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginEnableStateChangedListener
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
 import com.intellij.settingsSync.config.BUNDLED_PLUGINS_ID
 import com.intellij.settingsSync.plugins.PluginManagerProxy
+import com.intellij.settingsSync.plugins.SettingsSyncPluginsState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import org.junit.Assert
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.util.concurrent.atomic.AtomicReference
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
 
   @Test
   fun `test install missing plugins`() {
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
       typengo(enabled = true)
       ideaLight(enabled = true, category = SettingsCategory.UI)
@@ -32,7 +34,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
   fun `test do not install when plugin sync is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.PLUGINS, false)
     try {
-      pluginManager.pushChangesToIde(state {
+      pushToIdeAndWait(state {
         quickJump(enabled = false)
         typengo(enabled = true)
         ideaLight(enabled = true, category = SettingsCategory.UI)
@@ -58,7 +60,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
                                                                      fail("Shouldn't have set enabled=$enable for ${pluginDescriptors.joinToString()}")
                                                                    }, testRootDisposable)
     try {
-      pluginManager.pushChangesToIde(state {
+      pushToIdeAndWait(state {
         git4idea(enabled = true)
         css(enabled = false)
         quickJump(enabled = true)
@@ -101,7 +103,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
   fun `test do not install UI plugin when UI category is disabled`() {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.UI, false)
     try {
-      pluginManager.pushChangesToIde(state {
+      pushToIdeAndWait(state {
         quickJump(enabled = false)
         typengo(enabled = true)
         ideaLight(enabled = true, category = SettingsCategory.UI)
@@ -126,7 +128,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       quickJump(enabled = true)
     }
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
       typengo(enabled = true)
       ideaLight(enabled = true, category = SettingsCategory.UI)
@@ -145,7 +147,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     // install two plugins
     testPluginManager.addPluginDescriptors(quickJump, typengo)
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
       typengo(enabled = false)
     })
@@ -177,7 +179,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     testPluginManager.disablePlugin(typengo.pluginId)
     testPluginManager.enablePlugin(git4idea.pluginId)
 
-    testScheduler.runCurrent()
+    testScope.runCurrent()
     assertPluginManagerState {
       quickJump(enabled = true)
       typengo(enabled = false)
@@ -208,7 +210,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     testPluginManager.addPluginDescriptors(quickJump, typengo, git4idea)
     pluginManager.updateStateFromIdeOnStart(null)
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
       git4idea(enabled = false)
     })
@@ -219,7 +221,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       git4idea(enabled = false)
     }
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
     })
     // no entry for the bundled git4idea plugin => it is enabled
@@ -258,7 +260,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     testPluginManager.addPluginDescriptors(javascript, css)
     pluginManager.updateStateFromIdeOnStart(null)
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       css(enabled = false)
     })
 
@@ -277,7 +279,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     testPluginManager.addPluginDescriptors(javascript)
     pluginManager.updateStateFromIdeOnStart(null)
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       javascript(enabled = false)
     })
 
@@ -306,7 +308,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       typengo(enabled = true)
     }
 
-    pluginManager.pushChangesToIde(pushedState)
+    pushToIdeAndWait(pushedState)
 
     assertIdeState(pushedState)
     assertPluginManagerState(pushedState)
@@ -329,7 +331,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       typengo(enabled = true)
     }
 
-    pluginManager.pushChangesToIde(pushedState)
+    pushToIdeAndWait(pushedState)
 
     assertIdeState(pushedState)
     assertPluginManagerState(pushedState)
@@ -352,14 +354,13 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       typengo(enabled = true)
     }
 
-    pluginManager.pushChangesToIde(pushedState)
+    pushToIdeAndWait(pushedState)
 
     assertIdeState{
       git4idea(enabled = false)
       typengo(enabled = true)
     }
     assertPluginManagerState(pushedState)
-    Thread.sleep(100)
     assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, quickJump.idString))
   }
 
@@ -445,7 +446,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       cvsOutdated(enabled = false)
     }
 
-    pluginManager.pushChangesToIde(pushedState)
+    pushToIdeAndWait(pushedState)
 
     assertIdeState {
       git4idea(enabled = true)
@@ -461,7 +462,36 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     }
   }
 
-  private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean){
+  @Test
+  @TestFor(issues = ["IJPL-157266"])
+  fun `disable syncing of incompatible plugin`(){
+    val weirdPlugin = TestPluginDescriptor(
+      "org.intellij.weird"
+    )
+    TestPluginDescriptor.ALL.remove(weirdPlugin.pluginId)
+    testPluginManager.addPluginDescriptors(git4idea)
+    pluginManager.updateStateFromIdeOnStart(state {
+      git4idea (enabled = true) // bundled
+    })
+    assertPluginManagerState {
+      // empty
+    }
+
+    pushToIdeAndWait(state {
+      git4idea(enabled = true)
+      weirdPlugin(enabled = true)
+    })
+
+    assertIdeState {
+      git4idea (enabled = true)
+    }
+    assertPluginManagerState {
+      weirdPlugin(enabled = true)
+    }
+    assertFalse(SettingsSyncSettings.getInstance().isSubcategoryEnabled(SettingsCategory.PLUGINS, weirdPlugin.idString))
+  }
+
+  private fun restart_required_base(installedBefore: Boolean, enabledBefore: Boolean, enabledInPush: Boolean) = runTest {
     val restartRequiredRef = AtomicReference<RestartReason>()
     SettingsSyncEvents.getInstance().addListener(object : SettingsSyncEventListener {
       override fun restartRequired(reason: RestartReason) {
@@ -473,7 +503,7 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
       testPluginManager.addPluginDescriptors(scala.withEnabled(enabledBefore))
     }
 
-    pluginManager.pushChangesToIde(state {
+    pushToIdeAndWait(state {
       quickJump(enabled = false)
       scala(enabled = enabledInPush)
     })
@@ -492,5 +522,12 @@ class SettingsSyncPluginManagerTest : BasePluginManagerTest() {
     } else {
       assert(restartRequiredRef.get() is RestartForPluginEnable)
     }
+  }
+
+  private fun pushToIdeAndWait(newState: SettingsSyncPluginsState) {
+    testScope.launch {
+      pluginManager.pushChangesToIde(newState)
+    }
+    testScope.runCurrent()
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.rt.execution;
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -9,6 +11,7 @@ import java.net.Socket;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public final class ForkedDebuggerHelper {
 
   public static final String JVM_DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";

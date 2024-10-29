@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -17,19 +17,16 @@ import javax.swing.*;
  * @author 2003
  */
 public final class SourceRootPresentation {
-  @NotNull
-  public static Icon getSourceRootIcon(@NotNull SourceFolder sourceFolder) {
+  public static @NotNull Icon getSourceRootIcon(@NotNull SourceFolder sourceFolder) {
     return getSourceRootIcon(sourceFolder.getJpsElement().asTyped());
   }
 
-  @Nullable
-  public static Icon getSourceRootFileLayerIcon(@NotNull JpsModuleSourceRootType<?> rootType) {
+  public static @Nullable Icon getSourceRootFileLayerIcon(@NotNull JpsModuleSourceRootType<?> rootType) {
     ModuleSourceRootEditHandler<?> handler = ModuleSourceRootEditHandler.getEditHandler(rootType);
     return handler != null ? handler.getRootFileLayerIcon() : null;
   }
 
-  @NotNull
-  private static <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
+  private static @NotNull <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
     ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
     return handler != null ? handler.getRootIcon(root.getProperties()) : PlatformIcons.FOLDER_ICON;
   }

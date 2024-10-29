@@ -5,8 +5,8 @@ import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.SpecifyRemainingArgumentsByNameUtil.RemainingNamedArgumentData
 import org.jetbrains.kotlin.psi.KtValueArgumentList
@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 sealed class SpecifyRemainingArgumentsByNameFix(
     element: KtValueArgumentList,
     private val remainingArguments: List<RemainingNamedArgumentData>
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtValueArgumentList, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtValueArgumentList>(element) {
     companion object {
         fun createAvailableQuickFixes(
             argumentList: KtValueArgumentList,
@@ -35,7 +35,7 @@ sealed class SpecifyRemainingArgumentsByNameFix(
         return super.getPresentation(context, element)?.withPriority(PriorityAction.Priority.HIGH)
     }
 
-    override fun invoke(actionContext: ActionContext, element: KtValueArgumentList, elementContext: Unit, updater: ModPsiUpdater) {
+    override fun invoke(actionContext: ActionContext, element: KtValueArgumentList, updater: ModPsiUpdater) {
         SpecifyRemainingArgumentsByNameUtil.applyFix(actionContext.project, element, remainingArguments, updater)
     }
 }

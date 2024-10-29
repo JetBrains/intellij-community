@@ -71,6 +71,23 @@ public interface TreeVisitor {
     Promise<TreePath> accept(@NotNull TreeVisitor visitor);
   }
 
+  /**
+   * Represents a tree model that accepts a tree visitor and promises a result, optionally allowing to skip not loaded nodes.
+   */
+  interface LoadingAwareAcceptor extends Acceptor {
+    @Override
+    default @NotNull Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+      return accept(visitor, true);
+    }
+
+    /**
+     * @param visitor an object that controls visiting a tree structure
+     * @param allowLoading a flag that determines whether the nodes that weren't loaded yet will be loaded and visited or skipped
+     * @return a promise that will be resolved when visiting is finished
+     */
+    @NotNull
+    Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading);
+  }
 
   abstract class ByComponent<C, T> implements TreeVisitor {
     private final Function<TreePath, T> converter;

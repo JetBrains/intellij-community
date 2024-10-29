@@ -1,0 +1,8 @@
+NavigationItem:
+    name: InterfaceWithFunImplement
+ItemPresentation:
+    presentableText: InterfaceWithFunImplement
+    locationString: (test)
+    icon: RowIcon(icons=[org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg, Public])
+TargetElement: interface InterfaceWithFunImplement {
+QualifiedName: test.InterfaceWithFunImplement

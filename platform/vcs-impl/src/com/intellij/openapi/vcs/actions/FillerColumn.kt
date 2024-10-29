@@ -8,11 +8,13 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 class FillerColumn(annotation: FileAnnotation,
                    presentation: TextAnnotationPresentation,
                    colorScheme: Couple<out MutableMap<VcsRevisionNumber, Color>>?) : AnnotationFieldGutter(annotation, presentation,

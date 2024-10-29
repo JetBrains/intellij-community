@@ -2,22 +2,20 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.command.CommandProcessor
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.command.writeCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.IncorrectOperationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel
 import org.junit.Test
 
 class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp() = runBlocking {
     super.setUp()
 
     importProjectAsync("""
@@ -28,25 +26,25 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testReading() = runBlocking(Dispatchers.EDT) {
-    val model = domModel
+  fun testReading() = runBlocking {
+    readAction {
+      val model = domModel
 
-    assertEquals("test", model!!.getGroupId().getStringValue())
-    assertEquals("project", model.getArtifactId().getStringValue())
-    assertEquals("1", model.getVersion().getStringValue())
+      assertEquals("test", model!!.getGroupId().getStringValue())
+      assertEquals("project", model.getArtifactId().getStringValue())
+      assertEquals("1", model.getVersion().getStringValue())
+    }
   }
 
   @Test
-  fun testWriting() = runBlocking(Dispatchers.EDT) {
-    CommandProcessor.getInstance().executeCommand(project, {
-      ApplicationManager.getApplication().runWriteAction {
-        val model = domModel
-        model!!.getGroupId().setStringValue("foo")
-        model.getArtifactId().setStringValue("bar")
-        model.getVersion().setStringValue("baz")
-        formatAndSaveProjectPomDocument()
-      }
-    }, null, null)
+  fun testWriting() = runBlocking {
+    writeCommandAction(project, "") {
+      val model = domModel
+      model!!.getGroupId().setStringValue("foo")
+      model.getArtifactId().setStringValue("bar")
+      model.getVersion().setStringValue("baz")
+      formatAndSaveProjectPomDocument()
+    }
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}
@@ -63,17 +61,15 @@ class MavenModelReadingAndWritingTest : MavenMultiVersionImportingTestCase() {
   }
 
   @Test
-  fun testAddingADependency() = runBlocking(Dispatchers.EDT) {
-    CommandProcessor.getInstance().executeCommand(project, {
-      ApplicationManager.getApplication().runWriteAction {
-        val model = domModel
-        val d = model!!.getDependencies().addDependency()
-        d.getGroupId().setStringValue("group")
-        d.getArtifactId().setStringValue("artifact")
-        d.getVersion().setStringValue("version")
-        formatAndSaveProjectPomDocument()
-      }
-    }, null, null)
+  fun testAddingADependency() = runBlocking {
+    writeCommandAction(project, "") {
+      val model = domModel
+      val d = model!!.getDependencies().addDependency()
+      d.getGroupId().setStringValue("group")
+      d.getArtifactId().setStringValue("artifact")
+      d.getVersion().setStringValue("version")
+      formatAndSaveProjectPomDocument()
+    }
 
     UsefulTestCase.assertSameLines("""
                       <?xml version="1.0"?>${'\r'}

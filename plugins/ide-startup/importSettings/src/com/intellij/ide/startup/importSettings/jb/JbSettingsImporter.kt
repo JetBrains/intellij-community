@@ -500,11 +500,15 @@ class JbSettingsImporter(private val configDirPath: Path,
       ConfigImportHelper.updateVMOptions(PathManager.getConfigDir(), LOG)
     }
     CustomConfigMigrationOption.MigrateFromCustomPlace(configDirPath).writeConfigMarkerFile(PathManager.getConfigDir())
-    ConfigImportHelper.migrateLocalization(configDirPath, pluginsPath)
+    migrateLocalization()
     (System.currentTimeMillis() - startTime).let {
       LOG.info("Raw import finished in $it ms.")
       ImportSettingsEventsCollector.jbTotalImportTimeSpent(it)
     }
+  }
+
+  fun migrateLocalization() {
+    ConfigImportHelper.migrateLocalization(configDirPath, pluginsPath)
   }
 
   internal class ImportStreamProvider(private val configDirPath: Path) : StreamProvider {

@@ -120,7 +120,7 @@ abstract class AbstractScriptConfigurationLoadingTest : AbstractScriptConfigurat
     }
 
     protected fun assertReports(expected: String, file: KtFile = myFile as KtFile) {
-        val actual = IdeScriptReportSink.getReports(file.virtualFile).single().message
+        val actual = getScriptReports(file.virtualFile).single().message
         assertEquals("reports", expected, actual)
     }
 

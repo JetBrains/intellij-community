@@ -5,14 +5,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.removeUserData
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase
-import org.jetbrains.plugins.terminal.block.BlockTerminalOptions
 import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModel
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModelImpl
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptState
-import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptStyle
 import org.jetbrains.plugins.terminal.block.util.TerminalDataContextUtils.IS_PROMPT_EDITOR_KEY
-import org.jetbrains.plugins.terminal.block.util.TestTerminalSessionInfo
+import org.jetbrains.plugins.terminal.block.util.TestTerminalPromptModel
 import org.jetbrains.plugins.terminal.util.ShellType
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,8 +17,6 @@ import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
 internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase() {
-  private lateinit var promptModel: TerminalPromptModel
-
   @Test
   fun `delete word and stop at dash`() {
     doTest("cmd -s --longOpt<caret>", "cmd -s --<caret>")
@@ -71,20 +66,14 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
     doTest("someCommand<caret>", "<caret>", promptText = "prompt")
   }
 
+  private var promptText: String = ""
+
   private fun doTest(commandBefore: String, commandAfter: String, promptText: String = "") {
-    // Set the setting to use ShellPromptRenderer in TerminalPromptModel, so we can provide the exact prompt string to 'updatePrompt' method.
-    // BuiltInPromptRenderer is always appending the line break at the end, and now it is not configurable.
-    val options = BlockTerminalOptions.getInstance()
-    val originalPromptStyle = options.promptStyle
-    options.promptStyle = TerminalPromptStyle.SHELL
-    Disposer.register(testRootDisposable) {
-      options.promptStyle = originalPromptStyle
-    }
+    // Remember the prompt text to later use it for the prompt initialization
+    this.promptText = promptText
 
     // Extension of the file is the same as the default extension of TerminalPromptFileType
-    configureFromFileText("promptFile.prompt", commandBefore)
-    // Update prompt, the prompt text is supplied as an 'originalPrompt' to ShellPromptRenderer
-    promptModel.updatePrompt(TerminalPromptState(currentDirectory = "", originalPrompt = promptText))
+    configureFromFileText("promptFile.prompt", promptText + commandBefore)
 
     executeAction("Terminal.DeletePreviousWord")
     checkResultByText(promptText + commandAfter)
@@ -97,7 +86,7 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
   override fun createSaveAndOpenFile(relativePath: String, fileText: String): Editor {
     val editor = super.createSaveAndOpenFile(relativePath, fileText)
 
-    promptModel = TerminalPromptModelImpl(editor as EditorEx, TestTerminalSessionInfo())
+    val promptModel = TestTerminalPromptModel(editor as EditorEx, promptText)
     Disposer.register(testRootDisposable, promptModel)
     // Used in terminal actions
     editor.putUserData(TerminalPromptModel.KEY, promptModel)
@@ -106,6 +95,9 @@ internal class TerminalDeletePreviousWordTest : LightPlatformCodeInsightTestCase
     val virtualFile = FileDocumentManager.getInstance().getFile(editor.document)!!
     // Used in TerminalPromptFileViewProvider
     virtualFile.putUserData(TerminalPromptModel.KEY, promptModel)
+    Disposer.register(testRootDisposable) {
+      virtualFile.removeUserData(TerminalPromptModel.KEY)
+    }
     virtualFile.putUserData(ShellType.KEY, ShellType.ZSH)  // The shell type doesn't matter for this test
     return editor
   }

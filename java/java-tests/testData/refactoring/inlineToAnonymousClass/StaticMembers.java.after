@@ -1,0 +1,21 @@
+class A {
+  private Object b = new Object() {
+      static String A;
+
+      public String toString() {
+        return "A";
+      }
+
+      public static void staticMethod() {
+        A = "";
+        System.out.println(A);
+      }
+      
+      static class InnerInner {}
+
+      static {
+        // static initializer
+      }
+  };
+
+}

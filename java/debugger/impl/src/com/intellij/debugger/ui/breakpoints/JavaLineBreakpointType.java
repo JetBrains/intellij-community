@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.HelpID;
@@ -169,13 +169,15 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         PsiElement firstElem = DebuggerUtilsEx.getFirstElementOnTheLine(lambda, document, position.getLine());
         XSourcePositionImpl elementPosition = XSourcePositionImpl.createByElement(firstElem);
         if (elementPosition != null) {
+          PsiElement body = lambda.getBody();
+          LOG.assertTrue(body != null, "if we got an element, there must be a body");
           if (startMethodIsOuterLambda && lambda == startMethod) {
-            res.add(0, new LineJavaBreakpointVariant(elementPosition, lambda, ordinal));
+            res.add(0, new LineJavaBreakpointVariant(elementPosition, body, ordinal));
             mainMethodAdded = true;
           }
           else if (lambda != outerMethod) {
             lambdaCount++;
-            res.add(new LambdaJavaBreakpointVariant(elementPosition, lambda, ordinal));
+            res.add(new LambdaJavaBreakpointVariant(elementPosition, body, ordinal));
           }
           ordinal++;
         }
@@ -209,9 +211,10 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
     if (file.getFileType().isBinary()) return null;
 
     Project project = file.getProject();
-    Document document = file.getViewProvider().getDocument();
-    if (document == null) return null;
-    return findSingleConditionalReturn(project, document, line);
+    return ReadAction.compute(() -> {
+      Document document = file.getViewProvider().getDocument();
+      return document != null ? findSingleConditionalReturn(project, document, line) : null;
+    });
   }
 
   protected static @Nullable PsiElement findSingleConditionalReturn(@NotNull Project project, @NotNull Document document, int line) {
@@ -522,6 +525,9 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
         }
         else {
           highlightedElement = getContainingMethod(lineBreakpoint);
+          if (highlightedElement instanceof PsiLambdaExpression lambda) {
+            highlightedElement = lambda.getBody();
+          }
         }
       }
     }
@@ -625,12 +631,11 @@ public class JavaLineBreakpointType extends JavaLineBreakpointTypeBase<JavaLineB
   }
 
   public static TextRange getTextRangeWithoutTrailingComments(@NotNull PsiElement psiElement) {
-    PsiElement lastChild = psiElement.getLastChild();
-    if (lastChild == null || !isWhiteSpaceOrComment(lastChild)) {
-      return psiElement.getTextRange();
-    }
-    while (isWhiteSpaceOrComment(lastChild)) {
-      lastChild = lastChild.getPrevSibling();
+    @NotNull PsiElement lastChild = psiElement;
+    @Nullable PsiElement prevChild = psiElement.getLastChild();
+    while (prevChild != null && isWhiteSpaceOrComment(prevChild)) {
+      lastChild = prevChild;
+      prevChild = prevChild.getPrevSibling();
     }
     return new TextRange(psiElement.getTextRange().getStartOffset(), lastChild.getTextRange().getEndOffset());
   }

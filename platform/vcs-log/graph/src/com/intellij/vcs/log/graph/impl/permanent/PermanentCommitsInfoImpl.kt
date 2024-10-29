@@ -10,9 +10,11 @@ import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import it.unimi.dsi.fastutil.ints.IntSet
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-class PermanentCommitsInfoImpl<CommitId : Any> private constructor(val timestampGetter: TimestampGetter,
+@ApiStatus.Internal
+class PermanentCommitsInfoImpl<CommitId : Any> private constructor(internal val timestampGetter: TimestampGetter,
                                                                    private val commitIdIndexes: List<CommitId>,
                                                                    private val notLoadedCommits: Int2ObjectMap<CommitId>) : PermanentCommitsInfo<CommitId> {
   override fun getCommitId(nodeId: Int): CommitId {

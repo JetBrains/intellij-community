@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.TooltipTitle;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -15,7 +16,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -96,7 +96,8 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
   }
 
   protected boolean isNoWrapping(@NotNull String place) {
-    return ExperimentalUI.isNewUI() && ActionPlaces.isMainToolbar(place);
+    if (!ExperimentalUI.isNewUI()) return false;
+    return ActionPlaces.MAIN_TOOLBAR.equals(place);
   }
 
   protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
@@ -281,13 +282,13 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override
     public @Nullable String getToolTipText() {
-      return myForcePressed || Registry.is("ide.helptooltip.enabled") ? null : super.getToolTipText();
+      return myForcePressed || UISettings.isIdeHelpTooltipEnabled() ? null : super.getToolTipText();
     }
 
     public void showPopup() {
       JBPopup popup = createPopup(this::releaseForcePressed);
       setForcePressed(true);
-      if (Registry.is("ide.helptooltip.enabled")) {
+      if (UISettings.isIdeHelpTooltipEnabled()) {
         HelpTooltip.setMasterPopup(this, popup);
       }
 
@@ -317,7 +318,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     private void updateTooltipText() {
       HelpTooltip.dispose(this);
 
-      if (Registry.is("ide.helptooltip.enabled") && StringUtil.isNotEmpty(myTooltipText)) {
+      if (StringUtil.isNotEmpty(myTooltipText) && UISettings.isIdeHelpTooltipEnabled()) {
         String shortcut = KeymapUtil.getFirstKeyboardShortcutText(ComboBoxAction.this);
         new HelpTooltip().setTitle(myTooltipText).setShortcut(shortcut).installOn(this);
       }

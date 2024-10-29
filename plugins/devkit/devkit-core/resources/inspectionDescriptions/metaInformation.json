@@ -1,0 +1,192 @@
+{
+  "inspections": [
+    {
+      "id": "MigrateToOptControl",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "StatisticsCollectorNotRegistered",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PresentationAnnotation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "IntentionDescriptionNotFoundInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MissingActionUpdateThread",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ComponentNotRegistered",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UseDPIAwareInsets",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "ProductModulesXmlDom",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PluginXmlPluginLogo",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ActionIsNotPreviewFriendly",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LightServiceMigrationCode",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "InspectionUsingGrayColors",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UastHintedVisitorAdapterHints",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "UseJBColor",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PotentialDeadlockInServiceInitialization",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ActionPresentationInstantiatedInCtor",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PluginXmlRegistrationCheck",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UsePlatformProcessAwaitExit",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PsiElementConcatenation",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnsafeReturnStatementVisitor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PluginXmlValidity",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "InspectionDescriptionNotFoundInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "LeakableMapKey",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnsafeVfsRecursion",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseDPIAwareBorders",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "ExtensionRegisteredAsServiceOrComponent",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UseVirtualFileEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "MismatchedLightServiceLevelAndCtor",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MissingRecentApi",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "SimplifiableServiceRetrieving",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PluginXmlExtensionRegistration",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UsePrimitiveTypes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SerializableCtor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnresolvedPluginConfigReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CancellationCheckInLoops",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "StaticInitializationInExtensions",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PluginXmlDynamicPlugin",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "ComponentRegistrationProblems",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "LightServiceMustBeFinal",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "LightServiceMigrationXML",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "MissingAccessibleContext",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "UsePluginIdEquals",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectParentDisposable",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TokenSetInParserDefinition",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PostfixTemplateDescriptionNotFound",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "FileEqualsUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "IncorrectCancellationExceptionHandling",
+      "codeQualityCategory": "Reliability"
+    }
+  ]
+}

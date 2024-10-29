@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
-import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -567,11 +566,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (fileByName != null && fileByName.getId() != id) {
       // a child with the same name and different ID was recreated after a refresh session -
       // it doesn't make sense to check it earlier because it is executed outside the VFS' read/write lock
-      boolean deleted = FSRecords.isDeleted(id);
+      boolean deleted = persistence.peer().isDeleted(id);
       if (!deleted) {
         THROTTLED_LOG.info(() -> {
           int parentId = persistence.peer().getParent(id);
-          IntOpenHashSet childrenInPersistence = new IntOpenHashSet(FSRecords.listIds(id));
+          IntOpenHashSet childrenInPersistence = new IntOpenHashSet(persistence.peer().listIds(id));
           IntOpenHashSet childrenInMemory = new IntOpenHashSet(myData.childrenIds);
           int[] childrenNotInPersistent = childrenInMemory.intStream()
             .filter(childId -> !childrenInPersistence.contains(childId))
@@ -753,7 +752,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     int id = getId();
     synchronized (myData) {
-      existingNames.addAll(FSRecords.listNames(id));
+      existingNames.addAll(owningPersistentFS().peer().listNames(id));
 
       validateAgainst(childrenToCreate, existingNames);
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.tools;
 
@@ -31,32 +17,31 @@ import java.io.File;
 import java.io.IOException;
 
 
-abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> {
-  @NonNls private static final String TOOL_SET = "toolSet";
-  @NonNls private static final String TOOL = "tool";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String NAME = ATTRIBUTE_NAME;
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String SHOW_IN_MAIN_MENU = "showInMainMenu";
-  @NonNls private static final String SHOW_IN_EDITOR = "showInEditor";
-  @NonNls private static final String SHOW_IN_PROJECT = "showInProject";
-  @NonNls private static final String SHOW_IN_SEARCH_POPUP = "showInSearchPopup";
-  @NonNls private static final String DISABLED = "disabled";
-  @NonNls private static final String USE_CONSOLE = "useConsole";
-  @NonNls private static final String SHOW_CONSOLE_ON_STDOUT = "showConsoleOnStdOut";
-  @NonNls private static final String SHOW_CONSOLE_ON_STDERR = "showConsoleOnStdErr";
-  @NonNls private static final String SYNCHRONIZE_AFTER_EXECUTION = "synchronizeAfterRun";
-  @NonNls private static final String EXEC = "exec";
-  @NonNls private static final String WORKING_DIRECTORY = "WORKING_DIRECTORY";
-  @NonNls private static final String COMMAND = "COMMAND";
-  @NonNls private static final String PARAMETERS = "PARAMETERS";
-  @NonNls private static final String FILTER = "filter";
-  @NonNls private static final String ELEMENT_OPTION = "option";
-  @NonNls private static final String ATTRIBUTE_VALUE = "value";
+public abstract class ToolsProcessor<T extends Tool> extends NonLazySchemeProcessor<ToolsGroup<T>, ToolsGroup<T>> {
+  private static final @NonNls String TOOL_SET = "toolSet";
+  private static final @NonNls String TOOL = "tool";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String NAME = ATTRIBUTE_NAME;
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String SHOW_IN_MAIN_MENU = "showInMainMenu";
+  private static final @NonNls String SHOW_IN_EDITOR = "showInEditor";
+  private static final @NonNls String SHOW_IN_PROJECT = "showInProject";
+  private static final @NonNls String SHOW_IN_SEARCH_POPUP = "showInSearchPopup";
+  private static final @NonNls String DISABLED = "disabled";
+  private static final @NonNls String USE_CONSOLE = "useConsole";
+  private static final @NonNls String SHOW_CONSOLE_ON_STDOUT = "showConsoleOnStdOut";
+  private static final @NonNls String SHOW_CONSOLE_ON_STDERR = "showConsoleOnStdErr";
+  private static final @NonNls String SYNCHRONIZE_AFTER_EXECUTION = "synchronizeAfterRun";
+  private static final @NonNls String EXEC = "exec";
+  private static final @NonNls String WORKING_DIRECTORY = "WORKING_DIRECTORY";
+  private static final @NonNls String COMMAND = "COMMAND";
+  private static final @NonNls String PARAMETERS = "PARAMETERS";
+  private static final @NonNls String FILTER = "filter";
+  private static final @NonNls String ELEMENT_OPTION = "option";
+  private static final @NonNls String ATTRIBUTE_VALUE = "value";
 
-  @NotNull
   @Override
-  public ToolsGroup<T> readScheme(@NotNull Element root, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
+  public @NotNull ToolsGroup<T> readScheme(@NotNull Element root, boolean duringLoad) throws InvalidDataException, IOException, JDOMException {
     if (!TOOL_SET.equals(root.getName())) {
       throw new InvalidDataException();
     }
@@ -128,9 +113,8 @@ abstract public class ToolsProcessor<T extends Tool> extends NonLazySchemeProces
 
   protected abstract T createTool();
 
-  @NotNull
   @Override
-  public Element writeScheme(@NotNull final ToolsGroup<T> scheme) throws WriteExternalException {
+  public @NotNull Element writeScheme(final @NotNull ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
     groupElement.setAttribute(ATTRIBUTE_NAME, scheme.getName());
 

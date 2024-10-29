@@ -2,7 +2,6 @@
 package git4idea.ui.branch.popup
 
 import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.diverged
 import com.intellij.dvcs.getCommonName
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.DataManager
@@ -15,68 +14,59 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopupStep
 import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.PopupStep.FINAL_CHOICE
-import com.intellij.openapi.ui.popup.SpeedSearchFilter
-import com.intellij.openapi.util.TextRange
-import com.intellij.psi.codeStyle.MinusculeMatcher
-import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
-import com.intellij.ui.treeStructure.Tree
-import com.intellij.util.containers.FList
 import git4idea.GitBranch
 import git4idea.GitReference
 import git4idea.GitTag
 import git4idea.GitVcs
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.actions.branch.GitBranchActionsUtil.userWantsSyncControl
 import git4idea.repo.GitRefUtil
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.GIT_SINGLE_REF_ACTION_GROUP
 import git4idea.ui.branch.GitBranchPopupActions.EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase.Companion.TOP_LEVEL_ACTION_PLACE
 import git4idea.ui.branch.tree.*
 import javax.swing.JComponent
-import javax.swing.tree.TreePath
 
-class GitBranchesTreePopupStep(internal val project: Project,
-                               internal val selectedRepository: GitRepository?,
-                               internal val repositories: List<GitRepository>,
-                               private val isFirstStep: Boolean) : PopupStep<Any> {
-
-  internal val affectedRepositories get() = selectedRepository?.let(::listOf) ?: repositories
-
-  private val presentationFactory = PresentationFactory()
+class GitBranchesTreePopupStep(
+  project: Project,
+  selectedRepository: GitRepository?,
+  repositories: List<GitRepository>,
+  private val isFirstStep: Boolean,
+) : GitBranchesTreePopupStepBase(project, selectedRepository, repositories) {
   private var finalRunnable: Runnable? = null
 
-  override fun getFinalRunnable() = finalRunnable
+  private val topLevelItems: List<Any> = buildList {
+    val affectedRepositories = affectedRepositories(selectedRepository, repositories)
+    val presentationFactory = PresentationFactory()
 
-  internal var treeModel: GitBranchesTreeModel
-    private set
-
-  private val topLevelItems = mutableListOf<Any>()
-
-  init {
     if (ExperimentalUI.isNewUI() && isFirstStep) {
       val experimentalUIActionsGroup = ActionManager.getInstance().getAction(EXPERIMENTAL_BRANCH_POPUP_ACTION_GROUP) as? ActionGroup
       if (experimentalUIActionsGroup != null) {
-        topLevelItems.addAll(createTopLevelActionItems(project, experimentalUIActionsGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
-        if (topLevelItems.isNotEmpty()) {
-          topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+        addAll(createTopLevelActionItems(project, experimentalUIActionsGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
+        if (this.isNotEmpty()) {
+          add(GitBranchesTreePopupBase.createTreeSeparator())
         }
       }
     }
     val actionGroup = ActionManager.getInstance().getAction(TOP_LEVEL_ACTION_GROUP) as? ActionGroup
     if (actionGroup != null) {
       // get selected repo inside actions
-      topLevelItems.addAll(createTopLevelActionItems(project, actionGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
-      if (topLevelItems.isNotEmpty()) {
-        topLevelItems.add(GitBranchesTreePopup.createTreeSeparator())
+      addAll(createTopLevelActionItems(project, actionGroup, presentationFactory, selectedRepository, affectedRepositories).addSeparators())
+      if (this.isNotEmpty()) {
+        add(GitBranchesTreePopupBase.createTreeSeparator())
       }
     }
-
-    treeModel = createTreeModel(false)
   }
-  private fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
+
+  override var treeModel: GitBranchesTreeModel = createTreeModel(false)
+    private set
+
+  override fun createTreeModel(filterActive: Boolean): GitBranchesTreeModel {
     return when {
       !filterActive && repositories.size > 1
       && !userWantsSyncControl(project) && selectedRepository != null -> {
@@ -91,71 +81,11 @@ class GitBranchesTreePopupStep(internal val project: Project,
     }
   }
 
-  private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {
-    val actionsWithSeparators = mutableListOf<Any>()
-    for (action in this) {
-      if (action.isPrependWithSeparator) {
-        actionsWithSeparators.add(GitBranchesTreePopup.createTreeSeparator(action.separatorText))
-      }
-      actionsWithSeparators.add(action)
-    }
-    return actionsWithSeparators
+  override fun setTreeModel(treeModel: GitBranchesTreeModel) {
+    this.treeModel = treeModel
   }
 
-  fun isBranchesDiverged(): Boolean {
-    return repositories.size > 1
-           && getCommonName(repositories) { GitRefUtil.getCurrentReference(it)?.fullName ?: return@getCommonName null } == null
-           && userWantsSyncControl(project)
-  }
-
-  fun getPreferredSelection(): TreePath? {
-    return treeModel.getPreferredSelection()
-  }
-
-  fun createTreePathFor(value: Any): TreePath? {
-    return createTreePathFor(treeModel, value)
-  }
-
-  internal fun setPrefixGrouping(state: Boolean) {
-    treeModel.isPrefixGrouping = state
-  }
-
-  fun setSearchPattern(pattern: String?) {
-    if (pattern == null || pattern == "/") {
-      treeModel.filterBranches()
-      return
-    }
-
-    val trimmedPattern = pattern.trim() //otherwise Character.isSpaceChar would affect filtering
-    val matcher = PreferStartMatchMatcherWrapper(NameUtil.buildMatcher("*$trimmedPattern").build())
-    treeModel.filterBranches(matcher)
-  }
-
-  fun updateTreeModelIfNeeded(tree: Tree, pattern: String?) {
-    if (!isFirstStep || affectedRepositories.size == 1) {
-      require(tree.model != null) { "Provided tree with null model" }
-      return
-    }
-
-    val filterActive = !(pattern.isNullOrBlank() || pattern == "/")
-    treeModel = createTreeModel(filterActive)
-    tree.model = treeModel
-  }
-
-  override fun hasSubstep(selectedValue: Any?): Boolean {
-    val userValue = selectedValue ?: return false
-
-    return if (userValue is PopupFactoryImpl.ActionItem) {
-      userValue.isEnabled && userValue.action is ActionGroup
-    }
-    else {
-      treeModel.isSelectable(selectedValue)
-    }
-  }
-
-  fun isSelectable(node: Any?): Boolean {
-    return treeModel.isSelectable(node)
-  }
+  override fun getFinalRunnable() = finalRunnable
 
   override fun onChosen(selectedValue: Any?, finalChoice: Boolean): PopupStep<out Any>? {
     if (selectedValue is GitBranchesTreeModel.TopLevelRepository) {
@@ -170,7 +100,7 @@ class GitBranchesTreePopupStep(internal val project: Project,
     val reference = selectedValue as? GitReference ?: refUnderRepository?.ref
 
     if (reference != null) {
-      val actionGroup = ActionManager.getInstance().getAction(BRANCH_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
+      val actionGroup = ActionManager.getInstance().getAction(GIT_SINGLE_REF_ACTION_GROUP) as? ActionGroup ?: DefaultActionGroup()
       return createActionStep(actionGroup, project, selectedRepository,
                               refUnderRepository?.repository?.let(::listOf) ?: affectedRepositories, reference)
     }
@@ -203,31 +133,19 @@ class GitBranchesTreePopupStep(internal val project: Project,
       }
     }
 
-  override fun canceled() {}
+  override fun shouldValidateNotNullTreeModel(): Boolean = !isFirstStep || super.shouldValidateNotNullTreeModel()
 
-  override fun isMnemonicsNavigationEnabled() = false
-
-  override fun getMnemonicNavigationFilter() = null
-
-  override fun isSpeedSearchEnabled() = true
-
-  override fun getSpeedSearchFilter() = SpeedSearchFilter<Any> { node ->
-    when (node) {
-      is GitBranch -> node.name
-      else -> node?.let { GitBranchesTreeRenderer.getText(node, treeModel, repositories) } ?: ""
-    }
+  fun isBranchesDiverged(): Boolean {
+    return repositories.size > 1
+           && getCommonName(repositories) { GitRefUtil.getCurrentReference(it)?.fullName ?: return@getCommonName null } == null
+           && userWantsSyncControl(project)
   }
 
-  override fun isAutoSelectionEnabled() = false
-
   companion object {
-    internal const val HEADER_SETTINGS_ACTION_GROUP = "Git.Branches.Popup.Settings"
     private const val TOP_LEVEL_ACTION_GROUP = "Git.Branches.List"
-    internal const val SPEED_SEARCH_DEFAULT_ACTIONS_GROUP = "Git.Branches.Popup.SpeedSearch"
     private const val BRANCH_ACTION_GROUP = "Git.Branch"
 
     internal val SINGLE_REPOSITORY_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.SingleRepo.Branch.Actions")
-    internal val TOP_LEVEL_ACTION_PLACE = ActionPlaces.getPopupPlace("GitBranchesPopup.TopLevel.Branch.Actions")
 
     private fun createTopLevelActionItems(project: Project,
                                           actionGroup: ActionGroup,
@@ -256,6 +174,17 @@ class GitBranchesTreePopupStep(internal val project: Project,
         .createActionsStep(actionGroup, dataContext, SINGLE_REPOSITORY_ACTION_PLACE, false, true, null, null, false, 0, false)
     }
 
+    private fun List<PopupFactoryImpl.ActionItem>.addSeparators(): List<Any> {
+      val actionsWithSeparators = mutableListOf<Any>()
+      for (action in this) {
+        if (action.isPrependWithSeparator) {
+          actionsWithSeparators.add(GitBranchesTreePopupBase.createTreeSeparator(action.separatorText))
+        }
+        actionsWithSeparators.add(action)
+      }
+      return actionsWithSeparators
+    }
+
     internal fun createDataContext(project: Project,
                                    component: JComponent?,
                                    selectedRepository: GitRepository?,
@@ -264,35 +193,14 @@ class GitBranchesTreePopupStep(internal val project: Project,
       CustomizedDataContext.withSnapshot(
         DataManager.getInstance().getDataContext(component)) { sink ->
         sink[CommonDataKeys.PROJECT] = project
-        sink[GitBranchActionsUtil.REPOSITORIES_KEY] = repositories
-        sink[GitBranchActionsUtil.SELECTED_REPO_KEY] = selectedRepository
+        sink[GitBranchActionsDataKeys.AFFECTED_REPOSITORIES] = repositories
+        sink[GitBranchActionsDataKeys.SELECTED_REPOSITORY] = selectedRepository
         if (reference is GitBranch) {
-          sink[GitBranchActionsUtil.BRANCHES_KEY] = listOf(reference)
+          sink[GitBranchActionsDataKeys.BRANCHES] = listOf(reference)
         }
         else if (reference is GitTag) {
-          sink[GitBranchActionsUtil.TAGS_KEY] = listOf(reference)
+          sink[GitBranchActionsDataKeys.TAGS] = listOf(reference)
         }
-        sink[GitBranchActionsUtil.BRANCHES_KEY] = (reference as? GitBranch)?.let(::listOf)
       }
-
-    /**
-     * Adds weight to match offset. Degree of match is increased with the earlier the pattern was found in the name.
-     */
-    private class PreferStartMatchMatcherWrapper(private val delegate: MinusculeMatcher) : MinusculeMatcher() {
-      override fun getPattern(): String = delegate.pattern
-
-      override fun matchingFragments(name: String): FList<TextRange>? = delegate.matchingFragments(name)
-
-      override fun matchingDegree(name: String, valueStartCaseMatch: Boolean, fragments: FList<out TextRange>?): Int {
-        var degree = delegate.matchingDegree(name, valueStartCaseMatch, fragments)
-        if (fragments.isNullOrEmpty()) return degree
-        degree += MATCH_OFFSET - fragments.head.startOffset
-        return degree
-      }
-
-      companion object {
-        private const val MATCH_OFFSET = 10000
-      }
-    }
   }
 }

@@ -1,16 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
 import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
-import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamBase;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStreamImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.ByteBufferReader;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.RecordAlreadyDeletedException;
+import com.intellij.platform.util.io.storages.blobstorage.RecordAlreadyDeletedException;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +17,6 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.VFSAttributesStorage.checkAttributeValueSize;
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecords.LOG;
@@ -27,6 +24,8 @@ import static com.intellij.util.SystemProperties.getBooleanProperty;
 
 /**
  * Attribute storage implemented on the top of {@link StreamlinedBlobStorage}
+ * <p>
+ * Not thread safe, should be protected by external lock(s).
  */
 @ApiStatus.Internal
 public final class AttributesStorageOverBlobStorage implements VFSAttributesStorage, CleanableStorage {
@@ -64,8 +63,6 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
 
   private final @NotNull StreamlinedBlobStorage storage;
 
-  private final ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
-
   public AttributesStorageOverBlobStorage(@NotNull StreamlinedBlobStorage storage) { this.storage = storage; }
 
   @Override
@@ -83,61 +80,49 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                                       int fileId,
                                                       @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    lock.readLock().lock();
-    try {
-      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
-        return null;
-      }
-      else if (attributeRecordId < NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
-        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
-      }
-      int encodedAttributeId = connection.getAttributeId(attribute.getId());
-
-      byte[] attributeValueBytes = readAttributeValue(
-        attributeRecordId,
-        fileId, encodedAttributeId
-      );
-
-      if (attributeValueBytes == null) {
-        return null;
-      }
-      return new AttributeInputStream(
-        new UnsyncByteArrayInputStream(attributeValueBytes),
-        connection.getEnumeratedAttributes()
-      );
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
+    if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
+      return null;
     }
-    finally {
-      lock.readLock().unlock();
+    else if (attributeRecordId < NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
+      throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
     }
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
+
+    byte[] attributeValueBytes = readAttributeValue(
+      attributeRecordId,
+      fileId, encodedAttributeId
+    );
+
+    if (attributeValueBytes == null) {
+      return null;
+    }
+    return new AttributeInputStream(
+      new UnsyncByteArrayInputStream(attributeValueBytes),
+      connection.attributesEnumerator()
+    );
   }
 
-  public <R> R readAttributeRaw(PersistentFSConnection connection,
+  public <R> R readAttributeRaw(@NotNull PersistentFSConnection connection,
                                 int fileId,
                                 @NotNull FileAttribute attribute,
-                                ByteBufferReader<R> reader) throws IOException {
+                                @NotNull ByteBufferReader<R> reader) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    lock.readLock().lock();
-    try {
-      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
-        return null;
-      }
-      if (attributeRecordId < 0) {
-        throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
-      }
-      int encodedAttributeId = connection.getAttributeId(attribute.getId());
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
+    if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
+      return null;
+    }
+    if (attributeRecordId < 0) {
+      throw new IllegalStateException("file[id: " + fileId + "]: attributeRecordId[=" + attributeRecordId + "] is negative, must be >=0");
+    }
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
 
-      return readAttributeValue(
-        attributeRecordId,
-        fileId,
-        encodedAttributeId,
-        reader
-      );
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    return readAttributeValue(
+      attributeRecordId,
+      fileId,
+      encodedAttributeId,
+      reader
+    );
   }
 
   @Override
@@ -145,28 +130,25 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                   int fileId,
                                   @NotNull FileAttribute attribute) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
-    lock.readLock().lock();
-    try {
-      int attributeRecordId = connection.getRecords().getAttributeRecordId(fileId);
-      if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
-        return false;
-      }
-      int encodedAttributeId = connection.getAttributeId(attribute.getId());
+    int attributeRecordId = connection.records().getAttributeRecordId(fileId);
+    if (attributeRecordId == NON_EXISTENT_ATTRIBUTE_RECORD_ID) {
+      return false;
+    }
+    int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
 
-      return hasAttribute(attributeRecordId, fileId, encodedAttributeId);
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+    return hasAttribute(attributeRecordId, fileId, encodedAttributeId);
   }
 
   @Override
   public @NotNull AttributeOutputStream writeAttribute(@NotNull PersistentFSConnection connection,
                                                        int fileId,
                                                        @NotNull FileAttribute attribute) {
-    return new AttributeOutputStreamBase(
-      new AttributeOutputStreamImpl(connection, fileId, attribute),
-      connection.getEnumeratedAttributes()
+    //MAYBE RC: it is probably better to return plain OutputStream from this storage, and add everything else
+    //          (.writeEnumeratedString() method, locking around .close()) in FSRecordsImpl, then wrapping it into
+    //          a DataOutputStream
+    return new AttributeOutputStreamImpl(
+      new WritesAccumulatingOutputStream(connection, fileId, attribute),
+      connection.attributesEnumerator()
     );
   }
 
@@ -175,17 +157,11 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
                                int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
 
-    PersistentFSRecordsStorage records = connection.getRecords();
-    lock.writeLock().lock();
-    try {
-      int attributeRecordId = records.getAttributeRecordId(fileId);
-      deleteAttributes(attributeRecordId, fileId);
+    PersistentFSRecordsStorage records = connection.records();
+    int attributeRecordId = records.getAttributeRecordId(fileId);
+    deleteAttributes(attributeRecordId, fileId);
 
-      records.setAttributeRecordId(fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
-    }
-    finally {
-      lock.writeLock().unlock();
-    }
+    records.setAttributeRecordId(fileId, NON_EXISTENT_ATTRIBUTE_RECORD_ID);
   }
 
   @Override
@@ -195,66 +171,60 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
       return;
     }
 
-    lock.readLock().lock();
-    try {
-      storage.readRecord(attributeRecordId, buffer -> {
-        AttributesRecord attributesRecord = new AttributesRecord(buffer);
-        if (!attributesRecord.isValid()) {
-          throw new IllegalStateException(
-            "record(" + attributeRecordId + ") is invalid: " + attributesRecord
-          );
-        }
-        attributesRecord.checkBackrefFile(attributeRecordId, fileId);
+    storage.readRecord(attributeRecordId, buffer -> {
+      AttributesRecord attributesRecord = new AttributesRecord(buffer);
+      if (!attributesRecord.isValid()) {
+        throw new IllegalStateException(
+          "record(" + attributeRecordId + ") is invalid: " + attributesRecord
+        );
+      }
+      attributesRecord.checkBackrefFile(attributeRecordId, fileId);
 
-        if (attributesRecord.hasDirectory()) {
-          int entryNo = 0;
-          for (AttributeEntry entry = attributesRecord.currentEntry();
-               entry.isValid();
-               entry.moveToNextEntry(), entryNo++) {
-            int attributeId = entry.attributeId();
-            if (entry.isValueInlined()) {
-              if (!validAttributeId(attributeId)) {
-                String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
-                throw new IllegalStateException(
-                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
-                  "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
-              }
+      if (attributesRecord.hasDirectory()) {
+        int entryNo = 0;
+        for (AttributeEntry entry = attributesRecord.currentEntry();
+             entry.isValid();
+             entry.moveToNextEntry(), entryNo++) {
+          int attributeId = entry.attributeId();
+          if (entry.isValueInlined()) {
+            if (!validAttributeId(attributeId)) {
+              String valueAsHex = IOUtil.toHexString(entry.inlinedValueAsSlice());
+              throw new IllegalStateException(
+                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                "{attributeId: " + attributeId + ", value: " + valueAsHex + "} attributeId must be in [1.." + MAX_ATTRIBUTE_ID + "]");
             }
-            else {
-              int dedicatedRecordId = entry.dedicatedValueRecordId();
-              if (!storage.hasRecord(dedicatedRecordId)) {
-                throw new IllegalStateException(
-                  "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
-                  "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
-              }
+          }
+          else {
+            int dedicatedRecordId = entry.dedicatedValueRecordId();
+            if (!storage.hasRecord(dedicatedRecordId)) {
+              throw new IllegalStateException(
+                "attributeRecord[id:" + attributeRecordId + "][#" + entryNo + "]" +
+                "{attributeId: " + attributeId + ", dedicatedId: " + dedicatedRecordId + "} dedicatedId must be != 0");
             }
           }
         }
-        else if (attributesRecord.hasDedicatedAttribute()) {
-          int attributeId = attributesRecord.dedicatedRecordAttributeId();
-          throw new IllegalStateException(
-            "attributeRecord[id:" + attributeRecordId + "]{attributeId: " + attributeId + "} " +
-            "is dedicated record, but must be a directory record" +
-            ": " + attributesRecord
-          );
-        }
-        else {//AssertionError because it must be covered by !isValid() branch above
-          throw new AssertionError(
-            "attributeRecord[id:" + attributeRecordId + "] " +
-            "is of unknown type (!directory & !dedicated) record" +
-            ": " + attributesRecord
-          );
-        }
-        return null;
-      });
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+      }
+      else if (attributesRecord.hasDedicatedAttribute()) {
+        int attributeId = attributesRecord.dedicatedRecordAttributeId();
+        throw new IllegalStateException(
+          "attributeRecord[id:" + attributeRecordId + "]{attributeId: " + attributeId + "} " +
+          "is dedicated record, but must be a directory record" +
+          ": " + attributesRecord
+        );
+      }
+      else {//AssertionError because it must be covered by !isValid() branch above
+        throw new AssertionError(
+          "attributeRecord[id:" + attributeRecordId + "] " +
+          "is of unknown type (!directory & !dedicated) record" +
+          ": " + attributesRecord
+        );
+      }
+      return null;
+    });
   }
 
   @Override
-  public boolean isEmpty() {
+  public boolean isEmpty() throws IOException {
     return storage.liveRecordsCount() == 0;
   }
 
@@ -276,38 +246,32 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     // have in my mind now fileId and attributeId are important, but 'true' recordId is really not important. And the purpose of
     // this method is to provide fast _streaming-like_ access to storage.
     // Hence, I decided to delay more correct implementation until the need for it satisfies its cost.
-    lock.readLock().lock();
-    try {
-      storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
-        if (!storage.isRecordActual(recordLength)) {
-          return true;
-        }
+    storage.forEach((recordId, recordCapacity, recordLength, payload) -> {
+      if (!storage.isRecordActual(recordLength)) {
+        return true;
+      }
 
-        AttributesRecord attributesRecord = new AttributesRecord(payload);
-        if (attributesRecord.hasDirectory()) {
-          int fileId = attributesRecord.fileId();
-          for (AttributeEntry attributeEntry = attributesRecord.currentEntry();
-               attributeEntry.isValid();
-               attributeEntry.moveToNextEntry()) {
-            int attributeId = attributeEntry.attributeId();
-            if (attributeEntry.isValueInlined()) {
-              byte[] valueBytes = attributeEntry.inlinedValueAsByteArray();
-              processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ true);
-            }
+      AttributesRecord attributesRecord = new AttributesRecord(payload);
+      if (attributesRecord.hasDirectory()) {
+        int fileId = attributesRecord.fileId();
+        for (AttributeEntry attributeEntry = attributesRecord.currentEntry();
+             attributeEntry.isValid();
+             attributeEntry.moveToNextEntry()) {
+          int attributeId = attributeEntry.attributeId();
+          if (attributeEntry.isValueInlined()) {
+            byte[] valueBytes = attributeEntry.inlinedValueAsByteArray();
+            processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ true);
           }
         }
-        else if (attributesRecord.hasDedicatedAttribute()) {
-          int fileId = attributesRecord.fileId();
-          int attributeId = attributesRecord.dedicatedRecordAttributeId();
-          byte[] valueBytes = attributesRecord.dedicatedValueAsByteArray();
-          processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ false);
-        }
-        return true;
-      });
-    }
-    finally {
-      lock.readLock().unlock();
-    }
+      }
+      else if (attributesRecord.hasDedicatedAttribute()) {
+        int fileId = attributesRecord.fileId();
+        int attributeId = attributesRecord.dedicatedRecordAttributeId();
+        byte[] valueBytes = attributesRecord.dedicatedValueAsByteArray();
+        processor.processAttribute(recordId, fileId, attributeId, valueBytes, /*inlined: */ false);
+      }
+      return true;
+    });
   }
 
   public interface Processor<E extends Exception> {
@@ -754,15 +718,15 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     }
   }
 
-  private final class AttributeOutputStreamImpl extends DataOutputStream implements RepresentableAsByteArraySequence {
+  /** Accumulates writes in a byte[]-buffer, flushes the buffer into an attribute storage on {@link #close()} */
+  private final class WritesAccumulatingOutputStream extends UnsyncByteArrayOutputStream {
     private final @NotNull PersistentFSConnection connection;
     private final @NotNull FileAttribute attribute;
     private final int fileId;
 
-    private AttributeOutputStreamImpl(@NotNull PersistentFSConnection connection,
-                                      int fileId,
-                                      @NotNull FileAttribute attribute) {
-      super(new BufferExposingByteArrayOutputStream());
+    private WritesAccumulatingOutputStream(@NotNull PersistentFSConnection connection,
+                                           int fileId,
+                                           @NotNull FileAttribute attribute) {
       this.connection = connection;
       this.fileId = fileId;
       this.attribute = attribute;
@@ -772,40 +736,21 @@ public final class AttributesStorageOverBlobStorage implements VFSAttributesStor
     public void close() throws IOException {
       super.close();
 
-      BufferExposingByteArrayOutputStream attributeValueHolder = (BufferExposingByteArrayOutputStream)out;
-      int attributeValueSize = attributeValueHolder.size();
+      int attributeValueSize = size();
       checkAttributeValueSize(attribute, attributeValueSize);
 
-      PersistentFSRecordsStorage records = connection.getRecords();
-      lock.writeLock().lock();
-      try {
-        int encodedAttributeId = connection.getAttributeId(attribute.getId());
-        int attributesRecordId = records.getAttributeRecordId(fileId);
+      PersistentFSRecordsStorage records = connection.records();
+      int encodedAttributeId = connection.enumerateAttributeId(attribute.getId());
+      int attributesRecordId = records.getAttributeRecordId(fileId);
 
-        int updatedAttributesRecordId = updateAttribute(
-          attributesRecordId,
-          fileId, encodedAttributeId,
-          attributeValueHolder.getInternalBuffer(), attributeValueSize
-        );
+      int updatedAttributesRecordId = updateAttribute(
+        attributesRecordId,
+        fileId, encodedAttributeId,
+        myBuffer, attributeValueSize
+      );
 
-        //skip (updatedAttributesRecordId != attributesRecordId) check since we want to _always_ update file.modCount
-        records.setAttributeRecordId(fileId, updatedAttributesRecordId);
-      }
-      catch (Throwable t) {
-        LOG.warn("Error storing " + attribute + " of file(" + fileId + ")");
-        //FIXME RC: don't use static method -- use specific VFS instance to handle the error
-        //          Even better: setup error processing in FSRecordsImpl.writeAttribute() -- wrap returned stream,
-        //          and add exception handling into the .close() method.
-        throw FSRecords.handleError(t);
-      }
-      finally {
-        lock.writeLock().unlock();
-      }
-    }
-
-    @Override
-    public @NotNull ByteArraySequence asByteArraySequence() {
-      return ((BufferExposingByteArrayOutputStream)out).asByteArraySequence();
+      //skip (updatedAttributesRecordId != attributesRecordId) check since we want to _always_ update file.modCount
+      records.setAttributeRecordId(fileId, updatedAttributesRecordId);
     }
   }
 

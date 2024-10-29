@@ -44,7 +44,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
                                        .methodCallParameter(0, psiMethod()
                                          .withName(string().oneOf("get", "is", "intValue", "doubleValue", "stringValue", "getColor"))
                                          .definedInClass(PsiJavaPatterns.psiClass().withQualifiedName(string().oneOf(
+                                           //kotlin would resolve in the companion,
+                                           //while java would pretend to see static method in class
                                            Registry.class.getName(),
+                                           Registry.class.getName() + ".Companion",
                                            RegistryManager.class.getName()
                                          )))),
                                      new UastInjectionHostReferenceProvider() {

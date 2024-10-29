@@ -16,7 +16,7 @@ object KotlinNameSuggester : IExtractionNameSuggester<KaType> {
         validator: KotlinNameValidator,
         defaultName: String?,
     ): List<String> = analyze(container) {
-        if (kotlinType.isUnit) emptyList()
+        if (kotlinType.isUnitType) emptyList()
         else KotlinNameSuggester()
             .suggestTypeNames(kotlinType)
             .map { KotlinNameSuggester.suggestNameByName(it, validator) }

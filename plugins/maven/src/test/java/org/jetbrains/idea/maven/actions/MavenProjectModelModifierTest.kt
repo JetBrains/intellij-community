@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.actions
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
@@ -170,9 +171,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
       assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.JDK_1_8)
+    val tag = findTag("project.build.plugins.plugin")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin")
-      assertNotNull(tag)
       assertEquals("maven-compiler-plugin", tag.getSubTagText("artifactId"))
       val configuration = tag.findFirstSubTag("configuration")
       assertNotNull(configuration)
@@ -193,10 +194,10 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
       assertEquals(getDefaultLanguageLevel(), LanguageLevelUtil.getEffectiveLanguageLevel(module))
     }
     changeLanguageLevel(module, LanguageLevel.entries[LanguageLevel.HIGHEST.ordinal + 1])
+    val tag = findTag("project.build.plugins.plugin")
     readAction {
       assertEquals("--enable-preview",
-                   findTag("project.build.plugins.plugin")
-                     .findFirstSubTag("configuration")!!
+                   tag.findFirstSubTag("configuration")!!
                      .getSubTagText("compilerArgs"))
     }
   }
@@ -250,7 +251,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
                                                    scope: DependencyScope) {
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        extension.addExternalLibraryDependency(modules, descriptor, scope)
+        writeIntentReadAction {
+          extension.addExternalLibraryDependency(modules, descriptor, scope)
+        }
       }
     }
     return
@@ -259,7 +262,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   private suspend fun addLibraryDependency(from: Module, library: Library, scope: DependencyScope, exported: Boolean) {
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        extension.addLibraryDependency(from, library, scope, exported)
+        writeIntentReadAction {
+          extension.addLibraryDependency(from, library, scope, exported)
+        }
       }
     }
     return
@@ -268,7 +273,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   private suspend fun addModuleDependency(from: Module, to: Module, scope: DependencyScope, exported: Boolean) {
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        extension.addModuleDependency(from, to, scope, exported)
+        writeIntentReadAction {
+          extension.addModuleDependency(from, to, scope, exported)
+        }
       }
     }
     return
@@ -277,7 +284,9 @@ class MavenProjectModelModifierTest : MavenDomWithIndicesTestCase() {
   private suspend fun changeLanguageLevel(module: Module, level: LanguageLevel) {
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        extension.changeLanguageLevel(module, level)
+        writeIntentReadAction {
+          extension.changeLanguageLevel(module, level)
+        }
       }
     }
     return

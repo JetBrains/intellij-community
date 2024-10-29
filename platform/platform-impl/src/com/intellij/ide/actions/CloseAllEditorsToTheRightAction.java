@@ -4,7 +4,9 @@ package com.intellij.ide.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class CloseAllEditorsToTheRightAction extends CloseAllEditorsToTheLeftAction {
   @Override
   protected boolean isOKToClose(VirtualFile contextFile, VirtualFile candidateFile, VirtualFile cursorFile) {

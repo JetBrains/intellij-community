@@ -10,9 +10,16 @@ public class TestPop2OneDoublePop2 {
 class 'pkg/TestPop2OneDoublePop2' {
    method 'main ([Ljava/lang/String;)V' {
       0      5
+      1      5
+      2      5
       3      5
+      4      5
       5      4
+      6      4
+      7      4
       9      5
+      a      5
+      b      5
       c      6
    }
 }

@@ -218,7 +218,7 @@ public final class LanguageUtil {
     }
 
     for (Language value : Language.getRegisteredLanguages()) {
-      if (value.getID().equalsIgnoreCase(langValueText)) {
+      if (value.getID().equalsIgnoreCase(langValueText) || value.getDisplayName().equalsIgnoreCase(langValueText)) {
         return value;
       }
     }

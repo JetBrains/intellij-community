@@ -24,11 +24,15 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle;
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.*;
 import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringUtilKt;
 import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractUtilKt;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IParameter;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IReplacement;
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ParameterReplacement;
 import org.jetbrains.kotlin.idea.refactoring.introduce.ui.KotlinSignatureComponent;
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken;
 import org.jetbrains.kotlin.lexer.KtTokens;
 import org.jetbrains.kotlin.psi.KtElement;
 import org.jetbrains.kotlin.psi.KtPsiFactory;
+import org.jetbrains.kotlin.psi.KtSimpleNameExpression;
 import org.jetbrains.kotlin.psi.KtTypeCodeFragment;
 import org.jetbrains.kotlin.psi.psiUtil.KtPsiUtilKt;
 
@@ -36,9 +40,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class KotlinFirExtractFunctionDialog extends DialogWrapper {
     private JPanel contentPane;
@@ -115,7 +121,7 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
                                                                               originalDescriptor.getDescriptor().getContext())
                 )
                 .expireWith(getDisposable())
-                .finishOnUiThread(ModalityState.current(), preview -> signaturePreviewField.setText(preview))
+                .finishOnUiThread(ModalityState.stateForComponent(signaturePreviewField), preview -> signaturePreviewField.setText(preview))
                 .submit(AppExecutorUtil.getAppExecutorService());
     }
 
@@ -252,7 +258,6 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
                     }
                 }
         );
-        onAccept.invoke(result.getDescriptor());
         close(OK_EXIT_CODE);
     }
 
@@ -291,18 +296,32 @@ public class KotlinFirExtractFunctionDialog extends DialogWrapper {
         }
 
         ExtractionData data = originalDescriptor.getExtractionData();
+        var newReplacementMap = MultiMap.<KtSimpleNameExpression, IReplacement<KaType>>create();
+        originalDescriptor.getReplacementMap()
+                .entrySet()
+                .forEach(entry -> {
+                    List<IReplacement<KaType>> newReplacement = ContainerUtil.map(entry.getValue(), p -> {
+                        if (p instanceof ParameterReplacement<KaType> r) {
+                            Parameter newParameter = oldToNewParameters.get(r.getParameter());
+                            return newParameter != null ? r.copy(newParameter) : p;
+                        } else {
+                            return p;
+                        }
+                    });
+                    newReplacementMap.putValues(entry.getKey(), newReplacement);
+                });
         return new ExtractableCodeDescriptor(originalDescriptor.getContext(),
                                              data,
                                              List.of(newName),
                                              newVisibility,
-                                             oldToNewParameters.values().stream().toList(),
+                                             oldToNewParameters.values().stream().filter(p -> p != newReceiver).toList(),
                                              newReceiver,
                                              originalDescriptor.getTypeParameters(),
-                                             originalDescriptor.getReplacementMap(),
+                                             newReplacementMap,
                                              originalDescriptor.getControlFlow(),
                                              returnType,
                                              originalDescriptor.getModifiers(),
                                              originalDescriptor.getOptInMarkers(),
-                                             originalDescriptor.getAnnotationClassIds());
+                                             originalDescriptor.getRenderedAnnotations());
     }
 }

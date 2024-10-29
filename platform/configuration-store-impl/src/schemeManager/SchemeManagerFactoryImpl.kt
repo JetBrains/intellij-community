@@ -3,7 +3,6 @@ package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.SettingsCategory
@@ -14,18 +13,19 @@ import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.options.SchemeProcessor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.RefreshQueue
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.util.addSuppressed
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 
-@NonNls const val ROOT_CONFIG: String = "\$ROOT_CONFIG$"
+const val ROOT_CONFIG: String = "\$ROOT_CONFIG\$"
 
 internal typealias FileChangeSubscriber = (schemeManager: SchemeManagerImpl<*, *>) -> Unit
 
@@ -58,11 +58,11 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       processor,
       streamProvider ?: componentManager?.stateStore?.storageManager?.streamProvider,
       ioDirectory = directoryPath ?: pathToFile(path),
-      roamingType = roamingType,
-      presentableName = presentableName,
-      schemeNameToFileName = schemeNameToFileName,
-      fileChangeSubscriber = fileChangeSubscriber,
-      settingsCategory = settingsCategory,
+      roamingType,
+      presentableName,
+      schemeNameToFileName,
+      fileChangeSubscriber,
+      settingsCategory,
     )
     if (isAutoSave) {
       @Suppress("UNCHECKED_CAST")
@@ -90,12 +90,8 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       try {
         processor(manager)
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
+      catch (e: CancellationException) { throw e }
+      catch (e: ProcessCanceledException) { throw e }
       catch (e: Throwable) {
         LOG.error("Cannot reload settings for ${manager.javaClass.name}", e)
       }
@@ -104,32 +100,25 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
   final override suspend fun save() {
     var error: Throwable? = null
+    val events = mutableListOf<VFileEvent>()
+
     for (registeredManager in managers) {
       try {
-        if (registeredManager.isUseVfs) {
-          withContext(Dispatchers.EDT) {
-            registeredManager.save()
-          }
-        }
-        else {
-          registeredManager.save()
-        }
+        registeredManager.saveImpl(events)
       }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
+      catch (e: CancellationException) { throw e }
+      catch (e: ProcessCanceledException) { throw e }
       catch (e: Throwable) {
-        if (error == null) {
-          error = e
-        }
-        else {
-          error.addSuppressed(e)
-        }
+        error = addSuppressed(error, e)
       }
     }
+
+    if (events.isNotEmpty()) {
+      blockingContext {
+        RefreshQueue.getInstance().processEvents(false, events)
+      }
+    }
+
     error?.let {
       throw it
     }
@@ -155,20 +144,17 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
       return path
     }
 
-    override fun pathToFile(path: String): Path {
-      return ApplicationManager.getApplication().stateStore.storageManager.expandMacro(ROOT_CONFIG).resolve(path)
-    }
+    override fun pathToFile(path: String): Path =
+      ApplicationManager.getApplication().stateStore.storageManager.expandMacro(ROOT_CONFIG).resolve(path)
   }
 
   @Suppress("unused")
   private class ProjectSchemeManagerFactory(private val project: Project) : SchemeManagerFactoryBase() {
     override val componentManager = project
 
-    override fun createFileChangeSubscriber(): FileChangeSubscriber {
-      return { schemeManager ->
-        if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
-          project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
-        }
+    override fun createFileChangeSubscriber(): FileChangeSubscriber = { schemeManager ->
+      if (!ApplicationManager.getApplication().isUnitTestMode || project.getUserData(LISTEN_SCHEME_VFS_CHANGES_IN_TEST_MODE) == true) {
+        project.messageBus.simpleConnect().subscribe(VirtualFileManager.VFS_CHANGES, SchemeFileTracker(schemeManager, project))
       }
     }
 
@@ -180,11 +166,10 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), SettingsSavingCo
 
       val projectStore = project.stateStore as? IProjectStore
       val projectFileDir = projectStore?.directoryStorePath
-      if (projectFileDir == null) {
-        return if (projectStore != null) projectStore.projectBasePath.resolve(".$path") else Path.of(project.basePath!!, ".$path")
-      }
-      else {
-        return projectFileDir.resolve(path)
+      return when {
+        projectFileDir != null -> projectFileDir.resolve(path)
+        projectStore != null -> projectStore.projectBasePath.resolve(".$path")
+        else -> Path.of(project.basePath!!, ".${path}")
       }
     }
   }

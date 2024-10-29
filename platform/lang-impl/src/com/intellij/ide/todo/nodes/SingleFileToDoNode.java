@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.todo.nodes;
 
@@ -8,12 +8,14 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoItem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   private final TodoFileNode myFileNode;
 
@@ -23,8 +25,7 @@ public final class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
   }
 
   @Override
-  @NotNull
-  public Collection<AbstractTreeNode<?>> getChildren() {
+  public @NotNull Collection<AbstractTreeNode<?>> getChildren() {
     return new ArrayList<>(Collections.singleton(myFileNode));
   }
 

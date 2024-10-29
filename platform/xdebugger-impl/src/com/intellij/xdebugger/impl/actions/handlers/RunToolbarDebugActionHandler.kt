@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.actions.handlers
 
 import com.intellij.execution.RunManager
@@ -15,7 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 abstract class RunToolbarDebugActionHandler : DebuggerActionHandler() {
   override fun perform(project: Project, event: AnActionEvent) {
     val session = getSession(event)
@@ -54,7 +56,7 @@ abstract class RunToolbarDebugActionHandler : DebuggerActionHandler() {
   protected abstract fun perform(session: XDebugSessionImpl, dataContext: DataContext?)
 }
 
-class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
+internal class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     return !session.isPaused || session.isReadOnly
   }
@@ -64,6 +66,7 @@ class RunToolbarResumeActionHandler : RunToolbarDebugActionHandler() {
   }
 }
 
+@Internal
 open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     return !session.isPauseActionSupported || session.isPaused
@@ -74,16 +77,11 @@ open class RunToolbarPauseActionHandler : RunToolbarDebugActionHandler() {
   }
 }
 
-
-class InlineXDebuggerResumeHandler(val conf: RunnerAndConfigurationSettings) : XDebuggerResumeHandler() {
-  override fun getConfiguration(project: Project): RunnerAndConfigurationSettings {
-    return conf
-  }
-
+internal class InlineXDebuggerResumeHandler(private val conf: RunnerAndConfigurationSettings) : XDebuggerResumeHandler() {
+  override fun getConfiguration(project: Project): RunnerAndConfigurationSettings = conf
 }
 
-
-open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandler() {
+internal open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandler() {
   override fun getSession(e: AnActionEvent): XDebugSessionImpl? {
     val project = e.project ?: return null
     val configuration = getConfiguration(project) ?: return null
@@ -94,11 +92,11 @@ open class XDebuggerResumeHandler : CurrentSessionXDebuggerResumeHandler() {
   }
 
   open fun getConfiguration(project: Project): RunnerAndConfigurationSettings? {
-    return RunManager.getInstance(project).selectedConfiguration
+    return RunManager.getInstanceIfCreated(project)?.selectedConfiguration
   }
 }
 
-open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugActionHandler() {
+internal open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugActionHandler() {
   enum class State {
     RESUME,
     PAUSE
@@ -118,7 +116,7 @@ open class CurrentSessionXDebuggerResumeHandler : RunToolbarDebugActionHandler()
   override fun isHidden(session: XDebugSessionImpl, dataContext: DataContext?): Boolean {
     dataContext?.getData(CommonDataKeys.PROJECT)?.let { pr ->
       RunWidgetResumeManager.getInstance(pr).let {
-        return it.isSecondVersionAvailable() && (session.isReadOnly || !session.isPauseActionSupported)
+        return session.isReadOnly || !session.isPauseActionSupported
       }
     }
     return false

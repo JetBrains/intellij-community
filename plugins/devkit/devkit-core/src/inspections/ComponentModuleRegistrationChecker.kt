@@ -13,6 +13,7 @@ import com.intellij.openapi.extensions.InternalIgnoreDependencyViolation
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.VirtualFile
@@ -35,7 +36,6 @@ import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.jps.model.serialization.PathMacroUtil
 
 internal class ComponentModuleRegistrationChecker(
@@ -163,7 +163,7 @@ internal class ComponentModuleRegistrationChecker(
     if (ApplicationManager.getApplication().isUnitTestMode) {
       return true
     }
-    if (module == null || !PsiUtil.isIdeaProject(module.project)) {
+    if (module == null || !IntelliJProjectUtil.isIntelliJPlatformProject(module.project)) {
       return false
     }
     val contentRoots = ModuleRootManager.getInstance(module).contentRoots

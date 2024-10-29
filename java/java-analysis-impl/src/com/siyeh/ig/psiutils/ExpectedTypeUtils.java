@@ -23,6 +23,7 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -585,7 +586,7 @@ public final class ExpectedTypeUtils {
       if (containingClass == null) {
         return false;
       }
-      final PsiClass referencingClass = ClassUtils.getContainingClass(referencingLocation);
+      final PsiClass referencingClass = PsiUtil.getContainingClass(referencingLocation);
       if (referencingClass == null) {
         return false;
       }

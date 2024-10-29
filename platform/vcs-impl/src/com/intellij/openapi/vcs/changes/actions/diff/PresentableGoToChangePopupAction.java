@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,7 +21,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,7 +140,7 @@ public abstract class PresentableGoToChangePopupAction<T> extends GoToChangePopu
       viewer.requestRefresh();
 
       if (myChanges.getSelectedIndex() != -1) {
-        UiNotifyConnector.doWhenFirstShown(this, () -> {
+        DiffUtil.runWhenFirstShown(this, () -> {
           viewer.invokeAfterRefresh(() -> {
             DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
               return node instanceof GenericChangesBrowserNode &&

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.execution.ExecutionBundle;
@@ -16,11 +16,11 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.encoding.EncodingReference;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.ui.AddEditDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
@@ -124,7 +124,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.unlimited"));
         return;
       }
-      if (value > FileUtilRt.LARGE_FOR_CONTENT_LOADING / 1024) {
+      if (value > FileSizeLimit.getDefaultContentLoadLimit() / 1024) {
         myConsoleBufferSizeWarningLabel.setText(ApplicationBundle.message("checkbox.override.console.cycle.buffer.size.warning.too.large"));
         return;
       }
@@ -240,8 +240,7 @@ public class ConsoleConfigurable implements SearchableConfigurable, Configurable
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getDisplayName();
   }
 

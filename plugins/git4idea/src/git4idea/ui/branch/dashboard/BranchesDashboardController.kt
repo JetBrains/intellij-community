@@ -5,7 +5,8 @@ import com.intellij.dvcs.branch.DvcsBranchManager
 import com.intellij.dvcs.branch.DvcsBranchManager.DvcsBranchManagerListener
 import com.intellij.dvcs.branch.GroupingKey
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
@@ -19,19 +20,18 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsProjectLog
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx
+import git4idea.GitLocalBranch
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
-import git4idea.branch.GitBranchType
 import git4idea.i18n.GitBundle.message
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
-import git4idea.repo.GitRepositoryManager
+import git4idea.repo.*
 import git4idea.ui.branch.GitBranchManager
-import git4idea.ui.branch.dashboard.BranchesDashboardUtil.anyIncomingOutgoingState
 import kotlin.properties.Delegates
 
-internal class BranchesDashboardController(private val project: Project,
-                                           private val ui: BranchesDashboardUi) : Disposable, DataProvider {
+internal class BranchesDashboardController(
+  private val project: Project,
+  private val ui: BranchesDashboardUi,
+) : Disposable, UiDataProvider {
 
   private val changeListener = DataPackChangeListener { ui.updateBranchesTree(false) }
   private val logUiFilterListener = VcsLogFilterUiEx.VcsLogFilterListener { rootsToFilter = ui.getRootsToFilter() }
@@ -43,8 +43,8 @@ internal class BranchesDashboardController(private val project: Project,
     }
   }
 
-  val localBranches = hashSetOf<BranchInfo>()
-  val remoteBranches = hashSetOf<BranchInfo>()
+  val refs = RefsCollection(hashSetOf<BranchInfo>(), hashSetOf <BranchInfo>(), hashSetOf<RefInfo>())
+
   var showOnlyMy: Boolean by AtomicObservableProperty(false) { old, new -> if (old != new) updateBranchesIsMyState() }
 
   private var rootsToFilter: Set<VirtualFile>? by Delegates.observable(null) { _, old, new ->
@@ -63,6 +63,15 @@ internal class BranchesDashboardController(private val project: Project,
       override fun branchGroupingSettingsChanged(key: GroupingKey, state: Boolean) {
         toggleGrouping(key, state)
       }
+
+      override fun showTagsSettingsChanged(state: Boolean) {
+        ui.updateBranchesTree(false)
+      }
+    })
+    project.messageBus.connect(this).subscribe(GitTagHolder.GIT_TAGS_LOADED, GitTagLoaderListener {
+      runInEdt {
+        ui.updateBranchesTree(false)
+      }
     })
     project.messageBus.connect(this)
       .subscribe(GitBranchIncomingOutgoingManager.GIT_INCOMING_OUTGOING_CHANGED, GitIncomingOutgoingListener {
@@ -71,8 +80,7 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   override fun dispose() {
-    localBranches.clear()
-    remoteBranches.clear()
+    refs.forEach { infos, _ -> infos.clear() }
     rootsToFilter = null
   }
 
@@ -89,7 +97,7 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   fun getSelectedRemotes(): Map<GitRepository, Set<GitRemote>> {
-    val selectedRemotes = ui.getSelectedRemotes()
+    val selectedRemotes = ui.getSelection().selectedRemotes
     if (selectedRemotes.isEmpty()) return emptyMap()
 
     val result = hashMapOf<GitRepository, MutableSet<GitRemote>>()
@@ -113,8 +121,6 @@ internal class BranchesDashboardController(private val project: Project,
     return result
   }
 
-  fun getSelectedRepositories(branchInfo: BranchInfo) = ui.getSelectedRepositories(branchInfo)
-
   fun reloadBranches(): Boolean {
     val forceReload = ui.isGroupingEnabled(GroupingKey.GROUPING_BY_REPOSITORY)
     val changed = reloadBranches(forceReload)
@@ -134,31 +140,32 @@ internal class BranchesDashboardController(private val project: Project,
 
     val newLocalBranches = BranchesDashboardUtil.getLocalBranches(project, rootsToFilter)
     val newRemoteBranches = BranchesDashboardUtil.getRemoteBranches(project, rootsToFilter)
-    val localChanged = force || localBranches.size != newLocalBranches.size || !localBranches.containsAll(newLocalBranches)
-    val remoteChanged = force || remoteBranches.size != newRemoteBranches.size || !remoteBranches.containsAll(newRemoteBranches)
+    val newTags = BranchesDashboardUtil.getTags(project, rootsToFilter)
 
-    if (localChanged) {
-      localBranches.clear()
-      localBranches.addAll(newLocalBranches)
-    }
-    if (remoteChanged) {
-      remoteBranches.clear()
-      remoteBranches.addAll(newRemoteBranches)
-    }
+    val reloadedLocal = updateIfChanged(refs.localBranches, newLocalBranches, force)
+    val reloadedRemote = updateIfChanged(refs.remoteBranches, newRemoteBranches, force)
+    val reloadedTags = updateIfChanged(refs.tags, newTags, force)
 
     ui.stopLoadingBranches()
-    return localChanged || remoteChanged
+
+    return reloadedLocal || reloadedRemote || reloadedTags
   }
+
+  private fun <T : RefInfo> updateIfChanged(currentState: MutableCollection<T>, newState: Set<T>, force: Boolean) =
+    if (force || newState != currentState) {
+      currentState.clear()
+      currentState.addAll(newState)
+      true
+    }
+    else false
 
   private fun updateBranchesIsFavoriteState() {
     with(project.service<GitBranchManager>()) {
-      for (localBranch in localBranches) {
-        val isFavorite = localBranch.repositories.any { isFavorite(GitBranchType.LOCAL, it, localBranch.branchName) }
-        localBranch.apply { this.isFavorite = isFavorite }
-      }
-      for (remoteBranch in remoteBranches) {
-        val isFavorite = remoteBranch.repositories.any { isFavorite(GitBranchType.REMOTE, it, remoteBranch.branchName) }
-        remoteBranch.apply { this.isFavorite = isFavorite }
+      refs.forEach { refs, refType ->
+        for (ref in refs) {
+          val isFavorite = ref.repositories.any { isFavorite(refType, it, ref.refName) }
+          ref.isFavorite = isFavorite
+        }
       }
     }
 
@@ -166,9 +173,10 @@ internal class BranchesDashboardController(private val project: Project,
   }
 
   private fun updateBranchesIncomingOutgoingState() {
-    for (localBranch in localBranches) {
-      val incomingOutgoing = localBranch.repositories.anyIncomingOutgoingState(localBranch.branchName)
-      localBranch.apply { this.incomingOutgoingState = incomingOutgoing }
+    val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+    for (localBranch in refs.localBranches) {
+      val incomingOutgoing = incomingOutgoingManager.getIncomingOutgoingState(localBranch.repositories, GitLocalBranch(localBranch.branchName))
+      localBranch.incomingOutgoingState = incomingOutgoing
     }
 
     ui.refreshTree()
@@ -176,7 +184,7 @@ internal class BranchesDashboardController(private val project: Project,
 
   private fun updateBranchesIsMyState() {
     VcsProjectLog.runWhenLogIsReady(project) {
-      val allBranches = localBranches + remoteBranches
+      val allBranches = refs.localBranches + refs.remoteBranches
       val branchesToCheck = allBranches.filter { it.isMy == ThreeState.UNSURE }
       ui.startLoadingBranches()
       calculateMyBranchesInBackground(
@@ -184,8 +192,8 @@ internal class BranchesDashboardController(private val project: Project,
           BranchesDashboardUtil.checkIsMyBranchesSynchronously(VcsProjectLog.getInstance(project), branchesToCheck, indicator)
         },
         onSuccess = { branches ->
-          localBranches.updateUnsureBranchesStateFrom(branches)
-          remoteBranches.updateUnsureBranchesStateFrom(branches)
+          refs.localBranches.updateUnsureBranchesStateFrom(branches)
+          refs.remoteBranches.updateUnsureBranchesStateFrom(branches)
           ui.refreshTree()
         },
         onFinished = {
@@ -247,10 +255,7 @@ internal class BranchesDashboardController(private val project: Project,
     logUiFilterListener.onFiltersChanged()
   }
 
-  override fun getData(dataId: String): Any? {
-    if (BRANCHES_UI_CONTROLLER.`is`(dataId)) {
-      return this
-    }
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[BRANCHES_UI_CONTROLLER] = this
   }
 }

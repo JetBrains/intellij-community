@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/color-scheme-management.html#providing-attributes-for-specific-schemes">Color Scheme Management (IntelliJ Platform Docs)</a>
  */
+@ApiStatus.Internal
 public final class AdditionalTextAttributesEP implements PluginAware {
   private AdditionalTextAttributesEP() {
   }

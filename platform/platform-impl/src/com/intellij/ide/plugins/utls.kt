@@ -1,5 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("PluginUtilsKt")
+@file:ApiStatus.Internal
 
 package com.intellij.ide.plugins
 
@@ -11,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Ref
+import org.jetbrains.annotations.ApiStatus
 
 fun getEnableDisabledPluginsDependentConfirmationData(): Int? {
   val ref: Ref<Int?> = Ref(null)

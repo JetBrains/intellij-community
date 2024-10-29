@@ -2329,6 +2329,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             public void testSplitStringByEnterExistingParentheses() throws Exception {
                 runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterExistingParentheses.after.kt");
             }
+
+            @TestMetadata("SplitStringByEnterMultiCaret.after.kt")
+            public void testSplitStringByEnterMultiCaret() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/SplitStringByEnterMultiCaret.after.kt");
+            }
         }
     }
 

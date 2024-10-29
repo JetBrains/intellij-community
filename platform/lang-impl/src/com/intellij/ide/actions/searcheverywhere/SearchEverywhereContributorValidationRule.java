@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
@@ -12,13 +12,12 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class SearchEverywhereContributorValidationRule extends CustomValidationRule {
+final class SearchEverywhereContributorValidationRule extends CustomValidationRule {
 
   private static final Map<String, Boolean> ourContributorsMap = new HashMap<>();
 
-  @NotNull
   @Override
-  public String getRuleId() {
+  public @NotNull String getRuleId() {
     return "se_contributor";
   }
 

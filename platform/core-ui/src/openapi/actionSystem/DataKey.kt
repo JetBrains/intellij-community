@@ -29,7 +29,7 @@ class DataKey<T> private constructor(override val name: String) : ValueKey<T> {
    */
   fun `is`(dataId: String?): Boolean = name == dataId
 
-  fun getData(dataContext: DataContext): T? = dataContext.getData(name) as T?
+  fun getData(dataContext: DataContext): T? = dataContext.getData(this)
 
   fun getData(dataProvider: DataProvider): T? = dataProvider.getData(name) as T?
 

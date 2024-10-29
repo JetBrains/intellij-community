@@ -1,0 +1,50 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "lang",
+  module_name = "intellij.platform.lang",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-core",
+    "@community//platform/lvcs-api:lvcs",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util-ex",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/util/concurrency",
+    "@community//platform/core-ui",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/execution",
+    "@community//platform/refactoring",
+    "@community//platform/ml-api:ml",
+  ],
+  exports = [
+    "@community//platform/platform-api:ide",
+    "@community//platform/lang-core",
+    "@community//platform/lvcs-api:lvcs",
+    "@community//platform/indexing-api:indexing",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/execution",
+    "@community//platform/refactoring",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

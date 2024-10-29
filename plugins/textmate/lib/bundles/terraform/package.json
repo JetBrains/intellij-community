@@ -1,6 +1,6 @@
 {
   "name": "terraform",
-  "version": "2.30.1",
+  "version": "2.31.0",
   "description": "Syntax highlighting and autocompletion for Terraform",
   "license": "MPL-2.0",
   "contributes": {
@@ -24,6 +24,34 @@
         "configuration": "./language-configuration.json"
       },
       {
+        "id": "terraform-stack",
+        "aliases": [
+          "Terraform Stack"
+        ],
+        "extensions": [
+          ".tfstack.hcl"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "assets/icons/terraform_stacks.svg",
+          "light": "assets/icons/terraform_stacks.svg"
+        }
+      },
+      {
+        "id": "terraform-deploy",
+        "aliases": [
+          "Terraform Deployment"
+        ],
+        "extensions": [
+          ".tfdeploy.hcl"
+        ],
+        "configuration": "./language-configuration.json",
+        "icon": {
+          "dark": "assets/icons/terraform_stacks.svg",
+          "light": "assets/icons/terraform_stacks.svg"
+        }
+      },
+      {
         "id": "json",
         "extensions": [
           ".tfstate"
@@ -40,6 +68,16 @@
         "language": "terraform-vars",
         "scopeName": "source.hcl.terraform",
         "path": "./syntaxes/terraform.tmGrammar.json"
+      },
+      {
+        "language": "terraform-stack",
+        "scopeName": "source.hcl",
+        "path": "./syntaxes/hcl.tmGrammar.json"
+      },
+      {
+        "language": "terraform-deploy",
+        "scopeName": "source.hcl",
+        "path": "./syntaxes/hcl.tmGrammar.json"
       }
     ],
     "semanticTokenTypes": [

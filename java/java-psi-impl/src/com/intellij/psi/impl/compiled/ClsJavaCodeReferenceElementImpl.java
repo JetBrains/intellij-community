@@ -8,6 +8,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.ResolveScopeManager;
 import com.intellij.psi.impl.cache.TypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -50,7 +51,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     myAnnotations = annotations;
     String prefix = PsiNameHelper.getOuterClassReference(canonicalText);
     TypeAnnotationContainer container = prefix.isEmpty() ? TypeAnnotationContainer.EMPTY : annotations.forEnclosingClass();
-    myQualifier = container.isEmpty() ? null : new ClsJavaCodeReferenceElementImpl(this, prefix, container);
+    myQualifier = container == TypeAnnotationContainer.EMPTY ? null : new ClsJavaCodeReferenceElementImpl(this, prefix, container);
   }
 
   @Override
@@ -134,15 +135,15 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
     if (resolve == null) return null;
     if (resolve instanceof PsiClass) {
       Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<>();
-      int index = 0;
+      int index = typeElements.length - 1;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
-        if (index >= typeElements.length) {
+        if (index < 0) {
           substitutionMap.put(parameter, null);
         }
         else {
           substitutionMap.put(parameter, typeElements[index].getType());
         }
-        index++;
+        index--;
       }
       collectOuterClassTypeArgs((PsiClass)resolve, myCanonicalText, substitutionMap);
       return new CandidateInfo(resolve, PsiSubstitutor.createSubstitutor(substitutionMap));
@@ -299,6 +300,12 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   protected void setMirror(@NotNull TreeElement element) throws InvalidMirrorException {
     setMirrorCheckingType(element, JavaElementType.JAVA_CODE_REFERENCE);
+
+    PsiJavaCodeReferenceElement mirror = SourceTreeToPsiMap.treeToPsiNotNull(element);
+    PsiReferenceParameterList list = getParameterList();
+    if (list != null) {
+      setMirror(list, mirror.getParameterList());
+    }
   }
 
   @Override

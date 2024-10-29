@@ -22,8 +22,11 @@ import java.io.IOException
 import java.net.InetAddress
 import java.nio.file.Path
 import java.util.*
+import kotlin.Throws
 
 private const val LOCALHOST = "localhost"
+
+private val LOG = logger<WslTargetEnvironment>()
 
 class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
                            private val distribution: WSLDistribution) : TargetEnvironment(request), ExternallySynchronized {
@@ -76,7 +79,8 @@ class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
     for (targetPortBinding in request.targetPortBindings) {
       val theOnlyPort = targetPortBinding.target
       if (targetPortBinding.local != null && targetPortBinding.local != theOnlyPort) {
-        throw UnsupportedOperationException("Local target's TCP port forwarder is not implemented")
+        throw UnsupportedOperationException("TCP port forwarding for the local target is not implemented. " +
+                                            "Please use the same port number for both local and target ports.")
       }
       myTargetPortBindings[targetPortBinding] = ResolvedPortBinding(localEndpoint = HostPort(wslIpAddress.hostAddress, theOnlyPort),
                                                                     targetEndpoint = HostPort(LOCALHOST, targetPortBinding.target))
@@ -177,9 +181,5 @@ class WslTargetEnvironment(override val request: WslTargetEnvironmentRequest,
         LOG.warn("Path $path was not found on local filesystem")
       }
     }
-  }
-
-  companion object {
-    val LOG = logger<WslTargetEnvironment>()
   }
 }

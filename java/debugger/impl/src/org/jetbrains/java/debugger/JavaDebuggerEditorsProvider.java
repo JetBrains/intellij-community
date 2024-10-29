@@ -5,7 +5,6 @@ import com.intellij.debugger.engine.evaluation.CodeFragmentFactory;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -13,7 +12,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.XSourcePosition;
@@ -74,20 +72,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
     TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
     if (text != null) {
       CodeFragmentFactory factory = DebuggerUtilsEx.findAppropriateCodeFragmentFactory(text, context);
-      JavaCodeFragment codeFragment = factory.createPresentationCodeFragment(text, context, project);
-
-      if (context != null) {
-        PsiType contextType = context.getUserData(DebuggerUtilsImpl.PSI_TYPE_KEY);
-        if (contextType == null) {
-          PsiClass contextClass = PsiTreeUtil.getNonStrictParentOfType(context, PsiClass.class);
-          if (contextClass != null) {
-            contextType = JavaPsiFacade.getElementFactory(codeFragment.getProject()).createType(contextClass);
-          }
-        }
-        codeFragment.setThisType(contextType);
-      }
-
-      return codeFragment;
+      return factory.createPresentationPsiCodeFragment(text, context, project);
     }
     else {
       return super.createExpressionCodeFragment(project, expression, context, isPhysical);

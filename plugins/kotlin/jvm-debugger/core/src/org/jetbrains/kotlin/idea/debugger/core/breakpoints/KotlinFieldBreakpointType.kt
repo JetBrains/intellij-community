@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.SmartList
@@ -25,12 +24,10 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointType
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xml.CommonXmlStrings
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
 import org.jetbrains.kotlin.idea.debugger.core.KotlinDebuggerCoreBundle
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.*
 import org.jetbrains.kotlin.idea.debugger.core.breakpoints.dialog.AddFieldBreakpointDialog
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.psi.KtDeclarationContainer
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtParameter
@@ -110,8 +107,8 @@ class KotlinFieldBreakpointType :
                     return false
                 }
 
-                val psiClass = JavaPsiFacade.getInstance(project).findClass(className, GlobalSearchScope.allScope(project))
-                if (psiClass !is KtLightClass) {
+                val candidates = KotlinFullClassNameIndex[className, project, GlobalSearchScope.allScope(project)]
+                if (candidates.isEmpty()) {
                     reportError(project, KotlinDebuggerCoreBundle.message("property.watchpoint.error.couldnt.find.0.class", className))
                     return false
                 }
@@ -122,16 +119,8 @@ class KotlinFieldBreakpointType :
                     return false
                 }
 
-                result = when (psiClass) {
-                    is KtLightClassForFacade -> psiClass.files.asSequence().mapNotNull {
-                        createBreakpointIfPropertyExists(it, it, className, fieldName)
-                    }.firstOrNull()
-
-                    is KtLightClassForSourceDeclaration -> {
-                        val ktClassOrObject = psiClass.kotlinOrigin
-                        createBreakpointIfPropertyExists(ktClassOrObject, ktClassOrObject.containingKtFile, className, fieldName)
-                    }
-                    else -> null
+                result = candidates.firstNotNullOfOrNull { ktClassOrObject ->
+                    createBreakpointIfPropertyExists(ktClassOrObject, ktClassOrObject.containingKtFile, className, fieldName)
                 }
 
                 if (result == null) {

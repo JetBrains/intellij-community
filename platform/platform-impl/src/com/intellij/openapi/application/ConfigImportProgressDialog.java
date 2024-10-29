@@ -5,10 +5,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class ConfigImportProgressDialog extends JDialog {
   private final ProgressIndicatorAdapter myIndicator = new ProgressIndicatorAdapter();
   private final JLabel myProgressTextLabel = new JLabel(" ");

@@ -1,55 +1,547 @@
 <root>
-    <item name='java.util.stream.BaseStream S onClose(java.lang.Runnable)'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-      <annotation name='org.jetbrains.annotations.Contract'>
-        <val name="pure" val="true"/>
-      </annotation>
-    </item>
+  <item name='java.util.stream.BaseStream S onClose(java.lang.Runnable)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.stream.BaseStream S onClose(java.lang.Runnable) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.BaseStream S parallel()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.stream.BaseStream S sequential()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-    <item name='java.util.stream.BaseStream S unordered()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-      <annotation name='org.jetbrains.annotations.Contract'>
-        <val name="pure" val="true"/>
-      </annotation>
-    </item>
-    <item name='java.util.stream.BaseStream boolean isParallel()'>
-      <annotation name='org.jetbrains.annotations.Contract'>
-        <val name="pure" val="true"/>
-      </annotation>
-    </item>
-    <item name='java.util.stream.BaseStream java.util.Iterator&lt;T&gt; iterator()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-      <annotation name='org.jetbrains.annotations.Contract'>
-        <val name="pure" val="true"/>
-      </annotation>
-    </item>
-    <item name='java.util.stream.BaseStream java.util.Spliterator&lt;T&gt; spliterator()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-      <annotation name='org.jetbrains.annotations.Contract'>
-        <val name="pure" val="true"/>
-      </annotation>
-    </item>
-    <item
-      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.BaseStream S sequential()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.BaseStream S unordered()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.BaseStream boolean isParallel()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.BaseStream java.util.Iterator&lt;T&gt; iterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.BaseStream java.util.Spliterator&lt;T&gt; spliterator()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,C&gt; toCollection(java.util.function.Supplier&lt;C&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,C&gt; toCollection(java.util.function.Supplier&lt;C&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Supplier&lt;M&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,M&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;, java.util.function.Supplier&lt;M&gt;) 3'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; filtering(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,R&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; filtering(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,R&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; filtering(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,R&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; flatMapping(java.util.function.Function&lt;? super T,? extends java.util.stream.Stream&lt;? extends U&gt;&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; flatMapping(java.util.function.Function&lt;? super T,? extends java.util.stream.Stream&lt;? extends U&gt;&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; flatMapping(java.util.function.Function&lt;? super T,? extends java.util.stream.Stream&lt;? extends U&gt;&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; mapping(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; mapping(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; mapping(java.util.function.Function&lt;? super T,? extends U&gt;, java.util.stream.Collector&lt;? super U,A,R&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; teeing(java.util.stream.Collector&lt;? super T,?,R1&gt;, java.util.stream.Collector&lt;? super T,?,R2&gt;, java.util.function.BiFunction&lt;? super R1,? super R2,R&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; teeing(java.util.stream.Collector&lt;? super T,?,R1&gt;, java.util.stream.Collector&lt;? super T,?,R2&gt;, java.util.function.BiFunction&lt;? super R1,? super R2,R&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; teeing(java.util.stream.Collector&lt;? super T,?,R1&gt;, java.util.stream.Collector&lt;? super T,?,R2&gt;, java.util.function.BiFunction&lt;? super R1,? super R2,R&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,R&gt; teeing(java.util.stream.Collector&lt;? super T,?,R1&gt;, java.util.stream.Collector&lt;? super T,?,R2&gt;, java.util.function.BiFunction&lt;? super R1,? super R2,R&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,T&gt; reducing(T, java.util.function.BinaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,T&gt; reducing(T, java.util.function.BinaryOperator&lt;T&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,U&gt; reducing(U, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,U&gt; reducing(U, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,U&gt; reducing(U, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingInt(java.util.function.ToIntFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingInt(java.util.function.ToIntFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingLong(java.util.function.ToLongFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; averagingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; summingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Double&gt; summingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Integer&gt; summingInt(java.util.function.ToIntFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Integer&gt; summingInt(java.util.function.ToIntFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Long&gt; counting()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Long&gt; summingLong(java.util.function.ToLongFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.lang.Long&gt; summingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.DoubleSummaryStatistics&gt; summarizingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.DoubleSummaryStatistics&gt; summarizingDouble(java.util.function.ToDoubleFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.IntSummaryStatistics&gt; summarizingInt(java.util.function.ToIntFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.IntSummaryStatistics&gt; summarizingInt(java.util.function.ToIntFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.List&lt;T&gt;&gt; toList()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.List&lt;T&gt;&gt; toUnmodifiableList()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.LongSummaryStatistics&gt; summarizingLong(java.util.function.ToLongFunction&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.LongSummaryStatistics&gt; summarizingLong(java.util.function.ToLongFunction&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,D&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,D&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,D&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,U&gt;&gt; toUnmodifiableMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingBy(java.util.function.Function&lt;? super T,? extends K&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,D&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,D&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,D&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,java.util.List&lt;T&gt;&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Map&lt;java.lang.Boolean,java.util.List&lt;T&gt;&gt;&gt; partitioningBy(java.util.function.Predicate&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; maxBy(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; maxBy(java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; minBy(java.util.Comparator&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; minBy(java.util.Comparator&lt;? super T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; reducing(java.util.function.BinaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Optional&lt;T&gt;&gt; reducing(java.util.function.BinaryOperator&lt;T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Set&lt;T&gt;&gt; toSet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.Set&lt;T&gt;&gt; toUnmodifiableSet()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.Unmodifiable' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/1"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,D&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,D&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,D&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.stream.Collector&lt;? super T,A,D&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,U&gt;&gt; toConcurrentMap(java.util.function.Function&lt;? super T,? extends K&gt;, java.util.function.Function&lt;? super T,? extends U&gt;, java.util.function.BinaryOperator&lt;U&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3/2"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,?,java.util.concurrent.ConcurrentMap&lt;K,java.util.List&lt;T&gt;&gt;&gt; groupingByConcurrent(java.util.function.Function&lt;? super T,? extends K&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,A,RR&gt; collectingAndThen(java.util.stream.Collector&lt;T,A,R&gt;, java.util.function.Function&lt;R,RR&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,A,RR&gt; collectingAndThen(java.util.stream.Collector&lt;T,A,R&gt;, java.util.function.Function&lt;R,RR&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;T,A,RR&gt; collectingAndThen(java.util.stream.Collector&lt;T,A,R&gt;, java.util.function.Function&lt;R,RR&gt;) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NotNull' typePath="/3"/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.Collectors java.util.stream.Collector&lt;java.lang.CharSequence,?,java.lang.String&gt; joining(java.lang.CharSequence, java.lang.CharSequence, java.lang.CharSequence) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item
+    name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item
-      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 0'>
+  <item
+    name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item
-      name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 1'>
+  <item
+    name='java.util.stream.DoubleStream java.util.stream.DoubleStream concat(java.util.stream.DoubleStream, java.util.stream.DoubleStream) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream distinct()'>
@@ -98,7 +590,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream iterate(double, java.util.function.DoubleUnaryOperator)'>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream iterate(double, java.util.function.DoubleUnaryOperator)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -134,7 +626,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream of(double...)'>
+  <item name='java.util.stream.DoubleStream java.util.stream.DoubleStream of(double...)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -214,10 +706,10 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 0'>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 1'>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream concat(java.util.stream.IntStream, java.util.stream.IntStream) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.IntStream java.util.stream.IntStream distinct()'>
@@ -267,7 +759,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.IntStream java.util.stream.IntStream iterate(int, java.util.function.IntUnaryOperator)'>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream iterate(int, java.util.function.IntUnaryOperator)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -303,7 +795,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.IntStream java.util.stream.IntStream of(int...)'>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream of(int...)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -324,7 +816,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.IntStream java.util.stream.IntStream rangeClosed(int, int)'>
+  <item name='java.util.stream.IntStream java.util.stream.IntStream rangeClosed(int, int)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -393,10 +885,10 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 0'>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 1'>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream concat(java.util.stream.LongStream, java.util.stream.LongStream) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.LongStream java.util.stream.LongStream distinct()'>
@@ -446,7 +938,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.LongStream java.util.stream.LongStream iterate(long, java.util.function.LongUnaryOperator)'>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream iterate(long, java.util.function.LongUnaryOperator)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -479,7 +971,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.LongStream java.util.stream.LongStream of(long...)'>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream of(long...)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -500,7 +992,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.LongStream java.util.stream.LongStream rangeClosed(long, long)'>
+  <item name='java.util.stream.LongStream java.util.stream.LongStream rangeClosed(long, long)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -539,22 +1031,22 @@
   <item name='java.util.stream.Stream A[] toArray(java.util.function.IntFunction&lt;A[]&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.lang.Object[] toArray()'>
+  <item name='java.util.stream.Stream java.lang.Object[] toArray()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findAny()'>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findAny()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findFirst()'>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; findFirst()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; max(java.util.Comparator&lt;? super T&gt;)'>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; max(java.util.Comparator&lt;? super T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; min(java.util.Comparator&lt;? super T&gt;)'>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; min(java.util.Comparator&lt;? super T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; reduce(java.util.function.BinaryOperator&lt;T&gt;)'>
+  <item name='java.util.stream.Stream java.util.Optional&lt;T&gt; reduce(java.util.function.BinaryOperator&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item
@@ -626,18 +1118,18 @@
     </annotation>
   </item>
   <item
-      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;)'>
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item
-      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 0'>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item
-      name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 1'>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; concat(java.util.stream.Stream&lt;? extends T&gt;, java.util.stream.Stream&lt;? extends T&gt;) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; distinct()'>
@@ -656,18 +1148,41 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; filter(java.util.function.Predicate&lt;? super T&gt;)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;T&gt;)'>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; filter(java.util.function.Predicate&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;? extends T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;? extends T&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; generate(java.util.function.Supplier&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.UnaryOperator&lt;T&gt;)'>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;) 1'>
+        <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+  <item
+    name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.Predicate&lt;? super T&gt;, java.util.function.UnaryOperator&lt;T&gt;) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; iterate(T, java.util.function.UnaryOperator&lt;T&gt;)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -684,7 +1199,7 @@
     </annotation>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-    <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; of(T...)'>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; of(T...)'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val name="pure" val="true"/>
     </annotation>
@@ -710,14 +1225,32 @@
       <val name="pure" val="true"/>
     </annotation>
   </item>
-    <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; takeWhile(java.util.function.Predicate&lt;? super T&gt;)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
+  <item name='java.util.stream.Stream java.util.stream.Stream&lt;T&gt; takeWhile(java.util.function.Predicate&lt;? super T&gt;)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name='java.util.stream.Stream java.util.stream.Stream.Builder&lt;T&gt; builder()'>
     <annotation name='org.jetbrains.annotations.Contract'>
       <val val="&quot;-&gt;new&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder java.util.stream.Stream&lt;T&gt; build()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder java.util.stream.Stream.Builder&lt;T&gt; add(T)'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="value" val="&quot;_ -&gt; this&quot;"/>
+      <val name="mutates" val="&quot;this&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.util.stream.Stream.Builder void accept(T)'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;this&quot;"/>
     </annotation>
   </item>
 </root>

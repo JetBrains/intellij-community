@@ -48,13 +48,13 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.filter;
-import static com.intellij.vcs.log.util.VcsLogUtil.HASH_REGEX;
 import static com.intellij.vcs.log.util.VcsLogUtil.HEAD;
 import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 import static git4idea.push.GitPushNativeResult.Type.FORCED_UPDATE;
 import static git4idea.push.GitPushNativeResult.Type.NEW_REF;
 import static git4idea.push.GitPushRepoResult.Type.NOT_PUSHED;
 import static git4idea.push.GitPushRepoResult.Type.REJECTED_NO_FF;
+import static git4idea.push.GitPushRepoResult.tagPushResult;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
@@ -277,8 +277,9 @@ public class GitPushOperation {
       GitPushRepoResult repoResult = null;
 
       StructuredIdeActivity pushActivity = GitOperationsCollector.startLogPush(repository.getProject());
+      boolean setUpstream = spec.getTarget().shouldSetUpstream(spec.getSource(), repository);
       try {
-        resultWithOutput = doPush(repository, spec);
+        resultWithOutput = doPush(repository, spec, setUpstream);
         LOG.debug("Pushed to " + DvcsUtil.getShortRepositoryName(repository) + ": " + resultWithOutput);
 
         GitPushSource pushSource = spec.getSource();
@@ -288,20 +289,33 @@ public class GitPushOperation {
         }
         else {
           List<GitPushNativeResult> nativeResults = resultWithOutput.parsedResults;
-          final GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
-          if (sourceResult == null) {
-            LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
-                      "Full result: " + resultWithOutput);
-            continue;
+
+          if (pushSource instanceof GitPushSource.Tag tagPushSource) {
+            repoResult = tagPushResult(ContainerUtil.getOnlyItem(nativeResults), tagPushSource, target.getBranch());
           }
-          List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
-            !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
-          int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
-          repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+          else {
+            GitPushNativeResult sourceResult = getPushedBranchOrCommit(nativeResults);
+            if (sourceResult == null) {
+              LOG.error("No result for branch or commit among: [" + nativeResults + "]\n" +
+                        "Full result: " + resultWithOutput);
+              continue;
+            }
+            List<GitPushNativeResult> tagResults = filter(nativeResults, result ->
+              !result.equals(sourceResult) && (result.getType() == NEW_REF || result.getType() == FORCED_UPDATE));
+            int commits = collectNumberOfPushedCommits(repository.getRoot(), sourceResult);
+            repoResult = GitPushRepoResult.convertFromNative(sourceResult, tagResults, commits, pushSource, target.getBranch());
+          }
         }
       }
       finally {
-        GitOperationsCollector.endLogPush(pushActivity, resultWithOutput != null ? resultWithOutput.resultOutput : null, repoResult);
+        GitOperationsCollector.endLogPush(
+          pushActivity,
+          resultWithOutput != null ? resultWithOutput.resultOutput : null,
+          repoResult,
+          getPushTargetType(repository, spec),
+          spec.getTarget().isNewBranchCreated(),
+          setUpstream
+        );
       }
 
       LOG.debug("Converted result: " + repoResult);
@@ -318,18 +332,38 @@ public class GitPushOperation {
     return results;
   }
 
+  private @Nullable GitPushTargetType getPushTargetType(GitRepository repository, PushSpec<GitPushSource, GitPushTarget> spec) {
+    GitPushSource pushSource = spec.getSource();
+    GitPushTarget target = spec.getTarget();
+
+    GitPushTargetType targetType = spec.getTarget().getTargetType();
+    // Effective target branch can still be a tracking branch or a branch from spec
+    // E.g., user changed branch to custom in a push dialog and then reverted it to default
+    if (targetType == GitPushTargetType.CUSTOM) {
+      GitLocalBranch sourceBranch = pushSource.getBranch();
+      if (sourceBranch != null) {
+        GitPushTarget defaultTarget = myPushSupport.getDefaultTarget(repository, pushSource);
+        if (defaultTarget != null && defaultTarget.getBranch().equals(target.getBranch())) {
+          targetType = defaultTarget.getTargetType();
+        }
+      }
+    }
+
+    return targetType;
+  }
+
   private static @Nullable GitPushNativeResult getPushedBranchOrCommit(@NotNull List<? extends GitPushNativeResult> results) {
     return ContainerUtil.find(results, result -> isBranch(result) || isHash(result) || isHeadRelativeReference(result));
   }
 
   private static boolean isBranch(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return sourceRef.startsWith("refs/heads/") || HASH_REGEX.matcher(sourceRef).matches();
+    return sourceRef.startsWith("refs/heads/") || GitUtil.isHashString(sourceRef, false);
   }
 
   private static boolean isHash(@NotNull GitPushNativeResult result) {
     String sourceRef = result.getSourceRef();
-    return HASH_REGEX.matcher(sourceRef).matches();
+    return GitUtil.isHashString(sourceRef, false);
   }
 
   private static boolean isHeadRelativeReference(@NotNull GitPushNativeResult result) {
@@ -365,20 +399,14 @@ public class GitPushOperation {
     }
   }
 
-  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec) {
-    GitPushSource pushSource = pushSpec.getSource();
+  private @NotNull ResultWithOutput doPush(@NotNull GitRepository repository, @NotNull PushSpec<GitPushSource, GitPushTarget> pushSpec, boolean setUpstream) {
     GitPushTarget pushTarget = pushSpec.getTarget();
-    GitLocalBranch sourceBranch = pushSource.getBranch();
     GitRemoteBranch targetBranch = pushTarget.getBranch();
 
     GitLineHandlerListener progressListener = GitStandardProgressAnalyzer.createListener(myProgressIndicator);
-    boolean setUpstream = sourceBranch != null &&
-                          pushTarget.isNewBranchCreated() &&
-                          pushSource.isBranchRef() &&
-                          !branchTrackingInfoIsSet(repository, sourceBranch);
     String tagMode = myTagMode == null ? null : myTagMode.getArgument();
 
-    String spec = createPushSpec(pushSource, pushTarget, setUpstream);
+    String spec = createPushSpec(pushSpec.getSource(), pushTarget, setUpstream);
     GitRemote remote = targetBranch.getRemote();
 
     List<GitPushParams.ForceWithLease> forceWithLease = emptyList();

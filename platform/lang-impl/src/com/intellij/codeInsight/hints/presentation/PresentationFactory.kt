@@ -118,8 +118,26 @@ class PresentationFactory(private val editor: Editor) : InlayPresentationFactory
     return DynamicInsetPresentation(rounding, offsetFromTopProvider)
   }
 
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun roundWithBackgroundAndNoInset(base: InlayPresentation): InlayPresentation {
+    val rounding = withInlayAttributes(RoundWithBackgroundPresentation(base, 8, 8))
+    return DynamicInsetPresentation(rounding, offsetFromTopProvider)
+  }
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun offsetFromTopForSmallText(base: InlayPresentation) = DynamicInsetPresentation(base, offsetFromTopProvider)
+
   @Contract(pure = true)
   override fun icon(icon: Icon): IconPresentation = IconPresentation(icon, editor.component)
+
+  @ApiStatus.Internal
+  @Contract(pure = true)
+  fun scaledIcon(icon: Icon, scaleFactor: Float): InlayPresentation
+  {
+    return ScaledIconWithCustomFactorPresentation(textMetricsStorage, false, icon, editor.component, scaleFactor)
+  }
 
   @Contract(pure = true)
   override fun smallScaledIcon(icon: Icon): InlayPresentation

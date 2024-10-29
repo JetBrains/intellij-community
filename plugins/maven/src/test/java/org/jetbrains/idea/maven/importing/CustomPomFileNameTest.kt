@@ -82,7 +82,7 @@ class CustomPomFileNameTest : MavenDomTestCase() {
                     </modules>
                     """.trimIndent())
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>

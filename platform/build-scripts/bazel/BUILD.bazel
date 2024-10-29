@@ -1,0 +1,20 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "buildScripts-bazel",
+  module_name = "intellij.platform.buildScripts.bazel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//jps/model-api:jps-model",
+    "@community//platform/projectModel-api:projectModel",
+    "@libraries//:kotlin-jps-plugin-classpath",
+  ],
+  runtime_deps = ["@community//jps/model-impl:jps-model-impl"]
+)
+### auto-generated section `build` end

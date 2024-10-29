@@ -9,6 +9,7 @@ import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -21,6 +22,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.ui.JBColor.namedColor;
 
+@ApiStatus.Internal
 public abstract class ProgressStripeIcon implements Icon {
   private static final int TRANSLATE = 1;
   private final @NotNull JComponent myReferenceComponent;

@@ -53,7 +53,7 @@ public class YamlByJsonSchemaQuickFixTest extends JsonSchemaQuickFixTestBase {
                  "c": {}
                },
                "additionalProperties": false
-             }""", "a: 5\n<warning>b: 6<caret></warning>\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
+             }""", "a: 5\n<warning>b<caret></warning>: 6\nc: 7", "Remove prohibited property 'b'", "a: 5\n" +
                                                                                                    "c: 7");
   }
 

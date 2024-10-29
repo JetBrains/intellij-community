@@ -371,6 +371,8 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
     setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 
+  /** @deprecated Implement {@link com.intellij.openapi.actionSystem.UiDataProvider} instead */
+  @Deprecated(forRemoval = true)
   public void setDataProvider(@NotNull DataProvider provider) {
     DataManager.registerDataProvider(this, provider);
   }

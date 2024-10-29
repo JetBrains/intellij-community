@@ -72,7 +72,7 @@ fun prepareData(element: KtIfExpression): FoldInitializerAndIfExpressionData? {
     }
 
 
-    if (statement.expressionType?.isNothing != true) return null
+    if (statement.expressionType?.isNothingType != true) return null
 
     if (ReferencesSearch.search(variableDeclaration, LocalSearchScope(statement)).findFirst() != null) {
         return null

@@ -215,6 +215,12 @@
                  description="Send progress information like files download during project import to `Build Output`"/>
     <registryKey key="gradle.daemon.opentelemetry.enabled" defaultValue="false"
                  description="Enable performance trace collection in the Gradle daemon"/>
+    <registryKey key="gradle.daemon.opentelemetry.format" defaultValue="PROTOBUF"
+                 description="Sets the expected serialization format for the collected traces"/>
+    <registryKey key="gradle.daemon.opentelemetry.folder" defaultValue=""
+                 description="Sets the target folder for the collected telemetry"/>
+    <registryKey key="gradle.daemon.experimental.dependency.resolver" defaultValue="false"
+                 description="Use ArtifactView to resolve Javadoc/Sources"/>
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <warmupConfigurator implementation="org.jetbrains.plugins.gradle.GradleWarmupConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON" bundle="messages.GradleBundle" key="notification.group.gradle"/>
@@ -312,6 +318,8 @@
     </group>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
+    <action internal="true" id="Gradle.SyncWithDaemonTelemetry"
+            class="org.jetbrains.plugins.gradle.internal.daemon.GradleSyncWithDaemonTelemetry"/>
 
     <action id="Gradle.ImportExternalProject" class="org.jetbrains.plugins.gradle.action.ImportProjectFromScriptAction" icon="GradleIcons.Gradle">
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" anchor="last"/>

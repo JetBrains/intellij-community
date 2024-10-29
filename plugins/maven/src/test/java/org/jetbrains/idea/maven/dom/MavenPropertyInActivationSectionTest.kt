@@ -1,14 +1,12 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
   @Test
-  fun testResolvePropertyFromActivationSection() = runBlocking(Dispatchers.EDT) {
+  fun testResolvePropertyFromActivationSection() = runBlocking {
     importProjectAsync(
       """
           <groupId>example</groupId>
@@ -38,8 +36,7 @@ class MavenPropertyInActivationSectionTest : MavenDomTestCase() {
           </properties>
         """.trimIndent())
 
-
-    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 1)!!.resolve() != null)
-    assert(getReference(projectPom, "env.GLASSFISH_HOME_123", 2)!!.resolve() == null)
+    assert(resolveReference(projectPom, "env.GLASSFISH_HOME_123", 1) != null)
+    assert(resolveReference(projectPom, "env.GLASSFISH_HOME_123", 2) == null)
   }
 }

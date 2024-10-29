@@ -404,6 +404,12 @@ public class MethodCallInstruction extends ExpressionPushingInstruction {
         } else {
           mutable = Mutability.getMutability(myTargetMethod);
         }
+        if (type.hasAnnotation(Mutability.UNMODIFIABLE_ANNOTATION)) {
+          mutable = Mutability.UNMODIFIABLE;
+        }
+        else if (type.hasAnnotation(Mutability.UNMODIFIABLE_VIEW_ANNOTATION)) {
+          mutable = Mutability.UNMODIFIABLE_VIEW;
+        }
         PsiType qualifierType = DfaPsiUtil.dfTypeToPsiType(factory.getProject(), state.getDfType(qualifierValue));
         type = narrowReturnType(type, qualifierType, realMethod);
       }

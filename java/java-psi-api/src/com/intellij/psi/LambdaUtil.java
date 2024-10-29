@@ -1262,6 +1262,7 @@ public final class LambdaUtil {
         psiType = substitutor.substitute(parameters[i].getType());
         if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) return null;
       }
+      psiType = PsiTypesUtil.removeExternalAnnotations(psiType);
 
       PsiAnnotation[] annotations = lambdaParameter.getAnnotations();
       for (PsiAnnotation annotation : annotations) {

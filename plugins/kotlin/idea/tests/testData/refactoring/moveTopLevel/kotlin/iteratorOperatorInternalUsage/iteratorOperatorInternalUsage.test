@@ -1,0 +1,7 @@
+{
+  "mainFile": "a/InvokeObject.kt",
+  "type": "MOVE_KOTLIN_TOP_LEVEL_DECLARATIONS",
+  "targetPackage": "b",
+  "enabledInK1": "false",
+  "enabledInK2": "true"
+}

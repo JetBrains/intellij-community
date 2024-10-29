@@ -73,7 +73,23 @@ fun filterInlineFunctionsInClass() {
     foo(fun1(fun2(2), fun3(3)))
 }
 
+class B {
+    fun a() = this
+    inline fun b() = this
+}
+
+inline fun filterInlineFunctionsInsideInlineFunction() {
+    //Breakpoint!
+    val b = B()
+    // STEP_OVER: 1
+    // SMART_STEP_INTO_BY_INDEX: 1
+    // STEP_OVER: 1
+    // SMART_STEP_TARGETS_EXPECTED_NUMBER: 1
+    b.a().b()
+}
+
 fun main() {
     filterNestedInlineFunctions()
     filterInlineFunctionsInClass()
+    filterInlineFunctionsInsideInlineFunction()
 }

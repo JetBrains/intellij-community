@@ -27,13 +27,14 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.Path;
 import java.util.*;
 
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_LIBRARY_DATA_SERVICE_ORDER)
 public final class LibraryDataService extends AbstractProjectDataService<LibraryData, Library> {
 
@@ -106,17 +107,6 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
     return null;
   }
 
-  private static void refreshVfsFiles(Collection<? extends File> files) {
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    for (File file : files) {
-      Path path = file.toPath();
-      // search for jar file first otherwise lib root won't be found!
-      if (virtualFileManager.findFileByNioPath(path) == null) {
-        virtualFileManager.refreshAndFindFileByNioPath(path);
-      }
-    }
-  }
-
   static @NotNull Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = new HashMap<>();
     for (LibraryPathType pathType: LibraryPathType.values()) {
@@ -129,7 +119,6 @@ public final class LibraryDataService extends AbstractProjectDataService<Library
         continue;
       }
       List<File> files = ContainerUtil.map(paths, File::new);
-      refreshVfsFiles(files);
       result.put(orderRootType, files);
     }
     return result;

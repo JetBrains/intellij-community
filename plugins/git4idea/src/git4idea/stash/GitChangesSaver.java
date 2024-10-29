@@ -6,6 +6,7 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -93,14 +94,30 @@ public abstract class GitChangesSaver {
     save(rootsToSave);
   }
 
-  public void notifyLocalChangesAreNotRestored() {
+  public @Nullable @Nls String saveLocalChangesOrError(@Nullable Collection<? extends VirtualFile> rootsToSave) {
+    try {
+      saveLocalChanges(rootsToSave);
+      return null;
+    }
+    catch (VcsException e) {
+      LOG.warn(e);
+
+      String message = getSaveMethod().selectBundleMessage(
+        GitBundle.message("save.notification.failed.stash.text"),
+        GitBundle.message("save.notification.failed.shelf.text")
+      );
+      return new HtmlBuilder().append(message).br().appendRaw(e.getMessage()).toString();
+    }
+  }
+
+  public void notifyLocalChangesAreNotRestored(@NotNull @Nls String operationName) {
     if (wereChangesSaved()) {
-      LOG.info("Update is incomplete, changes are not restored");
+      LOG.info("Local changes are not restored");
       VcsNotifier.importantNotification()
         .createNotification(GitBundle.message("restore.notification.failed.title"),
                             getSaveMethod().selectBundleMessage(
-                              GitBundle.message("restore.notification.failed.stash.message"),
-                              GitBundle.message("restore.notification.failed.shelf.message")
+                              GitBundle.message("restore.notification.failed.stash.message", operationName),
+                              GitBundle.message("restore.notification.failed.shelf.message", operationName)
                             ),
                             NotificationType.WARNING)
         .setDisplayId(LOCAL_CHANGES_NOT_RESTORED)

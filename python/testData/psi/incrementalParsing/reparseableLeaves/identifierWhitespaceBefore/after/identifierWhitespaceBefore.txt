@@ -1,0 +1,8 @@
+Original text:
+---------------
+def foo(param1, param2): ...
+---------------
+Subtree: Language: Python
+---------------
+<reparse>def foo( param1, param2): ...</reparse>
+---------------

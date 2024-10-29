@@ -14,3 +14,9 @@ class C : A() {
 
     }
 }
+
+// MEMBER: "foo(value: Int): Unit"
+// MEMBER: "bar: Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

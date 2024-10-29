@@ -5,11 +5,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter
 import com.intellij.platform.diagnostic.telemetry.FilteredMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.OpenTelemetryUtils
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration.getTraceEndpoint
 import com.intellij.platform.diagnostic.telemetry.belongsToScope
 import com.intellij.platform.diagnostic.telemetry.exporters.meters.CsvGzippedMetricsExporter
 import com.intellij.platform.diagnostic.telemetry.impl.MessageBusSpanExporter
 import com.intellij.platform.diagnostic.telemetry.impl.OpenTelemetryExporterProvider
-import com.intellij.platform.diagnostic.telemetry.impl.getOtlpEndPoint
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import io.opentelemetry.sdk.metrics.export.MetricExporter
 import java.nio.file.Path
@@ -17,7 +17,7 @@ import kotlin.time.Duration.Companion.seconds
 
 private class RdctExportersProvider : OpenTelemetryExporterProvider {
   override fun getSpanExporters(): List<AsyncSpanExporter> {
-    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getOtlpEndPoint() != null) {
+    if (System.getProperty(OpenTelemetryUtils.RDCT_TRACING_DIAGNOSTIC_FLAG) != null && getTraceEndpoint() != null) {
       return listOf(MessageBusSpanExporter())
     }
     else {

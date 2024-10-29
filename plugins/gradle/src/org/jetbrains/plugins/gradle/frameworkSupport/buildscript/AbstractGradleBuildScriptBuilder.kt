@@ -7,6 +7,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptElement.Statement.Expression
 import org.jetbrains.plugins.gradle.frameworkSupport.script.ScriptTreeBuilder
+import org.jetbrains.plugins.gradle.util.GradleEnvironment
 import kotlin.apply as applyKt
 
 @ApiStatus.NonExtendable
@@ -129,6 +130,13 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     }
   }
 
+  override fun withKotlinDsl(): BSB = apply {
+    withMavenCentral()
+    withPlugin {
+      code("`kotlin-dsl`")
+    }
+  }
+
   override fun withGroovyPlugin() =
     withGroovyPlugin(groovyVersion)
 
@@ -224,6 +232,12 @@ abstract class AbstractGradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<B
     call("project", "path" to name, "configuration" to configuration)
 
   override fun ScriptTreeBuilder.mavenCentral() = applyKt {
-    call("mavenCentral")
+    val mavenRepositoryUrl = GradleEnvironment.Urls.MAVEN_REPOSITORY_URL
+    if (mavenRepositoryUrl != null) {
+      mavenRepository(mavenRepositoryUrl)
+    }
+    else {
+      call("mavenCentral")
+    }
   }
 }

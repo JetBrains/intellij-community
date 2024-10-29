@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.nj2k.printing
 
+import com.intellij.psi.PsiReferenceExpression
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK1Mode
@@ -741,7 +742,13 @@ class JKCodeBuilder(private val context: NewJ2kConverterContext) {
         }
 
         override fun visitFieldAccessExpressionRaw(fieldAccessExpression: JKFieldAccessExpression) {
-            printer.renderSymbol(fieldAccessExpression.identifier, fieldAccessExpression)
+            try {
+                printer.renderSymbol(fieldAccessExpression.identifier, fieldAccessExpression)
+            } catch (ignored: UninitializedPropertyAccessException) {
+                // This should only happen on copy-pasting broken (incomplete) code
+                val psi = fieldAccessExpression.psi as? PsiReferenceExpression ?: return
+                printer.print(psi.text)
+            }
         }
 
         override fun visitPackageAccessExpressionRaw(packageAccessExpression: JKPackageAccessExpression) {

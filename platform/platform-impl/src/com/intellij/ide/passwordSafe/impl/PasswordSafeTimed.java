@@ -2,11 +2,13 @@
 package com.intellij.ide.passwordSafe.impl;
 
 import com.intellij.util.TimedReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
 * @author gregsh
 */
+@ApiStatus.Internal
 public abstract class PasswordSafeTimed<T> extends TimedReference<T> {
   private int myCheckCount;
 

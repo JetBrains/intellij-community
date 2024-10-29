@@ -140,7 +140,7 @@ internal class ConvertLambdaToReferenceIntention :
             }
 
             outerCallExpression.typeArgumentList?.let {
-                if (areTypeArgumentsRedundant(it)) {
+                if (areTypeArgumentsRedundant(it, approximateFlexible = false)) {
                     it.delete()
                 }
             }
@@ -225,7 +225,7 @@ private fun buildReferenceText(lambdaExpression: KtLambdaExpression): String? {
             when (receiver) {
                 is KtNameReferenceExpression -> {
                     val receiverSymbol = receiver.resolveToCall()?.singleVariableAccessCall()?.partiallyAppliedSymbol?.symbol ?: return null
-                    val lambdaValueParameters = lambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
+                    val lambdaValueParameters = lambdaExpression.functionLiteral.symbol.valueParameters
                     if (receiverSymbol is KaValueParameterSymbol && receiverSymbol == lambdaValueParameters.firstOrNull()) {
                         val originalReceiverType = receiverSymbol.returnType
                         val receiverText = originalReceiverType.render(position = Variance.IN_VARIANCE)
@@ -351,7 +351,7 @@ private fun isConvertibleCallInLambdaByAnalyze(
         if (property != null && property.initializer?.let(KtPsiUtil::safeDeparenthesize) != lambdaExpression) return false
     }
 
-    val lambdaValueParameterSymbols = lambdaExpression.functionLiteral.getAnonymousFunctionSymbol().valueParameters
+    val lambdaValueParameterSymbols = lambdaExpression.functionLiteral.symbol.valueParameters
 
     if (explicitReceiver != null && explicitReceiver !is KtSimpleNameExpression &&
         explicitReceiver.anyDescendantOfType<KtSimpleNameExpression> {
@@ -404,7 +404,7 @@ private fun KaNamedFunctionSymbol.overloadedFunctions(lambdaArgument: KtLambdaEx
         else -> lambdaArgument.containingKtFile.scopeContext(lambdaArgument).compositeScope()
     }
 
-    val symbols = scope.getCallableSymbols(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
+    val symbols = scope.callables(name).filterIsInstance<KaNamedFunctionSymbol>().toList()
 
     val function = psi ?: return symbols
     if (!function.isPhysical) {

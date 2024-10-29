@@ -1,13 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.ApplicationManager.getApplication
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener
 import com.intellij.openapi.project.Project
@@ -24,6 +26,9 @@ import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.CalledInAny
 import java.util.*
 
@@ -33,25 +38,29 @@ private val isToggleCommitUi get() = AdvancedSettings.getBoolean(TOGGLE_COMMIT_U
 private val isForceNonModalCommit get() = Registry.get("vcs.force.non.modal.commit")
 private val appSettings get() = VcsApplicationSettings.getInstance()
 
-internal fun AnActionEvent.getProjectCommitMode(): CommitMode? =
-  project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
+internal fun AnActionEvent.getProjectCommitMode(): CommitMode? {
+  return project?.let { CommitModeManager.getInstance(it).getCurrentCommitMode() }
+}
 
 @Service(Service.Level.PROJECT)
-class CommitModeManager(private val project: Project) : Disposable {
+class CommitModeManager(private val project: Project, private val coroutineScope: CoroutineScope) : Disposable {
   internal class MyStartupActivity : VcsStartupActivity {
     override val order: Int
       get() = VcsInitObject.MAPPINGS.order + 50
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
       @Suppress("TestOnlyProblems")
       if (project is ProjectEx && project.isLight) {
         return
       }
 
-      AppUIExecutor.onUiThread().expireWith(project).execute {
-        val commitModeManager = getInstance(project)
-        commitModeManager.subscribeToChanges()
-        commitModeManager.updateCommitMode()
+      val commitModeManager = project.serviceAsync<CommitModeManager>()
+      commitModeManager.coroutineScope.launch(Dispatchers.EDT) {
+        //maybe readaction
+        writeIntentReadAction {
+          commitModeManager.subscribeToChanges()
+          commitModeManager.updateCommitMode()
+        }
       }
     }
   }
@@ -102,9 +111,9 @@ class CommitModeManager(private val project: Project) : Disposable {
   private fun subscribeToChanges() {
     isForceNonModalCommit.addListener(object : RegistryValueListener {
       override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
-    }, this)
+    }, coroutineScope)
 
-    val connection = getApplication().messageBus.connect(this)
+    val connection = getApplication().messageBus.connect(coroutineScope)
     connection.subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == TOGGLE_COMMIT_UI) {
@@ -117,7 +126,7 @@ class CommitModeManager(private val project: Project) : Disposable {
     })
 
     VcsEP.EP_NAME.addChangeListener(::scheduleUpdateCommitMode, this)
-    project.messageBus.connect(this).subscribe(VCS_CONFIGURATION_CHANGED, VcsListener(::scheduleUpdateCommitMode))
+    project.messageBus.connect(coroutineScope).subscribe(VCS_CONFIGURATION_CHANGED, VcsListener(::scheduleUpdateCommitMode))
   }
 
   companion object {

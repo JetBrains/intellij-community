@@ -9,7 +9,6 @@ written by Barry Warsaw.
 
 # Regular expression that matches `special' characters in parameters, the
 # existence of which force quoting of the parameter value.
-from __future__ import absolute_import, print_function
 
 import re
 
@@ -30,7 +29,7 @@ def _formatparam(param, value=None, quote=1):
         return param
 
 
-class Headers(object):
+class Headers:
     """Manage a collection of HTTP response headers"""
 
     def __init__(self, headers=None):

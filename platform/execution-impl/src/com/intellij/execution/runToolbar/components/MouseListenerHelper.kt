@@ -2,6 +2,7 @@
 package com.intellij.execution.runToolbar.components
 
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ContainerAdapter
 import java.awt.event.ContainerEvent
 import java.awt.event.MouseAdapter
@@ -9,6 +10,7 @@ import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class MouseListenerHelper {
   companion object {
     fun addListener(component: JComponent, doClick: () -> Unit, doShiftClick: () -> Unit, doRightClick: () -> Unit) {

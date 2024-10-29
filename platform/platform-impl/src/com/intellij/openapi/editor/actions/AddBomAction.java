@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,6 +18,7 @@ import java.nio.charset.Charset;
 /**
  * Adds <a href="http://unicode.org/faq/utf_bom.html">file's BOM</a> to files with UTF-XXX encoding.
  */
+@ApiStatus.Internal
 public final class AddBomAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(AddBomAction.class);
 

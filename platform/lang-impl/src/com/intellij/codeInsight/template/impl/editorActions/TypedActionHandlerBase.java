@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.template.impl.editorActions;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TypedActionHandlerBase implements TypedActionHandlerEx {
-  @Nullable protected final TypedActionHandler myOriginalHandler;
+  protected final @Nullable TypedActionHandler myOriginalHandler;
 
   public TypedActionHandlerBase(@Nullable TypedActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

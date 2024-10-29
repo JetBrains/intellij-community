@@ -5,11 +5,10 @@ fun println(i: Int) {}
 
 fun main() {
     when (foo()) {
-        <caret>null, 1 -> println(1)
+        /*1*/<caret>null/*2*/,/*3*/ 1 -> println(1)
         else -> println(0)
     }
 }
 
-/* IGNORE_K2 */
-
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWhenConditionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.RemoveWhenConditionFix

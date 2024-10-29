@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.ui.BookmarksView
@@ -7,7 +7,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
 
-class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure() {
+internal class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure() {
   private val root = RootNode(panel)
 
   override fun commit(): Unit = Unit

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
+abstract class ShowChangeMarkerAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Disabled {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Data data = getDataFromContext(e);
@@ -69,22 +69,21 @@ public abstract class ShowChangeMarkerAction extends DumbAwareAction implements 
   @Nullable
   protected abstract Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line);
 
-
-  public static class Next extends ShowChangeMarkerAction {
+  static class Next extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getNextRange(line);
     }
   }
 
-  public static class Prev extends ShowChangeMarkerAction {
+  static class Prev extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getPrevRange(line);
     }
   }
 
-  public static class Current extends ShowChangeMarkerAction {
+  static class Current extends ShowChangeMarkerAction {
     @Override
     protected Range getTargetRange(@NotNull LineStatusTracker<?> tracker, int line) {
       return tracker.getRangeForLine(line);

@@ -20,7 +20,7 @@ public class IfCanBePrimitivePatternSwitchFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
     myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   @Override

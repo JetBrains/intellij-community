@@ -1,0 +1,1 @@
+val source = $$"as<selection>df$$foo Not$Entry</selection> $$bar"

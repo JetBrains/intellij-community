@@ -37,6 +37,7 @@ abstract class AbstractScriptElementBuilder : ScriptElementBuilder {
 
   override fun assignIfNotNull(name: String, expression: Expression?) = expression?.let { assign(name, it) }
   override fun assignIfNotNull(name: String, value: String?) = value?.let { assign(name, it) }
+  override fun assignIfNotNull(name: String, value: Boolean?) = value?.let { assign(name, it) }
 
   override fun plusAssign(name: String, value: Expression) = PlusAssignElement(name, value)
   override fun plusAssign(name: String, value: String) = plusAssign(name, string(value))

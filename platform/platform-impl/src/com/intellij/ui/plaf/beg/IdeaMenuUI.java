@@ -113,7 +113,7 @@ public class IdeaMenuUI extends BasicMenuUI {
   }
 
   private boolean isHeaderMenu() {
-    return menuItem instanceof ActionMenu actionMenu && actionMenu.isHeaderMenuItem();
+    return menuItem instanceof ActionMenu actionMenu && actionMenu.isHeaderMenuItem;
   }
 
   private void checkEmptyIcon(JComponent comp) {

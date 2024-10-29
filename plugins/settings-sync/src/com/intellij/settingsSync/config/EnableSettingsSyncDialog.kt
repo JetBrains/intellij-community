@@ -1,8 +1,8 @@
 package com.intellij.settingsSync.config
 
-import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.settingsSync.SettingsSyncBundle.message
+import com.intellij.settingsSync.SettingsSyncLocalStateHolder
 import com.intellij.settingsSync.SettingsSyncState
 import com.intellij.settingsSync.SettingsSyncStateHolder
 import java.awt.event.ActionEvent
@@ -10,11 +10,15 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-internal class EnableSettingsSyncDialog(parent: JComponent, remoteSettings: SettingsSyncState?) : DialogWrapper(parent, false) {
+internal class EnableSettingsSyncDialog(
+  parent: JComponent,
+  remoteSettings: SettingsSyncState?,
+  remoteSyncScopeSettings: SettingsSyncLocalStateHolder?,
+) : DialogWrapper(parent, false) {
 
-  private lateinit var configPanel: DialogPanel
   private var dialogResult: Result? = null
   val syncSettings: SettingsSyncState = remoteSettings ?: SettingsSyncStateHolder()
+  private val syncScopeSettings = remoteSyncScopeSettings ?: SettingsSyncLocalStateHolder()
   private val remoteSettingsExist: Boolean = remoteSettings != null
 
   init {
@@ -28,9 +32,11 @@ internal class EnableSettingsSyncDialog(parent: JComponent, remoteSettings: Sett
   }
 
   override fun createCenterPanel(): JComponent {
-    configPanel = SettingsSyncPanelFactory.createPanel(message("enable.dialog.select.what.to.sync"), syncSettings)
-    configPanel.reset()
-    return configPanel
+    return  SettingsSyncPanelFactory.createCombinedSyncSettingsPanel(
+      message("enable.dialog.select.what.to.sync"),
+      syncSettings,
+      syncScopeSettings,
+    ).also { it.reset() }
   }
 
   override fun createActions(): Array<Action> =
@@ -60,7 +66,7 @@ internal class EnableSettingsSyncDialog(parent: JComponent, remoteSettings: Sett
   }
 
   private fun applyAndClose(result: Result) {
-    configPanel.apply()
+    applyFields()
     dialogResult = result
     close(0, true)
   }

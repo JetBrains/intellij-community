@@ -15,6 +15,9 @@
  */
 package com.intellij.openapi.editor.impl;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface MutableInterval extends Interval {
   void setRange(long scalarRange);
   boolean isValid();

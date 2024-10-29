@@ -14,8 +14,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
@@ -395,7 +395,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (document != null) return true;
     if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return false;
 
-    return !file.getFileType().isBinary() || !FileUtilRt.isTooLarge(file.getLength());
+    return !file.getFileType().isBinary() || !VirtualFileUtil.isTooLarge(file);
   }
 
   private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {

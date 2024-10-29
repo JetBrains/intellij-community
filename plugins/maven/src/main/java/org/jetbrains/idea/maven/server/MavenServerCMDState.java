@@ -112,6 +112,10 @@ public class MavenServerCMDState extends CommandLineState {
       params.getVMParametersList().addProperty("maven.collect.local.stat", "true");
     }
 
+    if (Registry.is("maven.delegate.trust.ssl.to.ide")) {
+      params.getVMParametersList().addProperty("delegate.ssl.to.ide", "true");
+    }
+
     String profilerOption = getProfilerVMString();
     if (profilerOption != null) {
       params.getVMParametersList()
@@ -146,8 +150,8 @@ public class MavenServerCMDState extends CommandLineState {
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
     MavenVersionAwareSupportExtension extension = MavenVersionSupportUtil.getExtensionFor(myDistribution);
-    setupMainClass(params, extension);
     checkExtension(extension);
+    setupMainClass(params, extension);
     assert extension != null; //checked in the method above, need to make static analyzer happy
     params.getClassPath().addAllFiles(extension.collectClassPathAndLibsFolder(myDistribution));
 

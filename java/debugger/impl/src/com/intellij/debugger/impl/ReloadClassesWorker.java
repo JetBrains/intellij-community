@@ -15,12 +15,14 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.unscramble.ThreadState;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.hotswap.HotSwapFailureReason;
 import com.intellij.xdebugger.impl.hotswap.HotSwapStatistics;
+import com.jetbrains.jdi.JDWP;
+import com.jetbrains.jdi.JDWPUnsupportedOperationException;
 import com.jetbrains.jdi.VirtualMachineImpl;
 import com.sun.jdi.ReferenceType;
 import one.util.streamex.StreamEx;
@@ -31,10 +33,7 @@ import org.jetbrains.annotations.Range;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.IntStream;
 
 class ReloadClassesWorker {
@@ -48,10 +47,6 @@ class ReloadClassesWorker {
   }
 
   private void processException(@NotNull Throwable e) {
-    if (e.getMessage() != null) {
-      myProgress.addMessage(myDebuggerSession, MessageCategory.ERROR, e.getMessage());
-    }
-
     if (e instanceof ProcessCanceledException) {
       myProgress.addMessage(myDebuggerSession, MessageCategory.INFORMATION, JavaDebuggerBundle.message("error.operation.canceled"));
       return;
@@ -59,10 +54,10 @@ class ReloadClassesWorker {
 
     String message;
     String reason = e.getLocalizedMessage();
+    HotSwapFailureReason failureReason = getFailureReason(e);
+    HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason);
     if (e instanceof UnsupportedOperationException) {
       message = JavaDebuggerBundle.message("error.operation.not.supported.by.vm", reason);
-      HotSwapFailureReason failureReason = getFailureReason(reason);
-      HotSwapStatistics.logFailureReason(myProgress.getProject(), failureReason);
     }
     else if (e instanceof NoClassDefFoundError) {
       message = JavaDebuggerBundle.message("error.class.def.not.found", reason);
@@ -89,27 +84,30 @@ class ReloadClassesWorker {
   /**
    * @see VirtualMachineImpl#redefineClasses(Map)
    */
-  private static @NotNull HotSwapFailureReason getFailureReason(String reason) {
-    switch (reason) {
-      case "add method not implemented" -> {
+  private static @NotNull HotSwapFailureReason getFailureReason(Throwable e) {
+    if (!(e instanceof JDWPUnsupportedOperationException exception)) {
+      return HotSwapFailureReason.OTHER;
+    }
+    switch (exception.getErrorCode()) {
+      case JDWP.Error.ADD_METHOD_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.METHOD_ADDED;
       }
-      case "delete method not implemented" -> {
+      case JDWP.Error.DELETE_METHOD_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.METHOD_REMOVED;
       }
-      case "schema change not implemented" -> {
+      case JDWP.Error.SCHEMA_CHANGE_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.SIGNATURE_MODIFIED;
       }
-      case "hierarchy change not implemented" -> {
+      case JDWP.Error.HIERARCHY_CHANGE_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.STRUCTURE_MODIFIED;
       }
-      case "changes to class modifiers not implemented" -> {
+      case JDWP.Error.CLASS_MODIFIERS_CHANGE_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.CLASS_MODIFIERS_CHANGED;
       }
-      case "changes to method modifiers not implemented" -> {
+      case JDWP.Error.METHOD_MODIFIERS_CHANGE_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.METHOD_MODIFIERS_CHANGED;
       }
-      case "changes to class attribute not implemented" -> {
+      case JDWP.Error.CLASS_ATTRIBUTE_CHANGE_NOT_IMPLEMENTED -> {
         return HotSwapFailureReason.CLASS_ATTRIBUTES_CHANGED;
       }
       default -> {
@@ -145,7 +143,10 @@ class ReloadClassesWorker {
       virtualMachineProxy.allThreads().stream()
         .filter(ThreadReferenceProxyImpl::isResumeOnHotSwap)
         .filter(ThreadReferenceProxyImpl::isSuspended)
-        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> t.resume()));
+        .forEach(t -> IntStream.range(0, t.getSuspendCount()).forEach(i -> {
+          t.setIgnoreModelSuspendCount(true);
+          t.resume();
+        }));
     }
 
     try {
@@ -181,10 +182,12 @@ class ReloadClassesWorker {
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
       if (partiallyRedefinedClassesCount == 0) {
-        myProgress.addMessage(
-          myDebuggerSession, MessageCategory.INFORMATION,
-          JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
-        );
+        if (!Registry.is("debugger.hotswap.floating.toolbar")) {
+          myProgress.addMessage(
+            myDebuggerSession, MessageCategory.INFORMATION,
+            JavaDebuggerBundle.message("status.classes.reloaded", redefineProcessor.getProcessedClassesCount())
+          );
+        }
       }
       else {
         final String message = JavaDebuggerBundle.message(

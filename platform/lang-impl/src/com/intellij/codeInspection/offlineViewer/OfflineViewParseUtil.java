@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInspection.InspectionsResultUtil;
@@ -23,12 +23,12 @@ import java.nio.file.Path;
 import java.util.*;
 
 public final class OfflineViewParseUtil {
-  @NonNls private static final String PACKAGE = "package";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String HINTS = "hints";
-  @NonNls private static final String LINE = "line";
-  @NonNls private static final String OFFSET = "offset";
-  @NonNls private static final String MODULE = "module";
+  private static final @NonNls String PACKAGE = "package";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String HINTS = "hints";
+  private static final @NonNls String LINE = "line";
+  private static final @NonNls String OFFSET = "offset";
+  private static final @NonNls String MODULE = "module";
 
   private OfflineViewParseUtil() {
   }
@@ -117,8 +117,7 @@ public final class OfflineViewParseUtil {
     return package2Result;
   }
 
-  @Nullable
-  public static String parseProfileName(@NotNull Path descriptorFile) throws IOException {
+  public static @Nullable String parseProfileName(@NotNull Path descriptorFile) throws IOException {
     return parseProfileName(Files.newBufferedReader(descriptorFile));
   }
 
@@ -126,13 +125,11 @@ public final class OfflineViewParseUtil {
    * @deprecated use {@link #parseProfileName(File)} or {@link #parseProfileName(Reader)}
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  public static String parseProfileName(String descriptorText) {
+  public static @Nullable String parseProfileName(String descriptorText) {
     return parseProfileName(new StringReader(descriptorText));
   }
 
-  @Nullable
-  public static String parseProfileName(Reader descriptorReader) {
+  public static @Nullable String parseProfileName(Reader descriptorReader) {
     final XppReader reader = new XppReader(descriptorReader, new MXParser());
     try {
       return reader.getAttribute(InspectionsResultUtil.PROFILE);

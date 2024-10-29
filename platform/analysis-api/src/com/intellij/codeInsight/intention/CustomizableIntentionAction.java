@@ -47,6 +47,25 @@ public interface CustomizableIntentionAction extends IntentionAction {
   }
 
   /**
+   * @return true if light bulb must be shown when such action is available
+   */
+  default boolean isShowLightBulb() {
+    return true;
+  }
+
+  /**
+   * Define if icon of this action must override the light bulb.
+   * It may be necessary for promoting promising language-specific actions
+   * that get blend in with other intentions.
+   * If there are many custom icons, the default yellow bulb will be shown.
+   *
+   * @see com.intellij.codeInsight.intention.impl.IntentionHintComponent.LightBulbUtil#findSingleCustomBulbIcon
+   */
+  default boolean isOverrideIntentionBulb() {
+    return false;
+  }
+
+  /**
    * Get text specifically for tooltip view
    */
   default @NlsContexts.Tooltip String getTooltipText() {

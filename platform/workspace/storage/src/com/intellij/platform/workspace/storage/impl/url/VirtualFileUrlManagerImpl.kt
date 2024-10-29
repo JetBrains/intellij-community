@@ -15,10 +15,10 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
-public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
+public open class VirtualFileUrlManagerImpl(isRootDirCaseSensitive: Boolean = false) : VirtualFileUrlManager {
   private val idGenerator = IntIdGenerator()
   private var emptyUrl: VirtualFileUrl? = null
-  private val fileNameStore = VirtualFileNameStore()
+  private val fileNameStore = VirtualFileNameStore(isRootDirCaseSensitive)
   private val id2NodeMapping = Int2ObjectOpenHashMap<FilePathNode>()
   private val rootNode = FilePathNode(0, 0)
 
@@ -96,6 +96,12 @@ public open class VirtualFileUrlManagerImpl : VirtualFileUrlManager {
     parentVfu as VirtualFileUrlImpl
     return add(relativePath, id2NodeMapping.get(parentVfu.id))
   }
+
+  /**
+   * Returns class of instances produced by [createVirtualFileUrl], it's used during serialization. 
+   */
+  public open val virtualFileUrlImplementationClass: Class<out VirtualFileUrl>
+    get() = VirtualFileUrlImpl::class.java
 
   protected open fun createVirtualFileUrl(id: Int, manager: VirtualFileUrlManagerImpl): VirtualFileUrl {
     return VirtualFileUrlImpl(id, manager)

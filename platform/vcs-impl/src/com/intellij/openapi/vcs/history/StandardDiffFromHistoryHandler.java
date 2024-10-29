@@ -18,8 +18,10 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class StandardDiffFromHistoryHandler implements DiffFromHistoryHandler {
 
   @Override

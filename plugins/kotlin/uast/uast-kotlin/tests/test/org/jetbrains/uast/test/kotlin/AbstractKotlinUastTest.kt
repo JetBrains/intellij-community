@@ -32,11 +32,11 @@ import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.messageCollector
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
+import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.jetbrains.kotlin.idea.base.test.KotlinRoot
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.test.ExpectedPluginModeProvider
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
-import org.jetbrains.kotlin.idea.test.setUpWithKotlinPlugin
 import org.jetbrains.kotlin.idea.test.testFramework.resetApplicationToNull
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
@@ -125,8 +125,8 @@ abstract class AbstractKotlinUastTest : TestCase(),
 
     private fun initializeCoreEnvironment() {
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
-          UastLanguagePlugin.EP,
-          UastLanguagePlugin::class.java,
+            UastLanguagePlugin.EP,
+            UastLanguagePlugin::class.java,
         )
 
         CoreApplicationEnvironment.registerApplicationExtensionPoint(
@@ -180,8 +180,14 @@ abstract class AbstractKotlinUastTest : TestCase(),
     }
 
     override fun setUp() {
+        super.setUp()
         testRootDisposable = Disposer.newDisposable()
-        setUpWithKotlinPlugin(testRootDisposable) { super.setUp() }
+
+        val oldUseK2Plugin = useK2Plugin
+        useK2Plugin = pluginMode == KotlinPluginMode.K2
+        Disposer.register(testRootDisposable) {
+            useK2Plugin = oldUseK2Plugin
+        }
     }
 
     @Suppress("SSBasedInspection")

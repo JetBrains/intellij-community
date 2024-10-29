@@ -112,7 +112,7 @@ internal class KotlinFirStructureElementPresentation(
         if (pointer != null) {
             analyze(ktElement) {
                 pointer.restoreSymbol()?.let {
-                    return getIconFor(it)
+                    return getIconFor(it, Iconable.ICON_FLAG_VISIBILITY)
                 }
             }
         }

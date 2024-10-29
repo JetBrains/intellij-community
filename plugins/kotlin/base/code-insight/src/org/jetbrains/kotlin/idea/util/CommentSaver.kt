@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.lexer.KtToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFunctionLiteral
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.*
 import kotlin.properties.Delegates
 
@@ -345,7 +346,10 @@ class CommentSaver(originalElements: PsiChildRange, private val saveLineBreaks: 
                     }
                 }
             } else {
-                restored = putAbandonedCommentsAfter.parent.addBefore(comment, putAbandonedCommentsAfter) as PsiComment
+                val parent = putAbandonedCommentsAfter.parent
+                //move comment out of argument, similar to parser
+                restored = (if (parent is KtValueArgument) parent.parent.addBefore(comment, parent)
+                else parent.addBefore(comment, putAbandonedCommentsAfter)) as PsiComment
 
                 if (isCommentInside) {
                     val element = resultElements.first

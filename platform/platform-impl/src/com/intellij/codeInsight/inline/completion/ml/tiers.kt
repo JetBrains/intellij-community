@@ -6,6 +6,7 @@ import com.intellij.lang.Language
 import com.intellij.openapi.editor.Editor
 import com.intellij.platform.ml.Tier
 import com.intellij.psi.PsiFile
+import com.jetbrains.ml.MLUnit
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -13,6 +14,12 @@ object TierTyping : Tier<TypingSpeedTracker>()
 
 @ApiStatus.Internal
 object TierCaretLocation : Tier<CaretLocation>()
+
+@ApiStatus.Internal
+object MLUnitTyping : MLUnit<TypingSpeedTracker>("typing_speed_tracker")
+
+@ApiStatus.Internal
+object MLUnitCaretLocation : MLUnit<CaretLocation>("caret_location")
 
 @ApiStatus.Internal
 data class CaretLocation(

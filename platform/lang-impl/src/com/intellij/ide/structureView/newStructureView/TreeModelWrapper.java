@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public final class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel {
+public final class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel, StructureViewModel.ExpandInfoProvider {
   private final StructureViewModel myModel;
   private final TreeActionsOwner myStructureView;
 
@@ -86,6 +86,22 @@ public final class TreeModelWrapper implements StructureViewModel, ProvidingTree
       return filterProviders(((ProvidingTreeModel)myModel).getNodeProviders());
     }
     return Collections.emptyList();
+  }
+
+  @Override
+  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
+    if (myModel instanceof ExpandInfoProvider expandInfoProvider) {
+      return expandInfoProvider.isAutoExpand(element);
+    }
+    return true;
+  }
+
+  @Override
+  public boolean isSmartExpand() {
+    if (myModel instanceof ExpandInfoProvider expandInfoProvider) {
+      return expandInfoProvider.isSmartExpand();
+    }
+    return true;
   }
 
   public static boolean isActive(@NotNull TreeAction action, @NotNull TreeActionsOwner actionsOwner) {

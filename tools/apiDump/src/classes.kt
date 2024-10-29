@@ -28,4 +28,5 @@ data class ApiRef(
 data class ApiFlags(
   val access: Int,
   val annotationExperimental: Boolean,
+  val annotationNonExtendable: Boolean,
 )

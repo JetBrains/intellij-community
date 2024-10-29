@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,6 +33,7 @@ import java.util.Map;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class EditableNotificationMessageElement extends NotificationMessageElement implements EditableMessageElement {
 
   @NotNull private final TreeCellEditor myRightTreeCellEditor;

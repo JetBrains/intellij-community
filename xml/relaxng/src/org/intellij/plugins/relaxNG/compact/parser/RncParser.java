@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 public class RncParser implements PsiParser {
 
   @Override
-  @NotNull
-  public ASTNode parse(@NotNull IElementType root, PsiBuilder builder) {
+  public @NotNull ASTNode parse(@NotNull IElementType root, PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();
     final PsiBuilder.Marker docMarker = builder.mark();
 

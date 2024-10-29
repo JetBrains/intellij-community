@@ -34,7 +34,7 @@ public final class RegexFacade {
       regex = new Regex(bytes, 0, bytes.length, Option.CAPTURE_GROUP, UTF8Encoding.INSTANCE, WarnCallback.NONE);
     }
     catch (JOniException e) {
-      LOGGER.info("Failed to parse textmate regex", e);
+      LOGGER.info(String.format("Failed to parse textmate regex '%s' with %s: %s", regexString, e.getClass().getName(), e.getMessage()));
       regex = FAILED_REGEX;
     }
     hasGMatch = regexString.contains("\\G");
@@ -82,7 +82,7 @@ public final class RegexFacade {
            // We catch AIOOBE here because of a bug in joni,
            // apparently the lengths of code units are not calculated correctly in UnicodeEncoding.mbcCaseFold
            | ArrayIndexOutOfBoundsException e) {
-      LOGGER.info("Failed to match textmate regex", e);
+      LOGGER.info(String.format("Failed to parse textmate regex '%s' with %s: %s", string, e.getClass().getName(), e.getMessage()));
       return MatchData.NOT_MATCHED;
     }
   }

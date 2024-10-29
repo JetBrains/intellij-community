@@ -1,7 +1,0 @@
-<idea-plugin package="com.jetbrains.extensions">
-  <!--This module will be removed soon, do not use it-->
-  <dependencies>
-    <plugin id="com.intellij.modules.lang"/>
-    <plugin id="com.intellij.modules.python-pro-fleet-not-capable"/>
-  </dependencies>
-</idea-plugin>

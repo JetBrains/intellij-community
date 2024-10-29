@@ -12,8 +12,6 @@ test.java.file
           REFERENCE_PARAMETER_LIST
             <empty list>
           IDENTIFIER
-      ERROR_ELEMENT
-        <empty list>
       COMMA
       WHITE_SPACE
       NAME_VALUE_PAIR

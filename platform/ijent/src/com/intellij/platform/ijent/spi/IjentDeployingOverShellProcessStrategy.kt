@@ -2,15 +2,15 @@
 package com.intellij.platform.ijent.spi
 
 import com.intellij.execution.CommandLineUtil.posixQuote
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.*
-import com.intellij.platform.ijent.IjentPlatform
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
+import com.intellij.platform.eel.EelPlatform
+import com.intellij.platform.ijent.IjentUnavailableException
 import com.intellij.platform.ijent.getIjentGrpcArgv
-import com.intellij.util.io.computeDetached
 import com.intellij.util.io.copyToAsync
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.io.InputStream
 import java.nio.file.Path
 import kotlin.io.path.fileSize
@@ -18,18 +18,20 @@ import kotlin.io.path.inputStream
 import kotlin.time.Duration.Companion.seconds
 
 abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : IjentDeployingStrategy.Posix {
+  protected abstract val ijentLabel: String
+
   /**
    * If there's some bind mount, returns the path for the remote machine/container that corresponds to [path].
    * Otherwise, returns null.
    */
   protected abstract suspend fun mapPath(path: Path): String?
 
-  protected abstract suspend fun createShellProcess(): ShellProcessWrapper
+  protected abstract suspend fun createShellProcess(): Process
 
   private val myContext: Deferred<DeployingContextAndShell> = run {
     var createdShellProcess: ShellProcessWrapper? = null
     val context = scope.async(start = CoroutineStart.LAZY) {
-      val shellProcess = createShellProcess()
+      val shellProcess = ShellProcessWrapper(IjentSessionMediator.create(scope, createShellProcess(), ijentLabel))
       createdShellProcess = shellProcess
       createDeployingContext(shellProcess.apply {
         // The timeout is taken at random.
@@ -40,21 +42,16 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
         }
       })
     }
-    context.invokeOnCompletion { error ->
-      if (error != null && error !is CancellationException) {
-        createdShellProcess?.destroyForcibly()
-      }
-    }
     context
   }
 
-  final override suspend fun getTargetPlatform(): IjentPlatform.Posix {
+  final override suspend fun getTargetPlatform(): EelPlatform.Posix {
     return myContext.await().execCommand {
       getTargetPlatform()
     }
   }
 
-  final override suspend fun createProcess(binaryPath: String): Process {
+  final override suspend fun createProcess(binaryPath: String): IjentSessionMediator {
     return myContext.await().execCommand {
       execIjent(binaryPath)
     }
@@ -72,17 +69,23 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     }
   }
 
-  class ShellProcessWrapper(private var wrapped: Process?) {
+  override suspend fun getConnectionStrategy(): IjentConnectionStrategy = IjentConnectionStrategy.Default
+
+  internal class ShellProcessWrapper(private var mediator: IjentSessionMediator?) {
+    @OptIn(DelicateCoroutinesApi::class)
     suspend fun write(data: String) {
-      val wrapped = wrapped!!
+      val process = mediator!!.process
 
       @Suppress("NAME_SHADOWING")
       val data = if (data.endsWith("\n")) data else "$data\n"
-      LOG.debug { "Executing a script inside the shell: $data" }
+      LOG.debug {
+        val debugData = data.replace(Regex("\n\n+")) { "<\\n ${it.value.length} times>\n" }
+        "Executing a script inside the shell: $debugData"
+      }
       withContext(Dispatchers.IO) {
-        wrapped.outputStream.write(data.toByteArray())
+        process.outputStream.write(data.toByteArray())
         ensureActive()
-        wrapped.outputStream.flush()
+        process.outputStream.flush()
         ensureActive()
       }
     }
@@ -91,7 +94,7 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
     suspend fun readLineWithoutBuffering(): String =
       withContext(Dispatchers.IO) {
         val buffer = StringBuilder()
-        val stream = wrapped!!.inputStream
+        val stream = mediator!!.process.inputStream
         while (true) {
           ensureActive()
           val c = stream.read()
@@ -100,30 +103,37 @@ abstract class IjentDeployingOverShellProcessStrategy(scope: CoroutineScope) : I
           }
           buffer.append(c.toChar())
         }
-        LOG.trace { "Read line from stdout: $buffer" }
+        if (buffer.isNotEmpty()) {
+          LOG.trace { "Read line from stdout: $buffer" }
+        }
         buffer.toString()
       }
 
     suspend fun copyDataFrom(stream: InputStream) {
-      val wrapped = wrapped!!
+      val process = mediator!!.process
       withContext(Dispatchers.IO) {
-        stream.copyToAsync(wrapped.outputStream)
+        stream.copyToAsync(process.outputStream)
         ensureActive()
-        wrapped.outputStream.flush()
+        process.outputStream.flush()
       }
     }
 
-    fun destroyForcibly() {
-      wrapped!!.destroyForcibly()
+    @OptIn(InternalCoroutinesApi::class)
+    suspend fun destroyForciblyAndGetError(): Throwable {
+      mediator!!.process.destroyForcibly()
+      try {
+        val job = mediator!!.ijentProcessScope.coroutineContext.job
+        job.join()
+        throw job.getCancellationException()
+      }
+      catch (err: Throwable) {
+        return IjentUnavailableException.unwrapFromCancellationExceptions(err)
+      }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
-    suspend fun readWholeErrorStream(): ByteArray =
-      computeDetached { wrapped!!.errorStream.readAllBytes() }
-
-    fun extractProcess(): Process {
-      val result = wrapped!!
-      wrapped = null
+    fun extractProcess(): IjentSessionMediator {
+      val result = mediator!!
+      mediator = null
       return result
     }
   }
@@ -133,24 +143,26 @@ private suspend fun <T : Any> DeployingContextAndShell.execCommand(block: suspen
   return try {
     block()
   }
-  catch (err: Throwable) {
-    runCatching { process.destroyForcibly() }.exceptionOrNull()?.let(err::addSuppressed)
+  catch (initialErrorFromStack: Throwable) {
+    val errorFromScope = process.destroyForciblyAndGetError()
+    val errorFromStack = IjentUnavailableException.unwrapFromCancellationExceptions(initialErrorFromStack)
 
-    val attachment = Attachment("stderr", String(process.readWholeErrorStream()))
-    attachment.isIncluded = attachment.isIncluded or ApplicationManager.getApplication().isInternal
+    // It happens sometimes that some valuable error is wrapped into CancellationException.
+    // However, if there's no valuable error,
+    // then it's a fair CancellationException that should be thrown futher, to cancel the context.
+    val (mainError, suppressedError) =
+      when (errorFromStack) {
+        is IjentUnavailableException, is CancellationException -> errorFromStack to errorFromScope
+        else -> errorFromScope to errorFromStack
+      }
 
-    val errorWithAttachments = RuntimeExceptionWithAttachments(err.message ?: "", err, attachment)
+    if (mainError != suppressedError) {
+      mainError.addSuppressed(suppressedError)
+    }
 
-    // TODO Suppress RuntimeExceptionWithAttachments instead of wrapping when KT-66006 is resolved.
-    //err.addSuppressed(RuntimeExceptionWithAttachments(
-    //  "The error happened during handling $process",
-    //  Attachment("stderr", stderr.toString()).apply { isIncluded = isIncluded or ApplicationManager.getApplication().isInternal },
-    //))
-    //throw err
-
-    throw when (err) {
-      is TimeoutCancellationException, is IOException -> IjentStartupError.CommunicationError(errorWithAttachments)
-      else -> errorWithAttachments
+    throw when (mainError) {
+      is IjentUnavailableException, is CancellationException -> mainError
+      else -> IjentStartupError.CommunicationError(mainError)
     }
   }
 }
@@ -179,6 +191,9 @@ internal data class DeployingContext(
   val getent: String,
   val head: String,
   val mktemp: String,
+  val rm: String,
+  val sed: String,
+  val tail: String,
   val uname: String,
   val whoami: String,
 )
@@ -228,6 +243,9 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     "getent",
     "head",
     "mktemp",
+    "rm",
+    "sed",
+    "tail",
     "uname",
     "whoami",
   )
@@ -252,12 +270,15 @@ internal suspend fun createDeployingContext(filterAvailableBinariesCmd: suspend 
     getent = getCommandPath("getent"),
     head = getCommandPath("head"),
     mktemp = getCommandPath("mktemp"),
+    rm = getCommandPath("rm"),
+    sed = getCommandPath("sed"),
+    tail = getCommandPath("tail"),
     uname = getCommandPath("uname"),
     whoami = getCommandPath("whoami"),
   )
 }
 
-private suspend fun DeployingContextAndShell.getTargetPlatform(): IjentPlatform.Posix = run {
+private suspend fun DeployingContextAndShell.getTargetPlatform(): EelPlatform.Posix = run {
   // There are two arguments in `uname` that can show the process architecture: `-m` and `-p`. According to `man uname`, `-p` is more
   // verbose, and that information may be sufficient for choosing the right binary.
   // https://man.freebsd.org/cgi/man.cgi?query=uname&sektion=1
@@ -267,8 +288,8 @@ private suspend fun DeployingContextAndShell.getTargetPlatform(): IjentPlatform.
 
   val targetPlatform = when {
     arch.isEmpty() -> throw IjentStartupError.IncompatibleTarget("Empty output of `uname`")
-    "x86_64" in arch -> IjentPlatform.X8664Linux
-    "aarch64" in arch -> IjentPlatform.Aarch64Linux
+    "x86_64" in arch -> EelPlatform.X8664Linux
+    "aarch64" in arch -> EelPlatform.Aarch64Linux
     else -> throw IjentStartupError.IncompatibleTarget("No binary for architecture $arch")
   }
   return targetPlatform
@@ -283,31 +304,56 @@ private suspend fun DeployingContextAndShell.uploadIjentBinary(
 
   val ijentBinaryPreparedOnTarget = pathMapper(ijentBinaryOnLocalDisk)
 
-  val script = context.run {
-    val ijentPathUploadScript =
-      pathMapper(ijentBinaryOnLocalDisk)
-        ?.let { "$cp ${posixQuote(it)} \$BINARY" }
-      ?: run {
-        "LC_ALL=C $head -c $ijentBinarySize > \$BINARY"
-      }
+  process.write(context.run {
+    "BINARY=\"\$($mktemp -d)/ijent\";\n"
+  })
 
-    "BINARY=\"$($mktemp -d)/ijent\" ; $ijentPathUploadScript ; $chmod 500 \"\$BINARY\" ; echo \"\$BINARY\" "
+  if (ijentBinaryPreparedOnTarget != null) {
+    process.write(context.run {
+      "$cp ${posixQuote(ijentBinaryPreparedOnTarget)} \$BINARY;\n"
+    })
   }
+  else {
+    process.write(context.run {
+      "$head -c ${ijentBinarySize + BUGGY_DASH_BUFFER_FILLER.length} > \$BINARY.tmp;\n"
+    })
 
-  process.write(script)
-
-  if (ijentBinaryPreparedOnTarget == null) {
+    // Old versions of busybox with bundled problematic versions of dash don't handle arguments
+    // like `-v` or `--version`.
+    // While it's not easy to figure out if the workaround filler is actually required,
+    // it's used with every shell. This also makes code a bit simpler.
+    LOG.debug { "Writing workaround command for Dash (1 of 2)" }
+    process.write(BUGGY_DASH_BUFFER_FILLER)
     LOG.debug { "Writing $ijentBinarySize bytes of IJent binary into the stream" }
     ijentBinaryOnLocalDisk.inputStream().use { stream ->
       process.copyDataFrom(stream)
     }
     LOG.debug { "Sent the IJent binary $ijentBinaryOnLocalDisk" }
+    LOG.debug { "Writing workaround command for Dash (2 of 2)" }
+    process.write(BUGGY_DASH_BUFFER_FILLER)
+
+    // Now the file `$BINARY.tmp` contains the following content:
+    // <\n * (random number in 0..filler_size)> + useful data + <\n + filler_size>
+    // The script below extracts the useful data and puts it into `$BINARY`.
+    // It wasn't checked if `LC_ALL` really needed for sed/head/tail, this variable
+    // was overridden just in case.
+    process.write(context.run {
+      """
+      | BYTES_TO_SKIP=${'$'}(LC_ALL=C $sed -e '/^${'$'}/d; =; q' ${'$'}BINARY.tmp | LC_ALL=C $head -n1);
+      | LC_ALL=C $tail -c+${'$'}BYTES_TO_SKIP ${'$'}BINARY.tmp | LC_ALL=C $head -c ${ijentBinarySize} > ${'$'}BINARY;
+      | $rm -f ${'$'}BINARY.tmp;
+      """.trimMargin()
+    })
   }
+
+  process.write(context.run {
+    "$chmod 500 \"\$BINARY\"; echo \"\$BINARY\";\n"
+  })
 
   return process.readLineWithoutBuffering()
 }
 
-private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): Process {
+private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: String): IjentSessionMediator {
   val joinedCmd = getIjentGrpcArgv(remotePathToBinary, selfDeleteOnExit = true, usrBinEnv = context.env).joinToString(" ")
   val commandLineArgs = context.run {
     """
@@ -321,4 +367,22 @@ private suspend fun DeployingContextAndShell.execIjent(remotePathToBinary: Strin
   return process.extractProcess()
 }
 
+/**
+ * [Dash-based shells up to 0.5.12 inclusively have a problem](https://lore.kernel.org/dash/CAMQsgbSZnEac=ETYnR6a_ysnAysaHThwY03pnoDxC=p5FqtAag@mail.gmail.com/).
+ *
+ * [According to IEEE Std 1003.1-2024](https://pubs.opengroup.org/onlinepubs/9799919799/utilities/sh.html#tag_20_110_06),
+ * `sh` must read user input byte by byte and execute commands
+ * as soon as a valid expression can be constructed right after reading a byte.
+ * In contrast, Dash used to read ahead user input into a buffer with the size of `BUFSIZ`.
+ * It broke our workflow of writing binary data right after executing the command for reading binary data.
+ *
+ * [The fix was committed at the beginning of 2023](https://git.kernel.org/pub/scm/utils/dash/dash.git/commit/?id=5f094d08c5bcee876191404a4f3dd2d075571215),
+ * so we expect a lot of problematic shell versions in the wild.
+ *
+ * [GlibC defines BUFSIZ as 8192](https://sourceware.org/git/?p=glibc.git;a=blob;f=libio/stdio.h;h=da9d4eebcf013f1bf4fa11accf14e391c6029aff;hb=HEAD#l100),
+ * [musl defines it as an even smaller constant](http://git.musl-libc.org/cgit/musl/tree/include/stdio.h).
+ * Although there can be some systems with greater `BUFSIZ`,
+ * we see the situation of compiling a shell with a problematic version and increased global buffer as improbable.
+ */
+private val BUGGY_DASH_BUFFER_FILLER: String get() = "\n".repeat(8192)
 private val LOG = logger<IjentDeployingOverShellProcessStrategy>()

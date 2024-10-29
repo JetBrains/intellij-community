@@ -7,7 +7,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 object FileEditorCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("file.editor", 6)
   private val FILE_EDITOR_FIELD = EventFields.Class("fileEditor")

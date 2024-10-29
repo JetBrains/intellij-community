@@ -10,7 +10,7 @@ import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.target.conda.PyAddCondaPanelModel
+import com.jetbrains.python.sdk.add.v1.PyAddCondaPanelModel
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnv
 import com.jetbrains.python.sdk.flavors.conda.PyCondaEnvIdentity

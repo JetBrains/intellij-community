@@ -14,7 +14,7 @@ import java.util.List;
  * Allows performing cleanup operations after refactoring is done e.g., optimize imports 
  */
 public interface RefactoringHelper<T> {
-  ExtensionPointName<RefactoringHelper> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.helper");
+  ExtensionPointName<RefactoringHelper<?>> EP_NAME = ExtensionPointName.create("com.intellij.refactoring.helper");
 
   /**
    * Is called before the refactoring is executed when the refactoring provides {@link BaseRefactoringProcessor#getBeforeData()}.
@@ -22,7 +22,7 @@ public interface RefactoringHelper<T> {
    * @param usages the usages found of the elements the refactoring will be called on
    * @param elements the elements the refactoring will be called on
    */
-  T prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements);
+  T prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements);
 
   /**
    * Is invoked in EDT, without WriteAction after refactoring is performed

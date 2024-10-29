@@ -1,7 +1,0 @@
-// "Add '@Throws' annotation" "true"
-// IGNORE_K2
-
-@Throws(Throwable::class)
-fun test() {
-    <selection><caret></selection>throw Throwable()
-}

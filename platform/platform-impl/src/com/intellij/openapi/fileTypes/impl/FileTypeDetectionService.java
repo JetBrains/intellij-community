@@ -17,7 +17,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -104,7 +103,7 @@ final class FileTypeDetectionService implements Disposable {
     if (!Objects.equals(prevDetectors, getDetectorListString())) {
       onDetectorListChange();
     }
-    reDetectExecutor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("FileTypeManager Redetect", coroutineScope);
+    reDetectExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor("FileTypeManager Redetect", coroutineScope);
   }
 
   @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
@@ -398,7 +397,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private void awakeReDetectExecutor() {
-    reDetectExecutor.schedule(() -> {
+    reDetectExecutor.execute(() -> {
       List<VirtualFile> files = new ArrayList<>(CHUNK_SIZE);
       synchronized (filesToRedetect) {
         for (int i = 0; i < CHUNK_SIZE; i++) {
@@ -546,7 +545,7 @@ final class FileTypeDetectionService implements Disposable {
                                                                              file, true, true,
                                                                              PlainTextFileType.INSTANCE, (@Nullable CharSequence text) -> {
         if (toLog()) {
-          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + ((ByteSequence)bytes).length() +
+          log("F: detectFromContentAndCache.processFirstBytes(" + file.getName() + "): bytes length=" + bytes.length() +
               "; isText=" + (text != null) + "; text='" + (text == null ? null : StringUtil.first(text, 100, true)) + "'" +
               ", detectors=" + detectors);
         }
@@ -572,7 +571,7 @@ final class FileTypeDetectionService implements Disposable {
 
         if (detected == null && !StringUtil.isEmpty(text)) {
           FileTypeManagerImpl.FileTypeWithDescriptor ftd = myFileTypeManager.patternsTable.findAssociatedFileTypeByHashBang(text);
-          detected = ftd == null ? null : ftd.fileType;
+          detected = ftd == null ? null : ftd.fileType();
         }
         if (detected == null) {
           detected = StringUtil.isEmpty(text) ? (bytes.getLength() == 0 ? DetectedByContentFileType.INSTANCE : UnknownFileType.INSTANCE): PlainTextFileType.INSTANCE;
@@ -651,7 +650,7 @@ final class FileTypeDetectionService implements Disposable {
     if (!file.isCharsetSet()) {
       // when detecting type from content of a file with unknown charset we have to determine charset first,
       // which in turn may require file content. But in this case, the whole file content because the UTF surrogates may very well be at the end of the file.
-      return FileUtilRt.getUserContentLoadLimit(); 
+      return FileUtilRt.getUserContentLoadLimit();
     }
     int bufferLength = cachedDetectFileBufferSize;
     if (bufferLength == -1) {

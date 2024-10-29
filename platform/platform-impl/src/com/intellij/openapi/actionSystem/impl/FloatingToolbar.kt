@@ -10,7 +10,9 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.VisualPosition
@@ -104,7 +106,8 @@ abstract class FloatingToolbar(
   @RequiresEdt
   private suspend fun showIfHidden() {
     preventHintFromShowing = true
-    if (isShown() || !isEnabled()) {
+    val enabled = writeIntentReadAction(::isEnabled)
+    if (isShown() || !enabled) {
       return
     }
     val canBeShownAtCurrentSelection = readAction { canBeShownAtCurrentSelection() }
@@ -112,7 +115,10 @@ abstract class FloatingToolbar(
       return
     }
     val hint = createHint()
-    showHint(hint)
+    //maybe readaction
+    writeIntentReadAction {
+      showHint (hint)
+    }
     hint.addHintListener {
       this.hint = null
     }
@@ -161,9 +167,11 @@ abstract class FloatingToolbar(
 
   private suspend fun createUpdatedActionToolbar(targetComponent: JComponent): ActionToolbar {
     return suspendCancellableCoroutine { continuation ->
-      createActionToolbar(targetComponent) {
-        if (!continuation.isCompleted) {
-          continuation.resume(it)
+      WriteIntentReadAction.run {
+        createActionToolbar(targetComponent) {
+          if (!continuation.isCompleted) {
+            continuation.resume(it)
+          }
         }
       }
     }

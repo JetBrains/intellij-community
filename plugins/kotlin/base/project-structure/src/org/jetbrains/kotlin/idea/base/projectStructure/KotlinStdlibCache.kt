@@ -17,6 +17,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileSystem
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.jps.entities.ModuleEntity
@@ -48,9 +49,9 @@ interface KotlinStdlibCache {
                     ?: error("Failed to load service ${KotlinStdlibCache::class.java.name}")
             }
 
-        val Disabled = object : KotlinStdlibCache {
-            override fun isStdlib(libraryInfo: LibraryInfo) = false
-            override fun isStdlibDependency(libraryInfo: LibraryInfo) = false
+        val Disabled: KotlinStdlibCache = object : KotlinStdlibCache {
+            override fun isStdlib(libraryInfo: LibraryInfo): Boolean = false
+            override fun isStdlibDependency(libraryInfo: LibraryInfo): Boolean = false
             override fun findStdlibInModuleDependencies(module: IdeaModuleInfo): LibraryInfo? = null
         }
     }
@@ -79,11 +80,11 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         project: Project,
         private val directories: Set<VirtualFile>
     ) : DelegatingGlobalSearchScope(GlobalSearchScope.allScope(project)) {
-        private val fileSystems = directories.mapTo(hashSetOf(), VirtualFile::getFileSystem)
+        private val fileSystems: Set<VirtualFileSystem> = directories.mapTo(hashSetOf(), VirtualFile::getFileSystem)
 
         override fun contains(file: VirtualFile): Boolean = file.fileSystem in fileSystems && VfsUtilCore.isUnder(file, directories)
 
-        override fun toString() = "All files under: $directories"
+        override fun toString(): String = "All files under: $directories"
     }
 
     private fun libraryScopeContainsIndexedFilesForName(libraryInfo: LibraryInfo, name: FqName): Boolean {
@@ -93,9 +94,9 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         })
     }
 
-    private fun isFatJar(libraryInfo: LibraryInfo) = libraryInfo.getLibraryRoots().size > 1
+    private fun isFatJar(libraryInfo: LibraryInfo): Boolean = libraryInfo.getLibraryRoots().size > 1
 
-    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo) = libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
+    private fun isKotlinJavaRuntime(libraryInfo: LibraryInfo): Boolean = libraryInfo.library.name == KOTLIN_JAVA_RUNTIME_NAME
 
     override fun isStdlib(libraryInfo: LibraryInfo): Boolean = stdlibCache[libraryInfo]
 
@@ -107,7 +108,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
         return stdlibDependency.libraryInfo
     }
 
-    override fun dispose() = Unit
+    override fun dispose() {}
 
     private sealed class BaseStdLibCache(project: Project) :
         SynchronizedFineGrainedEntityCache<LibraryInfo, Boolean>(project, doSelfInitialization = false, cleanOnLowMemory = true),
@@ -154,7 +155,7 @@ internal class KotlinStdlibCacheImpl(private val project: Project) : KotlinStdli
             else -> moduleCache[key]
         }
 
-        override fun dispose() = Unit
+        override fun dispose() {}
 
         private abstract inner class AbstractCache<Key : IdeaModuleInfo> :
             SynchronizedFineGrainedEntityCache<Key, StdlibDependency>(project, doSelfInitialization = false, cleanOnLowMemory = true),

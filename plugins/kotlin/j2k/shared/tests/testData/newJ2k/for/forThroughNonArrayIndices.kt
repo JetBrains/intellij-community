@@ -4,7 +4,7 @@ internal class X {
 
 internal class C {
     fun foo(x: X) {
-        for (i in 0 until x.length) {
+        for (i in 0..<x.length) {
             print(i)
         }
     }

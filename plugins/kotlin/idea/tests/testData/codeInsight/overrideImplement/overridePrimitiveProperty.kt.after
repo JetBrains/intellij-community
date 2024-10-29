@@ -28,3 +28,12 @@ class C : T {
     override val a8: Boolean
         get() = TODO("Not yet implemented")
 }
+
+// MEMBER: "a1: Byte"
+// MEMBER: "a2: Short"
+// MEMBER: "a3: Int"
+// MEMBER: "a4: Long"
+// MEMBER: "a5: Float"
+// MEMBER: "a6: Double"
+// MEMBER: "a7: Char"
+// MEMBER: "a8: Boolean"

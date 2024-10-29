@@ -2,9 +2,9 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.UpdateSession;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,17 +12,17 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public class SettingsEntryPointGroup extends DefaultActionGroup {
+final class SettingsEntryPointGroup extends DefaultActionGroup {
   @Override
-  public @NotNull List<AnAction> postProcessVisibleChildren(@NotNull List<? extends AnAction> visibleChildren,
-                                                            @NotNull UpdateSession updateSession) {
+  public @NotNull List<? extends @NotNull AnAction> postProcessVisibleChildren(@NotNull AnActionEvent e,
+                                                                               @NotNull List<? extends @NotNull AnAction> visibleChildren) {
     for (AnAction child : visibleChildren) {
-      Presentation presentation = updateSession.presentation(child);
+      Presentation presentation = e.getUpdateSession().presentation(child);
       String text = presentation.getText();
       if (text != null && !(text.endsWith("...") || text.endsWith("…")) && !(child instanceof SettingsEntryPointAction.NoDots)) {
         presentation.setText(text + "…");
       }
     }
-    return super.postProcessVisibleChildren(visibleChildren, updateSession);
+    return super.postProcessVisibleChildren(e, visibleChildren);
   }
 }

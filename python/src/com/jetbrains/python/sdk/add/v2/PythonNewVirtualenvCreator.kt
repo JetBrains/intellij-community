@@ -1,63 +1,55 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add.v2
 
-import com.intellij.execution.wsl.WslPath.Companion.parseWindowsUncPath
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.diagnostic.getOrLogException
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.validation.DialogValidationRequestor
 import com.intellij.openapi.ui.validation.WHEN_PROPERTY_CHANGED
 import com.intellij.openapi.ui.validation.and
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.components.validationTooltip
-import com.intellij.util.PathUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.ui.showingScope
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.newProject.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.newProjectWizard.collector.PythonNewProjectWizardCollector
+import com.jetbrains.python.newProjectWizard.projectPath.ProjectPathFlows.Companion.validatePath
+import com.jetbrains.python.sdk.VirtualEnvReader
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.LocalContext
-import com.jetbrains.python.sdk.add.ProjectLocationContext
-import com.jetbrains.python.sdk.add.WslContext
 import com.jetbrains.python.sdk.add.v2.PythonInterpreterSelectionMethod.SELECT_EXISTING
+import com.jetbrains.python.sdk.add.v2.PythonSupportedEnvironmentManagers.PYTHON
 import com.jetbrains.python.statistics.InterpreterCreationMode
-import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
-import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
 
-class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
-  private val location = propertyGraph.property("")
-  private val inheritSitePackages = propertyGraph.property(false)
-  private val makeAvailable = propertyGraph.property(false)
+class PythonNewVirtualenvCreator(model: PythonMutableTargetAddInterpreterModel) : PythonNewEnvironmentCreator(model) {
+  private lateinit var versionComboBox: PythonInterpreterComboBox
+
   private val locationValidationFailed = propertyGraph.property(false)
   private val locationValidationMessage = propertyGraph.property("Current location already exists")
-  private val basePythonVersion = propertyGraph.property<Sdk?>(initial = null)
-  private lateinit var versionComboBox: ComboBox<Sdk?>
   private var locationModified = false
   private var suggestedVenvName: String = ""
   private var suggestedLocation: Path = Path.of("")
+
   private val pythonInVenvPath: Path
     get() {
       return when {
-        SystemInfo.isWindows && presenter.projectLocationContext !is WslContext -> Paths.get("Scripts", "python.exe")
+        SystemInfo.isWindows -> Paths.get("Scripts", "python.exe")
+        //SystemInfo.isWindows && presenter.projectLocationContext !is WslContext -> Paths.get("Scripts", "python.exe")
         else -> Paths.get("bin", "python")
       }
     }
@@ -66,39 +58,44 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     val firstFixLink = ActionLink(message("sdk.create.custom.venv.use.different.venv.link", ".venv1")) {
       PythonNewProjectWizardCollector.logSuggestedVenvDirFixUsed()
       val newPath = suggestedLocation.resolve(suggestedVenvName)
-      location.set(newPath.toString())
+      model.state.venvPath.set(newPath.toString())
     }
     val secondFixLink = ActionLink(message("sdk.create.custom.venv.select.existing.link")) {
       PythonNewProjectWizardCollector.logExistingVenvFixUsed()
-      val sdkPath = Paths.get(location.get()).resolve(pythonInVenvPath).toString()
-      if (!presenter.state.allSdks.get().any { it.homePath == sdkPath }) {
-        presenter.addPythonInterpreter(sdkPath)
-      }
-      presenter.state.selectedVenvPath.set(sdkPath)
-      presenter.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PythonSupportedEnvironmentManagers.PYTHON)
+      val sdkPath = Paths.get(model.state.venvPath.get()).resolve(pythonInVenvPath).toString()
+
+      val interpreter = model.findInterpreter(sdkPath) ?: model.addInterpreter(sdkPath)
+
+      model.state.selectedInterpreter.set(interpreter)
+      model.navigator.navigateTo(newMethod = SELECT_EXISTING, newManager = PYTHON)
     }
 
     with(panel) {
       row(message("sdk.create.custom.base.python")) {
-        versionComboBox = pythonInterpreterComboBox(basePythonVersion,
-                                                    presenter,
-                                                    presenter.basePythonSdksFlow,
-                                                    presenter::addBasePythonInterpreter)
-            .align(Align.FILL)
-            .component
+        versionComboBox = pythonInterpreterComboBox(model.state.baseInterpreter,
+                                                    model,
+                                                    model::addInterpreter,
+                                                    model.interpreterLoading)
+          .align(Align.FILL)
+          .component
       }
       row(message("sdk.create.custom.location")) {
-        textFieldWithBrowseButton(message("sdk.create.custom.venv.location.browse.title"),
-                                  fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor())
-          .bindText(location)
+        // TODO" Extract this logic to the presenter or view model, do not touch nio from EDT, cover with test
+        textFieldWithBrowseButton(FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(message("sdk.create.custom.venv.location.browse.title")))
+          .bindText(model.state.venvPath)
           .whenTextChangedFromUi { locationModified = true }
-          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(location))
+          .validationRequestor(validationRequestor and WHEN_PROPERTY_CHANGED(model.state.venvPath))
           .cellValidation { textField ->
-            addInputRule("") {
-              val pathExists = textField.isVisible && textField.doesPathExist()
+            addInputRule {
+              if (!textField.isVisible) return@addInputRule null // We are hidden, hence valid
+              locationValidationFailed.set(false)
+              val locationPath = when (val path = validatePath(textField.text)) {
+                is com.jetbrains.python.Result.Failure -> return@addInputRule ValidationInfo(path.error) // Path is invalid
+                is com.jetbrains.python.Result.Success -> path.result
+              }
+              val pathExists = locationPath.exists()
               locationValidationFailed.set(pathExists)
               if (pathExists) {
-                val locationPath = Paths.get(textField.text)
                 if (locationPath.resolve(pythonInVenvPath).exists()) {
                   val typedName = locationPath.last().toString()
                   suggestedVenvName = suggestVenvName(typedName)
@@ -109,14 +106,16 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
                 }
                 else {
                   locationValidationMessage.set(message("sdk.create.custom.venv.folder.not.empty"))
-                  suggestedVenvName = ".venv"
+                  suggestedVenvName = VirtualEnvReader.DEFAULT_VIRTUALENV_DIRNAME
                   suggestedLocation = locationPath
+                  val suggestedPath = (if (locationPath.isDirectory()) locationPath else locationPath.parent).resolve(suggestedVenvName)
                   firstFixLink.text = message("sdk.create.custom.venv.use.different.venv.link",
-                                              Paths.get("..", locationPath.last().toString(), suggestedVenvName))
+                                              suggestedPath)
                   secondFixLink.isVisible = false
                 }
               }
-              pathExists
+              // Path exists means error
+              if (pathExists) ValidationInfo(locationValidationMessage.get()) else null
             }
           }
           .align(Align.FILL)
@@ -129,38 +128,67 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
 
       row("") {
         checkBox(message("sdk.create.custom.inherit.packages"))
-          .bindSelected(inheritSitePackages)
+          .bindSelected(model.state.inheritSitePackages)
       }
       row("") {
         checkBox(message("sdk.create.custom.make.available"))
-          .bindSelected(makeAvailable)
+          .bindSelected(model.state.makeAvailable)
       }
     }
 
-    state.scope.launch(start = CoroutineStart.UNDISPATCHED) {
-      presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
-        withContext(presenter.uiContext) {
-          if (!locationModified) {
-            val suggestedVirtualEnvPath = runCatching {
-              suggestVirtualEnvPath(projectPath, projectLocationContext)
-            }.getOrLogException(LOG)
-            location.set(suggestedVirtualEnvPath.orEmpty())
-          }
+    versionComboBox.showingScope("...") {
+      model.myProjectPathFlows.projectPathWithDefault.collect {
+        if (!locationModified) {
+
+          val suggestedVirtualEnvPath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(it.toString())) // todo nullability issue
+          model.state.venvPath.set(suggestedVirtualEnvPath)
         }
       }
     }
+    // todo venv path suggestion from controller
+    //model.scope.launch(start = CoroutineStart.UNDISPATCHED) {
+    //  presenter.projectWithContextFlow.collectLatest { (projectPath, projectLocationContext) ->
+    //    withContext(presenter.uiContext) {
+    //      if (!locationModified) {
+    //        val suggestedVirtualEnvPath = runCatching {
+    //          suggestVirtualEnvPath(projectPath, projectLocationContext)
+    //        }.getOrLogException(LOG)
+    //        location.set(suggestedVirtualEnvPath.orEmpty())
+    //      }
+    //    }
+    //  }
+    //}
   }
 
   override fun onShown() {
     val modalityState = ModalityState.current().asContextElement()
-    state.scope.launch(Dispatchers.EDT + modalityState) {
-      val basePath = suggestVirtualEnvPath(state.projectPath.get(), presenter.projectLocationContext)
-      location.set(basePath)
-    }
-  }
+    model.scope.launch(Dispatchers.EDT + modalityState) {
+      // TODO: Check venv set
+      //
+      //val suggestedVirtualEnvPath = model.suggestVenvPath()!! // todo nullability issue
+      //model.state.venvPath.set(suggestedVirtualEnvPath)
 
-  private suspend fun suggestVirtualEnvPath(projectPath: String, projectLocationContext: ProjectLocationContext): String =
-    projectLocationContext.suggestVirtualEnvPath(projectPath)
+      //val projectBasePath = state.projectPath.get()
+
+      //val basePath = if (model is PythonLocalAddInterpreterModel)
+      //  withContext(Dispatchers.IO) {
+      //    FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
+      //  }
+      //else {
+      //  ""
+      //  // todo fix for wsl and targets
+      //  //val suggestedVirtualEnvName = PathUtil.getFileName(projectBasePath)
+      //  //val userHome = presenter.projectLocationContext.fetchUserHomeDirectory()
+      //  //userHome?.resolve(DEFAULT_VIRTUALENVS_DIR)?.resolve(suggestedVirtualEnvName)?.toString().orEmpty()
+      //}
+      //
+      //model.state.venvPath.set(basePath)
+    }
+
+    versionComboBox.setItems(model.baseInterpreters)
+
+
+  }
 
   private fun suggestVenvName(currentName: String): String {
     val digitSuffix = currentName.takeLastWhile { it.isDigit() }
@@ -169,82 +197,26 @@ class PythonNewVirtualenvCreator(presenter: PythonAddInterpreterPresenter) : Pyt
     return currentName.removeSuffix(digitSuffix) + newSuffix
   }
 
-  override fun getOrCreateSdk(): Sdk? {
-    return presenter.setupVirtualenv(Path.of(location.get()), state.projectPath.get(), basePythonVersion.get()!!)
-  }
-
-  companion object {
-    private val LOG = logger<PythonNewVirtualenvCreator>()
-
-    /**
-     * We assume this is the default name of the directory that is located in user home and which contains user virtualenv Python
-     * environments.
-     *
-     * @see com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor.getDefaultLocation
-     */
-    private const val DEFAULT_VIRTUALENVS_DIR = ".virtualenvs"
-
-    private suspend fun ProjectLocationContext.suggestVirtualEnvPath(projectBasePath: String?): String =
-      if (this is LocalContext)
-        withContext(Dispatchers.IO) {
-          FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-        }
-      else suggestVirtualEnvPathGeneral(projectBasePath)
-
-
-    /**
-     * The simplest case of [PySdkSettings.getPreferredVirtualEnvBasePath] implemented.
-     */
-    private suspend fun ProjectLocationContext.suggestVirtualEnvPathGeneral(projectBasePath: String?): String {
-      val suggestedVirtualEnvName = projectBasePath?.let { PathUtil.getFileName(it) } ?: "venv"
-      val userHome = fetchUserHomeDirectory()
-      return userHome?.resolve(DEFAULT_VIRTUALENVS_DIR)?.resolve(suggestedVirtualEnvName)?.toString().orEmpty()
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> =
+    // todo remove project path, or move to controller
+    try {
+      val venvPath = Path.of(model.state.venvPath.get())
+      model.setupVirtualenv(venvPath, model.myProjectPathFlows.projectPathWithDefault.first())
+    }
+    catch (e: InvalidPathException) {
+      Result.failure(e)
     }
 
-    /**
-     * Checks if [this] field's text points to an existing file or directory. Calls [Path.exists] from EDT with care to avoid freezing the
-     * UI.
-     *
-     * In case of Windows machine, this method skips testing UNC paths on existence (except WSL paths) to prevent [Path.exists] checking the
-     * network resources. Such checks might freeze the UI for several seconds when performed from EDT. The freezes reveal themselves when
-     * a user starts typing a WSL path with `\\w` and continues symbol by symbol (`\\ws`, `\\wsl`, etc.) all the way to the root WSL path.
-     *
-     * @see [Path.exists]
-     */
-    @RequiresBackgroundThread(generateAssertion = false)
-    private fun TextFieldWithBrowseButton.doesPathExist(): Boolean =
-      text.let { probablyIncompletePath ->
-        if (SystemInfo.isWindows && OSAgnosticPathUtil.isUncPath(probablyIncompletePath)) {
-          val parseWindowsUncPath = parseWindowsUncPath(probablyIncompletePath)
-          if (parseWindowsUncPath?.linuxPath?.isNotBlank() == true) {
-            probablyIncompletePath.safeCheckCorrespondingPathExist()
-          }
-          else {
-            false
-          }
-        }
-        else {
-          probablyIncompletePath.safeCheckCorrespondingPathExist()
-        }
-      }
-
-    private fun String.safeCheckCorrespondingPathExist() =
-      try {
-        Paths.get(this).exists()
-      }
-      catch (e: InvalidPathException) {
-        false
-      }
-  }
-
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    val statisticsTarget = target.toStatisticsField() // todo fix for wsl
     return InterpreterStatisticsInfo(InterpreterType.VIRTUALENV,
                                      statisticsTarget,
-                                     inheritSitePackages.get(),
-                                     makeAvailable.get(),
+                                     model.state.inheritSitePackages.get(),
+                                     model.state.makeAvailable.get(),
                                      false,
-                                     presenter.projectLocationContext is WslContext,
+      //presenter.projectLocationContext is WslContext,
+                                     false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }
 }

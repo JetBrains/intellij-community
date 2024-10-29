@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.impl.presentationAssistant
 
 import com.intellij.ide.ui.LafManagerListener
@@ -30,7 +30,7 @@ import java.awt.event.WindowAdapter
 import java.awt.event.WindowEvent
 import javax.swing.SwingUtilities
 
-internal class ActionInfoPopupGroup(val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
+internal class ActionInfoPopupGroup(private val project: Project, textFragments: List<TextData>, showAnimated: Boolean) : Disposable {
   data class ActionBlock(val popup: JBPopup, val panel: ActionInfoPanel) {
     val isDisposed: Boolean get() = popup.isDisposed
   }
@@ -299,7 +299,7 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
         it.popup.cancel()
       }
     }
-    Disposer.dispose(animator)
+    animator.dispose()
     Disposer.dispose(settingsButton)
   }
 
@@ -333,10 +333,13 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
   }
 
   private fun fadeOut() {
-    if (phase != Phase.SHOWN) return
+    if (phase != Phase.SHOWN) {
+      return
+    }
+
     phase = Phase.FADING_OUT
-    Disposer.dispose(animator)
-    animator = FadeInOutAnimator(false, true)
+    animator.dispose()
+    animator = FadeInOutAnimator(forward = false, animated = true)
     animator.resume()
   }
 
@@ -382,10 +385,17 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     return PopupLocationInfo(RelativePoint(ideFrame.component, Point(x, y)), popupGroupSize)
   }
 
-  inner class FadeInOutAnimator(private val forward: Boolean, animated: Boolean) : Animator("Action Hint Fade In/Out", 8, if (animated) 100 else 0, false, forward) {
+  inner class FadeInOutAnimator(private val forward: Boolean, animated: Boolean) : Animator(
+    name = "Action Hint Fade In/Out",
+    totalFrames = 8,
+    cycleDuration = if (animated) 100 else 0,
+    isRepeatable = false,
+    isForward = forward,
+  ) {
     override fun paintNow(frame: Int, totalFrames: Int, cycle: Int) {
-      if (forward && phase != Phase.FADING_IN
-          || !forward && phase != Phase.FADING_OUT) return
+      if (forward && phase != Phase.FADING_IN || !forward && phase != Phase.FADING_OUT) {
+        return
+      }
       setAlpha((totalFrames - frame).toFloat() / totalFrames)
     }
 
@@ -399,45 +409,53 @@ internal class ActionInfoPopupGroup(val project: Project, textFragments: List<Te
     }
   }
 
-  internal data class Appearance(val titleFontSize: Float,
-                                 val subtitleFontSize: Float,
-                                 val popupInsets: Insets,
-                                 val subtitleHorizontalInset: Int,
-                                 val spaceBetweenPopups: Int,
-                                 val titleSubtitleGap: Int,
-                                 val settingsButtonWidth: Int,
-                                 val theme: PresentationAssistantTheme)
+  internal data class Appearance(
+    val titleFontSize: Float,
+    val subtitleFontSize: Float,
+    val popupInsets: Insets,
+    val subtitleHorizontalInset: Int,
+    val spaceBetweenPopups: Int,
+    val titleSubtitleGap: Int,
+    val settingsButtonWidth: Int,
+    val theme: PresentationAssistantTheme,
+  )
 
   companion object {
     @Suppress("UseDPIAwareInsets") // Values from insets will be scaled at the usage place
     private fun appearanceFromSize(popupSize: PresentationAssistantPopupSize,
                                    theme: PresentationAssistantTheme): Appearance = when(popupSize) {
-      PresentationAssistantPopupSize.SMALL -> Appearance(22f,
-                                                         12f,
-                                                         Insets(6, 12, 6, 12),
-                                                         2,
-                                                         8,
-                                                         1,
-                                                         25,
-                                                         theme)
+      PresentationAssistantPopupSize.SMALL -> Appearance(
+        titleFontSize = 22f,
+        subtitleFontSize = 12f,
+        popupInsets = Insets(6, 12, 6, 12),
+        subtitleHorizontalInset = 2,
+        spaceBetweenPopups = 8,
+        titleSubtitleGap = 1,
+        settingsButtonWidth = 25,
+        theme = theme,
+      )
 
-      PresentationAssistantPopupSize.MEDIUM -> Appearance(32f,
-                                                          13f,
-                                                          Insets(6, 16, 8, 16),
-                                                          2,
-                                                          12,
-                                                          -2,
-                                                          30,
-                                                          theme)
+      PresentationAssistantPopupSize.MEDIUM -> Appearance(
+        titleFontSize = 32f,
+        subtitleFontSize = 13f,
+        popupInsets = Insets(6, 16, 8, 16),
+        subtitleHorizontalInset = 2,
+        spaceBetweenPopups = 12,
+        titleSubtitleGap = -2,
+        settingsButtonWidth = 30,
+        theme = theme,
+      )
 
-      PresentationAssistantPopupSize.LARGE -> Appearance(40f,
-                                                         14f,
-                                                         Insets(6, 16, 8, 16),
-                                                         2,
-                                                         12,
-                                                         -2,
-                                                         34,
-                                                         theme)
+      PresentationAssistantPopupSize.LARGE -> Appearance(
+        titleFontSize = 40f,
+        subtitleFontSize = 14f,
+        popupInsets = Insets(6, 16, 8, 16),
+        subtitleHorizontalInset = 2,
+        spaceBetweenPopups = 12,
+        titleSubtitleGap = -2,
+        settingsButtonWidth = 34,
+        theme = theme,
+      )
     }
 
     /**

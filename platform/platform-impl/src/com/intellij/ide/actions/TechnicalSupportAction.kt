@@ -2,17 +2,21 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ConsentOptionsProvider
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls
+import com.intellij.util.PlatformUtils
 import kotlinx.coroutines.launch
 
 internal class TechnicalSupportAction : AnAction(), DumbAware {
   override fun update(e: AnActionEvent) {
-    e.presentation.setVisible(ExternalProductResourceUrls.getInstance().technicalSupportUrl != null)
+    e.presentation.setEnabledAndVisible(ExternalProductResourceUrls.getInstance().technicalSupportUrl != null &&
+                                        PlatformUtils.isCommercialEdition() &&
+                                        !service<ConsentOptionsProvider>().isActivatedWithFreeLicense)
   }
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

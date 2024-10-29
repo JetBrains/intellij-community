@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.CommonBundle;
@@ -148,13 +148,13 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   }
 
   private void updateFileTypeList() {
-    List<FileTypeManagerImpl.FileTypeWithDescriptor> types = ContainerUtil.sorted(ContainerUtil.filter(myTempFileTypes, ftd -> !ftd.fileType.isReadOnly()),
-    (o1, o2) -> o1.fileType.getDescription().compareToIgnoreCase(o2.fileType.getDescription()));
+    List<FileTypeManagerImpl.FileTypeWithDescriptor> types = ContainerUtil.sorted(ContainerUtil.filter(myTempFileTypes, ftd -> !ftd.fileType()
+                                                                                    .isReadOnly()),
+    (o1, o2) -> o1.fileType().getDescription().compareToIgnoreCase(o2.fileType().getDescription()));
     myRecognizedFileType.setFileTypes(types);
   }
 
-  @NotNull
-  private Set<FileTypeManagerImpl.FileTypeWithDescriptor> getRegisteredFilesTypes() {
+  private @NotNull Set<FileTypeManagerImpl.FileTypeWithDescriptor> getRegisteredFilesTypes() {
     return new HashSet<>(myFileTypeManager.getRegisteredFileTypeWithDescriptors());
   }
 
@@ -197,7 +197,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       myRecognizedFileType.selectFileType(myFileTypeToPreselect);
     }
     else if (lastSelectedFileType != null) {
-      myRecognizedFileType.selectFileType(lastSelectedFileType.fileType);
+      myRecognizedFileType.selectFileType(lastSelectedFileType.fileType());
     }
   }
 
@@ -262,9 +262,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   private void editFileType() {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
-    if (ftd==null||!canBeModified(ftd.fileType)) return;
+    if (ftd==null||!canBeModified(ftd.fileType())) return;
 
-    UserFileType<?> userFileType = (UserFileType<?>)ftd.fileType;
+    UserFileType<?> userFileType = (UserFileType<?>)ftd.fileType();
     UserFileType<?> ftToEdit = myOriginalToEditedMap.get(userFileType);
     if (ftToEdit == null) ftToEdit = userFileType.clone();
     TypeEditor editor = new TypeEditor(myRecognizedFileType.myFileTypesList, ftToEdit, FileTypesBundle.message("filetype.edit.existing.title"));
@@ -282,7 +282,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeFileType() {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
     if (ftd == null) return;
-    FileType fileType = ftd.fileType;
+    FileType fileType = ftd.fileType();
     FileTypeConfigurableInteractions.fileTypeRemoved.log();
 
     int index = myRecognizedFileType.myFileTypesList.getSelectedIndex();
@@ -329,7 +329,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editPattern(@Nullable("null means new") Pair<FileNameMatcher, Language> item) {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
     if (ftd == null) return;
-    FileType type = ftd.fileType;
+    FileType type = ftd.fileType();
 
     if (item == null) {
       FileTypeConfigurableInteractions.patternAdded.log(type);
@@ -354,8 +354,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       FileNameMatcher matcher = FileTypeManager.parseFromString(pattern);
       FileTypeManagerImpl.FileTypeWithDescriptor registeredFtd = findExistingFileType(matcher);
-      if (registeredFtd != null && registeredFtd.fileType != type) {
-        FileType registeredFileType = registeredFtd.fileType;
+      if (registeredFtd != null && registeredFtd.fileType() != type) {
+        FileType registeredFileType = registeredFtd.fileType();
         if (registeredFileType.isReadOnly()) {
           Messages.showMessageDialog(myPatterns.myList,
                                      FileTypesBundle.message("filetype.edit.add.pattern.exists.error", registeredFileType.getDescription()),
@@ -398,11 +398,11 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
   private @Nullable FileTypeManagerImpl.FileTypeWithDescriptor findExistingFileType(@NotNull FileNameMatcher matcher) {
     FileTypeManagerImpl.@Nullable FileTypeWithDescriptor ftd = myTempPatternsTable.findAssociatedFileType(matcher);
-    if (ftd != null && ftd.fileType != FileTypes.UNKNOWN) {
+    if (ftd != null && ftd.fileType() != FileTypes.UNKNOWN) {
       return ftd;
     }
     FileTypeManagerImpl.@NotNull FileTypeWithDescriptor registeredFtd = myFileTypeManager.getFileTypeWithDescriptorByExtension(matcher.getPresentableString());
-    if (registeredFtd.fileType != FileTypes.UNKNOWN && registeredFtd.fileType.isReadOnly()) {
+    if (registeredFtd.fileType() != FileTypes.UNKNOWN && registeredFtd.fileType().isReadOnly()) {
       return registeredFtd;
     }
     return null;
@@ -411,7 +411,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removePattern() {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
     if (ftd == null) return;
-    FileTypeConfigurableInteractions.patternRemoved.log(ftd.fileType);
+    FileTypeConfigurableInteractions.patternRemoved.log(ftd.fileType());
     Pair<FileNameMatcher, Language> removed = myPatterns.removeSelected();
     if (removed == null) return;
 
@@ -423,7 +423,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void removeHashBang() {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
     if (ftd == null) return;
-    FileTypeConfigurableInteractions.hashbangRemoved.log(ftd.fileType);
+    FileTypeConfigurableInteractions.hashbangRemoved.log(ftd.fileType());
     String extension = myHashBangs.removeSelected();
     if (extension == null) return;
 
@@ -445,7 +445,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
 
       myFileTypesList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myCellRenderer = new FileTypeWithDescriptorRenderer<>(myFileTypesList.getModel(), ftd -> {
-        FileType fileType = ftd.fileType;
+        FileType fileType = ftd.fileType();
         UserFileType<?> modified = myOriginalToEditedMap.get(fileType);
         return modified != null ? modified : fileType;
       });
@@ -481,7 +481,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     private boolean selectedTypeCanBeModified() {
       FileTypeManagerImpl.FileTypeWithDescriptor ftd = getSelectedFileType();
       if (ftd == null) return false;
-      return canBeModified(ftd.fileType);
+      return canBeModified(ftd.fileType());
     }
 
     private final class MySpeedSearch extends SpeedSearchBase<JList<FileTypeManagerImpl.FileTypeWithDescriptor>> {
@@ -496,7 +496,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
           p -> {
             String value = p.first.toString();
             if (p.first instanceof FileTypeManagerImpl.FileTypeWithDescriptor) {
-              value = ((FileTypeManagerImpl.FileTypeWithDescriptor)p.first).fileType.getDescription();
+              value = ((FileTypeManagerImpl.FileTypeWithDescriptor)p.first).fileType().getDescription();
             }
             return getComparator().matchingFragments(p.second, value) != null;
           },
@@ -514,9 +514,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
         return false;
       }
 
-      @Nullable
       @Override
-      protected String getElementText(Object element) {
+      protected @Nullable String getElementText(Object element) {
         throw new IllegalStateException();
       }
 
@@ -571,7 +570,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       DefaultListModel<FileTypeManagerImpl.FileTypeWithDescriptor> listModel = (DefaultListModel<FileTypeManagerImpl.FileTypeWithDescriptor>)myFileTypesList.getModel();
       listModel.clear();
       for (FileTypeManagerImpl.FileTypeWithDescriptor type : types) {
-        if (type.fileType != FileTypes.UNKNOWN) {
+        if (type.fileType() != FileTypes.UNKNOWN) {
           listModel.addElement(type);
         }
       }
@@ -725,7 +724,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private void editHashBang(@Nullable("null means new") String oldHashBang) {
     FileTypeManagerImpl.FileTypeWithDescriptor ftd = myRecognizedFileType.getSelectedFileType();
     if (ftd == null) return;
-    FileType type = ftd.fileType;
+    FileType type = ftd.fileType();
 
     if (oldHashBang == null) {
       FileTypeConfigurableInteractions.hashbangAdded.log(type);
@@ -741,9 +740,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return; //canceled or empty
     }
     HashBangConflict conflict = checkHashBangConflict(hashbang);
-    if (conflict != null && conflict.fileType.fileType != type) {
+    if (conflict != null && conflict.fileType.fileType() != type) {
       FileTypeManagerImpl.FileTypeWithDescriptor existingFtd = conflict.fileType;
-      FileType existingFileType = existingFtd.fileType;
+      FileType existingFileType = existingFtd.fileType();
       if (!conflict.writeable) {
         String message = conflict.exact
                          ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
@@ -797,7 +796,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       if (hashbang.contains(existingHashBang) || existingHashBang.contains(hashbang)) {
         FileTypeManagerImpl.FileTypeWithDescriptor ftd = entry.getValue();
         boolean exact = existingHashBang.equals(hashbang);
-        boolean writeable = !ftd.fileType.isReadOnly() && !isStandardFileType(ftd.fileType);
+        boolean writeable = !ftd.fileType().isReadOnly() && !isStandardFileType(ftd.fileType());
         return new HashBangConflict(ftd, exact, writeable, existingHashBang);
       }
     }

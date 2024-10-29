@@ -28,7 +28,7 @@ class TestPythonPackageManager(project: Project, sdk: Sdk) : PythonPackageManage
     return this
   }
 
-  override suspend fun installPackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+  override suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
     TODO("Not yet implemented")
   }
 

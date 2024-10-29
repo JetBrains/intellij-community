@@ -8,7 +8,9 @@ import com.intellij.notification.impl.NotificationsManagerImpl.isDummyEnvironmen
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class NotificationsListener : Notifications {
   private val project: Project?
 

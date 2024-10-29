@@ -1,63 +1,50 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.inspections;
 
-import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ProblemHolderUtilKt;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.inspections.quickfix.CreateHtmlDescriptionFix;
-import org.jetbrains.idea.devkit.util.PsiUtil;
-import org.jetbrains.uast.UAnonymousClass;
-import org.jetbrains.uast.UClass;
 
-abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBase {
+abstract class DescriptionNotFoundInspectionBase extends DevKitJvmInspection.ForClass {
 
   private final DescriptionType myDescriptionType;
 
   protected DescriptionNotFoundInspectionBase(DescriptionType descriptionType) {
-    super(UClass.class);
     myDescriptionType = descriptionType;
   }
 
   @Override
-  public final ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (uClass instanceof UAnonymousClass) return null;
+  protected void checkClass(@NotNull Project project, @NotNull PsiClass psiClass, @NotNull HighlightSink sink) {
+    if (!ExtensionUtil.isExtensionPointImplementationCandidate(psiClass)) return;
+    if (!myDescriptionType.matches(psiClass)) return;
 
-    PsiClass psiClass = uClass.getJavaPsi();
-    final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(psiClass)) return null;
-
-    final PsiClass base = JavaPsiFacade.getInstance(manager.getProject()).findClass(myDescriptionType.getClassName(),
-                                                                                    psiClass.getResolveScope());
-    if (base == null || !psiClass.isInheritor(base, true)) return null;
+    if (module == null) return;
 
     if (skipIfNotRegistered(psiClass)) {
-      return null;
+      return;
     }
 
-    ProblemsHolder holder = new ProblemsHolder(manager, psiClass.getContainingFile(), isOnTheFly);
     boolean registered;
     if (myDescriptionType.isFixedDescriptionFilename()) {
-      registered = checkFixedDescription(holder, module, psiClass, uClass);
+      registered = checkFixedDescription(sink, module, psiClass);
     }
     else {
-      registered = checkDynamicDescription(holder, module, psiClass);
+      registered = checkDynamicDescription(sink, module, psiClass);
     }
+    if (registered) return;
 
-    if (registered) return holder.getResultsArray();
-
-    ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotDescriptionError(module, psiClass),
-                                         new CreateHtmlDescriptionFix(getDescriptionDir(module, psiClass), module, myDescriptionType));
-    return holder.getResultsArray();
+    sink.highlight(getHasNotDescriptionError(module, psiClass),
+                   new CreateHtmlDescriptionFix(getDescriptionDir(module, psiClass), module, myDescriptionType));
   }
 
   protected abstract boolean skipIfNotRegistered(PsiClass epClass);
@@ -66,14 +53,13 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
     return false;
   }
 
-  protected boolean checkDynamicDescription(ProblemsHolder holder, Module module, PsiClass psiClass) {
+  protected boolean checkDynamicDescription(HighlightSink sink, Module module, PsiClass psiClass) {
     throw new IllegalStateException("must be implemented for " + getClass());
   }
 
-  protected boolean checkFixedDescription(ProblemsHolder holder,
+  protected boolean checkFixedDescription(HighlightSink sink,
                                           Module module,
-                                          PsiClass psiClass,
-                                          UClass uClass) {
+                                          PsiClass psiClass) {
     String descriptionDir = getDescriptionDir(module, psiClass);
     if (StringUtil.isEmptyOrSpaces(descriptionDir)) {
       return false;
@@ -87,7 +73,7 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
 
       if (!hasBeforeAndAfterTemplate(dir.getVirtualFile()) &&
           !skipOptionalBeforeAfter(psiClass)) {
-        ProblemHolderUtilKt.registerUProblem(holder, uClass, getHasNotBeforeAfterError());
+        sink.highlight(getHasNotBeforeAfterError());
       }
       return true;
     }

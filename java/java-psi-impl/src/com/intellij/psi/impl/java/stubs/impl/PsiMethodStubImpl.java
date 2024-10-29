@@ -83,7 +83,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
   @Override
   public PsiParameterStub findParameter(final int idx) {
     PsiParameterListStub list = null;
-    for (StubElement child : getChildrenStubs()) {
+    for (StubElement<?> child : getChildrenStubs()) {
       if (child instanceof PsiParameterListStub) {
         list = (PsiParameterListStub)child;
         break;
@@ -91,7 +91,7 @@ public class PsiMethodStubImpl extends StubBase<PsiMethod> implements PsiMethodS
     }
 
     if (list != null) {
-      final List<StubElement> params = list.getChildrenStubs();
+      final List<StubElement<?>> params = list.getChildrenStubs();
       return (PsiParameterStub)params.get(idx);
     }
 

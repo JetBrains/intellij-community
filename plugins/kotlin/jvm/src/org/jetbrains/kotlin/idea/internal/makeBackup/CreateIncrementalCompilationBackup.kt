@@ -80,7 +80,6 @@ class CreateIncrementalCompilationBackup : AnAction(KotlinJvmBundle.message("cre
                 gateway.createTransientRootEntry(),
                 project.baseDir!!.path,
                 project.locationHash,
-                null
             )
 
             var patchesCreated = 0

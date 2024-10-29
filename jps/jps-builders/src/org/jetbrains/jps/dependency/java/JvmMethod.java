@@ -143,8 +143,7 @@ public final class JvmMethod extends ProtoMember implements DiffCapable<JvmMetho
     return getDescriptor(myArgTypes, getType());
   }
 
-  @NotNull
-  public static String getDescriptor(Iterable<TypeRepr> argTypes, @NotNull TypeRepr returnType) {
+  public static @NotNull String getDescriptor(Iterable<TypeRepr> argTypes, @NotNull TypeRepr returnType) {
     final StringBuilder buf = new StringBuilder();
 
     buf.append("(");

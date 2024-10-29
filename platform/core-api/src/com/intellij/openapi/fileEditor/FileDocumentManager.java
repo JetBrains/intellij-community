@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
@@ -6,6 +6,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Computable;
@@ -15,7 +16,6 @@ import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.util.Processor;
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkListener;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -54,7 +55,6 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  @RequiresBlockingContext
   @RequiresReadLock
   public @Nullable Document getDocument(@NotNull VirtualFile file, @NotNull Project preferredProject) {
     try (AccessToken ignored = ProjectLocator.withPreferredProject(file, preferredProject)) {
@@ -203,6 +203,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
 
   @ApiStatus.Internal
   public void reloadBinaryFiles() { }
+
+  @ApiStatus.Internal
+  public void reloadFileTypes(@NotNull Set<FileType> fileTypes) { }
 
   @ApiStatus.Internal
   public @Nullable FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {

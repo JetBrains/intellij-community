@@ -11,9 +11,17 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.junit5.TestDisposable
 import com.intellij.testFramework.utils.vfs.getPsiFile
+import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.Directives
-import org.jetbrains.kotlin.idea.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getMethodMetadata
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestDataFileName
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.getTestsRoot
+import org.jetbrains.kotlin.idea.test.KotlinTestUtils.toSlashEndingDirPath
 import org.jetbrains.kotlin.idea.test.TestFiles
+import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
+import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
+import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.TestInfo
 import java.io.File
@@ -41,13 +49,15 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
 
     val mainTestDataFile: TestFile
         get() = requireNotNull(testDataFiles.firstOrNull()) {
-            "expected at lead one testDataFiles."
+            "expected at least one testDataFiles."
         }
 
     val mainTestDataPsiFile: PsiFile
         get() = runReadAction { getFile(mainTestDataFile.path).getPsiFile(project) }
 
     override fun setUp() {
+        assumeThatKotlinIsSupported(gradleVersion)
+
         super.setUp()
 
         loadTestDataFiles()
@@ -59,6 +69,7 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
     override fun tearDown() {
         runAll(
             { _testDataFiles = null },
+            { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() }
         )
     }
@@ -108,4 +119,52 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
     }
 
     class TestFile internal constructor(val path: String, val content: String)
+
+    companion object {
+        @JvmStatic
+        protected val GRADLE_VERSION_CATALOGS_FIXTURE = GradleTestFixtureBuilder.create("version-catalogs-kotlin-dsl") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("version-catalogs-kotlin-dsl")
+                includeBuild("includedBuild1")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withFile(
+                "gradle/libs.versions.toml",
+                /* language=TOML */
+                """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [plugins]
+                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+                [versions]
+                test_library-version = "1.0"
+                kotlin = "1.9.24"
+                """.trimIndent()
+            )
+            // included build files
+            withSettingsFile(relativeModulePath = "includedBuild1", useKotlinDsl = true) {
+                setProjectName("includedBuild1")
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "includedBuild1", useKotlinDsl = true) {
+                withKotlinMultiplatformPlugin()
+                withMavenCentral()
+            }
+            withFile(
+                "includedBuild1/gradle/libs.versions.toml",
+                /* language=TOML */
+                """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
+                [plugins]
+                kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin"}
+                [versions]
+                test_library-version = "1.0"
+                kotlin = "1.9.24"
+                """.trimIndent()
+            )
+        }
+    }
 }

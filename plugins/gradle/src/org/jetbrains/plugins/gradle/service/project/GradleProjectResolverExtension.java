@@ -160,20 +160,25 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
   // for Gradle version specific init scripts
   String GRADLE_VERSION = "GRADLE_VERSION";
 
+  // debug flag that will always be passed at runtime if debugging is enabled
+  String DEBUGGER_ENABLED = "DEBUGGER_ENABLED";
+
   /**
-   * Allows extension to contribute to init script
+   * Allows an extension to contribute an init script that would be passed into the Gradle execution
    *
    * @param project            project (if available)
    * @param taskNames          gradle task names to be executed
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
    * @param parameters         storage for passing optional named parameters
+   * @return map with environment variables to be passed into the execution
    */
   @ApiStatus.Experimental
-  default void enhanceTaskProcessing(@Nullable Project project,
-                                     @NotNull List<String> taskNames,
-                                     @NotNull Consumer<String> initScriptConsumer,
-                                     @NotNull Map<String, String> parameters) {
+  default @NotNull Map<String, String> enhanceTaskProcessing(@Nullable Project project,
+                                                             @NotNull List<String> taskNames,
+                                                             @NotNull Consumer<String> initScriptConsumer,
+                                                             @NotNull Map<String, String> parameters) {
     String jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
+    return Map.of();
   }
 }

@@ -33,14 +33,12 @@ public final class BundledFileTemplate extends FileTemplateBase implements Plugi
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NotNull String getName() {
     return myDefaultTemplate.getName();
   }
 
   @Override
-  @NotNull
-  public String getExtension() {
+  public @NotNull String getExtension() {
     return myDefaultTemplate.getExtension();
   }
 
@@ -55,14 +53,12 @@ public final class BundledFileTemplate extends FileTemplateBase implements Plugi
   }
 
   @Override
-  @NotNull
-  protected String getDefaultText() {
+  protected @NotNull String getDefaultText() {
     return myDefaultTemplate.getText();
   }
 
   @Override
-  @NotNull
-  public String getDescription() {
+  public @NotNull String getDescription() {
     return myDefaultTemplate.getDescriptionText();
   }
 
@@ -72,9 +68,8 @@ public final class BundledFileTemplate extends FileTemplateBase implements Plugi
     return getText().equals(getDefaultText());
   }
 
-  @NotNull
   @Override
-  public BundledFileTemplate clone() {
+  public @NotNull BundledFileTemplate clone() {
     return (BundledFileTemplate)super.clone();
   }
 

@@ -5,6 +5,7 @@ package com.intellij.platform.ijent
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.containers.map2Array
 
 /**
@@ -18,8 +19,8 @@ fun getIjentGrpcArgv(
 ): List<String> {
   val debuggingLogLevel = when {
     LOG.isTraceEnabled &&
-    (ApplicationManager.getApplication()?.isUnitTestMode == true || System.getProperty("ijent.trace.grpc") == "true") ->
-      "trace-with-grpc"
+    (ApplicationManager.getApplication()?.isUnitTestMode == true || System.getProperty("ijent.trace.all") == "true") ->
+      "trace-all"
 
     LOG.isTraceEnabled -> "trace"
     LOG.isDebugEnabled -> "debug"

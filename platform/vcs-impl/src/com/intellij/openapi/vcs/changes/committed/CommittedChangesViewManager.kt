@@ -91,6 +91,6 @@ internal class CommittedChangesViewManager(private val project: Project) : Chang
   }
 }
 
-fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
+internal fun isCommittedChangesAvailable(vcs: AbstractVcs): Boolean {
   return vcs.committedChangesProvider != null && vcs.type == VcsType.centralized
 }

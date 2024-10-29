@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
@@ -47,8 +48,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesTree.TreeStateStrategy;
 import com.intellij.openapi.vcs.telemetry.VcsTelemetrySpan.ChangesView;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
 import com.intellij.problems.ProblemListener;
 import com.intellij.ui.ExperimentalUI;
@@ -60,7 +59,6 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
@@ -74,10 +72,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;
 import kotlin.jvm.functions.Function0;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -94,9 +89,9 @@ import java.util.function.Supplier;
 
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.isCommitToolWindowShown;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerKt.subscribeOnVcsToolWindowLayoutChanges;
 import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 import static java.util.Arrays.asList;
 import static org.jetbrains.concurrency.Promises.cancelledPromise;
@@ -395,7 +390,7 @@ public class ChangesViewManager implements ChangesViewEx,
     DiffPreview preview = ObjectUtils.chooseNotNull(myToolWindowPanel.mySplitterDiffPreview,
                                                     myToolWindowPanel.myEditorDiffPreview);
     DiffPreview.setPreviewVisible(preview, state);
-    myToolWindowPanel.setCommitSplitOrientation();
+    myToolWindowPanel.updatePanelLayout();
   }
 
 
@@ -505,9 +500,6 @@ public class ChangesViewManager implements ChangesViewEx,
       myEditorDiffPreview = new ChangesViewEditorDiffPreview();
       Disposer.register(this, myEditorDiffPreview);
 
-      setSplitterDiffPreview();
-      EditorTabDiffPreviewManager.getInstance(project).subscribeToPreviewVisibilityChange(this, this::setSplitterDiffPreview);
-
       // Override the handlers registered by editorDiffPreview
       myView.setDoubleClickHandler(e -> {
         if (EditSourceOnDoubleClickHandler.isToggleEvent(myView, e)) return false;
@@ -525,12 +517,8 @@ public class ChangesViewManager implements ChangesViewEx,
 
       setContent(mainPanel);
 
-      busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-        @Override
-        public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-          setCommitSplitOrientation();
-        }
-      });
+      subscribeOnVcsToolWindowLayoutChanges(busConnection, this::updatePanelLayout);
+      updatePanelLayout();
 
       busConnection.subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED, () -> scheduleRefresh());
       busConnection.subscribe(ProblemListener.TOPIC, new ProblemListener() {
@@ -574,10 +562,13 @@ public class ChangesViewManager implements ChangesViewEx,
       mySplitterDiffPreview = null;
     }
 
-    private void setSplitterDiffPreview() {
+    private void updatePanelLayout() {
       if (myDisposed) return;
 
-      boolean hasSplitterPreview = !isCommitToolWindowShown(myProject);
+      boolean isVertical = isToolWindowTabVertical(myProject, LOCAL_CHANGES);
+      boolean hasSplitterPreview = !isVertical;
+      boolean isPreviewPanelShown = hasSplitterPreview && myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN;
+      myCommitPanelSplitter.setOrientation(isPreviewPanelShown || isVertical);
 
       //noinspection DoubleNegation
       boolean needUpdatePreviews = hasSplitterPreview != (mySplitterDiffPreview != null);
@@ -729,15 +720,6 @@ public class ChangesViewManager implements ChangesViewEx,
       if (myCommitPanel != null) myCommitPanel.setToolbarHorizontal(isToolbarHorizontal);
     }
 
-    private void setCommitSplitOrientation() {
-      boolean hasPreviewPanel = myVcsConfiguration.LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN && mySplitterDiffPreview != null;
-      ToolWindow tw = getToolWindowFor(myProject, LOCAL_CHANGES);
-      if (tw != null) {
-        boolean toolwindowIsHorizontal = tw.getAnchor().isHorizontal();
-        myCommitPanelSplitter.setOrientation(hasPreviewPanel || !toolwindowIsHorizontal);
-      }
-    }
-
     private final Function0<Boolean> isAllowExcludeFromCommit = () -> isAllowExcludeFromCommit();
     private @NotNull Function<ChangeNodeDecorator, ChangeNodeDecorator> getChangeDecoratorProvider() {
       return baseDecorator -> new PartialCommitChangeNodeDecorator(myProject, baseDecorator, isAllowExcludeFromCommit);
@@ -751,7 +733,7 @@ public class ChangesViewManager implements ChangesViewEx,
     @Override
     public void uiDataSnapshot(@NotNull DataSink sink) {
       super.uiDataSnapshot(sink);
-      sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+      sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
       // This makes COMMIT_WORKFLOW_HANDLER available anywhere in "Local Changes" - so commit executor actions are enabled.
       DataSink.uiDataSnapshot(sink, myCommitPanel);
     }
@@ -1075,6 +1057,7 @@ public class ChangesViewManager implements ChangesViewEx,
     return isCommitToolWindowShown(project) ? VcsBundle.message("tab.title.commit") : VcsBundle.message("local.changes.tab");
   }
 
+  @ApiStatus.Internal
   @Override
   public @Nullable ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
     return ChangesViewWorkflowManager.getInstance(myProject).getCommitWorkflowHandler();

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
@@ -30,9 +30,8 @@ public final class AddArrangementSectionRuleAction extends AddArrangementRuleAct
     e.getPresentation().setEnabledAndVisible(((ArrangementSectionRulesControl)control).getSectionRuleManager() != null);
   }
 
-  @NotNull
   @Override
-  protected Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
+  protected @NotNull Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
     final ArrangementSectionRuleManager manager = ((ArrangementSectionRulesControl)control).getSectionRuleManager();
     assert manager != null;
     return manager.createDefaultSectionRule();

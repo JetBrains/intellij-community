@@ -4,7 +4,9 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.externalDependencies.DependencyOnPlugin;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 @Tag("plugin")
 public final class DependencyOnPluginState {
   DependencyOnPluginState() {

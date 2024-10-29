@@ -1,0 +1,72 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.swing=ALL-UNNAMED",
+    "java.desktop/sun.awt=ALL-UNNAMED",
+  ]
+)
+
+kt_jvm_library(
+  name = "ide",
+  module_name = "intellij.platform.ide",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util",
+    "@community//platform/extensions",
+    "@community//platform/core-api:core",
+    "@community//platform/forms_rt:java-guiForms-rt",
+    "@community//platform/icons",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/editor-ui-api:editor",
+    "@libraries//:jna-platform",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util-ex",
+    "@community//platform/util/concurrency",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:jcef",
+    "@community//platform/code-style-api:codeStyle",
+    "@community//platform/credential-store:credentialStore",
+    "@community//platform/remote-core",
+    "@community//platform/ide-core",
+    "@community//platform/util/text-matching:util-text-matching",
+    "@community//platform/diagnostic",
+    "@libraries//:jackson-core",
+    "@libraries//:caffeine",
+    "@community//platform/progress/shared:ide-progress",
+    "@community//platform/util/diff:util-diff",
+  ],
+  exports = [
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/forms_rt:java-guiForms-rt",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/credential-store:credentialStore",
+    "@community//platform/remote-core",
+    "@community//platform/ide-core",
+    "@community//platform/progress/shared:ide-progress",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

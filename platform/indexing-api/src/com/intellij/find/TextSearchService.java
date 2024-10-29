@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,13 +19,21 @@ public interface TextSearchService {
   }
 
   @NotNull
-  TextSearchResult processFilesWithText(@NotNull String text, Processor<? super VirtualFile> processor, @NotNull GlobalSearchScope scope);
+  TextSearchResult processFilesWithText(@NotNull String text,
+                                        @NotNull Processor<? super VirtualFile> processor,
+                                        @NotNull GlobalSearchScope scope);
 
-  boolean isInSearchableScope(@NotNull VirtualFile file, @NotNull Project project);
+  boolean isInSearchableScope(@NotNull VirtualFile file,
+                              @NotNull Project project);
 
   enum TextSearchResult {
+    /** The search has finished successfully */
     FINISHED,
+
+    /** The search has been aborted */
     STOPPED,
+
+    /** No trigrams are extracted from the provided text. Thus, the search has not been run */
     NO_TRIGRAMS
   }
 }

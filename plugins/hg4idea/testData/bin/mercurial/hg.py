@@ -6,12 +6,12 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
-import errno
 import os
+import posixpath
 import shutil
 import stat
+import weakref
 
 from .i18n import _
 from .node import (
@@ -19,7 +19,6 @@ from .node import (
     sha1nodeconstants,
     short,
 )
-from .pycompat import getattr
 
 from . import (
     bookmarks,
@@ -65,29 +64,12 @@ release = lock.release
 sharedbookmarks = b'bookmarks'
 
 
-def _local(path):
-    path = util.expandpath(urlutil.urllocalpath(path))
-
-    try:
-        # we use os.stat() directly here instead of os.path.isfile()
-        # because the latter started returning `False` on invalid path
-        # exceptions starting in 3.8 and we care about handling
-        # invalid paths specially here.
-        st = os.stat(path)
-        isfile = stat.S_ISREG(st.st_mode)
-    # Python 2 raises TypeError, Python 3 ValueError.
-    except (TypeError, ValueError) as e:
-        raise error.Abort(
-            _(b'invalid path %s: %s') % (path, stringutil.forcebytestr(e))
-        )
-    except OSError:
-        isfile = False
-
-    return isfile and bundlerepo or localrepo
-
-
-def addbranchrevs(lrepo, other, branches, revs):
-    peer = other.peer()  # a courtesy to callers using a localrepo for other
+def addbranchrevs(lrepo, other, branches, revs, remotehidden=False):
+    if hasattr(other, 'peer'):
+        # a courtesy to callers using a localrepo for other
+        peer = other.peer(remotehidden=remotehidden)
+    else:
+        peer = other
     hashbranch, branches = branches
     if not hashbranch and not branches:
         x = revs or None
@@ -130,17 +112,47 @@ def addbranchrevs(lrepo, other, branches, revs):
     return revs, revs[0]
 
 
-def parseurl(path, branches=None):
-    '''parse url#branch, returning (url, (branch, branches))'''
-    msg = b'parseurl(...) moved to mercurial.utils.urlutil'
-    util.nouideprecwarn(msg, b'6.0', stacklevel=2)
-    return urlutil.parseurl(path, branches=branches)
+def _isfile(path):
+    try:
+        # we use os.stat() directly here instead of os.path.isfile()
+        # because the latter started returning `False` on invalid path
+        # exceptions starting in 3.8 and we care about handling
+        # invalid paths specially here.
+        st = os.stat(path)
+    except ValueError as e:
+        msg = stringutil.forcebytestr(e)
+        raise error.Abort(_(b'invalid path %s: %s') % (path, msg))
+    except OSError:
+        return False
+    else:
+        return stat.S_ISREG(st.st_mode)
 
 
-schemes = {
+class LocalFactory:
+    """thin wrapper to dispatch between localrepo and bundle repo"""
+
+    @staticmethod
+    def islocal(path: bytes) -> bool:
+        path = util.expandpath(urlutil.urllocalpath(path))
+        return not _isfile(path)
+
+    @staticmethod
+    def instance(ui, path, *args, **kwargs):
+        path = util.expandpath(urlutil.urllocalpath(path))
+        if _isfile(path):
+            cls = bundlerepo
+        else:
+            cls = localrepo
+        return cls.instance(ui, path, *args, **kwargs)
+
+
+repo_schemes = {
     b'bundle': bundlerepo,
     b'union': unionrepo,
-    b'file': _local,
+    b'file': LocalFactory,
+}
+
+peer_schemes = {
     b'http': httppeer,
     b'https': httppeer,
     b'ssh': sshpeer,
@@ -148,27 +160,23 @@ schemes = {
 }
 
 
-def _peerlookup(path):
-    u = urlutil.url(path)
-    scheme = u.scheme or b'file'
-    thing = schemes.get(scheme) or schemes[b'file']
-    try:
-        return thing(path)
-    except TypeError:
-        # we can't test callable(thing) because 'thing' can be an unloaded
-        # module that implements __call__
-        if not util.safehasattr(thing, b'instance'):
-            raise
-        return thing
-
-
 def islocal(repo):
     '''return true if repo (or path pointing to repo) is local'''
     if isinstance(repo, bytes):
-        try:
-            return _peerlookup(repo).islocal(repo)
-        except AttributeError:
-            return False
+        u = urlutil.url(repo)
+        scheme = u.scheme or b'file'
+        if scheme in peer_schemes:
+            cls = peer_schemes[scheme]
+            cls.make_peer  # make sure we load the module
+        elif scheme in repo_schemes:
+            cls = repo_schemes[scheme]
+            cls.instance  # make sure we load the module
+        else:
+            cls = LocalFactory
+        if hasattr(cls, 'islocal'):
+            return cls.islocal(repo)  # pytype: disable=module-attr
+        return False
+    repo.ui.deprecwarn(b"use obj.local() instead of islocal(obj)", b"6.4")
     return repo.local()
 
 
@@ -185,13 +193,7 @@ def openpath(ui, path, sendaccept=True):
 wirepeersetupfuncs = []
 
 
-def _peerorrepo(
-    ui, path, create=False, presetupfuncs=None, intents=None, createopts=None
-):
-    """return a repository object for the specified path"""
-    obj = _peerlookup(path).instance(
-        ui, path, create, intents=intents, createopts=createopts
-    )
+def _setup_repo_or_peer(ui, obj, presetupfuncs=None):
     ui = getattr(obj, "ui", ui)
     for f in presetupfuncs or []:
         f(ui, obj)
@@ -203,14 +205,12 @@ def _peerorrepo(
             if hook:
                 with util.timedcm('reposetup %r', name) as stats:
                     hook(ui, obj)
-                ui.log(
-                    b'extension', b'  > reposetup for %s took %s\n', name, stats
-                )
+                msg = b'  > reposetup for %s took %s\n'
+                ui.log(b'extension', msg, name, stats)
     ui.log(b'extension', b'> all reposetup took %s\n', allreposetupstats)
     if not obj.local():
         for f in wirepeersetupfuncs:
             f(ui, obj)
-    return obj
 
 
 def repository(
@@ -222,28 +222,68 @@ def repository(
     createopts=None,
 ):
     """return a repository object for the specified path"""
-    peer = _peerorrepo(
+    scheme = urlutil.url(path).scheme
+    if scheme is None:
+        scheme = b'file'
+    cls = repo_schemes.get(scheme)
+    if cls is None:
+        if scheme in peer_schemes:
+            raise error.Abort(_(b"repository '%s' is not local") % path)
+        cls = LocalFactory
+    repo = cls.instance(
         ui,
         path,
         create,
-        presetupfuncs=presetupfuncs,
         intents=intents,
         createopts=createopts,
     )
-    repo = peer.local()
-    if not repo:
-        raise error.Abort(
-            _(b"repository '%s' is not local") % (path or peer.url())
-        )
+    _setup_repo_or_peer(ui, repo, presetupfuncs=presetupfuncs)
     return repo.filtered(b'visible')
 
 
-def peer(uiorrepo, opts, path, create=False, intents=None, createopts=None):
+def peer(
+    uiorrepo,
+    opts,
+    path,
+    create=False,
+    intents=None,
+    createopts=None,
+    remotehidden=False,
+):
     '''return a repository peer for the specified path'''
+    ui = getattr(uiorrepo, 'ui', uiorrepo)
     rui = remoteui(uiorrepo, opts)
-    return _peerorrepo(
-        rui, path, create, intents=intents, createopts=createopts
-    ).peer()
+    if hasattr(path, 'url'):
+        # this is already a urlutil.path object
+        peer_path = path
+    else:
+        peer_path = urlutil.path(ui, None, rawloc=path, validate_path=False)
+    scheme = peer_path.url.scheme  # pytype: disable=attribute-error
+    if scheme in peer_schemes:
+        cls = peer_schemes[scheme]
+        peer = cls.make_peer(
+            rui,
+            peer_path,
+            create,
+            intents=intents,
+            createopts=createopts,
+            remotehidden=remotehidden,
+        )
+        _setup_repo_or_peer(rui, peer)
+    else:
+        # this is a repository
+        repo_path = peer_path.loc  # pytype: disable=attribute-error
+        if not repo_path:
+            repo_path = peer_path.rawloc  # pytype: disable=attribute-error
+        repo = repository(
+            rui,
+            repo_path,
+            create,
+            intents=intents,
+            createopts=createopts,
+        )
+        peer = repo.peer(path=peer_path, remotehidden=remotehidden)
+    return peer
 
 
 def defaultdest(source):
@@ -276,7 +316,7 @@ def sharedreposource(repo):
     if repo.sharedpath == repo.path:
         return None
 
-    if util.safehasattr(repo, b'srcrepo') and repo.srcrepo:
+    if hasattr(repo, 'srcrepo') and repo.srcrepo:
         return repo.srcrepo
 
     # the sharedpath always ends in the .hg; we want the path to the repo
@@ -298,17 +338,23 @@ def share(
 ):
     '''create a shared repository'''
 
-    if not islocal(source):
-        raise error.Abort(_(b'can only share local repositories'))
+    not_local_msg = _(b'can only share local repositories')
+    if hasattr(source, 'local'):
+        if source.local() is None:
+            raise error.Abort(not_local_msg)
+    elif not islocal(source):
+        # XXX why are we getting bytes here ?
+        raise error.Abort(not_local_msg)
 
     if not dest:
         dest = defaultdest(source)
     else:
-        dest = urlutil.get_clone_path(ui, dest)[1]
+        dest = urlutil.get_clone_path_obj(ui, dest).loc
 
     if isinstance(source, bytes):
-        origsource, source, branches = urlutil.get_clone_path(ui, source)
-        srcrepo = repository(ui, source)
+        source_path = urlutil.get_clone_path_obj(ui, source)
+        srcrepo = repository(ui, source_path.loc)
+        branches = (source_path.branch, [])
         rev, checkout = addbranchrevs(srcrepo, srcrepo, branches, None)
     else:
         srcrepo = source.local()
@@ -419,7 +465,9 @@ def postshare(sourcerepo, destrepo, defaultpath=None):
         template = b'[paths]\ndefault = %s\n'
         destrepo.vfs.write(b'hgrc', util.tonativeeol(template % default))
     if requirements.NARROW_REQUIREMENT in sourcerepo.requirements:
-        with destrepo.wlock():
+        with destrepo.wlock(), destrepo.lock(), destrepo.transaction(
+            b"narrow-share"
+        ):
             narrowspec.copytoworkingcopy(destrepo)
 
 
@@ -535,9 +583,8 @@ def clonewithshare(
     # lock class requires the directory to exist.
     try:
         util.makedir(pooldir, False)
-    except OSError as e:
-        if e.errno != errno.EEXIST:
-            raise
+    except FileExistsError:
+        pass
 
     poolvfs = vfsmod.vfs(pooldir)
     basename = os.path.basename(sharepath)
@@ -670,14 +717,25 @@ def clone(
     """
 
     if isinstance(source, bytes):
-        src = urlutil.get_clone_path(ui, source, branch)
-        origsource, source, branches = src
-        srcpeer = peer(ui, peeropts, source)
+        src_path = urlutil.get_clone_path_obj(ui, source)
+        if src_path is None:
+            srcpeer = peer(ui, peeropts, b'')
+            origsource = source = b''
+            branches = (None, branch or [])
+        else:
+            srcpeer = peer(ui, peeropts, src_path)
+            origsource = src_path.rawloc
+            branches = (src_path.branch, branch or [])
+            source = src_path.loc
     else:
-        srcpeer = source.peer()  # in case we were called with a localrepo
+        if hasattr(source, 'peer'):
+            srcpeer = source.peer()  # in case we were called with a localrepo
+        else:
+            srcpeer = source
         branches = (None, branch or [])
+        # XXX path: simply use the peer `path` object when this become available
         origsource = source = srcpeer.url()
-    srclock = destlock = cleandir = None
+    srclock = destlock = destwlock = cleandir = None
     destpeer = None
     try:
         revs, checkout = addbranchrevs(srcpeer, srcpeer, branches, revs)
@@ -687,7 +745,11 @@ def clone(
             if dest:
                 ui.status(_(b"destination directory: %s\n") % dest)
         else:
-            dest = urlutil.get_clone_path(ui, dest)[0]
+            dest_path = urlutil.get_clone_path_obj(ui, dest)
+            if dest_path is not None:
+                dest = dest_path.rawloc
+            else:
+                dest = b''
 
         dest = urlutil.urllocalpath(dest)
         source = urlutil.urllocalpath(source)
@@ -737,7 +799,7 @@ def clone(
             # data.
             createopts[b'lfs'] = True
 
-            if extensions.disabled_help(b'lfs'):
+            if b'lfs' in extensions.disabled():
                 ui.status(
                     _(
                         b'(remote is using large file support (lfs), but it is '
@@ -865,6 +927,8 @@ def clone(
                 requirements=dest_reqs,
             )
             destrepo = localrepo.makelocalrepository(ui, destrootpath)
+
+            destwlock = destrepo.wlock()
             destlock = destrepo.lock()
             from . import streamclone  # avoid cycle
 
@@ -873,6 +937,18 @@ def clone(
             # we need to re-init the repo after manually copying the data
             # into it
             destpeer = peer(srcrepo, peeropts, dest)
+
+            # make the peer aware that is it already locked
+            #
+            # important:
+            #
+            #    We still need to release that lock at the end of the function
+            destpeer.local()._lockref = weakref.ref(destlock)
+            destpeer.local()._wlockref = weakref.ref(destwlock)
+            # dirstate also needs to be copied because `_wlockref` has a reference
+            # to it: this dirstate is saved to disk when the wlock is released
+            destpeer.local().dirstate = destrepo.dirstate
+
             srcrepo.hook(
                 b'outgoing', source=b'clone', node=srcrepo.nodeconstants.nullhex
             )
@@ -886,13 +962,9 @@ def clone(
                     create=True,
                     createopts=createopts,
                 )
-            except OSError as inst:
-                if inst.errno == errno.EEXIST:
-                    cleandir = None
-                    raise error.Abort(
-                        _(b"destination '%s' already exists") % dest
-                    )
-                raise
+            except FileExistsError:
+                cleandir = None
+                raise error.Abort(_(b"destination '%s' already exists") % dest)
 
             if revs:
                 if not srcpeer.capable(b'lookup'):
@@ -924,7 +996,9 @@ def clone(
             local = destpeer.local()
             if local:
                 if narrow:
-                    with local.wlock(), local.lock():
+                    with local.wlock(), local.lock(), local.transaction(
+                        b'narrow-clone'
+                    ):
                         local.setnarrowpats(storeincludepats, storeexcludepats)
                         narrowspec.copytoworkingcopy(local)
 
@@ -942,7 +1016,7 @@ def clone(
                     exchange.pull(
                         local,
                         srcpeer,
-                        revs,
+                        heads=revs,
                         streamclonerequested=stream,
                         includepats=storeincludepats,
                         excludepats=storeexcludepats,
@@ -1040,6 +1114,8 @@ def clone(
                     bookmarks.activate(destrepo, update)
             if destlock is not None:
                 release(destlock)
+            if destwlock is not None:
+                release(destlock)
             # here is a tiny windows were someone could end up writing the
             # repository before the cache are sure to be warm. This is "fine"
             # as the only "bad" outcome would be some slowness. That potential
@@ -1047,7 +1123,7 @@ def clone(
             with destrepo.lock():
                 destrepo.updatecaches(caches=repositorymod.CACHES_POST_CLONE)
     finally:
-        release(srclock, destlock)
+        release(srclock, destlock, destwlock)
         if cleandir is not None:
             shutil.rmtree(cleandir, True)
         if srcpeer is not None:
@@ -1261,31 +1337,41 @@ def _incoming(
         (remoterepo, incomingchangesetlist, displayer) parameters,
     and is supposed to contain only code that can't be unified.
     """
-    srcs = urlutil.get_pull_paths(repo, ui, [source], opts.get(b'branch'))
+    srcs = urlutil.get_pull_paths(repo, ui, [source])
     srcs = list(srcs)
     if len(srcs) != 1:
         msg = _(b'for now, incoming supports only a single source, %d provided')
         msg %= len(srcs)
         raise error.Abort(msg)
-    source, branches = srcs[0]
-    if subpath is not None:
+    path = srcs[0]
+    if subpath is None:
+        peer_path = path
+        url = path.loc
+    else:
+        # XXX path: we are losing the `path` object here. Keeping it would be
+        # valuable. For example as a "variant" as we do for pushes.
         subpath = urlutil.url(subpath)
         if subpath.isabs():
-            source = bytes(subpath)
+            peer_path = url = bytes(subpath)
         else:
-            p = urlutil.url(source)
-            p.path = os.path.normpath(b'%s/%s' % (p.path, subpath))
-            source = bytes(p)
-    other = peer(repo, opts, source)
+            p = urlutil.url(path.loc)
+            if p.islocal():
+                normpath = os.path.normpath
+            else:
+                normpath = posixpath.normpath
+            p.path = normpath(b'%s/%s' % (p.path, subpath))
+            peer_path = url = bytes(p)
+    other = peer(repo, opts, peer_path)
     cleanupfn = other.close
     try:
-        ui.status(_(b'comparing with %s\n') % urlutil.hidepassword(source))
+        ui.status(_(b'comparing with %s\n') % urlutil.hidepassword(url))
+        branches = (path.branch, opts.get(b'branch', []))
         revs, checkout = addbranchrevs(repo, other, branches, opts.get(b'rev'))
 
         if revs:
             revs = [other.lookup(rev) for rev in revs]
         other, chlist, cleanupfn = bundlerepo.getremotechanges(
-            ui, repo, other, revs, opts[b"bundle"], opts[b"force"]
+            ui, repo, other, revs, opts.get(b"bundle"), opts.get(b"force")
         )
 
         if not chlist:
@@ -1338,21 +1424,25 @@ def _outgoing(ui, repo, dests, opts, subpath=None):
     out = set()
     others = []
     for path in urlutil.get_push_paths(repo, ui, dests):
-        dest = path.pushloc or path.loc
+        dest = path.loc
         if subpath is not None:
             subpath = urlutil.url(subpath)
             if subpath.isabs():
                 dest = bytes(subpath)
             else:
                 p = urlutil.url(dest)
-                p.path = os.path.normpath(b'%s/%s' % (p.path, subpath))
+                if p.islocal():
+                    normpath = os.path.normpath
+                else:
+                    normpath = posixpath.normpath
+                p.path = normpath(b'%s/%s' % (p.path, subpath))
                 dest = bytes(p)
         branches = path.branch, opts.get(b'branch') or []
 
         ui.status(_(b'comparing with %s\n') % urlutil.hidepassword(dest))
         revs, checkout = addbranchrevs(repo, repo, branches, opts.get(b'rev'))
         if revs:
-            revs = [repo[rev].node() for rev in scmutil.revrange(repo, revs)]
+            revs = [repo[rev].node() for rev in logcmdutil.revrange(repo, revs)]
 
         other = peer(repo, opts, dest)
         try:
@@ -1476,7 +1566,7 @@ def verify(repo, level=None):
 
 def remoteui(src, opts):
     """build a remote ui from ui or repo and opts"""
-    if util.safehasattr(src, b'baseui'):  # looks like a repository
+    if hasattr(src, 'baseui'):  # looks like a repository
         dst = src.baseui.copy()  # drop repo-specific config
         src = src.ui  # copy target options from repo
     else:  # assume it's a global ui object
@@ -1508,14 +1598,14 @@ def remoteui(src, opts):
 # Used to check if the repository has changed looking at mtime and size of
 # these files.
 foi = [
-    (b'spath', b'00changelog.i'),
-    (b'spath', b'phaseroots'),  # ! phase can change content at the same size
-    (b'spath', b'obsstore'),
-    (b'path', b'bookmarks'),  # ! bookmark can change content at the same size
+    ('spath', b'00changelog.i'),
+    ('spath', b'phaseroots'),  # ! phase can change content at the same size
+    ('spath', b'obsstore'),
+    ('path', b'bookmarks'),  # ! bookmark can change content at the same size
 ]
 
 
-class cachedlocalrepo(object):
+class cachedlocalrepo:
     """Holds a localrepository that can be cached and reused."""
 
     def __init__(self, repo):

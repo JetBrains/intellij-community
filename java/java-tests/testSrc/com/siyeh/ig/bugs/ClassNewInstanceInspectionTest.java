@@ -1,7 +1,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ClassNewInstanceInspectionTest extends LightJavaInspectionTestCase {
@@ -17,10 +19,7 @@ public class ClassNewInstanceInspectionTest extends LightJavaInspectionTestCase 
   }
 
   @Override
-  protected String[] getEnvironmentClasses() {
-    return new String[] {
-      "package java.lang;" +
-      "public class InstantiationException extends Exception {}"
-    };
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_LATEST_WITH_LATEST_JDK;
   }
 }

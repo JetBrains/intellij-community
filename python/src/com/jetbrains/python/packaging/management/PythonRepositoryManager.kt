@@ -17,8 +17,6 @@ abstract class PythonRepositoryManager(val project: Project, val sdk: Sdk) {
   abstract fun allPackages(): List<String>
 
   abstract fun packagesFromRepository(repository: PyPackageRepository): List<String>
-  suspend fun addRepository(repository: PyPackageRepository) { TODO() }
-  suspend fun removeRepository(repository: PyPackageRepository) { TODO() }
   abstract suspend fun getPackageDetails(pkg: PythonPackageSpecification): PythonPackageDetails
   abstract suspend fun getLatestVersion(spec: PythonPackageSpecification): PyPackageVersion?
 

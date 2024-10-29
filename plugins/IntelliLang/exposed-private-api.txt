@@ -1,1 +1,0 @@
-org/intellij/plugins/intelliLang/inject/config/Injection

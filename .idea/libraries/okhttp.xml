@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="okhttp" type="repository">
-    <properties maven-id="com.squareup.okhttp3:okhttp-jvm:5.0.0-alpha.12">
+    <properties maven-id="com.squareup.okhttp3:okhttp:5.0.0-alpha.14">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.12/okhttp-jvm-5.0.0-alpha.12.jar">
-          <sha256sum>05bea20bc7831d1507612b12b82ba94a06750711ed1d6f092bc37e0b8a0d1276</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14.jar">
+          <sha256sum>f0e3ffcbba6744ab4918a55aa32ff4f408fcd21e45ab8bd5f7883a1793b2a253</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.7.0/okio-jvm-3.7.0.jar">
-          <sha256sum>d8b35adc28768f43ae5afe6a7d1aa2a878ba51e0b96a4f308811f3b1f5b13e55</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar">
+          <sha256sum>ddc386ff14bd25d5c934167196eaf45b18de4f28e1c55a4db37ae594cbfd37e4</sha256sum>
         </artifact>
       </verification>
       <exclude>
@@ -16,13 +16,13 @@
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.12/okhttp-jvm-5.0.0-alpha.12.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.7.0/okio-jvm-3.7.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp-jvm/5.0.0-alpha.12/okhttp-jvm-5.0.0-alpha.12-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.7.0/okio-jvm-3.7.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5.0.0-alpha.14/okhttp-5.0.0-alpha.14-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.9.0/okio-jvm-3.9.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

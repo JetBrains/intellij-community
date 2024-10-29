@@ -33,6 +33,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -43,7 +44,7 @@ import com.jetbrains.python.remote.PyRemoteInterpreterUtil;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
-import com.jetbrains.python.sdk.add.target.PyDetectedSdkAdditionalData;
+import com.jetbrains.python.sdk.add.v1.PyDetectedSdkAdditionalData;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.target.PyInterpreterVersionUtil;
@@ -139,26 +140,9 @@ public final class PythonSdkType extends SdkType {
           }
         }
       }
-
-      @Override
-      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-        // TODO: add a better, customizable filtering
-        if (!file.isDirectory()) {
-          if (isLocatedInLocalWindowsFS(file)) {
-            String path = file.getPath();
-            boolean looksExecutable = false;
-            for (String ext : PythonSdkUtil.WINDOWS_EXECUTABLE_SUFFIXES) {
-              if (path.endsWith(ext)) {
-                looksExecutable = true;
-                break;
-              }
-            }
-            return looksExecutable && super.isFileVisible(file, showHiddenFiles);
-          }
-        }
-        return super.isFileVisible(file, showHiddenFiles);
-      }
-    }.withTitle(PyBundle.message("sdk.select.path")).withShowHiddenFiles(SystemInfo.isUnix);
+    }
+      .withTitle(PyBundle.message("sdk.select.path"))
+      .withShowHiddenFiles(SystemInfo.isUnix);
 
     // XXX: Workaround for PY-21787 and PY-43507 since the native macOS dialog always follows symlinks
     if (SystemInfo.isMac) {
@@ -166,10 +150,6 @@ public final class PythonSdkType extends SdkType {
     }
 
     return descriptor;
-  }
-
-  private static boolean isLocatedInLocalWindowsFS(@NotNull VirtualFile file) {
-    return SystemInfo.isWindows && !isCustomPythonSdkHomePath(file.getPath());
   }
 
   private static boolean isLocatedInWsl(@NotNull VirtualFile file) {
@@ -244,7 +224,7 @@ public final class PythonSdkType extends SdkType {
       return name;
     }
   }
-
+  @RequiresBackgroundThread(generateAssertion = false) //because of process output
   public static @Nullable String suggestBaseSdkName(@NotNull String sdkHome) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdkHome);
     if (flavor == null) return null;
@@ -297,13 +277,13 @@ public final class PythonSdkType extends SdkType {
         // TODO we should have "remote" SDK data with unknown credentials anyway!
       }
     }
+
     var additionalData = PySdkProvider.EP_NAME.getExtensionList().stream()
       .map(ext -> ext.loadAdditionalDataForSdk(additional))
       .filter(data -> data != null)
       .findFirst()
       .orElseGet(() -> PythonSdkAdditionalData.loadFromElement(additional));
-    // Convert legacy conda SDK, temporary fix.
-    PyCondaSdkFixKt.fixPythonCondaSdk(currentSdk, additionalData);
+
     return additionalData;
   }
 

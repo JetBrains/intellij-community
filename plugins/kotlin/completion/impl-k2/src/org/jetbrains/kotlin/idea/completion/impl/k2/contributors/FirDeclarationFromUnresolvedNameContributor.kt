@@ -1,6 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
-package org.jetbrains.kotlin.idea.completion.contributors
+package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.progress.ProgressManager
@@ -10,8 +9,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
 import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
@@ -31,8 +30,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
     basicContext: FirBasicCompletionContext,
-    priority: Int,
+    priority: Int = 0,
 ) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
@@ -95,13 +95,13 @@ internal class FirDeclarationFromUnresolvedNameContributor(
                     val expectedReceiverType = getReceiverType(symbol) ?: return false
 
                     // FIXME: this check does not work with generic types (i.e. List<String> and List<T>)
-                    actualReceiverType.isSubTypeOf(expectedReceiverType)
+                    actualReceiverType.isSubtypeOf(expectedReceiverType)
                 }
                 else -> {
                     // If there is no explicit receiver at call-site, we check if any implicit receiver at call-site matches the extension
                     // receiver type for the current declared symbol
                     val extensionReceiverType = symbol.receiverType ?: return true
-                    getImplicitReceiverTypesAtPosition(unresolvedRef).any { it.isSubTypeOf(extensionReceiverType) }
+                    collectImplicitReceiverTypes(unresolvedRef).any { it.isSubtypeOf(extensionReceiverType) }
                 }
             }
             is KaClassSymbol -> when {

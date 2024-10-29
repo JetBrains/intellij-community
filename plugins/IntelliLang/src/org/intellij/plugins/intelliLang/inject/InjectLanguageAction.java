@@ -63,7 +63,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class InjectLanguageAction implements IntentionAction, LowPriorityAction {
+public final class InjectLanguageAction implements IntentionAction, LowPriorityAction {
   public static final String LAST_INJECTED_LANGUAGE = "LAST_INJECTED_LANGUAGE";
   public static final Key<Processor<? super PsiLanguageInjectionHost>> FIX_KEY = Key.create("inject fix key");
 
@@ -124,8 +124,8 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
   }
 
   @Nullable
-  protected static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
-                                                              @NotNull PsiFile file) {
+  private static PsiLanguageInjectionHost findInjectionHost(@NotNull Editor editor,
+                                                            @NotNull PsiFile file) {
     if (editor instanceof EditorWindow) return null;
     int offset = editor.getCaretModel().getOffset();
 

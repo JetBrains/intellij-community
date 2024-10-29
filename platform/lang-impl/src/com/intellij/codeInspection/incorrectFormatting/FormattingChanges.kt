@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.codeInspection.incorrectFormatting
 
 import com.intellij.application.options.CodeStyle
@@ -22,9 +24,11 @@ import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade
 import com.intellij.psi.impl.source.codeStyle.CoreCodeStyleUtil
 import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor
 import com.intellij.psi.impl.source.tree.TreeElement
+import org.jetbrains.annotations.ApiStatus
 
 private val LOG = logger<FormattingChanges>()
 
+@ApiStatus.Internal
 data class FormattingChanges(val preFormatText: CharSequence, val postFormatText: CharSequence, val mismatches: List<WhitespaceMismatch>) {
   data class WhitespaceMismatch(val preFormatRange: TextRange, val postFormatRange: TextRange)
 }

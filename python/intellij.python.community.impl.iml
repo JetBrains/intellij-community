@@ -19,10 +19,12 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.testRunner" exported="" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.xml.psi.impl" />
     <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" name="gson" level="project" />
@@ -148,5 +150,11 @@
     <orderEntry type="module" module-name="intellij.commandInterface" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.community.impl.huggingFace" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.python.syntax" />
+    <orderEntry type="module" module-name="intellij.platform.ui.jcef" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client" />
+    <orderEntry type="module" module-name="intellij.libraries.ktor.client.cio" />
+    <orderEntry type="module" module-name="intellij.platform.util.progress" />
+    <orderEntry type="module" module-name="intellij.platform.ide.remote" />
+    <orderEntry type="module" module-name="intellij.platform.ide.ui" />
   </component>
 </module>

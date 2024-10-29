@@ -1,98 +1,67 @@
-<idea-plugin package="org.jetbrains.plugins.notebooks.visualization">
-  <module value="com.intellij.modules.notebooks.visualization" />
+<idea-plugin package="com.intellij.notebooks.visualization">
   <dependencies>
     <module name="intellij.notebooks.ui"/>
   </dependencies>
 
   <extensionPoints>
-    <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayOutputProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer"
-                    dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
-                    interface="org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearanceProvider"
+                    interface="com.intellij.notebooks.visualization.NotebookEditorAppearanceProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellLinesProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellLinesProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellSelectionModelProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookCellSelectionModelProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookCellSelectionModelProvider"/>
     </extensionPoint>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookIntervalPointerFactoryProvider"
                     beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="org.jetbrains.plugins.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
+      <with attribute="implementationClass" implements="com.intellij.notebooks.visualization.NotebookIntervalPointerFactoryProvider"/>
     </extensionPoint>
 
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.notebookCellInlayController"
-                    interface="org.jetbrains.plugins.notebooks.visualization.NotebookCellInlayController$Factory"
-                    dynamic="true"/>
-
-    <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
-                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayStateCustomizer"
+                    interface="com.intellij.notebooks.visualization.NotebookCellInlayController$Factory"
                     dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.VisualizationBundle">
-    <group id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputToolbarActions">
-      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
-              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
-              icon="AllIcons.Actions.MenuSaveall"/>
-      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
-              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
-              icon="AllIcons.Actions.Copy"/>
-    </group>
-
     <group id="NotebookOutputCollapseActions" popup="true">
       <action id="NotebookOutputCollapseSingleInCellAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseSingleInCellAction"/>
       <action id="NotebookOutputCollapseAllInCellAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInCellAction"/>
       <action id="NotebookOutputCollapseAllInSelectedCellsAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllInSelectedCellsAction"/>
       <action id="NotebookOutputCollapseAllAction"
-              class="org.jetbrains.plugins.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
+              class="com.intellij.notebooks.visualization.outputs.impl.NotebookOutputCollapseAllAction"/>
     </group>
 
     <action id="NotebookOutputSelectAllAction"
-            class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
+            class="com.intellij.notebooks.visualization.r.inlays.components.NotebookOutputSelectAllAction"
             use-shortcut-of="$SelectAll"/>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
 
-    <getDataRule
-      key="NOTEBOOK_CELL_LINES_INTERVAL"
-      implementationClass="org.jetbrains.plugins.notebooks.visualization.NotebookCellLinesIntervalDataRule"/>
-    <uiDataRule implementation="org.jetbrains.plugins.notebooks.visualization.EditorsWithOffsetsDataRule"/>
-    <editorFactoryDocumentListener implementation="org.jetbrains.plugins.notebooks.visualization.UndoableActionListener"
+    <editorFactoryDocumentListener implementation="com.intellij.notebooks.visualization.UndoableActionListener"
                                    order="last"/>
-  </extensions>
-
-  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">
-    <uiCustomizer implementation="org.jetbrains.plugins.notebooks.visualization.r.ui.DefaultUiCustomizer"/>
   </extensions>
 
   <!-- New output inlays -->
   <extensionPoints>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentFactory"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentFactory"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentFactory"
       dynamic="true"/>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputDataKeyExtractor"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputDataKeyExtractor"
       dynamic="true"/>
     <extensionPoint
       qualifiedName="org.jetbrains.plugins.notebooks.editor.outputs.notebookOutputComponentWrapper"
-      interface="org.jetbrains.plugins.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
+      interface="com.intellij.notebooks.visualization.outputs.NotebookOutputComponentWrapper"
       dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

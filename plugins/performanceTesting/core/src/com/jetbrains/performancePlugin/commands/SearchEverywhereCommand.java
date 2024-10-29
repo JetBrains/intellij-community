@@ -18,7 +18,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
-import com.intellij.platform.diagnostic.telemetry.helpers.TraceUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.jetbrains.performancePlugin.PerformanceTestSpan;
 import com.jetbrains.performancePlugin.utils.ActionCallbackProfilerStopper;
@@ -90,7 +89,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
 
     int numberOfPermits = getNumberOfPermits(insertText);
     Semaphore typingSemaphore = new Semaphore(numberOfPermits);
-    TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere", globalSpan -> {
+    TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere"), globalSpan -> {
       ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(() -> {
         try {
           TypingTarget target = findTarget(context);
@@ -102,20 +101,18 @@ public class SearchEverywhereCommand extends AbstractCommand {
           else {
             component = (EditorComponentImpl)target;
           }
-          DataContext dataContext = DataManager.getInstance().getDataContext(component);
+          DataContext dataContext = CustomizedDataContext.withSnapshot(
+            DataManager.getInstance().getDataContext(component),
+            sink -> sink.set(CommonDataKeys.PROJECT, context.getProject()));
           DataContext wrappedDataContext = wrapDataContextWithActionStartData(dataContext);
           IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
-          TraceUtil.runWithSpanThrows(PerformanceTestSpan.getTracer(warmup), "searchEverywhere_dialog_shown", dialogSpan -> {
+          TraceKt.use(PerformanceTestSpan.getTracer(warmup).spanBuilder("searchEverywhere_dialog_shown"), dialogSpan -> {
             var manager = SearchEverywhereManager.getInstance(project);
-            manager.show(tabId.get(), "",
-                         new AnActionEvent(null, wrappedDataContext, ActionPlaces.EDITOR_POPUP, new Presentation(), ActionManager.getInstance(),
-                                           0) {
-                           @Override
-                           public Project getProject() {
-                             return context.getProject();
-                           }
-                         });
+            AnActionEvent event = AnActionEvent.createEvent(
+              wrappedDataContext, null, ActionPlaces.EDITOR_POPUP, ActionUiKind.POPUP, null);
+            manager.show(tabId.get(), "", event);
             attachSearchListeners(manager.getCurrentlyShownUI());
+            return null;
           });
           typeOrInsertText(context, insertText, typingSemaphore, warmup);
         }
@@ -141,6 +138,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
       finally {
         actionCallback.setDone();
       }
+      return null;
     });
 
     return Promises.toPromise(actionCallback);
@@ -269,7 +267,7 @@ public class SearchEverywhereCommand extends AbstractCommand {
   protected String @NotNull [] getArgs(String prefix) {
     String input = extractCommandArgument(prefix);
     String[] args = input.split("\\|");
-    Args.parse(myOptions, args[0].split(" "));
+    Args.parse(myOptions, args[0].split(" "), false);
     return args;
   }
 

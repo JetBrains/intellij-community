@@ -9,14 +9,17 @@ import com.intellij.openapi.components.impl.stores.ComponentStorageUtil
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.workspace.jps.JpsProjectConfigLocation
+import com.intellij.platform.workspace.jps.bridge.impl.serialization.DefaultImlNormalizer
 import com.intellij.platform.workspace.jps.serialization.impl.JpsFileContentReader
 import com.intellij.platform.workspace.jps.serialization.impl.isExternalModuleFile
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
+@ApiStatus.Internal
 class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLocation) : JpsFileContentReader {
   private val projectPathMacroManager = ProjectPathMacroManager.createInstance(
     configLocation::projectFilePath,
@@ -54,15 +57,7 @@ class CachingJpsFileContentReader(private val configLocation: JpsProjectConfigLo
   private fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager): Map<String, Element> {
     val rootElement = JDOMUtil.load(xmlFile)
     if (Strings.endsWith(xmlFile.toString(), ".iml")) {
-      val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
-      val iterator = rootElement.attributes.iterator()
-      for (attribute in iterator) {
-        if (attribute.name != "version") {
-          iterator.remove()
-          optionElement.addContent(Element("option").setAttribute("key", attribute.name).setAttribute("value", attribute.value))
-        }
-      }
-      rootElement.addContent(optionElement)
+      DefaultImlNormalizer.normalize(rootElement)
     }
     return ComponentStorageUtil.loadComponents(rootElement, pathMacroManager)
   }

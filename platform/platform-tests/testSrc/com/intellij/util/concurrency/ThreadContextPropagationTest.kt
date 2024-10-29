@@ -14,6 +14,7 @@ import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import org.jetbrains.concurrency.AsyncPromise
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertSame
@@ -25,11 +26,15 @@ import org.junit.jupiter.api.extension.ReflectiveInvocationContext
 import java.lang.Runnable
 import java.lang.reflect.Method
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.Result
+import kotlin.coroutines.AbstractCoroutineContextElement
+import kotlin.coroutines.CoroutineContext
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 @TestApplication
 @ExtendWith(ThreadContextPropagationTest.Enabler::class)
@@ -279,7 +284,7 @@ class ThreadContextPropagationTest {
   fun `EDT dispatcher does not capture thread context`(): Unit = timeoutRunBlocking {
     blockingContext {
       launch(Dispatchers.EDT) {
-        assertNull(currentThreadContextOrNull())
+        assertNull(currentThreadOverriddenContextOrNull())
       }
     }
   }
@@ -315,6 +320,24 @@ class ThreadContextPropagationTest {
       }
     }
     finished.await()
+  }
+
+  class MyIjElement(val eventTracker: AtomicBoolean) : IntelliJContextElement, AbstractCoroutineContextElement(MyIjElement) {
+    companion object Key : CoroutineContext.Key<MyIjElement>
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+    override fun afterChildCompleted(context: CoroutineContext) = eventTracker.set(true)
+  }
+
+  @Test
+  fun `propagation with Asyncthen`(): Unit = timeoutRunBlocking {
+    val tracker = AtomicBoolean(false)
+    withContext(MyIjElement(tracker)) {
+      val promise = AsyncPromise<Int>()
+      promise.then { }
+      promise.setResult(1)
+    }
+    assertTrue(tracker.get())
   }
 
 }

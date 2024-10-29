@@ -6,8 +6,10 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.impl.CoreProgressManager
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 
+@ApiStatus.Internal
 class ReadAsyncSupplier<R>(
   private val supplier: () -> R,
   private val shouldKeepTasksAsynchronous: () -> Boolean,

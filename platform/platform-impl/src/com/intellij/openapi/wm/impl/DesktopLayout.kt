@@ -35,7 +35,7 @@ class DesktopLayout(
     unifiedWeights.copy(),
   )
 
-  internal fun create(task: RegisterToolWindowTask): WindowInfoImpl {
+  internal fun create(task: RegisterToolWindowTaskData): WindowInfoImpl {
     val info = WindowInfoImpl()
     info.id = task.id
     info.isFromPersistentSettings = false

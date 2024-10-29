@@ -3,7 +3,7 @@
 // "EXPECTED-NAVIGATION-SUBSTRING": "tasks.register("myKotlinPluginJavaSrcTask")"
 // FILE: build.gradle.kts
 plugins {
-    id("<caret>my-plugin")
+    id("<caret>my-kotlin-plugin-java-src")
 }
 
 tasks.named("myKotlinPluginJavaSrcTask") {

@@ -12,15 +12,14 @@ import com.intellij.grazie.text.TextChecker
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextExtractor
 import com.intellij.lang.Language
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiElementVisitor
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiWhiteSpace
+import com.intellij.psi.*
+import com.intellij.psi.util.CachedValuesManager
 import com.intellij.spellchecker.ui.SpellCheckingEditorCustomization
 import java.util.*
 
-class GrazieInspection : LocalInspectionTool() {
+class GrazieInspection : LocalInspectionTool(), DumbAware {
 
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
@@ -39,7 +38,7 @@ class GrazieInspection : LocalInspectionTool() {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
 
         val texts = TextExtractor.findUniqueTextsAt(element, checkedDomains)
-        if (texts.sumOf { it.length } > 50_000) return // too large text
+        if (skipCheckingTooLargeTexts(texts)) return
 
         for (extracted in sortByPriority(texts, session.priorityRange)) {
           val runner = CheckerRunner(extracted)
@@ -56,6 +55,9 @@ class GrazieInspection : LocalInspectionTool() {
    */
   @Suppress("CompanionObjectInExtension")
   companion object {
+    private const val MAX_TEXT_LENGTH_IN_PSI_ELEMENT = 50_000
+    private const val MAX_TEXT_LENGTH_IN_FILE = 200_000
+
     private val hasSpellChecking: Boolean by lazy {
       try {
         Class.forName("com.intellij.spellchecker.ui.SpellCheckingEditorCustomization")
@@ -64,6 +66,34 @@ class GrazieInspection : LocalInspectionTool() {
       catch (e: ClassNotFoundException) {
         false
       }
+    }
+
+    @JvmStatic
+    fun findAllTextContents(vp: FileViewProvider, domains: Set<TextContent.TextDomain>): Set<TextContent> {
+      val allContents: MutableSet<TextContent> = HashSet()
+      for (root in vp.allFiles) {
+        for (element in SyntaxTraverser.psiTraverser(root)) {
+          if (element.firstChild == null) {
+            allContents.addAll(TextExtractor.findTextsAt(element, domains))
+          }
+        }
+      }
+      return allContents
+    }
+
+    @JvmStatic
+    fun skipCheckingTooLargeTexts(texts: List<TextContent>): Boolean {
+      if (texts.isEmpty()) return false
+      if (texts.sumOf { it.length } > MAX_TEXT_LENGTH_IN_PSI_ELEMENT) return true
+
+      val file = texts[0].containingFile
+      if (file.textLength <= MAX_TEXT_LENGTH_IN_FILE) return false
+
+      val allInFile = CachedValuesManager.getProjectPsiDependentCache(file) {
+        findAllTextContents(it.viewProvider, TextContent.TextDomain.ALL)
+      }
+      val checkedDomains = checkedDomains()
+      return allInFile.asSequence().filter { it.domain in checkedDomains }.sumOf { it.length } > MAX_TEXT_LENGTH_IN_FILE
     }
 
     @JvmStatic

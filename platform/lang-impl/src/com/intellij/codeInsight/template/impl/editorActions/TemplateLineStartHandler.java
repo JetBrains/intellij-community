@@ -3,8 +3,10 @@
 package com.intellij.codeInsight.template.impl.editorActions;
 
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public class TemplateLineStartHandler extends TemplateLineStartEndHandler {
   public TemplateLineStartHandler(final EditorActionHandler originalHandler) {
     super(originalHandler, true, false);

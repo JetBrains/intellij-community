@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.editorconfig.language.spellchecker
 
+import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.spellchecker.tokenizer.SpellcheckingStrategy
@@ -10,7 +11,7 @@ import org.editorconfig.language.psi.interfaces.EditorConfigDescribableElement
 import org.editorconfig.language.psi.interfaces.EditorConfigHeaderElement
 import org.editorconfig.language.schema.descriptors.impl.EditorConfigDeclarationDescriptor
 
-class EditorConfigSpellcheckerStrategy : SpellcheckingStrategy() {
+class EditorConfigSpellcheckerStrategy : SpellcheckingStrategy(), DumbAware {
   override fun getTokenizer(element: PsiElement): Tokenizer<*> {
     if (element is PsiComment) return super.getTokenizer(element)
     if (element is EditorConfigCharClassPattern) return EMPTY_TOKENIZER

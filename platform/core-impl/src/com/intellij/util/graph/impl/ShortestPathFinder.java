@@ -3,10 +3,12 @@ package com.intellij.util.graph.impl;
 
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.InboundSemiGraph;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class ShortestPathFinder<Node> {
   private final InboundSemiGraph<Node> myGraph;
 

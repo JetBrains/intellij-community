@@ -19,7 +19,7 @@ final class RangeHighlighterTree extends RangeMarkerTree<RangeHighlighterEx> {
   }
 
   @Override
-  protected boolean keepIntervalsOnWeakReferences() {
+  protected boolean keepIntervalOnWeakReference(@NotNull RangeHighlighterEx interval) {
     return false;
   }
 

@@ -33,11 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.server.embedder.CustomMaven3ModelInterpolator2;
-import org.jetbrains.idea.maven.server.embedder.Maven3ExecutionResult;
 
 import java.io.File;
-import java.rmi.RemoteException;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -83,11 +80,7 @@ public class Maven3XProjectResolver {
   @NotNull
   public ArrayList<MavenServerExecutionResult> resolveProjects() {
     try {
-      Collection<Maven3ExecutionResult> results = myTelemetry.callWithSpan("doResolveProject", () -> doResolveProject());
-
-      ArrayList<MavenServerExecutionResult> list = new ArrayList<>();
-      results.stream().map(result -> createExecutionResult(result.getPomFile(), result)).forEachOrdered(list::add);
-      return list;
+      return myTelemetry.callWithSpan("doResolveProject", () -> doResolveProject());
     }
     catch (Exception e) {
       throw myEmbedder.wrapToSerializableRuntimeException(e);
@@ -95,12 +88,20 @@ public class Maven3XProjectResolver {
   }
 
   private static class ProjectBuildingResultInfo {
-    ProjectBuildingResult buildingResult;
-    List<Exception> exceptions;
+    @NotNull String projectId;
+    @NotNull MavenProject mavenProject;
+    @NotNull List<ModelProblem> modelProblems;
+    @NotNull List<Exception> exceptions;
     String dependencyHash;
 
-    private ProjectBuildingResultInfo(ProjectBuildingResult buildingResult, List<Exception> exceptions, String dependencyHash) {
-      this.buildingResult = buildingResult;
+    private ProjectBuildingResultInfo(@NotNull String projectId,
+                                      @NotNull MavenProject mavenProject,
+                                      @NotNull List<ModelProblem> modelProblems,
+                                      @NotNull List<Exception> exceptions,
+                                      String dependencyHash) {
+      this.projectId = projectId;
+      this.mavenProject = mavenProject;
+      this.modelProblems = modelProblems;
       this.exceptions = exceptions;
       this.dependencyHash = dependencyHash;
     }
@@ -108,14 +109,14 @@ public class Maven3XProjectResolver {
     @Override
     public String toString() {
       return "ProjectBuildingResultData{" +
-             "projectId=" + buildingResult.getProjectId() +
+             "projectId=" + projectId +
              ", dependencyHash=" + dependencyHash +
              '}';
     }
   }
 
   @NotNull
-  private Collection<Maven3ExecutionResult> doResolveProject() {
+  private ArrayList<MavenServerExecutionResult> doResolveProject() {
     Set<File> files = myPomHashMap.keySet();
     File file = !files.isEmpty() ? files.iterator().next() : null;
     files.forEach(f -> MavenServerStatsCollector.fileRead(f));
@@ -123,108 +124,126 @@ public class Maven3XProjectResolver {
 
     request.setUpdateSnapshots(myUpdateSnapshots);
 
-    Collection<Maven3ExecutionResult> executionResults = new ArrayList<>();
-    List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
+    ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
 
     myEmbedder.executeWithMavenSession(request, () -> {
-      try {
-        MavenSession mavenSession = myEmbedder.getComponent(LegacySupport.class).getSession();
-        RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
-        if (repositorySession instanceof DefaultRepositorySystemSession) {
-          DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
-          MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
-          myImporterSpy.setIndicator(indicator);
-          session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
-
-          setupWorkspaceReader(session);
-
-          session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
-          session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
-        }
-
-        List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
-          getProjectBuildingResults(request, files));
-
-        fillSessionCache(mavenSession, repositorySession, buildingResults);
-
-        boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
-
-        boolean runInParallel = myResolveInParallel;
-        Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
-        myTelemetry.callWithSpan("dependencyHashes", () ->
-          myTelemetry.execute(
-            runInParallel,
-            buildingResults, br -> {
-              String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
-              if (null != newDependencyHash) {
-                File pomFile = br.getPomFile();
-                if (pomFile != null) {
-                  fileToNewDependencyHash.put(pomFile, newDependencyHash);
-                }
-              }
-              return br;
-            }
-          ));
-
-        for (ProjectBuildingResult buildingResult : buildingResults) {
-          MavenProject project = buildingResult.getProject();
-          if (project == null) {
-            new Exception("PROJECT is null").printStackTrace();
-          }
-          File pomFile = buildingResult.getPomFile();
-
-          String newDependencyHash = null;
-          if (pomFile != null) {
-            if (project == null) {
-              executionResults.add(new Maven3ExecutionResult(pomFile, buildingResult.getProblems()));
-              continue;
-            }
-
-            String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
-            newDependencyHash = fileToNewDependencyHash.get(pomFile);
-            if (null != previousDependencyHash && previousDependencyHash.equals(newDependencyHash)) {
-              Maven3ExecutionResult res = new Maven3ExecutionResult(project, null, new ArrayList<>(), new ArrayList<>());
-              res.setDependencyHash(previousDependencyHash);
-              res.setDependencyResolutionSkipped(true);
-              executionResults.add(res);
-              continue;
-            }
-          }
-
-
-          List<Exception> exceptions = new ArrayList<>();
-
-          loadExtensions(project, exceptions);
-
-          project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
-
-          buildingResultInfos.add(new ProjectBuildingResultInfo(buildingResult, exceptions, newDependencyHash));
-        }
-
-        myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
-        Collection<Maven3ExecutionResult> execResults =
-          myTelemetry.callWithSpan("resolveBuildingResults", () ->
-            myTelemetry.execute(
-              runInParallel,
-              buildingResultInfos, br -> {
-                if (myLongRunningTask.isCanceled()) return new Maven3ExecutionResult(Collections.emptyList());
-                Maven3ExecutionResult result = myTelemetry.callWithSpan(
-                  "resolveBuildingResult " + br.buildingResult.getProjectId(), () ->
-                    resolveBuildingResult(repositorySession, addUnresolved, br.buildingResult, br.exceptions));
-                result.setDependencyHash(br.dependencyHash);
-                myLongRunningTask.incrementFinishedRequests();
-                return result;
-              }
-            ));
-
-        executionResults.addAll(execResults);
-      }
-      catch (Exception e) {
-        executionResults.add(handleException(e));
-      }
+      executionResults.addAll(getExecutionResults(files, request));
     });
 
     return executionResults;
+  }
+
+  @NotNull
+  private ArrayList<MavenServerExecutionResult> getExecutionResults(Set<File> files,
+                                                                    MavenExecutionRequest request) {
+    ArrayList<MavenServerExecutionResult> executionResults = new ArrayList<>();
+    try {
+      MavenSession mavenSession = myEmbedder.getComponent(LegacySupport.class).getSession();
+      RepositorySystemSession repositorySession = myEmbedder.getComponent(LegacySupport.class).getRepositorySession();
+      if (repositorySession instanceof DefaultRepositorySystemSession) {
+        DefaultRepositorySystemSession session = (DefaultRepositorySystemSession)repositorySession;
+        MavenServerConsoleIndicatorImpl indicator = myLongRunningTask.getIndicator();
+        myImporterSpy.setIndicator(indicator);
+        session.setTransferListener(new Maven3TransferListenerAdapter(indicator));
+
+        setupWorkspaceReader(session);
+
+        session.setConfigProperty(ConflictResolver.CONFIG_PROP_VERBOSE, true);
+        session.setConfigProperty(DependencyManagerUtils.CONFIG_PROP_VERBOSE, true);
+      }
+
+      List<ProjectBuildingResult> buildingResults = myTelemetry.callWithSpan("getProjectBuildingResults " + files.size(), () ->
+        getProjectBuildingResults(request, files));
+
+      fillSessionCache(mavenSession, repositorySession, buildingResults);
+
+      boolean addUnresolved = System.getProperty("idea.maven.no.use.dependency.graph") == null;
+
+      boolean runInParallel = myResolveInParallel;
+      Map<File, String> fileToNewDependencyHash = collectHashes(runInParallel, buildingResults);
+
+      List<ProjectBuildingResultInfo> buildingResultInfos = new ArrayList<>();
+
+      for (ProjectBuildingResult buildingResult : buildingResults) {
+        MavenProject project = buildingResult.getProject();
+        String projectId = buildingResult.getProjectId();
+        File pomFile = buildingResult.getPomFile();
+        List<ModelProblem> modelProblems = buildingResult.getProblems();
+
+        if (project == null || pomFile == null) {
+          executionResults.add(createExecutionResult(pomFile, modelProblems));
+          continue;
+        }
+
+        String newDependencyHash = fileToNewDependencyHash.get(pomFile);
+        if (!transitiveDependenciesChanged(pomFile, newDependencyHash, fileToNewDependencyHash)) {
+          executionResults.add(createExecutionResult(project, newDependencyHash));
+          continue;
+        }
+
+        List<Exception> exceptions = new ArrayList<>();
+
+        loadExtensions(project, exceptions);
+
+        project.setDependencyArtifacts(project.createArtifacts(myEmbedder.getComponent(ArtifactFactory.class), null, null));
+
+        buildingResultInfos.add(new ProjectBuildingResultInfo(projectId, project, modelProblems, exceptions, newDependencyHash));
+      }
+
+      myLongRunningTask.updateTotalRequests(buildingResultInfos.size());
+      Collection<MavenServerExecutionResult> execResults =
+        myTelemetry.callWithSpan("resolveBuildingResults", () ->
+          myTelemetry.execute(
+            runInParallel,
+            buildingResultInfos, br -> {
+              if (myLongRunningTask.isCanceled()) return MavenServerExecutionResult.EMPTY;
+              MavenServerExecutionResult result = myTelemetry.callWithSpan(
+                "resolveBuildingResult " + br.projectId, () ->
+                  resolveBuildingResult(repositorySession, addUnresolved, br.mavenProject, br.modelProblems, br.exceptions, br.dependencyHash));
+              myLongRunningTask.incrementFinishedRequests();
+              return result;
+            }
+          ));
+
+      executionResults.addAll(execResults);
+    }
+    catch (Exception e) {
+      executionResults.add(createExecutionResult(e));
+    }
+    return executionResults;
+  }
+
+  private boolean transitiveDependenciesChanged(@NotNull File pomFile, String newDependencyHash, Map<File, String> fileToNewDependencyHash) {
+    if (dependenciesChanged(pomFile, newDependencyHash)) return true;
+    for (File dependencyPomFile : myPomHashMap.getFileDependencies(pomFile)) {
+      if (dependenciesChanged(dependencyPomFile, fileToNewDependencyHash.get(dependencyPomFile))) return true;
+    }
+    return false;
+  }
+
+  private boolean dependenciesChanged(@NotNull File pomFile, String newDependencyHash) {
+    String previousDependencyHash = myPomHashMap.getDependencyHash(pomFile);
+    return previousDependencyHash == null || !previousDependencyHash.equals(newDependencyHash);
+  }
+
+  @NotNull
+  private Map<File, String> collectHashes(boolean runInParallel, List<ProjectBuildingResult> buildingResults) {
+    Map<File, String> fileToNewDependencyHash = new ConcurrentHashMap<>();
+    myTelemetry.callWithSpan("dependencyHashes", () ->
+      myTelemetry.execute(
+        runInParallel,
+        buildingResults, br -> {
+          String newDependencyHash = Maven3EffectivePomDumper.dependencyHash(br.getProject());
+          if (null != newDependencyHash) {
+            File pomFile = br.getPomFile();
+            if (pomFile != null) {
+              fileToNewDependencyHash.put(pomFile, newDependencyHash);
+            }
+          }
+          return br;
+        }
+      ));
+    return fileToNewDependencyHash;
   }
 
   protected void setupWorkspaceReader(DefaultRepositorySystemSession session) {
@@ -234,69 +253,101 @@ public class Maven3XProjectResolver {
   }
 
   @NotNull
-  private Maven3ExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
-                                                      boolean addUnresolved,
-                                                      ProjectBuildingResult buildingResult,
-                                                      List<Exception> exceptions) {
-    MavenProject project = buildingResult.getProject();
+  private MavenServerExecutionResult resolveBuildingResult(RepositorySystemSession repositorySession,
+                                                           boolean addUnresolved,
+                                                           MavenProject project,
+                                                           @NotNull List<ModelProblem> modelProblems,
+                                                           List<Exception> exceptions,
+                                                           String dependencyHash) {
     try {
-      List<ModelProblem> modelProblems = new ArrayList<>();
-
-      if (buildingResult.getProblems() != null) {
-        modelProblems.addAll(buildingResult.getProblems());
-      }
-
       DependencyResolutionResult dependencyResolutionResult = resolveDependencies(project, repositorySession);
       Set<Artifact> artifacts = resolveArtifacts(dependencyResolutionResult, addUnresolved);
       project.setArtifacts(artifacts);
 
-      return new Maven3ExecutionResult(project, dependencyResolutionResult, exceptions, modelProblems);
+      return createExecutionResult(exceptions, modelProblems, project, dependencyResolutionResult, dependencyHash);
     }
     catch (Exception e) {
-      return handleException(project, e);
+      return createExecutionResult(project, e);
     }
   }
 
   @NotNull
-  private MavenServerExecutionResult createExecutionResult(@Nullable File file, Maven3ExecutionResult result) {
-    Collection<MavenProjectProblem> problems = MavenProjectProblem.createProblemsList();
-    myEmbedder.collectProblems(file, result.getExceptions(), result.getModelProblems(), problems);
+  private MavenServerExecutionResult createExecutionResult(@NotNull MavenProject mavenProject, String dependencyHash) {
+    return createExecutionResult(mavenProject.getFile(), Collections.emptyList(), Collections.emptyList(), mavenProject, null,
+                                 dependencyHash, true);
+  }
 
-    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
-    collectUnresolvedArtifactProblems(file, result.getDependencyResolutionResult(), unresolvedProblems);
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(Exception exception) {
+    return createExecutionResult(null, exception);
+  }
 
-    MavenProject mavenProject = result.getMavenProject();
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(MavenProject mavenProject, Exception exception) {
+    return createExecutionResult(Collections.singletonList(exception), Collections.emptyList(), mavenProject, null, null);
+  }
+
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(List<Exception> exceptions,
+                                                           List<ModelProblem> modelProblems,
+                                                           MavenProject mavenProject,
+                                                           DependencyResolutionResult dependencyResolutionResult,
+                                                           String dependencyHash) {
+    return createExecutionResult(null, exceptions, modelProblems, mavenProject, dependencyResolutionResult, dependencyHash, false);
+  }
+
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file, List<ModelProblem> modelProblems) {
+    return createExecutionResult(file, Collections.emptyList(), modelProblems, null, null, null, false);
+  }
+
+  @NotNull
+  private MavenServerExecutionResult createExecutionResult(@Nullable File file,
+                                                           @NotNull List<Exception> exceptions,
+                                                           @NotNull List<ModelProblem> modelProblems,
+                                                           @Nullable MavenProject mavenProject,
+                                                           DependencyResolutionResult dependencyResolutionResult,
+                                                           String dependencyHash,
+                                                           boolean dependencyResolutionSkipped) {
+    if (null != dependencyResolutionResult && null != dependencyResolutionResult.getCollectionErrors()) {
+      exceptions.addAll(dependencyResolutionResult.getCollectionErrors());
+    }
+
+    if (null == file && null != mavenProject) {
+      file = mavenProject.getFile();
+    }
+
+    Collection<MavenProjectProblem> problems = myEmbedder.collectProblems(file, exceptions, modelProblems);
+
     if (mavenProject == null) return new MavenServerExecutionResult(null, problems, Collections.emptySet());
 
     MavenModel model = new MavenModel();
     try {
-      DependencyResolutionResult dependencyResolutionResult = result.getDependencyResolutionResult();
       DependencyNode dependencyGraph = dependencyResolutionResult != null ? dependencyResolutionResult.getDependencyGraph() : null;
 
       List<DependencyNode> dependencyNodes =
         dependencyGraph != null ? dependencyGraph.getChildren() : Collections.emptyList();
       model = Maven3AetherModelConverter.convertModelWithAetherDependencyTree(
-        mavenProject.getModel(), mavenProject.getCompileSourceRoots(), mavenProject.getTestCompileSourceRoots(),
-        mavenProject.getArtifacts(), dependencyNodes, mavenProject.getExtensionArtifacts(), myEmbedder.getLocalRepositoryFile());
+        mavenProject.getModel(),
+        mavenProject.getCompileSourceRoots(),
+        mavenProject.getTestCompileSourceRoots(),
+        mavenProject.getArtifacts(),
+        dependencyNodes,
+        mavenProject.getPluginArtifacts(),
+        mavenProject.getExtensionArtifacts(),
+        myEmbedder.getLocalRepositoryFile());
     }
     catch (Exception e) {
-      myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), result.getModelProblems(), problems);
-    }
-
-    RemoteNativeMaven3ProjectHolder holder = new RemoteNativeMaven3ProjectHolder(mavenProject);
-    try {
-      UnicastRemoteObject.exportObject(holder, 0);
-    }
-    catch (RemoteException e) {
-      throw new RuntimeException(e);
+      problems.addAll(myEmbedder.collectProblems(mavenProject.getFile(), Collections.singleton(e), modelProblems));
     }
 
     Collection<String> activatedProfiles = Maven3XProfileUtil.collectActivatedProfiles(mavenProject);
 
     Map<String, String> mavenModelMap = Maven3ModelConverter.convertToMap(mavenProject.getModel());
     MavenServerExecutionResult.ProjectData data =
-      new MavenServerExecutionResult.ProjectData(model, result.getDependencyHash(), result.isDependencyResolutionSkipped(), mavenModelMap,
-                                                 holder, activatedProfiles);
+      new MavenServerExecutionResult.ProjectData(model, dependencyHash, dependencyResolutionSkipped, mavenModelMap, activatedProfiles);
+    Collection<MavenProjectProblem> unresolvedProblems = new HashSet<>();
+    collectUnresolvedArtifactProblems(file, dependencyResolutionResult, unresolvedProblems);
     return new MavenServerExecutionResult(data, problems, Collections.emptySet(), unresolvedProblems);
   }
 
@@ -424,14 +475,6 @@ public class Maven3XProjectResolver {
         }
       }
     }
-  }
-
-  private static Maven3ExecutionResult handleException(Exception e) {
-    return new Maven3ExecutionResult(Collections.singletonList(e));
-  }
-
-  private static Maven3ExecutionResult handleException(MavenProject mavenProject, Exception e) {
-    return new Maven3ExecutionResult(mavenProject, Collections.singletonList(e));
   }
 
   /**

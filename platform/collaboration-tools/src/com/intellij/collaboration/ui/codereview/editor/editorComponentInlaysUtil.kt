@@ -11,6 +11,7 @@ import com.intellij.collaboration.ui.util.DimensionRestrictions
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.editor.*
@@ -85,7 +86,9 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
     vmsFlow.map {
       createCustomHashingStrategySet(vmHashingStrategy).apply { addAll(it) }
     }.collect {
-      positionKeeper.savePosition()
+      writeIntentReadAction {
+        positionKeeper.savePosition()
+      }
 
       // remove missing
       val iter = controllersByVmKey.iterator()
@@ -105,10 +108,12 @@ private suspend fun <VM : EditorMapped> EditorEx.doRenderInlays(
         }
       }
 
-      // immediately validate the editor to recalculate the size with inlays
-      editor.contentComponent.validate()
-      positionKeeper.restorePosition(true)
-      editor.contentComponent.repaint()
+      writeIntentReadAction {
+        // immediately validate the editor to recalculate the size with inlays
+        editor.contentComponent.validate()
+        positionKeeper.restorePosition(true)
+        editor.contentComponent.repaint()
+      }
     }
     awaitCancellation()
   }
@@ -128,19 +133,21 @@ private suspend fun <VM : EditorMapped> controlInlay(vm: VM, editor: EditorEx, r
         combine(lineFlow, visibleFlow, ::Pair)
       }.distinctUntilChanged()
         .collect { (line, isVisible) ->
-          val currentInlay = inlay
-          if (line != null && isVisible) {
-            runCatching {
-              val offset = editor.document.getLineEndOffset(line)
-              if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
-                currentInlay?.let(Disposer::dispose)
-                inlay = insertComponent(vm, rendererFactory, editor, offset)
-              }
-            }.getOrLogException(LOG)
-          }
-          else if (currentInlay != null) {
-            Disposer.dispose(currentInlay)
-            inlay = null
+          writeIntentReadAction {
+            val currentInlay = inlay
+            if (line != null && isVisible) {
+              runCatching {
+                val offset = editor.document.getLineEndOffset(line)
+                if (currentInlay == null || !currentInlay.isValid || currentInlay.offset != offset) {
+                  currentInlay?.let(Disposer::dispose)
+                  inlay = insertComponent(vm, rendererFactory, editor, offset)
+                }
+              }.getOrLogException(LOG)
+            }
+            else if (currentInlay != null) {
+              Disposer.dispose(currentInlay)
+              inlay = null
+            }
           }
         }
       awaitCancellation()

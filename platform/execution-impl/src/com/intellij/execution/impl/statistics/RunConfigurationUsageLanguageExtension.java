@@ -4,9 +4,11 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class RunConfigurationUsageLanguageExtension implements FeatureUsageCollectorExtension {
   @Override
   public String getGroupId() {

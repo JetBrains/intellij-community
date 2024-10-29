@@ -259,9 +259,8 @@ public abstract class EditorActionHandler {
   @ApiStatus.Internal
   public static @NotNull DataContext freshCaretDataContext(@NotNull DataContext context, @NotNull Caret caret) {
     // reset and later recompute keys like injected caret
-    return CustomizedDataContext.withProvider(context, dataId -> {
-      if (CommonDataKeys.CARET.is(dataId)) return caret;
-      return null;
+    return CustomizedDataContext.withSnapshot(context, sink -> {
+      sink.set(CommonDataKeys.CARET, caret);
     });
   }
 }

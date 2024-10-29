@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -18,6 +19,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
+@ApiStatus.Internal
 public class RestoreShelvedChange extends DumbAwareAction {
   public RestoreShelvedChange() {
     super(ActionsBundle.messagePointer("action.RestoreShelvedChange.text"));

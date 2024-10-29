@@ -9,10 +9,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class ShowErrorDescriptionAction extends BaseCodeInsightAction implements DumbAware {
   private boolean myRequestFocus;
 

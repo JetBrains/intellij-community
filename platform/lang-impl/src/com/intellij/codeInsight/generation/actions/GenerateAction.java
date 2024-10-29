@@ -10,11 +10,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class GenerateAction extends DumbAwareAction {
 
   @Override
@@ -44,7 +46,7 @@ public final class GenerateAction extends DumbAwareAction {
     Editor editor = event.getData(CommonDataKeys.EDITOR);
     boolean enabled = project != null && editor != null &&
                       !ActionGroupUtil.isGroupEmpty(getGroup(), event);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       event.getPresentation().setEnabledAndVisible(enabled);
     }
     else {

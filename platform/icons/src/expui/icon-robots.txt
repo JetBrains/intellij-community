@@ -1,5 +1,4 @@
 merge
-mergeAdd: expui/fileTypes/actionScript.svg
 mergeAdd: expui/general/close.svg
 mergeAdd: expui/general/closeSmall.svg
 mergeAdd: expui/general/closeSmallHovered.svg
@@ -17,16 +16,6 @@ mergeAdd: expui/nodes/library.svg
 mergeAdd: expui/run/restart.svg
 mergeAdd: expui/run/showIgnored.svg
 mergeAdd: expui/run/stop.svg
-mergeAdd: /expui/fileTypes/javaScript.svg
-mergeAdd: /expui/fileTypes/properties.svg
-mergeAdd: /expui/fileTypes/text.svg
-mergeAdd: /expui/general/add.svg
-mergeAdd: /expui/general/chevronDown.svg
-mergeAdd: /expui/general/chevronUp.svg
-mergeAdd: /expui/general/greenCheckmark.svg
-mergeAdd: /expui/nodes/dataTables.svg
-mergeAdd: /expui/nodes/folder.svg
-mergeAdd: /expui/runConfigurations/application.svg
 skip: /**/*14x14.svg
 skip: stub@20x20.svg
 skip: general/settings@20x20.svg

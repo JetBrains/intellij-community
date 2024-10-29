@@ -10,7 +10,7 @@ import org.jetbrains.plugins.gradle.model.RepositoryModels;
 import org.jetbrains.plugins.gradle.tooling.Message;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext;
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService;
-import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoriesModel;
+import org.jetbrains.plugins.gradle.tooling.internal.DefaultRepositoryModels;
 import org.jetbrains.plugins.gradle.tooling.internal.MavenRepositoryModelImpl;
 
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ public class MavenRepositoriesModelBuilder implements ModelBuilderService {
       final MavenRepositoryModel model = new MavenRepositoryModelImpl(artifactRepository.getName(), artifactRepository.getUrl().toString());
       repositories.add(model);
     }
-    return new DefaultRepositoriesModel(repositories);
+    return new DefaultRepositoryModels(repositories);
   }
 
   @Override

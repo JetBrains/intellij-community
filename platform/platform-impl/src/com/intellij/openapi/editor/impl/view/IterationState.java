@@ -95,6 +95,7 @@ public final class IterationState {
   private final boolean myReverseIteration;
   private final List<RangeHighlighterEx> myCurrentHighlighters = new ArrayList<>();
   private final List<TextAttributes> myCachedAttributesList = new ArrayList<>(5);
+  private final GuardedBlocksIndex myGuardedBlocks;
 
   private int myStartOffset;
   private int myEndOffset;
@@ -141,6 +142,7 @@ public final class IterationState {
     myDefaultFontType = defaultAttributes == null ? Font.PLAIN : defaultAttributes.getFontType();
     myView = createSweep(editor.getMarkupModel());
     myDoc = createSweep(editor.getFilteredDocumentMarkupModel());
+    myGuardedBlocks =  buildGuardedBlocks(start, end);
     myEndOffset = myStartOffset;
 
     advance();
@@ -334,17 +336,20 @@ public final class IterationState {
   }
 
   private int getGuardedBlockEnd(int start) {
+    int end = myEnd;
+    assert myReverseIteration && start >= end || !myReverseIteration && start <= end;
+
     if (myUseOnlyFullLineHighlighters) {
-      return myEnd;
+      return end;
     }
-    List<RangeMarker> blocks = myDocument.getGuardedBlocks();
-    int result = myEnd;
-    for (int i = 0; i < blocks.size(); i++) {
-      RangeMarker block = blocks.get(i);
-      int nearestValue = getNearestValueAhead(start, alignOffset(block.getStartOffset()), alignOffset(block.getEndOffset()));
-      result = myReverseIteration ? Math.max(result, nearestValue) : Math.min(result, nearestValue);
+
+    if (myReverseIteration) {
+      int nearest = myGuardedBlocks.nearestLeft(start - 1);
+      return (nearest != -1 && nearest > end) ? nearest : end;
     }
-    return result;
+
+    int nearest = myGuardedBlocks.nearestRight(start + 1);
+    return (nearest != -1 && nearest < end) ? nearest : end;
   }
 
   private void advanceCurrentSelectionIndex() {
@@ -371,6 +376,26 @@ public final class IterationState {
     return myCurrentSelectionIndex < myCaretData.selectionsSize() &&
            (myReverseIteration ? lessThan(myStartOffset, myCaretData.selectionEnd(myCurrentSelectionIndex, true), !atBreak)
                                : lessThan(myCaretData.selectionStart(myCurrentSelectionIndex, false), myStartOffset, !atBreak));
+  }
+
+  private GuardedBlocksIndex buildGuardedBlocks(int start, int end) {
+    if (myUseOnlyFullLineHighlighters) {
+      return null;
+    }
+    var guardedBlocks = new GuardedBlocksIndex.DocumentBuilder(myDocument);
+    return myReverseIteration
+           ? guardedBlocks.build(end, start)
+           : guardedBlocks.build(start, end);
+  }
+
+  private boolean isInDocumentGuardedBlock(boolean atBreak, boolean beforeBreak) {
+    if (myUseOnlyFullLineHighlighters || (atBreak && beforeBreak)) {
+      return false;
+    }
+    if (myReverseIteration) {
+      return myGuardedBlocks.isGuarded(myStartOffset - 1);
+    }
+    return myGuardedBlocks.isGuarded(myStartOffset);
   }
 
   private static boolean lessThan(int x, int y, boolean orEquals) {
@@ -473,14 +498,7 @@ public final class IterationState {
       !myReverseIteration && (!atBreak || !beforeBreak),
       myReverseIteration || (atBreak && beforeBreak)
     );
-    boolean isInGuardedBlock = false;
-    if (!myUseOnlyFullLineHighlighters) {
-      RangeMarker guard = myDocument.getOffsetGuard(myReverseIteration ? myStartOffset - 1 : myStartOffset);
-      isInGuardedBlock = guard != null &&
-                         (!atBreak || myReverseIteration
-                          ? guard.getEndOffset() > myStartOffset
-                          : guard.getStartOffset() < myStartOffset);
-    }
+    boolean isInGuardedBlock = isInDocumentGuardedBlock(atBreak, beforeBreak);
 
     TextAttributes syntax = myHighlighterIterator == null || myHighlighterIterator.atEnd()
                             ? null
@@ -594,8 +612,9 @@ public final class IterationState {
   }
 
   private boolean isInCaretRow(boolean includeLineStart, boolean includeLineEnd) {
-    return myStartOffset > myCaretData.caretRowStart() && myStartOffset < myCaretData.caretRowEnd() ||
-           includeLineStart && myStartOffset == myCaretData.caretRowStart() || includeLineEnd && myStartOffset == myCaretData.caretRowEnd();
+    return myCaretData.caretRowStart() < myStartOffset && myStartOffset < myCaretData.caretRowEnd() ||
+           includeLineStart && myStartOffset == myCaretData.caretRowStart() ||
+           includeLineEnd && myStartOffset == myCaretData.caretRowEnd();
   }
 
   private @Nullable TextAttributes getSelectionAttributes(boolean isInSelection) {

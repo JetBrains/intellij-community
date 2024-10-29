@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.todo;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.HighlightedRegion;
+import com.intellij.usageView.UsageTreeColors;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -45,9 +46,10 @@ public final class MultiLineTodoRenderer extends JPanel implements TreeCellRende
                                                 boolean hasFocus) {
     TodoItemNode node = (TodoItemNode)((DefaultMutableTreeNode)value).getUserObject();
     String text = value.toString();
-    int parenPos = text.indexOf(')');
-    int contentStartPos = (parenPos >= 0 && parenPos < (text.length() - 1)) ? parenPos + 2 : 0;
+    int lineNumPos = text.indexOf(' ');
+    int contentStartPos = (lineNumPos >= 0 && lineNumPos < (text.length() - 1)) ? lineNumPos + 1 : 0;
     myPrefixRenderer.getTreeCellRendererComponent(tree, text.substring(0, contentStartPos), selected, expanded, leaf, row, hasFocus);
+    myPrefixRenderer.addHighlighter(0, contentStartPos, UsageTreeColors.NUMBER_OF_USAGES_ATTRIBUTES.toTextAttributes());
     myPrefixRenderer.setIcon(node.getIcon());
 
     List<HighlightedRegionProvider> additionalLines = node.getAdditionalLines();

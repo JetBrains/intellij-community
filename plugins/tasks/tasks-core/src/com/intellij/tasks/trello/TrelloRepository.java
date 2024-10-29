@@ -385,7 +385,7 @@ public final class TrelloRepository extends NewBaseRepositoryImpl {
 
   @Override
   public boolean isConfigured() {
-    return super.isConfigured() && StringUtil.isNotEmpty(myPassword);
+    return super.isConfigured() && StringUtil.isNotEmpty(getPassword());
   }
 
   @NotNull

@@ -360,7 +360,7 @@ abstract class EditorBasedStatusBarPopup(
       @JvmStatic
       fun getDumbModeState(name: @Nls String?, widgetPrefix: @NlsContexts.StatusBarText String?): WidgetState {
         // todo: update accordingly to UX-252
-        return WidgetState(toolTip = ActionUtil.getUnavailableMessage(name!!, false),
+        return WidgetState(toolTip = ActionUtil.getActionUnavailableMessage(name!!),
                            text = widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
                            isActionEnabled = false)
       }

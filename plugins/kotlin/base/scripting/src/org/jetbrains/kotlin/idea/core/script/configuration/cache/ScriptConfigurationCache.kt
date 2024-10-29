@@ -31,13 +31,6 @@ interface ScriptConfigurationCache {
 
     fun allApplied(): List<Pair<VirtualFile, ScriptCompilationConfigurationWrapper>>
     fun clear()
-
-    fun getAnyLoadedScript(): ScriptCompilationConfigurationWrapper?
-}
-
-internal sealed class ScriptConfigurationCacheScope {
-    object All : ScriptConfigurationCacheScope()
-    class File(val file: KtFile) : ScriptConfigurationCacheScope()
 }
 
 data class ScriptConfigurationState(val applied: ScriptConfigurationSnapshot? = null, val loaded: ScriptConfigurationSnapshot? = null) {
@@ -54,10 +47,6 @@ data class ScriptConfigurationSnapshot(
 
 interface CachedConfigurationInputs: Serializable {
     fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile? = null): Boolean
-
-    object OutOfDate : CachedConfigurationInputs {
-        override fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile?): Boolean = false
-    }
 
     object UpToDate: CachedConfigurationInputs {
         override fun isUpToDate(project: Project, file: VirtualFile, ktFile: KtFile?): Boolean = true

@@ -6,9 +6,11 @@ import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImporter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public class InspectionProfileImporter implements SchemeImporter<InspectionProfileImpl> {
   @Override
   public String @NotNull [] getSourceExtensions() {

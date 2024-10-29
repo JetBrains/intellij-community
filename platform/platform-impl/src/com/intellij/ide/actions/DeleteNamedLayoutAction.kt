@@ -9,7 +9,9 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class DeleteNamedLayoutAction(@NlsSafe private val layoutName: String) : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {

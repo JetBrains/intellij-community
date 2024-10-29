@@ -2,7 +2,7 @@
 package com.intellij.java.compiler.charts
 
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
-import com.intellij.java.compiler.charts.jps.CompileStatisticBuilderMessage.*
+import com.intellij.openapi.Disposable
 import com.jetbrains.rd.framework.impl.RdList
 import com.jetbrains.rd.framework.impl.RdMap
 import com.jetbrains.rd.framework.impl.RdProperty
@@ -12,36 +12,24 @@ import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Predicate
+import kotlin.math.roundToLong
 
-class CompilationChartsViewModel(val lifetime: Lifetime) {
-  val modules: Modules = Modules(Long.MAX_VALUE, 0, 0, RdMap())
+
+class CompilationChartsViewModel(val lifetime: Lifetime, val disposable: Disposable) {
+  val modules: Modules = Modules(Long.MAX_VALUE, 0, RdMap())
   val statistics: Statistics = Statistics()
   val cpuMemory: RdProperty<CpuMemoryStatisticsType> = RdProperty(CpuMemoryStatisticsType.MEMORY)
   val filter: RdProperty<Filter> = RdProperty(Filter())
 
-  private val threadIndexes: MutableMap<Long, Int> = ConcurrentHashMap()
   fun started(values: List<StartTarget>) {
     values.forEach { value ->
-      modules.add(Modules.StartEvent(value, index(value.thread)))
+      modules.add(Modules.StartEvent(value))
     }
   }
 
   fun finished(values: List<FinishTarget>) {
     values.forEach { value ->
-      modules.add(Modules.FinishEvent(value, index(value.thread)))
-    }
-  }
-
-  private fun index(threadId: Long): Int {
-    var index: Int? = threadIndexes[threadId]
-    if (index != null) return index
-    synchronized(threadIndexes) {
-      index = threadIndexes[threadId]
-      if (index != null) return index!!
-
-      index = threadIndexes.size
-      threadIndexes[threadId] = index!!
-      return index!!
+      modules.add(Modules.FinishEvent(value))
     }
   }
 
@@ -50,16 +38,21 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
     if (statistics.start > value.time) statistics.start = value.time
     if (statistics.end < value.time) statistics.end = value.time
 
-    statistics.cpu.add(StatisticData(value.time, value.cpu))
+    if (value.cpu > 0) {
+      statistics.cpu.add(StatisticData(value.time, value.cpu))
+    } else {
+      val lastElement = statistics.cpu.lastOrNull()?.data ?: 0L
+      statistics.cpu.add(StatisticData(value.time, calculateNewLastCpuValue(lastElement)))
+    }
+
     statistics.memoryMax.add(StatisticData(value.time, value.heapMax))
     statistics.memoryUsed.add(StatisticData(value.time, value.heapUsed))
   }
 
-  data class Modules(var start: Long, var end: Long, var threadCount: Int, private val events: RdMap<EventKey, PersistentList<Event>>) {
+  data class Modules(var start: Long, var end: Long, private val events: RdMap<EventKey, PersistentList<Event>>) {
     fun add(event: Event) {
       if (start > event.target.time) start = event.target.time
       if (end < event.target.time) end = event.target.time
-      if (threadCount <= event.threadNumber) threadCount = event.threadNumber + 1
 
       events.compute(event.key) { _, list ->
         list?.add(event) ?: persistentListOf(event)
@@ -70,15 +63,14 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
 
     interface Event {
       val target: TargetEvent
-      val threadNumber: Int
 
       val key: EventKey
         get() = EventKey(target.name, target.type, target.isTest)
     }
 
     data class EventKey(val name: String, val type: String, val test: Boolean)
-    data class StartEvent(override val target: StartTarget, override val threadNumber: Int) : Event
-    data class FinishEvent(override val target: FinishTarget, override val threadNumber: Int) : Event
+    data class StartEvent(override val target: StartTarget) : Event
+    data class FinishEvent(override val target: FinishTarget) : Event
   }
 
   data class StatisticData(val time: Long, val data: Long) : Comparable<StatisticData> {
@@ -92,7 +84,7 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
                         var start: Long = Long.MAX_VALUE,
                         var end: Long = 0)
 
-  data class ViewModules(var filter: Predicate<EventKey> = Predicate<EventKey> { _ -> true },
+  data class ViewModules(var filter: Predicate<EventKey> = Filter(),
                          val data: MutableMap<EventKey, List<Modules.Event>> = ConcurrentHashMap()) {
     fun data(): Map<EventKey, List<Modules.Event>> = data(filter)
     fun data(filter: Predicate<EventKey>): Map<EventKey, List<Modules.Event>> = data.filter { filter.test(it.key) }
@@ -119,6 +111,22 @@ class CompilationChartsViewModel(val lifetime: Lifetime) {
   }
 
   enum class CpuMemoryStatisticsType {
-    CPU, MEMORY
+    CPU {
+      override fun max(statistics: Statistics): Long = 100
+    },
+    MEMORY {
+      override fun max(statistics: Statistics): Long = statistics.maxMemory
+    };
+
+    abstract fun max(statistics: Statistics): Long
+  }
+
+  companion object {
+    private fun calculateNewLastCpuValue(value: Long): Long = when (value) {
+      in 50..100 -> (value / 1.02).roundToLong()
+      in 25 until 50 -> (value / 1.03).roundToLong()
+      in 15 until 25 -> (value / 1.04).roundToLong()
+      else -> (value / 2)
+    }
   }
 }

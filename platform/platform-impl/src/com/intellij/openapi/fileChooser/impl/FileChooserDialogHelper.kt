@@ -1,9 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl
 
-import com.intellij.concurrency.resetThreadContext
 import com.intellij.core.CoreFileTypeRegistry
 import com.intellij.ide.highlighter.ArchiveFileType
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.LaterInvocator
 import com.intellij.openapi.command.CommandProcessorEx
@@ -11,10 +11,10 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
@@ -29,12 +29,10 @@ import com.intellij.util.UriUtil
 import java.awt.Component
 import java.awt.FileDialog
 import java.awt.KeyboardFocusManager
-import java.io.File
-import java.io.FilenameFilter
 import java.nio.file.FileSystems
 import java.nio.file.Path
 
-internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) : FilenameFilter {
+internal class FileChooserDialogHelper(private val descriptor: FileChooserDescriptor) : Disposable {
   @Suppress("SpellCheckingInspection")
   private val ZIP_FS_TYPE = "zipfs"
 
@@ -50,23 +48,21 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
       val registry = CoreFileTypeRegistry()
       registry.registerFileType(ArchiveFileType.INSTANCE, "zip")
       registry.registerFileType(ArchiveFileType.INSTANCE, "jar")
-      FileTypeRegistry.setInstanceSupplier { registry }
+      FileTypeRegistry.setInstanceSupplier( { registry }, this)
     }
+  }
+
+  override fun dispose() {
+
   }
 
   fun setNativeDialogProperties() {
     if (SystemInfo.isWindows) {
       System.setProperty("sun.awt.windows.useCommonItemDialog", "true")
     }
-    else if (SystemInfo.isMac) {
-      var key = "awt.file.dialog.enable.filter"
-      System.setProperty(key, Registry.`is`(key, true).toString())
-    }
   }
 
   fun showNativeDialog(fileDialog: FileDialog) {
-    fileDialog.filenameFilter = this
-
     val commandProcessor = if (ApplicationManager.getApplication() != null) CommandProcessorEx.getInstance() as CommandProcessorEx else null
     if (commandProcessor != null) {
       commandProcessor.enterModal()
@@ -74,9 +70,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     }
     val previousFocusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner
     try {
-      resetThreadContext().use {
-        fileDialog.isVisible = true
-      }
+      fileDialog.isVisible = true
     }
     finally {
       if (commandProcessor != null) {
@@ -86,6 +80,7 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
           IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { previousFocusOwner.requestFocus() }
         }
       }
+      Disposer.dispose(this)
     }
   }
 
@@ -142,14 +137,5 @@ internal class FileChooserDialogHelper(private val descriptor: FileChooserDescri
     catch (e: Exception) {
       Logger.getInstance(FileChooserDialogHelper::class.java).warn(e)
       null
-    }
-
-  override fun accept(dir: File, name: String): Boolean =
-    try {
-      descriptor.isFileSelectable(localFs.value.refreshAndFindFileByPath(dir.absolutePath + File.separatorChar + name))
-    }
-    catch (t: Throwable) {
-      Logger.getInstance(FileChooserDialogHelper::class.java).warn(t)
-      false
     }
 }

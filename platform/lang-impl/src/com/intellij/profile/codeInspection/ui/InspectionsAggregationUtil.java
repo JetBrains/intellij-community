@@ -4,6 +4,7 @@ package com.intellij.profile.codeInspection.ui;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +14,7 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionsAggregationUtil {
   public static List<HighlightDisplayKey> getInspectionsKeys(@NotNull InspectionConfigTreeNode node) {
     return ContainerUtil.map(getInspectionsNodes(node), node1 -> node1.getKey());

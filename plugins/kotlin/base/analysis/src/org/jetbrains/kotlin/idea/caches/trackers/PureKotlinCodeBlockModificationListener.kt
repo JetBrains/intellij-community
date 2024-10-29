@@ -25,6 +25,7 @@ import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.findTopmostParentInFile
 import com.intellij.psi.util.findTopmostParentOfType
+import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener.Companion.getInsideCodeBlockModificationScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -280,7 +281,7 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
                     val physicalFile = ktFile.isPhysical
 
                     if (inBlockElements.isEmpty()) {
-                        val physical = physicalFile && !isReplLine(ktFile.virtualFile)
+                        val physical = physicalFile && (ktFile.virtualFile?.let { !isReplLine(it) } ?: false)
                         ktFile.incOutOfBlockModificationCount()
 
                         didChangeKotlinCode(ktFile, physical)

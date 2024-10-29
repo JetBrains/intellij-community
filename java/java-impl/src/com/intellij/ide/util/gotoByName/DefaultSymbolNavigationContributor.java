@@ -3,6 +3,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.actions.JavaQualifiedNameProvider;
 import com.intellij.ide.util.gotoByName.DefaultClassNavigationContributor.DefaultClassProcessor;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
@@ -101,12 +102,17 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return false;
   }
 
+  private static PsiShortNamesCache getPsiShortNamesCache(@NotNull Project project) {
+    Set<Language> withoutLanguages = IgnoreLanguageInDefaultProvider.getIgnoredLanguages();
+    return PsiShortNamesCache.getInstance(project).withoutLanguages(withoutLanguages);
+  }
+
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     Project project = scope.getProject();
     if (project == null) return;
     DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE.ignoreDumbMode(() -> {
-      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      PsiShortNamesCache cache = getPsiShortNamesCache(project);
       cache.processAllClassNames(processor, scope, filter);
       cache.processAllFieldNames(processor, scope, filter);
       cache.processAllMethodNames(processor, scope, filter);
@@ -126,7 +132,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     final Predicate<PsiMember> qualifiedMatcher = getQualifiedNameMatcher(completePattern);
     final Set<PsiMethod> collectedMethods = new HashSet<>();
     DumbModeAccessType.RELIABLE_DATA_ONLY.ignoreDumbMode(() -> {
-      PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
+      PsiShortNamesCache cache = getPsiShortNamesCache(project);
       boolean success = cache.processFieldsWithName(name, field -> {
         if (isOpenable(field) && qualifiedMatcher.test(field)) return processor.process(field);
         return true;

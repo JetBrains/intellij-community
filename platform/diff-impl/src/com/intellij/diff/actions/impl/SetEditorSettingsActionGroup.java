@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,11 +33,13 @@ public class SetEditorSettingsActionGroup extends ActionGroup implements DumbAwa
 
   protected final AnAction @NotNull [] myActions;
 
+  @ApiStatus.Internal
   public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
                                       @NotNull List<? extends Editor> editors) {
     this(settings, () -> editors);
   }
 
+  @ApiStatus.Internal
   public SetEditorSettingsActionGroup(@NotNull TextDiffSettings settings,
                                       @NotNull Supplier<? extends List<? extends Editor>> editors) {
     super(DiffBundle.message("editor.settings"), null, AllIcons.General.GearPlain);

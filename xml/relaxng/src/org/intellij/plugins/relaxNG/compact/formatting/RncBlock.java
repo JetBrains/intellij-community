@@ -41,14 +41,12 @@ class RncBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public TextRange getTextRange() {
+  public @NotNull TextRange getTextRange() {
     return myNode.getTextRange();
   }
 
   @Override
-  @NotNull
-  public List<Block> getSubBlocks() {
+  public @NotNull List<Block> getSubBlocks() {
     final List<Block> list = new ArrayList<>();
     ASTNode node = myNode.getFirstChildNode();
     while (node != null) {
@@ -61,15 +59,13 @@ class RncBlock implements Block {
   }
 
   @Override
-  @Nullable
-  public Wrap getWrap() {
+  public @Nullable Wrap getWrap() {
     // TODO
     return null;
   }
 
   @Override
-  @Nullable
-  public Indent getIndent() {
+  public @Nullable Indent getIndent() {
     if (myNode.getTreeParent() == null) return null;
     if (isTopLevel()) {
       return Indent.getAbsoluteNoneIndent();
@@ -88,15 +84,13 @@ class RncBlock implements Block {
   }
 
   @Override
-  @Nullable
-  public Alignment getAlignment() {
+  public @Nullable Alignment getAlignment() {
     // TODO
     return null;
   }
 
   @Override
-  @Nullable
-  public Spacing getSpacing(Block child1, @NotNull Block child2) {
+  public @Nullable Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 == null) {
       return null;
     }
@@ -121,8 +115,7 @@ class RncBlock implements Block {
   }
 
   @Override
-  @NotNull
-  public ChildAttributes getChildAttributes(int newChildIndex) {
+  public @NotNull ChildAttributes getChildAttributes(int newChildIndex) {
     return new ChildAttributes(null, null);
   }
 

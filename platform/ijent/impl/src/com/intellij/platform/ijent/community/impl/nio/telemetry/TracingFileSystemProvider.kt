@@ -17,6 +17,7 @@ import java.nio.file.spi.FileSystemProvider
  * Given that [delegate] is the same, measures from instances of `TracingFileSystemProvider(delegate)` are written into the single place.
  * It's possible to get rid of this contract, but usages should be refactored then.
  */
+// TODO There should be an implementation for Path, to meet the contract `fsp.getPath(..).fileSystem.provider() === fsp`
 class TracingFileSystemProvider(
   val delegate: FileSystemProvider,
 ) : DelegatingFileSystemProvider<TracingFileSystemProvider, TracingFileSystem>(), RoutingAwareFileSystemProvider {

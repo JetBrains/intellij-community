@@ -1,15 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.dvcs.commit
 
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.util.NlsActions
-import com.intellij.vcs.commit.CommitWorkflowHandler
 import com.intellij.vcs.commit.CommitWorkflowHandlerState
-
-@NlsActions.ActionText
-fun CommitWorkflowHandler.getCommitAndPushActionName(): String {
-  return getCommitAndPushActionName(getState())
-}
 
 @NlsActions.ActionText
 fun getCommitAndPushActionName(state: CommitWorkflowHandlerState): String {

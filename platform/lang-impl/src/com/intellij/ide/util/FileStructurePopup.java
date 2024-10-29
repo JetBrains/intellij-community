@@ -1,15 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.ViewStructureAction;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.SearchableTextProvider;
-import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.impl.common.PsiTreeElementBase;
 import com.intellij.ide.structureView.newStructureView.*;
@@ -30,6 +28,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -131,18 +130,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 
   private boolean myCanClose = true;
   private boolean myDisposed;
-  /**
-   * @noinspection unused
-   * @deprecated use {@link #FileStructurePopup(Project, FileEditor, StructureViewModel)}
-   */
-  @Deprecated(forRemoval = true)
-  public FileStructurePopup(@NotNull Project project,
-                            @NotNull FileEditor fileEditor,
-                            @NotNull StructureView structureView,
-                            boolean applySortAndFilter) {
-    this(project, fileEditor, ViewStructureAction.createStructureViewModel(project, fileEditor, structureView));
-    Disposer.register(this, structureView);
-  }
 
   public FileStructurePopup(@NotNull Project project,
                             @NotNull FileEditor fileEditor,
@@ -541,8 +528,6 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     scrollPane.setBorder(IdeBorderFactory.createBorder(JBUI.CurrentTheme.Popup.toolbarBorderColor(), SideBorder.TOP | SideBorder.BOTTOM));
     panel.add(scrollPane, BorderLayout.CENTER);
-    DataManager.registerDataProvider(panel, this::getData);
-
     panel.addFocusListener(new FocusAdapter() {
       @Override
       public void focusLost(FocusEvent e) {
@@ -550,59 +535,35 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
       }
     });
 
-    return panel;
+    return UiDataProvider.wrapComponent(panel, sink -> uiDataSnapshot(sink));
   }
 
-  private @Nullable Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return myProject;
+  private void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.PROJECT, myProject);
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myFileEditor);
+    if (myFileEditor instanceof TextEditor o) {
+      sink.set(OpenFileDescriptor.NAVIGATE_IN_EDITOR, o.getEditor());
     }
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
-      return myFileEditor;
-    }
-    if (OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      if (myFileEditor instanceof TextEditor) {
-        return ((TextEditor)myFileEditor).getEditor();
-      }
-    }
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      TreePath[] selection = myTree.getSelectionPaths();
-      return (DataProvider)slowId -> getSlowData(slowId, selection);
-    }
-    if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
-      return myPopup;
-    }
-    if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return myCopyPasteDelegator.getCopyProvider();
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
-  }
+    sink.set(LangDataKeys.POSITION_ADJUSTER_POPUP, myPopup);
+    sink.set(PlatformDataKeys.COPY_PROVIDER, myCopyPasteDelegator.getCopyProvider());
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId, TreePath @Nullable [] selection) {
+    TreePath[] selection = myTree.getSelectionPaths();
     JBIterable<Object> selectedElements = JBIterable.of(selection)
       .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent()));
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return selectedElements.filter(PsiElement.class).first();
-    }
-    if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       return PsiUtilCore.toPsiElementArray(selectedElements.filter(PsiElement.class).toList());
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       return selectedElements.filter(Navigatable.class).first();
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
       List<Navigatable> result = selectedElements.filter(Navigatable.class).toList();
       return result.isEmpty() ? null : result.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    return null;
-  }
-
-  private @NotNull JBIterable<Object> getSelectedElements() {
-    return JBIterable.of(myTree.getSelectionPaths())
-      .filterMap(o -> StructureViewComponent.unwrapValue(o.getLastPathComponent()));
+    });
   }
 
   private @NotNull JComponent createSettingsButton() {
@@ -827,14 +788,17 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
               mySpeedSearch.refreshSelection(); // Selection failed, let the speed search reflect that by coloring itself red.
             })
             .onSuccess(p -> EdtInvocationManager.invokeLaterIfNeeded(() -> {
-              TreeUtil.expand(getTree(),
-                              myTreeModel instanceof StructureViewCompositeModel
-                              ? 3
-                              : 2);
-              TreeUtil.ensureSelection(myTree);
-              mySpeedSearch.refreshSelection();
-              result.setResult(p);
-              FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
+              //maybe readaction
+              WriteIntentReadAction.run((Runnable)() -> {
+                TreeUtil.expand(getTree(),
+                                myTreeModel instanceof StructureViewCompositeModel
+                                ? 3
+                                : 2);
+                TreeUtil.ensureSelection(myTree);
+                mySpeedSearch.refreshSelection();
+                result.setResult(p);
+                FileStructurePopupTimeTracker.logRebuildTime(System.nanoTime() - finalLastRebuildStartTime);
+              });
             }));
         });
       }
@@ -1139,10 +1103,10 @@ public final class FileStructurePopup implements Disposable, TreeActionsOwner {
 }
 
 final class FileStructurePopupTimeTracker extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
-  private final static EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
-  private final static EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
-  private final static EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
+  private static final EventLogGroup GROUP = new EventLogGroup("file.structure.popup", 2);
+  private static final EventId1<Long> LIFE = GROUP.registerEvent("popup.disposed", EventFields.DurationMs);
+  private static final EventId1<Long> SHOW = GROUP.registerEvent("data.shown", EventFields.DurationMs);
+  private static final EventId1<Long> REBUILD = GROUP.registerEvent("data.filled", EventFields.DurationMs);
 
   static void logRebuildTime(long elapsedTimeNanos) {
     long elapsedTimesMs = TimeUnit.NANOSECONDS.toMillis(elapsedTimeNanos);

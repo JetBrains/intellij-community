@@ -3,6 +3,7 @@ package com.intellij.xdebugger.frame.presentation;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,12 @@ public abstract class XValuePresentation {
   public String getType() {
     return null;
   }
+
+  /**
+   * @return true if content retrieval is async
+   */
+  @ApiStatus.Internal
+  public boolean isAsync() { return false; }
 
   public interface XValueTextRenderer {
     /**

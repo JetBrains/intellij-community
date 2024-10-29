@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.paths;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -35,14 +35,12 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
 
   protected abstract WebReference @NotNull [] collectWebReferences(@NotNull PsiFile file);
 
-  @Nullable
-  protected static WebReference lookForWebReference(@NotNull PsiElement element) {
+  protected static @Nullable WebReference lookForWebReference(@NotNull PsiElement element) {
     return lookForWebReference(Arrays.asList(element.getReferences()));
   }
 
   @SuppressWarnings("unchecked")
-  @Nullable
-  private static WebReference lookForWebReference(Collection<? extends PsiReference> references) {
+  private static @Nullable WebReference lookForWebReference(Collection<? extends PsiReference> references) {
     for (PsiReference reference : references) {
       if (reference instanceof WebReference) {
         return (WebReference)reference;
@@ -125,18 +123,15 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
     }
   }
 
-  @NotNull
-  protected abstract @InspectionMessage String getErrorMessage(@NotNull String url);
+  protected abstract @NotNull @InspectionMessage String getErrorMessage(@NotNull String url);
 
   protected IntentionAction @NotNull [] getQuickFixes() {
     return IntentionAction.EMPTY_ARRAY;
   }
 
-  @NotNull
-  protected abstract HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
+  protected abstract @NotNull HighlightDisplayLevel getHighlightDisplayLevel(@NotNull PsiElement context);
 
-  @NotNull
-  private MyFetchResult checkUrl(String url) {
+  private @NotNull MyFetchResult checkUrl(String url) {
     synchronized (myFetchCacheLock) {
       final MyFetchCacheEntry entry = myFetchCache.get(url);
       final long currentTime = System.currentTimeMillis();

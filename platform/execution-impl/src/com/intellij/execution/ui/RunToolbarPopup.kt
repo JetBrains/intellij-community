@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.impl.PresentationFactory
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehavior
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAwareAction
@@ -33,7 +34,10 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.PopupStep
+import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findPsiFile
@@ -45,6 +49,7 @@ import com.intellij.ui.popup.ActionPopupOptions
 import com.intellij.ui.popup.ActionPopupStep
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.ui.popup.WizardPopup
+import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.ui.popup.list.ListPopupModel
 import com.intellij.ui.popup.list.PopupListElementRenderer
 import com.intellij.util.messages.Topic
@@ -62,6 +67,7 @@ import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Predicate
 import javax.swing.JList
+import kotlin.collections.plus
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.math.max
@@ -75,6 +81,9 @@ private val recentLimit: Int get() = AdvancedSettings.getInt("max.recent.run.con
 @JvmField
 val RUN_CONFIGURATION_KEY = DataKey.create<RunnerAndConfigurationSettings>("sub.popup.parent.action")
 
+@JvmField
+internal val RUN_CONFIGURATION_ID: Key<String> = Key.create("sub.popup.run.configuration.unique.id")
+
 private const val TAG_PINNED = "pinned"
 private const val TAG_RECENT = "recent"
 private const val TAG_REGULAR_HIDE = "regular-hide" // hidden behind "All configurations" toggle
@@ -82,6 +91,7 @@ private const val TAG_REGULAR_SHOW = "regular-show" // shown regularly
 private const val TAG_REGULAR_DUPE = "regular-dupe" // shown regularly until search (pinned/recent duplicate)
 private const val TAG_HIDDEN = "hidden"             // hidden until search
 
+@ApiStatus.Internal
 class RunConfigurationsActionGroup : ActionGroup(), ActionRemoteBehaviorSpecification.BackendOnly {
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {
     val project = e?.project ?: return emptyArray()
@@ -152,7 +162,10 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
       val result = ArrayList<AnAction>()
       for (folderMap in folderMaps) {
-        result.add(object : ActionGroup(), AlwaysVisibleActionGroup {
+        result.add(object : ActionGroup() {
+          init {
+            templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
+          }
           override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
             val result = ArrayList<AnAction>()
             for (folderEntry in folderMap.entries) {
@@ -166,12 +179,13 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
                 }
               }
               else {
-                result.add(object : ActionGroup(), AlwaysVisibleActionGroup {
+                result.add(object : ActionGroup() {
                   init {
-                    templatePresentation.setPopupGroup(true)
+                    templatePresentation.isPopupGroup =true
                     templatePresentation.setText(folderName)
                     templatePresentation.setIcon(AllIcons.Nodes.Folder)
                     templatePresentation.putClientProperty(ActionUtil.SEARCH_TAG, regularTag)
+                    templatePresentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true)
                   }
 
                   override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
@@ -202,6 +216,14 @@ private fun createRunConfigurationActionGroup(folderMaps: Collection<Map<String?
   }
 }
 
+@ApiStatus.Internal
+@Topic.ProjectLevel
+val VOID_EXECUTION_TOPIC = Topic("any execution event", Runnable::class.java)
+
+@ApiStatus.Internal
+private class RunPopupVoidExecutionListener(project: Project) : MyExecutionListener(
+  { _, _, _ -> project.messageBus.syncPublisher(VOID_EXECUTION_TOPIC).run() })
+
 internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
                                                  dataContext: DataContext,
                                                  disposeCallback: (() -> Unit)?) :
@@ -217,12 +239,17 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
     serviceState = RunConfigurationStartHistory.getInstance(project)
     list.setExpandableItemsEnabled(false)
     (myStep as ActionPopupStep).setSubStepContextAdjuster { context, action ->
-      if (action is SelectConfigAction) {
-        CustomizedDataContext.withSnapshot(context) { sink ->
-          sink[RUN_CONFIGURATION_KEY] = action.configuration
+      val configuration = when {
+        action is SelectConfigAction -> action.configuration
+        else -> {
+          action.templatePresentation.getClientProperty(RUN_CONFIGURATION_ID)?.let { configId ->
+            RunManager.getInstance(project).allSettings.find { it.uniqueID == configId }
+          } ?: return@setSubStepContextAdjuster context
         }
       }
-      else context
+      CustomizedDataContext.withSnapshot(context) { sink ->
+        sink[RUN_CONFIGURATION_KEY] = configuration
+      }
     }
     pinnedSize = (myStep as ActionPopupStep).values.asSequence()
       .filter { it.action !is Separator }
@@ -234,6 +261,19 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
       dndManager.registerTarget(MyDnDTarget(), list, this)
     }
     listModel.syncModel()
+
+    project.messageBus.connect(this).subscribe(VOID_EXECUTION_TOPIC, Runnable {
+      ApplicationManager.getApplication().invokeLater {
+        if (list.isShowing) {
+          (myStep as ActionPopupStep).updateStepItems(list)
+          val focused = StackingPopupDispatcher.getInstance().focusedPopup
+          if (focused != this@RunConfigurationsActionGroupPopup &&
+              focused is ListPopupImpl) {
+            (focused.step as ActionPopupStep).updateStepItems(focused.list)
+          }
+        }
+      }
+    })
   }
 
   override fun createPopup(parent: WizardPopup?, step: PopupStep<*>?, parentValue: Any?): WizardPopup {
@@ -330,6 +370,7 @@ internal class RunConfigurationsActionGroupPopup(actionGroup: ActionGroup,
   }
 }
 
+@ApiStatus.Internal
 open class AllRunConfigurationsToggle : DumbAwareToggleAction(), ActionRemoteBehaviorSpecification {
   init {
     templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Always
@@ -380,53 +421,52 @@ private fun createRunConfigurationWithInlines(project: Project,
                                               isPinned: Boolean): AnAction {
   val activeExecutor = getActiveExecutor(project, conf)
   val showRerunAndStopButtons = !conf.configuration.isAllowRunningInParallel && activeExecutor != null
-  val inlineActions =
-    if (showRerunAndStopButtons) {
-      val secondVersionAction = if (RunWidgetResumeManager.getInstance(project).isSecondVersionAvailable())
-        InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
-      else null
-      if (secondVersionAction != null) {
-        listOf(
-          secondVersionAction,
-          RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
-          StopConfigurationInlineAction(activeExecutor, conf)
-        )
-      }
-      else {
-        listOf(
-          RunSpecifiedConfigExecutorAction(activeExecutor!!, conf, false),
-          StopConfigurationInlineAction(activeExecutor, conf)
-        )
-      }
-    }
-    else {
-      listOf(
-        RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
-        RunSpecifiedConfigExecutorAction(debugExecutor, conf, false)
-      )
-    }
+  val resumeAction = InlineResumeCreator.getInstance(project).getInlineResumeCreator(conf, false)
+
+  val inlineActions = listOf(
+    RunSpecifiedConfigExecutorAction(runExecutor, conf, false),
+    StopConfigurationInlineAction(runExecutor, conf),
+    resumeAction,
+    RunSpecifiedConfigExecutorAction(debugExecutor, conf, false),
+    StopConfigurationInlineAction(debugExecutor, conf),
+    (if (activeExecutor != null &&
+         activeExecutor != runExecutor &&
+         activeExecutor != debugExecutor)
+      StopConfigurationInlineAction(activeExecutor, conf)
+    else null))
+    .filterNotNull()
+  inlineActions.forEach {
+    it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
+  val inlineActionGroup = DefaultActionGroup(inlineActions)
+  val exclude = executorFilterByParentGroupFactory(DefaultActionGroup(inlineActions))
   val extraGroup = AdditionalRunningOptions.getInstance(project).getAdditionalActions(conf, false)
-  val result = object : SelectConfigAction(project, conf) {
+  return object : SelectConfigAction(project, conf) {
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+      val filtered = filterOutRunIfDebugResumeIsPresent(
+        e, ActionGroupUtil.getVisibleActions(inlineActionGroup, e).toList())
+      e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, filtered)
+      if (Registry.`is`("run.popup.show.inlines.for.active.configurations", false)) {
+        val isRunning = getActiveExecutor(project, conf) != null
+        filtered.forEach {
+          e.updateSession.presentation(it).putClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION, isRunning)
+        }
+      }
+    }
+
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
       var prefix = listOf<AnAction>(extraGroup)
       if (showRerunAndStopButtons) {
         val extraExecutor = if (activeExecutor === runExecutor) debugExecutor else runExecutor
         prefix = prefix + RunSpecifiedConfigExecutorAction(extraExecutor, conf, false)
       }
-      val pinActionText = if (isPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
-      else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
-      val pinAction = object : ActionRemotePermissionRequirements.ActionWithWriteAccess(pinActionText) {
-        override fun actionPerformed(e: AnActionEvent) {
-          RunConfigurationStartHistory.getInstance(project).togglePin(conf)
-        }
-      }
-      return (prefix + getDefaultChildren(excludeRunAndDebug) + pinAction).toTypedArray()
+      val pinAction = PinConfigurationAction(conf, isPinned)
+      return (prefix + getDefaultChildren(exclude(e)) + pinAction).toTypedArray()
     }
   }
-    .also {
-      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineActions)
-    }
-  return result
 }
 
 private fun createCurrentFileWithInlineActions(project: Project,
@@ -436,49 +476,34 @@ private fun createCurrentFileWithInlineActions(project: Project,
   if (DumbService.isDumb(project)) {
     return RunConfigurationsComboBoxAction.RunCurrentFileAction()
   }
-  val configs = selectedFile?.findPsiFile(project)?.let { ExecutorAction.getRunConfigsForCurrentFile(it, false) }
-                ?: emptyList()
+  val psiFile = selectedFile?.findPsiFile(project)
+  val configs = psiFile?.let { ExecutorAction.getRunConfigsForCurrentFile(it, false) } ?: emptyList()
+
   val runRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, runExecutor, project) }
   val debugRunningConfig = configs.firstOrNull { checkIfRunWithExecutor(it, debugExecutor, project) }
-  val activeConfig = runRunningConfig ?: debugRunningConfig
 
-  if (activeConfig == null || activeConfig.configuration.isAllowRunningInParallel) {
-    return object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
-      override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
-        return getDefaultChildren(excludeRunAndDebug).toTypedArray()
-      }
-    }.also {
-      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(
-        RunCurrentFileExecutorAction(runExecutor),
-        RunCurrentFileExecutorAction(debugExecutor))
-      )
+  val inlineActions = listOf(
+    RunCurrentFileExecutorAction(runExecutor),
+    runRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
+    RunCurrentFileExecutorAction(debugExecutor),
+    debugRunningConfig?.let { StopConfigurationInlineAction(runExecutor, it) },
+  ).filterNotNull()
+  inlineActions.forEach {
+    it.templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.IfRequested
+  }
+
+  val exclude = executorFilterByParentGroupFactory(DefaultActionGroup(inlineActions))
+  return object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
+    init {
+      templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineActions)
     }
-  }
-
-  val inlineActions = when {
-    runRunningConfig != null -> listOf(
-      RunCurrentFileExecutorAction(runExecutor),
-      StopConfigurationInlineAction(runExecutor, runRunningConfig))
-    debugRunningConfig != null -> listOf(
-      RunCurrentFileExecutorAction(debugExecutor),
-      StopConfigurationInlineAction(debugExecutor, debugRunningConfig))
-    else -> listOf(
-      RunCurrentFileExecutorAction(runExecutor),
-      RunCurrentFileExecutorAction(debugExecutor))
-  }
-
-  val res = object : RunConfigurationsComboBoxAction.RunCurrentFileAction() {
     override fun getChildren(e: AnActionEvent?): Array<out AnAction> {
-      var suffix = emptyList<AnAction>()
-      if (debugRunningConfig != null) suffix = suffix + RunCurrentFileExecutorAction(runExecutor)
-      if (runRunningConfig != null) suffix = suffix + RunCurrentFileExecutorAction(debugExecutor)
-      return (suffix + getDefaultChildren(excludeRunAndDebug)).toTypedArray()
+      var prefix = emptyList<AnAction>()
+      if (debugRunningConfig != null) prefix = prefix + RunCurrentFileExecutorAction(runExecutor)
+      if (runRunningConfig != null) prefix = prefix + RunCurrentFileExecutorAction(debugExecutor)
+      return (prefix + getDefaultChildren(exclude(e))).toTypedArray()
     }
   }
-    .also {
-      it.templatePresentation.putClientProperty(ActionUtil.INLINE_ACTIONS, inlineActions)
-    }
-  return res
 }
 
 private fun checkIfRunWithExecutor(config: RunnerAndConfigurationSettings, executor: Executor, project: Project): Boolean {
@@ -533,6 +558,30 @@ fun runCounterToString(e: AnActionEvent, stopCount: Int): String =
   else {
     stopCount.toString()
   }
+
+private class PinConfigurationAction(val conf: RunnerAndConfigurationSettings, isPinned: Boolean)
+  : ActionRemotePermissionRequirements.ActionWithWriteAccess() {
+  init {
+    templatePresentation.text = getText(isPinned)
+  }
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
+
+  private fun getText(isPinned: Boolean): @Nls String =
+    if (isPinned) ExecutionBundle.message("run.toolbar.widget.dropdown.unpin.action.text")
+    else ExecutionBundle.message("run.toolbar.widget.dropdown.pin.action.text")
+
+  override fun update(e: AnActionEvent) {
+    val project = e.project ?: return
+    e.presentation.keepPopupOnPerform = KeepPopupOnPerform.IfPreferred
+    e.presentation.text = getText(RunConfigurationStartHistory.getInstance(project).pinned().contains(conf.uniqueID))
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.project ?: return
+    RunConfigurationStartHistory.getInstance(project).togglePin(conf)
+  }
+}
 
 private class StopConfigurationInlineAction(val executor: Executor, val settings: RunnerAndConfigurationSettings)
   : AnAction(), ActionRemotePermissionRequirements.RunAccess {
@@ -701,37 +750,40 @@ class RunConfigurationStartHistory(private val project: Project) : PersistentSta
 
 private class ExecutionReasonableHistoryManager : ProjectActivity {
   override suspend fun execute(project: Project) {
-    project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
-      override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
-        onAnyChange(executorId, env, RunState.SCHEDULED)
+    project.messageBus.simpleConnect().subscribe(ExecutionManager.EXECUTION_TOPIC, MyExecutionListener { executorId, env, state ->
+      getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
+        RunStatusHistory.getInstance(env.project).changeState(conf, executorId, state)
       }
-
-      override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
-        onAnyChange(executorId, env, RunState.NOT_STARTED)
-      }
-
-      override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        onAnyChange(executorId, env, RunState.STARTED)
-      }
-
-      override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
-        onAnyChange(executorId, env, RunState.TERMINATING)
-      }
-
-      override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
-        onAnyChange(executorId, env, RunState.TERMINATED)
-      }
-
-      private fun onAnyChange(executorId: String, env: ExecutionEnvironment, reason: RunState) {
-        getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-          RunStatusHistory.getInstance(env.project).changeState(conf, executorId, reason)
-        }
-        ActivityTracker.getInstance().inc() // needed to update run toolbar
-      }
+      ActivityTracker.getInstance().inc() // needed to update run toolbar
     })
   }
 }
 
+private open class MyExecutionListener(
+  val onAnyChange: (executorId: String, env: ExecutionEnvironment, reason: RunState) -> Unit
+) : ExecutionListener {
+  override fun processStartScheduled(executorId: String, env: ExecutionEnvironment) {
+    onAnyChange(executorId, env, RunState.SCHEDULED)
+  }
+
+  override fun processNotStarted(executorId: String, env: ExecutionEnvironment, cause: Throwable?) {
+    onAnyChange(executorId, env, RunState.NOT_STARTED)
+  }
+
+  override fun processStarted(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+    onAnyChange(executorId, env, RunState.STARTED)
+  }
+
+  override fun processTerminating(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler) {
+    onAnyChange(executorId, env, RunState.TERMINATING)
+  }
+
+  override fun processTerminated(executorId: String, env: ExecutionEnvironment, handler: ProcessHandler, exitCode: Int) {
+    onAnyChange(executorId, env, RunState.TERMINATED)
+  }
+}
+
+@ApiStatus.Internal
 enum class RunState {
   UNDEFINED,
   SCHEDULED,

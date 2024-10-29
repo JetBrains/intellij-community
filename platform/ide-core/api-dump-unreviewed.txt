@@ -125,12 +125,6 @@ e:com.intellij.execution.ui.SettingsEditorFragmentType
 - sf:TAG:com.intellij.execution.ui.SettingsEditorFragmentType
 - s:valueOf(java.lang.String):com.intellij.execution.ui.SettingsEditorFragmentType
 - s:values():com.intellij.execution.ui.SettingsEditorFragmentType[]
-f:com.intellij.facet.frameworks.LibrariesDownloadAssistant
-- s:findVersion(java.lang.String,java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact
-- s:getLibraryInfos(com.intellij.facet.frameworks.beans.Artifact):com.intellij.facet.ui.libraries.LibraryInfo[]
-- s:getLibraryInfos(java.net.URL,java.lang.String):com.intellij.facet.ui.libraries.LibraryInfo[]
-- s:getVersions(java.lang.String,java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact[]
-- s:getVersions(java.net.URL[]):com.intellij.facet.frameworks.beans.Artifact[]
 f:com.intellij.facet.frameworks.LibrariesDownloadConnectionService
 - com.intellij.facet.frameworks.SettingsConnectionService
 - s:getInstance():com.intellij.facet.frameworks.LibrariesDownloadConnectionService
@@ -174,6 +168,14 @@ c:com.intellij.facet.ui.libraries.RemoteRepositoryInfo
 - getMirrors():java.lang.String[]
 - getPresentableName():java.lang.String
 - hashCode():I
+com.intellij.ide.AppLifecycleListener
+- sf:TOPIC:com.intellij.util.messages.Topic
+- appClosing():V
+- appFrameCreated(java.util.List):V
+- appWillBeClosed(Z):V
+- projectFrameClosed():V
+- projectOpenFailed():V
+- welcomeScreenDisplayed():V
 f:com.intellij.ide.GeneralLocalSettings
 - com.intellij.openapi.components.SimplePersistentStateComponent
 - sf:Companion:com.intellij.ide.GeneralLocalSettings$Companion
@@ -425,7 +427,6 @@ com.intellij.ide.dnd.DnDEvent
 - a:updateAction(com.intellij.ide.dnd.DnDAction):V
 - a:wasDelegated():Z
 com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
-- *sf:BOTTOM:I
 - sf:ERROR_TEXT:I
 - sf:FILLED_RECTANGLE:I
 - sf:H_ARROWS:I
@@ -437,6 +438,7 @@ com.intellij.ide.dnd.DnDSource
 - a:canStartDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):Z
 - createDraggedImage(com.intellij.ide.dnd.DnDAction,java.awt.Point,com.intellij.ide.dnd.DnDDragStartBean):com.intellij.openapi.util.Pair
 - dragDropEnd():V
+- dragDropEnd(com.intellij.ide.dnd.DnDEvent,java.awt.dnd.DragSourceDropEvent):V
 - dropActionChanged(I):V
 - a:startDragging(com.intellij.ide.dnd.DnDAction,java.awt.Point):com.intellij.ide.dnd.DnDDragStartBean
 com.intellij.ide.dnd.DnDTarget
@@ -484,13 +486,13 @@ f:com.intellij.ide.plugins.advertiser.FeaturePluginData
 - bs:copy$default(com.intellij.ide.plugins.advertiser.FeaturePluginData,java.lang.String,com.intellij.ide.plugins.advertiser.PluginData,I,java.lang.Object):com.intellij.ide.plugins.advertiser.FeaturePluginData
 - equals(java.lang.Object):Z
 - hashCode():I
-f:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
+bc:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.FeaturePluginData$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.FeaturePluginData
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.FeaturePluginData):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.FeaturePluginData
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.FeaturePluginData):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.ide.plugins.advertiser.FeaturePluginData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -516,13 +518,13 @@ f:com.intellij.ide.plugins.advertiser.PluginData
 - f:getPluginId():com.intellij.openapi.extensions.PluginId
 - f:getPluginName():java.lang.String
 - hashCode():I
-f:com.intellij.ide.plugins.advertiser.PluginData$$serializer
+bc:com.intellij.ide.plugins.advertiser.PluginData$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginData$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginData
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginData):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginData
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginData):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.ide.plugins.advertiser.PluginData$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -537,13 +539,13 @@ f:com.intellij.ide.plugins.advertiser.PluginDataSet
 - equals(java.lang.Object):Z
 - f:getDataSet():java.util.Set
 - hashCode():I
-f:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
+bc:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginDataSet$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginDataSet
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginDataSet):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginDataSet
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginDataSet):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.ide.plugins.advertiser.PluginDataSet$Companion
 - f:serializer():kotlinx.serialization.KSerializer
@@ -561,47 +563,16 @@ f:com.intellij.ide.plugins.advertiser.PluginFeatureMap
 - equals(java.lang.Object):Z
 - f:get(java.lang.String):java.util.Set
 - hashCode():I
-f:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
+bc:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
 - kotlinx.serialization.internal.GeneratedSerializer
 - sf:INSTANCE:com.intellij.ide.plugins.advertiser.PluginFeatureMap$$serializer
-- childSerializers():kotlinx.serialization.KSerializer[]
-- deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginFeatureMap
-- getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
-- serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginFeatureMap):V
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.ide.plugins.advertiser.PluginFeatureMap
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.ide.plugins.advertiser.PluginFeatureMap):V
 - typeParametersSerializers():kotlinx.serialization.KSerializer[]
 f:com.intellij.ide.plugins.advertiser.PluginFeatureMap$Companion
 - f:serializer():kotlinx.serialization.KSerializer
-*c:com.intellij.ide.ui.IdeUiService
-- <init>():V
-- askForUnlock(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.fileEditor.UnlockOption
-- browse(java.lang.String):V
-- browse(java.net.URL):V
-- chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
-- chooseFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile[]
-- createAsyncDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
-- createCustomizedDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.DataContext
-- createUiDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
-- getComponentFromRecentMouseEvent():java.awt.Component
-- s:getInstance():com.intellij.ide.ui.IdeUiService
-- getPlainProxyPassword():java.lang.String
-- getProxyList(java.net.URL):java.util.List
-- getProxyLogin():java.lang.String
-- getSslContext():javax.net.ssl.SSLContext
-- getSslSocketFactory():javax.net.ssl.SSLSocketFactory
-- initUpdateSession(com.intellij.openapi.actionSystem.AnActionEvent):V
-- isFileRecentlyChanged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
-- isProxyAuth():Z
-- isUseSafeWrite():Z
-- logIdeScriptUsageEvent(java.lang.Class):V
-- notifyByBalloon(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType,java.lang.String,javax.swing.Icon,javax.swing.event.HyperlinkListener):Z
-- openHttpConnection(java.lang.String):java.net.URLConnection
-- performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
-- prepareURL(java.lang.String):V
-- revealFile(java.nio.file.Path):V
-- showErrorDialog(java.lang.String,java.lang.String):Z
-- showErrorHint(com.intellij.openapi.editor.Editor,java.lang.String):V
-- showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):V
-- systemNotify(java.lang.String,java.lang.String):V
 f:com.intellij.ide.util.RunOnceUtil
 - sf:INSTANCE:com.intellij.ide.util.RunOnceUtil
 - sf:runOnceForApp(java.lang.String,java.lang.Runnable):Z
@@ -691,7 +662,6 @@ c:com.intellij.notification.Notification
 - <init>(java.lang.String,javax.swing.Icon,java.lang.String,java.lang.String,java.lang.String,com.intellij.notification.NotificationType,com.intellij.notification.NotificationListener):V
 - addAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.notification.Notification
 - addActions(java.util.Collection):com.intellij.notification.Notification
-- f:addActions(java.util.List):V
 - f:assertHasTitleOrContent():V
 - configureDoNotAskOption(java.lang.String,java.lang.String):V
 - expire():V
@@ -726,7 +696,6 @@ c:com.intellij.notification.Notification
 - setCollapseDirection(com.intellij.notification.Notification$CollapseActionsDirection):com.intellij.notification.Notification
 - setContent(java.lang.String):com.intellij.notification.Notification
 - setContextHelpAction(com.intellij.openapi.actionSystem.AnAction):com.intellij.notification.Notification
-- s:setDataProvider(com.intellij.notification.Notification,javax.swing.JComponent):V
 - setDisplayId(java.lang.String):com.intellij.notification.Notification
 - setDropDownText(java.lang.String):com.intellij.notification.Notification
 - setIcon(javax.swing.Icon):com.intellij.notification.Notification
@@ -895,8 +864,6 @@ com.intellij.notification.Notifications
 f:com.intellij.notification.Notifications$Bus
 - s:notify(com.intellij.notification.Notification):V
 - s:notify(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
-- *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
-- s:register(java.lang.String,com.intellij.notification.NotificationDisplayType):V
 a:com.intellij.notification.NotificationsConfiguration
 - com.intellij.notification.Notifications
 - sf:LIGHTWEIGHT_PREFIX:java.lang.String
@@ -966,6 +933,7 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:FILEVIEW_POPUP:java.lang.String
 - sf:FILE_STRUCTURE_POPUP:java.lang.String
 - sf:FORCE_TOUCH:java.lang.String
+- sf:GRID_FLOATING_PAGING_TOOLBAR:java.lang.String
 - sf:GUI_DESIGNER_COMPONENT_TREE_POPUP:java.lang.String
 - sf:GUI_DESIGNER_EDITOR_POPUP:java.lang.String
 - sf:GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP:java.lang.String
@@ -1023,10 +991,12 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - sf:SCOPE_VIEW_POPUP:java.lang.String
 - sf:SERVICES_POPUP:java.lang.String
 - sf:SERVICES_TOOLBAR:java.lang.String
+- sf:SERVICES_TREE_TOOLBAR:java.lang.String
 - sf:SETTINGS_HISTORY:java.lang.String
 - sf:SHOW_USAGES_POPUP_TOOLBAR:java.lang.String
 - sf:SIMILAR_USAGES_PREVIEW_TOOLBAR:java.lang.String
 - sf:STATUS_BAR_PLACE:java.lang.String
+- sf:STRUCTURE_VIEW_FLOATING_TOOLBAR:java.lang.String
 - sf:STRUCTURE_VIEW_POPUP:java.lang.String
 - sf:STRUCTURE_VIEW_TOOLBAR:java.lang.String
 - sf:TABS_MORE_TOOLBAR:java.lang.String
@@ -1067,8 +1037,6 @@ a:com.intellij.openapi.actionSystem.ActionPlaces
 - s:getPopupPlace(java.lang.String):java.lang.String
 - s:isCommonPlace(java.lang.String):Z
 - s:isMainMenuOrActionSearch(java.lang.String):Z
-- s:isMainToolbar(java.lang.String):Z
-- s:isNewUiToolbarPlace(java.lang.String):Z
 - s:isPopupPlace(java.lang.String):Z
 - s:isShortcutPlace(java.lang.String):Z
 com.intellij.openapi.actionSystem.ActionWithDelegate
@@ -1204,6 +1172,7 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:ACTION_EXPAND_ALL:java.lang.String
 - sf:ACTION_EXPAND_ALL_REGIONS:java.lang.String
 - sf:ACTION_EXPAND_ALL_TO_LEVEL_1:java.lang.String
+- sf:ACTION_EXPAND_COLLAPSE_TOGGLE_REGION:java.lang.String
 - sf:ACTION_EXPAND_LIVE_TEMPLATE_BY_TAB:java.lang.String
 - sf:ACTION_EXPAND_LIVE_TEMPLATE_CUSTOM:java.lang.String
 - sf:ACTION_EXPAND_REGION:java.lang.String
@@ -1358,7 +1327,6 @@ com.intellij.openapi.actionSystem.IdeActions
 - sf:GROUP_NAVBAR_POPUP:java.lang.String
 - sf:GROUP_NAVBAR_TOOLBAR:java.lang.String
 - sf:GROUP_NEW:java.lang.String
-- sf:GROUP_OTHER_MENU:java.lang.String
 - sf:GROUP_PARAMETERS_VIEW_POPUP:java.lang.String
 - sf:GROUP_PROJECT_VIEW_POPUP:java.lang.String
 - sf:GROUP_REFACTOR:java.lang.String
@@ -1460,7 +1428,6 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - ps:dressIcon(com.intellij.openapi.vfs.VirtualFile,javax.swing.Icon):javax.swing.Icon
 - getComment(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getDescription():java.lang.String
-- f:getFileToSelect(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getIcon(com.intellij.openapi.vfs.VirtualFile):javax.swing.Icon
 - getName(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 - getRoots():java.util.List
@@ -1474,7 +1441,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - isChooseJarsAsFiles():Z
 - isChooseMultiple():Z
 - isFileSelectable(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
+- F:isFileVisible(com.intellij.openapi.vfs.VirtualFile,Z):Z
 - isForcedToUseIdeaFileChooser():Z
 - isHideIgnored():Z
 - isShowFileSystemRoots():Z
@@ -1490,6 +1457,10 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - setTitle(java.lang.String):V
 - validateSelectedFiles(com.intellij.openapi.vfs.VirtualFile[]):V
 - withDescription(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(com.intellij.openapi.fileTypes.FileType):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(java.lang.String,com.intellij.openapi.fileTypes.FileType[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withExtensionFilter(java.lang.String,java.lang.String[]):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withFileFilter(com.intellij.openapi.util.Condition):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withHideIgnored(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withRoots(java.util.List):com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -1498,6 +1469,7 @@ c:com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withShowHiddenFiles(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withTitle(java.lang.String):com.intellij.openapi.fileChooser.FileChooserDescriptor
 - withTreeRootVisible(Z):com.intellij.openapi.fileChooser.FileChooserDescriptor
+- withoutExtensionFilter():com.intellij.openapi.fileChooser.FileChooserDescriptor
 f:com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 - s:createAllButJarContentsDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
 - s:createMultipleFilesNoJarsDescriptor():com.intellij.openapi.fileChooser.FileChooserDescriptor
@@ -1565,11 +1537,13 @@ com.intellij.openapi.fileTypes.FileTypeListener
 - fileTypesChanged(com.intellij.openapi.fileTypes.FileTypeEvent):V
 a:com.intellij.openapi.fileTypes.FileTypeManager
 - com.intellij.openapi.fileTypes.FileTypeRegistry
+- com.intellij.openapi.Disposable
 - sf:TOPIC:com.intellij.util.messages.Topic
-- <init>():V
+- p:<init>():V
 - a:associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - f:associateExtension(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
 - f:associatePattern(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
+- dispose():V
 - a:getAssociations(com.intellij.openapi.fileTypes.FileType):java.util.List
 - a:getIgnoredFilesList():java.lang.String
 - s:getInstance():com.intellij.openapi.fileTypes.FileTypeManager
@@ -1577,7 +1551,6 @@ a:com.intellij.openapi.fileTypes.FileTypeManager
 - a:getStdFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
 - a:isFileIgnored(java.lang.String):Z
 - s:parseFromString(java.lang.String):com.intellij.openapi.fileTypes.FileNameMatcher
-- a:registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
 - f:removeAssociatedExtension(com.intellij.openapi.fileTypes.FileType,java.lang.String):V
 - a:removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
 - a:setIgnoredFilesList(java.lang.String):V
@@ -1586,24 +1559,6 @@ c:com.intellij.openapi.fileTypes.FileTypes
 - sf:PLAIN_TEXT:com.intellij.openapi.fileTypes.LanguageFileType
 - sf:UNKNOWN:com.intellij.openapi.fileTypes.FileType
 - p:<init>():V
-f:com.intellij.openapi.fileTypes.MockFileTypeManager
-- com.intellij.openapi.fileTypes.FileTypeManager
-- <init>():V
-- associate(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- findFileTypeByName(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getAssociations(com.intellij.openapi.fileTypes.FileType):java.util.List
-- getFileTypeByExtension(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getFileTypeByFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.fileTypes.FileType
-- getFileTypeByFileName(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- getIgnoredFilesList():java.lang.String
-- getKnownFileTypeOrAssociate(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project):com.intellij.openapi.fileTypes.FileType
-- getRegisteredFileTypes():com.intellij.openapi.fileTypes.FileType[]
-- getStdFileType(java.lang.String):com.intellij.openapi.fileTypes.FileType
-- isFileIgnored(com.intellij.openapi.vfs.VirtualFile):Z
-- isFileIgnored(java.lang.String):Z
-- registerFileType(com.intellij.openapi.fileTypes.FileType,java.lang.String[]):V
-- removeAssociation(com.intellij.openapi.fileTypes.FileType,com.intellij.openapi.fileTypes.FileNameMatcher):V
-- setIgnoredFilesList(java.lang.String):V
 f:com.intellij.openapi.fileTypes.MockLanguageFileType
 - com.intellij.openapi.fileTypes.LanguageFileType
 - sf:INSTANCE:com.intellij.openapi.fileTypes.LanguageFileType
@@ -1695,8 +1650,6 @@ com.intellij.openapi.options.Configurable
 com.intellij.openapi.options.Configurable$Beta
 com.intellij.openapi.options.Configurable$Composite
 - a:getConfigurables():com.intellij.openapi.options.Configurable[]
-*:com.intellij.openapi.options.Configurable$InnerWithModifiableParent
-- a:getModifiableParents():java.util.List
 com.intellij.openapi.options.Configurable$NoMargin
 com.intellij.openapi.options.Configurable$NoScroll
 com.intellij.openapi.options.Configurable$Promo
@@ -1780,8 +1733,6 @@ c:com.intellij.openapi.options.ConfigurationException
 - setQuickFix(java.lang.Runnable):V
 - shouldShowInDumbMode():Z
 - withHtmlMessage():com.intellij.openapi.options.ConfigurationException
-*:com.intellij.openapi.options.ConfigurationQuickFix
-- a:applyFix(com.intellij.openapi.actionSystem.DataContext):V
 c:com.intellij.openapi.options.ExtendableSettingsEditor
 - com.intellij.openapi.options.SettingsEditor
 - <init>(com.intellij.openapi.options.SettingsEditor):V
@@ -1923,8 +1874,6 @@ f:com.intellij.openapi.project.ProjectUtil
 - sf:calcRelativeToProjectPath(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,Z):java.lang.String
 - sf:calcRelativeToProjectPath(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,Z,Z):java.lang.String
 - bs:calcRelativeToProjectPath$default(com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.project.Project,Z,Z,Z,I,java.lang.Object):java.lang.String
-- *sf:clearCachesForAllProjects(java.lang.String):V
-- *sf:clearCachesForAllProjectsStartingWith(java.lang.String):V
 - sf:currentOrDefaultProject(com.intellij.openapi.project.Project):com.intellij.openapi.project.Project
 - sf:getExternalConfigurationDir(com.intellij.openapi.project.Project):java.nio.file.Path
 - sf:getModules(com.intellij.openapi.project.Project):com.intellij.openapi.module.Module[]
@@ -2036,14 +1985,6 @@ f:com.intellij.openapi.ui.MessageDialogBuilder$Companion
 - f:yesNo(java.lang.String,java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$YesNo
 - f:yesNo(java.lang.String,java.lang.String,javax.swing.Icon):com.intellij.openapi.ui.MessageDialogBuilder$YesNo
 - f:yesNoCancel(java.lang.String,java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$YesNoCancel
-*f:com.intellij.openapi.ui.MessageDialogBuilder$Message
-- com.intellij.openapi.ui.MessageDialogBuilder
-- <init>(java.lang.String,java.lang.String):V
-- f:buttons(java.lang.String[]):com.intellij.openapi.ui.MessageDialogBuilder$Message
-- f:defaultButton(java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$Message
-- f:focusedButton(java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$Message
-- f:show(com.intellij.openapi.project.Project,java.awt.Component):java.lang.String
-- bs:show$default(com.intellij.openapi.ui.MessageDialogBuilder$Message,com.intellij.openapi.project.Project,java.awt.Component,I,java.lang.Object):java.lang.String
 f:com.intellij.openapi.ui.MessageDialogBuilder$YesNo
 - com.intellij.openapi.ui.MessageDialogBuilder
 - f:ask(com.intellij.openapi.project.Project):Z
@@ -2296,7 +2237,6 @@ c:com.intellij.openapi.vcs.UrlFilePath
 - p:getPath(com.intellij.openapi.vfs.VirtualFile):java.lang.String
 a:com.intellij.openapi.vfs.JarFileSystem
 - com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
-- com.intellij.openapi.vfs.JarCopyingFileSystem
 - com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem
 - sf:JAR_SEPARATOR:java.lang.String
 - sf:PROTOCOL:java.lang.String
@@ -2307,6 +2247,7 @@ a:com.intellij.openapi.vfs.JarFileSystem
 - getJarRootForLocalFile(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getLocalVirtualFileFor(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
 - getVirtualFileForJar(com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- setNoCopyJarForPath(java.lang.String):V
 com.intellij.openapi.vfs.LargeFileWriteRequestor
 com.intellij.openapi.vfs.SafeWriteRequestor
 - s:shouldUseSafeWrite(java.lang.Object):Z
@@ -2357,9 +2298,6 @@ c:com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile
 com.intellij.openapi.wm.FocusRequestor
 - com.intellij.openapi.Disposable
 - a:requestFocus(java.awt.Component,Z):com.intellij.openapi.util.ActionCallback
-*:com.intellij.openapi.wm.IconWidgetPresentation
-- com.intellij.openapi.wm.WidgetPresentation
-- a:icon():kotlinx.coroutines.flow.Flow
 a:com.intellij.openapi.wm.IdeFocusManager
 - com.intellij.openapi.wm.FocusRequestor
 - <init>():V
@@ -2497,10 +2435,6 @@ com.intellij.openapi.wm.StatusBarWidget$WidgetPresentation
 - getClickConsumer():com.intellij.util.Consumer
 - getShortcutText():java.lang.String
 - a:getTooltipText():java.lang.String
-*:com.intellij.openapi.wm.TextWidgetPresentation
-- com.intellij.openapi.wm.WidgetPresentation
-- a:getAlignment():F
-- a:text():kotlinx.coroutines.flow.Flow
 com.intellij.openapi.wm.ToolWindow
 - com.intellij.openapi.util.BusyObject
 - sf:SHOW_CONTENT_ICON:com.intellij.openapi.util.Key
@@ -2607,17 +2541,6 @@ e:com.intellij.openapi.wm.ToolWindowType
 - sf:WINDOWED:com.intellij.openapi.wm.ToolWindowType
 - s:valueOf(java.lang.String):com.intellij.openapi.wm.ToolWindowType
 - s:values():com.intellij.openapi.wm.ToolWindowType[]
-*:com.intellij.openapi.wm.WidgetPresentation
-- getClickConsumer():kotlin.jvm.functions.Function1
-- getShortcutText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getShortcutText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
-- getTooltipText(kotlin.coroutines.Continuation):java.lang.Object
-- bs:getTooltipText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
-*:com.intellij.openapi.wm.WidgetPresentationDataContext
-- a:getCurrentFileEditor():kotlinx.coroutines.flow.StateFlow
-- a:getProject():com.intellij.openapi.project.Project
-*:com.intellij.openapi.wm.WidgetPresentationFactory
-- a:createPresentation(com.intellij.openapi.wm.WidgetPresentationDataContext,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.wm.WidgetPresentation
 a:com.intellij.openapi.wm.WindowManager
 - <init>():V
 - a:doNotSuggestAsParent(java.awt.Window):V
@@ -2646,7 +2569,6 @@ c:com.intellij.projectImport.ProjectAttachProcessor
 - sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
 - <init>():V
 - attachToProject(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback):Z
-- *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
 - beforeAttach(com.intellij.openapi.project.Project,kotlin.coroutines.Continuation):java.lang.Object
 - beforeDetach(com.intellij.openapi.module.Module):V
 - sf:canAttachToProject():Z
@@ -2663,7 +2585,6 @@ com.intellij.projectImport.ProjectOpenedCallback
 c:com.intellij.ui.AnimatedIcon
 - javax.swing.Icon
 - sf:ANIMATION_IN_RENDERER_ALLOWED:com.intellij.openapi.util.Key
-- *sf:REFRESH_DELEGATE:com.intellij.openapi.util.Key
 - <init>(I,javax.swing.Icon[]):V
 - p:<init>(java.util.function.Function):V
 - <init>(com.intellij.ui.AnimatedIcon$Frame[]):V
@@ -2716,7 +2637,6 @@ com.intellij.ui.UserActivityListener
 - a:stateChanged():V
 c:com.intellij.ui.UserActivityWatcher
 - com.intellij.ui.ComponentTreeWatcher
-- *sf:DO_NOT_WATCH:com.intellij.openapi.util.Key
 - <init>():V
 - <init>(java.lang.Class[]):V
 - addUserActivityListener(com.intellij.ui.UserActivityListener):V
@@ -2937,36 +2857,35 @@ c:com.intellij.ui.mac.MacMessages
 - showOkMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.awt.Window):V
 c:com.intellij.util.Alarm
 - com.intellij.openapi.Disposable
-- psf:LOG:com.intellij.openapi.diagnostic.Logger
 - <init>():V
 - <init>(com.intellij.openapi.Disposable):V
 - <init>(com.intellij.util.Alarm$ThreadToUse):V
 - <init>(com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
 - <init>(javax.swing.JComponent,com.intellij.openapi.Disposable):V
-- addComponentRequest(java.lang.Runnable,I):V
-- addComponentRequest(java.lang.Runnable,J):V
+- f:addComponentRequest(java.lang.Runnable,I):V
+- f:addComponentRequest(java.lang.Runnable,J):V
 - addRequest(java.lang.Runnable,I):V
-- addRequest(java.lang.Runnable,I,com.intellij.openapi.application.ModalityState):V
-- addRequest(java.lang.Runnable,I,Z):V
-- addRequest(java.lang.Runnable,J):V
-- addRequest(java.lang.Runnable,J,com.intellij.openapi.application.ModalityState):V
+- f:addRequest(java.lang.Runnable,I,com.intellij.openapi.application.ModalityState):V
+- f:addRequest(java.lang.Runnable,I,Z):V
+- f:addRequest(java.lang.Runnable,J):V
+- f:addRequest(java.lang.Runnable,J,com.intellij.openapi.application.ModalityState):V
 - cancelAllRequests():I
-- cancelRequest(java.lang.Runnable):Z
+- f:cancelRequest(java.lang.Runnable):Z
 - dispose():V
-- drainRequestsInTest():V
-- getActiveRequestCount():I
-- isDisposed():Z
-- isEmpty():Z
-- setActivationComponent(javax.swing.JComponent):com.intellij.util.Alarm
-- waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
+- f:drainRequestsInTest():V
+- f:getActiveRequestCount():I
+- f:isDisposed():Z
+- f:isEmpty():Z
+- f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 e:com.intellij.util.Alarm$ThreadToUse
 - java.lang.Enum
 - sf:POOLED_THREAD:com.intellij.util.Alarm$ThreadToUse
 - sf:SHARED_THREAD:com.intellij.util.Alarm$ThreadToUse
 - sf:SWING_THREAD:com.intellij.util.Alarm$ThreadToUse
+- s:getEntries():kotlin.enums.EnumEntries
 - s:valueOf(java.lang.String):com.intellij.util.Alarm$ThreadToUse
 - s:values():com.intellij.util.Alarm$ThreadToUse[]
-c:com.intellij.util.AlarmFactory
+f:com.intellij.util.AlarmFactory
 - <init>():V
 - create():com.intellij.util.Alarm
 - create(com.intellij.util.Alarm$ThreadToUse):com.intellij.util.Alarm
@@ -2979,7 +2898,6 @@ f:com.intellij.util.SingleAlarm
 - <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable):V
 - <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable,com.intellij.util.Alarm$ThreadToUse):V
 - <init>(java.lang.Runnable,I,com.intellij.openapi.Disposable,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.application.ModalityState):V
-- b:<init>(java.lang.Runnable,I,com.intellij.openapi.Disposable,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.application.ModalityState,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.Runnable,I,com.intellij.util.Alarm$ThreadToUse,com.intellij.openapi.Disposable):V
 - f:cancel():V
 - f:cancelAllRequests():I
@@ -2990,22 +2908,21 @@ f:com.intellij.util.SingleAlarm
 - f:isDisposed():Z
 - f:isEmpty():Z
 - f:request():V
-- f:request(com.intellij.openapi.application.ModalityState):V
 - f:request(Z):V
-- f:request(Z,I):V
-- bs:request$default(com.intellij.util.SingleAlarm,Z,I,I,java.lang.Object):V
+- f:requestWithCustomDelay(I):V
+- sf:singleAlarm(I,kotlinx.coroutines.CoroutineScope,java.lang.Runnable):com.intellij.util.SingleAlarm
 - f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
 f:com.intellij.util.SingleAlarm$Companion
 - f:pooledThreadSingleAlarm(I,com.intellij.openapi.Disposable,kotlin.jvm.functions.Function0):com.intellij.util.SingleAlarm
+- f:singleAlarm(I,kotlinx.coroutines.CoroutineScope,java.lang.Runnable):com.intellij.util.SingleAlarm
+- f:singleAlarm(I,kotlinx.coroutines.CoroutineScope,kotlin.jvm.functions.Function0):com.intellij.util.SingleAlarm
 f:com.intellij.util.WaitForProgressToShow
-- s:execute(com.intellij.openapi.progress.ProgressIndicator):V
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable):V
 - s:runOrInvokeAndWaitAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState):V
 - s:runOrInvokeLaterAboveProgress(java.lang.Runnable,com.intellij.openapi.application.ModalityState,com.intellij.openapi.project.Project):V
-a:com.intellij.util.download.DownloadableFileService
+Fa:com.intellij.util.download.DownloadableFileService
 - <init>():V
 - a:createDownloader(com.intellij.util.download.DownloadableFileSetDescription):com.intellij.util.download.FileDownloader
-- a:createDownloader(java.util.List,com.intellij.openapi.project.Project,javax.swing.JComponent,java.lang.String):com.intellij.util.download.FileDownloader
 - a:createDownloader(java.util.List,java.lang.String):com.intellij.util.download.FileDownloader
 - a:createFileDescription(java.lang.String,java.lang.String):com.intellij.util.download.DownloadableFileDescription
 - a:createFileSetVersions(java.lang.String,java.net.URL[]):com.intellij.util.download.DownloadableFileSetVersions
@@ -3018,12 +2935,10 @@ a:com.intellij.util.download.DownloadableFileSetVersions$FileSetVersionsCallback
 - onError(java.lang.String):V
 - a:onSuccess(java.util.List):V
 com.intellij.util.download.FileDownloader
-- a:download():com.intellij.openapi.vfs.VirtualFile[]
 - a:download(java.io.File):java.util.List
 - a:downloadFilesWithProgress(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent):java.util.List
 - a:downloadWithBackgroundProgress(java.lang.String,com.intellij.openapi.project.Project):java.util.concurrent.CompletableFuture
 - a:downloadWithProgress(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent):java.util.List
-- a:toDirectory(java.lang.String):com.intellij.util.download.FileDownloader
 f:com.intellij.util.io.HttpRequests
 - sf:CONNECTION_TIMEOUT:I
 - sf:CUSTOM_ERROR_CODE:I
@@ -3172,6 +3087,7 @@ f:com.intellij.util.proxy.PropertiesEncryptionSupport
 com.intellij.util.proxy.ProtocolDefaultPorts
 - sf:HTTP:I
 - sf:SSL:I
+f:com.intellij.util.ui.ShowingScopeKt
 com.intellij.util.ui.update.Activatable
 - hideNotify():V
 - showNotify():V
@@ -3183,41 +3099,41 @@ f:com.intellij.util.ui.update.MergingQueueUtil
 c:com.intellij.util.ui.update.MergingUpdateQueue
 - com.intellij.openapi.Disposable
 - com.intellij.util.ui.update.Activatable
-- java.lang.Runnable
 - sf:ANY_COMPONENT:javax.swing.JComponent
+- sf:Companion:com.intellij.util.ui.update.MergingUpdateQueue$Companion
 - <init>(java.lang.String,I,Z,javax.swing.JComponent):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse):V
+- <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse,kotlinx.coroutines.CoroutineScope):V
+- b:<init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,com.intellij.util.Alarm$ThreadToUse,kotlinx.coroutines.CoroutineScope,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,Z):V
-- activate():V
-- cancelAllUpdates():V
-- deactivate():V
+- b:<init>(java.lang.String,I,Z,javax.swing.JComponent,com.intellij.openapi.Disposable,javax.swing.JComponent,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:activate():V
+- f:cancelAllUpdates():V
+- f:deactivate():V
 - dispose():V
-- p:execute(com.intellij.util.ui.update.Update[]):V
-- flush():V
-- getModalityState():com.intellij.openapi.application.ModalityState
+- f:flush():V
+- f:getModalityState():com.intellij.openapi.application.ModalityState
 - hideNotify():V
-- isActive():Z
-- isEmpty():Z
-- isFlushing():Z
-- p:isModalityStateCorrect():Z
+- f:isActive():Z
+- f:isEmpty():Z
+- f:isFlushing():Z
 - f:isPassThrough():Z
-- isSuspended():Z
+- f:isSuspended():Z
 - queue(com.intellij.util.ui.update.Update):V
-- restartTimer():V
+- f:restartTimer():V
 - resume():V
-- run():V
 - f:run(com.intellij.util.ui.update.Update):V
-- sendFlush():V
-- setMergingTimeSpan(I):V
-- setModalityStateComponent(javax.swing.JComponent):V
+- f:sendFlush():V
+- f:setMergingTimeSpan(I):V
+- f:setModalityStateComponent(javax.swing.JComponent):V
 - f:setPassThrough(Z):V
-- setRestartTimerOnAdd(Z):com.intellij.util.ui.update.MergingUpdateQueue
-- p:setTrackUiActivity(Z):V
-- showNotify():V
+- f:setRestartTimerOnAdd(Z):com.intellij.util.ui.update.MergingUpdateQueue
+- f:showNotify():V
 - suspend():V
-- waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
+- f:waitForAllExecuted(J,java.util.concurrent.TimeUnit):V
+f:com.intellij.util.ui.update.MergingUpdateQueue$Companion
 c:com.intellij.util.ui.update.UiNotifyConnector
 - com.intellij.openapi.Disposable
 - java.awt.event.HierarchyListener
@@ -3243,7 +3159,6 @@ f:com.intellij.util.ui.update.UiNotifyConnector$Companion
 - f:doWhenFirstShown(javax.swing.JComponent,java.lang.Runnable):V
 - bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,java.lang.Runnable,com.intellij.openapi.Disposable,I,java.lang.Object):V
 - bs:doWhenFirstShown$default(com.intellij.util.ui.update.UiNotifyConnector$Companion,java.awt.Component,Z,kotlin.jvm.functions.Function0,I,java.lang.Object):V
-- *f:forceNotifyIsShown(java.awt.Component):V
 - f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable):com.intellij.util.ui.update.UiNotifyConnector
 - f:installOn(java.awt.Component,com.intellij.util.ui.update.Activatable,Z):com.intellij.util.ui.update.UiNotifyConnector
 f:com.intellij.util.ui.update.UiNotifyConnector$Once
@@ -3256,15 +3171,16 @@ f:com.intellij.util.ui.update.UiNotifyConnector$Once$Companion
 a:com.intellij.util.ui.update.Update
 - com.intellij.util.ui.update.ComparableObject$Impl
 - java.lang.Runnable
+- sf:Companion:com.intellij.util.ui.update.Update$Companion
 - sf:HIGH_PRIORITY:I
 - sf:LOW_PRIORITY:I
 - <init>(java.lang.Object):V
 - <init>(java.lang.Object,I):V
 - <init>(java.lang.Object,Z):V
 - <init>(java.lang.Object,Z,I):V
+- b:<init>(java.lang.Object,Z,I,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - canEat(com.intellij.util.ui.update.Update):Z
-- s:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update
-- executeInWriteAction():Z
+- sf:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update
 - f:getPriority():I
 - isDisposed():Z
 - isExpired():Z
@@ -3272,3 +3188,5 @@ a:com.intellij.util.ui.update.Update
 - setProcessed():V
 - setRejected():V
 - wasProcessed():Z
+f:com.intellij.util.ui.update.Update$Companion
+- f:create(java.lang.Object,java.lang.Runnable):com.intellij.util.ui.update.Update

@@ -9,7 +9,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.CommitContext;
-import com.intellij.openapi.vcs.changes.PseudoMap;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.NullableFunction;
@@ -44,10 +43,6 @@ public interface CheckinEnvironment {
   @Nullable
   default RefreshableOnComponent createAdditionalOptionsPanel(@NotNull CheckinProjectPanel panel,
                                                               @NotNull PairConsumer<Object, Object> additionalDataConsumer) {
-    // for compatibility with external plugins
-    if (additionalDataConsumer instanceof PseudoMap) {
-      return createCommitOptions(panel, ((PseudoMap<?, ?>)additionalDataConsumer).getCommitContext());
-    }
     return null;
   }
 

@@ -5,8 +5,8 @@ import com.intellij.openapi.progress.blockingContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
- * Service, which implements this interfaces, will be asked to [save] custom settings (in their own custom way)
- * when application (for Application level services) or project (for Project level services) is invoked.
+ * Services which implement this interface will be asked to [save] custom settings (in their own custom way)
+ * when application (for application level services) or project (for project level services) settings save is called.
  */
 @Internal
 interface SettingsSavingComponent {

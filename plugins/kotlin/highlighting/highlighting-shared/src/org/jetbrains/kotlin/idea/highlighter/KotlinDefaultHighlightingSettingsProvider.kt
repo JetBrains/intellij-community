@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.KotlinSupportAvailability
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 var VirtualFile.isKotlinDecompiledFile: Boolean by NotNullableUserDataProperty(Key.create("IS_KOTLIN_DECOMPILED_FILE"), false)
 
@@ -28,7 +28,7 @@ class KotlinDefaultHighlightingSettingsProvider : DefaultHighlightingSettingProv
         return when {
             psiFile is KtFile ->
                 when {
-                    psiFile.isScript() && ScriptDependenciesProvider.getInstance(project)?.getScriptConfiguration(psiFile) == null ->
+                    psiFile.isScript() && ScriptConfigurationsProvider.getInstance(project)?.getScriptConfigurationResult(psiFile) == null ->
                         FileHighlightingSetting.SKIP_HIGHLIGHTING
 
                     psiFile.isCompiled -> FileHighlightingSetting.SKIP_INSPECTION

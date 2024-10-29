@@ -3,10 +3,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -64,7 +61,7 @@ public @NonNls class Key<T> {
   }
 
   @Contract("null -> null")
-  public T get(@Nullable UserDataHolder holder) {
+  public @UnknownNullability T get(@Nullable UserDataHolder holder) {
     return holder == null ? null : holder.getUserData(this);
   }
 

@@ -4,7 +4,7 @@ LineBreakpoint created at lambdasOnSameLine.kt:16 lambdaOrdinal = -1
 Run Java
 Connected to the target VM
 lambdasOnSameLine.kt:5
-Highlight lambda range: '{ lambda("second") { println("third $it ") } }'
+Highlight lambda range: 'lambda("second") { println("third $it ") }'
 lambdasOnSameLine.kt:10
 Highlight whole line
 lambdasOnSameLine.kt:16

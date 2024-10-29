@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.highlighter.custom;
 
 import com.intellij.lexer.LayeredLexer;
@@ -41,8 +41,7 @@ public class CustomFileHighlighter extends SyntaxHighlighterBase {
   }
 
   @Override
-  @NotNull
-  public Lexer getHighlightingLexer() {
+  public @NotNull Lexer getHighlightingLexer() {
     Lexer customFileTypeLexer = new CustomFileTypeLexer(myTable, true);
     if (myTable.isHasStringEscapes()) {
       customFileTypeLexer = new LayeredLexer(customFileTypeLexer);

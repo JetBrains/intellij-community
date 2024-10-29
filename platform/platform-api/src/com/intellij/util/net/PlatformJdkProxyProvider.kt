@@ -15,8 +15,8 @@ private fun asProxyConfigurationProvider(getProxySettings: () -> ProxySettings):
   ProxyConfigurationProvider { getProxySettings().getProxyConfiguration() }
 
 private fun asProxyAuthentication(getProxyAuthentication: () -> ProxyAuthentication): ProxyAuthentication = object : ProxyAuthentication {
-  override fun getOrPromptAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
-    getProxyAuthentication().getOrPromptAuthentication(prompt, host, port)
+  override fun getKnownAuthentication(host: String, port: Int): Credentials? =
+    getProxyAuthentication().getKnownAuthentication(host, port)
 
   override fun getPromptedAuthentication(prompt: @Nls String, host: String, port: Int): Credentials? =
     getProxyAuthentication().getPromptedAuthentication(prompt, host, port)

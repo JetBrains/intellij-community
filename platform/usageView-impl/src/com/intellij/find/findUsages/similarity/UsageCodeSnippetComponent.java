@@ -1,7 +1,10 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -11,14 +14,17 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.ui.EditorTextFieldCellRenderer;
 import com.intellij.ui.RemoteTransferUIManager;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.impl.UsagePreviewPanel;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -26,11 +32,16 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent {
-  private static final int CONTEXT_LINE_NUMBER = 3;
+import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 
-  UsageCodeSnippetComponent(@NotNull SnippetRenderingData renderingData) {
+class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGutterRendererComponent implements UiDataProvider {
+  private static final int CONTEXT_LINE_NUMBER = 3;
+  @NotNull private final UsageInfo myUsageInfo;
+
+  UsageCodeSnippetComponent(@NotNull SnippetRenderingData renderingData,
+                            @NotNull UsageInfo usageInfo) {
     super(renderingData.getProject(), renderingData.getLanguage(), false);
+    myUsageInfo = usageInfo;
     setupEditor();
     addUsagePreview(renderingData);
     getEditor().getGutterComponentEx().setLineNumberConverter(renderingData.getConverter());
@@ -68,6 +79,18 @@ class UsageCodeSnippetComponent extends EditorTextFieldCellRenderer.SimpleWithGu
     getEditor().getGutterComponentEx().updateUI();
     getEditor().getMarkupModel().removeAllHighlighters();
     highlightRange(result.getSelectionRange());
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      var file = myUsageInfo.getVirtualFile();
+      if (file == null) return EMPTY_NAVIGATABLE_ARRAY;
+
+      var navigationOffset = myUsageInfo.getNavigationOffset();
+      var openFileDescriptor = new OpenFileDescriptor(myUsageInfo.getProject(), file, navigationOffset);
+      return new Navigatable[]{openFileDescriptor};
+    });
   }
 
   public static @Nullable SnippetRenderingData calculateSnippetRenderingData(@NotNull PsiElement element,

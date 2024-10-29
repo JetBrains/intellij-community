@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
 import com.intellij.codeInspection.dataFlow.lang.ir.DataFlowIRProvider
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
+import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
@@ -28,10 +29,10 @@ import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
-import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
 import org.jetbrains.kotlin.analysis.api.symbols.KaEnumEntrySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
@@ -323,7 +324,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         val expression = entry.expression ?: return false
         return analyze(expression) {
             val missingCases = whenExpr.computeMissingCases()
-            missingCases.isEmpty() && expression.expressionType?.isNothing == true
+            missingCases.isEmpty() && expression.expressionType?.isNothingType == true
         }
     }
 
@@ -529,6 +530,17 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             return true
         }
 
+        fun shouldSuppress(value: DfType, expression: KtExpression): Boolean {
+            val constant = when(value) {
+                DfTypes.NULL -> ConstantValue.NULL
+                DfTypes.TRUE -> ConstantValue.TRUE
+                DfTypes.FALSE -> ConstantValue.FALSE
+                DfTypes.intValue(0), DfTypes.longValue(0) -> ConstantValue.ZERO
+                else -> ConstantValue.UNKNOWN
+            }
+            return analyze(expression) { shouldSuppress(constant, expression) }
+        }
+
         context(KaSession)
         private fun shouldSuppress(value: ConstantValue, expression: KtExpression): Boolean {
             var parent = expression.parent
@@ -555,7 +567,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
                 // While inner "return" is redundant, the "always true" warning is confusing
                 // probably separate inspection could report extra "return"
                 val ktType = expression.left?.expressionType
-                if (ktType != null && ktType.isNothing && ktType.isMarkedNullable) {
+                if (ktType != null && ktType.isNothingType && ktType.isMarkedNullable) {
                     return true
                 }
             }
@@ -675,7 +687,7 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         private fun isAndOrConditionWithNothingOperand(expression: KtExpression, token: KtSingleValueToken): Boolean {
             if (expression !is KtBinaryExpression || expression.operationToken != token) return false
             val type = expression.right?.expressionType
-            return type != null && type.isNothing
+            return type != null && type.isNothingType
         }
     }
 }

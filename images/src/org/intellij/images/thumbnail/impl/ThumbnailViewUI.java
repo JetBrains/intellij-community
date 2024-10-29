@@ -21,12 +21,11 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.options.*;
@@ -58,7 +57,7 @@ import java.util.*;
 
 import static com.intellij.pom.Navigatable.EMPTY_NAVIGATABLE_ARRAY;
 
-final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
+final class ThumbnailViewUI extends JPanel implements UiDataProvider, Disposable {
 
   private final ThumbnailView thumbnailView;
   private final CopyPasteSupport copyPasteSupport;
@@ -318,7 +317,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   }
 
   public VirtualFile @NotNull [] getSelection() {
-    return getSelectedFiles();
+    List<VirtualFile> list = this.list == null ? Collections.emptyList() : this.list.getSelectedValuesList();
+    return list.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   private final class ThumbnailListCellRenderer extends ThumbnailComponent
@@ -512,89 +512,41 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull String dataId) {
-    if (CommonDataKeys.PROJECT.is(dataId)) {
-      return thumbnailView.getProject();
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      VirtualFile[] selectedFiles = getSelectedFiles();
-      return (DataProvider)slowId -> getSlowData(slowId, selectedFiles);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-      VirtualFile[] selectedFiles = getSelectedFiles();
-      return selectedFiles.length > 0 ? selectedFiles[0] : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-      return getSelectedFiles();
-    }
-    else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFile[] selectedFiles = getSelectedFiles();
-      return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
-    }
-    else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
-      return copyPasteSupport.getCopyProvider();
-    }
-    else if (PlatformDataKeys.CUT_PROVIDER.is(dataId)) {
-      return copyPasteSupport.getCutProvider();
-    }
-    else if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-      return copyPasteSupport.getPasteProvider();
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return deleteProvider;
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      VirtualFile[] selectedFiles = getSelectedFiles();
-      Set<Navigatable> navigatables = new HashSet<>(selectedFiles.length);
-      for (VirtualFile selectedFile : selectedFiles) {
-        if (!selectedFile.isDirectory()) {
-          navigatables.add(new ThumbnailNavigatable(selectedFile));
-        }
-      }
-      return navigatables.toArray(EMPTY_NAVIGATABLE_ARRAY);
-    }
-    else if (ThumbnailView.DATA_KEY.is(dataId)) {
-      return thumbnailView;
-    }
-    else if (ImageComponentDecorator.DATA_KEY.is(dataId)) {
-      return thumbnailView;
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    Project project = thumbnailView.getProject();
+    VirtualFile @NotNull [] selection = getSelection();
 
-    return null;
-  }
+    sink.set(CommonDataKeys.PROJECT, project);
+    sink.set(CommonDataKeys.VIRTUAL_FILE,
+             selection.length > 0 ? selection[0] : null);
+    sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, selection);
+    sink.set(CommonDataKeys.NAVIGATABLE,
+             new ThumbnailNavigatable(selection.length > 0 ? selection[0] : null));
+    sink.set(PlatformDataKeys.COPY_PROVIDER, copyPasteSupport.getCopyProvider());
+    sink.set(PlatformDataKeys.CUT_PROVIDER, copyPasteSupport.getCutProvider());
+    sink.set(PlatformDataKeys.PASTE_PROVIDER, copyPasteSupport.getPasteProvider());
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, deleteProvider);
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY, JBIterable.of(selection)
+      .filter(o -> !o.isDirectory())
+      .map(o -> (Navigatable)new ThumbnailNavigatable(o))
+      .unique()
+      .toArray(EMPTY_NAVIGATABLE_ARRAY));
+    sink.set(ThumbnailView.DATA_KEY, thumbnailView);
+    sink.set(ImageComponentDecorator.DATA_KEY, thumbnailView);
 
-  private @Nullable Object getSlowData(@NotNull String dataId, VirtualFile @NotNull [] selectedFiles) {
-    if (CommonDataKeys.PSI_FILE.is(dataId)) {
-      return getData(CommonDataKeys.PSI_ELEMENT.getName());
-    }
-    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-      return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return getSelectedElements();
-    }
-    return null;
-  }
-
-
-  private PsiElement @NotNull [] getSelectedElements() {
-    VirtualFile[] selectedFiles = getSelectedFiles();
-    Set<PsiElement> psiElements = new HashSet<>(selectedFiles.length);
-    PsiManager psiManager = PsiManager.getInstance(thumbnailView.getProject());
-    for (VirtualFile file : selectedFiles) {
-      PsiFile psiFile = psiManager.findFile(file);
-      PsiElement element = psiFile != null ? psiFile : psiManager.findDirectory(file);
-      if (element != null) {
-        psiElements.add(element);
-      }
-    }
-    return PsiUtilCore.toPsiElementArray(psiElements);
-  }
-
-  private VirtualFile @NotNull [] getSelectedFiles() {
-    List<VirtualFile> selection = list == null ? Collections.emptyList() : list.getSelectedValuesList();
-    return selection.toArray(VirtualFile.EMPTY_ARRAY);
+    sink.lazy(CommonDataKeys.PSI_FILE, () -> {
+      return selection.length > 0 ? PsiManager.getInstance(project).findFile(selection[0]) : null;
+    });
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+      return selection.length > 0 ? PsiManager.getInstance(project).findFile(selection[0]) : null;
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
+      PsiManager psiManager = PsiManager.getInstance(project);
+      return JBIterable.of(selection)
+        .filterMap(o -> (PsiElement)(o.isDirectory() ? psiManager.findDirectory(o) : psiManager.findFile(o)))
+        .unique()
+        .toArray(PsiElement.EMPTY_ARRAY);
+    });
   }
 
   @Override

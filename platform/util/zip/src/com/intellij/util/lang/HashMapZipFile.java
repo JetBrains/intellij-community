@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -13,6 +13,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
+
+import static com.intellij.util.lang.ImmutableZipFile.CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE;
 
 @ApiStatus.Internal
 public final class HashMapZipFile implements ZipFile {
@@ -96,7 +98,7 @@ public final class HashMapZipFile implements ZipFile {
   @Override
   public ByteBuffer getByteBuffer(@NotNull String path) throws IOException {
     ImmutableZipEntry entry = getRawEntry(path.charAt(0) == '/' ? path.substring(1) : path);
-    return entry == null ? null : entry.getByteBuffer(this);
+    return entry == null ? null : entry.getByteBuffer(this, null);
   }
 
   /**
@@ -122,7 +124,7 @@ public final class HashMapZipFile implements ZipFile {
 
       @Override
       public @NotNull ByteBuffer getByteBuffer() throws IOException {
-        return entry.getByteBuffer(HashMapZipFile.this);
+        return entry.getByteBuffer(HashMapZipFile.this, null);
       }
 
       @Override
@@ -168,9 +170,9 @@ public final class HashMapZipFile implements ZipFile {
     int prevEntryExpectedDataOffset = -1;
     int endOffset = centralDirPosition + centralDirSize;
     while (offset < endOffset) {
-      if (buffer.getInt(offset) != 33639248) {
-        throw new EOFException("Expected central directory size " + centralDirSize +
-                               " but only at " + offset + " no valid central directory file header signature");
+      if (buffer.getInt(offset) != CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE) {
+        throw new EOFException("No valid central directory file header signature present (expectedCentralDirectorySize=" + centralDirSize +
+                               ", expectedCentralDirectoryOffset=" + offset + ")");
       }
 
       int compressedSize = buffer.getInt(offset + 20);

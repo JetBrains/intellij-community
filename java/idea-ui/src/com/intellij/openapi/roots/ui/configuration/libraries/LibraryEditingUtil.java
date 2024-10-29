@@ -169,7 +169,7 @@ public final class LibraryEditingUtil {
       }
 
       @Override
-      public PopupStep onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(final TypeForNewLibrary selectedValue, boolean finalChoice) {
         return doFinalStep(() -> action.run(selectedValue.getType()));
       }
     };

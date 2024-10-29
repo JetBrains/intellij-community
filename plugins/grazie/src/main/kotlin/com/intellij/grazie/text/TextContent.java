@@ -222,7 +222,7 @@ public interface TextContent extends CharSequence, UserDataHolderEx {
    */
   @Nullable
   static TextContent joinWithWhitespace(char whitespace, List<? extends @NotNull TextContent> components) {
-    if (!Character.isWhitespace(whitespace)) {
+    if (!Character.isWhitespace(whitespace) && Character.getType(whitespace) != Character.SPACE_SEPARATOR) {
       throw new IllegalArgumentException("Whitespace expected, got " + StringUtil.escapeStringCharacters(String.valueOf(whitespace)));
     }
     if (components.isEmpty()) return null;

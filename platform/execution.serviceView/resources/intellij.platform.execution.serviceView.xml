@@ -13,6 +13,8 @@
   </extensions>
   <actions>
     <group id="ServiceViewTreeToolbar">
+      <!-- Suppres unresolved reference to NewElement -->
+      <!--suppress PluginXmlValidity -->
       <group id="ServiceView.AddService" popup="true" icon="AllIcons.General.Add" use-shortcut-of="NewElement"
              class="com.intellij.platform.execution.serviceView.AddServiceActionGroup"/>
       <group id="ServiceView.ViewOptions" popup="true" icon="AllIcons.Actions.GroupBy"
@@ -47,10 +49,12 @@
       <action id="ServiceView.JumpToServices" use-shortcut-of="ShowNavBar"
               class="com.intellij.platform.execution.serviceView.JumpToServicesAction"/>
     </group>
-    <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
-    <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
-            class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>
-    <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
-            class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
+    <group id="ServiceView.Gear">
+      <action id="ServiceView.SelectActiveService" class="com.intellij.platform.execution.serviceView.SelectActiveServiceAction"/>
+      <action id="ServiceView.ShowServices" icon="AllIcons.Actions.ShowAsTree"
+              class="com.intellij.platform.execution.serviceView.ShowServicesAction"/>
+      <action id="ServiceView.ConfigureServices" icon="AllIcons.General.GearPlain"
+              class="com.intellij.platform.execution.serviceView.ConfigureServicesAction"/>
+    </group>
   </actions>
 </idea-plugin>

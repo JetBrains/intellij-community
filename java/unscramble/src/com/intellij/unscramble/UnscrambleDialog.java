@@ -20,6 +20,8 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.configurable.VcsContentAnnotationConfigurable;
+import com.intellij.threadDumpParser.ThreadDumpParser;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.TextFieldWithHistory;
@@ -45,7 +47,6 @@ public class UnscrambleDialog extends DialogWrapper {
   private static final @NonNls String PROPERTY_LOG_FILE_LAST_URL = "UNSCRAMBLE_LOG_FILE_LAST_URL";
   private static final @NonNls String PROPERTY_UNSCRAMBLER_NAME_USED = "UNSCRAMBLER_NAME_USED";
   private static final Condition<ThreadState> DEADLOCK_CONDITION = state -> state.isDeadlocked();
-  private static final String[] IMPORTANT_THREAD_DUMP_WORDS = ContainerUtil.ar("tid", "nid", "wait", "parking", "prio", "os_prio", "java");
 
   private final Project myProject;
   private JPanel myEditorPanel;
@@ -279,75 +280,8 @@ public class UnscrambleDialog extends DialogWrapper {
     @Override
     public void actionPerformed(ActionEvent e){
       String text = myStacktraceEditorPanel.getText();
-      myStacktraceEditorPanel.setText(normalizeText(text));
+      myStacktraceEditorPanel.setText(ThreadDumpParser.normalizeText(text));
     }
-  }
-
-  public static String normalizeText(@NonNls String text) {
-    StringBuilder builder = new StringBuilder(text.length());
-
-    text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
-    text = text.replaceAll("(\\\\n|\\\\r|\\\\t)+(at\\s+)", "\n$2");
-    String[] lines = text.split("\n");
-
-    boolean first = true;
-    boolean inAuxInfo = false;
-    for (final String line : lines) {
-      //noinspection HardCodedStringLiteral
-      if (!inAuxInfo && (line.startsWith("JNI global references") || line.trim().equals("Heap"))) {
-        builder.append("\n");
-        inAuxInfo = true;
-      }
-      if (inAuxInfo) {
-        builder.append(trimSuffix(line)).append("\n");
-        continue;
-      }
-      if (line.startsWith("at breakpoint")) { // possible thread status mixed with "at ..."
-        builder.append(" ").append(trimSuffix(line));
-        continue;
-      }
-      if (!first && (mustHaveNewLineBefore(line) || StringUtil.endsWith(builder, ")"))) {
-        if (!StringUtil.endsWith(builder, "\n")) builder.append("\n");
-        if (line.startsWith("\"")) builder.append("\n"); // Additional line break for thread names
-      }
-      first = false;
-      int i = builder.lastIndexOf("\n");
-      CharSequence lastLine = i == -1 ? builder : builder.subSequence(i + 1, builder.length());
-      if (!line.matches("\\s+.*") && lastLine.length() > 0) {
-        if (lastLine.toString().matches("\\s*at") //separate 'at' from filename
-            || ContainerUtil.or(IMPORTANT_THREAD_DUMP_WORDS, word -> line.startsWith(word))) {
-          builder.append(" ");
-        }
-      }
-      builder.append(trimSuffix(line));
-    }
-    return builder.toString();
-  }
-
-  private static String trimSuffix(final String line) {
-    int len = line.length();
-
-    while ((0 < len) && (line.charAt(len-1) <= ' ')) {
-        len--;
-    }
-    return (len < line.length()) ? line.substring(0, len) : line;
-  }
-
-  private static boolean mustHaveNewLineBefore(String line) {
-    final int nonWs = CharArrayUtil.shiftForward(line, 0, " \t");
-    if (nonWs < line.length()) {
-      line = line.substring(nonWs);
-    }
-
-    if (line.startsWith("at")) return true;        // Start of the new stack frame entry
-    if (line.startsWith("Caused")) return true;    // Caused by message
-    if (line.startsWith("- locked")) return true;  // "Locked a monitor" logging
-    if (line.startsWith("- waiting")) return true; // "Waiting for monitor" logging
-    if (line.startsWith("- parking to wait")) return true;
-    if (line.startsWith("java.lang.Thread.State")) return true;
-    if (line.startsWith("\"")) return true;        // Start of the new thread (thread name)
-
-    return false;
   }
 
   @Override

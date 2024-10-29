@@ -5,6 +5,7 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifactConstants
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
 import org.jetbrains.kotlin.utils.PathUtil
@@ -22,10 +23,13 @@ enum class LibraryJarDescriptor(val mavenArtifactId: String) {
 
     val repositoryLibraryProperties: RepositoryLibraryProperties
         get() = RepositoryLibraryProperties(
-            KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
-            mavenArtifactId,
-            KotlinPluginLayout.standaloneCompilerVersion.artifactVersion,
-            true,
-            emptyList()
+            JpsMavenRepositoryLibraryDescriptor(
+                KotlinArtifactConstants.KOTLIN_MAVEN_GROUP_ID,
+                mavenArtifactId,
+                KotlinPluginLayout.standaloneCompilerVersion.artifactVersion,
+                if (this == JS_STDLIB_JAR) "klib" else "jar",
+                true,
+                emptyList()
+            )
         )
 }

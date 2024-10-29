@@ -14,7 +14,7 @@ class UseInheritedVisibilityFix(
     elementContext: ElementContext
 ) : KotlinPsiUpdateModCommandAction.ElementBased<KtModifierListOwner, UseInheritedVisibilityFix.ElementContext>(element, elementContext) {
 
-    override fun getFamilyName() = KotlinBundle.message("use.inherited.visibility")
+    override fun getFamilyName(): String = KotlinBundle.message("use.inherited.visibility")
 
     data class ElementContext(
         val modifierType: KtModifierKeywordToken,

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,12 +68,12 @@ public class SphinxBaseCommand {
 
       setTitle(RestBundle.message("sphinx.set.working.directory.dialog.title"));
       init();
-      VirtualFile baseDir =  project.getBaseDir();
-      String path = baseDir != null? baseDir.getPath() : "";
+      VirtualFile baseDir = project.getBaseDir();
+      String path = baseDir != null ? baseDir.getPath() : "";
       myInputFile.setText(path);
       myInputFile.setEditable(false);
-      myInputFile.addBrowseFolderListener(RestBundle.message("sphinx.choose.working.directory.browse.folder.title"), null, project,
-                                          FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myInputFile.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(RestBundle.message("sphinx.choose.working.directory.browse.folder.title")));
 
       myPanel.setPreferredSize(new Dimension(600, 20));
     }
@@ -93,7 +94,7 @@ public class SphinxBaseCommand {
     try {
       if (!setWorkDir(module)) return;
       final ProcessHandler process = createProcess(module);
-      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
+      process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
       new RunContentExecutor(project, process)
         .withFilter(new PythonTracebackFilter(project))
         .withTitle("reStructuredText")
@@ -134,7 +135,8 @@ public class SphinxBaseCommand {
     GeneralCommandLine cmd = new GeneralCommandLine();
     if (sdkHomePath != null) {
       final String runnerName = "sphinx-quickstart" + (SystemInfo.isWindows ? ".exe" : "");
-      String executablePath = PythonSdkUtil.getExecutablePath(sdkHomePath, runnerName);
+      var executablePathNio = PythonSdkUtil.getExecutablePath(Path.of(sdkHomePath), runnerName);
+      String executablePath = executablePathNio != null ? executablePathNio.toString() : null;
       if (executablePath != null) {
         cmd.setExePath(executablePath);
       }
@@ -143,7 +145,7 @@ public class SphinxBaseCommand {
       }
     }
 
-    cmd.setWorkDirectory(service.getWorkdir().isEmpty()? module.getProject().getBasePath(): service.getWorkdir());
+    cmd.setWorkDirectory(service.getWorkdir().isEmpty() ? module.getProject().getBasePath() : service.getWorkdir());
     PythonCommandLineState.createStandardGroups(cmd);
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert scriptParams != null;
@@ -172,5 +174,4 @@ public class SphinxBaseCommand {
 
     return cmd;
   }
-
 }

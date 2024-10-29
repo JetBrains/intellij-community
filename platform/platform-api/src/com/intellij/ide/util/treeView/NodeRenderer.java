@@ -16,6 +16,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.treeStructure.TreeNodePresentation;
+import com.intellij.ui.treeStructure.TreeNodeTextFragment;
+import com.intellij.ui.treeStructure.TreeNodeViewModel;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +38,26 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (value instanceof TreeNodeViewModel vm) {
+      customizeViewModelRenderer(vm.presentationSnapshot(), selected, hasFocus);
+    }
+    else {
+      customizeLegacyRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+    }
+  }
+
+  private void customizeViewModelRenderer(@NotNull TreeNodePresentation presentation, boolean selected, boolean hasFocus) {
+    setIcon(fixIconIfNeeded(presentation.getIcon(), selected, hasFocus));
+    boolean isMain = true;
+    for (@NotNull TreeNodeTextFragment fragment : presentation.getFullText()) {
+      var simpleTextAttributes = fragment.getAttributes();
+      isMain = isMain && !Comparing.equal(simpleTextAttributes.getFgColor(), SimpleTextAttributes.GRAYED_ATTRIBUTES.getFgColor());
+      append(fragment.getText(), simpleTextAttributes, isMain);
+    }
+    setToolTipText(presentation.getToolTip());
+  }
+
+  private void customizeLegacyRenderer(@NotNull JTree tree, @NlsSafe Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     @NlsSafe Object node = TreeUtil.getUserObject(value);
 
     if (node instanceof NodeDescriptor<?> descriptor) {

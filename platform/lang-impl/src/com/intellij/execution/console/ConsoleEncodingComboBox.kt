@@ -14,11 +14,13 @@ import com.intellij.openapi.vfs.encoding.EncodingReference
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SeparatorWithText
 import com.intellij.ui.SimpleListCellRenderer
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.nio.charset.Charset
 import javax.swing.JList
 
+@ApiStatus.Internal
 class ConsoleEncodingComboBox : ComboBox<ConsoleEncodingComboBox.EncodingItem>() {
   interface EncodingItem {
     val displayName: @Nls @NlsContexts.Label String

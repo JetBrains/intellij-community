@@ -6,5 +6,5 @@ import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
 public interface DataCollectorSystemEventLogger {
-  void logErrorEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull Throwable exception);
+  void logLoadingConfigFailed(@NotNull String recorderId, @NotNull Throwable exception);
 }

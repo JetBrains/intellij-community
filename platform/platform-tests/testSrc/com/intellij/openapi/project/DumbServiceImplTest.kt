@@ -36,6 +36,7 @@ import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesServic
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.junit.*
 import org.junit.Assert.*
 import org.junit.runner.RunWith
@@ -47,6 +48,7 @@ import java.util.concurrent.Phaser
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.time.Duration.Companion.seconds
 
 @RunWith(JUnit4::class)
 class DumbServiceImplTest {
@@ -801,6 +803,25 @@ class DumbServiceImplTest {
         }
       }
     }
+  }
+
+  @Test
+  fun `DumbService_runInDumbMode should properly handle coroutine cancellation`() = runBlocking(Dispatchers.EDT) {
+    val dumbTaskStarted = Job()
+    val dumbTask = launch(Dispatchers.Default) {
+      DumbServiceImpl.getInstance(project).runInDumbMode("Test dumb task that awaits cancellation") {
+        dumbTaskStarted.complete()
+        awaitCancellation()
+      }
+    }
+    withTimeout(10.seconds) {
+      dumbTaskStarted.join()
+
+      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> isDumb }
+      dumbTask.cancel("Cancel dumb task")
+      DumbServiceImpl.getInstance(project).isDumbAsFlow.first { isDumb -> !isDumb }
+    }
+    return@runBlocking
   }
 
   private fun waitForSmartModeFiveSecondsOrThrow() {

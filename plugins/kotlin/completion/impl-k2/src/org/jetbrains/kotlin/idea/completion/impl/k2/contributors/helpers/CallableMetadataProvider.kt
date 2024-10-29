@@ -163,8 +163,8 @@ internal object CallableMetadataProvider {
 
     context(KaSession)
     private fun getExpectedNonExtensionReceiver(symbol: KaCallableSymbol): KaClassSymbol? {
-        val containingClass = symbol.originalContainingClassForOverride
-        return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassOrObjectSymbol)?.isInner == true) {
+        val containingClass = symbol.fakeOverrideOriginal.containingSymbol as? KaClassSymbol
+        return if (symbol is KaConstructorSymbol && (containingClass as? KaNamedClassSymbol)?.isInner == true) {
             containingClass.containingDeclaration as? KaClassSymbol
         } else {
             containingClass
@@ -186,8 +186,8 @@ internal object CallableMetadataProvider {
             .map { it.flatten() }
     }
 
-    private val KaClassLikeSymbol.companionObject: KaNamedClassOrObjectSymbol?
-        get() = (this as? KaNamedClassOrObjectSymbol)?.companionObject
+    private val KaClassLikeSymbol.companionObject: KaNamedClassSymbol?
+        get() = (this as? KaNamedClassSymbol)?.companionObject
 
     context(KaSession)
     private fun KaType.flatten(): List<KaType> = when (this) {
@@ -287,13 +287,13 @@ internal object CallableMetadataProvider {
         actualReceiverType: KaType,
         expectedReceiverType: KaType,
     ): CallableKind? = when {
-        actualReceiverType.isEqualTo(expectedReceiverType) -> when {
+        actualReceiverType.semanticallyEquals(expectedReceiverType) -> when {
             isExtensionCallOnTypeParameterReceiver(symbol) -> CallableKind.TYPE_PARAMETER_EXTENSION
             symbol.isExtension -> CallableKind.THIS_TYPE_EXTENSION
             else -> CallableKind.THIS_CLASS_MEMBER
         }
 
-        actualReceiverType.isSubTypeOf(expectedReceiverType) -> when {
+        actualReceiverType.isSubtypeOf(expectedReceiverType) -> when {
             symbol.isExtension -> CallableKind.BASE_TYPE_EXTENSION
             else -> CallableKind.BASE_CLASS_MEMBER
         }

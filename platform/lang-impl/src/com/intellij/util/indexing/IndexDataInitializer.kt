@@ -10,11 +10,13 @@ import com.intellij.serviceContainer.AlreadyDisposedException
 import com.intellij.util.ThrowableRunnable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.future.asCompletableFuture
+import org.jetbrains.annotations.ApiStatus
 import java.time.Duration
 import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.Future
 
+@ApiStatus.Internal
 abstract class IndexDataInitializer<T>(private val name: String) : Callable<T?> {
   override fun call(): T? {
     val log = thisLogger()

@@ -29,6 +29,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 /**
  * Most methods in this class are used to equip long background processes which take read actions with a special listener
  * that fires when a write action is about to begin, and cancels corresponding progress indicators to avoid blocking the UI.
@@ -171,7 +173,7 @@ public final class ProgressIndicatorUtils {
   /**
    * @deprecated see {@link ReadTask}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public static @NotNull CompletableFuture<?> scheduleWithWriteActionPriority(@NotNull ProgressIndicator progressIndicator,
                                                                               @NotNull Executor executor,
                                                                               @NotNull ReadTask readTask) {
@@ -312,7 +314,7 @@ public final class ProgressIndicatorUtils {
     ScheduledFuture<?> cancelProgress = AppExecutorUtil.getAppScheduledExecutorService().schedule(() -> {
       canceledByTimeout.set(true);
       inner.cancel();
-    }, timeoutMs, TimeUnit.MILLISECONDS);
+    }, timeoutMs, MILLISECONDS);
     try {
       return ProgressManager.getInstance().runProcess(computation, inner);
     }
@@ -350,11 +352,11 @@ public final class ProgressIndicatorUtils {
   }
 
   public static void awaitWithCheckCanceled(@NotNull Condition condition) {
-    awaitWithCheckCanceled(() -> condition.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> condition.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull CountDownLatch waiter) {
-    awaitWithCheckCanceled(() -> waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> waiter.await(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS));
   }
 
   public static <T> T awaitWithCheckCanceled(@NotNull Future<T> future) {
@@ -367,10 +369,12 @@ public final class ProgressIndicatorUtils {
     while (true) {
       checkCancelledEvenWithPCEDisabled(indicator);
       try {
-        return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
+        return future.get(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS);
       }
       catch (TimeoutException ignore) {
       }
+      //TODO RC: in a non-cancellable section we could still (re-)throw a (P)CE if the _awaited_ code gets cancelled
+      //         (nowadays it is mistakenly considered an error) -- [Daniil et all, private conversation]
       catch (RejectedExecutionException ree) {
         //EA-225412: FJP throws REE (which propagates through futures) e.g. when FJP reaches max
         // threads while compensating for too many managedBlockers -- or when it is shutdown.
@@ -402,7 +406,7 @@ public final class ProgressIndicatorUtils {
   }
 
   public static void awaitWithCheckCanceled(@NotNull Lock lock) {
-    awaitWithCheckCanceled(() -> lock.tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, TimeUnit.MILLISECONDS));
+    awaitWithCheckCanceled(() -> lock.tryLock(ConcurrencyUtil.DEFAULT_TIMEOUT_MS, MILLISECONDS));
   }
 
   public static void awaitWithCheckCanceled(@NotNull ThrowableComputable<Boolean, ? extends Exception> waiter) {
@@ -433,7 +437,7 @@ public final class ProgressIndicatorUtils {
       ((CoreProgressManager)ProgressManager.getInstance()).runCheckCanceledHooks(indicator);
     }
     if (isNonCancelable) return;
-    Cancellation.checkCancelled();
+    Cancellation.ensureActive();
     if (indicator == null) return;
     indicator.checkCanceled();              // check for cancellation as usual and run the hooks
     if (indicator.isCanceled()) {           // if a just-canceled indicator or PCE is disabled

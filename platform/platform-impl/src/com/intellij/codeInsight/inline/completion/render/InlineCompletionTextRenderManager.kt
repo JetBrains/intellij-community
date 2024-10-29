@@ -62,9 +62,10 @@ internal class InlineCompletionTextRenderManager private constructor(
 
   private class Renderer(private val editor: Editor, private val offset: Int) : Disposable {
 
-    private var suffixInlay: Inlay<InlineCompletionLineRenderer>? = null
-    private val blockLineInlays = mutableListOf<Inlay<InlineCompletionLineRenderer>>()
+    private var suffixInlay: Inlay<out InlineCompletionLineRenderer>? = null
+    private val blockLineInlays = mutableListOf<Inlay<out InlineCompletionLineRenderer>>()
     private var state = RenderState.RENDERING_SUFFIX
+    private val inlayRenderers = InlineCompletionInlayRenderer.all()
     private val descriptor = Descriptor()
 
     fun append(text: String, attributes: TextAttributes): RenderedInlineCompletionElementDescriptor {
@@ -103,7 +104,7 @@ internal class InlineCompletionTextRenderManager private constructor(
       suffixInlay = null
 
       editor.inlayModel.execute(true) {
-        val element = editor.inlayModel.addInlineElement(offset, true, InlineCompletionLineRenderer(editor, suffixBlocks))
+        val element = renderInlineInlay(editor, offset, suffixBlocks)
         element?.addActionAvailabilityHint(
           EditorActionAvailabilityHint(
             IdeActions.ACTION_INSERT_INLINE_COMPLETION,
@@ -143,14 +144,16 @@ internal class InlineCompletionTextRenderManager private constructor(
       editor: Editor,
       offset: Int,
       blocks: List<InlineCompletionRenderTextBlock>
-    ): Inlay<InlineCompletionLineRenderer>? {
-      return editor.inlayModel.addBlockElement(
-        offset,
-        true,
-        false,
-        1,
-        InlineCompletionLineRenderer(editor, blocks)
-      )
+    ): Inlay<out InlineCompletionLineRenderer>? {
+      return inlayRenderers.firstNotNullOfOrNull { it.renderBlockInlay(editor, offset, blocks) }
+    }
+
+    private fun renderInlineInlay(
+      editor: Editor,
+      offset: Int,
+      blocks: List<InlineCompletionRenderTextBlock>
+    ): Inlay<out InlineCompletionLineRenderer>? {
+      return inlayRenderers.firstNotNullOfOrNull { it.renderInlineInlay(editor, offset, blocks) }
     }
 
     private fun Editor.forceLeanLeft() {

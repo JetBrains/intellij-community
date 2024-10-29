@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.project.Project;
@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 final class CreateDirectoryHandler extends CreateGroupHandler {
 
-  @NotNull private final CreateDirectoryOrPackageHandler myDelegate;
+  private final @NotNull CreateDirectoryOrPackageHandler myDelegate;
 
   CreateDirectoryHandler(@NotNull Project project, @NotNull PsiDirectory directory) {
     super(project, directory);
@@ -38,9 +38,8 @@ final class CreateDirectoryHandler extends CreateGroupHandler {
     return myDelegate.getCreatedElement();
   }
 
-  @Nullable
   @Override
-  public String getErrorText(String inputString) {
+  public @Nullable String getErrorText(String inputString) {
     return myDelegate.getErrorText(inputString);
   }
 

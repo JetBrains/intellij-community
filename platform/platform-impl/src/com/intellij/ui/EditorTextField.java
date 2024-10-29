@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
@@ -163,7 +164,6 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     });
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
     putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
-    putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, this); // Disable warning in Kotlin UI DSL, see IDEA-309743
   }
 
   private @Nullable Project getProjectIfValid() {
@@ -193,6 +193,9 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
     setDocument(myDocument); // reinit editor.
   }
 
+  /**
+   * @see EditorEx#setShowPlaceholderWhenFocused(boolean)
+   */
   public void setShowPlaceholderWhenFocused(boolean b) {
     myShowPlaceholderWhenFocused = b;
     EditorEx editor = getEditor(false);
@@ -226,11 +229,12 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
   @Override
   public void setBackground(Color bg) {
     if (myIgnoreSetBgColor) {
-      super.setBackground(getBackground());
-      return;
+      bg = getBackground();
+      super.setBackground(bg);
+    } else {
+      super.setBackground(bg);
+      myEnforcedBgColor = bg;
     }
-    super.setBackground(bg);
-    myEnforcedBgColor = bg;
     EditorEx editor = getEditor(false);
     if (editor != null) {
       editor.setBackgroundColor(bg);
@@ -326,22 +330,24 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
 
   @Override
   public void setText(final @Nullable String text) {
-    CommandProcessor.getInstance().executeCommand(getProject(), () ->
-      ApplicationManager.getApplication().runWriteAction(() -> {
-        LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
-        if (separator == null) {
-          separator = detectLineSeparators(myDocument, text);
-        }
-        LINE_SEPARATOR_KEY.set(myDocument, separator);
-        myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
-        Editor editor = getEditor();
-        if (editor != null) {
-          final CaretModel caretModel = editor.getCaretModel();
-          if (caretModel.getOffset() >= myDocument.getTextLength()) {
-            caretModel.moveToOffset(myDocument.getTextLength());
+    WriteIntentReadAction.run((Runnable)() ->
+      CommandProcessor.getInstance().executeCommand(getProject(), () ->
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          LineSeparator separator = LINE_SEPARATOR_KEY.get(myDocument);
+          if (separator == null) {
+            separator = detectLineSeparators(myDocument, text);
           }
-        }
-      }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
+          LINE_SEPARATOR_KEY.set(myDocument, separator);
+          myDocument.replaceString(0, myDocument.getTextLength(), normalize(text, separator));
+          Editor editor = getEditor();
+          if (editor != null) {
+            final CaretModel caretModel = editor.getCaretModel();
+            if (caretModel.getOffset() >= myDocument.getTextLength()) {
+              caretModel.moveToOffset(myDocument.getTextLength());
+            }
+          }
+        }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument())
+    );
   }
 
   private static @NotNull String normalize(@Nullable String text, @Nullable LineSeparator separator) {
@@ -511,14 +517,16 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       });
     }
     Disposer.register(myDisposable, () -> {
-      // remove traces of this editor from UndoManager to avoid leaks
-      Document document = myDocument;
-      if (document != null) {
-        if (project != null && !project.isDisposed()) {
-          ((UndoManagerImpl)UndoManager.getInstance(project)).clearDocumentReferences(document);
+      WriteIntentReadAction.run((Runnable)() -> {
+        // remove traces of this editor from UndoManager to avoid leaks
+        Document document = myDocument;
+        if (document != null) {
+          if (project != null && !project.isDisposed()) {
+            ((UndoManagerImpl)UndoManager.getInstance(project)).clearDocumentReferences(document);
+          }
+          ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(document);
         }
-        ((UndoManagerImpl)UndoManager.getGlobalInstance()).clearDocumentReferences(document);
-      }
+      });
     });
   }
 

@@ -3,7 +3,7 @@
 class Receiver(val r: String)
 class Container(val <caret>r: String) {
     fun Receiver.respond() {
-        println(this@Receiver.r)
+        println(this@respond.r)
         println(this@Container.r)
     }
 }

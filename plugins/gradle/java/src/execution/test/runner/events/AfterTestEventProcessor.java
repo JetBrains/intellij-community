@@ -43,7 +43,7 @@ public class AfterTestEventProcessor extends AbstractTestEventProcessor {
     var eventTime = Long.parseLong(eventXml.getEventTestResultEndTime());
     var testDescriptor = GradleXmlTestEventConverter.convertTestDescriptor(eventTime, eventXml);
     var testResult = GradleXmlTestEventConverter.convertOperationResult(eventXml);
-    var event = new ExternalSystemFinishEventImpl<>(testId, testParentId, testDescriptor, testResult);
+    var event = new ExternalSystemFinishEvent<>(testId, testParentId, testDescriptor, testResult);
     process(event, true);
   }
 

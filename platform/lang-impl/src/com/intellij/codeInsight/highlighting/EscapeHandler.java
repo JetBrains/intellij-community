@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
@@ -14,14 +14,15 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ANY_KEY;
 import static com.intellij.codeInsight.highlighting.HighlightManager.HIDE_BY_ESCAPE;
 
+@ApiStatus.Internal
 public final class EscapeHandler extends EditorActionHandler {
-  @NotNull
-  private final EditorActionHandler myOriginalHandler;
+  private final @NotNull EditorActionHandler myOriginalHandler;
 
   public EscapeHandler(@NotNull EditorActionHandler originalHandler) {
     myOriginalHandler = originalHandler;

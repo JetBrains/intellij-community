@@ -3,8 +3,8 @@ package com.intellij.openapi.vfs.newvfs.persistent.bytearraystorage
 
 import com.intellij.openapi.vfs.newvfs.persistent.App
 import com.intellij.openapi.vfs.newvfs.persistent.AppAgent
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray
-import com.intellij.openapi.vfs.newvfs.persistent.log.io.DurablePersistentByteArray.Companion.OpenMode
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray
+import com.intellij.openapi.vfs.newvfs.persistent.dev.DurablePersistentByteArray.Companion.OpenMode
 import java.nio.file.Path
 
 class DurablePersistentByteArrayStorageApp : App {

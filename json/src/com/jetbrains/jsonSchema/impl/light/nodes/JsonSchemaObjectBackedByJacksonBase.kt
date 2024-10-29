@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.impl.light.nodes
 
 import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ArrayNode
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.keyFMap.KeyFMap
@@ -493,6 +494,19 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
 
   override fun getHtmlDescription(): String? {
     return JacksonSchemaNodeAccessor.readTextNodeValue(rawSchemaNode, X_INTELLIJ_HTML_DESCRIPTION)
+  }
+
+  override fun getMetadata(): List<JsonSchemaMetadataEntry>? {
+    return JacksonSchemaNodeAccessor.readNodeAsMapEntries(rawSchemaNode, X_INTELLIJ_METADATA)
+      ?.mapNotNull {
+        val values = (it.second as? ArrayNode)?.let {
+          it.elements().asSequence().mapNotNull {
+            it.takeIf { it.isTextual }?.asText()
+          }.toList()
+        } ?: it.second.takeIf { it.isTextual }?.asText()?.let { listOf(it) }
+        if (values.isNullOrEmpty()) null
+        else JsonSchemaMetadataEntry(it.first, values)
+      }?.toList()
   }
 
   override fun getLanguageInjection(): String? {

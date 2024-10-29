@@ -2,12 +2,13 @@
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.CachedTreePresentationNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -47,27 +48,19 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
     if (LOG.isTraceEnabled()) LOG.debug("process ", path);
     T element = getElement();
     if (element == null) return Action.SKIP_SIBLINGS;
-    Object component = path.getLastPathComponent();
-    if (component instanceof AbstractTreeNode) {
-      return visit(path, (AbstractTreeNode)component, element);
+    Object object = TreeUtil.getLastUserObject(path);
+    if (object instanceof AbstractTreeNode) {
+      return visit(path, (AbstractTreeNode)object, element);
     }
-    if (component instanceof DefaultMutableTreeNode node) {
-      Object object = node.getUserObject();
-      if (object instanceof AbstractTreeNode) {
-        return visit(path, (AbstractTreeNode)object, element);
-      }
-      else if (object instanceof String) {
-        LOG.debug("ignore children: ", object);
-      }
-      else {
-        LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
-      }
+    else if (object instanceof String) {
+      LOG.debug("ignore children: ", object);
     }
-    else if (component instanceof String) {
-      LOG.debug("ignore children: ", component);
+    else if (object instanceof CachedTreePresentationNode) {
+      // Cached presentation nodes don't contain the actual object because it's not loaded yet.
+      return Action.SKIP_CHILDREN;
     }
     else {
-      LOG.warn(component == null ? "no component" : "unexpected component " + component.getClass());
+      LOG.warn(object == null ? "no object" : "unexpected object " + object.getClass());
     }
     return Action.SKIP_CHILDREN;
   }

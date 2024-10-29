@@ -1,9 +1,0 @@
-// "Remove invocation" "true"
-enum class Test {
-    A
-}
-
-fun test() {
-    Test.A
-}
-// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeToPropertyAccessFix

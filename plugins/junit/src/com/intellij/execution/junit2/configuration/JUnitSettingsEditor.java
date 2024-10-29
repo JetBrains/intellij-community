@@ -122,6 +122,12 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     forkMode.setVariantNameProvider(s -> JUnitBundle.message("junit.configuration.fork.mode." + s.toLowerCase(Locale.ENGLISH)));
     fragments.add(forkMode);
 
+    SettingsEditorFragment<JUnitConfiguration, ?> asyncStackTraceForExceptions =
+      SettingsEditorFragment.createTag("asyncStackTraceForExceptions", JUnitBundle.message("async.stack.trace.for.exceptions.name"), group,
+                                       settings -> settings.isPrintAsyncStackTraceForExceptions(),
+                                       (settings, value) -> settings.setPrintAsyncStackTraceForExceptions(value));
+    fragments.add(asyncStackTraceForExceptions);
+
     testKind.addSettingsEditorListener(
       editor -> {
         int selectedType = testKind.getTestKind();

@@ -2,6 +2,8 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.diff.impl.DiffEditorViewer;
+import com.intellij.diff.tools.util.DiffDataKeys;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -12,7 +14,6 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -25,8 +26,6 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
-import com.intellij.util.ui.update.Activatable;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.vcs.log.UnsupportedHistoryFiltersException;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogBundle;
@@ -97,7 +96,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     myFileHistoryModel = fileHistoryModel;
     myProperties = logUi.getProperties();
 
-    myGraphTable = new VcsLogGraphTable(logUi.getId(), logData, logUi.getProperties(), colorManager,
+    myGraphTable = new VcsLogGraphTable(logUi, logData, logUi.getProperties(), colorManager,
                                         () -> logUi.requestMore(EmptyRunnable.INSTANCE), disposable) {
       @Override
       protected void updateEmptyText() {
@@ -236,6 +235,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
   @NotNull
   FileHistoryDiffProcessor createDiffPreview(boolean isInEditor) {
     FileHistoryDiffProcessor diffPreview = new FileHistoryDiffProcessor(myProject, () -> getSelectedChange(), isInEditor, this);
+
     ListSelectionListener selectionListener = e -> {
       int[] selection = myGraphTable.getSelectedRows();
       ApplicationManager.getApplication().invokeLater(() -> diffPreview.updatePreview(),
@@ -251,15 +251,10 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
                                                         o -> Disposer.isDisposed(diffPreview));
       }
     };
-    UiNotifyConnector.installOn(diffPreview.getComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-        diffPreview.updatePreview();
-      }
-    });
-
     myGraphTable.getModel().addTableModelListener(modelListener);
     Disposer.register(diffPreview, () -> myGraphTable.getModel().removeTableModelListener(modelListener));
+
+    DiffUtil.installShowNotifyListener(diffPreview.getComponent(), () -> diffPreview.updatePreview());
 
     return diffPreview;
   }
@@ -277,7 +272,7 @@ class FileHistoryPanel extends JPanel implements UiDataProvider, Disposable {
     sink.set(VcsLogInternalDataKeys.VCS_LOG_VISIBLE_ROOTS, Collections.singleton(myRoot));
     sink.set(VcsDataKeys.VCS_NON_LOCAL_HISTORY_SESSION, false);
     sink.set(VcsLogInternalDataKeys.LOG_DIFF_HANDLER, myFileHistoryModel.getDiffHandler());
-    sink.set(EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
+    sink.set(DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW, myEditorDiffPreview);
     sink.set(VcsLogInternalDataKeys.FILE_HISTORY_MODEL, myFileHistoryModel.createSnapshot());
     sink.set(QuickActionProvider.KEY, new ComponentQuickActionProvider(this));
     sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);

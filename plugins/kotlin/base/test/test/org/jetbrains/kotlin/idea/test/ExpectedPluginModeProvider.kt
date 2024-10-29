@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
 import org.jetbrains.kotlin.idea.base.plugin.useK2Plugin
 import org.junit.Assert
+import org.junit.AssumptionViolatedException
 
 @TestOnly
 interface ExpectedPluginModeProvider {
@@ -46,10 +47,29 @@ fun ExpectedPluginModeProvider.setUpWithKotlinPlugin(
         useK2Plugin = oldUseK2Plugin
     }
 
-    setUp.run()
+    try {
+        setUp.run()
+    } catch (e: Throwable) {
+        val wrappedAssumptionViolationException = e.cause
+        if (wrappedAssumptionViolationException !is AssumptionViolatedException) {
+            if (e is NoClassDefFoundError && e.cause is ExceptionInInitializerError) {
+                val message = e.cause!!.message
+                unloadedDependenciesException?.let {
+                    if (message != null && message.contains(it.javaClass.name)) {
+                        throw it
+                    }
+                }
+            }
+            throw e
+        }
+        unloadedDependenciesException = wrappedAssumptionViolationException
+        throw wrappedAssumptionViolationException
+    }
 
     assertKotlinPluginMode()
 }
+
+private var unloadedDependenciesException: AssumptionViolatedException? = null
 
 @TestOnly
 fun <T> T.setUpWithKotlinPlugin(

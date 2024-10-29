@@ -3,11 +3,10 @@ package org.jetbrains.kotlin.idea.base.fir.codeInsight.tooling
 
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaAnnotatedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinTestAvailabilityChecker
 import org.jetbrains.kotlin.idea.base.codeInsight.tooling.AbstractGenericTestIconProvider
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -19,7 +18,7 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     override fun isKotlinTestDeclaration(declaration: KtNamedDeclaration): Boolean {
         return analyze(declaration) {
             val symbol = when (declaration) {
-                is KtClassOrObject -> declaration.getClassOrObjectSymbol()
+                is KtClassOrObject -> declaration.classSymbol
                 is KtNamedFunction -> declaration.symbol
                 else -> null
             } ?: return false
@@ -31,16 +30,16 @@ internal object SymbolBasedGenericTestIconProvider : AbstractGenericTestIconProv
     private fun isTestDeclaration(symbol: KaAnnotatedSymbol): Boolean {
         return when {
             isIgnored(symbol) -> false
-            (symbol as? KaSymbolWithVisibility)?.visibility != KaSymbolVisibility.PUBLIC -> false
-            symbol.hasAnnotation(KotlinTestAvailabilityChecker.TEST_FQ_NAME) -> true
-            symbol is KaClassSymbol -> symbol.declaredMemberScope.getCallableSymbols().any { isTestDeclaration(it) }
+            (symbol as? KaDeclarationSymbol)?.visibility != KaSymbolVisibility.PUBLIC -> false
+            KotlinTestAvailabilityChecker.TEST_FQ_NAME in symbol.annotations -> true
+            symbol is KaClassSymbol -> symbol.declaredMemberScope.callables.any { isTestDeclaration(it) }
             else -> false
         }
     }
 
     context(KaSession)
     private tailrec fun isIgnored(symbol: KaAnnotatedSymbol): Boolean {
-        if (symbol.hasAnnotation(KotlinTestAvailabilityChecker.IGNORE_FQ_NAME)) {
+        if (KotlinTestAvailabilityChecker.IGNORE_FQ_NAME in symbol.annotations) {
             return true
         }
 

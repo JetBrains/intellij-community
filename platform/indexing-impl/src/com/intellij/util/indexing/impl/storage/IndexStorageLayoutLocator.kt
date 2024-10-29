@@ -2,13 +2,16 @@
 package com.intellij.util.indexing.impl.storage
 
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.util.indexing.*
-import com.intellij.util.indexing.impl.forward.*
+import com.intellij.util.indexing.FileBasedIndexExtension
+import com.intellij.util.indexing.IndexExtension
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator.customIndexLayoutProviderBean
+import com.intellij.util.indexing.impl.storage.IndexStorageLayoutLocator.getLayout
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider.STORAGE_LAYOUT_EP_NAME
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
+import kotlin.Throws
 
 
 /**
@@ -48,7 +51,7 @@ object IndexStorageLayoutLocator {
     }
 
     log.info("Layout '${providerBeanForExtension.id}' will be used to for '${indexExtension.name}' index " +
-             "(applicable providers: [${applicableLayoutProviders.map { it.id }.joinToString()}]) ")
+             "(applicable providers: [${applicableLayoutProviders.joinToString { it.id }}]) ")
     return providerBeanForExtension.layoutProvider.getLayout(indexExtension)
   }
 

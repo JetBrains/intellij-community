@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.SlowOperations;
+import kotlin.jvm.functions.Function0;
 
 import java.awt.*;
 
@@ -83,7 +84,10 @@ public class PlatformCoreDataKeys extends CommonDataKeys {
    * </pre></code>
    *
    * @see SlowOperations#assertSlowOperationsAreAllowed()
+   *
+   * @deprecated Use {@link DataSink#lazy(DataKey, Function0)} instead
    */
+  @Deprecated
   public static final DataKey<DataProvider> BGT_DATA_PROVIDER = DataKey.create("bgtDataProvider");
 
   /**

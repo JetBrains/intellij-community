@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
+import com.intellij.debugger.impl.SimpleStackFrameContext;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
@@ -47,19 +48,15 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
 
   public StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                   @NotNull MethodsTracker tracker) {
-    this(frame, false, null, tracker);
-  }
-
-  private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
-                                   @Nullable Method method,
-                                   @NotNull MethodsTracker tracker) {
-    this(frame, true, method, tracker);
+    this(frame, false, null, tracker,
+         ContextUtil.getSourcePosition(new SimpleStackFrameContext(frame, frame.getVirtualMachine().getDebugProcess())));
   }
 
   private StackFrameDescriptorImpl(@NotNull StackFrameProxyImpl frame,
                                    boolean useMethod,
                                    @Nullable Method method,
-                                   @NotNull MethodsTracker tracker) {
+                                   @NotNull MethodsTracker tracker,
+                                   SourcePosition sourcePosition) {
     myFrame = frame;
 
     try {
@@ -71,7 +68,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       myMethodOccurrence = tracker.getMethodOccurrence(myUiIndex,
                                                        useMethod ? method : DebuggerUtilsEx.getMethod(myLocation));
       myIsSynthetic = DebuggerUtils.isSynthetic(myMethodOccurrence.getMethod());
-      mySourcePosition = ContextUtil.getSourcePosition(this);
+      mySourcePosition = sourcePosition;
       PsiFile psiFile = mySourcePosition != null ? mySourcePosition.getFile() : null;
       myIsInLibraryContent =
         DebuggerUtilsEx.isInLibraryContent(psiFile != null ? psiFile.getVirtualFile() : null, getDebugProcess().getProject());
@@ -85,11 +82,25 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     }
   }
 
+  private static CompletableFuture<SourcePosition> getSourcePositionAsync(@NotNull StackFrameProxyImpl frame) {
+    try {
+      Location location = frame.location();
+      CompoundPositionManager positionManager = frame.getVirtualMachine().getDebugProcess().getPositionManager();
+      return positionManager.getSourcePositionAsync(location);
+    }
+    catch (Exception e) {
+      return CompletableFuture.failedFuture(e);
+    }
+  }
+
   public static CompletableFuture<StackFrameDescriptorImpl> createAsync(@NotNull StackFrameProxyImpl frame,
                                                                         @NotNull MethodsTracker tracker) {
     return frame.locationAsync()
       .thenCompose(DebuggerUtilsAsync::method)
-      .thenApply(method -> new StackFrameDescriptorImpl(frame, method, tracker))
+      .thenCombine(DebuggerUtilsAsync.reschedule(getSourcePositionAsync(frame)), (method, position) -> {
+        DebuggerManagerThreadImpl.assertIsManagerThread();
+        return new StackFrameDescriptorImpl(frame, true, method, tracker, position);
+      })
       .exceptionally(throwable -> {
         Throwable exception = DebuggerUtilsAsync.unwrap(throwable);
         if (exception instanceof EvaluateException) {
@@ -97,6 +108,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
           if (!(exception.getCause() instanceof InvalidStackFrameException)) {
             LOG.error(new Exception(exception));
           }
+          DebuggerManagerThreadImpl.assertIsManagerThread();
           return new StackFrameDescriptorImpl(frame, tracker); // fallback to sync
         }
         throw (RuntimeException)throwable;

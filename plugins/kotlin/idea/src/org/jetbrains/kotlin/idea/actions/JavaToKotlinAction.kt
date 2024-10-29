@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.base.codeInsight.pathBeforeJavaToKotlinConversion
-import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider.Companion.isK2Mode
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.util.KotlinPlatformUtils
 import org.jetbrains.kotlin.idea.codeinsight.utils.commitAndUnblockDocument
@@ -116,7 +116,11 @@ class JavaToKotlinAction : AnAction() {
             // "Global" means that you can undo it from any changed file: the converted files,
             // or the external files that were updated.
             project.executeCommand(KotlinBundle.message("action.j2k.task.name")) {
-                if (!runSynchronousProcess(project, ::convertWithStatistics)) return@executeCommand
+                if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                        { convertWithStatistics() },
+                        title, /* canBeCanceled = */ true,
+                        project
+                    )) return@executeCommand
 
                 val result = converterResult ?: return@executeCommand
                 val externalCodeProcessing = result.externalCodeProcessing
@@ -151,17 +155,14 @@ class JavaToKotlinAction : AnAction() {
             if (!isEnabled || processing == null) return null
 
             var result: (() -> Unit)? = null
-            runSynchronousProcess(project) {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously({
                 runReadAction {
                     result = processing.prepareWriteOperation(ProgressManager.getInstance().progressIndicator!!)
                 }
-            }
+            }, title, /* canBeCanceled = */ true, project)
 
             return result
         }
-
-        private fun runSynchronousProcess(project: Project, process: () -> Unit): Boolean =
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(process, title, /* canBeCanceled = */ true, project)
 
         private fun <T> Project.runUndoTransparentGlobalWriteAction(command: () -> T): T =
             CommandProcessor.getInstance().withUndoTransparentAction().use {
@@ -334,7 +335,7 @@ class JavaToKotlinAction : AnAction() {
 }
 
 private fun getJ2kKind(forceUsingOldJ2k: Boolean = false): J2kConverterExtension.Kind = when {
-    KotlinPluginModeProvider.isK2Mode() -> K2
+    isK2Mode() -> K2
     forceUsingOldJ2k || !NewJ2k.isEnabled -> K1_OLD
     else -> K1_NEW
 }

@@ -2,9 +2,11 @@
 package com.intellij.tools;
 
 import com.intellij.openapi.keymap.KeyMapBundle;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ToolKeymapExtension extends BaseToolKeymapExtension {
   private final ToolManager myToolManager;
 

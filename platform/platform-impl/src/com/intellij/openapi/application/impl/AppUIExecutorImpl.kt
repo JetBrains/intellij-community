@@ -20,6 +20,7 @@ import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.Executor
 import java.util.function.BooleanSupplier
 import kotlin.coroutines.ContinuationInterceptor
@@ -63,7 +64,10 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
 
   private class MyEdtExecutor(private val modality: ModalityState) : Executor {
     override fun execute(command: Runnable) {
+      // TransactionGuard.isWritingAllowed could throw exception if there is no write intent lock
+      // It was always so, but now we could be here without WIL
       if (ApplicationManager.getApplication().isDispatchThread
+          && ApplicationManager.getApplication().isWriteIntentLockAcquired
           && (!TransactionGuard.getInstance().isWriteSafeModality(modality)
               || TransactionGuard.getInstance().isWritingAllowed)
           && !ModalityState.current().dominates(modality)) {
@@ -124,10 +128,12 @@ internal class AppUIExecutorImpl private constructor(private val modality: Modal
   }
 }
 
+@ApiStatus.Internal
 fun AppUIExecutor.withConstraint(constraint: ContextConstraint): AppUIExecutor {
   return (this as AppUIExecutorImpl).withConstraint(constraint)
 }
 
+@ApiStatus.Internal
 fun AppUIExecutor.withConstraint(constraint: ContextConstraint, parentDisposable: Disposable): AppUIExecutor {
   return (this as AppUIExecutorImpl).withConstraint(constraint, parentDisposable)
 }

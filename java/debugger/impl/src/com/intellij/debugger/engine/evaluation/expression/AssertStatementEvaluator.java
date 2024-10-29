@@ -44,7 +44,7 @@ public class AssertStatementEvaluator implements Evaluator {
       }
     }
     if (status == ThreeState.NO) {
-      return context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
+      return context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid();
     }
     return myEvaluator.evaluate(context);
   }

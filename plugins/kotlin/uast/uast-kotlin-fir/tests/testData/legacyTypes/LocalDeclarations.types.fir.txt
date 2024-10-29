@@ -10,14 +10,14 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                         ULambdaExpression [fun () {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() Local>
                             UBlockExpression [{...}]
                                 UReturnExpression [return Local()]
-                                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : @org.jetbrains.annotations.NotNull() Local
+                                    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : Local
                                         UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                                         USimpleNameReferenceExpression (identifier = Local, resolvesTo = PsiClass: Local) [Local]
                 UDeclarationsExpression [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                     ULocalVariable (name = baz) [var baz: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = fun () {...}]
                         ULambdaExpression [fun () {...}] : @org.jetbrains.annotations.NotNull() kotlin.jvm.functions.Function0<? extends @org.jetbrains.annotations.NotNull() kotlin.Unit>
                             UBlockExpression [{...}] : void
-                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : @org.jetbrains.annotations.NotNull() Local
+                                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : Local
                                     UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                                     USimpleNameReferenceExpression (identifier = Local, resolvesTo = PsiClass: Local) [Local]
                 UDeclarationsExpression [var someLocalFun: kotlin.jvm.functions.Function2<? super java.lang.Integer,? super java.lang.String,? extends java.lang.Integer> = fun (@org.jetbrains.annotations.NotNull var text: java.lang.String) {...}]
@@ -32,6 +32,6 @@ UFile (package = ) [public final class LocalDeclarationsKt {...]
                     UBinaryExpression (operator = ==) [bar() == Local()] : boolean
                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [bar()] : @org.jetbrains.annotations.NotNull() java.lang.Object
                             UIdentifier (Identifier (bar)) [UIdentifier (Identifier (bar))]
-                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : @org.jetbrains.annotations.NotNull() java.lang.Object
+                        UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [Local()] : java.lang.Object
                             UIdentifier (Identifier (Local)) [UIdentifier (Identifier (Local))]
                             USimpleNameReferenceExpression (identifier = Local, resolvesTo = PsiClass: Local) [Local]

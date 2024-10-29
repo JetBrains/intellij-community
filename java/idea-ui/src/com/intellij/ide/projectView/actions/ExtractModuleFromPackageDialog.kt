@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.actions
 
 import com.intellij.ide.JavaUiBundle
@@ -51,8 +51,10 @@ class ExtractModuleFromPackageDialog(private val project: Project, moduleName: S
       }
       indent {
         row {
-          pathField = textFieldWithBrowseButton(JavaUiBundle.message("dialog.title.specify.path.to.new.source.root"), project,
-                                                FileChooserDescriptorFactory.createSingleFolderDescriptor())
+          pathField = textFieldWithBrowseButton(
+            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(JavaUiBundle.message("dialog.title.specify.path.to.new.source.root")),
+            project
+          )
             .bindText(::sourceRootPath)
             .enabledIf(moveClassesCheckBox.selected)
             .align(AlignX.FILL)

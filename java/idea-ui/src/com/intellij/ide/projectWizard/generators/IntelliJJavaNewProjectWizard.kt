@@ -47,25 +47,20 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   private class AssetsStep(
     private val parent: Step
-  ) : AssetsJavaNewProjectWizardStep(parent) {
+  ) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
-      outputDirectory = parent.contentRoot
+      setOutputDirectory(parent.contentRoot)
 
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getIntelliJIgnoreAssets())
       }
-
       if (parent.addSampleCode) {
-        withJavaSampleCodeAsset("src", "", parent.generateOnboardingTips)
+        if (parent.generateOnboardingTips) {
+          prepareJavaSampleOnboardingTips(project)
+        }
+        withJavaSampleCodeAsset("src", null, parent.generateOnboardingTips)
       }
-    }
-
-    override fun setupProject(project: Project) {
-      if (parent.generateOnboardingTips) {
-        prepareOnboardingTips(project)
-      }
-      super.setupProject(project)
     }
   }
 }

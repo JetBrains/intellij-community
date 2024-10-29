@@ -10,7 +10,7 @@ object EvaluationFilterReader {
     for ((id, description) in map) {
       val configuration = EvaluationFilterManager.getConfigurationById(id)
                           ?: throw IllegalStateException("Unknown filter: $id")
-      assert(configuration.isLanguageSupported(language)) { "filter $id is not supported for this language" }
+      assert(configuration.isLanguageSupported(language)) { "filter $id is not supported for this language: ${language}" }
       evaluationFilters[id] = configuration.buildFromJson(description)
     }
     return evaluationFilters

@@ -23,6 +23,7 @@ import git4idea.config.GitVersionSpecialty;
 import git4idea.log.GitLogProvider;
 import git4idea.log.GitRefManager;
 import git4idea.telemetry.GitTelemetrySpan.Log;
+import io.opentelemetry.api.trace.Tracer;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -201,9 +202,8 @@ public final class GitLogUtil {
       handler.addParameters("--decorate=full");
       handler.endOptions();
 
-      runWithSpanThrows(TelemetryManager.getInstance().getTracer(VcsScope), Log.LoadingCommitMetadata.getName(), span -> {
-        span.setAttribute("rootName", root.getName());
-
+      Tracer tracer = TelemetryManager.getInstance().getTracer(VcsScope);
+      runWithSpanThrows(tracer.spanBuilder(Log.LoadingCommitMetadata.getName()).setAttribute("rootName", root.getName()), __ -> {
         GitLogOutputSplitter<GitLogRecord> handlerListener = new GitLogOutputSplitter<>(handler, parser, recordConsumer);
         Git.getInstance().runCommandWithoutCollectingOutput(handler).throwOnError();
         handlerListener.reportErrors();

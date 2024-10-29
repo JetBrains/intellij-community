@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -18,6 +18,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.scope.packageSet.*
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.File
 import java.io.Reader
 import java.nio.file.FileSystems
@@ -30,26 +31,35 @@ private const val SCOPE_PREFIX = "scope#"
 
 private val LOG = logger<YamlInspectionProfileImpl>()
 
-class YamlInspectionConfigImpl(override val inspection: String,
-                               override val enabled: Boolean?,
-                               override val severity: String?,
-                               override val ignore: List<String>,
-                               override val options: Map<String, String>) : YamlInspectionConfig
+private class YamlInspectionConfigImpl(
+  override val inspection: String,
+  override val enabled: Boolean?,
+  override val severity: String?,
+  override val ignore: List<String>,
+  override val options: Map<String, String>,
+) : YamlInspectionConfig
 
-class YamlGroupConfigImpl(override val group: String,
-                          override val enabled: Boolean?,
-                          override val severity: String?,
-                          override val ignore: List<String>) : YamlGroupConfig
+private class YamlGroupConfigImpl(
+  override val group: String,
+  override val enabled: Boolean?,
+  override val severity: String?,
+  override val ignore: List<String>,
+) : YamlGroupConfig
 
-class YamlInspectionGroupImpl(override val groupId: String, val inspections: Set<String>) : YamlInspectionGroup {
+private class YamlInspectionGroupImpl(
+  override val groupId: String,
+  val inspections: Set<String>
+) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     return tool.shortName in inspections
   }
 }
 
-class YamlCompositeGroupImpl(override val groupId: String,
-                             private val groupProvider: InspectionGroupProvider,
-                             private val groupRules: List<String>) : YamlInspectionGroup {
+private class YamlCompositeGroupImpl(
+  override val groupId: String,
+  private val groupProvider: InspectionGroupProvider,
+  private val groupRules: List<String>,
+) : YamlInspectionGroup {
   override fun includesInspection(tool: InspectionToolWrapper<*, *>): Boolean {
     for (groupRule in groupRules.asReversed().filter { it.isNotEmpty() }) {
       val groupId = groupRule.removePrefix("!")
@@ -61,7 +71,7 @@ class YamlCompositeGroupImpl(override val groupId: String,
   }
 }
 
-class CompositeGroupProvider : InspectionGroupProvider {
+private class CompositeGroupProvider : InspectionGroupProvider {
 
   private val providers = mutableListOf<InspectionGroupProvider>()
 
@@ -74,6 +84,7 @@ class CompositeGroupProvider : InspectionGroupProvider {
   }
 }
 
+@Internal
 class YamlInspectionProfileImpl private constructor(override val profileName: String?,
                                                     override val inspectionToolsSupplier: InspectionToolsSupplier,
                                                     override val inspectionProfileManager: BaseInspectionProfileManager,
@@ -93,7 +104,7 @@ class YamlInspectionProfileImpl private constructor(override val profileName: St
       val baseProfile = findBaseProfile(profileManager, profile.baseProfile)
       val configurations = profile.inspections.map(::createInspectionConfig)
       val groupProvider = CompositeGroupProvider()
-      groupProvider.addProvider(InspectionGroupProvider.createDynamicGroupProvider())
+      groupProvider.addProvider(InspectionGroupProviderEP.createDynamicGroupProvider())
 
       val groups = profile.groups.map { group -> createGroup(groupProvider, group) }
       val customGroupProvider = object : InspectionGroupProvider {

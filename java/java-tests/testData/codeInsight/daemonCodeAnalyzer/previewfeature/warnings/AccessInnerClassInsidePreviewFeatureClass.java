@@ -1,5 +1,5 @@
 
-import <warning descr="com.mycom.FirstPreviewFeature is a preview API and may be removed in a future release">com.mycom.FirstPreviewFeature</warning>;
+import com.mycom.FirstPreviewFeature;
 
 class Main {
   public Main(String s) { }

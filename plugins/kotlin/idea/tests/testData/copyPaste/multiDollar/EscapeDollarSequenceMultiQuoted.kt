@@ -1,0 +1,1 @@
+val from = $$$$"<selection>Foo$$$Bar</selection>"

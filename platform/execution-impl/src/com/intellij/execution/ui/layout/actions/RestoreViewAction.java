@@ -8,10 +8,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.custom.options.ContentLayoutStateSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class RestoreViewAction extends DumbAwareToggleAction implements ViewLayoutModificationAction {
 
   private final Content myContent;

@@ -1,3 +1,6 @@
+//region Test configuration
+// - hidden: line markers
+//endregion
 import com.example.dumblib.DumbLib
 
 fun baz() {

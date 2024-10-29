@@ -21,7 +21,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_EXTEN
 
 private val sections = arrayListOf("buildscript", "plugins", "initscript", "pluginManagement")
 
-fun isGradleKotlinScript(virtualFile: VirtualFile) = virtualFile.name.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
+fun isGradleKotlinScript(virtualFile: VirtualFile): Boolean = virtualFile.nameSequence.endsWith(".$KOTLIN_DSL_SCRIPT_EXTENSION")
 
 fun getGradleScriptInputsStamp(
     project: Project,

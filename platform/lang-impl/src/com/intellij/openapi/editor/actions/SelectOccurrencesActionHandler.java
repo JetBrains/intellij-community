@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.editorActions.SelectWordUtil;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
-abstract public class SelectOccurrencesActionHandler extends EditorActionHandler {
+public abstract class SelectOccurrencesActionHandler extends EditorActionHandler {
   private static final Key<Boolean> NOT_FOUND = Key.create("select.next.occurence.not.found");
   private static final Key<Boolean> WHOLE_WORDS = Key.create("select.next.occurence.whole.words");
 
@@ -61,8 +61,7 @@ abstract public class SelectOccurrencesActionHandler extends EditorActionHandler
     return value != null;
   }
 
-  @Nullable
-  protected static TextRange getSelectionRange(Editor editor, Caret caret) {
+  protected static @Nullable TextRange getSelectionRange(Editor editor, Caret caret) {
     return SelectWordUtil.getWordSelectionRange(editor.getDocument().getCharsSequence(),
                                                 caret.getOffset(),
                                                 SelectWordUtil.JAVA_IDENTIFIER_PART_CONDITION);

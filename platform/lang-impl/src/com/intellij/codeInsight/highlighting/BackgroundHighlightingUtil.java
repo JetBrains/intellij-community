@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
@@ -23,11 +22,12 @@ import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.function.BiFunction;
 
+@ApiStatus.Internal
 public final class BackgroundHighlightingUtil {
   /**
    * start background thread where find injected fragment at the caret position,
@@ -95,8 +95,7 @@ public final class BackgroundHighlightingUtil {
     return state == null || state.isFinished();
   }
 
-  @NotNull
-  private static PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
+  private static @NotNull PsiFile getInjectedFileIfAny(int offset, @NotNull PsiFile psiFile) {
     PsiElement injectedElement = InjectedLanguageManager.getInstance(psiFile.getProject()).findInjectedElementAt(psiFile, offset);
     if (injectedElement != null) {
       PsiFile injected = injectedElement.getContainingFile();
@@ -105,10 +104,5 @@ public final class BackgroundHighlightingUtil {
       }
     }
     return psiFile;
-  }
-
-  @TestOnly
-  public static void enableListenersInTest(@NotNull Project project, @NotNull Disposable disposable) {
-    BackgroundHighlighter.enableListenersInTest(project, disposable);
   }
 }

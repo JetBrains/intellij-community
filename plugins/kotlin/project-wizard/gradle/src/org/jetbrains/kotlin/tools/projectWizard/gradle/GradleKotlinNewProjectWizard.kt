@@ -5,8 +5,13 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleCodeFinished
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildChanged
+import com.intellij.ide.projectWizard.NewProjectWizardCollector.Kotlin.logGenerateSingleModuleBuildFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsJava
+import com.intellij.ide.projectWizard.generators.AssetsNewProjectWizardStep
+import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
+import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.shouldRenderOnboardingTips
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PROPERTY_NAME
@@ -14,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.observable.util.bindBooleanStorage
+import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.JavaSdk
@@ -27,7 +33,6 @@ import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
 import com.intellij.ui.layout.ValidationInfoBuilder
-import com.intellij.util.io.createDirectories
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
@@ -42,14 +47,24 @@ import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizar
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_KOTLIN_PATH
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_TEST_RESOURCES_PATH
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinGradleCompatibilityStore
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.COROUTINES_ARTIFACT_ID
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.DATETIME_ARTIFACT_ID
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.KOTLINX_GROUP
+import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinLibrariesCompatibilityStore.Companion.SERIALIZATION_JSON_ARTIFACT_ID
 import org.jetbrains.kotlin.tools.projectWizard.compatibility.KotlinWizardVersionStore
 import org.jetbrains.kotlin.tools.projectWizard.core.KotlinAssetsProvider
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
-import org.jetbrains.kotlin.tools.projectWizard.wizard.AssetsKotlinNewProjectWizardStep
+import org.jetbrains.kotlin.tools.projectWizard.wizard.KotlinNewProjectWizardUIBundle
+import org.jetbrains.kotlin.tools.projectWizard.wizard.prepareKotlinSampleOnboardingTips
 import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
+import org.jetbrains.kotlin.tools.projectWizard.wizard.withKotlinSampleCode
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
-import java.nio.file.Path
+import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
+import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
+
+private const val GENERATE_SINGLE_MODULE_PROPERTY_NAME: String = "NewProjectWizard.generateSingleModule"
 
 private class GradleKotlinModuleBuilder : AbstractGradleModuleBuilder()
 
@@ -77,10 +92,18 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override var addSampleCode by addSampleCodeProperty
 
-        override val generateOnboardingTipsProperty = propertyGraph.property(AssetsJavaNewProjectWizardStep.proposeToGenerateOnboardingTipsByDefault())
+        override val generateOnboardingTipsProperty = propertyGraph.property(proposeToGenerateOnboardingTipsByDefault())
             .bindBooleanStorage(NewProjectWizardStep.GENERATE_ONBOARDING_TIPS_NAME)
 
         override var generateOnboardingTips by generateOnboardingTipsProperty
+
+        val generateSingleModuleProperty = propertyGraph.property(false)
+            .bindBooleanStorage(GENERATE_SINGLE_MODULE_PROPERTY_NAME)
+
+        override var generateSingleModule by generateSingleModuleProperty
+
+        internal val shouldGenerateMultipleModules
+            get() = !generateSingleModule && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -102,6 +125,18 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             }.enabledIf(addSampleCodeProperty)
         }
 
+        private fun setupMultipleModulesUI(builder: Panel) {
+            builder.row {
+                checkBox(KotlinNewProjectWizardUIBundle.message("label.project.wizard.new.project.generate.single.module"))
+                    .bindSelected(generateSingleModuleProperty)
+                    .enabledIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
+                    .whenStateChangedFromUi { logGenerateSingleModuleBuildChanged(it) }
+                    .onApply { logGenerateSingleModuleBuildFinished(generateSingleModule) }
+
+                contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.single.module"))
+            }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
+        }
+
         override fun setupSettingsUI(builder: Panel) {
             setupJavaSdkUI(builder)
             setupGradleDslUI(builder)
@@ -109,6 +144,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             setupSampleCodeUI(builder)
             setupSampleCodeWithOnBoardingTipsUI(builder)
             if (context.isCreatingNewProject) {
+                setupMultipleModulesUI(builder)
                 addMultiPlatformLink(builder)
             }
         }
@@ -150,7 +186,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             setupArtifactIdUI(builder)
         }
 
-        private var selectedJdkJvmTarget: Int? = null
+        var selectedJdkJvmTarget: Int? = null
 
         private fun findSelectedJvmTarget() {
             // Ordinal here works correctly, starting at Java 1.0 (0)
@@ -249,6 +285,8 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
         override fun setupProject(project: Project) {
             initializeProjectValues(project)
 
+            if (shouldGenerateMultipleModules) return
+
             val moduleBuilder = GradleKotlinModuleBuilder()
             moduleBuilder.configurePreImport { _, settingsScriptFile ->
                 configureSettingsFile(project, settingsScriptFile)
@@ -259,7 +297,9 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                 it.getGradleKotlinVersion()
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
-            linkGradleProject(project, moduleBuilder) {
+
+            setupBuilder(moduleBuilder)
+            setupBuildScript(moduleBuilder) {
                 withKotlinJvmPlugin(kotlinVersionToUse.takeIf { pluginManagementVersion == null && parentKotlinVersion == null })
                 withKotlinTest()
 
@@ -267,40 +307,111 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     withKotlinJvmToolchain(it)
                 }
             }
+            setupProject(project, moduleBuilder)
         }
     }
 
-    private class AssetsStep(private val parent: Step) : AssetsKotlinNewProjectWizardStep(parent) {
-        private fun createKotlinContentRoots() {
-            val directories = listOf(
-                "$outputDirectory/$SRC_MAIN_KOTLIN_PATH",
-                "$outputDirectory/$SRC_MAIN_RESOURCES_PATH",
-                "$outputDirectory/$SRC_TEST_KOTLIN_PATH",
-                "$outputDirectory/$SRC_TEST_RESOURCES_PATH",
-            )
-            directories.forEach {
-                Path.of(it).createDirectories()
-            }
-        }
-
-        private fun shouldAddOnboardingTips(): Boolean = parent.addSampleCode && parent.generateOnboardingTips
+    private class AssetsStep(private val parent: Step) : AssetsNewProjectWizardStep(parent) {
 
         override fun setupAssets(project: Project) {
-            if (context.isCreatingNewProject) {
-                addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
-                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
-            }
-            createKotlinContentRoots()
-            if (parent.addSampleCode) {
-                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, shouldAddOnboardingTips())
+            if (parent.shouldGenerateMultipleModules) {
+                setupMultiModuleProjectAssets(project)
+            } else {
+                setupSingleModuleProjectAssets(project)
             }
         }
 
         override fun setupProject(project: Project) {
-            if (shouldAddOnboardingTips()) {
-                prepareOnboardingTips(project)
-            }
             super.setupProject(project)
+
+            if (parent.shouldGenerateMultipleModules) {
+                val moduleBuilder = GradleKotlinModuleBuilder()
+                moduleBuilder.setCreateEmptyContentRoots(false)
+                moduleBuilder.isCreatingSettingsScriptFile = false
+                moduleBuilder.isCreatingBuildScriptFile = false
+                parent.setupBuilder(moduleBuilder)
+                parent.setupProject(project, moduleBuilder)
+            }
+        }
+
+        private fun setupSingleModuleProjectAssets(project: Project) {
+            if (context.isCreatingNewProject) {
+                addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
+                addTemplateAsset("gradle.properties", "KotlinCodeStyleProperties")
+            }
+            addEmptyDirectoryAsset(SRC_MAIN_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_MAIN_RESOURCES_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_KOTLIN_PATH)
+            addEmptyDirectoryAsset(SRC_TEST_RESOURCES_PATH)
+            if (parent.addSampleCode) {
+                if (parent.generateOnboardingTips) {
+                    prepareKotlinSampleOnboardingTips(project)
+                }
+                withKotlinSampleCode(SRC_MAIN_KOTLIN_PATH, parent.groupId, parent.generateOnboardingTips)
+            }
+        }
+
+        // This is currently only supported for generating new projects!
+        private fun setupMultiModuleProjectAssets(project: Project) {
+            assert(context.isCreatingNewProject)
+            val librariesVersionStore = KotlinLibrariesCompatibilityStore.getInstance()
+            val datetimeVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, DATETIME_ARTIFACT_ID) ?: ""
+            val coroutinesVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, COROUTINES_ARTIFACT_ID) ?: ""
+            val serializationJsonVersion = librariesVersionStore.getLatestVersion(KOTLINX_GROUP, SERIALIZATION_JSON_ARTIFACT_ID) ?: ""
+
+            val templateParameters = mapOf(
+                "PROJECT_NAME" to parent.name,
+                "PACKAGE_NAME" to parent.groupId,
+                "KOTLIN_VERSION" to Versions.KOTLIN,
+                "FOOJAY_VERSION" to Versions.GRADLE_PLUGINS.FOOJAY_VERSION,
+                "JVM_VERSION" to (parent.selectedJdkJvmTarget?.toString() ?: "21"),
+                "KOTLINX_DATETIME_VERSION" to datetimeVersion,
+                "KOTLINX_SERIALIZATION_JSON_VERSION" to serializationJsonVersion,
+                "KOTLINX_COROUTINES_VERSION" to coroutinesVersion,
+            )
+
+            addAssets(KotlinAssetsProvider.getKotlinGradleIgnoreAssets())
+
+            addTemplateAsset("gradle.properties", "KotlinSampleProperties", templateParameters)
+            addTemplateAsset("gradle/libs.versions.toml", "KotlinSampleGradleToml", templateParameters)
+            addTemplateAsset(KOTLIN_DSL_SETTINGS_FILE_NAME, "KotlinSampleSettings", templateParameters)
+            addTemplateAsset("README.md", "KotlinSampleReadme", templateParameters)
+
+            addTemplateAsset("buildSrc/$KOTLIN_DSL_SCRIPT_NAME", "KotlinSampleBuildSrcBuildGradle", templateParameters)
+            addTemplateAsset("buildSrc/$KOTLIN_DSL_SETTINGS_FILE_NAME", "KotlinSampleBuildSrcSettings", templateParameters)
+            addTemplateAsset("buildSrc/$SRC_MAIN_KOTLIN_PATH/kotlin-jvm.gradle.kts", "KotlinSampleConventionPlugin", templateParameters)
+
+            addEmptyDirectoryAsset("app/$SRC_MAIN_KOTLIN_PATH")
+            addEmptyDirectoryAsset("app/$SRC_MAIN_RESOURCES_PATH")
+            addEmptyDirectoryAsset("app/$SRC_TEST_KOTLIN_PATH")
+            addEmptyDirectoryAsset("app/$SRC_TEST_RESOURCES_PATH")
+            addTemplateAsset("app/$KOTLIN_DSL_SCRIPT_NAME", "KotlinSampleAppBuildGradle", templateParameters)
+
+            if (parent.addSampleCode) {
+                if (parent.generateOnboardingTips) {
+                    prepareKotlinSampleOnboardingTips(project, "KotlinSampleApp", "App.kt")
+                }
+                val templateName = when {
+                    !parent.generateOnboardingTips -> "KotlinSampleApp"
+                    shouldRenderOnboardingTips() -> "KotlinSampleAppWithRenderedOnboardingTips"
+                    else -> "KotlinSampleAppWithOnboardingTips"
+                }
+                val sourcePath = AssetsJava.getJavaSampleSourcePath(SRC_MAIN_KOTLIN_PATH, null, "App.kt")
+                withKotlinSampleCode("app/$sourcePath", templateName, parent.groupId, parent.generateOnboardingTips)
+            }
+
+            addEmptyDirectoryAsset("utils/$SRC_MAIN_KOTLIN_PATH")
+            addEmptyDirectoryAsset("utils/$SRC_MAIN_RESOURCES_PATH")
+            addEmptyDirectoryAsset("utils/$SRC_TEST_KOTLIN_PATH")
+            addEmptyDirectoryAsset("utils/$SRC_TEST_RESOURCES_PATH")
+            addTemplateAsset("utils/$KOTLIN_DSL_SCRIPT_NAME", "KotlinSampleUtilsBuildGradle", templateParameters)
+
+            if (parent.addSampleCode) {
+                val utilitiesPath = AssetsJava.getJavaSampleSourcePath(SRC_MAIN_KOTLIN_PATH, null, "Utilities.kt")
+                val utilitiesTestPath = AssetsJava.getJavaSampleSourcePath(SRC_TEST_KOTLIN_PATH, null, "UtilitiesTest.kt")
+                addTemplateAsset("utils/$utilitiesPath", "KotlinSampleUtilsUtilities", templateParameters)
+                addTemplateAsset("utils/$utilitiesTestPath", "KotlinSampleUtilsUtilitiesTest", templateParameters)
+            }
         }
     }
 }

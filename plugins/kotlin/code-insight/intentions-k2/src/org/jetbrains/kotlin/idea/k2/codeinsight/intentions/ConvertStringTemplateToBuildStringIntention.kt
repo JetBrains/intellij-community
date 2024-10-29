@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.convertStringTemplateToBuildStringCall
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 internal class ConvertStringTemplateToBuildStringIntention :
     KotlinApplicableModCommandAction<KtStringTemplateExpression, Unit>(KtStringTemplateExpression::class),
@@ -19,7 +20,7 @@ internal class ConvertStringTemplateToBuildStringIntention :
     override fun getFamilyName(): String = KotlinBundle.message("convert.string.template.to.build.string")
 
     override fun isApplicableByPsi(element: KtStringTemplateExpression): Boolean =
-        !element.text.startsWith("\"\"\"") && !element.isInsideAnnotationEntryArgumentList()
+        element.isSingleQuoted() && !element.isInsideAnnotationEntryArgumentList() && element.interpolationPrefix == null
 
     context(KaSession)
     override fun prepareContext(element: KtStringTemplateExpression) {

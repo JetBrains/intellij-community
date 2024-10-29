@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -34,8 +34,10 @@ import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import static java.awt.event.MouseEvent.*;
 
@@ -265,7 +267,7 @@ public final class IdeMouseEventDispatcher {
     ActionManagerEx actionManager = (ActionManagerEx)ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (actionManager != null && !actions.isEmpty()) {
       DataContext context = DataManager.getInstance().getDataContext(component);
-      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction$intellij_platform_ide_impl(
+      IdeEventQueue.getInstance().getKeyEventDispatcher().processAction(
         event, place, context, actions,
         newActionProcessor(modifiers), myPresentationFactory, shortcut);
     }

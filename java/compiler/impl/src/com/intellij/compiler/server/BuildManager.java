@@ -77,7 +77,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache;
+import com.intellij.platform.backend.workspace.WorkspaceModelCache;
 import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
@@ -91,6 +92,7 @@ import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.net.NetUtils;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -146,6 +148,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.intellij.ide.impl.ProjectUtil.getProjectForComponent;
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
 public final class BuildManager implements Disposable {
@@ -172,6 +175,8 @@ public final class BuildManager implements Disposable {
     s -> !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION)) :
     s -> !(Strings.endsWithIgnoreCase(s, IWS_EXTENSION) || Strings.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
+  private static final String JPS_USE_EXPERIMENTAL_STORAGE = "jps.use.experimental.storage";
+
   private final String myFallbackSdkHome;
   private final String myFallbackSdkVersion;
 
@@ -185,51 +190,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
 
-  private final BuildManagerPeriodicTask myAutoMakeTask = new BuildManagerPeriodicTask() {
-    @Override
-    protected int getDelay() {
-      return Registry.intValue("compiler.automake.trigger.delay");
-    }
+  private final BuildManagerPeriodicTask myAutoMakeTask;
 
-    @Override
-    protected void runTask() {
-      runAutoMake();
-    }
-
-    @Override
-    protected boolean shouldPostpone() {
-      // Heuristics for automake postpone decision:
-      // 1. There are unsaved documents OR
-      // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
-      if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
-        return true;
-      }
-      final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
-      final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
-      return idleSinceLastActivity < threshold;
-    }
-  };
-
-  private final BuildManagerPeriodicTask myDocumentSaveTask = new BuildManagerPeriodicTask() {
-    @Override
-    protected int getDelay() {
-      return Registry.intValue("compiler.document.save.trigger.delay");
-    }
-
-    @Override
-    public void runTask() {
-      if (shouldSaveDocuments()) {
-        ApplicationManager.getApplication().invokeAndWait(
-          () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false)
-        );
-      }
-    }
-
-    private static boolean shouldSaveDocuments() {
-      final Project contextProject = getCurrentContextProject();
-      return contextProject != null && canStartAutoMake(contextProject);
-    }
-  };
+  private final BuildManagerPeriodicTask myDocumentSaveTask;
 
   private final Runnable myGCTask = () -> {
     // todo: make customizable in UI?
@@ -295,8 +258,53 @@ public final class BuildManager implements Disposable {
   private volatile boolean myBuildProcessDebuggingEnabled;
 
   public BuildManager(@NotNull CoroutineScope coroutineScope) {
-    myRequestsProcessor = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager RequestProcessor Pool", coroutineScope);
-    myAutomakeTrigger = AppJavaExecutorUtil.createSingleTaskApplicationPoolExecutor("BuildManager Auto-Make Trigger", coroutineScope);
+    myRequestsProcessor = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager RequestProcessor Pool", coroutineScope);
+    myAutomakeTrigger = AppJavaExecutorUtil.createBoundedTaskExecutor("BuildManager Auto-Make Trigger", coroutineScope);
+
+    myAutoMakeTask = new BuildManagerPeriodicTask(coroutineScope) {
+      @Override
+      protected int getDelay() {
+        return Registry.intValue("compiler.automake.trigger.delay");
+      }
+
+      @Override
+      protected void runTask() {
+        runAutoMake();
+      }
+
+      @Override
+      protected boolean shouldPostpone() {
+        // Heuristics for automake postpone decision:
+        // 1. There are unsaved documents OR
+        // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
+        if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
+          return true;
+        }
+        final long threshold = Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+        final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+        return idleSinceLastActivity < threshold;
+      }
+    };
+    myDocumentSaveTask = new BuildManagerPeriodicTask(coroutineScope) {
+      @Override
+      protected int getDelay() {
+        return Registry.intValue("compiler.document.save.trigger.delay");
+      }
+
+      @Override
+      public void runTask() {
+        if (shouldSaveDocuments()) {
+          ApplicationManager.getApplication().invokeAndWait(
+            () -> ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveAllDocuments(false)
+          );
+        }
+      }
+
+      private static boolean shouldSaveDocuments() {
+        final Project contextProject = getCurrentContextProject();
+        return contextProject != null && canStartAutoMake(contextProject);
+      }
+    };
 
     final Application application = ApplicationManager.getApplication();
     IS_UNIT_TEST_MODE = application.isUnitTestMode();
@@ -313,7 +321,7 @@ public final class BuildManager implements Disposable {
       myFallbackSdkVersion = fallbackSdkVersion;
     }
 
-    MessageBusConnection connection = application.getMessageBus().connect(this);
+    SimpleMessageBusConnection connection = application.getMessageBus().connect(coroutineScope);
     connection.subscribe(ProjectCloseListener.TOPIC, new ProjectWatcher());
     connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
       @Override
@@ -322,7 +330,7 @@ public final class BuildManager implements Disposable {
           synchronized (myUnprocessedEvents) {
             myUnprocessedEvents.addAll(events);
           }
-          myAutomakeTrigger.schedule(() -> {
+          myAutomakeTrigger.execute(() -> {
             if (!application.isDisposed()) {
               ReadAction.run(()-> {
                 if (application.isDisposed()) {
@@ -523,7 +531,7 @@ public final class BuildManager implements Disposable {
   }
 
   public void runCommand(@NotNull Runnable command) {
-    myRequestsProcessor.schedule(command);
+    myRequestsProcessor.execute(command);
   }
 
   private void doNotify(final Supplier<Collection<? extends File>> pathsProvider, final boolean notifyDeletion) {
@@ -774,11 +782,7 @@ public final class BuildManager implements Disposable {
       if (window == null) {
         window = ComponentUtil.getActiveWindow();
       }
-
-      Component component = ComponentUtil.findUltimateParent(window);
-      if (component instanceof IdeFrame) {
-        project = ((IdeFrame)component).getProject();
-      }
+      project = getProjectForComponent(window);
     }
 
     return isValidProject(project)? project : null;
@@ -817,39 +821,49 @@ public final class BuildManager implements Disposable {
     }
   }
 
-  public void cancelPreloadedBuilds(@NotNull Project project) {
-    cancelPreloadedBuilds(getProjectPath(project));
+  @NotNull
+  public TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull Project project) {
+    return cancelPreloadedBuilds(getProjectPath(project));
   }
 
-  private void cancelPreloadedBuilds(@NotNull String projectPath) {
+  @NotNull
+  private TaskFuture<Boolean> cancelPreloadedBuilds(@NotNull String projectPath) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Cancel preloaded build for " + projectPath + "\n" + getThreadTrace(Thread.currentThread(), 50));
     }
+    CompletableFuture<Boolean> future = new CompletableFuture<>();
     runCommand(() -> {
       Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> pair = takePreloadedProcess(projectPath);
-      if (pair == null) {
-        return;
+      if (pair != null) {
+        stopProcess(projectPath, pair.first.getRequestID(), pair.second, future);
       }
+      else {
+        future.complete(Boolean.TRUE);
+      }
+    });
+    return new TaskFutureAdapter<>(future);
+  }
 
-      final RequestFuture<PreloadedProcessMessageHandler> future = pair.first;
-      final OSProcessHandler processHandler = pair.second;
-      myMessageDispatcher.cancelSession(future.getRequestID());
-      // waiting for the preloaded process from project's task queue guarantees no build is started for this project
-      // until this one gracefully exits and closes all its storages
-      getProjectData(projectPath).taskQueue.execute(() -> {
-        Throwable error = null;
-        try {
-          while (!processHandler.waitFor()) {
-            LOG.info("processHandler.waitFor() returned false for session " + future.getRequestID() + ", continue waiting");
-          }
+  private void stopProcess(@NotNull String projectPath, @NotNull UUID sessionId, @NotNull OSProcessHandler processHandler, @Nullable CompletableFuture<Boolean> future) {
+    myMessageDispatcher.cancelSession(sessionId);
+    // waiting for the process from project's task queue guarantees no build is started for this project
+    // until this one gracefully exits and closes all its storages
+    getProjectData(projectPath).taskQueue.execute(() -> {
+      Throwable error = null;
+      try {
+        while (!processHandler.waitFor()) {
+          LOG.info("processHandler.waitFor() returned false for session " + sessionId + ", continue waiting");
         }
-        catch (Throwable e) {
-          error = e;
+      }
+      catch (Throwable e) {
+        error = e;
+      }
+      finally {
+        notifySessionTerminationIfNeeded(sessionId, error);
+        if (future != null) {
+          future.complete(error == null? Boolean.TRUE : Boolean.FALSE);
         }
-        finally {
-          notifySessionTerminationIfNeeded(future.getRequestID(), error);
-        }
-      });
+      }
     });
   }
 
@@ -1404,15 +1418,33 @@ public final class BuildManager implements Disposable {
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
+    if (Boolean.getBoolean(JPS_USE_EXPERIMENTAL_STORAGE)) {
+      cmdLine.addParameter("-D" + JPS_USE_EXPERIMENTAL_STORAGE + "=true");
+    }
 
     String jnaBootLibraryPath = System.getProperty("jna.boot.library.path");
-    if (jnaBootLibraryPath != null) {
+    if (jnaBootLibraryPath != null && wslPath == null) {
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.boot.library.path=" + jnaBootLibraryPath);
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.nosys=true");
       //noinspection SpellCheckingInspection
       cmdLine.addParameter("-Djna.noclasspath=true");
+    }
+    if (Registry.is("jps.build.use.workspace.model")) {
+      cmdLine.addParameter("-Dintellij.jps.use.workspace.model=true");
+      WorkspaceModelCache cache = WorkspaceModelCache.getInstance(project);
+      GlobalWorkspaceModelCache globalCache = GlobalWorkspaceModelCache.getInstance();
+      if (cache != null && globalCache != null) {
+        //todo ensure that caches are up-to-date or use a different way to pass serialized workspace model to the build process
+        cmdLine.addParameter("-Djps.workspace.storage.project.cache.path=" + cache.getCacheFile());
+        cmdLine.addParameter("-Djps.workspace.storage.global.cache.path=" + globalCache.getCacheFile());
+        cmdLine.addParameter("-Djps.workspace.storage.relative.paths.in.cache=" + Registry.is("ide.workspace.model.store.relative.paths.in.cache", false));
+      }
+      else {
+        LOG.info("Workspace model caches aren't available and won't be used in the build process");
+      }
+      cmdLine.addParameter("--add-opens=java.base/java.util=ALL-UNNAMED");//used by com.esotericsoftware.kryo.kryo5.serializers.CachedFields.addField
     }
 
     if (sdkVersion != null) {
@@ -1521,17 +1553,15 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if (Registry.is("compiler.process.use.portable.caches") &&
+    if (RegistryManager.getInstance().is("compiler.process.use.portable.caches") &&
         CompilerCacheConfigurator.isServerUrlConfigured(project) &&
         CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");
     }
-    else {
-      // Unified IC implementation is not tested with portable caches yet, so if caches are enabled, stick with the old implementation
-      // DepGraph-based IC implementation
-      if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
-        cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
-      }
+
+    // DepGraph-based IC implementation
+    if (AdvancedSettings.getBoolean("compiler.unified.ic.implementation")) {
+      cmdLine.addParameter("-D" + GlobalOptions.DEPENDENCY_GRAPH_ENABLED + "=true");
     }
 
     // Java compiler's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
@@ -1865,9 +1895,9 @@ public final class BuildManager implements Disposable {
   }
 
   private abstract class BuildManagerPeriodicTask implements Runnable {
-    private final Alarm myAlarm;
+    private final Alarm alarm;
     private final AtomicBoolean myInProgress = new AtomicBoolean(false);
-    private final Runnable myTaskRunnable = () -> {
+    private final Runnable taskRunnable = () -> {
       try {
         runTask();
       }
@@ -1876,8 +1906,11 @@ public final class BuildManager implements Disposable {
       }
     };
 
-    BuildManagerPeriodicTask() {
-      myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, BuildManager.this);
+    private final @NotNull CoroutineScope coroutineScope;
+
+    BuildManagerPeriodicTask(@NotNull CoroutineScope coroutineScope) {
+      this.coroutineScope = coroutineScope;
+      alarm = new Alarm(coroutineScope, Alarm.ThreadToUse.POOLED_THREAD);
     }
 
     final void schedule() {
@@ -1886,11 +1919,11 @@ public final class BuildManager implements Disposable {
 
     private void schedule(boolean increasedDelay) {
       cancelPendingExecution();
-      myAlarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
+      alarm.addRequest(this, Math.max(100, increasedDelay ? 10 * getDelay() : getDelay()));
     }
 
     void cancelPendingExecution() {
-      myAlarm.cancelAllRequests();
+      alarm.cancelAllRequests();
     }
 
     protected boolean shouldPostpone() {
@@ -1906,7 +1939,7 @@ public final class BuildManager implements Disposable {
       final boolean shouldPostponeAllTasks = HeavyProcessLatch.INSTANCE.isRunning() || mySuspendBackgroundTasksCounter.get() > 0;
       if (!shouldPostponeAllTasks && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
-          AppJavaExecutorUtil.executeOnPooledIoThread(myTaskRunnable);
+          AppJavaExecutorUtil.executeOnPooledIoThread(coroutineScope, taskRunnable);
         }
         catch (CancellationException ignored) {
           // we were shut down

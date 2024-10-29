@@ -22,6 +22,7 @@ public final class JavaHighlightInfoTypes {
     HighlightDisplayKey.findOrRegister(MissortedImportsInspection.SHORT_NAME, MissortedImportsInspection.getDisplayNameText()), JavaHighlightingColors.MISSORTED_IMPORTS_ATTRIBUTES);
 
   public final static HighlightInfoType JAVA_KEYWORD = new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, JavaHighlightingColors.KEYWORD);
+  public final static HighlightInfoType JAVA_KEYWORD_CLASS_FILE = new HighlightInfoType.HighlightInfoTypeImpl(HighlightInfoType.SYMBOL_TYPE_SEVERITY, JavaHighlightingColors.KEYWORD);
 
   public final static HighlightInfoType CLASS_NAME = createSymbolTypeInfo(JavaHighlightingColors.CLASS_NAME_ATTRIBUTES);
   public final static HighlightInfoType LOCAL_VARIABLE = createSymbolTypeInfo(JavaHighlightingColors.LOCAL_VARIABLE_ATTRIBUTES);

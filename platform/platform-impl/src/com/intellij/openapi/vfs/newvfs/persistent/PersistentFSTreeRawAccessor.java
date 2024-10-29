@@ -25,14 +25,14 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
                               @NotNull PersistentFSRecordAccessor recordAccessor,
                               @NotNull PersistentFSConnection connection) {
     super(attributeAccessor, recordAccessor, connection);
-    
+
     if (!this.attributeAccessor.supportsRawAccess()) {
       throw new IllegalArgumentException("attributesAccessor must .supportsRawAccess(): " + attributeAccessor);
     }
   }
 
   @Override
-  @NotNull ListResult doLoadChildren(final int parentId) throws IOException {
+  @NotNull ListResult doLoadChildren(int parentId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(parentId);
     if (parentId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -40,37 +40,37 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
         "Super-root is a special file record for internal use, it MUST NOT be used directly");
     }
 
-    final PersistentFSRecordsStorage records = connection.getRecords();
+    PersistentFSRecordsStorage records = connection.records();
 
     //MAYBE RC: .listIds() and .doLoadChildren() both contains same code for reading&parsing children array. It seems
     //         they were implemented this way for optimization i.e. to avoid creating childrenIds array. Could be
     //         useful to check does it really matter -- otherwise code could be simplified, as below:
-    //final int[] childrenIds = listIds(parentId);
+    //int[] childrenIds = listIds(parentId);
     //if(childrenIds.length == 0){
     //  return new ListResult(Collections.emptyList(), parentId);
     //}else{
-    //  final List<ChildInfo> children =  new ArrayList<>(childrenIds.length);
+    //  List<ChildInfo> children =  new ArrayList<>(childrenIds.length);
     //  for (int childId : childrenIds) {
-    //    final int nameId = records.getNameId(childId);
-    //    final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
+    //    int nameId = records.getNameId(childId);
+    //    ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
     //    children.add(child);
     //  }
     //  return new ListResult(children, parentId);
     //}
 
-    final int parentModCount = records.getModCount(parentId);
-    final ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
-      final int count = DataInputOutputUtil.readINT(buffer);
-      final List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
-      final int maxID = connection.getRecords().maxAllocatedID();
+    int parentModCount = records.getModCount(parentId);
+    ListResult result = attributeAccessor.readAttributeRaw(parentId, CHILDREN_ATTR, buffer -> {
+      int count = DataInputOutputUtil.readINT(buffer);
+      List<ChildInfo> children = (count == 0) ? Collections.emptyList() : new ArrayList<>(count);
+      int maxID = records.maxAllocatedID();
       int prevId = parentId;
       for (int i = 0; i < count; i++) {
-        final int childId = DataInputOutputUtil.readINT(buffer) + prevId;
+        int childId = DataInputOutputUtil.readINT(buffer) + prevId;
         checkChildIdValid(parentId, childId, i, maxID);
         prevId = childId;
-        final int nameId = records.getNameId(childId);
+        int nameId = records.getNameId(childId);
         checkNameIdValid(nameId, parentId, childId);
-        final ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
+        ChildInfo child = new ChildInfoImpl(childId, nameId, null, null, null);
         children.add(child);
       }
       return new ListResult(parentModCount, children, parentId);
@@ -82,18 +82,18 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   }
 
   @Override
-  int @NotNull [] listIds(final int fileId) throws IOException {
+  int @NotNull [] listIds(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
         "Incorrect call .listIds() with is a super-root record id(=" + SUPER_ROOT_ID + ") -- use .listRoots() instead");
     }
 
-    final int[] childrenIds = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      final int count = DataInputOutputUtil.readINT(buffer);
-      final int[] result = ArrayUtil.newIntArray(count);
+    int[] childrenIds = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+      int count = DataInputOutputUtil.readINT(buffer);
+      int[] result = ArrayUtil.newIntArray(count);
       int prevId = fileId;
-      final int maxID = connection.getRecords().maxAllocatedID();
+      int maxID = connection.records().maxAllocatedID();
       for (int i = 0; i < count; i++) {
         prevId = result[i] = DataInputOutputUtil.readINT(buffer) + prevId;
         checkChildIdValid(fileId, prevId, i, maxID);
@@ -107,7 +107,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   }
 
   @Override
-  boolean mayHaveChildren(final int fileId) throws IOException {
+  boolean mayHaveChildren(int fileId) throws IOException {
     PersistentFSConnection.ensureIdIsValid(fileId);
     if (fileId == SUPER_ROOT_ID) {
       throw new AssertionError(
@@ -116,8 +116,8 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
       );
     }
 
-    final Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
-      final int count = DataInputOutputUtil.readINT(buffer);
+    Boolean hasChildren = attributeAccessor.readAttributeRaw(fileId, CHILDREN_ATTR, buffer -> {
+      int count = DataInputOutputUtil.readINT(buffer);
       return Boolean.valueOf(count != 0);
     });
     if (hasChildren == null) {
@@ -127,13 +127,13 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   }
 
   //@Override
-  //void doSaveChildren(final int parentId,
-  //                    final @NotNull ListResult toSave) throws IOException {
-  //  final List<? extends ChildInfo> children = toSave.children;
+  //void doSaveChildren(int parentId,
+  //                    @NotNull ListResult toSave) throws IOException {
+  //  List<? extends ChildInfo> children = toSave.children;
   //  {
   //    int prevId = parentId;
   //    for (ChildInfo childInfo : children) {
-  //      final int childId = childInfo.getId();
+  //      int childId = childInfo.getId();
   //      if (childId <= 0) {
   //        throw new IllegalArgumentException("ids must be >0 but got: " + childId + "; childInfo: " + childInfo + "; list: " + toSave);
   //      }
@@ -141,7 +141,7 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   //        FSRecords.LOG.error("Cyclic parent-child relations. parentId=" + parentId + "; list: " + toSave);
   //      }
   //      else {
-  //        final int delta = childId - prevId;
+  //        int delta = childId - prevId;
   //        if (prevId != parentId && delta <= 0) {
   //          throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " +
   //                                             parentId + "; delta: " + delta + "; childInfo: " + childInfo + "; prevId: " +
@@ -157,11 +157,11 @@ public final class PersistentFSTreeRawAccessor extends PersistentFSTreeAccessor 
   //
   //    int prevId = parentId;
   //    for (ChildInfo childInfo : children) {
-  //      final int childId = childInfo.getId();
+  //      int childId = childInfo.getId();
   //      if (childId == parentId) {
   //        continue;//skip, already logged above
   //      }
-  //      final int delta = childId - prevId;
+  //      int delta = childId - prevId;
   //      DataInputOutputUtil.writeINT(buffer, delta);
   //      prevId = childId;
   //    }

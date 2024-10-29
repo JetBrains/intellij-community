@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.json.JsonFileType;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonObject;
@@ -12,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import com.jetbrains.jsonSchema.impl.inspections.JsonSchemaComplianceInspection;
@@ -26,7 +25,6 @@ import java.util.Collections;
 
 import static com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema;
 
-@HardwareAgentRequired
 public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   public static final String BASE_PATH = "/tests/testData/jsonSchema/performance/";
 
@@ -46,7 +44,7 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   private void doTestAzurePerformance(boolean useNewImplementation) throws IOException {
     Registry.get("json.schema.object.v2").setValue(useNewImplementation);
 
-    PerformanceTestUtil.newPerformanceTest("Highlight azure json by schema", () -> {
+    Benchmark.newBenchmark("Highlight azure json by schema", () -> {
       myFixture.enableInspections(JsonSchemaComplianceInspection.class);
       myFixture.enableInspections(JsonSchemaRefReferenceInspection.class);
       myFixture.enableInspections(JsonSchemaDeprecationInspection.class);
@@ -89,11 +87,11 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         myFixture.doHighlighting();
       }
     });
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), test).attempts(5).start();
+    Benchmark.newBenchmark(getTestName(false), test).attempts(5).start();
   }
 
   public void testEslintHighlightingPerformance() {
-    PerformanceTestUtil.newPerformanceTest(getTestName(true), () -> {
+    Benchmark.newBenchmark(getTestName(true), () -> {
       PsiFile psiFile = myFixture.configureByFile(getTestName(true) + "/.eslintrc.json");
 
       for (int i = 0; i < 10; i++) {

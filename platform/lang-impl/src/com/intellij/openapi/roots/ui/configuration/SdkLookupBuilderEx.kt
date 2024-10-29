@@ -5,6 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class SdkLookupBuilderEx<T> {
   private val suggestedSdks = IdentityHashMap<Sdk, T>()

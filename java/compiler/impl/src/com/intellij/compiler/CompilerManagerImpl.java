@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler;
 
 import com.intellij.compiler.impl.*;
@@ -49,7 +49,8 @@ import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -343,7 +344,12 @@ public class CompilerManagerImpl extends CompilerManager {
 
   @Override
   public void rebuild(CompileStatusNotification callback) {
-    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback));
+    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback), false);
+  }
+
+  @Override
+  public void rebuildClean(@Nullable CompileStatusNotification callback) {
+    new CompileDriver(myProject).rebuild(new ListenerNotificator(callback), true);
   }
 
   @Override

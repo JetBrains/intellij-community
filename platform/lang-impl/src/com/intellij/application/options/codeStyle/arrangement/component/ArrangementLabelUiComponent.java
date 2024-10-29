@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
@@ -10,8 +10,8 @@ import javax.swing.*;
 
 public final class ArrangementLabelUiComponent extends AbstractArrangementUiComponent {
 
-  @NotNull private final ArrangementAtomMatchCondition myCondition;
-  @NotNull private final JLabel                        myLabel;
+  private final @NotNull ArrangementAtomMatchCondition myCondition;
+  private final @NotNull JLabel                        myLabel;
 
   public ArrangementLabelUiComponent(@NotNull ArrangementSettingsToken token) {
     super(token);
@@ -19,9 +19,8 @@ public final class ArrangementLabelUiComponent extends AbstractArrangementUiComp
     myLabel = new JLabel(token.getRepresentationValue());
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return myCondition.getType();
   }
 
@@ -30,9 +29,8 @@ public final class ArrangementLabelUiComponent extends AbstractArrangementUiComp
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     return myCondition;
   }
 

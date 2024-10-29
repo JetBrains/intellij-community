@@ -54,8 +54,10 @@ internal class LanguageDetectionInspection : LocalInspectionTool() {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
         if (element is PsiWhiteSpace || areChecksDisabled(element)) return
-        val context = session.getUserData(key)!!
         val texts = TextExtractor.findUniqueTextsAt(element, domains)
+        if (GrazieInspection.skipCheckingTooLargeTexts(texts)) return
+
+        val context = session.getUserData(key)!!
         texts.forEach {
           ProgressManager.checkCanceled()
           LangDetector.updateContext(it, context)

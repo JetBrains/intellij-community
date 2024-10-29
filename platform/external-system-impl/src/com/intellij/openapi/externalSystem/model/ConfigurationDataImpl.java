@@ -14,6 +14,7 @@ import org.jetbrains.io.JsonUtil;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public final class ConfigurationDataImpl extends AbstractExternalEntityData implements ConfigurationData {
   @Language("JSON") @NotNull private final String data;

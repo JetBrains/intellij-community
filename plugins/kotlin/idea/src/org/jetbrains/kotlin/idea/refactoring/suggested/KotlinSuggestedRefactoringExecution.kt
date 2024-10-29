@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.utils.addIfNotNull
 
 class KotlinSuggestedRefactoringExecution(
-    refactoringSupport: KotlinSuggestedRefactoringSupport
+    refactoringSupport: KotlinSuggestedRefactoringSupportBase
 ) : SuggestedRefactoringExecution(refactoringSupport) {
 
     private data class PrepareChangeSignatureResult(

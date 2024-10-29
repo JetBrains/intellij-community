@@ -112,4 +112,18 @@ class EqualsWithItself {
       }
     }
   }
+
+  void testComparator() {
+    if (myComparator.<warning descr="'compare()' called on itself">compare</warning>(null, null) == 0) {
+      System.out.println("ok");
+    }
+    org.testng.Assert.assertEquals(myComparator.<warning descr="'compare()' called on itself">compare</warning>(null, null), 0);
+  }
+
+  Comparator myComparator = new Comparator() {
+    @Override
+    public int compare(Object o1, Object o2) {
+      return 0;
+    }
+  };
 }

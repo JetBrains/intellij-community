@@ -6,6 +6,7 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.JavaHierarchyUtil
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase
+import com.intellij.ide.hierarchy.type.TypeHierarchyNodeDescriptor
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
@@ -13,6 +14,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.psi.ElementDescriptionUtil
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.usageView.UsageViewLongNameLocation
 import org.jetbrains.kotlin.psi.KtClass
@@ -45,7 +47,7 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
     }
 
     override fun getElementFromDescriptor(descriptor: HierarchyNodeDescriptor): PsiElement? {
-        return (descriptor as? KotlinTypeHierarchyNodeDescriptor)?.psiElement
+        return (descriptor as? KotlinTypeHierarchyNodeDescriptor)?.psiElement ?: (descriptor as? TypeHierarchyNodeDescriptor)?.psiElement
     }
 
     override fun createLegendPanel(): JPanel? {
@@ -82,11 +84,11 @@ class KotlinTypeHierarchyBrowser(project: Project, klass: KtClassOrObject) : Typ
     }
 
     override fun canBeDeleted(psiElement: PsiElement?): Boolean {
-        return psiElement is KtClassOrObject && psiElement.name != null
+        return psiElement is KtClassOrObject && psiElement.name != null || psiElement is PsiClass && psiElement.name != null
     }
 
     override fun getQualifiedName(psiElement: PsiElement?): String? {
-        return (psiElement as? KtClassOrObject)?.fqName?.asString() ?: ""
+        return (psiElement as? KtClassOrObject)?.fqName?.asString() ?: (psiElement as? PsiClass)?.qualifiedName ?: ""
     }
 
     companion object {

@@ -53,6 +53,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.progress.util.ProgressIndicatorWithDelayedPresentation;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
@@ -64,7 +65,10 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SyntaxTraverser;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -73,6 +77,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.concurrency.annotations.RequiresWriteLock;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -88,6 +93,7 @@ import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -113,6 +119,7 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
   protected boolean myInitialRediffFinished;
   protected boolean myContentModified;
   protected boolean myResolveImportConflicts;
+  protected boolean myResolveImportsPossible;
 
   private List<PsiFile> myPsiFiles = new ArrayList<>();
 
@@ -409,10 +416,15 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         sequences.addAll(ContainerUtil.map(contents, content -> content.getDocument().getImmutableCharSequence()));
         if (getTextSettings().isAutoResolveImportConflicts()) {
           initPsiFiles();
-          return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+          boolean canImportsBeProcessedAutomatically = canImportsBeProcessedAutomatically();
+          myResolveImportsPossible = canImportsBeProcessedAutomatically;
+          if (canImportsBeProcessedAutomatically) {
+            return MergeImportUtil.getImportMergeRange(myProject, myPsiFiles);
+          }
         }
         return null;
       });
+
       MergeLineFragmentsWithImportMetadata lineFragments = getLineFragments(indicator, sequences, importRange, ignorePolicy);
       List<LineOffsets> lineOffsets = ContainerUtil.map(sequences, LineOffsetsUtil::create);
       List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments.getFragments(), fragment -> {
@@ -549,6 +561,30 @@ public class MergeThreesideViewer extends ThreesideTextDiffViewerEx {
         applyNonConflictedChanges(ThreeSide.BASE);
       }
     }
+  }
+
+  private boolean canImportsBeProcessedAutomatically() {
+    try {
+      return canSideBeProcessed(ThreeSide.LEFT) && canSideBeProcessed(ThreeSide.RIGHT);
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+    return false;
+  }
+
+  private boolean canSideBeProcessed(ThreeSide side) {
+    if (DumbService.isDumb(myProject)) return false;
+    AtomicReference<Boolean> atLeastOnReferenceFound = new AtomicReference<>(false);
+    return SyntaxTraverser.psiTraverser(side.select(myPsiFiles))
+             .traverse(TreeTraversal.PLAIN_BFS)
+             .processEach(element -> {
+               PsiReference reference = element.getReference();
+               if (reference == null) return true;
+               atLeastOnReferenceFound.set(true);
+               PsiElement resolved = reference.resolve();
+               return resolved != null || reference.isSoft();
+             }) && atLeastOnReferenceFound.get();
   }
 
   @Override

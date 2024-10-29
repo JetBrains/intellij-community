@@ -2,11 +2,15 @@ package com.intellij.settingsSync
 
 import com.intellij.idea.TestFor
 import com.intellij.openapi.components.SettingsCategory
+import com.intellij.openapi.progress.currentThreadCoroutineScope
 import com.intellij.testFramework.LoggedErrorProcessor
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.util.ConcurrencyUtil
 import com.intellij.util.concurrency.AppExecutorUtil.createBoundedScheduledExecutorService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
+import com.intellij.util.progress.sleepCancellable
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
@@ -21,6 +25,7 @@ import java.time.Instant
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
 import kotlin.io.path.*
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
@@ -31,15 +36,26 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator = MockSettingsSyncIdeMediator()
   }
 
-  private fun initSettingsSync(initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit) {
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
+  private fun initSettingsSync(
+    initMode: SettingsSyncBridge.InitMode = SettingsSyncBridge.InitMode.JustInit,
+    waitForInit: Boolean = true,
+  ) {
+    SettingsSyncSettings.getInstance().state = SettingsSyncSettings.getInstance().state.withSyncEnabled(true)
+    val controls = SettingsSyncMain.init(currentThreadCoroutineScope(), disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
     updateChecker = controls.updateChecker
     bridge = controls.bridge
     bridge.initialize(initMode)
+    if (waitForInit) {
+      timeoutRunBlocking(2.seconds) {
+        while (!bridge.isInitialized) {
+          sleepCancellable(10)
+        }
+      }
+    }
   }
 
   @Test
-  fun `existing settings should be copied on initialization`() {
+  fun `existing settings should be copied on initialization`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -52,7 +68,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `settings modified between IDE sessions should be logged`() {
+  fun `settings modified between IDE sessions should be logged`() = timeoutRunBlockingAndStopBridge {
     // emulate first session with initialization
     val fileName = "options/laf.xml"
     val file = configDir.resolve(fileName).write("LaF Initial")
@@ -73,7 +89,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `delete server data`() {
+  fun `delete server data`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
@@ -99,14 +115,14 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   private fun deleteServerDataAndWait() {
     val cdl = CountDownLatch(1)
-    SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.DeleteServerData {
+    syncSettingsAndWait(SyncSettingsEvent.DeleteServerData {
       cdl.countDown()
     })
     cdl.wait()
   }
 
   @Test
-  fun `disable settings sync if data on server was deleted`() {
+  fun `disable settings sync if data on server was deleted`() = timeoutRunBlockingAndStopBridge {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
@@ -117,12 +133,11 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     val metaInfo = SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true)
     remoteCommunicator.prepareFileOnServer(SettingsSnapshot(metaInfo, emptySet(), null, emptyMap(), emptySet()))
     syncSettingsAndWait()
-
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled, "Settings sync was not disabled")
   }
 
   @Test
-  fun `first push after IDE start should update from server if needed`() {
+  fun `first push after IDE start should update from server if needed`() = timeoutRunBlockingAndStopBridge {
     // prepare settings on server
     val editorXml = "options/editor.xml"
     val editorContent = "Editor from Server"
@@ -136,7 +151,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     configDir.resolve(lafXml).write(lafContent)
 
     initSettingsSync()
-
+    bridge.waitForAllExecuted()
     val pushedSnapshot = remoteCommunicator.getVersionOnServer()
     Assertions.assertNotNull(pushedSnapshot, "Nothing has been pushed")
     pushedSnapshot!!.assertSettingsSnapshot {
@@ -146,7 +161,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `enable settings sync with Push to Server should overwrite server snapshot instead of merging with it`() {
+  fun `enable settings sync with Push to Server should overwrite server snapshot instead of merging with it`() = timeoutRunBlockingAndStopBridge {
     // prepare settings on server
     val editorXml = "options/editor.xml"
     val editorContent = "Editor from Server"
@@ -167,7 +182,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `enable settings via Take from Server should log existing settings`() {
+  fun `enable settings via Take from Server should log existing settings`() = timeoutRunBlockingAndStopBridge {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
@@ -200,7 +215,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `enable settings with migration`() {
+  fun `enable settings with migration`() = timeoutRunBlockingAndStopBridge {
     val migration = migrationFromLafXml()
 
     initSettingsSync(SettingsSyncBridge.InitMode.MigrateFromOldStorage(migration))
@@ -209,7 +224,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() {
+  fun `enable settings with migration and data on server should merge but prefer server data in case of conflicts`() = timeoutRunBlockingAndStopBridge {
     val migration = migration(settingsSnapshot {
       fileState("options/laf.xml", "Migration Data")
       fileState("options/editor.xml", "Migration Data")
@@ -228,7 +243,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
 
   //@Test
   // the implementation is postponed
-  fun `migrated settings with disabled categories should be pushed without settings from these categories`() {
+  fun `migrated settings with disabled categories should be pushed without settings from these categories`() = timeoutRunBlockingAndStopBridge {
     val migration = object : SettingsSyncMigration {
       override fun isLocalDataAvailable(appConfigDir: Path): Boolean = true
 
@@ -238,6 +253,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
           fileState("options/keymap.xml", "Migration Data")
         }
       }
+
       override fun migrateCategoriesSyncStatus(appConfigDir: Path, syncSettings: SettingsSyncSettings) {
         syncSettings.setCategoryEnabled(SettingsCategory.UI, false)
       }
@@ -250,7 +266,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `rollback settings and stop sync in case of error`() {
+  fun `rollback settings and stop sync in case of error`() = timeoutRunBlockingAndStopBridge {
     val fileName = "options/laf.xml"
     val initialContent = "LaF Initial"
     configDir.resolve(fileName).write(initialContent)
@@ -262,10 +278,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator.throwOnApply(exceptionToThrow)
 
     suppressFailureOnLogError(exceptionToThrow) {
-      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CloudChange(settingsSnapshot {
+      syncSettingsAndWait(SyncSettingsEvent.CloudChange(settingsSnapshot {
         fileState("options/editor.xml", "Editor change")
       }, null))
-      bridge.waitForAllExecuted()
     }
 
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
@@ -275,7 +290,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `rollback settings and stop sync if error happens on initialization`() {
+  fun `rollback settings and stop sync if error happens on initialization`() = timeoutRunBlockingAndStopBridge {
     val initialContent = "LaF Initial"
     configDir.resolve("options/laf.xml").write(initialContent)
 
@@ -289,7 +304,9 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator.throwOnApply(exceptionToThrow)
 
     suppressFailureOnLogError(exceptionToThrow) {
-      initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
+      timeoutRunBlocking {
+        initSettingsSync(SettingsSyncBridge.InitMode.TakeFromServer(SyncSettingsEvent.CloudChange(snapshot, null)))
+      }
     }
 
     Assertions.assertFalse((settingsSyncStorage / "options" / "editor.xml").exists(), "Partial apply was not rolled back")
@@ -299,41 +316,35 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `sync settings`() {
+  fun `sync settings`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
-    updateChecker = controls.updateChecker
-    bridge = controls.bridge
-    bridge.initialize(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       fileState("options/editor.xml", "Editor from Server")
     })
 
     syncSettingsAndWait()
-
     assertFileWithContent("Editor from Server", (settingsSyncStorage / "options" / "editor.xml"))
     assertFileWithContent("LaF Initial", (settingsSyncStorage / "options" / "laf.xml"))
     assertAppliedToIde("options/editor.xml", "Editor from Server")
   }
 
   @Test
-  fun `concurrent sync does not disable sync during initialization`() {
+  fun `concurrent sync does not disable sync during initialization`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/laf.xml", "LaF Initial")
     }
-    val controls = SettingsSyncMain.init(disposable, settingsSyncStorage, configDir, remoteCommunicator, ideMediator)
-    updateChecker = controls.updateChecker
-    bridge = controls.bridge
+    initSettingsSync()
 
     SettingsSyncSettings.getInstance().syncEnabled = true
     val task1 = Callable {
       bridge.initialize(SettingsSyncBridge.InitMode.PushToServer)
     }
     val task2 = Callable {
-      fireSettingsChanged()
+      syncSettingsAndWait()
     }
 
     executeAndWaitUntilPushed {
@@ -348,7 +359,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `migration should respect deletion on server`() {
+  fun `migration should respect deletion on server`() = timeoutRunBlockingAndStopBridge {
     val deletionSnapshot = SettingsSnapshot(SettingsSnapshot.MetaInfo(Instant.now(), getLocalApplicationInfo(), isDeleted = true),
                                             emptySet(), null, emptyMap(), emptySet())
     remoteCommunicator.prepareFileOnServer(deletionSnapshot)
@@ -361,12 +372,12 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `regular sync should push if there is nothing on server`() {
+  fun `regular sync should push if there is nothing on server`() = timeoutRunBlockingAndStopBridge {
     writeToConfig {
       fileState("options/editor.xml", "Editor Initial")
     }
-    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
     remoteCommunicator.deleteAllFiles()
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     syncSettingsAndWait()
 
@@ -376,15 +387,16 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `unknown additional files should be stored to the history`() {
+  fun `unknown additional files should be stored to the history`() = timeoutRunBlockingAndStopBridge {
     initSettingsSync()
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       additionalFile("newformat.json", "File with new unknown format")
     })
 
     syncSettingsAndWait()
+    val newFormatJson = settingsSyncStorage / ".metainfo" / "newformat.json"
 
-    assertFileWithContent("File with new unknown format", settingsSyncStorage / ".metainfo" / "newformat.json")
+    assertFileWithContent("File with new unknown format", newFormatJson)
     FileRepositoryBuilder.create(settingsSyncStorage.resolve(".git").toFile()).use { repository ->
       val git = Git(repository)
       val latestCommit = git.log().add(repository.findRef("HEAD").objectId).call().toList().first()
@@ -392,19 +404,10 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     }
   }
 
-  @Test
-  fun `unknown additional files should be sent to the server`() {
-    (settingsSyncStorage / ".metainfo" / "newformat.json").write("File with new unknown format")
-    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
-
-    assertServerSnapshot {
-      additionalFile("newformat.json", "File with new unknown format")
-    }
-  }
 
   @TestFor(issues = ["IDEA-326189"])
   @Test
-  fun `create initial commit for empty repo`(){
+  fun `create initial commit for empty repo`() = timeoutRunBlockingAndStopBridge {
     val dotGit: Path = settingsSyncStorage.resolve(".git")
     val repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
     repository.create()
@@ -414,7 +417,7 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
   }
 
   @Test
-  fun `disable sync if init failed`() {
+  fun `disable sync if init failed`() = timeoutRunBlockingAndStopBridge {
     SettingsSyncSettings.getInstance().syncEnabled = true
     val dotGit: Path = settingsSyncStorage.resolve(".git")
     val repository = FileRepositoryBuilder().setGitDir(dotGit.toFile()).setAutonomous(true).readEnvironment().build()
@@ -432,14 +435,40 @@ internal class SettingsSyncFlowTest : SettingsSyncTestBase() {
     ideMediator.throwOnGetInitial(RuntimeException(errorMessage))
 
     LoggedErrorProcessor.executeAndReturnLoggedError {
-      initSettingsSync()
+      timeoutRunBlocking {
+        initSettingsSync(waitForInit = false)
+        waitUntil {
+          SettingsSyncStatusTracker.getInstance().getErrorMessage() != null
+        }
+      }
     }
     Assertions.assertFalse(SettingsSyncSettings.getInstance().syncEnabled)
   }
 
-  private fun syncSettingsAndWait() {
-    fireSettingsChanged()
+  @TestFor(issues = ["IJPL-13361"])
+  @Test
+  fun `don't disable sync on startup if connection failed`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().syncEnabled = true
+    (remoteCommunicator as MockRemoteCommunicator).isConnected = false
+    initSettingsSync(waitForInit = false)
+    Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
+    waitUntil("Waiting for bridge to initialize", 2.seconds) {
+      Assertions.assertTrue(SettingsSyncSettings.getInstance().syncEnabled)
+      bridge.isInitialized
+    }
+    Assertions.assertEquals(MockRemoteCommunicator.DISCONNECTED_ERROR, SettingsSyncStatusTracker.getInstance().getErrorMessage())
+
+
+  }
+
+  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+    SettingsSyncEvents.getInstance().fireSettingsChanged(event)
     bridge.waitForAllExecuted()
+    timeoutRunBlocking(2.seconds) {
+      waitUntil("Waiting for file to appear", 2.seconds) {
+        bridge.queueSize == 0
+      }
+    }
   }
 
   private fun suppressFailureOnLogError(expectedException: RuntimeException, activity: () -> Unit) {

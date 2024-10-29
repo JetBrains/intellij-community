@@ -1,0 +1,13 @@
+// "Make 'foo' private" "true"
+// ACTION: Convert parameter to receiver
+// ACTION: Enable a trailing comma by default in the formatter
+// ACTION: Make 'PrivateType' public
+// ACTION: Make 'foo' private
+// ACTION: Remove parameter 'arg'
+
+private class PrivateType
+
+private fun foo(<caret>arg: PrivateType) {}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToPrivateFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.ChangeVisibilityFixFactories$ChangeToPrivateModCommandAction

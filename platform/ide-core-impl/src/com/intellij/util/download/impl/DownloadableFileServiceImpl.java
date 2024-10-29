@@ -3,13 +3,11 @@ package com.intellij.util.download.impl;
 
 import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.download.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.net.URL;
 import java.util.List;
 
@@ -44,12 +42,5 @@ final class DownloadableFileServiceImpl extends DownloadableFileService {
   public @NotNull FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
                                                   @NotNull String presentableDownloadName) {
     return new FileDownloaderImpl(fileDescriptions, null, null, presentableDownloadName);
-  }
-
-  @Override
-  public @NotNull FileDownloader createDownloader(final List<? extends DownloadableFileDescription> fileDescriptions,
-                                                  final @Nullable Project project,
-                                                  JComponent parent, @NotNull String presentableDownloadName) {
-    return new FileDownloaderImpl(fileDescriptions, project, parent, presentableDownloadName);
   }
 }

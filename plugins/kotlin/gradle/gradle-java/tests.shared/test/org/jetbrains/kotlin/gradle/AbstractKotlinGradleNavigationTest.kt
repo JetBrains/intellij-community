@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.TestRoot
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.TestMetadata
+import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.annotations.BaseGradleVersionSource
 import org.jetbrains.plugins.gradle.testFramework.util.withBuildFile
@@ -21,7 +22,7 @@ private const val EXPECTED_NAVIGATION_DIRECTIVE = "EXPECTED-NAVIGATION-SUBSTRING
 
 @TestRoot("idea/tests/testData/")
 @TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("gradle/navigation")
+@TestMetadata("../../../idea/tests/testData/gradle/navigation/")
 abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTest() {
 
     private val actionName: String get() = IdeActions.ACTION_GOTO_DECLARATION
@@ -104,7 +105,10 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
     }
 
     private fun verifyNavigationFromCaretToExpected(gradleVersion: GradleVersion) {
-        test(gradleVersion, GRADLE_KOTLIN_FIXTURE) {
+        val systemSettings = GradleSystemSettings.getInstance()
+        systemSettings.isDownloadSources = true
+
+        test(gradleVersion, GRADLE_KMP_KOTLIN_FIXTURE) {
             val mainFileContent = mainTestDataFile
             val mainFile = mainTestDataPsiFile
             val expectedNavigationText =
@@ -122,13 +126,69 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 mainFile.virtualFile.toNioPath(),
                 if (useK2Plugin == true) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
             ) {
-                assertTrue("Actual text:\n\n$text") { text.contains(expectedNavigationText) }
+                assertTrue("Actual text:\n\n$text") {
+                    !text.contains(EXPECTED_NAVIGATION_DIRECTIVE) && text.contains(expectedNavigationText)
+                }
             }
         }
     }
 
     companion object {
-        val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+        val GRADLE_COMPOSITE_BUILD_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("GradleKotlinFixture")
+                includeBuild("not-build-src")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withPlugin("some-custom-plugin")
+            }
+            withFile(
+                "not-build-src/src/main/kotlin/utils.kt",
+                """
+                    import org.gradle.api.Plugin
+                    import org.gradle.api.Project
+
+                    class SomeCustomPlugin: Plugin<Project> {
+                        override fun apply(target: Project) {
+                            // no-op
+                        }
+                    }
+
+                    const val kotlinStdLib = "..."
+                """.trimIndent()
+            )
+            withSettingsFile(useKotlinDsl = true, relativeModulePath = "not-build-src") {
+                addCode("""
+                    pluginManagement {
+                        repositories {
+                            gradlePluginPortal()
+                        }
+                    }
+                """.trimIndent())
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "not-build-src", useKotlinDsl = true) {
+                withPrefix {
+                    code("""
+                        plugins {
+                            id("java-gradle-plugin")
+                            `kotlin-dsl`
+                        }
+                    """.trimIndent())
+                }
+                withMavenCentral()
+                withPostfix {
+                    code("""
+                        gradlePlugin {
+                            plugins.register("some-custom-plugin") {
+                                id = "some-custom-plugin"
+                                implementationClass = "SomeCustomPlugin"
+                            }
+                        }
+                    """.trimIndent())
+                }
+            }
+        }
+        val GRADLE_KMP_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("GradleKotlinFixture")
                 include("module1", ":module1:a-module11", ":module1:a-module11:module111")
@@ -139,9 +199,7 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 withMavenCentral()
             }
             withBuildFile(gradleVersion, relativeModulePath = "buildSrc", useKotlinDsl = true) {
-                withKotlinJvmPlugin()
-                withMavenCentral()
-                withDirectory("src/main/java/")
+                withKotlinDsl()
             }
             withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
                 withKotlinMultiplatformPlugin()
@@ -168,8 +226,41 @@ abstract class AbstractKotlinGradleNavigationTest : AbstractGradleCodeInsightTes
                 kotlin = "1.9.24"
                 """.trimIndent()
             )
+            withFile(
+                "gradle.properties",
+                """
+                kotlin.code.style=official
+                """.trimIndent()
+            )
+            withFile(
+                "buildSrc/src/main/kotlin/MyTask.kt",
+                """
+                    
+                """.trimIndent()
+            )
             withDirectory("src/main/kotlin")
         }
-    }
 
+        val GRADLE_KOTLIN_FIXTURE: GradleTestFixtureBuilder = GradleTestFixtureBuilder.create("GradleKotlinFixture") { gradleVersion ->
+            withSettingsFile(useKotlinDsl = true) {
+                setProjectName("GradleKotlinFixture")
+                include(":module1")
+                enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+            }
+            withBuildFile(gradleVersion, useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withBuildFile(gradleVersion, relativeModulePath = "module1", useKotlinDsl = true) {
+                withKotlinDsl()
+                withMavenCentral()
+            }
+            withFile(
+                "gradle.properties",
+                """
+                kotlin.code.style=official
+                """.trimIndent()
+            )
+        }
+    }
 }

@@ -1,18 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.prefs.Preferences;
 
@@ -23,7 +22,7 @@ public final class PermanentInstallationID {
   private static final Logger LOG = Logger.getInstance("#PermanentInstallationID");
 
   private static final String OLD_USER_ON_MACHINE_ID_KEY = "JetBrains.UserIdOnMachine";
-  private static final @NonNls String INSTALLATION_ID_KEY = "user_id_on_machine";
+  private static final String INSTALLATION_ID_KEY = "user_id_on_machine";
   private static final String INSTALLATION_ID = calculateInstallationId();
 
   public static @NotNull String get() {
@@ -31,19 +30,21 @@ public final class PermanentInstallationID {
   }
 
   private static String calculateInstallationId() {
-    String installationId = null;
+    var installationId = "";
+
     try {
-      final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      final Preferences oldPrefs = Preferences.userRoot();
-      final String oldValue = appInfo.isVendorJetBrains()? oldPrefs.get(OLD_USER_ON_MACHINE_ID_KEY, null) : null; // compatibility with previous versions
+      var appInfo = ApplicationInfoImpl.getShadowInstance();
+      var oldPreferences = Preferences.userRoot();
+      var oldValue = appInfo.isVendorJetBrains() ? oldPreferences.get(OLD_USER_ON_MACHINE_ID_KEY, "") : ""; // compatibility with previous versions
 
-      final String companyName = appInfo.getShortCompanyName();
-      final Preferences prefs = Preferences.userRoot().node(StringUtil.isEmptyOrSpaces(companyName)? "jetbrains" : StringUtil.toLowerCase(companyName));
+      var companyName = appInfo.getShortCompanyName();
+      var nodeName = companyName == null || companyName.isBlank() ? "jetbrains" : companyName.toLowerCase(Locale.ROOT);
+      var preferences = Preferences.userRoot().node(nodeName);
 
-      installationId = prefs.get(INSTALLATION_ID_KEY, null);
-      if (StringUtil.isEmptyOrSpaces(installationId)) {
-        installationId = !StringUtil.isEmptyOrSpaces(oldValue) ? oldValue : UUID.randomUUID().toString();
-        prefs.put(INSTALLATION_ID_KEY, installationId);
+      installationId = preferences.get(INSTALLATION_ID_KEY, "");
+      if (installationId.isBlank()) {
+        installationId = !oldValue.isBlank() ? oldValue : UUID.randomUUID().toString();
+        preferences.put(INSTALLATION_ID_KEY, installationId);
       }
 
       if (!appInfo.isVendorJetBrains()) {
@@ -52,62 +53,49 @@ public final class PermanentInstallationID {
 
       // for Windows attempt to use PermanentUserId, so that DotNet products and IDEA would use the same ID.
       if (SystemInfo.isWindows) {
-        installationId = syncWithSharedFile("PermanentUserId", installationId, prefs, INSTALLATION_ID_KEY);
+        installationId = syncWithSharedFile("PermanentUserId", installationId, preferences, INSTALLATION_ID_KEY);
       }
 
       // make sure values in older location and in the new location are the same
       if (!installationId.equals(oldValue)) {
-        oldPrefs.put(OLD_USER_ON_MACHINE_ID_KEY, installationId);
+        oldPreferences.put(OLD_USER_ON_MACHINE_ID_KEY, installationId);
       }
     }
-    catch (Throwable ex) {
+    catch (Throwable t) {
       // should not happen
-      LOG.info("Unexpected error initializing Installation ID", ex);
-    }
-
-    return installationId == null? UUID.randomUUID().toString() : installationId;
-  }
-
-  public static @NotNull String syncWithSharedFile(@NotNull String fileName, @NotNull String installationId, @NotNull Preferences prefs, @NotNull String prefsKey) {
-    try {
-      final String appdata = System.getenv("APPDATA");
-      if (appdata != null) {
-        final File dir = new File(appdata, "JetBrains");
-        if (dir.exists() || dir.mkdirs()) {
-          final File permanentIdFile = new File(dir, fileName);
-          String fromFile = "";
-          if (permanentIdFile.exists()) {
-            fromFile = loadFromFile(permanentIdFile).trim();
-          }
-          if (!fromFile.isEmpty()) {
-            if (!fromFile.equals(installationId)) {
-              installationId = fromFile;
-              prefs.put(prefsKey, installationId);
-            }
-          }
-          else {
-            writeToFile(permanentIdFile, installationId);
-          }
-        }
+      LOG.info("Unexpected error initializing Installation ID", t);
+      if (installationId.isBlank()) {
+        installationId = UUID.randomUUID().toString();
       }
     }
-    catch (Throwable ex) {
-      LOG.info("Error synchronizing Installation ID", ex);
-    }
+
     return installationId;
   }
 
-  private static @NotNull String loadFromFile(@NotNull File file) throws IOException {
-    try (FileInputStream is = new FileInputStream(file)) {
-      final byte[] bytes = FileUtilRt.loadBytes(is);
-      final int offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
-      return new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
+  @SuppressWarnings({"SameParameterValue", "DuplicatedCode"})
+  private static String syncWithSharedFile(String fileName, String installationId, Preferences preferences, String prefKey) {
+    var appdata = System.getenv("APPDATA");
+    if (appdata != null) {
+      try {
+        var permanentIdFile = Path.of(appdata, "JetBrains", fileName);
+        Files.createDirectories(permanentIdFile.getParent());
+        try {
+          var bytes = Files.readAllBytes(permanentIdFile);
+          var offset = CharsetToolkit.hasUTF8Bom(bytes) ? CharsetToolkit.UTF8_BOM.length : 0;
+          var fromFile = new String(bytes, offset, bytes.length - offset, StandardCharsets.UTF_8);
+          if (!fromFile.equals(installationId)) {
+            installationId = fromFile;
+            preferences.put(prefKey, installationId);
+          }
+        }
+        catch (NoSuchFileException ignored) {
+          Files.writeString(permanentIdFile, installationId);
+        }
+      }
+      catch (Throwable t) {
+        LOG.info("Error synchronizing Installation ID", t);
+      }
     }
-  }
-
-  private static void writeToFile(@NotNull File file, @NotNull String text) throws IOException {
-    try (DataOutputStream stream = new DataOutputStream(new FileOutputStream(file))) {
-      stream.write(text.getBytes(StandardCharsets.UTF_8));
-    }
+    return installationId;
   }
 }

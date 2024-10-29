@@ -18,20 +18,20 @@ public final class TextFieldWithAutoCompletionWithCache<T> extends TextFieldWith
   private final boolean myShowBottomPanel;
   private final boolean myAllowAutoPopupWithSlash;
 
-  public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
+  private TextFieldWithAutoCompletionWithCache(@Nullable Project project,
                                               @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
                                               boolean showCompletionHint, @Nullable String text) {
     this(project, provider, showCompletionHint, text, true, false, false);
   }
 
-  public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
+  private TextFieldWithAutoCompletionWithCache(@Nullable Project project,
                                               @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
                                               boolean showCompletionHint, @Nullable String text,
                                               boolean showBottomPanel) {
     this(project, provider, showCompletionHint, text, showBottomPanel, false, false);
   }
 
-  public TextFieldWithAutoCompletionWithCache(@Nullable Project project,
+  private TextFieldWithAutoCompletionWithCache(@Nullable Project project,
                                               @NotNull TextFieldWithAutoCompletionWithCacheListProvider<T> provider,
                                               boolean showCompletionHint, @Nullable String text,
                                               boolean showBottomPanel, boolean allowAutoPopupWithSlash, boolean forbidWordCompletion) {

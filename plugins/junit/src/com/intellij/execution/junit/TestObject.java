@@ -522,6 +522,11 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getForkMode();
   }
 
+  @Override
+  protected boolean isPrintAsyncStackTraceForExceptions() {
+    return getConfiguration().isPrintAsyncStackTraceForExceptions();
+  }
+
   /**
    * Dependencies for full & forked per module configurations are downloaded;
    * <p>
@@ -806,7 +811,8 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private static boolean isCustomJunit5TestEngineName(@Nullable String engineImplClassName) {
     return !"org.junit.jupiter.engine.JupiterTestEngine".equals(engineImplClassName) &&
-           !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName);
+           !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName) &&
+           !"org.spockframework.runtime.SpockEngine".equals(engineImplClassName);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.ide.ui.ProductIcons;
@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -96,12 +97,9 @@ public class CreateBranchOrTagDialog extends DialogWrapper {
     }
     mySrcURL = info.getUrl();
 
-    myWorkingCopyField.addBrowseFolderListener(
-      message("dialog.title.select.working.copy.location"),
-      message("label.select.location.to.copy.from"),
-      myProject,
-      FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    );
+    myWorkingCopyField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(message("dialog.title.select.working.copy.location"))
+      .withDescription(message("label.select.location.to.copy.from")));
     myWorkingCopyField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull final DocumentEvent e) {

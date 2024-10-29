@@ -101,7 +101,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   internal fun remove(id: EntityId): T? {
-    LOG.trace { "Remove $id from external index" }
+    LOG.trace { "Remove ${id.asString()} from external index" }
     val removed = index.remove(id)
     if (removed != null) {
       indexLogBunches.add(id, IndexLogRecord.Remove(id))

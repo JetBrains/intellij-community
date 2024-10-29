@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.animation;
 
 import com.intellij.ide.PowerSaveMode;
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.Alarm;
 import com.intellij.util.MathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -82,20 +83,20 @@ public final class JBAnimator implements Disposable {
   private volatile @NotNull Future<?> myCurrentAnimatorFuture = CompletableFuture.completedFuture(null); // a future scheduled to display the next part of the animation
 
   public JBAnimator() {
-    this(Thread.SWING_THREAD, null);
+    this(Alarm.ThreadToUse.SWING_THREAD, null);
   }
 
   @SuppressWarnings("unused")
   public JBAnimator(@NotNull Disposable parentDisposable) {
-    this(Thread.SWING_THREAD, parentDisposable);
+    this(Alarm.ThreadToUse.SWING_THREAD, parentDisposable);
   }
 
-  public JBAnimator(@NotNull Thread threadToUse, @Nullable Disposable parentDisposable) {
-    myService = threadToUse == Thread.SWING_THREAD ?
+  public JBAnimator(@NotNull Alarm.ThreadToUse threadToUse, @Nullable Disposable parentDisposable) {
+    myService = threadToUse == Alarm.ThreadToUse.SWING_THREAD ?
                 EdtExecutorService.getScheduledExecutorInstance() :
                 AppExecutorUtil.createBoundedScheduledExecutorService("Animator Pool", 1);
     if (parentDisposable == null) {
-      if (threadToUse != Thread.SWING_THREAD) {
+      if (threadToUse != Alarm.ThreadToUse.SWING_THREAD) {
         Logger.getInstance(JBAnimator.class).error(new IllegalArgumentException("You must provide parent Disposable for non-swing thread Alarm"));
       }
     }
@@ -348,6 +349,7 @@ public final class JBAnimator implements Disposable {
   /**
    * @return statistic of the last animation
    */
+  @ApiStatus.Internal
   public @Nullable Statistic getStatistic() {
     return myStatistic;
   }
@@ -363,13 +365,6 @@ public final class JBAnimator implements Disposable {
   }
 
   /**
-   * <p>The thread where {@link Animation#update(double)} and {@link Animation.Listener#update(Animation.Phase)} will be called.</p>
-   */
-  public enum Thread {
-    SWING_THREAD, POOLED_THREAD
-  }
-
-  /**
    * <p>Animation can be played 2 different ways:</p>
    *
    * <ul>
@@ -379,7 +374,7 @@ public final class JBAnimator implements Disposable {
    */
   public enum Type {
     /**
-     * Animation creates necessary amount of frames and tries to play them.
+     * Animation creates the necessary number of frames and tries to play them.
      *
      * <p>For simple animation n + 1 frame is submitted, started from the 0.0 until 1.0,
      * except the case when animation is cyclic. In the latter case instead of 1.0

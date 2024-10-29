@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.util.text.CharSequenceSubSequence;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -28,6 +29,7 @@ import java.util.Comparator;
  * Compares {@link FilePath FilePaths} hierarchically, i.e. folders always precede files
  * (like in default sorting method of most file managers).
  */
+@ApiStatus.Internal
 public class HierarchicalFilePathComparator implements Comparator<FilePath> {
   public static final HierarchicalFilePathComparator CASE_SENSITIVE = new HierarchicalFilePathComparator(false);
   public static final HierarchicalFilePathComparator CASE_INSENSITIVE = new HierarchicalFilePathComparator(true);

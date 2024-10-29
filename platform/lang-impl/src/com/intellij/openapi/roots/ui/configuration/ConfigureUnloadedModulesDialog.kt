@@ -33,6 +33,7 @@ import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
@@ -45,6 +46,7 @@ import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreePath
 import kotlin.math.max
 
+@ApiStatus.Internal
 class ConfigureUnloadedModulesDialog(private val project: Project, selectedModuleName: String?) : DialogWrapper(project) {
   private val loadedModulesTree = ModuleDescriptionsTree(project)
   private val unloadedModulesTree = ModuleDescriptionsTree(project)

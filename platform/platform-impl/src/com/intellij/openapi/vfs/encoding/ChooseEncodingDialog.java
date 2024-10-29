@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.TreeUIHelper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,6 +13,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.nio.charset.Charset;
 
+@ApiStatus.Internal
 public final class ChooseEncodingDialog extends DialogWrapper {
   private final Charset[] myCharsets;
   private final Charset myDefaultCharset;

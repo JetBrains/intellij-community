@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -12,6 +13,7 @@ import javax.swing.plaf.metal.MetalTabbedPaneUI;
 import javax.swing.text.View;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class BegTabbedPaneUI extends MetalTabbedPaneUI {
   private static final Color LIGHT = new Color(247, 243, 239);
   private static final Color DARK = new Color(189, 187, 182);

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio.toggle
 
+import com.intellij.CommonBundle
 import com.intellij.diagnostic.VMOptions
 import com.intellij.execution.wsl.WslIjentAvailabilityService
 import com.intellij.icons.AllIcons
@@ -12,6 +13,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.platform.core.nio.fs.CoreBootstrapSecurityManager
@@ -35,14 +37,6 @@ object IjentWslNioFsVmOptionsSetter {
     getOptionByPrefix: (String) -> String?,
   ): Collection<Pair<String, String?>> {
     val changedOptions = mutableListOf<Pair<String, String?>>()
-
-    run {
-      val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
-      val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull() ?: false
-      if (actualValue != isEnabled || isEnabledByDefault && !isEnabled) {
-        changedOptions += prefix to isEnabled.toString()
-      }
-    }
 
     var forceDefaultFs = false
     run {
@@ -104,6 +98,21 @@ object IjentWslNioFsVmOptionsSetter {
       }
     }
 
+    run {
+      val prefix = "-D$IJENT_WSL_FILE_SYSTEM_REGISTRY_KEY="
+      val valueToSet = when (val actualValue = getOptionByPrefix(prefix)?.toBooleanStrictOrNull()) {
+        null ->
+          if (isEnabled != isEnabledByDefault && changedOptions.isNotEmpty()) isEnabled
+          else null
+        true, false ->
+          if (isEnabled != actualValue) isEnabled
+          else null
+      }
+      if (valueToSet != null) {
+        changedOptions += prefix to valueToSet.toString()
+      }
+    }
+
     return changedOptions
   }
 
@@ -112,7 +121,11 @@ object IjentWslNioFsVmOptionsSetter {
 
     // In Dev Server, it's possible to customize VM options only through the Run Configuration.
     // Invoking the action "Customize VM Options" won't have any effect because the Dev Server resets the file on restart.
-    val getEffectiveVmOptions = AppMode.isDevServer() || ApplicationManager.getApplication().isUnitTestMode
+    val getEffectiveVmOptions =
+      PluginManagerCore.isRunningFromSources() ||
+      AppMode.isDevServer() ||
+      ApplicationManager.getApplication().isUnitTestMode ||
+      !VMOptions.canWriteOptions()  // It happens when the IDE is launched from `.\gradlew runIde` with intellij-platform-gradle-plugin.
 
     val changedOptions = ensureInVmOptionsImpl(isEnabled, false) { prefix ->
       VMOptions.readOption(prefix, getEffectiveVmOptions)
@@ -124,7 +137,7 @@ object IjentWslNioFsVmOptionsSetter {
       }
       catch (err: IOException) {
         if (!ApplicationManager.getApplication().isUnitTestMode) {
-          throw err
+          thisLogger().error("Failed to set VM Option for IJent file system", err)
         }
       }
     }
@@ -171,7 +184,7 @@ object IjentWslNioFsVmOptionsSetter {
               IdeBundle.message("ijent.wsl.fs.dialog.message"),
               IdeBundle.message("ijent.wsl.fs.dialog.title"),
               IdeBundle.message(if (ApplicationManager.getApplication().isRestartCapable) "ide.restart.action" else "ide.shutdown.action"),
-              IdeBundle.message("dialog.action.restart.cancel"),
+              CommonBundle.getCancelButtonText(),
               AllIcons.General.Warning,
             )
             if (doThat) {

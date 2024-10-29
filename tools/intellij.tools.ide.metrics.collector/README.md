@@ -6,7 +6,7 @@ and [meters](https://opentelemetry.io/docs/specs/otel/metrics/api/#meter).
 Spans are exported to `opentelemetry.json` file (usually located in log directory) by registered span exporters in `com.intellij.platform.diagnostic.telemetry.TelemetryManager`.  
 To enable span exports provide system property `idea.diagnostic.opentelemetry.file` (basically it should be ide_log_directory/opentelemetry.json)
 
-Meters will be exported to `*.csv` files in log directory by meter exporters (also via `TelemetryManager`).
+Meters will be exported to `*.json` files in log directory by meter exporters (also via `TelemetryManager`).
 
 - Spans:  
 To get reported spans use `com.intellij.tools.ide.metrics.collector.OpenTelemetrySpanCollector` and pass the span name you're interested in.  

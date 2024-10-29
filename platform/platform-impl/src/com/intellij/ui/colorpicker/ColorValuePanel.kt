@@ -21,8 +21,9 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.picker.ColorListener
-import com.intellij.util.Alarm
+import com.intellij.util.SingleEdtTaskScheduler
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.*
@@ -41,12 +42,13 @@ private val PANEL_BORDER = JBUI.Borders.empty(0, HORIZONTAL_MARGIN_TO_PICKER_BOR
 
 private val PREFERRED_PANEL_SIZE = JBUI.size(PICKER_PREFERRED_WIDTH, 50)
 
-private const val TEXT_FIELDS_UPDATING_DELAY = 300
+private const val TEXT_FIELDS_UPDATING_DELAY = 300L
 
 private val COLOR_RANGE = 0..255
 private val HUE_RANGE = 0..360
 private val PERCENT_RANGE = 0..100
 
+@Internal
 enum class AlphaFormat {
   BYTE,
   PERCENTAGE;
@@ -57,6 +59,7 @@ enum class AlphaFormat {
   }
 }
 
+@Internal
 enum class ColorFormat {
   RGB,
   HSB;
@@ -67,6 +70,7 @@ enum class ColorFormat {
   }
 }
 
+@Internal
 class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha: Boolean = false, private val showAlphaInPercent: Boolean = true)
   : JPanel(GridBagLayout()), DocumentListener, ColorListener {
 
@@ -74,7 +78,8 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
    * Used to update the color of picker when color text fields are edited.
    */
   @get:TestOnly
-  val updateAlarm: Alarm = Alarm()
+  @get:Internal
+  val updateAlarm: SingleEdtTaskScheduler = SingleEdtTaskScheduler.createSingleEdtTaskScheduler()
 
   @get:TestOnly
   val alphaField: ColorValueField = ColorValueField()
@@ -192,7 +197,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
       }
     }
     // change the text in document trigger the listener, but it doesn't to update the color in Model in this case.
-    updateAlarm.cancelAllRequests()
+    updateAlarm.cancel()
     repaint()
   }
 
@@ -226,7 +231,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
       }
     }
     // change the text in document trigger the listener, but it doesn't to update the color in Model in this case.
-    updateAlarm.cancelAllRequests()
+    updateAlarm.cancel()
     repaint()
   }
 
@@ -256,7 +261,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
     }
     hexField.setTextIfNeeded(hexStr, source)
     // Cleanup the update requests which triggered by setting text in this function
-    updateAlarm.cancelAllRequests()
+    updateAlarm.cancel()
   }
 
   private fun JTextField.setTextIfNeeded(newText: String?, source: Any?) {
@@ -272,8 +277,7 @@ class ColorValuePanel(private val model: ColorPickerModel, private val showAlpha
   override fun changedUpdate(e: DocumentEvent): Unit = Unit
 
   private fun update(src: JTextField) {
-    updateAlarm.cancelAllRequests()
-    updateAlarm.addRequest({ updateColorToColorModel(src) }, TEXT_FIELDS_UPDATING_DELAY)
+    updateAlarm.cancelAndRequest(TEXT_FIELDS_UPDATING_DELAY, { updateColorToColorModel(src) })
   }
 
   private fun updateColorToColorModel(src: JTextField?) {
@@ -354,6 +358,7 @@ private const val BORDER_CORNER_ARC = 7
 private const val ACTION_PRESS_BUTTON_PANEL = "pressButtonPanel"
 private const val ACTION_RELEASE_BUTTON_PANEL = "releaseButtonPanel"
 
+@Internal
 abstract class ButtonPanel : JPanel() {
 
   companion object {

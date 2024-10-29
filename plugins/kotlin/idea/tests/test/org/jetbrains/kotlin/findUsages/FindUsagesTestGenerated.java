@@ -455,6 +455,11 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
                 runTest("testData/findUsages/kotlin/findClassUsages/javaLambdaUsages.0.kt");
             }
 
+            @TestMetadata("jvmClassNameInLiteral.0.kt")
+            public void testJvmClassNameInLiteral() throws Exception {
+                runTest("testData/findUsages/kotlin/findClassUsages/jvmClassNameInLiteral.0.kt");
+            }
+
             @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
             public void testKotlinAliasedClassAllUsages() throws Exception {
                 runTest("testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
@@ -663,6 +668,25 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             @TestMetadata("usageInTypeAlias.0.kt")
             public void testUsageInTypeAlias() throws Exception {
                 runTest("testData/findUsages/kotlin/findClassUsages/usageInTypeAlias.0.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/findUsages/kotlin/findEnumEntryUsages")
+        public static class FindEnumEntryUsages extends AbstractFindUsagesTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K1;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry.0.kt")
+            public void testEnumEntry() throws Exception {
+                runTest("testData/findUsages/kotlin/findEnumEntryUsages/enumEntry.0.kt");
             }
         }
 

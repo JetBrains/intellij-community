@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.roots.ExternalLibraryDescriptor
+import com.intellij.openapi.module.Module
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -16,5 +16,5 @@ interface KotlinLibraryVersionProvider {
      * Returns a version of the library identified by the [groupId] and [artifactId] compatible with the [projectKotlinVersion].
      * Returns null if the [KotlinLibraryVersionProvider] does not manage the given library or no compatible version could be found.
      */
-    fun getVersion(groupId: String, artifactId: String, projectKotlinVersion: KotlinVersion): ExternalLibraryDescriptor?
+    fun getVersion(module: Module, groupId: String, artifactId: String): String?
 }

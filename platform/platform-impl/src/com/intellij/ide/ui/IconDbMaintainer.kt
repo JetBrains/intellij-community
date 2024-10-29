@@ -8,10 +8,8 @@ import com.intellij.openapi.components.Service
 import com.intellij.ui.svg.SvgCacheManager
 import com.intellij.ui.svg.activeSvgCache
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration
+import org.jetbrains.annotations.ApiStatus.Internal
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
@@ -20,29 +18,22 @@ private fun nowAsDuration() = System.currentTimeMillis().toDuration(DurationUnit
 
 // icons maybe loaded before app loaded, so, SvgCacheMapper cannot be as a service
 @Service(Service.Level.APP)
-internal class IconDbMaintainer : SettingsSavingComponent {
-  // save is ignored first 5 minutes
-  private var lastSaved: Duration = nowAsDuration()
-
-  // compact only once per-app launch
-  private var isCompacted = AtomicBoolean(false)
+@Internal
+class IconDbMaintainer : SettingsSavingComponent {
+  // we save only once every 2 minutes, and not earlier than 2 minutes after the start
+  private var lastSaved = nowAsDuration()
 
   override suspend fun save() {
     val exitInProgress = ApplicationManager.getApplication().isExitInProgress
-    if (!exitInProgress && (nowAsDuration() - lastSaved) < 5.minutes) {
+    if (!exitInProgress && (nowAsDuration() - lastSaved) < 2.minutes) {
       return
     }
 
     val svgCache = activeSvgCache ?: return
     withContext(Dispatchers.IO) {
       svgCache.save()
-      ensureActive()
-      if (!exitInProgress && isCompacted.compareAndSet(false, true)) {
-        svgCache.compact()
-      }
+      lastSaved = nowAsDuration()
     }
-
-    lastSaved = nowAsDuration()
   }
 }
 

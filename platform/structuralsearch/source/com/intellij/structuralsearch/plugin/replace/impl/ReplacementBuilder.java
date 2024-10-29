@@ -94,15 +94,15 @@ public final class ReplacementBuilder {
         assert dialect != null;
         final PatternContextInfo context = new PatternContextInfo(PatternTreeContext.Block, options.getMatchOptions().getPatternContext());
         final PsiElement[] elements =
-          MatcherImplUtil.createTreeFromText(options.getReplacement(), context, fileType, dialect, project, false);
+          MatcherImplUtil.createTreeFromText(prepareReplacementPattern(), context, fileType, dialect, project, false);
         if (elements.length > 0) {
           final PsiElement patternNode = elements[0].getParent();
           patternNode.accept(new PsiRecursiveElementWalkingVisitor() {
             @Override
             public void visitElement(@NotNull PsiElement element) {
               final String text = element.getText();
-              if (MatchUtil.isTypedVariable(text)) {
-                final Collection<ParameterInfo> infos = findParameterization(Replacer.stripTypedVariableDecoration(text));
+              if (profile.isReplacementTypedVariable(text)) {
+                final Collection<ParameterInfo> infos = findParameterization(profile.stripReplacementTypedVariableDecorations(text));
                 for (ParameterInfo info : infos) {
                   if (info.getElement() == null) {
                     info.setElement(element);
@@ -181,8 +181,33 @@ public final class ReplacementBuilder {
 
   public ParameterInfo findParameterization(PsiElement element) {
     if (element == null) return null;
+    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
+    assert profile != null;
     final String text = element.getText();
-    if (!MatchUtil.isTypedVariable(text)) return null;
-    return ContainerUtil.find(findParameterization(Replacer.stripTypedVariableDecoration(text)), info -> info.getElement() == element);
+    if (!profile.isReplacementTypedVariable(text)) return null;
+    return ContainerUtil.find(findParameterization(profile.stripReplacementTypedVariableDecorations(text)), info -> info.getElement() == element);
+  }
+
+  @NotNull
+  public String prepareReplacementPattern() {
+    final LanguageFileType fileType = options.getMatchOptions().getFileType();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+    assert profile != null;
+
+    final StringBuilder buf = new StringBuilder();
+    final Template template = TemplateManager.getInstance(myProject).createTemplate("", "", options.getReplacement());
+    final int segmentsCount = template.getSegmentsCount();
+    final String text = template.getTemplateText();
+
+    int prevOffset = 0;
+    for (int i = 0; i < segmentsCount; i++) {
+      final int offset = template.getSegmentOffset(i);
+      final String name = template.getSegmentName(i);
+      final String compiledName = profile.compileReplacementTypedVariable(name);
+      buf.append(text, prevOffset, offset).append(compiledName);
+      prevOffset = offset;
+    }
+    buf.append(text.substring(prevOffset));
+    return buf.toString();
   }
 }

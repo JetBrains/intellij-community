@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.containers;
 
 import com.intellij.util.indexing.ValueContainer;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Arrays;
 import java.util.function.IntPredicate;
@@ -19,6 +20,7 @@ import java.util.function.IntPredicate;
  * synchronization is performed upon transforming changes array into randomAccessContainer because it can be done
  * during read only operations in several threads
  */
+@ApiStatus.Internal
 public final class ChangeBufferingList implements Cloneable {
   static final int MAX_FILES = 20000; // less than Short.MAX_VALUE
 

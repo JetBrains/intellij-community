@@ -34,4 +34,9 @@ public class MultiModuleLineMarkerCodeMetaInfoTestGenerated extends AbstractMult
     public void testMultiplatform() throws Exception {
         runTest("../../code-insight/testData/linemarkers/multiplatform/");
     }
+
+    @TestMetadata("nativeTestLineMarker")
+    public void testNativeTestLineMarker() throws Exception {
+        runTest("../../code-insight/testData/linemarkers/nativeTestLineMarker/");
+    }
 }

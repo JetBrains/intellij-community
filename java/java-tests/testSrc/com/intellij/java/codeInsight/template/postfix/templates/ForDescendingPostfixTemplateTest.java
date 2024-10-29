@@ -15,6 +15,7 @@
  */
 package com.intellij.java.codeInsight.template.postfix.templates;
 
+import com.intellij.refactoring.JavaRefactoringSettings;
 import org.jetbrains.annotations.NotNull;
 
 public class ForDescendingPostfixTemplateTest extends PostfixTemplateTestCase {
@@ -26,6 +27,17 @@ public class ForDescendingPostfixTemplateTest extends PostfixTemplateTestCase {
 
   public void testIntArray() {
     doTest();
+  }
+  
+  public void testIntArrayVar() {
+    JavaRefactoringSettings instance = JavaRefactoringSettings.getInstance();
+    instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = true;
+    try {
+      doTest();
+    }
+    finally {
+      instance.INTRODUCE_LOCAL_CREATE_VAR_TYPE = false;
+    }
   }
 
   public void testByteNumber() {

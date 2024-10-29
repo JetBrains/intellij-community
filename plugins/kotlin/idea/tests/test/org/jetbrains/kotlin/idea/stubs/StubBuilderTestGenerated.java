@@ -215,6 +215,11 @@ public class StubBuilderTestGenerated extends AbstractStubBuilderTest {
         runTest("testData/stubs/QualifiedAnnotationOnFunction.kt");
     }
 
+    @TestMetadata("ScriptObjectLiteral.kts")
+    public void testScriptObjectLiteral() throws Exception {
+        runTest("testData/stubs/ScriptObjectLiteral.kts");
+    }
+
     @TestMetadata("SecondaryConstructors.kt")
     public void testSecondaryConstructors() throws Exception {
         runTest("testData/stubs/SecondaryConstructors.kt");

@@ -41,12 +41,12 @@ public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
 
   @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public Class<PyTypingAliasStubType> getTypeClass() {
     return PyTypingAliasStubType.class;
   }
 
   @Override
-  public void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(@NotNull StubOutputStream stream) throws IOException {
     stream.writeName(myText);
   }
 

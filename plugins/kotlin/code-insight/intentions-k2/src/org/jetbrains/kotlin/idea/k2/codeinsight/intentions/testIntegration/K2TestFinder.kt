@@ -12,7 +12,7 @@ class K2TestFinder: AbstractKotlinTestFinder() {
     override fun isResolvable(classOrObject: KtClassOrObject): Boolean =
         allowAnalysisOnEdt {
             analyze(classOrObject) {
-                classOrObject.getClassOrObjectSymbol() != null
+                classOrObject.classSymbol != null
             }
         }
 

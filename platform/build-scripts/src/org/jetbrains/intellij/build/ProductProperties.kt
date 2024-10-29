@@ -85,13 +85,6 @@ abstract class ProductProperties {
   var inspectCommandName: String = "inspect"
 
   /**
-   * `true` if tools.jar from JDK must be added to the IDE classpath.
-   */
-  var toolsJarRequired: Boolean = false
-
-  var isAntRequired: Boolean = false
-
-  /**
    * Whether to use splash for application start-up.
    */
   var useSplash: Boolean = false
@@ -103,6 +96,16 @@ abstract class ProductProperties {
    * it unifies class-loading logic of an application and allows to avoid double-loading of bootstrap classes.
    */
   var classLoader: String? = "com.intellij.util.lang.PathClassLoader"
+
+  /**
+   * If `true`, the Class Data Sharing (CDS) feature will be enabled for the JVM and system.class.loader will be disabled.
+   *
+   * When enabled, the JVM will generate a shared archive file for the application's classes on the first startup,
+   * which can be reused in further launches.
+   *
+   * The location of the cds file is $SYSTEM/$shortProductName$Version.jsa
+   */
+  var enableCds: Boolean = false
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems.
@@ -175,7 +178,7 @@ abstract class ProductProperties {
   /**
    * See [SoftwareBillOfMaterials]
    */
-  val sbomOptions = SoftwareBillOfMaterials.Options()
+  val sbomOptions: SoftwareBillOfMaterials.Options = SoftwareBillOfMaterials.Options()
 
   /**
    * If `true`, a cross-platform ZIP archive containing binaries for all OSes will be built.
@@ -213,7 +216,7 @@ abstract class ProductProperties {
    * This property makes sense only if [rootModuleForModularLoader] is set to a non-null value.
    */
   @ApiStatus.Experimental
-  var productMode: ProductMode = ProductMode.LOCAL_IDE
+  var productMode: ProductMode = ProductMode.MONOLITH
 
   /**
    * Specifies name of cross-platform ZIP archive if `[buildCrossPlatformDistribution]` is set to `true`.
@@ -223,8 +226,7 @@ abstract class ProductProperties {
   }
 
   /**
-   * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker],
-   * when .class file version verification is needed.
+   * A config map for [org.jetbrains.intellij.build.impl.ClassFileChecker], when .class file version verification is necessary.
    */
   var versionCheckerConfig: Map<String, String> = java.util.Map.of()
 
@@ -299,12 +301,6 @@ abstract class ProductProperties {
   val mavenArtifacts: MavenArtifactsProperties = MavenArtifactsProperties()
 
   /**
-   * Specified additional modules (not included into the product layout) which need to be compiled when product is built.
-   * todo get rid of this
-   */
-  var additionalModulesToCompile: PersistentList<String> = persistentListOf()
-
-  /**
    * Specified modules which tests need to be compiled when product is built.
    * todo get rid of this
    */
@@ -352,7 +348,9 @@ abstract class ProductProperties {
    * If `true`, a distribution contains libraries and launcher script for running IDE in Remote Development mode.
    */
   @ApiStatus.Internal
-  open fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean = buildContext.bundledPluginModules.contains("intellij.remoteDevServer")
+  open suspend fun addRemoteDevelopmentLibraries(buildContext: BuildContext): Boolean {
+    return buildContext.getBundledPluginModules().contains("intellij.remoteDevServer")
+  }
 
   /**
    * Checks whether some necessary conditions specific for the product are met and report errors via [BuildContext.messages] if they aren't.
@@ -387,8 +385,7 @@ abstract class ProductProperties {
 
   /**
    * When set to true, invokes keymap and inspections description generators during build.
-   * These generators produce artifacts utilized by documentation
-   * authoring tools and builds.
+   * These generators produce artifacts utilized by documentation authoring tools and builds.
    */
   var buildDocAuthoringAssets: Boolean = false
 
@@ -428,9 +425,10 @@ abstract class ProductProperties {
   /**
    * Additional validation can be performed here for [BuildOptions.VALIDATE_PLUGINS_TO_BE_PUBLISHED] step.
    * Please do not ignore validation failures here, they will fail CI builds anyway.
+   * @param pluginId may be null if missing or a plugin descriptor is malformed
    * @return list of plugin validation errors.
    */
-  open fun validatePlugin(result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
+  open fun validatePlugin(pluginId: String?, result: PluginCreationResult<IdePlugin>, context: BuildContext): List<PluginProblem> {
     return when (result) {
       is PluginCreationSuccess -> result.unacceptableWarnings
       is PluginCreationFail -> result.errorsAndWarnings

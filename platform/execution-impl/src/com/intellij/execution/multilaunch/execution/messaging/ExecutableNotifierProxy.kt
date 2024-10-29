@@ -9,7 +9,7 @@ import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.internal.statistic.StructuredIdeActivity
 import java.util.concurrent.CancellationException
 
-class ExecutableNotifierProxy(
+internal class ExecutableNotifierProxy(
   private val configurationModel: MultiLaunchExecutionModel,
   private val actualExecutable: Executable,
   private val publisher: ExecutionNotifier,

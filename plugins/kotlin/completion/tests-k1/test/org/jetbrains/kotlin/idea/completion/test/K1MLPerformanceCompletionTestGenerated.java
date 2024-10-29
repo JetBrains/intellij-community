@@ -670,6 +670,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/dslMarker/noDslCompletionForNonDslReciever.kt");
             }
 
+            @TestMetadata("property.kt")
+            public void testProperty() throws Exception {
+                runTest("../testData/basic/common/dslMarker/property.kt");
+            }
+
             @TestMetadata("root.kt")
             public void testRoot() throws Exception {
                 runTest("../testData/basic/common/dslMarker/root.kt");
@@ -1014,6 +1019,16 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("JavaTypeExtension.kt")
             public void testJavaTypeExtension() throws Exception {
                 runTest("../testData/basic/common/extensions/JavaTypeExtension.kt");
+            }
+
+            @TestMetadata("KTIJ-28743.kt")
+            public void testKTIJ_28743() throws Exception {
+                runTest("../testData/basic/common/extensions/KTIJ-28743.kt");
+            }
+
+            @TestMetadata("KTIJ-30225.kt")
+            public void testKTIJ_30225() throws Exception {
+                runTest("../testData/basic/common/extensions/KTIJ-30225.kt");
             }
 
             @TestMetadata("KotlinGenericTypeExtension.kt")
@@ -1876,6 +1891,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/override/AfterVarKeyword.kt");
             }
 
+            @TestMetadata("ContextReceiver.kt")
+            public void testContextReceiver() throws Exception {
+                runTest("../testData/basic/common/override/ContextReceiver.kt");
+            }
+
             @TestMetadata("Generics.kt")
             public void testGenerics() throws Exception {
                 runTest("../testData/basic/common/override/Generics.kt");
@@ -1889,6 +1909,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("InConstructorParameters2.kt")
             public void testInConstructorParameters2() throws Exception {
                 runTest("../testData/basic/common/override/InConstructorParameters2.kt");
+            }
+
+            @TestMetadata("MethodNameMatch.kt")
+            public void testMethodNameMatch() throws Exception {
+                runTest("../testData/basic/common/override/MethodNameMatch.kt");
             }
 
             @TestMetadata("NoOverrideAfterFunKeyword.kt")
@@ -2276,6 +2301,26 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("smartCast.kt")
             public void testSmartCast() throws Exception {
                 runTest("../testData/basic/common/primitiveCompletion/smartCast.kt");
+            }
+
+            @TestMetadata("smartCastAssignedLaterVariable.kt")
+            public void testSmartCastAssignedLaterVariable() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastAssignedLaterVariable.kt");
+            }
+
+            @TestMetadata("smartCastBySafeCastAndEarlyReturn.kt")
+            public void testSmartCastBySafeCastAndEarlyReturn() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastBySafeCastAndEarlyReturn.kt");
+            }
+
+            @TestMetadata("smartCastReassignedVariable.kt")
+            public void testSmartCastReassignedVariable() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastReassignedVariable.kt");
+            }
+
+            @TestMetadata("smartCastReassignedVariable2.kt")
+            public void testSmartCastReassignedVariable2() throws Exception {
+                runTest("../testData/basic/common/primitiveCompletion/smartCastReassignedVariable2.kt");
             }
 
             @TestMetadata("stringCompletion.kt")
@@ -3590,6 +3635,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
                 runTest("../testData/basic/common/TypeArgOfOwnerClass.kt");
             }
 
+            @TestMetadata("TypeParamAsTypeArg.kt")
+            public void testTypeParamAsTypeArg() throws Exception {
+                runTest("../testData/basic/common/TypeParamAsTypeArg.kt");
+            }
+
             @TestMetadata("TypeParameterFromOuterClass.kt")
             public void testTypeParameterFromOuterClass() throws Exception {
                 runTest("../testData/basic/common/TypeParameterFromOuterClass.kt");
@@ -4277,6 +4327,11 @@ public abstract class K1MLPerformanceCompletionTestGenerated extends AbstractK1M
             @TestMetadata("SAMAdaptersStatic.kt")
             public void testSAMAdaptersStatic() throws Exception {
                 runTest("../testData/basic/java/SAMAdaptersStatic.kt");
+            }
+
+            @TestMetadata("SamAdapters.kt")
+            public void testSamAdapters() throws Exception {
+                runTest("../testData/basic/java/SamAdapters.kt");
             }
 
             @TestMetadata("StandardKotlinTypeAliasAfterExplicitlyImported.kt")

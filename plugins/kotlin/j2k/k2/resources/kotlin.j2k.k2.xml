@@ -2,6 +2,7 @@
 
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <j2kConverterExtension implementation="org.jetbrains.kotlin.j2k.k2.K2J2KConverterExtension"/>
+    <j2kPreprocessorExtension implementation="org.jetbrains.kotlin.j2k.k2.preProcessings.K2TypeArgumentsExpander"/>
   </extensions>
 
   <dependencies>

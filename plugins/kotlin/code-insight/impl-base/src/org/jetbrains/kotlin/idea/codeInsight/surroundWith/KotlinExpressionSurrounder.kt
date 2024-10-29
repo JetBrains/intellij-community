@@ -30,7 +30,7 @@ abstract class KotlinExpressionSurrounder : ModCommandSurrounder() {
         allowAnalysisOnEdt {
             return analyze(expression) {
                 val type = expression.expressionType
-                if (type == null || type is KaErrorType || type.isUnit && isApplicableToStatements) {
+                if (type == null || type is KaErrorType || type.isUnitType && isApplicableToStatements) {
                     false
                 } else {
                     isApplicableToStatements || expression.isUsedAsExpression

@@ -47,6 +47,11 @@ public final class ActionClassMetaData {
     return BitUtil.isSet(getFlags(group), WRAPPER_POSTPROCESS);
   }
 
+  /**
+   * @see AnAction#update
+   * @see ActionGroup#getChildren
+   * @see ActionGroup#postProcessVisibleChildren
+   */
   private static int getFlags(@NotNull AnAction action) {
     if (action.myMetaFlags != 0) return action.myMetaFlags;
     int flags = INIT;
@@ -64,10 +69,13 @@ public final class ActionClassMetaData {
     }
 
     if (isGroup) {
-      Class<?> c = ReflectionUtil.getMethodDeclaringClass(action.getClass(), "postProcessVisibleChildren",
+      Class<?> c1 = ReflectionUtil.getMethodDeclaringClass(action.getClass(), "postProcessVisibleChildren",
                                                           List.class, UpdateSession.class);
-      if (ActionGroup.class.equals(c)) flags = BitUtil.set(flags, POSTPROCESS, true);
-      else if (isActionWrapper(c)) flags = BitUtil.set(flags, WRAPPER_POSTPROCESS, true);
+      Class<?> c2 = ReflectionUtil.getMethodDeclaringClass(action.getClass(), "postProcessVisibleChildren",
+                                                          AnActionEvent.class, List.class);
+
+      if (ActionGroup.class.equals(c1) && ActionGroup.class.equals(c2)) flags = BitUtil.set(flags, POSTPROCESS, true);
+      else if (isActionWrapper(c1) && isActionWrapper(c2)) flags = BitUtil.set(flags, WRAPPER_POSTPROCESS, true);
     }
 
     action.myMetaFlags = flags;

@@ -3,11 +3,13 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SLRUMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class SoftHardCacheMap<K, V> {
   @NotNull private final SLRUMap<K, V> mySLRUMap;
   @NotNull private final Map<K, V> mySoftLinkMap = ContainerUtil.createSoftValueMap();

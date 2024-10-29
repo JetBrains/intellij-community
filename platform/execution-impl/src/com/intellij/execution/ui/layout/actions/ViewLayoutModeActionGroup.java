@@ -8,8 +8,10 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOption;
 import com.intellij.ui.content.custom.options.CustomContentLayoutOptions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ViewLayoutModeActionGroup extends DefaultActionGroup implements ViewLayoutModificationAction {
 
   private final @NotNull Content myContent;

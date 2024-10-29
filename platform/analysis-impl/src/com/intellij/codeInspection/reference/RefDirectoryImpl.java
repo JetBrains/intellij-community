@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -11,12 +11,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
+@ApiStatus.Internal
+public final class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
   private volatile RefModule myRefModule; // it's guaranteed that getModule() used after initialize()
-  protected RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
+  RefDirectoryImpl(PsiDirectory psiElement, RefManager refManager) {
     super(psiElement.getName(), psiElement, refManager);
   }
 

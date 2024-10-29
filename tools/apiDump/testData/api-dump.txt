@@ -1,9 +1,4 @@
-*f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion
-- *sf:Companion:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
-*f:com.intellij.tools.apiDump.testData.ApiExperimentalClassWithCompanion$Companion
 f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion
-- *sf:Companion:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion$Companion
-*f:com.intellij.tools.apiDump.testData.ClassWithApiExperimentalCompanion$Companion
 f:com.intellij.tools.apiDump.testData.ClassWithApiInternalCompanion
 e:com.intellij.tools.apiDump.testData.JAbstractEnum
 - java.lang.Enum
@@ -21,37 +16,17 @@ e:com.intellij.tools.apiDump.testData.JEnum
 - sf:TWO:com.intellij.tools.apiDump.testData.JEnum
 - s:valueOf(java.lang.String):com.intellij.tools.apiDump.testData.JEnum
 - s:values():com.intellij.tools.apiDump.testData.JEnum[]
-*c:com.intellij.tools.apiDump.testData.JExperimentalClass
-- <init>():V
-*c:com.intellij.tools.apiDump.testData.JExperimentalClass$ExperimentalClass
-- <init>():V
-*pc:com.intellij.tools.apiDump.testData.JExperimentalClass$ProtectedClass
-- p:<init>():V
-*c:com.intellij.tools.apiDump.testData.JExperimentalClass$PublicClass
-- <init>():V
 c:com.intellij.tools.apiDump.testData.JInners
 - anonymousClass:java.lang.Object
 - <init>():V
 - ownerMethod():V
-*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass
-- <init>():V
-*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$ExperimentalClassD
-- <init>():V
-*pc:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$ProtectedClass
-- p:<init>():V
-*c:com.intellij.tools.apiDump.testData.JInners$ExperimentalClass$PublicClass
-- <init>():V
 pc:com.intellij.tools.apiDump.testData.JInners$ProtectedClass
 - p:<init>():V
-*c:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$ExperimentalClass
-- <init>():V
 pc:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$ProtectedClassD
 - p:<init>():V
 c:com.intellij.tools.apiDump.testData.JInners$ProtectedClass$PublicClass
 - <init>():V
 c:com.intellij.tools.apiDump.testData.JInners$PublicClass
-- <init>():V
-*c:com.intellij.tools.apiDump.testData.JInners$PublicClass$ExperimentalClass
 - <init>():V
 pc:com.intellij.tools.apiDump.testData.JInners$PublicClass$ProtectedClass
 - p:<init>():V
@@ -98,9 +73,6 @@ f:com.intellij.tools.apiDump.testData.JRecord
 - f:hashCode():I
 - x():I
 - y():I
-*c:com.intellij.tools.apiDump.testData.KtApiExperimentalClass
-*f:com.intellij.tools.apiDump.testData.KtApiExperimentalClass$ApiExperimentalClass
-*f:com.intellij.tools.apiDump.testData.KtApiExperimentalClass$PublicClass
 f:com.intellij.tools.apiDump.testData.KtConstructorAccessors
 f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$Accessor
 f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$AccessorWithLastInt
@@ -112,16 +84,9 @@ f:com.intellij.tools.apiDump.testData.KtConstructorAccessors$DefaultConstructorP
 - <init>(java.lang.String):V
 - b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 f:com.intellij.tools.apiDump.testData.KtFieldAnnotations
-- *f:apiExperimentalField:java.lang.Object
-- *f:getApiExperimentalProperty():java.lang.Object
-- *f:getApiExperimentalPropertyGetter():java.lang.Object
-- *f:getApiExperimentalPropertyGetterSetter():java.lang.Object
 - f:getApiExperimentalPropertySetter():java.lang.Object
 - f:getApiInternalPropertySetter():java.lang.Object
-- *f:setApiExperimentalPropertyGetterSetter(java.lang.Object):V
-- *f:setApiExperimentalPropertySetter(java.lang.Object):V
 f:com.intellij.tools.apiDump.testData.KtPublicClass
-*f:com.intellij.tools.apiDump.testData.KtPublicClass$ApiExperimentalClass
 f:com.intellij.tools.apiDump.testData.KtPublicClass$PublicClass
 f:com.intellij.tools.apiDump.testData.defaultParameters.KtChildClass
 - com.intellij.tools.apiDump.testData.defaultParameters.KtMiddleClass
@@ -139,14 +104,6 @@ a:com.intellij.tools.apiDump.testData.defaultParameters.KtMiddleClass
 f:com.intellij.tools.apiDump.testData.defaultParameters.KtTestKt
 - sf:function(I,I,I):V
 - bs:function$default(I,I,I,I,java.lang.Object):V
-*c:com.intellij.tools.apiDump.testData.experimental.JPublicClass
-- <init>():V
-*c:com.intellij.tools.apiDump.testData.experimental.JPublicClass$PublicClass
-- <init>():V
-*f:com.intellij.tools.apiDump.testData.experimental.KPublicClass
-- <init>():V
-*f:com.intellij.tools.apiDump.testData.experimental.KPublicClass$PublicClass
-- <init>():V
 c:com.intellij.tools.apiDump.testData.generics.JGenericChildClass
 - com.intellij.tools.apiDump.testData.generics.JGenericMiddleClass
 - <init>():V

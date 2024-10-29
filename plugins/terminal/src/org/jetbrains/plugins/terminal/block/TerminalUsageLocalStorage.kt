@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.terminal.block
 
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.XMap
 
@@ -23,6 +24,16 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     state.shellToExecutedCommandsNumber.merge(shellName.lowercase(), 1, Int::plus)
   }
 
+  fun recordBlockTerminalUsed() {
+    val curVersionString = ApplicationInfo.getInstance().build.asStringWithoutProductCodeAndSnapshot()
+    state.blockTerminalUsedLastVersion = curVersionString
+    state.blockTerminalUsedLastTimeMillis = System.currentTimeMillis()
+  }
+
+  fun recordBlockTerminalDisabled() {
+    state.blockTerminalDisabledLastTimeMillis = System.currentTimeMillis()
+  }
+
   override fun getState(): State = state
 
   override fun loadState(state: State) {
@@ -34,6 +45,8 @@ internal class TerminalUsageLocalStorage : PersistentStateComponent<TerminalUsag
     val shellToExecutedCommandsNumber: MutableMap<String, Int> = HashMap()
     var feedbackNotificationShown: Boolean = false
     var blockTerminalUsedLastVersion: String? = null
+    var blockTerminalUsedLastTimeMillis: Long = 0
+    var blockTerminalDisabledLastTimeMillis: Long = 0
   }
 
   companion object {

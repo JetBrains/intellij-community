@@ -8,7 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.execution.multilaunch.execution.*
 import com.intellij.idea.ActionsBundle
 
-class CancelExecutableAction(
+internal class CancelExecutableAction(
   private val configurationModel: MultiLaunchExecutionModel,
   private val executableModel: ExecutableExecutionModel
 ) : AnAction(ActionsBundle.message("action.multilaunch.CancelExecutableAction.text"), null, AllIcons.RunConfigurations.TestTerminated) {

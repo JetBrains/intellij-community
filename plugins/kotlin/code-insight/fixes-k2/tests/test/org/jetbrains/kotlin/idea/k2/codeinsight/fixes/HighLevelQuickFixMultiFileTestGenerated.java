@@ -350,6 +350,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/classImport.before.Main.kt");
             }
 
+            @TestMetadata("constructorCallToObject.test")
+            public void testConstructorCallToObject() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/constructorCallToObject.test");
+            }
+
             @TestMetadata("constructorParameterAnnotation.test")
             public void testConstructorParameterAnnotation() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/constructorParameterAnnotation.test");
@@ -398,6 +403,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             @TestMetadata("dslMarkersOnReceiver.before.Main.kt")
             public void testDslMarkersOnReceiver() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionErroneousReceiver.test")
+            public void testExtensionErroneousReceiver() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/extensionErroneousReceiver.test");
             }
 
             @TestMetadata("extensionFunctionImport.before.Main.kt")
@@ -915,6 +925,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
                 runTest("../../../idea/tests/testData/quickfix/autoImports/postfixOperator.before.Main.kt");
             }
 
+            @TestMetadata("privateConstructor.test")
+            public void testPrivateConstructor() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/privateConstructor.test");
+            }
+
             @TestMetadata("propertyImport.before.Main.kt")
             public void testPropertyImport() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/propertyImport.before.Main.kt");
@@ -984,6 +999,11 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
             public void testWithSmartCastQualifier() throws Exception {
                 runTest("../../../idea/tests/testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");
             }
+
+            @TestMetadata("wrongReceiverType.test")
+            public void testWrongReceiverType() throws Exception {
+                runTest("../../../idea/tests/testData/quickfix/autoImports/wrongReceiverType.test");
+            }
         }
     }
 
@@ -1042,6 +1062,54 @@ public abstract class HighLevelQuickFixMultiFileTestGenerated extends AbstractHi
         @TestMetadata("finalJavaUpperBound.before.Main.kt")
         public void testFinalJavaUpperBound() throws Exception {
             runTest("../../../idea/tests/testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaUpperBound.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/addGenericUpperBound")
+    public static class AddGenericUpperBound extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("javaUpperBoundViolated.test")
+        public void testJavaUpperBoundViolated() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/addGenericUpperBound/javaUpperBoundViolated.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments")
+    public static class JavaAnnotationPositionedArguments extends AbstractHighLevelQuickFixMultiFileTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("basicMultiple.before.Main.kt")
+        public void testBasicMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/basicMultiple.before.Main.kt");
+        }
+
+        @TestMetadata("noValueForArgumentMultiple.before.Main.kt")
+        public void testNoValueForArgumentMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/noValueForArgumentMultiple.before.Main.kt");
+        }
+
+        @TestMetadata("wrongTypeMultiple.before.Main.kt")
+        public void testWrongTypeMultiple() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/migration/javaAnnotationPositionedArguments/wrongTypeMultiple.before.Main.kt");
         }
     }
 }

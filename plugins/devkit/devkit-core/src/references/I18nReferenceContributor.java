@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.hints.declarative.InlayHintsProviderExtensionBean;
@@ -55,6 +55,9 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String SPRING_TOOL_WINDOW_CONTENT = "com.intellij.spring.toolWindow.SpringToolWindowContent";
 
     private static final String DECLARATIVE_INLAY_PROVIDER_EP = InlayHintsProviderExtensionBean.class.getName();
+
+    private static final String WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP =
+      "com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP";
   }
 
   @Override
@@ -105,6 +108,11 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayName"},
                                                                   Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"messageKey"},
+                                                                  Holder.WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
+                                        new PropertyKeyReferenceProvider(false, "messageKey", "bundleName"));
+
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameKey"},
                                                                   Holder.DECLARATIVE_INLAY_PROVIDER_EP),
@@ -219,6 +227,10 @@ final class I18nReferenceContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
                                                                   Holder.TYPE_NAME_EP, Holder.ICON_DESCRIPTION_BUNDLE_EP),
+                                        bundleReferenceProvider);
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundleName"},
+                                                                  Holder.WEB_SYMBOLS_INSPECTION_TOOL_MAPPING_EP),
                                         bundleReferenceProvider);
 
     final XmlTagPattern.Capture intentionActionBundleTagPattern =

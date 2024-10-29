@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.vfs.newvfs.persistent.FSRecordsImpl.REUSE_DELETED_FILE_IDS;
 
+@ApiStatus.Internal
 public final class StaleIndexesChecker {
   private static final Logger LOG = Logger.getInstance(StaleIndexesChecker.class);
   private static final ThreadLocal<Boolean> IS_IN_STALE_IDS_DELETION = new ThreadLocal<>();
@@ -122,8 +124,7 @@ public final class StaleIndexesChecker {
     fileBasedIndex.removeFileDataFromIndices(indexIds, staleInputId, null);
   }
 
-  @NotNull
-  private static String getStaleInputIdsMessage(Int2ObjectMap<String> staleTrees, IndexId<?, ?> indexId) {
+  private static @NotNull String getStaleInputIdsMessage(Int2ObjectMap<String> staleTrees, IndexId<?, ?> indexId) {
     return "`" + indexId + "` index contains several stale file ids (size = "
            + staleTrees.size()
            + "). Ids & paths: "

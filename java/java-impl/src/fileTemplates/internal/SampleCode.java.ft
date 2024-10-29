@@ -5,6 +5,6 @@ package ${PACKAGE_NAME};
 #parse("File Header.java")
 public class Main {
     public static void main(String[] args) {
-        System.out.println("Hello world!");
+        System.out.println("Hello, World!");
     }
 }

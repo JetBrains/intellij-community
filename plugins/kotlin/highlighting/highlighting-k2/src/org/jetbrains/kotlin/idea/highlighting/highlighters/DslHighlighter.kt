@@ -6,8 +6,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotationClassIds
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
@@ -54,7 +52,7 @@ fun KtClass.getDslStyleId(): Int? {
         return null
     }
     analyze(this) {
-        val classSymbol = getNamedClassOrObjectSymbol()?.takeIf {
+        val classSymbol = namedClassSymbol?.takeIf {
             it.classKind == KaClassKind.ANNOTATION_CLASS && it.isDslHighlightingMarker()
         } ?: return null
         val className = classSymbol.classId?.asSingleFqName() ?: return null
@@ -69,19 +67,19 @@ fun KtClass.getDslStyleId(): Int? {
 context(KaSession)
 private fun getDslAnnotation(type: KaType): ClassId? {
     val allAnnotationsWithSuperTypes = sequence {
-        yieldAll(type.annotationClassIds)
+        yieldAll(type.annotations.classIds)
         val symbol = type.expandedSymbol ?: return@sequence
-        yieldAll(symbol.annotationClassIds)
-        for (superType in type.getAllSuperTypes()) {
-            superType.expandedSymbol?.let { yieldAll(it.annotationClassIds) }
+        yieldAll(symbol.annotations.classIds)
+        for (superType in type.allSupertypes) {
+            superType.expandedSymbol?.let { yieldAll(it.annotations.classIds) }
         }
     }
     val dslAnnotation = allAnnotationsWithSuperTypes.find { annotationClassId ->
-        getClassOrObjectSymbolByClassId(annotationClassId)?.isDslHighlightingMarker() ?: false
+        findClass(annotationClassId)?.isDslHighlightingMarker() ?: false
     }
     return dslAnnotation
 }
 
 private fun KaClassSymbol.isDslHighlightingMarker(): Boolean {
-    return hasAnnotation(DslStyleUtils.DSL_MARKER_CLASS_ID)
+    return DslStyleUtils.DSL_MARKER_CLASS_ID in annotations
 }

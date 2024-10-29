@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.service.project.data
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.CompilerConfigurationImpl
-import com.intellij.ide.projectView.actions.MarkRootActionBase
+import com.intellij.ide.projectView.actions.MarkRootsManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.Key
@@ -172,7 +172,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
       sourceFolderManager.setSourceFolderGenerated(url, true)
     } else {
       val modifiableRootModel = modelsProvider.getModifiableRootModel(ideModule)
-      val contentEntry = MarkRootActionBase.findContentEntry(modifiableRootModel, vf)
+      val contentEntry = MarkRootsManager.findContentEntry(modifiableRootModel, vf)
                          ?: modifiableRootModel.addContentEntry(url)
       val properties = JpsJavaExtensionService.getInstance().createSourceRootProperties("", true)
       contentEntry.addSourceFolder(url, type, properties, externalSource)

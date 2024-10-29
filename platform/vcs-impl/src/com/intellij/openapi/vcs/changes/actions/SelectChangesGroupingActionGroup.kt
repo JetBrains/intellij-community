@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SelectChangesGroupingActionGroup : DefaultActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {

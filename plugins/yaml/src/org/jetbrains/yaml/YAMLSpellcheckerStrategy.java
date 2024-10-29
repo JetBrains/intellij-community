@@ -3,6 +3,7 @@ package org.jetbrains.yaml;
 
 import com.intellij.json.JsonSchemaSpellcheckerClient;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
@@ -19,7 +20,7 @@ import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
 import org.jetbrains.yaml.psi.YAMLScalar;
 
-final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy {
+final class YAMLSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
 
   private final Tokenizer<YAMLQuotedText> myQuotedTextTokenizer = new Tokenizer<>() {
     @Override

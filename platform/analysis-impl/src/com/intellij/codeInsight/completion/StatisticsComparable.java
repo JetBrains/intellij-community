@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.psi.statistics.StatisticsInfo;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class StatisticsComparable implements Comparable<StatisticsComparable> {
   private final int myScalar;
   private final StatisticsInfo myStatisticsInfo;

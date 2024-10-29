@@ -4,6 +4,7 @@ package com.intellij.execution;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.lang.ClassPath;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
 
+@ApiStatus.Internal
 public final class CommandLineWrapperUtil {
   public static final String CLASSPATH_JAR_FILE_NAME_PREFIX = ClassPath.CLASSPATH_JAR_FILE_NAME_PREFIX;
 

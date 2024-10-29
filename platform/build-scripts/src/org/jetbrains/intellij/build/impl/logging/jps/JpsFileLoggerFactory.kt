@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.logging.jps;
 
 import com.intellij.openapi.diagnostic.IdeaLogRecordFormatter
@@ -13,12 +13,10 @@ import java.util.logging.Level
 
 @ApiStatus.Internal
 class JpsFileLoggerFactory(logFile: Path, categoriesWithDebugLevel: String) : Factory {
-  private val appender: RollingFileHandler
-  private val categoriesWithDebugLevel: List<String>
+  private val appender = RollingFileHandler(logFile, 20_000_000L, 10, true)
+  private val categoriesWithDebugLevel = if (categoriesWithDebugLevel.isEmpty()) emptyList() else categoriesWithDebugLevel.split(',')
 
   init {
-    this.categoriesWithDebugLevel = if (categoriesWithDebugLevel.isEmpty()) emptyList() else categoriesWithDebugLevel.split(",")
-    this.appender = RollingFileHandler(logFile, 20_000_000L, 10, true)
     this.appender.setFormatter(IdeaLogRecordFormatter())
   }
 

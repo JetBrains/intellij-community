@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.test.Directives
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.K1_NEW
@@ -86,13 +87,30 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     //   - or, if no IGNORE directives are present, the K1 and K2 results are identical for such a test
     private fun getExpectedFile(javaFile: File): File {
         val defaultFile = File(javaFile.path.replace(".java", ".kt"))
-        val customFileExtension = when (pluginMode) {
-            KotlinPluginMode.K1 -> ".k1.kt"
-            KotlinPluginMode.K2 -> ".k2.kt"
-            else -> error("Can't determine the plugin mode")
+        if (!defaultFile.exists()) {
+            throw AssertionError("Expected file doesn't exist: ${defaultFile.path}.")
         }
+
+        val customFileExtension = getCustomExpectedFileExtension()
         val customFile = File(javaFile.path.replace(".java", customFileExtension)).takeIf(File::exists)
-        return customFile ?: defaultFile
+        if (customFile == null) return defaultFile
+
+        val defaultText = defaultFile.readText().trimTrailingWhitespacesAndAddNewlineAtEOF()
+        val customText = customFile.readText().trimTrailingWhitespacesAndAddNewlineAtEOF()
+        if (defaultText != customText) return customFile
+
+        customFile.delete()
+        throw AssertionError("""
+            Custom expected file text is the same as the default one.
+            Deleting custom file: ${customFile.path}.
+            Please rerun the test now.""".trimIndent()
+        )
+    }
+
+    private fun getCustomExpectedFileExtension(): String = when (pluginMode) {
+        KotlinPluginMode.K1 -> ".k1.kt"
+        KotlinPluginMode.K2 -> ".k2.kt"
+        else -> error("Can't determine the plugin mode")
     }
 
     private fun addDependencies(directives: Directives) {
@@ -145,9 +163,9 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
 
     private fun convertJavaToKotlin(prefix: String, javaCode: String, settings: ConverterSettings, directives: Directives): String {
         val preprocessorExtensions =
-            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPreprocessorExtension) else emptyList()
+            if (directives.contains(PREPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPreprocessorExtension) + J2kPreprocessorExtension.EP_NAME.extensionList) else J2kPreprocessorExtension.EP_NAME.extensionList
         val postprocessorExtensions =
-            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) listOf(J2kTestPostprocessorExtension) else emptyList()
+            if (directives.contains(POSTPROCESSOR_EXTENSIONS_DIRECTIVE)) (listOf(J2kTestPostprocessorExtension) + J2kPostprocessorExtension.EP_NAME.extensionList) else J2kPostprocessorExtension.EP_NAME.extensionList
 
         return when (prefix) {
             "expression" -> expressionToKotlin(javaCode, settings)
@@ -161,8 +179,8 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
     open fun fileToKotlin(
         text: String,
         settings: ConverterSettings,
-        preprocessorExtensions: List<J2kPreprocessorExtension> = emptyList(),
-        postprocessorExtensions: List<J2kPostprocessorExtension> = emptyList()
+        preprocessorExtensions: List<J2kPreprocessorExtension> = J2kPreprocessorExtension.EP_NAME.extensionList,
+        postprocessorExtensions: List<J2kPostprocessorExtension> = J2kPostprocessorExtension.EP_NAME.extensionList
     ): String {
         val file = createJavaFile(text)
         val j2kKind = if (isFirPlugin) K2 else K1_NEW

@@ -305,6 +305,21 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER",
                                 JavaBundle.message("editbox.blanklines.around.initializer"),
                                 getInstance().BLANK_LINES);
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+        JavaBundle.message("editbox.blank.lines.field.in.interface"));
+
+      consumer.renameStandardOption(
+        "BLANK_LINES_AROUND_FIELD",
+        JavaBundle.message("editbox.blank.lines.field.without.annotations"));
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class,
+                                "BLANK_LINES_AROUND_FIELD_WITH_ANNOTATIONS",
+                                JavaBundle.message("editbox.blank.lines.field.with.annotations"),
+                                getInstance().BLANK_LINES,
+                                OptionAnchor.AFTER,
+                                "BLANK_LINES_AROUND_FIELD");
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
       consumer.showStandardOptions(
@@ -552,6 +567,8 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
 
       import javax.swing.*;
       import java.util.Vector;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Nullable;
 
       public class Foo {
         private int field1;
@@ -573,6 +590,18 @@ public final class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeSty
       }
       class AnotherClass {
       }
+      
+      public class ClassWithAnnotatedFields {
+          @NotNull
+          public Boolean publicAnnotatedField = true;
+          public Boolean publicNonAnnotatedField = true;
+          @NotNull Boolean typeAnnotatedField = false;
+          @NotNull
+          private Boolean firstPrivateAnnotatedField = true;
+          @NotNull
+          private Boolean secondPrivateAnnotatedField = true;
+      }
+      
       interface TestInterface {
           int MAX = 10;
           int MIN = 1;

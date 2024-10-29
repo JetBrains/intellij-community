@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist.storage;
 
 import com.intellij.openapi.project.Project;
@@ -7,20 +7,23 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4;
 import com.intellij.util.gist.storage.GistStorage.Gist;
 import com.intellij.util.gist.storage.GistStorage.GistData;
+import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
 import java.lang.reflect.Proxy;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.junit.Assert.fail;
 
-/**
- *
- */
 public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
 
 
@@ -174,7 +177,31 @@ public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
     }
   }
 
+  @Test
+  public void ifGistExternalizerFail_gistIsNotWrittenAtAll() throws IOException {
+    FailAbleStringExternalizer externalizer = new FailAbleStringExternalizer();
 
+    VirtualFile file = emptyFile(randomFileName());
+    int gistStamp = DEFAULT_GIST_STAMP;
+    String originalData = "testData";
+
+    Gist<String> gist = GistStorage.getInstance().newGist("testFailingGist", 1, externalizer);
+    gist.putGlobalData(file, originalData, gistStamp);
+
+    externalizer.shouldFail(true);
+    try {
+      gist.putGlobalData(file, "anotherData", gistStamp);
+      fail("Should throw IOException");
+    }
+    catch (IOException e){
+      //OK, expected
+    }
+    assertThat(
+      "Gist should still contain the data before failed write -- failed write should be abandoned completely",
+      gist.getGlobalData(file, gistStamp).data(),
+      is(originalData)
+    );
+  }
 
   // ============================= infrastructure: ================================================ //
 
@@ -219,5 +246,26 @@ public class GistStorageImplTest extends LightJavaCodeInsightFixtureTestCase4 {
       version,
       EnumeratorStringDescriptor.INSTANCE
     );
+  }
+
+  private static class FailAbleStringExternalizer implements DataExternalizer<String> {
+    private boolean shouldFail = false;
+    @Override
+    public void save(@NotNull DataOutput out,
+                     String value) throws IOException {
+      if(shouldFail) {
+        throw new IOException("Fail to write");
+      }
+      IOUtil.writeUTF(out, value);
+    }
+
+    @Override
+    public String read(@NotNull DataInput in) throws IOException {
+      return IOUtil.readUTF(in);
+    }
+
+    public void shouldFail(boolean shouldFail) {
+      this.shouldFail = shouldFail;
+    }
   }
 }

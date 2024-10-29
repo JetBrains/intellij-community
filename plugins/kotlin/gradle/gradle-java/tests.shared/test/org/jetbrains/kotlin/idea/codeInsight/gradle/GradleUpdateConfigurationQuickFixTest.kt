@@ -45,10 +45,51 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     }
 
     @Test
-    @Ignore // Import failed: A problem occurred evaluating root project 'project'
-    @TargetVersions("4.7 <=> 6.0")
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateExistingLanguageVersion() {
+        doTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateExistingLanguageVersionKts() {
+        doTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateExistingLanguageVersionKMP() {
+        doKMPTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateExistingLanguageVersionKMPKts() {
+        doKMPTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
     fun testUpdateLanguageVersion() {
-        doTest("Set module language version to 1.1")
+        doTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateLanguageVersionKts() {
+        doTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateLanguageVersionKMP() {
+        doKMPTest("Set module language version to 1.9")
+    }
+
+    @Test
+    @TargetVersions("7.0 <=> 9.0")
+    fun testUpdateLanguageVersionKMPKts() {
+        doKMPTest("Set module language version to 1.9")
     }
 
     @Test
@@ -72,9 +113,16 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
         doTest("Add 'kotlin-reflect.jar' to the classpath")
     }
 
-    private fun doTest(intentionName: String) {
-        val buildGradleVFile = createProjectSubFile("build.gradle", File(getTestDataDirectory(), "build.gradle").readText())
-        val sourceVFile = createProjectSubFile("src/main/kotlin/src.kt", File(getTestDataDirectory(), "src.kt").readText())
+    private fun doKMPTest(intentionName: String) = doTest(intentionName, "src/jvmMain/kotlin/src.kt")
+
+    private fun doTest(intentionName: String, srcFilePath: String = "src/main/kotlin/src.kt") {
+        var gradleKtsFile = File(getTestDataDirectory(), "build.gradle.kts")
+        val buildGradleVFile = if (gradleKtsFile.exists()) {
+            createProjectSubFile("build.gradle.kts", gradleKtsFile.readText())
+        } else {
+            createProjectSubFile("build.gradle", File(getTestDataDirectory(), "build.gradle").readText())
+        }
+        val sourceVFile = createProjectSubFile(srcFilePath, File(getTestDataDirectory(), "src.kt").readText())
         importProject()
         runInEdtAndWait {
             codeInsightTestFixture.configureFromExistingVirtualFile(sourceVFile)
@@ -85,11 +133,11 @@ class GradleUpdateConfigurationQuickFixTest : GradleImportingTestCase() {
     }
 
     private fun checkResult(file: VirtualFile) {
-        val expectedPath = File(getTestDataDirectory(), "build.gradle.after")
+        val expectedPath = File(getTestDataDirectory(), file.name + ".after")
         val expectedContent = StringUtil.convertLineSeparators(expectedPath.readText())
         val actualContent = StringUtil.convertLineSeparators(LoadTextUtil.loadText(file).toString())
         if (actualContent != expectedContent) {
-            throw FileComparisonFailedError("build.gradle doesn't match", expectedContent, actualContent, expectedPath.path)
+            throw FileComparisonFailedError("${file.name} doesn't match", expectedContent, actualContent, expectedPath.path)
         }
     }
 }

@@ -13,11 +13,13 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.XDebuggerWatchesManager;
 import com.intellij.xdebugger.impl.ui.InplaceEditor;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class InlineWatchInplaceEditor extends InplaceEditor {
   private final XSourcePosition myPresentationPosition;
   private final XDebugSession mySession;

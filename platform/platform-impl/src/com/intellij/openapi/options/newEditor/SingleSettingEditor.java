@@ -4,6 +4,7 @@ package com.intellij.openapi.options.newEditor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.awt.*;
 import java.util.HashMap;
@@ -12,6 +13,7 @@ import java.util.Map;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class SingleSettingEditor extends ConfigurableEditor {
   private final SimpleBanner myBanner = new SimpleBanner() {
     @Override

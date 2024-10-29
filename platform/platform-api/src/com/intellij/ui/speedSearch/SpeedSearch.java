@@ -160,8 +160,8 @@ public class SpeedSearch extends SpeedSearchSupply implements KeyListener, Speed
 
   @Override
   public @Nullable Iterable<TextRange> matchingFragments(@NotNull String text) {
-    if (myMatcher instanceof MinusculeMatcher) {
-      return ((MinusculeMatcher)myMatcher).matchingFragments(text);
+    if (getMatcher() instanceof MinusculeMatcher matcher) {
+      return matcher.matchingFragments(text);
     }
     return null;
   }

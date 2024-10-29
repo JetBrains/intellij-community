@@ -16,17 +16,16 @@
 
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import
 
+# pytype: disable=import-error
 import svn.client
 import svn.core
 import svn.ra
 
+# pytype: enable=import-error
+
 Pool = svn.core.Pool
 SubversionException = svn.core.SubversionException
-
-from mercurial.pycompat import getattr
-from mercurial import util
 
 # Some older versions of the Python bindings need to be
 # explicitly initialized. But what we want to do probably
@@ -38,7 +37,7 @@ svn_config = None
 
 def _create_auth_baton(pool):
     """Create a Subversion authentication baton."""
-    import svn.client
+    import svn.client  # pytype: disable=import-error
 
     # Give the client context baton a suite of authentication
     # providers.h
@@ -61,7 +60,7 @@ def _create_auth_baton(pool):
                 if p:
                     providers.append(p)
     else:
-        if util.safehasattr(svn.client, b'get_windows_simple_provider'):
+        if hasattr(svn.client, 'get_windows_simple_provider'):
             providers.append(svn.client.get_windows_simple_provider(pool))
 
     return svn.core.svn_auth_open(providers, pool)
@@ -71,7 +70,7 @@ class NotBranchError(SubversionException):
     pass
 
 
-class SvnRaTransport(object):
+class SvnRaTransport:
     """
     Open an ra connection to a Subversion repository.
     """
@@ -83,7 +82,7 @@ class SvnRaTransport(object):
         self.password = b''
 
         # Only Subversion 1.4 has reparent()
-        if ra is None or not util.safehasattr(svn.ra, b'reparent'):
+        if ra is None or not hasattr(svn.ra, 'reparent'):
             self.client = svn.client.create_context(self.pool)
             ab = _create_auth_baton(self.pool)
             self.client.auth_baton = ab
@@ -108,7 +107,7 @@ class SvnRaTransport(object):
             self.ra = ra
             svn.ra.reparent(self.ra, self.svn_url.encode('utf8'))
 
-    class Reporter(object):
+    class Reporter:
         def __init__(self, reporter_data):
             self._reporter, self._baton = reporter_data
 

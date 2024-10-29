@@ -19,16 +19,16 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Intention actions are context-specific actions related to the caret position in the editor.
- * Upon pressing Alt+Enter, a list of possible intention actions is shown, see IntentionPopup.
+ * Upon pressing <kbd>Alt+Enter</kbd>, a list of possible intention actions is shown in a popup.
  * <p>
- * Individual intention actions can be enabled or disabled in the "Intentions" settings dialog.
+ * Individual intention actions can be enabled or disabled in the <em>Settings | Editor | Intentions</em> dialog.
  * <p>
  * To change the icon in the intention popup menu, implement {@link Iconable}.
  * <p>
  * To change the ordering, implement {@link HighPriorityAction},
  * {@link LowPriorityAction} or {@link PriorityAction}.
  * <p>
- * Can be {@link com.intellij.openapi.project.DumbAware}.
+ * Can be marked {@link com.intellij.openapi.project.DumbAware}.
  * <p>
  * See {@link CustomizableIntentionAction} for further customization options.
  */

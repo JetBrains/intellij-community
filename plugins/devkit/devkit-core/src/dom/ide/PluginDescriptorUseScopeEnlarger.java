@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.ide;
 
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomTarget;
@@ -20,7 +21,6 @@ import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
-import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.UClass;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastVisibility;
@@ -43,7 +43,7 @@ final class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
       }
     }
 
-    if (PsiUtil.isIdeaProject(element.getProject())) {
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(element.getProject())) {
       // we use UAST to properly handle both Java and Kotlin classes
       var uClass = UastContextKt.toUElement(element, UClass.class);
 

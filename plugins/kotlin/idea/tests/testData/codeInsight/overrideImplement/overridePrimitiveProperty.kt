@@ -12,3 +12,12 @@ interface T {
 
 class C : T {<caret>
 }
+
+// MEMBER: "a1: Byte"
+// MEMBER: "a2: Short"
+// MEMBER: "a3: Int"
+// MEMBER: "a4: Long"
+// MEMBER: "a5: Float"
+// MEMBER: "a6: Double"
+// MEMBER: "a7: Char"
+// MEMBER: "a8: Boolean"

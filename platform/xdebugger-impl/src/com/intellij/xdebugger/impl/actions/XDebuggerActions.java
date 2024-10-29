@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
+@ApiStatus.Internal
 public interface XDebuggerActions {
   @NonNls String VIEW_BREAKPOINTS = "ViewBreakpoints";
 
@@ -60,4 +62,7 @@ public interface XDebuggerActions {
 
   @NonNls String FOCUS_ON_BREAKPOINT = "Debugger.FocusOnBreakpoint";
   @NonNls String FOCUS_ON_FINISH = "Debugger.FocusOnFinish";
+
+  @NonNls String PARALLEL_STACKS_POPUP_EXTRA_GROUP = "XDebugger.ParallelStacks.Popup.Extra";
+  @NonNls String PARALLEL_STACKS_TOOLBAR_EXTRA_GROUP = "XDebugger.ParallelStacks.ToolBar.Extra";
 }

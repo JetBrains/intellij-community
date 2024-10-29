@@ -10,10 +10,12 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public class HtmlSyntaxInfoReader extends AbstractSyntaxAwareReader implements MarkupHandler {
   private final int myTabSize;
   protected StringBuilder    myResultBuffer;

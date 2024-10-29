@@ -9,10 +9,13 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.diagnostics.KaDiagnosticWithPsi
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
+import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.builtins.functions.FunctionTypeKind
@@ -113,11 +116,11 @@ object ChangeTypeQuickFixFactories {
             addAll(returnedExpressions.mapNotNull { returnExpr ->
                 (property?.getPropertyInitializerType() ?: returnExpr.expressionType)?.let { getActualType(it) }
             })
-            if (!candidateType.isUnit) {
+            if (!candidateType.isUnitType) {
                 add(candidateType)
             }
         }.distinct()
-        return commonSuperType(returnTypes) ?: candidateType
+        return if (returnTypes.isNotEmpty()) returnTypes.commonSupertype else candidateType
     }
 
     context(KaSession)
@@ -186,8 +189,7 @@ object ChangeTypeQuickFixFactories {
             registerVariableTypeFixes(property, getActualType(actualType))
         }
 
-    context(KaSession)
-    private fun registerVariableTypeFixes(declaration: KtProperty, type: KaType): List<KotlinQuickFixAction<KtExpression>> {
+    private fun KaSession.registerVariableTypeFixes(declaration: KtProperty, type: KaType): List<KotlinQuickFixAction<KtExpression>> {
         val expectedType = declaration.returnType
         val expression = declaration.initializer
         return buildList {
@@ -229,9 +231,9 @@ object ChangeTypeQuickFixFactories {
             buildList {
                 add(UpdateTypeQuickFix(entryWithWrongType, TargetType.VARIABLE, createTypeInfo(diagnostic.destructingType)))
 
-                val classSymbol = (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaSymbolWithMembers ?: return@buildList
+                val classSymbol = (diagnostic.psi.expressionType as? KaClassType)?.symbol as? KaDeclarationContainerSymbol ?: return@buildList
                 val componentFunction = classSymbol.memberScope
-                    .getCallableSymbols(diagnostic.componentFunctionName)
+                    .callables(diagnostic.componentFunctionName)
                     .firstOrNull()?.psi as? KtCallableDeclaration
                     ?: return@buildList
                 add(UpdateTypeQuickFix(componentFunction, TargetType.CALLED_FUNCTION, createTypeInfo(diagnostic.expectedType)))
@@ -253,14 +255,12 @@ object ChangeTypeQuickFixFactories {
         )
     }
 
-    context(KaSession)
-    private fun <PSI : KtCallableDeclaration> createChangeCurrentDeclarationQuickFix(
+    private fun <PSI : KtCallableDeclaration> KaSession.createChangeCurrentDeclarationQuickFix(
         superCallable: KaCallableSymbol,
         declaration: PSI
     ): UpdateTypeQuickFix<PSI> = UpdateTypeQuickFix(declaration, TargetType.CURRENT_DECLARATION, createTypeInfo(superCallable.returnType))
 
-    context(KaSession)
-    private fun createChangeOverriddenFunctionQuickFix(
+    private fun KaSession.createChangeOverriddenFunctionQuickFix(
         callable: KaCallableSymbol,
         superCallable: KaCallableSymbol,
     ): UpdateTypeQuickFix<KtCallableDeclaration>? {
@@ -270,8 +270,7 @@ object ChangeTypeQuickFixFactories {
         return UpdateTypeQuickFix(singleMatchingOverriddenFunctionPsi, TargetType.BASE_DECLARATION, createTypeInfo(type))
     }
 
-    context(KaSession)
-    private fun createTypeInfo(ktType: KaType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
+    private fun KaSession.createTypeInfo(ktType: KaType) = with(CallableReturnTypeUpdaterUtils.TypeInfo) {
         createByKtTypes(ktType)
     }
 
@@ -337,7 +336,7 @@ context(KaSession)
 fun KaType.isNumberOrUNumberType(): Boolean = isNumberType() || isUNumberType()
 
 context(KaSession)
-fun KaType.isNumberType(): Boolean = isPrimitive && !isBoolean && !isChar
+fun KaType.isNumberType(): Boolean = isPrimitive && !isBooleanType && !isCharType
 
 context(KaSession)
-fun KaType.isUNumberType(): Boolean = isUByte || isUShort || isUInt || isULong
+fun KaType.isUNumberType(): Boolean = isUByteType || isUShortType || isUIntType || isULongType

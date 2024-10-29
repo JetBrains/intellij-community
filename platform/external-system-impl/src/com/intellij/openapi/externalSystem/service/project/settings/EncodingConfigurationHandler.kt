@@ -14,10 +14,12 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl
 import com.intellij.openapi.vfs.encoding.EncodingProjectManagerImpl.BOMForNewUTF8Files
+import org.jetbrains.annotations.ApiStatus
 import java.nio.charset.Charset
 
 private const val DEFAULT_CHARSET = "<System Default>"
 
+@ApiStatus.Internal
 class EncodingConfigurationHandler : ConfigurationHandler {
   override fun onSuccessImport(project: Project,
                                projectData: ProjectData?,

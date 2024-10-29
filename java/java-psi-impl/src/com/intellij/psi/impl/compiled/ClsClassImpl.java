@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static java.util.Arrays.asList;
 
@@ -446,12 +447,14 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
       PsiExtensibleClass extMirror = (PsiExtensibleClass)mirror;
       setMirrorsChecked(getOwnFields(), extMirror.getOwnFields());
       setMirrorsChecked(getOwnMethods(), extMirror.getOwnMethods());
-      setMirrorsChecked(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
+      //inner classes are sorted by decompiler by method lines, so it is necessary to resort
+      setSortedMirrorsChecked(getOwnInnerClasses(), extMirror.getOwnInnerClasses(), Comparator.comparing(PsiClass::getName));
     }
     else {
       setMirrorsChecked(getOwnFields(), asList(mirror.getFields()));
       setMirrorsChecked(getOwnMethods(), asList(mirror.getMethods()));
-      setMirrorsChecked(getOwnInnerClasses(), asList(mirror.getInnerClasses()));
+      //inner classes are sorted by decompiler by method lines, so it is necessary to resort
+      setSortedMirrorsChecked(getOwnInnerClasses(), asList(mirror.getInnerClasses()), Comparator.comparing(PsiClass::getName));
     }
   }
 
@@ -463,6 +466,13 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     if (stub.size() == mirror.size()) {
       setMirrors(stub, mirror);
     }
+  }
+
+  private static <T extends PsiElement> void setSortedMirrorsChecked(@NotNull List<T> stub,
+                                                                     @NotNull List<T> mirror,
+                                                                     @NotNull Comparator<? super T> comparator) {
+    setMirrorsChecked(stub.stream().sorted(comparator).collect(Collectors.toList()),
+                      mirror.stream().sorted(comparator).collect(Collectors.toList()));
   }
 
   @Override

@@ -91,7 +91,7 @@ public interface Promise<T> {
    * or on promise reject (null as result value will be passed).
    */
   @NotNull
-  Promise<T> onProcessed(@NotNull Consumer<? super T> processed);
+  Promise<T> onProcessed(@NotNull Consumer<? super @Nullable T> processed);
 
   /**
    * Get promise state.

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.source.tree;
 
@@ -8,6 +8,7 @@ import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
@@ -32,13 +33,15 @@ import java.util.concurrent.atomic.AtomicReferenceFieldUpdater;
 
 public class CompositeElement extends TreeElement {
   private static final Logger LOG = Logger.getInstance(CompositeElement.class);
+  private static final Key<Integer> OUR_HC_KEY = Key.create("OUR_HC_KEY");
+
   public static final CompositeElement[] EMPTY_ARRAY = new CompositeElement[0];
 
   private TreeElement firstChild;
   private TreeElement lastChild;
 
   private volatile int myCachedLength = -1;
-  private volatile int myHC = -1;
+
   private volatile PsiElement myWrapper;
   private static final AtomicReferenceFieldUpdater<CompositeElement, PsiElement>
     myWrapperUpdater = AtomicReferenceFieldUpdater.newUpdater(CompositeElement.class, PsiElement.class, "myWrapper");
@@ -85,7 +88,7 @@ public class CompositeElement extends TreeElement {
   public void clearCaches() {
     myCachedLength = -1;
 
-    myHC = -1;
+    this.putUserData(OUR_HC_KEY, null);
 
     clearRelativeOffsets(rawFirstChild());
   }
@@ -481,16 +484,19 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public int hc() {
-    int hc = myHC;
-    if (hc == -1) {
-      hc = 0;
-      TreeElement child = firstChild;
-      while (child != null) {
-        hc += child.hc();
-        child = child.getTreeNext();
-      }
-      myHC = hc;
+    Integer cached = getUserData(OUR_HC_KEY);
+    if (cached != null) {
+      return cached;
     }
+
+    int hc = 0;
+    TreeElement child = firstChild;
+    while (child != null) {
+      hc += child.hc();
+      child = child.getTreeNext();
+    }
+    putUserDataIfAbsent(OUR_HC_KEY, hc);
+
     return hc;
   }
 
@@ -614,7 +620,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void removeRange(@NotNull ASTNode first, ASTNode firstWhichStayInTree) {
+  public void removeRange(@NotNull ASTNode first, @Nullable ASTNode firstWhichStayInTree) {
     removeChildrenInner((TreeElement)first, (TreeElement)firstWhichStayInTree);
   }
 
@@ -673,7 +679,7 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, @Nullable ASTNode lastChild, @Nullable ASTNode anchorBefore) {
     ASTNode next;
     for (ASTNode f = firstChild; f != lastChild; f = next) {
       next = f.getTreeNext();
@@ -811,7 +817,7 @@ public class CompositeElement extends TreeElement {
     parent.rawAddChildren(first);
   }
 
-  private static void remove(@NotNull TreeChangeEventImpl destinationTreeChange, TreeElement first, TreeElement last) {
+  private static void remove(@NotNull TreeChangeEventImpl destinationTreeChange, @Nullable TreeElement first, @Nullable TreeElement last) {
     if (first != null) {
       destinationTreeChange.addElementaryChange(first.getTreeParent());
       first.rawRemoveUpTo(last);
@@ -832,7 +838,7 @@ public class CompositeElement extends TreeElement {
     removeChildrenInner(child, child.getTreeNext());
   }
 
-  private static void removeChildrenInner(@NotNull TreeElement first, TreeElement last) {
+  private static void removeChildrenInner(@NotNull TreeElement first, @Nullable TreeElement last) {
     FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
       ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {

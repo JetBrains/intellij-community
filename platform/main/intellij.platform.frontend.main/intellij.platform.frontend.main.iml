@@ -7,5 +7,6 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="intellij.platform.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.navbar.frontend" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.debugger.impl.frontend" scope="RUNTIME" />
   </component>
 </module>

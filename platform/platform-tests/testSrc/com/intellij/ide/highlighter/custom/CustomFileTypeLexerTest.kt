@@ -8,7 +8,7 @@ import com.intellij.openapi.util.IntRef
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
 
@@ -508,7 +508,7 @@ NUMBER ('0yabc0')
       }
     }
 
-    PerformanceTestUtil.newPerformanceTest(name) {
+    Benchmark.newBenchmark(name) {
       val charAts = IntRef()
       LexerTestCase.printTokens(countingCharSequence(text, charAts), 0, CustomFileTypeLexer(table))
       assertTrue(charAts.get() < text.length * 4)

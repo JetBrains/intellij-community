@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
@@ -107,9 +108,10 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
     }
   }
 
-  private static class MySpeedSearchActionGroup extends ActionGroupWrapper implements SpeedsearchAction, DumbAware, AlwaysVisibleActionGroup {
+  private static class MySpeedSearchActionGroup extends ActionGroupWrapper implements SpeedsearchAction, DumbAware {
     MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
+      getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
     }
   }
 }

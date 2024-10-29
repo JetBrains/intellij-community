@@ -8,9 +8,9 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.platform.backend.workspace.WorkspaceModelChangeListener
 import com.intellij.platform.backend.workspace.WorkspaceModelTopics
 import com.intellij.platform.workspace.storage.VersionedStorageChange
-import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.platform.workspace.storage.WorkspaceEntity
 import com.intellij.platform.workspace.storage.WorkspaceEntityWithSymbolicId
+import com.intellij.platform.workspace.storage.impl.VersionedStorageChangeInternal
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
 import com.intellij.testFramework.PlatformTestUtil
 import kotlinx.coroutines.runBlocking
@@ -23,7 +23,6 @@ import org.junit.Test
 import java.io.File
 import java.util.*
 import java.util.function.Function
-
 
 class MiscImportingTest : MavenMultiVersionImportingTestCase() {
   private val myEventsTestHelper = MavenEventsTestHelper()
@@ -56,12 +55,13 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertModules("project")
     assertEquals("1", projectsTree.rootProjects[0].name)
     MavenServerManager.getInstance().closeAllConnectorsAndWait()
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
                     <name>2</name>
                     """.trimIndent())
+    updateAllProjects()
     assertModules("project")
     assertEquals("2", projectsTree.rootProjects[0].name)
   }
@@ -216,7 +216,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
                       <version>1</version>
                       """.trimIndent())
     updateAllProjects()
-    createModulePom("m1",
+    updateModulePom("m1",
                     """
                       <groupId>test</groupId>
                       <artifactId>m1</artifactId>
@@ -288,6 +288,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testTakingProxySettingsIntoAccount() = runBlocking {
+    needFixForMaven4()
     val helper = MavenCustomRepositoryHelper(dir, "local1")
     repositoryPath = helper.getTestDataPath("local1")
     importProjectAsync("""
@@ -372,7 +373,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     val disposable: Disposable = Disposer.newDisposable()
     try {
       maskExtensions(MavenImporter.EXTENSION_POINT_NAME,
-                     listOf<MavenImporter>(NameSettingMavenImporter("name-from-properties")),
+                     listOf<MavenImporter>(MyTestNameSettingMavenImporter("name-from-properties")),
                      disposable)
       importProjectAsync("""
                       <groupId>test</groupId>
@@ -390,7 +391,7 @@ class MiscImportingTest : MavenMultiVersionImportingTestCase() {
     assertEquals("name-from-properties", project!!.name)
   }
 
-  private class NameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
+  private class MyTestNameSettingMavenImporter(private val myName: String) : MavenImporter("gid", "id") {
     override fun customizeUserProperties(project: Project, mavenProject: MavenProject, properties: Properties) {
       properties.setProperty("myName", myName)
     }

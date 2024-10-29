@@ -3,19 +3,19 @@ f:com.intellij.credentialStore.CredentialAttributes
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,java.lang.String,java.lang.Class):V
 - <init>(java.lang.String,java.lang.String,java.lang.Class,Z):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.Class,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,java.lang.String,java.lang.Class,Z,Z):V
-- b:<init>(java.lang.String,java.lang.String,java.lang.Class,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,java.lang.Class,Z,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,java.lang.String,Z):V
+- <init>(java.lang.String,java.lang.String,Z,Z):V
 - f:component1():java.lang.String
 - f:component2():java.lang.String
-- f:component3():java.lang.Class
+- f:component3():Z
 - f:component4():Z
-- f:component5():Z
-- f:copy(java.lang.String,java.lang.String,java.lang.Class,Z,Z):com.intellij.credentialStore.CredentialAttributes
-- bs:copy$default(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String,java.lang.Class,Z,Z,I,java.lang.Object):com.intellij.credentialStore.CredentialAttributes
+- f:copy(java.lang.String,java.lang.String,Z,Z):com.intellij.credentialStore.CredentialAttributes
+- bs:copy$default(com.intellij.credentialStore.CredentialAttributes,java.lang.String,java.lang.String,Z,Z,I,java.lang.Object):com.intellij.credentialStore.CredentialAttributes
 - equals(java.lang.Object):Z
 - f:getCacheDeniedItems():Z
-- f:getRequestor():java.lang.Class
 - f:getServiceName():java.lang.String
 - f:getUserName():java.lang.String
 - hashCode():I
@@ -52,8 +52,9 @@ com.intellij.credentialStore.CredentialStoreManager
 f:com.intellij.credentialStore.CredentialStoreManager$Companion
 - f:getInstance():com.intellij.credentialStore.CredentialStoreManager
 f:com.intellij.credentialStore.Credentials
+- <init>(java.lang.String):V
 - <init>(java.lang.String,com.intellij.credentialStore.OneTimeString):V
-- b:<init>(java.lang.String,com.intellij.credentialStore.OneTimeString,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- <init>(java.lang.String,com.intellij.credentialStore.OneTimeString,I,kotlin.jvm.internal.DefaultConstructorMarker):V
 - <init>(java.lang.String,java.lang.String):V
 - <init>(java.lang.String,B[]):V
 - <init>(java.lang.String,C[]):V
@@ -85,6 +86,10 @@ a:com.intellij.ide.passwordSafe.PasswordSafe
 - a:setRememberPasswordByDefault(Z):V
 f:com.intellij.ide.passwordSafe.PasswordSafe$Companion
 - f:getInstance():com.intellij.ide.passwordSafe.PasswordSafe
+c:com.intellij.ide.passwordSafe.PasswordSafeException
+- java.lang.RuntimeException
+- <init>(java.lang.String):V
+- <init>(java.lang.String,java.lang.Throwable):V
 com.intellij.ide.passwordSafe.PasswordStorage
 - a:get(com.intellij.credentialStore.CredentialAttributes):com.intellij.credentialStore.Credentials
 - getPassword(com.intellij.openapi.project.Project,java.lang.Class,java.lang.String):java.lang.String

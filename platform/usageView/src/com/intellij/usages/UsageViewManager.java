@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
 
@@ -9,6 +9,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usages.rules.PsiElementUsage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public abstract class UsageViewManager {
   public static UsageViewManager getInstance (Project project) {
@@ -31,7 +33,7 @@ public abstract class UsageViewManager {
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,
-                                                @NotNull Factory<? extends UsageSearcher> searcherFactory,
+                                                @NotNull Supplier<? extends UsageSearcher> searcherFactory,
                                                 boolean showPanelIfOnlyOneUsage,
                                                 boolean showNotFoundMessage,
                                                 @NotNull UsageViewPresentation presentation,

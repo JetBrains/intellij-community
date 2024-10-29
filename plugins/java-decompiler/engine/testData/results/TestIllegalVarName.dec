@@ -21,10 +21,19 @@ public final class TestIllegalVarName {
 
 class 'pkg/TestIllegalVarName' {
    method 'm (Ljava/lang/String;I)Ljava/lang/String;' {
+      0      16
       1      16
+      2      16
       3      16
+      4      16
+      5      16
+      d      17
       11      17
+      12      17
+      16      17
       1a      17
+      1b      17
+      1c      17
       1d      17
    }
 }

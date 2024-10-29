@@ -16,10 +16,12 @@
 package com.intellij.framework.detection.impl;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
+@ApiStatus.Internal
 public interface FrameworkDetectionIndexListener extends EventListener {
   void fileUpdated(@NotNull VirtualFile file, @NotNull String detectorId);
 }

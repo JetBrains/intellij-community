@@ -2,6 +2,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
@@ -14,6 +15,7 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.setCaresAboutInjection(false);
+    ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true);
   }
 
   @Override

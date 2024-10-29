@@ -16,6 +16,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -81,6 +82,7 @@ public class FileElement extends LazyParseableElement implements FileASTNode {
     myStubbedSpine = null;
   }
 
+  @ApiStatus.Internal
   public final @NotNull AstSpine getStubbedSpine() {
     AstSpine result = myStubbedSpine;
     if (result == null) {

@@ -5,13 +5,11 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from .i18n import _
 
 from . import (
     error,
-    pycompat,
 )
 
 MISSING_NEWLINE_MARKER = b'\\ No newline at end of file\n'
@@ -30,7 +28,7 @@ def addlines(fp, hunk, lena, lenb, a, b):
         num = max(todoa, todob)
         if num == 0:
             break
-        for i in pycompat.xrange(num):
+        for i in range(num):
             s = fp.readline()
             if not s:
                 raise error.ParseError(_(b'incomplete hunk'))
@@ -77,7 +75,7 @@ def testhunk(a, b, bstart):
     blen = len(b)
     if alen > blen - bstart or bstart < 0:
         return False
-    for i in pycompat.xrange(alen):
+    for i in range(alen):
         if a[i][1:] != b[i + bstart]:
             return False
     return True

@@ -628,9 +628,8 @@ public final class ExceptionUtil {
         if (!(type instanceof PsiClassType)) continue;
         PsiClassType classType = (PsiClassType)type;
         PsiClass exceptionClass = ((PsiClassType)type).resolve();
-        if (exceptionClass == null) continue;
+        if (exceptionClass != null && isUncheckedException(classType)) continue;
 
-        if (isUncheckedException(classType)) continue;
         if (getHandlePlace(element, classType, topElement) != HandlePlace.UNHANDLED) continue;
 
         result.add((PsiClassType)type);

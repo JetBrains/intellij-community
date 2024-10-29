@@ -1,15 +1,15 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesExtractOptions
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.FileVisitResult
 import java.nio.file.Files
 import java.nio.file.Path
@@ -20,37 +20,19 @@ import java.nio.file.attribute.PosixFilePermission.*
 import java.util.*
 import java.util.zip.GZIPInputStream
 
-class BundledRuntimeImpl : BundledRuntime {
-  private val options: BuildOptions
-  private val paths: BuildPaths
-  private val dependenciesProperties: DependenciesProperties
-  private val productProperties: ProductProperties?
-  private val error: (String) -> Unit
-  private val info: (String) -> Unit
-
-  constructor(
-    options: BuildOptions,
-    paths: BuildPaths,
-    dependenciesProperties: DependenciesProperties,
-    productProperties: ProductProperties? = null,
-    error: (String) -> Unit,
-    info: (String) -> Unit
-  ) {
-    this.options = options
-    this.paths = paths
-    this.dependenciesProperties = dependenciesProperties
-    this.productProperties = productProperties
-    this.error = error
-    this.info = info
-  }
-
+class BundledRuntimeImpl(
+  private val options: BuildOptions,
+  private val paths: BuildPaths,
+  private val dependenciesProperties: DependenciesProperties,
+  private val productProperties: ProductProperties?,
+  private val info: (String) -> Unit,
+) : BundledRuntime {
   constructor(context: CompilationContext) : this(
-    context.options,
-    context.paths,
-    context.dependenciesProperties,
-    (context as? BuildContext)?.productProperties,
-    context.messages::error,
-    context.messages::info,
+    options = context.options,
+    paths = context.paths,
+    dependenciesProperties = context.dependenciesProperties,
+    productProperties = (context as? BuildContext)?.productProperties,
+    info = context.messages::info,
   )
 
   override val prefix: String
@@ -135,8 +117,8 @@ class BundledRuntimeImpl : BundledRuntime {
     if (!options.runtimeDebug) {
       return ""
     }
-    if (!options.isTestBuild && !options.isInDevelopmentMode) {
-      error("Either test or development mode is required to use fastdebug runtime build")
+    check(options.isTestBuild || options.isInDevelopmentMode) {
+      "Either test or development mode is required to use fastdebug runtime build"
     }
     info("Fastdebug runtime build is requested")
     return "fastdebug-"
@@ -145,17 +127,17 @@ class BundledRuntimeImpl : BundledRuntime {
   /**
    * When changing this list of patterns, also change patch_bin_file in launcher.sh (for remote dev)
    */
-  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): List<String> {
+  override fun executableFilesPatterns(os: OsFamily, distribution: JetBrainsRuntimeDistribution): Sequence<String> {
     val pathPrefix = if (os == OsFamily.MACOS) "jbr/Contents/Home" else "jbr"
     @Suppress("SpellCheckingInspection")
-    return buildList {
-      add("$pathPrefix/bin/*")
+    return sequence {
+      yield("$pathPrefix/bin/*")
       if (os == OsFamily.LINUX) {
-        add("$pathPrefix/lib/jexec")
-        add("$pathPrefix/lib/jspawnhelper")
+        yield("$pathPrefix/lib/jexec")
+        yield("$pathPrefix/lib/jspawnhelper")
         if (distribution == JetBrainsRuntimeDistribution.JCEF) {
-          add("$pathPrefix/lib/chrome-sandbox")
-          add("$pathPrefix/lib/jcef_helper")
+          yield("$pathPrefix/lib/chrome-sandbox")
+          yield("$pathPrefix/lib/jcef_helper")
         }
       }
     }
@@ -169,12 +151,12 @@ private fun getArchSuffix(arch: JvmArchitecture): String {
   }
 }
 
-private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
+private suspend fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
   spanBuilder("extract JBR")
     .setAttribute("archive", archive.toString())
     .setAttribute("os", os.osName)
     .setAttribute("destination", destinationDir.toString())
-    .useWithoutActiveScope {
+    .use {
       NioFiles.deleteRecursively(destinationDir)
       unTar(archive, destinationDir)
       fixPermissions(destinationDir, os == OsFamily.WINDOWS)
@@ -184,7 +166,7 @@ private fun doExtract(archive: Path, destinationDir: Path, os: OsFamily) {
 private fun unTar(archive: Path, destination: Path) {
   // CompressorStreamFactory requires stream with mark support
   val rootDir = createTarGzInputStream(archive).use {
-    it.nextTarEntry?.name
+    it.nextEntry?.name
   }
   if (rootDir == null) {
     throw IllegalStateException("Unable to detect root dir of $archive")

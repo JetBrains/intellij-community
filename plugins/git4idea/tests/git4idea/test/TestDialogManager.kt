@@ -15,6 +15,7 @@
  */
 package git4idea.test
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import git4idea.DialogManager
@@ -40,12 +41,20 @@ import kotlin.test.assertNull
  */
 class TestDialogManager : DialogManager() {
 
+  // for rem-dev tests, we call real methods of the base class
+  private val isRemoteDevHost = AppMode.isRemoteDevHost()
+
   private val DEFAULT_MESSAGE_HANDLER : (String) -> Int = { throw IllegalStateException("Message is not expected: $it") }
 
   private val myHandlers = hashMapOf<Class<out DialogWrapper>, (DialogWrapper) -> Int>()
   private var myOnMessage: (String) -> Int = DEFAULT_MESSAGE_HANDLER
 
   override fun showDialog(dialog: DialogWrapper) {
+    if (isRemoteDevHost) {
+      super.showDialog(dialog)
+      return
+    }
+
     var exitCode = DialogWrapper.OK_EXIT_CODE
     try {
       val handler = myHandlers[dialog.javaClass]
@@ -63,17 +72,30 @@ class TestDialogManager : DialogManager() {
 
   override fun showMessageDialog(project: Project, message: String, title: String, options: Array<String>,
                                  defaultButtonIndex: Int, icon: Icon?): Int {
-    return myOnMessage.invoke(message)
+    return when {
+      isRemoteDevHost -> super.showMessageDialog(project, message, title, options, defaultButtonIndex, icon)
+
+      else -> myOnMessage.invoke(message)
+    }
   }
 
   override fun showMessageDialog(project: Project, message: String, title: String, options: Array<String>,
                                  defaultButtonIndex: Int, focusedButtonIndex: Int, icon: Icon?): Int {
-    return myOnMessage.invoke(message)
+    return when {
+      isRemoteDevHost -> super.showMessageDialog(project, message, title, options, defaultButtonIndex, focusedButtonIndex, icon)
+
+      else -> myOnMessage.invoke(message)
+    }
   }
 
   override fun showMessageDialog(description: String, title: String, options: Array<String>, defaultButtonIndex: Int,
                                  focusedButtonIndex: Int, icon: Icon?, dontAskOption: DialogWrapper.DoNotAskOption?): Int {
-    return myOnMessage.invoke(description)
+
+    return when {
+      isRemoteDevHost -> super.showMessageDialog(description, title, options, defaultButtonIndex, focusedButtonIndex, icon, dontAskOption)
+
+      else -> myOnMessage.invoke(description)
+    }
   }
 
   fun <T : DialogWrapper> registerDialogHandler(dialogClass: Class<T>, handler: TestDialogHandler<T>) {

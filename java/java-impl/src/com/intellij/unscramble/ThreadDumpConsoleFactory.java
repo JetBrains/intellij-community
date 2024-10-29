@@ -18,6 +18,7 @@ package com.intellij.unscramble;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
+import com.intellij.threadDumpParser.ThreadState;
 
 import javax.swing.*;
 import java.util.List;

@@ -243,7 +243,6 @@ com.intellij.psi.formatter.WhiteSpaceFormattingStrategy
 - a:addWhitespace(com.intellij.lang.ASTNode,com.intellij.psi.impl.source.tree.LeafElement):Z
 - a:adjustWhiteSpaceIfNecessary(java.lang.CharSequence,com.intellij.psi.PsiElement,I,I,com.intellij.psi.codeStyle.CodeStyleSettings):java.lang.CharSequence
 - a:adjustWhiteSpaceIfNecessary(java.lang.CharSequence,java.lang.CharSequence,I,I,com.intellij.psi.codeStyle.CodeStyleSettings,com.intellij.lang.ASTNode):java.lang.CharSequence
-- *:check(com.intellij.lang.Language,java.lang.CharSequence,I,I):I
 - a:check(java.lang.CharSequence,I,I):I
 - a:containsWhitespacesOnly(com.intellij.lang.ASTNode):Z
 - a:replaceDefaultStrategy():Z

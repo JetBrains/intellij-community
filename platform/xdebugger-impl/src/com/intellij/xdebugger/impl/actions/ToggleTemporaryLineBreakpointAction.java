@@ -17,8 +17,10 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ToggleTemporaryLineBreakpointAction extends XDebuggerActionBase implements DumbAware {
   public ToggleTemporaryLineBreakpointAction() {
     super(true);

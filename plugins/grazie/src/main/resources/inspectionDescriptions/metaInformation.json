@@ -1,0 +1,12 @@
+{
+  "inspections": [
+    {
+      "id": "LanguageDetectionInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GrazieInspection",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

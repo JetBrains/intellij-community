@@ -7,6 +7,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -15,6 +16,7 @@ import java.util.stream.Collectors;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 @State(name = "AbbreviationManager", storages = @Storage("abbrevs.xml"), category = SettingsCategory.KEYMAP)
 public final class AbbreviationManagerImpl extends AbbreviationManager implements PersistentStateComponent<Element> {
   private final Map<String, List<String>> abbreviationToActionId = new HashMap<>();

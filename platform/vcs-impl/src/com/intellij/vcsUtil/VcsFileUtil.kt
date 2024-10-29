@@ -2,7 +2,9 @@
 package com.intellij.vcsUtil
 
 import com.intellij.openapi.vcs.FilePath
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object VcsFileUtilKt {
   @JvmStatic
   fun isUnder(repositoryRootPath: FilePath, parents: Set<FilePath>, child: FilePath) =

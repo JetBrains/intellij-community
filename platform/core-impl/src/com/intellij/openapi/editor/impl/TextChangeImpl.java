@@ -5,11 +5,13 @@ import com.intellij.openapi.editor.TextChange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceBackedByArray;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Default {@link TextChange} implementation with mutable state.
  */
+@ApiStatus.Internal
 public class TextChangeImpl implements TextChange {
 
   private final StringBuilder myText = new StringBuilder();

@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.SwitchUtils.IfStatementBranch;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -354,7 +355,7 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
           hasConflicts = true;
         }
       }
-      dumpBranch(branch, castToInt, hasConflicts, breaksNeedRelabeled, newLabel, switchStatementText);
+      dumpBranch(branch, castToInt, hasConflicts, breaksNeedRelabeled, newLabel, switchExpression, switchStatementText);
     }
     switchStatementText.append('}');
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(ifStatement.getProject());
@@ -472,14 +473,14 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
   }
 
   private static void dumpBranch(IfStatementBranch branch, boolean castToInt, boolean wrap, boolean renameBreaks, String breakLabelName,
-                                 @NonNls StringBuilder switchStatementText) {
+                                 @NotNull PsiExpression switchExpression, @NonNls StringBuilder switchStatementText) {
     dumpComments(branch.getComments(), switchStatementText);
     for (PsiExpression caseExpression : branch.getCaseExpressions()) {
       if (caseExpression instanceof PsiLiteralExpression literalExpression && PsiTypes.nullType().equals(literalExpression.getType())) {
         switchStatementText.append("case null:");
       }
       else {
-        switchStatementText.append("case ").append(getCaseLabelText(caseExpression, castToInt)).append(": ");
+        switchStatementText.append("case ").append(getCaseLabelText(caseExpression, switchExpression, castToInt)).append(": ");
       }
     }
     if (branch.isElse()) {
@@ -489,11 +490,22 @@ public final class IfCanBeSwitchInspection extends BaseInspection {
     dumpBody(branch.getStatement(), wrap, renameBreaks, breakLabelName, switchStatementText);
   }
 
-  private static @NonNls String getCaseLabelText(PsiExpression expression, boolean castToInt) {
+  private static @NonNls String getCaseLabelText(PsiExpression expression,
+                                                 @NotNull PsiExpression switchExpression,
+                                                 boolean castToInt) {
     if (expression instanceof PsiReferenceExpression referenceExpression) {
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiEnumConstant enumConstant) {
-        return enumConstant.getName();
+        PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(switchExpression.getType());
+        Set<PsiEnumConstant> constants = psiClass != null && psiClass.isEnum() ?
+                                         StreamEx.of(psiClass.getFields()).select(PsiEnumConstant.class).toSet() : Set.of();
+        if (constants.contains(enumConstant)) {
+          return enumConstant.getName();
+        }
+        else {
+          PsiClass containingClass = enumConstant.getContainingClass();
+          return containingClass != null ? containingClass.getQualifiedName() + "." + enumConstant.getName() : enumConstant.getName();
+        }
       }
     }
     final String patternCaseText = SwitchUtils.createPatternCaseText(expression);

@@ -4,6 +4,8 @@ package org.jetbrains.kotlin.gradle.multiplatformTests
 import com.intellij.openapi.project.Project
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.gradle.util.GradleVersion
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.TestTasksChecker
+import org.jetbrains.kotlin.gradle.multiplatformTests.testFeatures.checkers.workspace.GeneralWorkspaceChecks
 import org.jetbrains.kotlin.tooling.core.KotlinToolingVersion
 import org.junit.runner.Description
 import java.io.File
@@ -32,9 +34,15 @@ interface KotlinMppTestsContext {
     val gradleJdkPath: File
 
     val testConfiguration: TestConfiguration
+
+    val testFeatures: List<TestFeature<*>>
+
+    val enabledFeatures: List<TestFeature<*>>
 }
 
-class KotlinMppTestsContextImpl : KotlinMppTestsContext {
+class KotlinMppTestsContextImpl(
+    override val testFeatures: List<TestFeature<*>>
+) : KotlinMppTestsContext {
     override val testConfiguration: TestConfiguration = TestConfiguration()
     internal val testProperties: KotlinTestProperties = KotlinTestProperties.construct(testConfiguration)
 
@@ -56,4 +64,19 @@ class KotlinMppTestsContextImpl : KotlinMppTestsContext {
         get() = testProperties.agpVersion
 
     override val testDataDirectory: File by lazy { computeTestDataDirectory(description) }
+
+    override val enabledFeatures: List<TestFeature<*>>
+        get() {
+            val config = testConfiguration.getConfiguration(GeneralWorkspaceChecks)
+
+            return testFeatures.filter { feature ->
+                // Temporary mute TEST_TASKS checks due to issues with hosts on CI. See KT-56332
+                if (feature is TestTasksChecker) return@filter false
+
+                if (config.disableCheckers != null && feature in config.disableCheckers!!) return@filter false
+                if (config.onlyCheckers != null) return@filter feature in config.onlyCheckers!!
+
+                feature.isEnabledByDefault()
+            }
+        }
 }

@@ -4,9 +4,19 @@ package com.intellij.tools.apiDump
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.Type
 import java.io.PrintWriter
+import java.io.StringWriter
 
-fun PrintWriter.dumpApi(api: API) {
-  for (classData in api.publicApi) {
+fun dumpApi(classSignatures: List<ApiClass>): String {
+  return StringWriter().use {
+    PrintWriter(it).use { printer ->
+      printer.dumpApi(classSignatures)
+    }
+    it.buffer.toString()
+  }
+}
+
+fun PrintWriter.dumpApi(classSignatures: List<ApiClass>) {
+  for (classData in classSignatures) {
     printClassHeader(classData.className, classData.flags)
     printSupers(classData.supers)
     printMembers(classData.members)
@@ -93,20 +103,29 @@ fun Appendable.printFlags(flags: ApiFlags, isClass: Boolean): Boolean {
       append('e') // we don't care if ACC_ENUM class has ACC_ABSTRACT modifier
       hasModifier = true
     }
-    else if (flags.access.isSet(Opcodes.ACC_FINAL)) {
-      append('f')
-      hasModifier = true
-    }
-    else if (flags.access.isSet(Opcodes.ACC_ABSTRACT)) {
-      append('a')
-      hasModifier = true
-    }
     else {
-      append('c')
-      hasModifier = true
+      if (flags.annotationNonExtendable) {
+        append('F') // like `final`
+      }
+      if (flags.access.isSet(Opcodes.ACC_FINAL)) {
+        append('f')
+        hasModifier = true
+      }
+      else if (flags.access.isSet(Opcodes.ACC_ABSTRACT)) {
+        append('a')
+        hasModifier = true
+      }
+      else {
+        append('c')
+        hasModifier = true
+      }
     }
   }
   else {
+    if (flags.annotationNonExtendable) {
+      append('F')
+      hasModifier = true
+    }
     if (flags.access.isSet(Opcodes.ACC_FINAL)) {
       append('f')
       hasModifier = true

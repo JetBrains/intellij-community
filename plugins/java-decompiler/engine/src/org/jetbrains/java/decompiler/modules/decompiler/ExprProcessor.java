@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -23,6 +23,7 @@ import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructTypePathEntry;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -30,6 +31,7 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.Type;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
+import org.jetbrains.java.decompiler.struct.gen.generics.GenericType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
@@ -271,7 +273,15 @@ public class ExprProcessor {
     for (int i = 0; i < seq.length(); i++) {
       Instruction instr = seq.getInstr(i);
       Integer offset = block.getOriginalOffset(i);
-      Set<Integer> offsets = offset >= 0 ? Set.of(offset) : null;
+      BitSet offsets = null;
+      if (offset >= 0) {
+        offsets = new BitSet();
+        offsets.set(offset);
+        int end_offset = block.getOriginalOffset(i+1);
+        if (end_offset > offset) {
+          offsets.set(offset, end_offset);
+        }
+      }
 
       switch (instr.opcode) {
         case CodeConstants.opc_aconst_null:
@@ -312,7 +322,9 @@ public class ExprProcessor {
         case CodeConstants.opc_fload:
         case CodeConstants.opc_dload:
         case CodeConstants.opc_aload:
-          pushEx(stack, exprList, new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offset));
+          VarExprent varExprent = new VarExprent(instr.operand(0), varTypes[instr.opcode - CodeConstants.opc_iload], varProcessor, offsets);
+          varProcessor.findLVT(varExprent, offset + instr.length);
+          pushEx(stack, exprList, varExprent);
           break;
         case CodeConstants.opc_iaload:
         case CodeConstants.opc_laload:
@@ -335,7 +347,11 @@ public class ExprProcessor {
         case CodeConstants.opc_astore: {
           Exprent value = stack.pop();
           int varIndex = instr.operand(0);
-          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, nextMeaningfulOffset(block, i));
+          if (offsets != null) { //TODO: Figure out why this nulls in some cases
+            offsets.set(offset, offset + instr.length);
+          }
+          VarExprent left = new VarExprent(varIndex, varTypes[instr.opcode - CodeConstants.opc_istore], varProcessor, offsets);
+          varProcessor.findLVT(left, offset + instr.length);
           exprList.add(new AssignmentExprent(left, value, offsets));
           break;
         }
@@ -397,7 +413,8 @@ public class ExprProcessor {
           pushEx(stack, exprList, new FunctionExprent(FunctionExprent.FUNCTION_NEG, stack, offsets));
           break;
         case CodeConstants.opc_iinc: {
-          VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor);
+          VarExprent varExpr = new VarExprent(instr.operand(0), VarType.VARTYPE_INT, varProcessor, offsets);
+          varProcessor.findLVT(varExpr, offset + instr.length);
           int type = instr.operand(1) < 0 ? FunctionExprent.FUNCTION_SUB : FunctionExprent.FUNCTION_ADD;
           List<Exprent> operands = Arrays.asList(varExpr.copy(), new ConstExprent(VarType.VARTYPE_INT, Math.abs(instr.operand(1)), null));
           exprList.add(new AssignmentExprent(varExpr, new FunctionExprent(type, operands, offsets), offsets));
@@ -463,7 +480,7 @@ public class ExprProcessor {
           exprList.add(new ExitExprent(instr.opcode == CodeConstants.opc_athrow ? ExitExprent.EXIT_THROW : ExitExprent.EXIT_RETURN,
                                        instr.opcode == CodeConstants.opc_return ? null : stack.pop(),
                                        instr.opcode == CodeConstants.opc_athrow ? null : methodDescriptor.ret,
-                                       offsets));
+                                       offsets, methodDescriptor));
           break;
         case CodeConstants.opc_monitorenter:
         case CodeConstants.opc_monitorexit:
@@ -675,7 +692,15 @@ public class ExprProcessor {
       sb.append("void");
       return sb.toString();
     }
+    else if (tp == CodeConstants.TYPE_GENVAR && type.isGeneric()) {
+      sb.append(type.getValue());
+      return sb.toString();
+    }
     else if (tp == CodeConstants.TYPE_OBJECT) {
+      if (type.isGeneric()) {
+        ((GenericType)type).appendCastName(sb, typeAnnWriteHelpers);
+        return sb.toString();
+      }
       String ret;
       if (getShort) {
         ret = DecompilerContext.getImportCollector().getNestedName(type.getValue());
@@ -686,7 +711,7 @@ public class ExprProcessor {
         return UNDEFINED_TYPE_STRING; // FIXME: a warning should be logged
       }
       List<String> nestedTypes = Arrays.asList(ret.split("\\."));
-      writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
+      typeAnnWriteHelpers = writeNestedClass(sb, type, nestedTypes, typeAnnWriteHelpers);
       popNestedTypeAnnotation(typeAnnWriteHelpers);
       return sb.toString();
     }
@@ -726,7 +751,9 @@ public class ExprProcessor {
       boolean shouldWrite = true;
       if (!enclosingClasses.isEmpty() && i != nestedTypes.size() - 1) {
         String enclosingType = enclosingClasses.remove(0).simpleName;
-        shouldWrite = !nestedType.equals(enclosingType);
+        shouldWrite = !nestedType.equals(enclosingType)
+          // Also write out the enclosing class if we are the outermost, and we're in the type params
+          || enclosingClasses.isEmpty() && DecompilerContext.getOption(DecompilerContext.IN_CLASS_TYPE_PARAMS);
       }
       if (i == 0) { // the first annotation can be written already
         if (!sb.toString().isEmpty()) shouldWrite = true; // write if annotation exists
@@ -756,9 +783,16 @@ public class ExprProcessor {
   public static boolean canWriteNestedTypeAnnotation(String curPath, List<String> nestedTypes) {
     if (nestedTypes.isEmpty()) return true;
     String fullName = curPath + nestedTypes.get(0);
-    ClassesProcessor.ClassNode classNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(fullName);
-    if (classNode == null) return false;
-    return (classNode.access & CodeConstants.ACC_STATIC) == 0 && canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
+    StructClass currentClass = (StructClass)DecompilerContext.getProperty(DecompilerContext.CURRENT_CLASS);
+    StructInnerClassesAttribute attribute = currentClass.getAttribute(StructGeneralAttribute.ATTRIBUTE_INNER_CLASSES);
+    if (attribute == null) return false;
+    Optional<StructInnerClassesAttribute.Entry> first = attribute.getEntries().stream()
+      .filter(t -> t.innerName != null && t.innerName.equals(fullName))
+      .findFirst();
+    if (first.isEmpty()) return false;
+    StructInnerClassesAttribute.Entry entry = first.get();
+    return (entry.accessFlags & CodeConstants.ACC_STATIC) == 0 &&
+           canWriteNestedTypeAnnotation(fullName + "$", nestedTypes.subList(1, nestedTypes.size()));
   }
 
   public static List<ClassesProcessor.ClassNode> enclosingClassList() {
@@ -933,6 +967,7 @@ public class ExprProcessor {
     }
 
     TextBuffer buf = new TextBuffer();
+    lst = Exprent.sortIndexed(lst);
 
     for (Exprent expr : lst) {
       if (buf.length() > 0 && expr.type == Exprent.EXPRENT_VAR && ((VarExprent)expr).isClassDef()) {
@@ -940,6 +975,8 @@ public class ExprProcessor {
         buf.appendLineSeparator();
         tracer.incrementCurrentSourceLine();
       }
+
+      expr.inferExprType(null);
 
       TextBuffer content = expr.toJava(indent, tracer);
 
@@ -1013,13 +1050,19 @@ public class ExprProcessor {
       }
     }
 
+    exprent.inferExprType(leftType);
     VarType rightType = exprent.getExprType();
 
+    boolean isCastNull =
+      rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()));
     boolean cast =
       castAlways ||
-      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.getType() == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
+      (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.getType() != CodeConstants.TYPE_OBJECT && !isCastNull)) ||
+      (castNull && isCastNull) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
+
+    boolean castLambda = !cast && exprent.type == Exprent.EXPRENT_NEW && !leftType.equals(rightType) &&
+                          lambdaNeedsCast(leftType, (NewExprent)exprent);
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
 
@@ -1034,6 +1077,8 @@ public class ExprProcessor {
     }
 
     if (cast) buffer.append('(').append(getCastTypeName(leftType, Collections.emptyList())).append(')');
+
+    if (castLambda) buffer.append('(').append(getCastTypeName(rightType, Collections.emptyList())).append(')');
 
     if (quote) buffer.append('(');
 
@@ -1063,5 +1108,13 @@ public class ExprProcessor {
 
   private static boolean isNarrowedIntType(VarType type) {
     return VarType.VARTYPE_INT.isStrictSuperset(type) || type.equals(VarType.VARTYPE_BYTE_OBJ) || type.equals(VarType.VARTYPE_SHORT_OBJ);
+  }
+
+  private static boolean lambdaNeedsCast(VarType left, NewExprent exprent) {
+    if (exprent.isLambda() && !exprent.isMethodReference()) {
+      StructClass cls = DecompilerContext.getStructContext().getClass(left.getValue());
+      return cls == null || cls.getMethod(exprent.getLambdaMethodKey()) == null;
+    }
+    return false;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
@@ -140,14 +141,15 @@ public class ExtensionPointImplTest {
   }
 
   @Test
-  public void testIncompatibleAdapter() {
+  public void testIncompatibleAdapter() throws Exception {
     DefaultLogger.disableStderrDumping(disposable);
-
-    ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    extensionPoint.addExtensionAdapter(newStringAdapter());
-    assertThatThrownBy(() -> {
-      extensionPoint.getExtensionList();
-    }).hasMessageContaining("Extension java.lang.String does not implement class java.lang.Integer");
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      ExtensionPointImpl<@NotNull Integer> extensionPoint = buildExtensionPoint(Integer.class);
+      extensionPoint.addExtensionAdapter(newStringAdapter());
+      assertThatThrownBy(() -> {
+        extensionPoint.getExtensionList();
+      }).hasMessageContaining("Extension java.lang.String does not implement class java.lang.Integer");
+    });
   }
 
   @Test

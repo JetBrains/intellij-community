@@ -176,7 +176,7 @@ public class UnmodifiableHashMapTest {
   public void testEquals() {
     for (int size : new int[]{0, 1, 2, 3, 4, 10, 11, 12}) {
       UnmodifiableHashMap<Integer, String> map = create(size);
-      assertThat(map.equals(map)).isTrue();
+      assertThat(map).isEqualTo(map);
       HashMap<Integer, String> hashMap = new HashMap<>(map);
       assertThat(hashMap).isEqualTo(map);
       assertThat(map).isEqualTo(hashMap);

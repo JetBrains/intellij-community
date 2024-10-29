@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.framework.detection.impl.exclude.old;
 
@@ -94,8 +92,7 @@ public class DisabledAutodetectionByTypeElement {
     myModuleElements.add(new DisabledAutodetectionInModuleElement(moduleName, fileUrl, recursively));
   }
 
-  @Nullable
-  public DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
+  public @Nullable DisabledAutodetectionInModuleElement findElement(final @NotNull String moduleName) {
     for (DisabledAutodetectionInModuleElement element : myModuleElements) {
       if (moduleName.equals(element.getModuleName())) {
         return element;

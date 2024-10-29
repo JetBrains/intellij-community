@@ -15,6 +15,11 @@
     <registryKey key="evaluation.plugin.disable.sdk.check" defaultValue="false"
                  description="Disables check that project sdk configured properly" restartRequired="false"/>
     <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
+
+    <toolWindow id="Evaluation Dataset"
+                factoryClass="com.intellij.cce.ui.EvaluationDatasetToolWindowFactory"
+                anchor="bottom"
+                canCloseContents="false"/>
   </extensions>
 
   <extensionPoints>
@@ -39,14 +44,17 @@
     <extensionPoint qualifiedName="com.intellij.cce.evaluableFeature"
                     interface="com.intellij.cce.evaluable.EvaluableFeature"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.cce.apiCallExtractor"
+                    interface="com.intellij.cce.metric.ApiCallExtractor"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij.cce">
     <evaluableFeature implementation="com.intellij.cce.evaluable.rename.RenameFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.docGeneration.DocGenerationFeature"/>
-    <evaluableFeature implementation="com.intellij.cce.evaluable.testGeneration.TestGenerationFeature"/>
     <evaluableFeature implementation="com.intellij.cce.evaluable.completion.TokenCompletionFeature"/>
     <evaluableFeature implementation="com.intellij.cce.actions.ContextCollectionFeature"/>
+    <evaluableFeature implementation="com.intellij.cce.evaluable.standaloneExample.StandaloneExampleFeature"/>
     <suggestionsProvider implementation="com.intellij.cce.evaluable.completion.DefaultCompletionProvider"/>
   </extensions>
 
@@ -80,6 +88,8 @@
   <depends optional="true" config-file="evaluationPlugin-statsCollector.xml">com.intellij.stats.completion</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="evaluationPlugin-terraform.xml">org.intellij.terraform</depends>
+  <!-- suppress PluginXmlValidity -->
+  <depends optional="true" config-file="evaluationPlugin-sql.xml">com.intellij.database</depends>
   <!--suppress PluginXmlValidity -->
   <depends optional="true" config-file="evaluationPlugin-fullLine.xml">org.jetbrains.completion.full.line</depends>
   <!--suppress PluginXmlValidity -->

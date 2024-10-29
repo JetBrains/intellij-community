@@ -93,16 +93,14 @@ object K2CreateParameterFromUsageBuilder {
         }
 
         override fun startInWriteAction(): Boolean = false
-        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-            return originalExprPointer.element != null
-        }
+        override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = originalExprPointer.element != null
         override fun getFamilyName(): String = KotlinBundle.message("fix.create.from.usage.family")
 
         context(KaSession)
         private fun getExpectedType(expression: KtExpression): KaType {
             if (expression is KtDestructuringDeclarationEntry) {
                 val type = expression.returnType
-                return if (type is KaErrorType) builtinTypes.ANY else type
+                return if (type is KaErrorType) builtinTypes.any else type
             }
             val physicalExpression = expression.substringContextOrThis
             val type = if (physicalExpression is KtProperty && physicalExpression.isLocal) {
@@ -111,7 +109,7 @@ object K2CreateParameterFromUsageBuilder {
                 (expression.extractableSubstringInfo as? K2ExtractableSubstringInfo)?.guessLiteralType() ?: physicalExpression.expressionType
             }
             val approximatedType = approximateWithResolvableType(type, physicalExpression)
-            if (approximatedType != null && approximatedType != builtinTypes.UNIT) { return approximatedType }
+            if (approximatedType != null && !approximatedType.semanticallyEquals(builtinTypes.unit)) { return approximatedType }
 
             expression.expectedType?.let { return it }
             val binaryExpression = expression.getAssignmentByLHS()
@@ -119,7 +117,7 @@ object K2CreateParameterFromUsageBuilder {
             right?.expressionType?.let { return it }
             right?.expectedType?.let { return it }
             (expression.parent as? KtDeclaration)?.returnType?.let { return it }
-            return builtinTypes.ANY
+            return builtinTypes.any
         }
 
         private fun runChangeSignature(
@@ -141,7 +139,15 @@ object K2CreateParameterFromUsageBuilder {
                     return descriptor
                 }
             }
-            KotlinFirIntroduceParameterHandler(helper).addParameter(project, editor, originalExpression, container, { getExpectedType(originalExpression) }, { _ -> listOf(name) })
+            KotlinFirIntroduceParameterHandler(helper).addParameter(
+                project,
+                editor,
+                originalExpression,
+                container,
+                { getExpectedType(originalExpression) },
+                { _ -> listOf(name) },
+                true
+            )
         }
     }
 }

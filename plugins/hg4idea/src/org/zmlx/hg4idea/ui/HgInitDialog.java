@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -55,8 +55,10 @@ public class HgInitDialog extends DialogWrapper {
         }
         updateEverything();
       }
-    };
-    myFileDescriptor.setHideIgnored(false);
+    }
+      .withHideIgnored(false)
+      .withTitle(HgBundle.message("hg4idea.init.destination.directory.title"))
+      .withDescription(HgBundle.message("hg4idea.init.destination.directory.description"));
 
     init();
   }
@@ -89,10 +91,7 @@ public class HgInitDialog extends DialogWrapper {
         updateEverything();
       }
     });
-
-    myTextFieldBrowser.addBrowseFolderListener(HgBundle.message("hg4idea.init.destination.directory.title"),
-                                               HgBundle.message("hg4idea.init.destination.directory.description"),
-                                               myProject, myFileDescriptor);
+    myTextFieldBrowser.addBrowseFolderListener(myProject, myFileDescriptor);
   }
 
   /**
@@ -162,5 +161,4 @@ public class HgInitDialog extends DialogWrapper {
     setErrorText(HgBundle.message("hg4idea.init.dialog.incorrect.path"), myTextFieldBrowser);
     setOKActionEnabled(false);
   }
-
 }

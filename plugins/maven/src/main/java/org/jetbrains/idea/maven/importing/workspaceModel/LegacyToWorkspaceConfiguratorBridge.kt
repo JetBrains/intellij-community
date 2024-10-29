@@ -25,16 +25,5 @@ sealed class LegacyToWorkspaceConfiguratorBridge : MavenWorkspaceConfigurator {
     return result.asSequence().asStream()
   }
 
-  override fun configureMavenProject(context: MavenWorkspaceConfigurator.MutableMavenProjectContext) {
-
-  }
-
-  override fun beforeModelApplied(context: MavenWorkspaceConfigurator.MutableModelContext) {
-
-  }
-
-  override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
-  }
-
   abstract fun legacyImporters(mavenProject: MavenProject): List<MavenImporter>
 }

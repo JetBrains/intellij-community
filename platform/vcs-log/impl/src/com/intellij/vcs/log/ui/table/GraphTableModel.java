@@ -10,11 +10,13 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.graph.RowInfo;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumn;
 import com.intellij.vcs.log.ui.table.column.VcsLogColumnManager;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,7 +110,11 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   @Override
   public int getId(int row) {
-    return myVisiblePack.getVisibleGraph().getRowInfo(row).getCommit();
+    return getRowInfo(row).getCommit();
+  }
+
+  public @NotNull RowInfo<Integer> getRowInfo(int row) {
+    return myVisiblePack.getVisibleGraph().getRowInfo(row);
   }
 
   public @Nullable VirtualFile getRootAtRow(int row) {
@@ -135,7 +141,7 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
    * @deprecated get cached commit details by commit id ({@link VcsLogCommitListModel#getId(int)})
    * from {@link VcsLogDataProvider#getFullCommitDetailsCache()}.
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public @NotNull VcsFullCommitDetails getFullDetails(int row) {
     return myLogData.getCommitDetailsGetter().getCachedDataOrPlaceholder(getId(row));
   }
@@ -151,6 +157,12 @@ public final class GraphTableModel extends AbstractTableModel implements VcsLogC
 
   public @Nullable CommitId getCommitId(int row) {
     VcsCommitMetadata metadata = getCommitMetadata(row);
+    if (metadata instanceof LoadingDetails) return null;
+    return getCommitId(metadata);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable CommitId getCommitId(@NotNull VcsCommitMetadata metadata) {
     if (metadata instanceof LoadingDetails) return null;
     return new CommitId(metadata.getId(), metadata.getRoot());
   }

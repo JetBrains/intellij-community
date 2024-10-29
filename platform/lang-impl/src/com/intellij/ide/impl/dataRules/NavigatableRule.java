@@ -9,8 +9,10 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class NavigatableRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {

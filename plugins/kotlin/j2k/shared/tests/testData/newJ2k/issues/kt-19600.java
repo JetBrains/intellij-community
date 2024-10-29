@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class TestNumberConversionInSetter {
     private double d;
 

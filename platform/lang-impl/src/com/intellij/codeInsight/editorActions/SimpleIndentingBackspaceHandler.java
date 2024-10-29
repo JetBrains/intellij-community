@@ -4,7 +4,9 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class SimpleIndentingBackspaceHandler extends AbstractIndentingBackspaceHandler {
   private LogicalPosition myTargetPosition;
 

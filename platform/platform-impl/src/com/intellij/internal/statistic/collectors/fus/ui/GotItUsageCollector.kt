@@ -16,6 +16,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 
 
 class GotItTooltipAllowlistEP {
@@ -23,6 +24,7 @@ class GotItTooltipAllowlistEP {
   var prefix: String = ""
 }
 
+@ApiStatus.Internal
 @Service
 class GotItUsageCollector private constructor() {
   companion object {
@@ -80,9 +82,11 @@ class GotItUsageCollector private constructor() {
   }
 }
 
+@ApiStatus.Internal
 object GotItUsageCollectorGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
+  @ApiStatus.Internal
   enum class CloseType(private val text: String) {
     ButtonClick("click.button"),
     LinkClick("click.link"),
@@ -107,7 +111,7 @@ object GotItUsageCollectorGroup : CounterUsagesCollector() {
                                                                               EventFields.Enum<CloseType>("type"))
 }
 
-class GotItIDValidator : CustomValidationRule() {
+internal class GotItIDValidator : CustomValidationRule() {
   override fun getRuleId(): String = GotItTooltip.PROPERTY_PREFIX
 
   override fun doValidate(data: String, context: EventContext): ValidationResultType =

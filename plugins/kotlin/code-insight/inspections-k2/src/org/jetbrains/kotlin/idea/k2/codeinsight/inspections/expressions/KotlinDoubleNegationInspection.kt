@@ -39,7 +39,7 @@ internal class KotlinDoubleNegationInspection : KotlinApplicableInspectionBase.S
     context(KaSession)
     override fun prepareContext(element: KtPrefixExpression): Unit? =
         element.expressionType
-            ?.isBoolean
+            ?.isBooleanType
             ?.asUnit
 
     override fun createQuickFix(

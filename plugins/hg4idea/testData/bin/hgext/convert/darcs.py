@@ -4,12 +4,14 @@
 #
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
-from __future__ import absolute_import
 
-import errno
 import os
 import re
 import shutil
+from xml.etree.ElementTree import (
+    ElementTree,
+    XMLParser,
+)
 
 from mercurial.i18n import _
 from mercurial import (
@@ -21,26 +23,6 @@ from mercurial.utils import dateutil
 from . import common
 
 NoRepo = common.NoRepo
-
-# The naming drift of ElementTree is fun!
-
-try:
-    import xml.etree.cElementTree.ElementTree as ElementTree
-    import xml.etree.cElementTree.XMLParser as XMLParser
-except ImportError:
-    try:
-        import xml.etree.ElementTree.ElementTree as ElementTree
-        import xml.etree.ElementTree.XMLParser as XMLParser
-    except ImportError:
-        try:
-            import elementtree.cElementTree.ElementTree as ElementTree
-            import elementtree.cElementTree.XMLParser as XMLParser
-        except ImportError:
-            try:
-                import elementtree.ElementTree.ElementTree as ElementTree
-                import elementtree.ElementTree.XMLParser as XMLParser
-            except ImportError:
-                pass
 
 
 class darcs_source(common.converter_source, common.commandline):
@@ -60,7 +42,7 @@ class darcs_source(common.converter_source, common.commandline):
                 _(b'darcs version 2.1 or newer needed (found %r)') % version
             )
 
-        if b"ElementTree" not in globals():
+        if "ElementTree" not in globals():
             raise error.Abort(_(b"Python ElementTree module is not available"))
 
         self.path = os.path.realpath(path)
@@ -96,9 +78,9 @@ class darcs_source(common.converter_source, common.commandline):
         )
         tagname = None
         child = None
-        for elt in tree.findall(b'patch'):
-            node = elt.get(b'hash')
-            name = elt.findtext(b'name', b'')
+        for elt in tree.findall('patch'):
+            node = self.recode(elt.get('hash'))
+            name = self.recode(elt.findtext('name', ''))
             if name.startswith(b'TAG '):
                 tagname = name[4:].strip()
             elif tagname is not None:
@@ -114,7 +96,7 @@ class darcs_source(common.converter_source, common.commandline):
         shutil.rmtree(self.tmppath, ignore_errors=True)
 
     def recode(self, s, encoding=None):
-        if isinstance(s, pycompat.unicode):
+        if isinstance(s, str):
             # XMLParser returns unicode objects for anything it can't
             # encode into ASCII. We convert them back to str to get
             # recode's normal conversion behavior.
@@ -128,7 +110,7 @@ class darcs_source(common.converter_source, common.commandline):
         # While we are decoding the XML as latin-1 to be as liberal as
         # possible, etree will still raise an exception if any
         # non-printable characters are in the XML changelog.
-        parser = XMLParser(encoding=b'latin-1')
+        parser = XMLParser(encoding='latin-1')
         p = self._run(cmd, **kwargs)
         etree.parse(p.stdout, parser=parser)
         p.wait()
@@ -138,7 +120,7 @@ class darcs_source(common.converter_source, common.commandline):
     def format(self):
         output, status = self.run(b'show', b'repo', repodir=self.path)
         self.checkexit(status)
-        m = re.search(r'^\s*Format:\s*(.*)$', output, re.MULTILINE)
+        m = re.search(br'^\s*Format:\s*(.*)$', output, re.MULTILINE)
         if not m:
             return None
         return b','.join(sorted(f.strip() for f in m.group(1).split(b',')))
@@ -161,13 +143,13 @@ class darcs_source(common.converter_source, common.commandline):
     def getcommit(self, rev):
         elt = self.changes[rev]
         dateformat = b'%a %b %d %H:%M:%S %Z %Y'
-        date = dateutil.strdate(elt.get(b'local_date'), dateformat)
-        desc = elt.findtext(b'name') + b'\n' + elt.findtext(b'comment', b'')
+        date = dateutil.strdate(self.recode(elt.get('local_date')), dateformat)
+        desc = elt.findtext('name') + '\n' + elt.findtext('comment', '')
         # etree can return unicode objects for name, comment, and author,
         # so recode() is used to ensure str objects are emitted.
         newdateformat = b'%Y-%m-%d %H:%M:%S %1%2'
         return common.commit(
-            author=self.recode(elt.get(b'author')),
+            author=self.recode(elt.get('author')),
             date=dateutil.datestr(date, newdateformat),
             desc=self.recode(desc).strip(),
             parents=self.parents[rev],
@@ -178,7 +160,7 @@ class darcs_source(common.converter_source, common.commandline):
             b'pull',
             self.path,
             all=True,
-            match=b'hash %s' % rev,
+            match=b'hash %s' % self.recode(rev),
             no_test=True,
             no_posthook=True,
             external_merge=b'/bin/false',
@@ -196,13 +178,14 @@ class darcs_source(common.converter_source, common.commandline):
         copies = {}
         changes = []
         man = None
-        for elt in self.changes[rev].find(b'summary').getchildren():
-            if elt.tag in (b'add_directory', b'remove_directory'):
+        for elt in self.changes[rev].find('summary'):
+            if elt.tag in ('add_directory', 'remove_directory'):
                 continue
-            if elt.tag == b'move':
+            if elt.tag == 'move':
                 if man is None:
                     man = self.manifest()
-                source, dest = elt.get(b'from'), elt.get(b'to')
+                source = self.recode(elt.get('from'))
+                dest = self.recode(elt.get('to'))
                 if source in man:
                     # File move
                     changes.append((source, rev))
@@ -219,7 +202,7 @@ class darcs_source(common.converter_source, common.commandline):
                         changes.append((fdest, rev))
                         copies[fdest] = f
             else:
-                changes.append((elt.text.strip(), rev))
+                changes.append((self.recode(elt.text.strip()), rev))
         self.pull(rev)
         self.lastrev = rev
         return sorted(changes), copies, set()
@@ -231,10 +214,8 @@ class darcs_source(common.converter_source, common.commandline):
         try:
             data = util.readfile(path)
             mode = os.lstat(path).st_mode
-        except IOError as inst:
-            if inst.errno == errno.ENOENT:
-                return None, None
-            raise
+        except FileNotFoundError:
+            return None, None
         mode = (mode & 0o111) and b'x' or b''
         return data, mode
 

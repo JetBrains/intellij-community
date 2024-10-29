@@ -497,7 +497,7 @@ private fun resolveContainingDeserializedClass(context: KtElement, memberDescrip
             val declaredPsiType = containingDeclaration.defaultType.toPsiType(
                 null as PsiModifierListOwner?,
                 context,
-                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, isBoxed = true)
+                PsiTypeConversionConfiguration(TypeOwnerKind.DECLARATION, isBoxed = false)
             )
             (declaredPsiType as? PsiClassType)?.resolve() ?: return null
         }

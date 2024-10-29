@@ -121,29 +121,18 @@ public final class LightEditModeNotificationWidget implements CustomStatusBarWid
 
   private void showPopupMenu(@NotNull JComponent actionLink) {
     if (!myPopupState.isRecentlyHidden()) {
-      addDataProvider(actionLink, dataId -> {
-        if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
-          return LightEditService.getInstance().getSelectedFile();
-        }
-        return null;
-      });
-      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.STATUS_BAR_PLACE,
-                                                                                    createAccessFullIdeActionGroup());
-      popupMenu.setTargetComponent(actionLink);
+      DataContext dataContext = CustomizedDataContext.withSnapshot(
+        DataManager.getInstance().getDataContext(actionLink), sink -> {
+          sink.set(CommonDataKeys.VIRTUAL_FILE,
+                   LightEditService.getInstance().getSelectedFile());
+        });
+      ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(
+        ActionPlaces.STATUS_BAR_PLACE, createAccessFullIdeActionGroup());
+      popupMenu.setDataContext(() -> dataContext);
       JPopupMenu menu = popupMenu.getComponent();
       myPopupState.prepareToShow(menu);
       JBPopupMenu.showAbove(actionLink, menu);
     }
-  }
-
-  private static void addDataProvider(@NotNull JComponent component, @NotNull DataProvider dataProvider) {
-    DataProvider prev = DataManager.getDataProvider(component);
-    DataProvider result = dataProvider;
-    if (prev != null) {
-      DataManager.removeDataProvider(component);
-      result = CompositeDataProvider.compose(prev, dataProvider);
-    }
-    DataManager.registerDataProvider(component, result);
   }
 
   private static @NotNull ActionGroup createAccessFullIdeActionGroup() {

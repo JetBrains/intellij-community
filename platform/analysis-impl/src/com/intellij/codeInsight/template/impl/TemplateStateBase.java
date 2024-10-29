@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.ExpressionContext;
@@ -60,6 +60,7 @@ public class TemplateStateBase {
     myPredefinedVariableValues = predefinedVariableValues;
   }
 
+  @ApiStatus.Internal
   protected void setTemplate(TemplateBase template) {
     myTemplate = template;
   }
@@ -99,10 +100,10 @@ public class TemplateStateBase {
     return myDocument == null;
   }
 
-  protected void restoreEmptyVariables(IntList indices) {
+  protected void restoreEmptyVariables(@NotNull List<Integer> indices) {
     List<TextRange> rangesToRemove = new ArrayList<>();
     for (int i = 0; i < indices.size(); i++) {
-      int index = indices.getInt(i);
+      int index = indices instanceof IntList ? ((IntList)indices).getInt(i) : indices.get(i);
       rangesToRemove.add(TextRange.create(mySegments.getSegmentStart(index), mySegments.getSegmentEnd(index)));
     }
     rangesToRemove.sort((o1, o2) -> {
@@ -119,6 +120,7 @@ public class TemplateStateBase {
     });
   }
 
+  @ApiStatus.Internal
   protected TemplateBase getTemplate() {
     return myTemplate;
   }

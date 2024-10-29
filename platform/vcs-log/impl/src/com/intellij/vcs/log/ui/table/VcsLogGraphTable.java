@@ -38,13 +38,18 @@ import com.intellij.vcs.log.graph.RowType;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
 import com.intellij.vcs.log.impl.CommonUiProperties;
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
+import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.ui.table.column.*;
+import com.intellij.vcs.log.ui.table.links.CommitLinksProvider;
+import com.intellij.vcs.log.ui.table.links.NavigateToCommit;
+import com.intellij.vcs.log.ui.table.links.VcsLinksRenderer;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -54,8 +59,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.CellEditorListener;
 import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -96,11 +101,10 @@ public class VcsLogGraphTable extends TableWithProgress
   private static final Color SELECTION_FOREGROUND_INACTIVE = JBColor.namedColor("VersionControl.Log.Commit.selectionInactiveForeground",
                                                                                 NamedColorUtil.getListSelectionForeground(false));
   private final @NotNull VcsLogData myLogData;
-  private final @NotNull String myId;
+  private final @NotNull VcsLogUiEx myLogUi;
   private final @NotNull VcsLogUiProperties myProperties;
   private final @NotNull VcsLogColorManager myColorManager;
 
-  private final @NotNull MyDummyTableCellEditor myDummyEditor = new MyDummyTableCellEditor();
   private final @NotNull BaseStyleProvider myBaseStyleProvider;
   private final @NotNull GraphCommitCellRenderer myGraphCommitCellRenderer;
   private final @NotNull MyMouseAdapter myMouseAdapter;
@@ -115,14 +119,14 @@ public class VcsLogGraphTable extends TableWithProgress
 
   private boolean myDisposed = false;
 
-  public VcsLogGraphTable(@NotNull String logId, @NotNull VcsLogData logData,
+  public VcsLogGraphTable(@NotNull VcsLogUiEx logUi, @NotNull VcsLogData logData,
                           @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLogColorManager colorManager,
                           @NotNull Runnable requestMore, @NotNull Disposable disposable) {
     super(new GraphTableModel(logData, requestMore, uiProperties));
     Disposer.register(disposable, this);
 
     myLogData = logData;
-    myId = logId;
+    myLogUi = logUi;
     myProperties = uiProperties;
     myColorManager = colorManager;
 
@@ -163,6 +167,31 @@ public class VcsLogGraphTable extends TableWithProgress
 
     putClientProperty(BookmarksManager.ALLOWED, true);
     ScrollingUtil.installActions(this, false);
+    registerResolveLinks();
+  }
+
+  private void registerResolveLinks() {
+    GraphTableModel model = getModel();
+    model.addTableModelListener(new TableModelListener() {
+      @Override
+      public void tableChanged(TableModelEvent e) {
+        resolveLinks();
+      }
+    });
+  }
+
+  private void resolveLinks() {
+    if (!VcsLinksRenderer.isEnabled()) return;
+
+    VisiblePack visiblePack = getModel().getVisiblePack();
+    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
+    if (visibleGraph.getVisibleCommitCount() == 0) return;
+
+    CommitLinksProvider linksProvider = CommitLinksProvider.getServiceOrNull(getLogData().getProject());
+    if (linksProvider != null) {
+      Couple<Integer> visibleRows = ScrollingUtil.getVisibleRows(this);
+      linksProvider.resolveLinks(getId(), myLogData, visiblePack, visibleRows.first, visibleRows.second);
+    }
   }
 
   @Override
@@ -172,7 +201,7 @@ public class VcsLogGraphTable extends TableWithProgress
   }
 
   public @NotNull @NonNls String getId() {
-    return myId;
+    return myLogUi.getId();
   }
 
   @Override
@@ -689,6 +718,9 @@ public class VcsLogGraphTable extends TableWithProgress
           model.fireTableChanged(evt);
         }
       }
+
+      resolveLinks();
+
       mySelectionSnapshot = null;
     });
   }
@@ -732,13 +764,6 @@ public class VcsLogGraphTable extends TableWithProgress
 
   public @NotNull VisibleGraph<Integer> getVisibleGraph() {
     return getModel().getVisiblePack().getVisibleGraph();
-  }
-
-  @Override
-  public TableCellEditor getCellEditor() {
-    // this fixes selection problems by prohibiting selection when user clicks on graph (CellEditor does that)
-    // what is fun about this code is that if you set cell editor in constructor with setCellEditor method it would not work
-    return myDummyEditor;
   }
 
   @Override
@@ -833,7 +858,8 @@ public class VcsLogGraphTable extends TableWithProgress
       if ((row >= 0 && row < getRowCount()) && e.getClickCount() == 1) {
         VcsLogCellController controller = getController(column);
         if (controller != null) {
-          Cursor cursor = controller.performMouseClick(row, e);
+          Cursor cursor =
+            SwingUtilities.isLeftMouseButton(e) ? controller.performMouseClick(row, e) : null;
           handleCursor(cursor);
         }
       }
@@ -912,61 +938,41 @@ public class VcsLogGraphTable extends TableWithProgress
       getExpandableItemsHandler().setEnabled(true);
     }
 
-    private static class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
+    private class MyLinkMouseListener extends SimpleColoredComponentLinkMouseListener {
       @Override
-      public @Nullable Object getTagAt(@NotNull MouseEvent e) {
-        return ObjectUtils.tryCast(super.getTagAt(e), SimpleColoredComponent.BrowserLauncherTag.class);
+      public boolean onClick(@NotNull MouseEvent e, int clickCount) {
+        Object tag = getTagAt(e);
+        if ((tag instanceof Runnable)) return super.onClick(e, clickCount);
+
+        if (tag instanceof NavigateToCommit navigateToCommitTag) {
+          VcsLogNavigationUtil.jumpToHash(VcsLogGraphTable.this.myLogUi, navigateToCommitTag.getTarget(), false, true);
+          return true;
+        }
+
+        return false;
       }
     }
   }
 
-  private class MyDummyTableCellEditor implements TableCellEditor {
-    @Override
-    public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-      return null;
+  @Override
+  public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
+    if (shouldChangeSelect(EventQueue.getCurrentEvent(), rowIndex, columnIndex )) {
+      super.changeSelection(rowIndex, columnIndex, toggle, extend);
     }
+  }
 
-    @Override
-    public Object getCellEditorValue() {
-      return null;
-    }
+  /**
+   * Allows avoiding selection update when graph is clicked
+   */
+  private boolean shouldChangeSelect(@Nullable AWTEvent event, int rowIndex, int columnIndex) {
+    if (!(event instanceof MouseEvent)) return true;
 
-    @Override
-    public boolean isCellEditable(EventObject anEvent) {
-      return false;
-    }
+    VcsLogColumn<?> column = getVcsLogColumn(columnIndex);
+    if (column == null) return false;
+    VcsLogCellController controller = getController(column);
+    if (controller == null) return true;
 
-    @Override
-    public boolean shouldSelectCell(EventObject anEvent) {
-      if (!(anEvent instanceof MouseEvent e)) return true;
-
-      int row = rowAtPoint(e.getPoint());
-      if (row < 0 || row >= getRowCount()) return true;
-
-      VcsLogColumn<?> column = getVcsLogColumn(columnAtPoint(e.getPoint()));
-      if (column == null) return true;
-      VcsLogCellController controller = getController(column);
-      if (controller == null) return true;
-
-      return controller.shouldSelectCell(row, e);
-    }
-
-    @Override
-    public boolean stopCellEditing() {
-      return false;
-    }
-
-    @Override
-    public void cancelCellEditing() {
-    }
-
-    @Override
-    public void addCellEditorListener(CellEditorListener l) {
-    }
-
-    @Override
-    public void removeCellEditorListener(CellEditorListener l) {
-    }
+    return controller.shouldSelectCell(rowIndex, (MouseEvent)event);
   }
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
@@ -977,7 +983,7 @@ public class VcsLogGraphTable extends TableWithProgress
 
     @Override
     public void progressChanged(@NotNull Collection<? extends VcsLogProgress.ProgressKey> keys) {
-      if (VcsLogUiUtil.isProgressVisible(keys, myId)) {
+      if (VcsLogUiUtil.isProgressVisible(keys, myLogUi.getId())) {
         getEmptyText().setText(VcsLogBundle.message("vcs.log.loading.status"));
       }
       else {
@@ -1016,6 +1022,11 @@ public class VcsLogGraphTable extends TableWithProgress
 
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
+      if (columnIndex == newIndex) {
+        super.moveColumn(columnIndex, newIndex);
+        return;
+      }
+
       VcsLogColumn<?> column = getVcsLogColumn(columnIndex);
       if (column == null ||
           column == Root.INSTANCE || getVcsLogColumn(newIndex) == Root.INSTANCE ||

@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -27,6 +29,8 @@ abstract class AbstractExtractKotlinFunctionHandler(
         targetSibling: PsiElement
     )
 
+    abstract fun restart(templateState: TemplateState, file: KtFile, restartInplace: Boolean): Boolean
+
     fun selectElements(editor: Editor, file: KtFile, continuation: (elements: List<PsiElement>, targetSibling: PsiElement) -> Unit) {
         val selection: ((elements: List<PsiElement>, commonParent: PsiElement) -> PsiElement?)? = if (allContainersEnabled) {
             { elements, parent -> parent.getExtractionContainers(elements.size == 1, false, acceptScripts).firstOrNull() }
@@ -46,6 +50,12 @@ abstract class AbstractExtractKotlinFunctionHandler(
 
     override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
         if (file !is KtFile) return
+
+        val activeTemplateState = TemplateManagerImpl.getTemplateState(editor)
+        if (activeTemplateState != null && restart(activeTemplateState, file, false)) {
+            return
+        }
+
         selectElements(editor, file) { elements, targetSibling -> doInvoke(editor, file, elements, targetSibling) }
     }
 

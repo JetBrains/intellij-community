@@ -9,47 +9,18 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.MutableProperty
-import com.intellij.ui.layout.CellBuilder
-import com.intellij.ui.layout.PropertyBinding
-import com.intellij.ui.layout.Row
-import org.jetbrains.annotations.ApiStatus
+import com.intellij.ui.dsl.builder.Row
 import java.util.function.Supplier
 
 /**
  * See [BrowsableTargetEnvironmentType.createBrowser]
  */
-@ApiStatus.ScheduledForRemoval
-@Deprecated("Use overloaded method with Kotlin UI DSL 2 API", level = DeprecationLevel.HIDDEN)
-fun textFieldWithBrowseTargetButton(row: Row,
-                                    targetType: BrowsableTargetEnvironmentType,
-                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
-                                    project: Project,
-                                    @NlsContexts.DialogTitle title: String,
-                                    property: PropertyBinding<String>,
-                                    targetBrowserHints: TargetBrowserHints): CellBuilder<TextFieldWithBrowseButton> {
-  val textFieldWithBrowseButton = TextFieldWithBrowseButton()
-  val browser = targetType.createBrowser(project,
-                                         title,
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
-                                         textFieldWithBrowseButton.textField,
-                                         targetSupplier,
-                                         targetBrowserHints)
-  textFieldWithBrowseButton.addActionListener(browser)
-  textFieldWithBrowseButton.text = property.get()
-  return row.component(textFieldWithBrowseButton).withBindingInt(TextFieldWithBrowseButton::getText,
-                                                              TextFieldWithBrowseButton::setText,
-                                                              property)
-}
-
-/**
- * See [BrowsableTargetEnvironmentType.createBrowser]
- */
-fun com.intellij.ui.dsl.builder.Row.textFieldWithBrowseTargetButton(targetType: BrowsableTargetEnvironmentType,
-                                                                    targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
-                                                                    project: Project,
-                                                                    @NlsContexts.DialogTitle title: String,
-                                                                    property: MutableProperty<String>,
-                                                                    targetBrowserHints: TargetBrowserHints = TargetBrowserHints(true)): Cell<TextFieldWithBrowseButton> {
+fun Row.textFieldWithBrowseTargetButton(targetType: BrowsableTargetEnvironmentType,
+                                        targetSupplier: Supplier<out TargetEnvironmentConfiguration>,
+                                        project: Project,
+                                        @NlsContexts.DialogTitle title: String,
+                                        property: MutableProperty<String>,
+                                        targetBrowserHints: TargetBrowserHints = TargetBrowserHints(true)): Cell<TextFieldWithBrowseButton> {
   val textFieldWithBrowseButton = TextFieldWithBrowseButton()
   val browser = targetType.createBrowser(project,
                                          title,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.CommonBundle;
@@ -68,7 +68,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.*;
 
-public final class DependenciesPanel extends JPanel implements Disposable, DataProvider {
+public final class DependenciesPanel extends JPanel implements Disposable, UiDataProvider {
   private final Map<PsiFile, Set<PsiFile>> myDependencies;
   private Map<VirtualFile, Map<DependencyRule, Set<PsiFile>>> myIllegalDependencies;
   private final MyTree myLeftTree = new MyTree();
@@ -308,8 +308,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     return ActionManager.getInstance().createActionToolbar("PackageDependencies", group, true);
   }
 
-  @NotNull
-  private FlattenModulesToggleAction createFlattenModulesAction() {
+  private @NotNull FlattenModulesToggleAction createFlattenModulesAction() {
     return new FlattenModulesToggleAction(myProject, () -> mySettings.UI_SHOW_MODULES, () -> !mySettings.UI_SHOW_MODULE_GROUPS, (value) -> {
       DependencyUISettings.getInstance().UI_SHOW_MODULE_GROUPS = !value;
       mySettings.UI_SHOW_MODULE_GROUPS = !value;
@@ -491,16 +490,9 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   @Override
-  @Nullable
-  @NonNls
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      return myRightTree.getData(dataId);
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return "dependency.viewer.tool.window";
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, "dependency.viewer.tool.window");
+    DataSink.uiDataSnapshot(sink, myRightTree);
   }
 
   private static final class MyTreeCellRenderer extends ColoredTreeCellRenderer {
@@ -638,7 +630,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       e.getPresentation().setVisible(ModuleManager.getInstance(myProject).hasModuleGroups());
       e.getPresentation().setEnabled(mySettings.UI_SHOW_MODULES);
@@ -717,9 +709,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
   }
 
   private final class DependenciesExporterToTextFile implements ExporterToTextFile {
-    @NotNull
     @Override
-    public String getReportText() {
+    public @NotNull String getReportText() {
       final Element rootElement = new Element("root");
       rootElement.setAttribute("isBackward", String.valueOf(!myForward));
       final List<PsiFile> files = new ArrayList<>(myDependencies.keySet());
@@ -751,9 +742,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }
     }
 
-    @NotNull
     @Override
-    public String getDefaultFilePath() {
+    public @NotNull String getDefaultFilePath() {
       return "";
     }
 
@@ -805,35 +795,26 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
   }
 
-  private static final class MyTree extends Tree implements DataProvider {
+  private static final class MyTree extends Tree implements UiDataProvider {
     @Override
-    public Object getData(@NotNull String dataId) {
+    public void uiDataSnapshot(@NotNull DataSink sink) {
       PackageDependenciesNode node = getSelectedNode();
-      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-        return node;
-      }
-      if (node != null && PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-        return (DataProvider)slowDataId -> {
-          if (CommonDataKeys.PSI_ELEMENT.is(slowDataId)) {
-            final PsiElement element = node.getPsiElement();
-            return element != null && element.isValid() ? element : null;
-          }
-          return null;
-        };
-      }
-      if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-        TreePath[] paths = getSelectionPaths();
-        return paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null;
-      }
-      if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-        TreePath path = getSelectionPath();
-        return path != null ? path.getLastPathComponent() : null;
-      }
-      return null;
+      sink.set(CommonDataKeys.NAVIGATABLE, node);
+      TreePath[] paths = getSelectionPaths();
+      TreePath path = getSelectionPath();
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+               paths != null ? ContainerUtil.map2Array(paths, p -> p.getLastPathComponent()) : null);
+      sink.set(PlatformCoreDataKeys.SELECTED_ITEM,
+               path != null ? path.getLastPathComponent() : null);
+      if (node == null) return;
+
+      sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
+        PsiElement element = node.getPsiElement();
+        return element != null && element.isValid() ? element : null;
+      });
     }
 
-    @Nullable
-    public PackageDependenciesNode getSelectedNode() {
+    public @Nullable PackageDependenciesNode getSelectedNode() {
       TreePath[] paths = getSelectionPaths();
       if (paths == null || paths.length != 1) return null;
       return (PackageDependenciesNode)paths[0].getLastPathComponent();
@@ -846,8 +827,8 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
-      @NonNls final String delim = "&nbsp;-&gt;&nbsp;";
+    public void actionPerformed(final @NotNull AnActionEvent e) {
+      final @NonNls String delim = "&nbsp;-&gt;&nbsp;";
       final StringBuffer buf = new StringBuffer();
       processDependencies(getSelectedScope(myLeftTree), getSelectedScope(myRightTree), path -> {
         if (buf.length() > 0) buf.append("<br>");
@@ -867,7 +848,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       Pair<Set<PsiFile>, Set<PsiFile>> scopes = e.getUpdateSession()
         .compute(this, "getSelectedScopes", ActionUpdateThread.EDT, () -> {
           return Pair.create(getSelectedScope(myLeftTree), getSelectedScope(myRightTree));
@@ -892,7 +873,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(!getSelectedScope(e.getData(PlatformCoreDataKeys.SELECTED_ITEMS)).isEmpty());
     }
 
@@ -902,7 +883,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final Set<PsiFile> selectedScope = getSelectedScope(myLeftTree);
       exclude(selectedScope);
       myExcluded.addAll(selectedScope);
@@ -920,7 +901,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       Set<PsiFile> scope = e.getUpdateSession()
         .compute(this, "getScope", ActionUpdateThread.EDT, () -> getSelectedScope(myRightTree));
       e.getPresentation().setEnabled(getScope(scope) != null);
@@ -932,7 +913,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final AnalysisScope scope = getScope(getSelectedScope(myRightTree));
       LOG.assertTrue(scope != null);
       final DependenciesBuilder builder;
@@ -951,8 +932,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
       }, null, new PerformAnalysisInBackgroundOption(myProject));
     }
 
-    @Nullable
-    private AnalysisScope getScope(Set<? extends PsiFile> selectedScope) {
+    private @Nullable AnalysisScope getScope(Set<? extends PsiFile> selectedScope) {
       Set<PsiFile> result = new HashSet<>();
       ((PackageDependenciesNode)myLeftTree.getModel().getRoot()).fillFiles(result, !mySettings.UI_FLATTEN_PACKAGES);
       selectedScope.removeAll(result);
@@ -1081,7 +1061,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(false);
       Pair<PackageDependenciesNode, PackageDependenciesNode> pair = e.getUpdateSession()
@@ -1102,13 +1082,12 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
 
   private final class ChooseScopeTypeAction extends ComboBoxAction {
     @Override
-    @NotNull
-    protected DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+    protected @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
       final DefaultActionGroup group = new DefaultActionGroup();
       for (final PatternDialectProvider provider : PatternDialectProvider.EP_NAME.getExtensionList()) {
         group.add(new AnAction(provider.getDisplayName()) {
           @Override
-          public void actionPerformed(@NotNull final AnActionEvent e) {
+          public void actionPerformed(final @NotNull AnActionEvent e) {
             mySettings.SCOPE_TYPE = provider.getShortName();
             DependencyUISettings.getInstance().SCOPE_TYPE = provider.getShortName();
             rebuild();
@@ -1124,7 +1103,7 @@ public final class DependenciesPanel extends JPanel implements Disposable, DataP
     }
 
     @Override
-    public void update(@NotNull final AnActionEvent e) {
+    public void update(final @NotNull AnActionEvent e) {
       super.update(e);
       final PatternDialectProvider provider = PatternDialectProvider.getInstance(mySettings.SCOPE_TYPE);
       assert provider != null;

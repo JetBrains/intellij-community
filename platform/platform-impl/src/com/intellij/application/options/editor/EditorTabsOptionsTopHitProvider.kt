@@ -3,7 +3,9 @@ package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class EditorTabsOptionsTopHitProvider : OptionsSearchTopHitProvider.ApplicationLevelProvider {
   override fun getId(): String = EDITOR_TABS_OPTIONS_ID
 

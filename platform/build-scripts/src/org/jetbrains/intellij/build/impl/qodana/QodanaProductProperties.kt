@@ -15,10 +15,11 @@ private val COMMON_ADDITIONAL_VM_OPTIONS = listOf(
   "-Didea.job.launcher.without.timeout=true",
   "-Dscanning.in.smart.mode=false",
   "-Deap.login.enabled=false",
-  "-Djdk.download.consent=true"
+  "-Dsdk.download.consent=true",
+  "-Deslint.service.expiration.timeout.ms=5000"
   )
 
-private const val IS_EAP = false
+private const val IS_EAP = true
 
 /**
  * Represents a set of properties specific to the Qodana product.

@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 
@@ -21,6 +22,7 @@ class RetypeOptions(val project: Project) {
   var retypeCurrentFile: Boolean = false
 }
 
+@ApiStatus.Internal
 class RetypeOptionsDialog(project: Project, private val retypeOptions: RetypeOptions, private val editor: Editor?) : DialogWrapper(project) {
   init {
     init()

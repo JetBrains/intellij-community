@@ -78,10 +78,12 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (!module.project.isTrusted() || ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) {
+    return if (!module.project.isTrusted() || ApplicationManager.getApplication().isUnitTestMode) {
       null
     }
-    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
+    else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe {
+      it.getIntention(module) != null && (!ApplicationManager.getApplication().isHeadlessEnvironment || it.supportsHeadlessModel())
+    }
   }
 
   fun configureSdk(
@@ -130,18 +132,15 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
       LOGGER.debug { "Detected virtual environment related to the project: $it" }
-      val newSdk = it.setupAssociated(existingSdks, module.basePath).getOrElse { err->
+      val newSdk = it.setupAssociated(existingSdks, module.basePath, true).getOrElse { err->
         LOGGER.error(err)
         return
       }
+
       LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
       runInEdt {
         SdkConfigurationUtil.addSdk(newSdk)
-        newSdk.associateWithModule(module, null)
-        ApplicationManager.getApplication().runWriteAction {
-          newSdk.sdkModificator.commitChanges()
-        }
         setReadyToUseSdk(project, module, newSdk)
       }
 

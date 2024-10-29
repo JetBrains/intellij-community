@@ -18,14 +18,29 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testMutatingFrozenDataclassTransform() {
+    doMultiFileTest();
+  }
+
   // PY-28506
   public void testFrozenInheritance() {
     doTest();
   }
 
+  // PY-54560
+  public void testFrozenInheritanceDataclassTransform() {
+    doMultiFileTest();
+  }
+
   // PY-28506, PY-31762
   public void testMutatingFrozenInInheritance() {
     doTest();
+  }
+
+  // PY-54560
+  public void testMutatingFrozenInInheritanceDataclassTransform() {
+    doMultiFileTest();
   }
 
   // PY-28506, PY-31762
@@ -38,24 +53,44 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testOrderAndNotEqDataclassTransform() {
+    doMultiFileTest();
+  }
+  
   // PY-27398
   public void testDefaultFieldValue() {
     doTest();
   }
 
+  // PY-54560
+  public void testMutableDefaultFieldValueDataclassTransform() {
+    doMultiFileTest();
+  }
+  
   // PY-27398
   public void testFieldsOrder() {
     doTest();
   }
-
+  
   // PY-26354
   public void testAttrsFieldsOrder() {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformFieldsOrder() {
+    doMultiFileTest();
+  }
+
   // PY-28506, PY-31762
   public void testFieldsOrderInInheritance() {
     doTest();
+  }
+
+  // PY-54560
+  public void testDataclassTransformFieldOrderInInheritance() {
+    doMultiFileTest();
   }
 
   // PY-28506, PY-31762
@@ -64,22 +99,22 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyNoDefaultBase() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyDefaultBase() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyDefaultBase() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyNoDefaultDerived() {
     doTest();
   }
 
   // PY-34374, PY-33189
-  public void testFieldsOrderInInheritanceKwOnlyDefaultDerived() {
+  public void testAttrsFieldsOrderInInheritanceKwOnlyDefaultDerived() {
     doTest();
   }
 
@@ -116,6 +151,26 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
   // PY-26354
   public void testComparisonForOrderedAndUnorderedAttrs() {
     doTest();
+  }
+
+  // PY-54560
+  public void testComparisonForOrderedDataclassTransform() {
+    doMultiFileTest();  
+  }
+
+  // PY-54560
+  public void testComparisonForUnorderedDataclassTransform() {
+    doMultiFileTest();
+  }
+
+  // PY-54560
+  public void testComparisonForOrderedAndUnorderedDataclassTransform() {
+    doMultiFileTest();
+  }
+
+  // PY-54560
+  public void testComparisonForManuallyOrderedDataclassTransform() {
+    doMultiFileTest();
   }
 
   // PY-32078
@@ -250,9 +305,19 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformDefaultAndDefaultFactory() {
+    doMultiFileTest();    
+  }
+
   // PY-27398
   public void testUselessInitReprEq() {
     doTest();
+  }
+
+  // PY-54560
+  public void testDataclassTransformUselessInitEqUnsafeHashOrderFrozen() {
+    doMultiFileTest();
   }
 
   // PY-27398
@@ -305,6 +370,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformFieldLackingTypeAnnotation() {
+    doMultiFileTest();
+  }
+
   // PY-26354
   public void testAttrsLackingTypeAnnotation() {
     doTest();
@@ -325,6 +395,11 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-54560
+  public void testDataclassTransformKwOnlyFieldOrderInInheritance() {
+    doMultiFileTest();
+  }
+
   // PY-49946
   public void testFieldsOrderOverridden() {
     doTest();
@@ -336,6 +411,14 @@ public class PyDataclassInspectionTest extends PyInspectionTestCase {
     myFixture.copyDirectoryToProject("packages/attrs", "attrs");
     super.doTest();
     assertProjectFilesNotParsed(myFixture.getFile());
+  }
+
+  public void testFieldOrderInheritanceMultifile() {
+    doMultiFileTest();
+  }
+
+  public void testDataclassMissingHandlingMultifile() {
+    doMultiFileTest();
   }
 
   @NotNull

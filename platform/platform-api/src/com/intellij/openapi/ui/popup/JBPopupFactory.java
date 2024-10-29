@@ -160,20 +160,6 @@ public abstract class JBPopupFactory {
                                          boolean showDisabledActions,
                                          @PopupTitle String title,
                                          Component component,
-                                         boolean honorActionMnemonics) {
-    return createActionsStep(actionGroup, dataContext, null, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
-  }
-
-  /**
-   * @deprecated use {@link #createActionsStep(ActionGroup, DataContext, String, boolean, boolean, String, Component, boolean, int, boolean)}
-   */
-  @Deprecated(forRemoval = true)
-  public @NotNull ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
-                                         @NotNull DataContext dataContext,
-                                         boolean showNumbers,
-                                         boolean showDisabledActions,
-                                         @PopupTitle String title,
-                                         Component component,
                                          boolean honorActionMnemonics,
                                          int defaultOptionIndex,
                                          boolean autoSelectionEnabled) {

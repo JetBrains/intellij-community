@@ -237,8 +237,8 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
 
   private static class PropertiesTable extends ListTableWithButtons<BuildFileProperty> {
     @Override
-    protected ListTableModel createListModel() {
-      final ColumnInfo nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
+    protected ListTableModel<BuildFileProperty> createListModel() {
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> nameColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.name")) {
         @Nullable
         @Override
         public String valueOf(BuildFileProperty property) {
@@ -250,7 +250,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyName(value);
         }
       };
-      final ColumnInfo valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
+      final ColumnInfo<BuildFileProperty, @NlsContexts.ListItem String> valueColumn = new TableColumn(AntBundle.message("column.name.ant.configuration.property.value")) {
         @Nullable
         @Override
         public String valueOf(BuildFileProperty property) {
@@ -262,7 +262,7 @@ public final class AntRunConfiguration extends LocatableConfigurationBase implem
           property.setPropertyValue(value);
         }
       };
-      return new ListTableModel(nameColumn, valueColumn);
+      return new ListTableModel<>(nameColumn, valueColumn);
     }
 
     @Override

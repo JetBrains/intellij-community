@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="netty-codec-compression" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.netty:netty-codec-compression:4.2.0.Alpha4">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.Alpha4/netty-codec-compression-4.2.0.Alpha4.jar">
+          <sha256sum>f72ad668f7618e23b0a2b07e8b42a1a76e31fa23cb26e6940c59e57355a0c5e9</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.Alpha4/netty-codec-compression-4.2.0.Alpha4.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-compression/4.2.0.Alpha4/netty-codec-compression-4.2.0.Alpha4-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

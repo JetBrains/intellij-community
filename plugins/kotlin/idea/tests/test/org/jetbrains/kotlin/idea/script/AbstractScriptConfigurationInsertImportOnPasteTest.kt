@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.ActionUiKind
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.ex.EditorEx
@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActio
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeDeleted
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.importsToBeReviewed
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.completion.test.KotlinCompletionTestCase.assertEquals
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.dumpTextWithErrors
 import org.jetbrains.kotlin.psi.KtFile
@@ -79,7 +80,7 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val dataContext = getEditorDataContext()
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
-        val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
+        val event = AnActionEvent.createEvent(dataContext, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
         ActionUtil.performDumbAwareUpdate(action, event, false)
         if (event.presentation.isEnabled) {
             ActionUtil.performActionDumbAwareWithCallbacks(action, event)

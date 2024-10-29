@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.util.Objects;
 import static com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList.*;
 import static com.intellij.util.ArrayUtil.EMPTY_BYTE_ARRAY;
 
+@ApiStatus.Internal
 public final class ShelvedBinaryFile {
   private static final String BEFORE_PATH_FIELD_NAME = "BEFORE_PATH";
   private static final String AFTER_PATH_FIELD_NAME = "AFTER_PATH";

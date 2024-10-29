@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.Dispatchers
@@ -57,7 +58,8 @@ class MavenModelValidationTest : MavenDomWithIndicesTestCase() {
 
     configTest(modulePom)
     withContext(Dispatchers.EDT) {
-      val elementAtCaret = fixture.getElementAtCaret()
+      //maybe readaction
+      val elementAtCaret = writeIntentReadAction { fixture.getElementAtCaret () }
 
       UsefulTestCase.assertInstanceOf(elementAtCaret, PsiFile::class.java)
       assertEquals((elementAtCaret as PsiFile).getVirtualFile(), projectPom)

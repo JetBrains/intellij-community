@@ -39,7 +39,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import javax.swing.Icon
 import javax.swing.text.StyleConstants
-import kotlin.io.path.invariantSeparatorsPathString
 
 private val LOG = logger<TipUtils>()
 
@@ -134,7 +133,7 @@ private fun loadAndParseTip(tip: TipAndTrickBean?, contextComponent: Component?,
   return paragraphs
 }
 
-private data class LoadedTipInfo(val tipContent: String,
+private data class LoadedTipInfo(val tipContent: @Nls String,
                                  val imagesLocation: String? = null,
                                  val tipContentLoader: ClassLoader? = null,
                                  val tipImagesLoader: ClassLoader? = tipContentLoader)
@@ -147,7 +146,7 @@ private fun loadTip(tip: TipAndTrickBean?, isStrict: Boolean): LoadedTipInfo {
   try {
     val tipFile = Path.of(tip.fileName)
     if (tipFile.isAbsolute && Files.exists(tipFile)) {
-      val content = Files.readString(tipFile)
+      @Suppress("HardCodedStringLiteral") val content = Files.readString(tipFile)
       return LoadedTipInfo(content, tipFile.parent.toString())
     }
     else {
@@ -208,7 +207,7 @@ private fun getTipRetrievers(tip: TipAndTrickBean): TipRetrieversInfo {
 
 private fun getLocalizationTipRetrievers(loader: ClassLoader): List<TipRetriever> {
   val result = mutableListOf<TipRetriever>()
-  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(Path.of(tipDirectory)).map { it.invariantSeparatorsPathString }
+  val folderPaths = LocalizationUtil.getFolderLocalizedPaths(tipDirectory)
   val suffixes = LocalizationUtil.getLocalizationSuffixes()
   //folder paths and suffix paths should have the same size, because their elements depend on locale (if it contains a region or not)
   for (i in folderPaths.indices) {
@@ -312,11 +311,12 @@ private fun handleError(t: Throwable, isStrict: Boolean) {
   }
 }
 
-private fun getCantReadText(bean: TipAndTrickBean): String {
+private fun getCantReadText(bean: TipAndTrickBean): @Nls String {
   val plugin = getPoweredByText(bean)
-  var product = ApplicationNamesInfo.getInstance().fullProductName
-  if (!plugin.isEmpty()) {
-    product += " and $plugin plugin"
+  val product: @Nls String = if (!plugin.isEmpty()) {
+    IdeBundle.message("product.and.plugin", ApplicationNamesInfo.getInstance().fullProductName, plugin)
+  } else {
+    ApplicationNamesInfo.getInstance().fullProductName
   }
   return IdeBundle.message("error.unable.to.read.tip.of.the.day", bean.fileName, product)
 }
@@ -326,20 +326,21 @@ private fun getPoweredByText(tip: TipAndTrickBean): @NlsSafe String {
   return if (descriptor == null || PluginManagerCore.CORE_ID == descriptor.pluginId) "" else descriptor.name
 }
 
-private class TipEntity(private val name: String, private val value: String) {
-  fun inline(where: String): String {
+private class TipEntity(private val name: @NlsSafe String, private val value: @NlsSafe String) {
+  fun inline(where: @Nls String): @Nls String {
     return where.replace("&$name;", value)
   }
 }
 
 private class TipRetriever(@JvmField val loader: ClassLoader?, @JvmField val path: String, @JvmField val subPath: String, val suffix: String = "") {
-  fun getTipContent(tipName: String?): String? {
+  fun getTipContent(tipName: String?): @Nls String? {
     if (tipName == null) {
       return null
     }
 
     val tipUrl = getTipUrl(tipName) ?: return null
     try {
+      @Suppress("HardCodedStringLiteral")
       return ResourceUtil.loadText(tipUrl.openStream())
     }
     catch (ignored: IOException) {

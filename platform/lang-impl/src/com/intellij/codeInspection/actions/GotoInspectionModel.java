@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
@@ -44,9 +44,8 @@ public final class GotoInspectionModel extends SimpleChooseByNameModel {
     return tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ") + " " + tool.getShortName();
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer getListCellRenderer() {
+  public @NotNull ListCellRenderer getListCellRenderer() {
     return myListCellRenderer;
   }
 
@@ -65,7 +64,7 @@ public final class GotoInspectionModel extends SimpleChooseByNameModel {
   }
 
   @Override
-  public String getElementName(@NotNull final Object element) {
+  public String getElementName(final @NotNull Object element) {
     if (element instanceof InspectionElement) {
       return getSearchString(((InspectionElement)element).getToolWrapper());
     }

@@ -210,9 +210,24 @@ public class RenameTestGenerated extends AbstractRenameTest {
         runTest("testData/refactoring/rename/dataClassComponentN/dataClassComponentN.test");
     }
 
+    @TestMetadata("dataClassCopyFromJava/dataClassCopy.test")
+    public void testDataClassCopyFromJava_DataClassCopy() throws Exception {
+        runTest("testData/refactoring/rename/dataClassCopyFromJava/dataClassCopy.test");
+    }
+
     @TestMetadata("dataClassCopy/dataClassCopy.test")
     public void testDataClassCopy_DataClassCopy() throws Exception {
         runTest("testData/refactoring/rename/dataClassCopy/dataClassCopy.test");
+    }
+
+    @TestMetadata("enumGetEntriesFromJava/enumValueOf.test")
+    public void testEnumGetEntriesFromJava_EnumValueOf() throws Exception {
+        runTest("testData/refactoring/rename/enumGetEntriesFromJava/enumValueOf.test");
+    }
+
+    @TestMetadata("enumValueOfFromJava/enumValueOf.test")
+    public void testEnumValueOfFromJava_EnumValueOf() throws Exception {
+        runTest("testData/refactoring/rename/enumValueOfFromJava/enumValueOf.test");
     }
 
     @TestMetadata("enumValueOf/enumValueOf.test")

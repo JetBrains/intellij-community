@@ -6,12 +6,14 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Registers {@link QuoteHandler} for given file type.
  */
+@ApiStatus.Internal
 public final class QuoteHandlerEP extends BaseKeyedLazyInstance<QuoteHandler> implements KeyedLazyInstance<QuoteHandler> {
   public static final ExtensionPointName<KeyedLazyInstance<QuoteHandler>> EP_NAME = new ExtensionPointName<>("com.intellij.quoteHandler");
 

@@ -2,6 +2,7 @@
 package com.jetbrains.python.spellchecker;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
@@ -23,7 +24,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
+public final class PythonSpellcheckerStrategy extends SpellcheckingStrategy implements DumbAware {
   private static class StringLiteralTokenizer extends Tokenizer<PyStringLiteralExpression> {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, @NotNull TokenConsumer consumer) {

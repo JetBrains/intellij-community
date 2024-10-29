@@ -15,5 +15,3 @@ class Test {
         v.toString()
     }
 }
-
-// IGNORE_K2

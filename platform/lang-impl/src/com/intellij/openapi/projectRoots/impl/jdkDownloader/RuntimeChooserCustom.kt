@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -18,15 +18,15 @@ import com.intellij.openapi.ui.Messages
 import java.nio.file.Path
 import javax.swing.JComponent
 
-data class RuntimeChooserCustomItem(
+internal data class RuntimeChooserCustomItem(
   override val displayName: String?,
   override val version: String?,
   override val homeDir: String,
 ) : RuntimeChooserItem(), RuntimeChooserItemWithFixedLocation
 
-object RuntimeChooserAddCustomItem : RuntimeChooserItem()
+internal object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
-object RuntimeChooserCustom {
+internal object RuntimeChooserCustom {
   val sdkType: SdkType?
     get() {
       return SdkType

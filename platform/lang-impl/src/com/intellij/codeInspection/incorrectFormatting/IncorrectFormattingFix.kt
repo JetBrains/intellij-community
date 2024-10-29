@@ -12,10 +12,12 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.atomic.AtomicBoolean
 
 
+@ApiStatus.Internal
 class ReplaceQuickFix(val replacements: List<Pair<RangeMarker, CharSequence>>) : LocalQuickFix {
   override fun getFamilyName(): @Nls String = LangBundle.message("inspection.incorrect.formatting.fix.replace")
   override fun getFileModifierForPreview(target: PsiFile): ReplaceQuickFix = ReplaceQuickFix(replacements)
@@ -44,6 +46,7 @@ class ReplaceQuickFix(val replacements: List<Pair<RangeMarker, CharSequence>>) :
 }
 
 
+@ApiStatus.Internal
 object ReformatQuickFix : LocalQuickFix {
   override fun getFamilyName(): @Nls String = LangBundle.message("inspection.incorrect.formatting.fix.reformat")
 
@@ -55,6 +58,7 @@ object ReformatQuickFix : LocalQuickFix {
 }
 
 
+@ApiStatus.Internal
 abstract class ReconfigureQuickFix(@Nls val family: String, val reconfigure: IncorrectFormattingInspection.() -> Unit) : LocalQuickFix {
   override fun getFamilyName(): String = family
   override fun startInWriteAction(): Boolean = false
@@ -71,11 +75,13 @@ abstract class ReconfigureQuickFix(@Nls val family: String, val reconfigure: Inc
   }
 }
 
+@ApiStatus.Internal
 object ShowDetailedReportIntention : ReconfigureQuickFix(
   LangBundle.message("inspection.incorrect.formatting.fix.show.details"),
   { reportPerFile = false }
 )
 
+@ApiStatus.Internal
 object HideDetailedReportIntention : ReconfigureQuickFix(
   LangBundle.message("inspection.incorrect.formatting.fix.hide.details"),
   { reportPerFile = true }

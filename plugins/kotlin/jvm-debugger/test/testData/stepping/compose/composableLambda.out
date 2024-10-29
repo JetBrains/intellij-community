@@ -1,0 +1,11 @@
+LineBreakpoint created at composableLambda.kt:32
+LineBreakpoint created at composableLambda.kt:37
+LineBreakpoint created at composableLambda.kt:41
+Run Java
+Connected to the target VM
+composableLambda.kt:32
+composableLambda.kt:37
+composableLambda.kt:41
+Disconnected from the target VM
+
+Process finished with exit code 0

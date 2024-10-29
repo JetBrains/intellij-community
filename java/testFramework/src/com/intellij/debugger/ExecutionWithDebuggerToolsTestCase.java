@@ -252,8 +252,8 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     }
   }
 
-  protected void invokeRatherLater(SuspendContextImpl context, Runnable runnable) {
-    invokeRatherLater(new SuspendContextCommandImpl(context) {
+  protected void invokeRatherLater(@NotNull SuspendContextImpl context, @NotNull Runnable runnable) {
+    invokeRatherLater(context.getDebugProcess(), new SuspendContextCommandImpl(context) {
       @Override
       public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         DebuggerInvocationUtil.invokeLater(myProject, runnable);
@@ -303,7 +303,13 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
   private void pumpDebuggerThread(InvokeRatherLaterRequest request) {
     if (request.invokesN == RATHER_LATER_INVOKES_N) {
-      request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        var commands = request.myDebugProcess.getManagerThread().getUnfinishedCommands();
+        while (!commands.isEmpty()) {
+          TimeoutUtil.sleep(1);
+        }
+        request.myDebugProcess.getManagerThread().schedule(request.myDebuggerCommand);
+      });
     }
     else {
       if (!SwingUtilities.isEventDispatchThread()) {
@@ -424,7 +430,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
           }
           case "Exception" -> {
             String exceptionClassName = Objects.requireNonNull(comment.readKindValue());
-            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName, "");
+            breakpoint = breakpointManager.addExceptionBreakpoint(exceptionClassName);
             if (breakpoint == null) break;
             systemPrintln("ExceptionBreakpoint created at " + breakpointLocation);
             String catchClassFiltersStr = comment.readValue("Catch class filters");
@@ -579,7 +585,7 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
     public void paused(SuspendContextImpl suspendContext) {
       // Need to add SuspendContextCommandImpl because the stepping pause is not now in SuspendContextCommandImpl
       DebuggerManagerThreadImpl debuggerManagerThread = Objects.requireNonNull(suspendContext.getDebugProcess()).getManagerThread();
-      debuggerManagerThread.schedule(new SuspendContextCommandImpl(suspendContext) {
+      debuggerManagerThread.invoke(new SuspendContextCommandImpl(suspendContext) {
         @Override
         public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           pausedImpl(suspendContext);

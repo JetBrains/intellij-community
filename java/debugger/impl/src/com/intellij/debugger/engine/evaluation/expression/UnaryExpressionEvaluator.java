@@ -49,7 +49,7 @@ class UnaryExpressionEvaluator implements Evaluator {
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
     Value operand = (Value)myOperandEvaluator.evaluate(context);
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
     if (myOperationType == JavaTokenType.PLUS) {
       if (DebuggerUtils.isNumeric(operand)) {
         return operand;

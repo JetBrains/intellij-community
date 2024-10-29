@@ -211,6 +211,16 @@ public abstract class CompilerManager {
    */
   public abstract void rebuild(@Nullable CompileStatusNotification callback);
 
+
+  /**
+   * Same as rebuild, but build system directory is forcibly removed from the IDE to ensure the build starts on the clean state
+   *
+   * @param callback a notification callback, or null if no notifications needed
+   */
+  public void rebuildClean(@Nullable CompileStatusNotification callback) {
+    rebuild(callback); // default implementation
+  }
+
   /**
    * Execute a custom compile task.
    *

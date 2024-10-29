@@ -7,6 +7,7 @@ import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -31,8 +32,8 @@ internal class ClassLoaderConfiguratorTest {
     val plugins = arrayOf(
       IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = null),
       IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = PluginId.getId("org.jetbrains.plugins.gradle"), moduleName = null),
-      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java"),
-      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle"),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.gradle.gradle-java", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
+      IdeaPluginDescriptorImpl(RawPluginDescriptor(), emptyPath, isBundled = false, id = pluginId, moduleName = "kotlin.compiler-plugins.annotation-based-compiler-support.gradle", moduleLoadingRule = ModuleLoadingRule.OPTIONAL),
     )
     sortDependenciesInPlace(plugins)
     assertThat(plugins.last().moduleName).isNull()
@@ -48,7 +49,8 @@ internal class ClassLoaderConfiguratorTest {
                                       path = emptyPath,
                                       isBundled = false,
                                       id = pluginId,
-                                      moduleName = name)
+                                      moduleName = name,
+                                      moduleLoadingRule = ModuleLoadingRule.OPTIONAL)
     }
 
     val modules = arrayOf(
@@ -187,7 +189,7 @@ internal fun loadDescriptors(dir: Path): PluginLoadingResult {
   // constant order in tests
   val paths = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {
-    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context) },
+    result.addAll(descriptors = paths.asSequence().mapNotNull { loadDescriptor(file = it, parentContext = context, pool = ZipFilePoolImpl()) },
                   overrideUseIfCompatible = false,
                   productBuildNumber = buildNumber)
   }

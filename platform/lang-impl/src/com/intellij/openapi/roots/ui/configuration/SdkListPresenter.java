@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.icons.AllIcons;
@@ -227,8 +227,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     }
   }
 
-  @NotNull
-  public static @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
+  public static @NotNull @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
     return presentDetectedSdkPath(home, 50, 30);
   }
 
@@ -249,7 +248,7 @@ public class SdkListPresenter extends ColoredListCellRenderer<SdkListItem> {
     return accessibleContext;
   }
 
-  static private final class AccessibleSdkListPresenter extends AccessibleContextDelegate {
+  private static final class AccessibleSdkListPresenter extends AccessibleContextDelegate {
     private @Nls String myAccessibleString = null;
 
     AccessibleSdkListPresenter(AccessibleContext context) {

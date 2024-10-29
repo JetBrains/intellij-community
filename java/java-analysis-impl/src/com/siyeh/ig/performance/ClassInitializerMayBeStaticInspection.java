@@ -15,7 +15,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.ChangeModifierFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,7 @@ public final class ClassInitializerMayBeStaticInspection extends BaseInspection 
         return;
       }
       final PsiClass containingClass =
-        ClassUtils.getContainingClass(initializer);
+        PsiUtil.getContainingClass(initializer);
       if (containingClass == null || containingClass instanceof PsiAnonymousClass) {
         return;
       }

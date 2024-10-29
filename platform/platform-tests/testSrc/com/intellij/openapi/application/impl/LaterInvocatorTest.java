@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -12,7 +12,7 @@ import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.ThreadingAssertions;
@@ -102,13 +102,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   @Override
   protected void runBareRunnable(@NotNull ThrowableRunnable<Throwable> runnable) throws Throwable {
-    if (isStressTest()) {
-      // this call is in hot path. make sure it's cached and local, to avoid remote crazy stuff
-      ClientId.Companion.nullizeCachedServiceInTest(runnable);
-    }
-    else {
-      runnable.run();
-    }
+    runnable.run();
   }
 
   public void testReorder() {
@@ -499,14 +493,16 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
 
   public void testModalityStateCurrentAllowedOnlyFromEDT() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
-    try {
-      future.get(1000, TimeUnit.MILLISECONDS);
-      fail("should fail");
-    }
-    catch (ExecutionException e) {
-      assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Future<ModalityState> future = ApplicationManager.getApplication().executeOnPooledThread(() -> ModalityState.current());
+      try {
+        future.get(1000, TimeUnit.MILLISECONDS);
+        fail("should fail");
+      }
+      catch (ExecutionException e) {
+        assertThat(e.getMessage()).contains("EventQueue.isDispatchThread()=false");
+      }
+    });
   }
 
   public void testDispatchInvocationEventsWorksForJustSubmitted() {
@@ -591,7 +587,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
 
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
           // decrease GC pressure, we're not measuring that
@@ -609,7 +605,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     int N = 1_000_000;
     AtomicInteger counter = new AtomicInteger();
     Runnable r = () -> counter.incrementAndGet();
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       Application application = ApplicationManager.getApplication();
       for (int i = 0; i < N; i++) {
         if (i % 8192 == 0) {
@@ -630,7 +626,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
     Runnable r = () -> counter.incrementAndGet();
     Application application = ApplicationManager.getApplication();
     application.invokeAndWait(r);
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       counter.set(0);
       UIUtil.invokeAndWaitIfNeeded(() -> LaterInvocator.enterModal(myWindow1));
       for (int i = 0; i < N; i++) {

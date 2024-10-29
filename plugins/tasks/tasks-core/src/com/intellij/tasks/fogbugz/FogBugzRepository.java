@@ -1,8 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.tasks.fogbugz;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
@@ -262,7 +261,6 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
     return method;
   }
 
-  @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
     return new CancellableConnection() {
@@ -302,21 +300,4 @@ public final class FogBugzRepository extends BaseRepositoryImpl {
   public String getComment() {
     return "{id} (e.g. 2344245), {summary}";
   }
-
-  @Tag("token")
-  @NotNull
-  public String getEncodedToken() {
-    // The same approach as used for passwords in BaseRepository
-    return PasswordUtil.encodePassword(myToken);
-  }
-
-  @SuppressWarnings("unused")
-  public void setEncodedToken(@Nullable String token) {
-    try {
-      myToken = PasswordUtil.decodePassword(token);
-    }
-    catch (NumberFormatException ignored) {
-    }
-  }
-
 }

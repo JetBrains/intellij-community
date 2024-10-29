@@ -14,6 +14,10 @@ import org.jetbrains.annotations.NotNull;
 final class PlatformDataValidators extends DataValidators {
   @Override
   public void collectValidators(@NotNull Registry registry) {
+    Validator<Object> uiOnlyValidator = uiOnlyDataKeyValidator();
+    registry.register(PlatformCoreDataKeys.SELECTED_ITEM, uiOnlyValidator);
+    registry.register(PlatformCoreDataKeys.SELECTED_ITEMS, uiOnlyValidator);
+
     Validator<VirtualFile> fileValidator = (data, dataId, source) -> data.isValid();
     registry.register(CommonDataKeys.VIRTUAL_FILE, fileValidator);
     registry.register(CommonDataKeys.VIRTUAL_FILE_ARRAY, arrayValidator(fileValidator));
@@ -32,7 +36,7 @@ final class PlatformDataValidators extends DataValidators {
     registry.register(PlatformCoreDataKeys.SELECTED_ITEMS, arrayValidator(objectValidator));
     registry.register(PlatformDataKeys.LAST_ACTIVE_TOOL_WINDOWS, arrayValidator(objectValidator));
 
-    Validator<EditorWindow> editorWindowValidator = (data, dataId, source) -> data.isValid$intellij_platform_ide_impl();
+    Validator<EditorWindow> editorWindowValidator = (data, dataId, source) -> data.isValid();
     registry.register(EditorWindow.DATA_KEY, editorWindowValidator);
   }
 }

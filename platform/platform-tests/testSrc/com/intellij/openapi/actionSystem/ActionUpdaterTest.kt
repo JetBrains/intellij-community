@@ -82,7 +82,7 @@ class ActionUpdaterTest {
     group.add(DefaultActionGroup(DefaultActionGroup(
       newAction(ActionUpdateThread.BGT) { it.presentation.isEnabledAndVisible = false })))
     val presentations = PresentationFactory()
-    val actions = Utils.expandActionGroup(group, presentations, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    val actions = expandActionGroup(group, presentations)
     assertEmpty(actions)
     assertFalse(presentations.getPresentation(group).isEnabled)
   }
@@ -153,7 +153,7 @@ class ActionUpdaterTest {
         val count = IdeEventQueue.getInstance().eventCount
         val result = async(start = CoroutineStart.UNDISPATCHED) {
           Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                         ActionPlaces.UNKNOWN, false, fastTrack = true)
+                                         ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = true)
         }
         jobCompleted = result.isCompleted
         assertEquals(count, IdeEventQueue.getInstance().eventCount, "Expand must complete in a single event")
@@ -197,7 +197,7 @@ class ActionUpdaterTest {
     withContext(Dispatchers.EDT) {
       val result = async(start = CoroutineStart.UNDISPATCHED) {
         Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       assertFalse(result.isCompleted, "The update must still be in progress")
       semaphore.acquire()
@@ -236,7 +236,7 @@ class ActionUpdaterTest {
     val actions = try {
       withContext(Dispatchers.EDT) {
         Utils.expandActionGroupSuspend (actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                        ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                        ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
     }
     catch (ex: Exception) {
@@ -261,7 +261,7 @@ class ActionUpdaterTest {
       LaterInvocator.enterModal(modalEntity)
       try {
         Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       finally {
         LaterInvocator.leaveModal(modalEntity)
@@ -291,7 +291,7 @@ class ActionUpdaterTest {
     }
     val actions = withContext(Dispatchers.EDT + MyContextElement(1)) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(1, actions.size)
   }
@@ -303,15 +303,15 @@ class ActionUpdaterTest {
       override fun getChildren(e: AnActionEvent?): Array<AnAction> {
         return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
       }
-      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
-                                              updateSession: UpdateSession): List<AnAction?> {
-        updateSession.presentation(extra).isEnabledAndVisible = true
+
+      override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+        e.updateSession.presentation(extra).isEnabledAndVisible = true
         return visibleChildren + listOf(extra)
       }
     }
     val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(2, actions.size)
   }
@@ -337,9 +337,9 @@ class ActionUpdaterTest {
         updateNewInstance(e!!.updateSession, 1)
         return arrayOf<AnAction>(EmptyAction.createEmptyAction("", null, true))
       }
-      override fun postProcessVisibleChildren(visibleChildren: List<AnAction>,
-                                              updateSession: UpdateSession): List<AnAction?> {
-        updateNewInstance(updateSession, 2)
+
+      override fun postProcessVisibleChildren(e: AnActionEvent, visibleChildren: List<AnAction>): List<AnAction> {
+        updateNewInstance(e.updateSession, 2)
         return visibleChildren
       }
     }
@@ -348,7 +348,7 @@ class ActionUpdaterTest {
         retries.setValue(10)
         withContext(Dispatchers.EDT) {
           Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                         ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                         ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
         }
       }
       catch (_: TestLoggerAssertionError) {
@@ -396,7 +396,7 @@ class ActionUpdaterTest {
     }
     val actions = withContext(Dispatchers.EDT) {
       Utils.expandActionGroupSuspend(actionGroup, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                     ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                     ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
     }
     assertEquals(1, actions.size)
   }
@@ -425,7 +425,7 @@ class ActionUpdaterTest {
     try {
       withContext(Dispatchers.EDT) {
         Utils.expandActionGroupSuspend(group, PresentationFactory(), DataContext.EMPTY_CONTEXT,
-                                       ActionPlaces.UNKNOWN, false, fastTrack = false)
+                                       ActionPlaces.UNKNOWN, ActionUiKind.NONE, fastTrack = false)
       }
       fail("Expected to fail")
     }
@@ -439,7 +439,8 @@ class ActionUpdaterTest {
 
   private fun expandActionGroup(actionGroup: ActionGroup,
                                 presentationFactory: PresentationFactory = PresentationFactory()): List<AnAction?> {
-    return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT, ActionPlaces.UNKNOWN)
+    return Utils.expandActionGroup(actionGroup, presentationFactory, DataContext.EMPTY_CONTEXT,
+                                   ActionPlaces.UNKNOWN, ActionUiKind.NONE)
   }
 
   private fun newAction(updateThread: ActionUpdateThread, update: (AnActionEvent) -> Unit): AnAction =

@@ -10,8 +10,8 @@ class Foo {
             val product = (a[j].toLong() and LONG_MASK) * xLong + carry
             val difference = q[offset--] - product
             carry = ((product ushr 32)
-                    + (if (((difference and LONG_MASK) >
-                        (((product.toInt().inv()).toLong() and LONG_MASK)))
+                    + (if ((difference and LONG_MASK) >
+                (((product.toInt().inv()).toLong() and LONG_MASK))
             ) 1 else 0))
         }
         return carry.toInt()

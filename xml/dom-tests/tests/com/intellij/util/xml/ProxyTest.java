@@ -170,6 +170,7 @@ public class ProxyTest extends TestCase {
       }, false, ArrayUtilRt.EMPTY_OBJECT_ARRAY);
     assertEquals("a", proxy.sayA());
     assertEquals("a", ((CovariantFromBaseClassTest.Base)proxy).sayA());
+    //noinspection RedundantCast
     assertEquals("a", ((CovariantFromBaseClassTest.Intf)proxy).sayA());
   }
 

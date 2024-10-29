@@ -3,7 +3,8 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
@@ -23,7 +24,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-public class CommittedChangeListPanel extends JPanel implements DataProvider {
+public class CommittedChangeListPanel extends JPanel implements UiDataProvider {
   private final Project myProject;
 
   private final JLabel myDescriptionLabel;
@@ -143,18 +143,11 @@ public class CommittedChangeListPanel extends JPanel implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull @NonNls final String dataId) {
-    if (VcsDataKeys.CHANGES.is(dataId)) {
-      return myChanges.toArray(Change.EMPTY_CHANGE_ARRAY);
-    }
-    if (VcsDataKeys.VCS.is(dataId)) {
-      AbstractVcs vcs = myChangeList.getVcs();
-      return vcs == null ? null : vcs.getKeyInstanceMethod();
-    }
-    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
-      return new ChangeList[]{myChangeList};
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    AbstractVcs vcs = myChangeList.getVcs();
+    sink.set(VcsDataKeys.CHANGES, myChanges.toArray(Change.EMPTY_CHANGE_ARRAY));
+    sink.set(VcsDataKeys.VCS, vcs == null ? null : vcs.getKeyInstanceMethod());
+    sink.set(VcsDataKeys.CHANGE_LISTS, new ChangeList[]{myChangeList});
   }
 
   @NotNull

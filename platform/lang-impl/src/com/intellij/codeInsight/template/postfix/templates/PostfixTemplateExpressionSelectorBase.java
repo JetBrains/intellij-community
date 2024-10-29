@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.openapi.editor.Document;
@@ -20,8 +20,7 @@ import java.util.List;
  */
 public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTemplateExpressionSelector {
 
-  @NotNull
-  protected final Condition<? super PsiElement> myAdditionalCondition;
+  protected final @NotNull Condition<? super PsiElement> myAdditionalCondition;
 
   public PostfixTemplateExpressionSelectorBase(@Nullable Condition<? super PsiElement> condition) {
     myAdditionalCondition = condition != null ? condition : Conditions.alwaysTrue();
@@ -40,15 +39,13 @@ public abstract class PostfixTemplateExpressionSelectorBase implements PostfixTe
     return element -> element.getTextRange().getEndOffset() == offset;
   }
 
-  @NotNull
   @Override
-  public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
+  public @NotNull List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
     return ContainerUtil.filter(getNonFilteredExpressions(context, document, offset), getFilters(offset));
   }
 
   @Override
-  @NotNull
-  public Function<PsiElement, String> getRenderer() {
+  public @NotNull Function<PsiElement, String> getRenderer() {
     return element -> element.getText();
   }
 

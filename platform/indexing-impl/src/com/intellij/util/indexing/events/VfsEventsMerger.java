@@ -119,8 +119,8 @@ public final class VfsEventsMerger {
               return false;
             }
           }
-          catch (ProcessCanceledException pce) { // todo remove
-            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(pce);
+          catch (ProcessCanceledException pce) { // todo remove (IJPL-9805)
+            ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(new RuntimeException(pce));
             assert false;
           }
         }
@@ -185,8 +185,14 @@ public final class VfsEventsMerger {
     @Override
     public String toString() {
       StringBuilder builder = new StringBuilder();
-      builder.append("file: ").append(file.getPath()).append("; ")
-        .append("operation: ");
+      builder.append("file: ");
+      if (file instanceof VirtualFileWithId fileWithId) {
+        builder.append(fileWithId.getId());
+      }
+      else {
+        builder.append(file.getPath());
+      }
+      builder.append("; ").append("operation: ");
       if ((eventMask & FILE_TRANSIENT_STATE_CHANGED) != 0) builder.append("TRANSIENT_STATE_CHANGE ");
       if ((eventMask & FILE_CONTENT_CHANGED) != 0) builder.append("CONTENT_CHANGE ");
       if ((eventMask & FILE_REMOVED) != 0) builder.append("REMOVE ");
@@ -255,7 +261,10 @@ public final class VfsEventsMerger {
       if (indexedFile instanceof FileContent fileContent) {
         extra += ",contLen(b)=" + fileContent.getContent().length;
         FileType fileType = fileContent.getFileType();
-        extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
+        // WARNING: LanguageFileType does not guarantee that there is a PsiFile.
+        // Example: org.jetbrains.bazel.languages.projectview.base.ProjectViewFileType
+        // psiLen has never been helpful to me, so don't log it for now.
+        // extra += ",psiLen=" + (fileType instanceof LanguageFileType ? fileContent.getPsiFile().getTextLength() : -1);
         extra += ",bin=" + (fileType.isBinary() ? "t" : "f");
       }
 
@@ -268,7 +277,12 @@ public final class VfsEventsMerger {
 
   public static void tryLog(Supplier<String> message) {
     if (LOG != null) {
-      LOG.info(message.get());
+      try {
+        LOG.info(message.get());
+      }
+      catch (Throwable t) {
+        Logger.getInstance(VfsEventsMerger.class).error("Could not evaluate log message (message.get())", t);
+      }
     }
   }
 

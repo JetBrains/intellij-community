@@ -9,7 +9,9 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.keymap.Keymap
 import com.intellij.openapi.wm.WelcomeScreenTab
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object WelcomeScreenEventCollector : CounterUsagesCollector() {
   internal enum class TabType { TabNavProject, TabNavCustomize, TabNavPlugins, TabNavTutorials, TabNavOther }
 
@@ -55,7 +57,7 @@ object WelcomeScreenEventCollector : CounterUsagesCollector() {
   @JvmStatic
   fun logProjectSearchUsed(): Unit = projectSearchUsed.log()
 
-    fun logLafChanged(laf: UIThemeLookAndFeelInfo, osSync: Boolean): Unit = lafChanged.log(laf.name, osSync)
+  fun logLafChanged(laf: UIThemeLookAndFeelInfo, osSync: Boolean): Unit = lafChanged.log(laf.name, osSync)
 
   fun logIdeFontChanged(oldSize: Float, newSize: Float): Unit = ideFontChanged.log(
     OLD_FONT_SIZE.with((oldSize + 0.5).toInt()), NEW_FONT_SIZE.with((newSize + 0.5).toInt()),

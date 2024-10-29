@@ -3,10 +3,12 @@ package com.intellij.largeFilesEditor.editor;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.components.JBScrollBar;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class LocalInvisibleScrollBar extends JBScrollBar {
 
   private static final Logger LOG = Logger.getInstance(LocalInvisibleScrollBar.class);

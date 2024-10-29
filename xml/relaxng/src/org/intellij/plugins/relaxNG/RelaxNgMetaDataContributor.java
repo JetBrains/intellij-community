@@ -53,15 +53,13 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
       ),
       RngNsDescriptor.class);
 
-    registrar.registerMetaData(
-      new ClassFilter(RncDocument.class),
-      RngNsDescriptor.class);
+    registrar.registerMetaData(new ClassFilter(RncDocument.class), RngNsDescriptor.class);
 
     registrar.registerMetaData(new ElementFilter() {
       @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         if (element instanceof XmlTag tag) {
-          final DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
+          DomElement domElement = DomManager.getDomManager(tag.getProject()).getDomElement(tag);
           return domElement instanceof RngDefine;
         }
         return false;
@@ -74,17 +72,17 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
     }, RngDefineMetaData.class);
   }
 
-  @NotNull
-  public static List<Class<? extends LocalInspectionTool>> getInspectionClasses() {
+  public static @NotNull List<Class<? extends LocalInspectionTool>> getInspectionClasses() {
     return Arrays.asList(RngDomInspection.class, UnusedDefineInspection.class);
   }
 
   static final class ResourceProvider implements StandardResourceProvider {
     @Override
     public void registerResources(ResourceRegistrar registrar) {
-      registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());
-      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "/resources/html5-schema/svg20/svg20.rnc", getClass());
-      registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "/resources/html5-schema/mml3/mathml3.rnc", getClass());
+      ClassLoader classLoader = getClass().getClassLoader();
+      registrar.addStdResource(RNG_NAMESPACE, "resources/relaxng.rng", classLoader);
+      registrar.addStdResource(HtmlUtil.SVG_NAMESPACE, "resources/html5-schema/svg20/svg20.rnc", classLoader);
+      registrar.addStdResource(HtmlUtil.MATH_ML_NAMESPACE, "resources/html5-schema/mml3/mathml3.rnc", classLoader);
       registrar.addIgnoredResource("http://relaxng.org/ns/compatibility/annotations/1.0");
     }
   }

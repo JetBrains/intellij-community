@@ -8,6 +8,5 @@
         "JavaClass.java",
         "JavaClass4.java",
         "Property2.kt"
-    ],
-    "ignoreK2Compiler": "KTIJ-24831"
+    ]
 }

@@ -25,8 +25,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class ExpandLiveTemplateCustomAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandLiveTemplateCustomAction() {
     super(createExpandTemplateHandler(TemplateSettings.CUSTOM_CHAR));

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.util;
 
 import com.intellij.codeInspection.RedundantLambdaCodeBlockInspection;
@@ -340,7 +340,7 @@ public final class LambdaRefactoringUtil {
                                        JavaRefactoringBundle.message("side.effects.detected.title"), Messages.getQuestionIcon()) == Messages.YES) {
             //ensure introduced before lambda
             qualifierExpression.putUserData(ElementToWorkOn.PARENT, lambdaExpression);
-            RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+            RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
             JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
             assert handler != null;
             handler.invoke(qualifierExpression.getProject(), editor, qualifierExpression);

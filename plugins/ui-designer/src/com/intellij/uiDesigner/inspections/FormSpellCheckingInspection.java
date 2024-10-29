@@ -61,7 +61,7 @@ public final class FormSpellCheckingInspection extends StringDescriptorInspectio
               public ListPopupStep<String> getPopupStep() {
                 return new BaseListPopupStep<>(UIDesignerBundle.message("popup.title.select.replacement"), suggestions) {
                   @Override
-                  public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+                  public PopupStep<?> onChosen(String selectedValue, boolean finalChoice) {
                     FormInspectionUtil.updateStringPropertyValue(editor, component1, (IntroStringProperty)prop, descriptor, selectedValue);
                     return FINAL_CHOICE;
                   }

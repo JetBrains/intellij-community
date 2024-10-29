@@ -4,7 +4,9 @@ package com.intellij.ide.ui.experimental
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 object ExperimentalUiCollector : CounterUsagesCollector() {
 
   enum class SwitchSource {

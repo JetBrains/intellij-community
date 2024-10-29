@@ -45,12 +45,12 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
 
   @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public Class<PropertyStubType> getTypeClass() {
     return PropertyStubType.class;
   }
 
   @Override
-  public void serialize(StubOutputStream stream) throws IOException {
+  public void serialize(@NotNull StubOutputStream stream) throws IOException {
     writeOne(myGetter, stream);
     writeOne(mySetter, stream);
     writeOne(myDeleter, stream);

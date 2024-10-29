@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -89,7 +89,7 @@ import java.util.*;
 
 public class SingleInspectionProfilePanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(SingleInspectionProfilePanel.class);
-  @NonNls private static final String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
+  private static final @NonNls String INSPECTION_FILTER_HISTORY = "INSPECTION_FILTER_HISTORY";
 
   private static final float DIVIDER_PROPORTION_DEFAULT = 0.5f;
   private static final int SECTION_GAP = 20;
@@ -99,8 +99,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private final List<InspectionTreeAdvertiser.CustomGroup> myCustomGroups = new ArrayList<>();
   private final Alarm myAlarm = new Alarm();
   private final ProjectInspectionProfileManager myProjectProfileManager;
-  @NotNull
-  private final InspectionProfileModifiableModel myProfile;
+  private final @NotNull InspectionProfileModifiableModel myProfile;
   private DescriptionEditorPane myDescription;
   private JBLabel myOptionsLabel;
   private JPanel myOptionsPanel;
@@ -159,8 +158,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myRoot.dropCache();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProjectProfileManager.getProject();
   }
 
@@ -187,12 +185,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  @Nullable
-  private static InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
+  private static @Nullable InspectionConfigTreeNode findNodeByKey(String name, InspectionConfigTreeNode root) {
     for (int i = 0; i < root.getChildCount(); i++) {
       final InspectionConfigTreeNode child = (InspectionConfigTreeNode)root.getChildAt(i);
       if (child instanceof InspectionConfigTreeNode.Tool) {
-        if (((InspectionConfigTreeNode.Tool)child).getKey().toString().equals(name)) {
+        if (((InspectionConfigTreeNode.Tool)child).getKey().getShortName().equals(name)) {
           return child;
         }
       }
@@ -238,7 +235,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       } else if (forceInclude) return false;
     }
     for (Set<String> keySet : keySetList) {
-      if (keySet.contains(descriptor.getKey().toString())) {
+      if (keySet.contains(descriptor.getKey().getShortName())) {
         if (!forceInclude) {
           return true;
         }
@@ -376,7 +373,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private void loadDescriptorsConfigs(boolean onlyModified) {
     myInitialToolDescriptors.values().stream().flatMap(ToolDescriptors::getDescriptors).forEach(d -> {
-      if (!onlyModified || myProfile.isProperSetting(d.getKey().toString())) {
+      if (!onlyModified || myProfile.isProperSetting(d.getKey().getShortName())) {
         d.loadConfig();
       }
     });
@@ -405,7 +402,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (selectionPath != null) {
       InspectionConfigTreeNode node = (InspectionConfigTreeNode)selectionPath.getLastPathComponent();
       if (node instanceof InspectionConfigTreeNode.Tool) {
-        final boolean properSetting = myProfile.isProperSetting(((InspectionConfigTreeNode.Tool)node).getKey().toString());
+        final boolean properSetting = myProfile.isProperSetting(((InspectionConfigTreeNode.Tool)node).getKey().getShortName());
         if (node.isProperSetting() != properSetting) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(() -> myTreeTable.repaint(), 300);
@@ -584,7 +581,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     };
     myTreeTable = InspectionsConfigTreeTable.create(new InspectionsConfigTreeTable.InspectionsConfigTreeTableSettings(myRoot, getProject()) {
       @Override
-      protected void onChanged(@NotNull final InspectionConfigTreeNode node) {
+      protected void onChanged(final @NotNull InspectionConfigTreeNode node) {
         InspectionConfigTreeNode.updateUpHierarchy(node);
       }
 
@@ -594,8 +591,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
 
       @Override
-      @NotNull
-      public InspectionProfileImpl getInspectionProfile() {
+      public @NotNull InspectionProfileImpl getInspectionProfile() {
         return myProfile;
       }
     }, myDisposable);
@@ -706,7 +702,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private boolean includeDoNotShow(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     return !ContainerUtil.exists(nodes, node -> {
-      final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().toString(), project).getTool();
+      final InspectionToolWrapper tool = myProfile.getToolDefaultState(node.getKey().getShortName(), project).getTool();
       return tool instanceof GlobalInspectionToolWrapper &&
              ((GlobalInspectionToolWrapper)tool).getSharedLocalInspectionToolWrapper() == null;
     });
@@ -761,7 +757,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       final Project project = getProject();
       final InspectionConfigTreeNode.Tool singleNode = myTreeTable.getStrictlySelectedToolNode();
       final ScopeToolState toolState = singleNode != null ?
-                                       myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().toString(), project) : null;
+                                       myProfile.getToolDefaultState(singleNode.getDefaultDescriptor().getKey().getShortName(), project) : null;
       boolean showDefaultConfigurationOptions = toolState == null || toolState.getTool().getTool().showDefaultConfigurationOptions();
       if (singleNode != null) {
         // Inspection tool node selected
@@ -803,7 +799,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
       final Set<String> scopesNames = new HashSet<>();
       for (final InspectionConfigTreeNode.Tool node : nodes) {
-        final List<ScopeToolState> nonDefaultTools = myProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().toString(), project);
+        final List<ScopeToolState> nonDefaultTools = myProfile.getNonDefaultTools(node.getDefaultDescriptor().getKey().getShortName(), project);
         for (final ScopeToolState tool : nonDefaultTools) {
           scopesNames.add(tool.getScopeName());
         }
@@ -845,7 +841,7 @@ public class SingleInspectionProfilePanel extends JPanel {
               final NamedScope scope = node.getDefaultDescriptor().getScope();
               final boolean doUpdate = myProfile.getEditorAttributesKey(node.getKey(), scope, project) != key;
               if (doUpdate) {
-                myProfile.setEditorAttributesKey(node.getKey().toString(), key.getExternalName(), null, project);
+                myProfile.setEditorAttributesKey(node.getKey().getShortName(), key.getExternalName(), null, project);
                 toUpdate.add(node);
               }
             }
@@ -873,7 +869,7 @@ public class SingleInspectionProfilePanel extends JPanel {
                                          || myProfile.getEditorAttributesKey(key, scope, project) != null;
                 if (doUpdate) {
                   myProfile.setErrorLevel(key, level, null, project);
-                  myProfile.setEditorAttributesKey(node.getKey().toString(), null, null, project);
+                  myProfile.setEditorAttributesKey(node.getKey().getShortName(), null, null, project);
                   updateHighlightingChooser(nodes, project, highlightingChooser);
                   toUpdate.add(node);
                 }
@@ -919,7 +915,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         }
         final var tableSettings = new ScopesAndSeveritiesTable.TableSettings(nodes, myProfile, project) {
           @Override
-          protected void onScopeChosen(@NotNull final ScopeToolState state) {
+          protected void onScopeChosen(final @NotNull ScopeToolState state) {
             setConfigPanel(configPanelAnchor, state);
             configPanelAnchor.revalidate();
             configPanelAnchor.repaint();
@@ -1046,7 +1042,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private boolean isThoughOneNodeEnabled(Collection<? extends InspectionConfigTreeNode.Tool> nodes) {
     final Project project = getProject();
     for (final InspectionConfigTreeNode.Tool node : nodes) {
-      final String toolId = node.getKey().toString();
+      final String toolId = node.getKey().getShortName();
       if (myProfile.getTools(toolId, project).isEnabled()) {
         return true;
       }
@@ -1061,8 +1057,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myOptionsPanel.repaint();
   }
 
-  @NotNull
-  public InspectionProfileModifiableModel getProfile() {
+  public @NotNull InspectionProfileModifiableModel getProfile() {
     return myProfile;
   }
 
@@ -1310,7 +1305,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       }
     }
 
-    final List<ScopeToolState> tools = profile.getNonDefaultTools(desc.getKey().toString(), project);
+    final List<ScopeToolState> tools = profile.getNonDefaultTools(desc.getKey().getShortName(), project);
     if (tools.size() != descriptors.size()) {
       return true;
     }
@@ -1411,8 +1406,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   private final class ToolOptionsSeparator extends JPanel {
     private final ActionLink myResetLink;
-    @Nullable
-    private final ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
+    private final @Nullable ScopesAndSeveritiesTable myScopesAndSeveritiesTable;
 
     ToolOptionsSeparator(@Nullable ScopesAndSeveritiesTable scopesAndSeveritiesTable) {
       myScopesAndSeveritiesTable = scopesAndSeveritiesTable;

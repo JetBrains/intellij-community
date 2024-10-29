@@ -8,17 +8,16 @@ import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.application.impl.RawSwingDispatcher
 import com.intellij.openapi.components.serviceAsync
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfoRt
+import com.intellij.ui.User32Ex
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.Foundation.NSAutoreleasePool
 import com.intellij.ui.mac.foundation.ID
-import com.intellij.util.User32Ex
 import com.sun.jna.platform.win32.WinDef
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.accessibility.AccessibleRole
 
@@ -27,7 +26,8 @@ object AccessibilityUtils {
   val GROUPED_ELEMENTS: AccessibleRole = if (SystemInfoRt.isMac) AccessibleRole.AWT_COMPONENT else AccessibleRole.PANEL
 }
 
-internal suspend fun enableScreenReaderSupportIfNecessary() {
+@ApiStatus.Internal
+suspend fun enableScreenReaderSupportIfNecessary() {
   if (isSupportScreenReadersOverridden()) {
     AccessibilityUsageTrackerCollector.featureTriggered(AccessibilityUsageTrackerCollector.SCREEN_READER_SUPPORT_ENABLED_VM)
     return
@@ -98,10 +98,9 @@ private fun isWindowsScreenReaderEnabled(): Boolean {
   return retValue && isActive.value.booleanValue()
 }
 
-internal class EnableScreenReaderSupportTask : ProjectActivity {
-  override suspend fun execute(project: Project) {
-    if (enable) {
-      serviceAsync<GeneralSettings>().isSupportScreenReaders = true
-    }
+@ApiStatus.Internal
+suspend fun enableScreenReaderSupportIfNeeded() {
+  if (enable) {
+    serviceAsync<GeneralSettings>().isSupportScreenReaders = true
   }
 }

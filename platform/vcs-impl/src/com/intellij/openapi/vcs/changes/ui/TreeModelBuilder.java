@@ -424,7 +424,7 @@ public class TreeModelBuilder implements ChangesViewModelBuilder {
   /**
    * @deprecated Kept for binary compatibility
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public void insertChangeNode(@NotNull Object nodePath,
                                @NotNull ChangesBrowserNode<?> subtreeRoot,
                                @NotNull ChangesBrowserNode<?> node) {

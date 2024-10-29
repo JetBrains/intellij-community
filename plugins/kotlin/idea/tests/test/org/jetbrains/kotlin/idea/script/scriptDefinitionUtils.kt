@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.script
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
+import org.jetbrains.kotlin.idea.core.script.SCRIPT_DEFINITIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.test.KotlinCompilerStandalone
@@ -57,7 +57,7 @@ private fun compileLibToDir(testName: String, srcDir: File): File {
 private fun registerScriptDefinitionsProvider(project: Project, testRootDisposable: Disposable, environment: Environment) {
     val provider = CustomScriptTemplateProvider(environment)
 
-    addExtensionPointInTest(ScriptDefinitionContributor.EP_NAME, project, provider, testRootDisposable)
+    addExtensionPointInTest(SCRIPT_DEFINITIONS_SOURCES, project, provider, testRootDisposable)
 
     ScriptDefinitionsManager.getInstance(project).reloadDefinitions()
 

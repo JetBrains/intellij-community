@@ -9,11 +9,13 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public final class NotificationPopup {
   public NotificationPopup(final JComponent owner, final JComponent content, Color background) {
     this(owner, content, background, true);

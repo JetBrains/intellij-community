@@ -11,6 +11,7 @@ import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actions.AbstractToggleUseSoftWrapsAction;
@@ -25,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -412,7 +414,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
             new KeyEvent(getComponent(), KeyEvent.KEY_PRESSED, System.currentTimeMillis(), InputEvent.CTRL_MASK, KeyEvent.VK_ENTER, '\r'));
         }
       }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_MASK))))
-      .setCancelCallback(() -> {
+      .setCancelCallback(() -> WriteIntentReadAction.compute((Computable<Boolean>)()-> { //maybe readaction
         setExpression(expressionEditor.getExpression());
         requestFocusInEditor();
         Editor baseEditor = getEditor();
@@ -426,7 +428,7 @@ public abstract class XDebuggerEditorBase implements Expandable {
         }
         myExpandedPopup = null;
         return true;
-      }).createPopup();
+      })).createPopup();
 
     myExpandedPopup.show(new RelativePoint(getComponent(), new Point(0, 0)));
 

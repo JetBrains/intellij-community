@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.icons.IconUtilKt;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -17,10 +17,7 @@ import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
-
-import static com.intellij.ui.SpinningProgressIconKt.bigSpinningProgressIcon;
 
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
@@ -96,7 +93,7 @@ public class AnimatedIcon implements Icon {
       if (Boolean.getBoolean("disable.new.spinning.icon")) {
         return AnimatedIcon.getFrames(DELAY, OLD_BIG_ICONS);
       }
-      return bigSpinningProgressIcon().frames;
+      return SpinningProgressIconKt.bigSpinningProgressIcon().frames;
     }
 
     public static final int DELAY = 125;
@@ -285,12 +282,12 @@ public class AnimatedIcon implements Icon {
     int delay = frame.getDelay();
     if (delay > 0) {
       requested.add(c);
-      EdtScheduledExecutorService.getInstance().schedule(() -> {
+      EdtScheduler.getInstance().schedule(delay, () -> {
         requested.remove(c);
         if (canRefresh(c)) {
           doRefresh(c);
         }
-      }, delay, TimeUnit.MILLISECONDS);
+      });
     }
     else {
       doRefresh(c);

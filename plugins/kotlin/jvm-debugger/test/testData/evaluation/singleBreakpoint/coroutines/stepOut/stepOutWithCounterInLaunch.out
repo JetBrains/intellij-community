@@ -1,40 +1,40 @@
-LineBreakpoint created at stepOutWithCounterInLaunch.kt:29
+LineBreakpoint created at stepOutWithCounterInLaunch.kt:30
 Run Java
 Connected to the target VM
-stepOutWithCounterInLaunch.kt:29
-stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:30
 stepOutWithCounterInLaunch.kt:16
-stepOutWithCounterInLaunch.kt:12
+stepOutWithCounterInLaunch.kt:17
 stepOutWithCounterInLaunch.kt:13
 stepOutWithCounterInLaunch.kt:14
-stepOutWithCounterInLaunch.kt:29
 stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:30
 stepOutWithCounterInLaunch.kt:16
-stepOutWithCounterInLaunch.kt:12
+stepOutWithCounterInLaunch.kt:17
 stepOutWithCounterInLaunch.kt:13
 stepOutWithCounterInLaunch.kt:14
-stepOutWithCounterInLaunch.kt:29
 stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:30
 stepOutWithCounterInLaunch.kt:16
-stepOutWithCounterInLaunch.kt:12
+stepOutWithCounterInLaunch.kt:17
 stepOutWithCounterInLaunch.kt:13
 stepOutWithCounterInLaunch.kt:14
-stepOutWithCounterInLaunch.kt:29
 stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:30
 stepOutWithCounterInLaunch.kt:16
-stepOutWithCounterInLaunch.kt:12
+stepOutWithCounterInLaunch.kt:17
 stepOutWithCounterInLaunch.kt:13
 stepOutWithCounterInLaunch.kt:14
-stepOutWithCounterInLaunch.kt:29
 stepOutWithCounterInLaunch.kt:15
+stepOutWithCounterInLaunch.kt:30
+stepOutWithCounterInLaunch.kt:16
 Compile bytecode for x
 Compile bytecode for y
-stepOutWithCounterInLaunch.kt:29
-resuming stepOutWithCounterInLaunch.kt:29
-resuming stepOutWithCounterInLaunch.kt:29
-resuming stepOutWithCounterInLaunch.kt:29
-resuming stepOutWithCounterInLaunch.kt:29
-resuming stepOutWithCounterInLaunch.kt:29
+stepOutWithCounterInLaunch.kt:30
+resuming stepOutWithCounterInLaunch.kt:30
+resuming stepOutWithCounterInLaunch.kt:30
+resuming stepOutWithCounterInLaunch.kt:30
+resuming stepOutWithCounterInLaunch.kt:30
+resuming stepOutWithCounterInLaunch.kt:30
 Disconnected from the target VM
 
 Process finished with exit code 0

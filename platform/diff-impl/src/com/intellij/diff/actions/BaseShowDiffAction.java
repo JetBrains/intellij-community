@@ -11,7 +11,6 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.util.BlankDiffWindowUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -30,7 +29,7 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
     Presentation presentation = e.getPresentation();
     boolean canShow = isAvailable(e);
     presentation.setEnabled(canShow);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       presentation.setVisible(canShow);
     }
   }
@@ -77,17 +76,18 @@ public abstract class BaseShowDiffAction extends DumbAwareAction {
         (baseContent == null || baseContent instanceof DocumentContent)) {
       chain = BlankDiffWindowUtil.createBlankDiffRequestChain((DocumentContent)content1,
                                                               (DocumentContent)content2,
-                                                              (DocumentContent)baseContent);
+                                                              (DocumentContent)baseContent,
+                                                              project);
     }
     else {
-      chain = new MutableDiffRequestChain(content1, baseContent, content2);
+      chain = new MutableDiffRequestChain(content1, baseContent, content2, project);
     }
 
     if (baseFile != null) {
       chain.setWindowTitle(requestFactory.getTitle(baseFile));
     }
     else {
-      chain.setWindowTitle(requestFactory.getTitle(file1, file2));
+      chain.setWindowTitle(requestFactory.getTitleForComparison(file1, file2));
     }
     return chain;
   }

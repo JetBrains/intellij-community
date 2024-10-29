@@ -1,0 +1,8 @@
+*:com.intellij.dvcs.push.CustomPushOptionsPanelFactory
+- *sf:Companion:com.intellij.dvcs.push.CustomPushOptionsPanelFactory$Companion
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- a:createOptionsPanel(com.intellij.openapi.Disposable,java.util.Collection):com.intellij.dvcs.push.VcsPushOptionsPanel
+- a:getId():java.lang.String
+*f:com.intellij.dvcs.push.CustomPushOptionsPanelFactory$Companion
+a:com.intellij.dvcs.push.Pusher
+- *:push(java.util.Map,com.intellij.dvcs.push.VcsPushOptionValue,Z,java.util.Map):V

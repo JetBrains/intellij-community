@@ -23,7 +23,8 @@ import java.awt.font.TextLayout
  * * [TextAttributes.getFontType]
  */
 @ApiStatus.Internal
-class InlineCompletionLineRenderer(
+@ApiStatus.NonExtendable
+open class InlineCompletionLineRenderer(
   private val editor: Editor,
   initialBlocks: List<InlineCompletionRenderTextBlock>
 ) : EditorCustomElementRenderer {
@@ -52,10 +53,14 @@ class InlineCompletionLineRenderer(
     return maxOf(1, result)
   }
 
+  protected open fun beforePaint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle) {}
+
   override fun paint(inlay: Inlay<*>, g: Graphics, targetRegion: Rectangle, textAttributes: TextAttributes) {
     if (blocks.isEmpty()) {
       return
     }
+
+    beforePaint(inlay, g, targetRegion)
 
     val previousRenderingHint = (g as Graphics2D).getRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING)
     g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, AntialiasingType.getKeyForCurrentScope(false))

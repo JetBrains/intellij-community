@@ -15,11 +15,13 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ImportIntoShelfAction extends DumbAwareAction {
   public ImportIntoShelfAction() {
     super(VcsBundle.messagePointer("action.ImportIntoShelfAction.text"),

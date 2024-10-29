@@ -9,11 +9,11 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.impl.stores.IComponentStore
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -30,6 +30,7 @@ import com.intellij.serviceContainer.findConstructorOrNull
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Path
@@ -61,7 +62,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     registerServiceInstance(serviceInterface = Module::class.java, instance = this, pluginDescriptor = fakeCorePluginDescriptor)
     this.project = project
     @Suppress("LeakingThis")
-    moduleScopeProvider = ModuleScopeProviderImpl(this)
+    moduleScopeProvider = project.service<ModuleScopeProviderFactory>().createProvider(this)
     this.name = name
   }
 
@@ -102,6 +103,7 @@ open class ModuleImpl @ApiStatus.Internal constructor(
     return super.isDisposed() || (project as ProjectEx).isLight && project.isDisposed()
   }
 
+  @Internal
   override fun isComponentSuitable(componentConfig: ComponentConfig): Boolean {
     if (!super.isComponentSuitable(componentConfig)) {
       return false

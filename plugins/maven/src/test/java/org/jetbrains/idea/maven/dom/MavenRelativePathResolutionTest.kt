@@ -1,17 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom
 
-import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.impl.source.xml.XmlFileImpl
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 import java.io.File
 
 class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp() = runBlocking {
     super.setUp()
     importProjectAsync("""
                     <groupId>test</groupId>
@@ -21,7 +20,7 @@ class MavenRelativePathResolutionTest : MavenDomWithIndicesTestCase() {
   }
 
   @Test
-  fun testParentRelativePathOutsideProjectRoot() = runBlocking(Dispatchers.EDT) {
+  fun testParentRelativePathOutsideProjectRoot() = runBlocking {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/example-1.0.pom")
 
 
@@ -40,8 +39,10 @@ $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
 
+    refreshFiles(listOf(pom))
     fixture.configureFromExistingVirtualFile(pom)
-    val resolved = fixture.getElementAtCaret()
+
+    val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)
@@ -51,7 +52,7 @@ $relativePathUnixSeparator<caret></relativePath>
 
 
   @Test
-  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking(Dispatchers.EDT) {
+  fun testParentRelativePathOutsideProjectRootWithDir() = runBlocking {
     val file = myIndicesFixture!!.repositoryHelper.getTestData("local1/org/example/example/1.0/pom.xml")
 
     val parentFile = file.getParentFile()
@@ -71,9 +72,10 @@ $relativePathUnixSeparator<caret></relativePath>
 $relativePathUnixSeparator<caret></relativePath>
 </parent>"""
     )
-
+    refreshFiles(listOf(pom))
     fixture.configureFromExistingVirtualFile(pom)
-    val resolved = fixture.getElementAtCaret()
+
+    val resolved = readAction { fixture.getElementAtCaret() }
     assertTrue(resolved is XmlFileImpl)
     val f = LocalFileSystem.getInstance().refreshAndFindFileByPath(file.path)
     val parentPsi = findPsiFile(f)

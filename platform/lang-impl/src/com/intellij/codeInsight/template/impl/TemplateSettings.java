@@ -54,10 +54,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   private static final Logger LOG = Logger.getInstance(TemplateSettings.class);
   private static final ExtensionPointName<DefaultLiveTemplateEP> EP_NAME = new ExtensionPointName<>("com.intellij.defaultLiveTemplates");
 
-  @NonNls public static final String USER_GROUP_NAME = "user";
-  @NonNls private static final String TEMPLATE_SET = "templateSet";
-  @NonNls private static final String GROUP = "group";
-  @NonNls public static final String TEMPLATE = "template";
+  public static final @NonNls String USER_GROUP_NAME = "user";
+  private static final @NonNls String TEMPLATE_SET = "templateSet";
+  private static final @NonNls String GROUP = "group";
+  public static final @NonNls String TEMPLATE = "template";
 
   public static final char SPACE_CHAR = TemplateConstants.SPACE_CHAR;
   public static final char TAB_CHAR = TemplateConstants.TAB_CHAR;
@@ -66,34 +66,34 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   public static final char CUSTOM_CHAR = TemplateConstants.CUSTOM_CHAR;
   public static final char NONE_CHAR = TemplateConstants.NONE_CHAR;
 
-  @NonNls private static final String SPACE = "SPACE";
-  @NonNls private static final String TAB = "TAB";
-  @NonNls private static final String ENTER = "ENTER";
-  @NonNls private static final String CUSTOM = "CUSTOM";
-  @NonNls private static final String NONE = "NONE";
+  private static final @NonNls String SPACE = "SPACE";
+  private static final @NonNls String TAB = "TAB";
+  private static final @NonNls String ENTER = "ENTER";
+  private static final @NonNls String CUSTOM = "CUSTOM";
+  private static final @NonNls String NONE = "NONE";
 
-  @NonNls private static final String NAME = "name";
-  @NonNls private static final String VALUE = "value";
-  @NonNls private static final String DESCRIPTION = "description";
-  @NonNls private static final String SHORTCUT = "shortcut";
+  private static final @NonNls String NAME = "name";
+  private static final @NonNls String VALUE = "value";
+  private static final @NonNls String DESCRIPTION = "description";
+  private static final @NonNls String SHORTCUT = "shortcut";
 
-  @NonNls private static final String VARIABLE = "variable";
-  @NonNls private static final String EXPRESSION = "expression";
-  @NonNls private static final String DEFAULT_VALUE = "defaultValue";
-  @NonNls private static final String ALWAYS_STOP_AT = "alwaysStopAt";
+  private static final @NonNls String VARIABLE = "variable";
+  private static final @NonNls String EXPRESSION = "expression";
+  private static final @NonNls String DEFAULT_VALUE = "defaultValue";
+  private static final @NonNls String ALWAYS_STOP_AT = "alwaysStopAt";
 
-  @NonNls static final String CONTEXT = TemplateConstants.CONTEXT;
-  @NonNls private static final String TO_REFORMAT = "toReformat";
-  @NonNls private static final String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
-  @NonNls private static final String USE_STATIC_IMPORT = "useStaticImport";
+  static final @NonNls String CONTEXT = TemplateConstants.CONTEXT;
+  private static final @NonNls String TO_REFORMAT = "toReformat";
+  private static final @NonNls String TO_SHORTEN_FQ_NAMES = "toShortenFQNames";
+  private static final @NonNls String USE_STATIC_IMPORT = "useStaticImport";
 
-  @NonNls private static final String DEACTIVATED = "deactivated";
+  private static final @NonNls String DEACTIVATED = "deactivated";
 
-  @NonNls private static final String RESOURCE_BUNDLE = "resource-bundle";
-  @NonNls private static final String KEY = "key";
-  @NonNls private static final String ID = "id";
+  private static final @NonNls String RESOURCE_BUNDLE = "resource-bundle";
+  private static final @NonNls String KEY = "key";
+  private static final @NonNls String ID = "id";
 
-  @NonNls static final String TEMPLATES_DIR_PATH = "templates";
+  static final @NonNls String TEMPLATES_DIR_PATH = "templates";
 
   private final MultiMap<String, TemplateImpl> myTemplates = MultiMap.createLinked();
 
@@ -107,9 +107,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   private final Map<Pair<String, String>, PluginInfo> myPredefinedTemplates = new HashMap<>();
 
   static final class ShortcutConverter extends Converter<Character> {
-    @NotNull
     @Override
-    public Character fromString(@NotNull String shortcut) {
+    public @NotNull Character fromString(@NotNull String shortcut) {
       return TAB.equals(shortcut) ? TAB_CHAR :
              ENTER.equals(shortcut) ? ENTER_CHAR :
              CUSTOM.equals(shortcut) ? CUSTOM_CHAR :
@@ -117,9 +116,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
              SPACE_CHAR;
     }
 
-    @NotNull
     @Override
-    public String toString(@NotNull Character shortcut) {
+    public @NotNull String toString(@NotNull Character shortcut) {
       return shortcut == TAB_CHAR ? TAB :
              shortcut == ENTER_CHAR ? ENTER :
              shortcut == CUSTOM_CHAR ? CUSTOM :
@@ -128,7 +126,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  final static class State {
+  static final class State {
     @OptionTag(nameAttribute = "", valueAttribute = "shortcut", converter = ShortcutConverter.class)
     public char defaultShortcut = TAB_CHAR;
 
@@ -197,9 +195,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
   @NonInjectable
   public TemplateSettings(@NotNull SchemeManagerFactory factory) {
     mySchemeManager = factory.create(TEMPLATES_DIR_PATH, new BaseSchemeProcessor<TemplateGroup, TemplateGroup>() {
-      @Nullable
       @Override
-      public TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
+      public @Nullable TemplateGroup readScheme(@NotNull Element element, boolean duringLoad) {
         TemplateGroup readGroup = parseTemplateGroup(element, element.getAttributeValue("group"), getClass().getClassLoader());
         TemplateGroup group = readGroup == null ? null : mergeParsedGroup(element, false, false, readGroup);
         if (group != null) {
@@ -222,9 +219,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         doLoadTemplates(groups);
       }
 
-      @NotNull
       @Override
-      public SchemeState getState(@NotNull TemplateGroup template) {
+      public @NotNull SchemeState getState(@NotNull TemplateGroup template) {
         if (template.isModified()) {
           return SchemeState.POSSIBLY_CHANGED;
         }
@@ -238,9 +234,8 @@ public final class TemplateSettings implements PersistentStateComponent<Template
         return SchemeState.NON_PERSISTENT;
       }
 
-      @NotNull
       @Override
-      public Element writeScheme(@NotNull TemplateGroup template) {
+      public @NotNull Element writeScheme(@NotNull TemplateGroup template) {
         Element templateSetElement = new Element(TEMPLATE_SET);
 
         List<TemplateImpl> elements = template.getElements();
@@ -267,14 +262,14 @@ public final class TemplateSettings implements PersistentStateComponent<Template
       }
 
       @Override
-      public void onSchemeAdded(@NotNull final TemplateGroup scheme) {
+      public void onSchemeAdded(final @NotNull TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           addTemplateImpl(template);
         }
       }
 
       @Override
-      public void onSchemeDeleted(@NotNull final TemplateGroup scheme) {
+      public void onSchemeDeleted(final @NotNull TemplateGroup scheme) {
         for (TemplateImpl template : scheme.getElements()) {
           removeTemplate(template);
         }
@@ -317,8 +312,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return differsFromDefault(LiveTemplateContextService.getInstance().getSnapshot(), t);
   }
 
-  @Nullable
-  public TemplateImpl getDefaultTemplate(@NotNull TemplateImpl t) {
+  public @Nullable TemplateImpl getDefaultTemplate(@NotNull TemplateImpl t) {
     return myDefaultTemplates.get(TemplateKey.keyOf(t));
   }
 
@@ -350,13 +344,11 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  @Nullable
-  public String getLastSelectedTemplateKey() {
+  public @Nullable String getLastSelectedTemplateKey() {
     return myLastSelectedTemplate != null ? myLastSelectedTemplate.key : null;
   }
 
-  @Nullable
-  public String getLastSelectedTemplateGroup() {
+  public @Nullable String getLastSelectedTemplateGroup() {
     return myLastSelectedTemplate != null ? myLastSelectedTemplate.groupName : null;
   }
 
@@ -382,13 +374,11 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     myState.defaultShortcut = defaultShortcutChar;
   }
 
-  @NotNull
-  public Collection<TemplateImpl> getTemplates(@NotNull String key) {
+  public @NotNull Collection<TemplateImpl> getTemplates(@NotNull String key) {
     return myTemplates.get(key);
   }
 
-  @Nullable
-  public TemplateImpl getTemplate(@NonNls String key, String group) {
+  public @Nullable TemplateImpl getTemplate(@NonNls String key, String group) {
     final Collection<TemplateImpl> templates = myTemplates.get(key);
     for (TemplateImpl template : templates) {
       if (template.getGroupName().equals(group)) {
@@ -466,13 +456,12 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     }
   }
 
-  @NotNull
-  private static TemplateImpl createTemplate(@NotNull @NlsSafe String key,
-                                             @NlsSafe String string,
-                                             @NotNull @NonNls String group,
-                                             @NlsContexts.DetailedDescription String description,
-                                             @Nullable @NlsSafe String shortcut,
-                                             @NonNls String id) {
+  private static @NotNull TemplateImpl createTemplate(@NotNull @NlsSafe String key,
+                                                      @NlsSafe String string,
+                                                      @NotNull @NonNls String group,
+                                                      @NlsContexts.DetailedDescription String description,
+                                                      @Nullable @NlsSafe String shortcut,
+                                                      @NonNls String id) {
     TemplateImpl template = new TemplateImpl(key, string, group, false);
     template.setId(id);
     template.setDescription(description);
@@ -594,8 +583,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return head.endsWith(ComponentStorageUtil.DEFAULT_EXT) ? head : head + ComponentStorageUtil.DEFAULT_EXT;
   }
 
-  @Nullable
-  public PluginInfo findPluginForPredefinedTemplate(TemplateImpl template) {
+  public @Nullable PluginInfo findPluginForPredefinedTemplate(TemplateImpl template) {
     return myPredefinedTemplates.get(Pair.create(template.getKey(), template.getGroupName()));
   }
 
@@ -630,11 +618,10 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return result;
   }
 
-  @Nullable
-  private TemplateGroup mergeParsedGroup(@NotNull Element element,
-                                         boolean isDefault,
-                                         boolean registerTemplate,
-                                         TemplateGroup parsedGroup) {
+  private @Nullable TemplateGroup mergeParsedGroup(@NotNull Element element,
+                                                   boolean isDefault,
+                                                   boolean registerTemplate,
+                                                   TemplateGroup parsedGroup) {
     TemplateGroup result = new TemplateGroup(parsedGroup.getName(), element.getAttributeValue("REPLACE"));
 
     Map<String, TemplateImpl> created = new LinkedHashMap<>();
@@ -814,8 +801,7 @@ public final class TemplateSettings implements PersistentStateComponent<Template
     return mySchemeManager.getAllSchemes();
   }
 
-  @NotNull
-  public List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
+  public @NotNull List<TemplateImpl> collectMatchingCandidates(@NotNull String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
     if (templates.isEmpty()) {
       return Collections.emptyList();

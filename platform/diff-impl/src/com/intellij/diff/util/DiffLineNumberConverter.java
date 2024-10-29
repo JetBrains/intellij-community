@@ -3,12 +3,14 @@ package com.intellij.diff.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LineNumberConverter;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.IntPredicate;
 import java.util.function.IntUnaryOperator;
 
+@ApiStatus.Internal
 public final class DiffLineNumberConverter implements LineNumberConverter {
   private final @Nullable IntPredicate myFoldingHiddenLines;
   private final @Nullable IntUnaryOperator myLineConverter;

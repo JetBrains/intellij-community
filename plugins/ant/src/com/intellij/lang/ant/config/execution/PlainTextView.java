@@ -22,6 +22,7 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -145,9 +146,7 @@ public final class PlainTextView implements AntOutputView {
   }
 
   @Override
-  @Nullable
-  public Object getData(@NotNull @NonNls String dataId) {
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
   }
 
   public void setBuildCommandLine(@NlsSafe String commandLine) {

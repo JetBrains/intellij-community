@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.AbstractCodeToIn
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
 import org.jetbrains.kotlin.psi.*
 
-class CodeToInlineBuilder(
+open class CodeToInlineBuilder(
     private val original: KtDeclaration, fallbackToSuperCall: Boolean = false
 ) : AbstractCodeToInlineBuilder(original.project, original, fallbackToSuperCall) {
 
@@ -33,17 +33,14 @@ class CodeToInlineBuilder(
 
                 val codeToInline = MutableCodeToInline(
                     mainExpression,
-                    originalDeclaration,
+                    original,
                     statementsBefore.toMutableList(),
                     mutableSetOf(),
                     alwaysKeepMainExpression,
                     extraComments = null,
                 )
 
-                if (originalDeclaration != null) {
-                    saveComments(codeToInline, originalDeclaration!!)
-                }
-
+                saveComments(codeToInline, original)
                 insertExplicitTypeArguments(codeToInline)
                 removeContracts(codeToInline)
                 encodeInternalReferences(codeToInline, original)

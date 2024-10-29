@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
@@ -18,10 +19,14 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 
 public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
@@ -86,10 +91,14 @@ public final class UnversionedDiffRequestProducer implements ChangeDiffRequestCh
     DiffContent content1 = contentFactory.createEmpty();
     DiffContent content2 = contentFactory.create(project, file);
 
-    SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2,
-                                                      null, ChangeDiffRequestProducer.getYourVersion());
+    String title2 = DiffBundle.message("merge.version.title.current");
+    SimpleDiffRequest request = new SimpleDiffRequest(DiffRequestFactory.getInstance().getTitle(file), content1, content2, null, title2);
 
     DiffUtil.putDataKey(request, VcsDataKeys.CURRENT_UNVERSIONED, file);
+    List<DiffEditorTitleCustomizer> titleCustomizers =
+      Arrays.asList(DiffTitleFilePathCustomizer.EMPTY_CUSTOMIZER, DiffTitleFilePathCustomizer.getTitleCustomizer(project, VcsUtil.getFilePath(file), title2));
+    DiffUtil.addTitleCustomizers(request, titleCustomizers);
+
     return request;
   }
 

@@ -104,7 +104,7 @@ public class ResolvingElementQuickFix implements LocalQuickFix, IntentionAction 
       default -> JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<DomElement>(XmlDomBundle.message(
         "dom.quickfix.create.new.element.choose.file.title"), files) {
         @Override
-        public PopupStep onChosen(final DomElement selectedValue, final boolean finalChoice) {
+        public PopupStep<?> onChosen(final DomElement selectedValue, final boolean finalChoice) {
           onChoose.consume(selectedValue);
           return super.onChosen(selectedValue, finalChoice);
         }

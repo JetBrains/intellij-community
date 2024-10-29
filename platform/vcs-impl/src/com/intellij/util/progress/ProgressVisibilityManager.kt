@@ -10,10 +10,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Allows to run multiple processes with a single UI indicator
  */
+@ApiStatus.Internal
 abstract class ProgressVisibilityManager : Disposable {
   private val indicators: MutableList<ProgressIndicator> = ArrayList()
   var disposed: Boolean = false

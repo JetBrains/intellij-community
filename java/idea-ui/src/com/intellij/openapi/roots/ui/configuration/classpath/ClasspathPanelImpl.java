@@ -373,7 +373,7 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
             }
 
             @Override
-            public PopupStep onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
+            public PopupStep<?> onChosen(final AddItemPopupAction<?> selectedValue, final boolean finalChoice) {
               if (selectedValue.hasSubStep()) {
                 return selectedValue.createSubStep();
               }

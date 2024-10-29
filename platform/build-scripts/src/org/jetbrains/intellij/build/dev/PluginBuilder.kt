@@ -3,17 +3,15 @@
 
 package org.jetbrains.intellij.build.dev
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.PluginBuildDescriptor
 import org.jetbrains.intellij.build.SearchableOptionSetDescriptor
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.impl.*
 import org.jetbrains.intellij.build.impl.projectStructureMapping.DistributionFileEntry
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Path
 
 internal suspend fun buildPlugins(
@@ -25,7 +23,7 @@ internal suspend fun buildPlugins(
   buildPlatformJob: Job,
   moduleOutputPatcher: ModuleOutputPatcher,
 ): List<Pair<PluginBuildDescriptor, List<DistributionFileEntry>>> {
-  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).useWithScope {
+  return spanBuilder("build plugins").setAttribute(AttributeKey.longKey("count"), plugins.size.toLong()).use {
     buildPlugins(
       moduleOutputPatcher = moduleOutputPatcher,
       plugins = plugins,
@@ -34,6 +32,7 @@ internal suspend fun buildPlugins(
       context = context,
       buildPlatformJob = buildPlatformJob,
       searchableOptionSet = searchableOptionSet,
+      os = null,
     )
   }
 }

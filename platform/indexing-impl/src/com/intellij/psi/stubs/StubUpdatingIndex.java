@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.Language;
@@ -17,6 +17,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
@@ -87,7 +88,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
         final IFileElementType elementType = parserDefinition.getFileNodeType();
         if (elementType instanceof IStubFileElementType && ((IStubFileElementType<?>)elementType).shouldBuildStubFor(file.getFile())) {
-          logIfStubTraceEnabled(() -> "Should build stub for " + file.getFileName());
+          logIfStubTraceEnabled(() -> "Should build stub for " + ((VirtualFileWithId)file.getFile()).getId());
           return true;
         }
 
@@ -122,7 +123,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       return ThreeState.UNSURE;
     }
   };
+
   private final @NotNull StubForwardIndexExternalizer<?> myStubIndexesExternalizer;
+  private final @NotNull SerializationManagerEx mySerializationManager;
 
   @ApiStatus.Internal
   public StubUpdatingIndex() {
@@ -141,7 +144,6 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     IndexedFile indexedFile = new IndexedFileImpl(file, project);
     return INPUT_FILTER.acceptInput(indexedFile);
   }
-  private final @NotNull SerializationManagerEx mySerializationManager;
 
   @Override
   public @NotNull ID<Integer, SerializedStubTree> getName() {
@@ -313,9 +315,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   @Override
   @ApiStatus.Internal
-  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(final @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
-                                                                                                        @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout)
-    throws StorageException, IOException {
+  public @NotNull UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> createIndexImplementation(
+    @NotNull FileBasedIndexExtension<Integer, SerializedStubTree> extension,
+    @NotNull VfsAwareIndexStorageLayout<Integer, SerializedStubTree> layout
+  ) throws StorageException, IOException {
+
     ((StubIndexEx)StubIndex.getInstance()).initializeStubIndexes();
     checkNameStorage();
     mySerializationManager.initialize();

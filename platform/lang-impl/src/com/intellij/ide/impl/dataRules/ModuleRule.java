@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.impl.dataRules;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class ModuleRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
@@ -56,8 +58,7 @@ public final class ModuleRule implements GetDataRule {
     return singleModule;
   }
 
-  @Nullable
-  private static Project extractProject(@NotNull DataProvider dataProvider) {
+  private static @Nullable Project extractProject(@NotNull DataProvider dataProvider) {
     Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     if (project != null) return project;
     

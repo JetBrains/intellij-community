@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.spellchecker.inspections;
 
-import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
@@ -74,7 +74,7 @@ public class PlainTextSplitter extends BaseSplitter {
       matcher = SPLIT_PATTERN.matcher(newBombedCharSequence(text, range));
 
       while (true) {
-        checkCancelled();
+        ProgressManager.checkCanceled();
 
         List<TextRange> toCheck;
         TextRange wRange;
@@ -131,7 +131,7 @@ public class PlainTextSplitter extends BaseSplitter {
         if (matcher.hitEnd()) break;
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (TooLongBombedMatchingException ignored) {
     }
   }
 

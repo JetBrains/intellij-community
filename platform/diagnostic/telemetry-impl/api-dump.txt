@@ -1,5 +1,3 @@
-f:com.intellij.platform.diagnostic.telemetry.impl.OtlpServiceKt
-- sf:getOtlpEndPoint():java.lang.String
 f:com.intellij.platform.diagnostic.telemetry.impl.TracerKt
 - sf:rootTask():kotlin.coroutines.CoroutineContext
 - sf:span(java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object

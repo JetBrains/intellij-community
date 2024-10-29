@@ -6,18 +6,16 @@ use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, IsTerminal, Write};
 use std::path::{Path, PathBuf};
 
-use anyhow::{anyhow, bail, Context, Result};
+use anyhow::{bail, Context, Result};
 #[allow(unused_imports)]
 use log::{debug, error, info};
 
 use crate::*;
 use crate::docker::is_running_in_docker;
 
-#[allow(dead_code)]
 pub struct RemoteDevLaunchConfiguration {
     default: DefaultLaunchConfiguration,
-    launcher_name: String,
-    ij_starter_command: String,
+    started_via_remote_dev_launcher: bool,
 }
 
 impl LaunchConfiguration for RemoteDevLaunchConfiguration {
@@ -38,6 +36,22 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
         #[cfg(target_os = "linux")]
         if is_wsl2() && !parse_bool_env_var("REMOTE_DEV_SERVER_ALLOW_IPV6_ON_WSL2", false)? {
             vm_options.push("-Djava.net.preferIPv4Stack=true".to_string())
+        }
+
+        if let Some(command) = self.get_args().get(0) {
+            match command.as_str() {
+                "remoteDevStatus" | "cwmHostStatus" => {
+                    vm_options.retain(|opt| {
+                        if opt.starts_with("-agentlib:jdwp=") {
+                            info!("Dropping debug option to prevent startup failure due to port conflict: {}", opt);
+                            false
+                        } else {
+                            true
+                        }
+                    });
+                }
+                _ => {}
+            }
         }
 
         Ok(vm_options)
@@ -65,12 +79,12 @@ impl LaunchConfiguration for RemoteDevLaunchConfiguration {
 
 impl RemoteDevLaunchConfiguration {
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(exe_path: &Path, args: Vec<String>) -> Result<Box<dyn LaunchConfiguration>> {
+    pub fn new(exe_path: &Path, args: Vec<String>, started_via_remote_dev_launcher: bool) -> Result<Box<dyn LaunchConfiguration>> {
         let (_, default_cfg_args) = Self::parse_remote_dev_args(&args)?;
 
         let default_cfg = DefaultLaunchConfiguration::new(exe_path, default_cfg_args)?;
 
-        let configuration = Self::create(exe_path, default_cfg)?;
+        let configuration = Self::create(default_cfg, started_via_remote_dev_launcher)?;
         Ok(Box::new(configuration))
     }
 
@@ -164,17 +178,10 @@ impl RemoteDevLaunchConfiguration {
         Ok(project_path)
     }
 
-    fn create(exe_path: &Path, default: DefaultLaunchConfiguration) -> Result<Self> {
-        let ij_starter_command = default.args[0].to_string();
-
-        let launcher_name = exe_path.file_name()
-            .ok_or(anyhow!("Invalid executable path: {exe_path:?}"))?
-            .to_string_lossy().to_string();
-
+    fn create(default: DefaultLaunchConfiguration, started_via_remote_dev_launcher: bool) -> Result<Self> {
         let config = RemoteDevLaunchConfiguration {
             default,
-            launcher_name,
-            ij_starter_command,
+            started_via_remote_dev_launcher,
         };
 
         Ok(config)
@@ -207,22 +214,8 @@ impl RemoteDevLaunchConfiguration {
             // ("jdk.lang.Process.launchMechanism", "vfork"),
         ];
 
-        if parse_bool_env_var("REMOTE_DEV_SERVER_JCEF_ENABLED", false)? {
-            let _ = self.setup_jcef();
-
-            remote_dev_properties.push(("ide.browser.jcef.gpu.disable", "true"));
-            remote_dev_properties.push(("ide.browser.jcef.log.level", "warning"));
-            remote_dev_properties.push(("idea.suppress.statistics.report", "true"));
-        } else {
-            if let Ok(trace_var) = env::var("REMOTE_DEV_SERVER_TRACE") {
-                if !trace_var.is_empty() {
-                    info!("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable");
-                }
-            }
-
-            // Disable JCEF support for now since it does not work in headless environment now
-            // Also see IDEA-241709
-            remote_dev_properties.push(("ide.browser.jcef.enabled", "false"));
+        if self.started_via_remote_dev_launcher {
+            remote_dev_properties.push(("ide.started.from.remote.dev.launcher", "true"))
         }
 
         match parse_bool_env_var_optional("REMOTE_DEV_JDK_DETECTION")? {
@@ -292,16 +285,6 @@ impl RemoteDevLaunchConfiguration {
         writer.flush()?;
 
         Ok(path)
-    }
-
-    #[cfg(target_os = "linux")]
-    fn setup_jcef(&self) -> Result<()> {
-        bail!("XVFB workarounds from linux are not ported yet");
-    }
-
-    #[cfg(not(target_os = "linux"))]
-    fn setup_jcef(&self) -> Result<()> {
-        Ok(())
     }
 }
 
@@ -433,7 +416,6 @@ impl std::fmt::Display for RemoteDevEnvVars {
 fn get_remote_dev_env_vars() -> RemoteDevEnvVars {
     RemoteDevEnvVars(vec![
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_TRACE".to_string(), description: "set to any value to get more debug output from the startup script".to_string()},
-        RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_JCEF_ENABLED".to_string(), description: "set to '1' to enable JCEF (embedded Chromium) in IDE".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_SERVER_USE_SELF_CONTAINED_LIBS".to_string(), description: "set to '0' to skip using bundled X11 and other Linux libraries from plugins/remote-dev-server/self-contained. Use everything from the system. by default bundled libraries are used".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_TRUST_PROJECTS".to_string(), description: "set to any value to skip project trust warning (will execute build scripts automatically)".to_string()},
         RemoteDevEnvVar {name: "REMOTE_DEV_NEW_UI_ENABLED".to_string(), description: "set to '1' to start with forced enabled new UI".to_string()},
@@ -498,6 +480,7 @@ fn init_env_vars(ide_home_path: &Path) -> Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "linux")]
 fn parse_bool_env_var(var_name: &str, default: bool) -> Result<bool> {
     Ok(parse_bool_env_var_optional(var_name)?.unwrap_or(default))
 }

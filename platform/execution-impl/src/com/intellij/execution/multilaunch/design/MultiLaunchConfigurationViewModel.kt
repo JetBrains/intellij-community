@@ -3,7 +3,9 @@ package com.intellij.execution.multilaunch.design
 import com.intellij.openapi.project.Project
 import com.intellij.execution.multilaunch.MultiLaunchConfiguration
 import com.intellij.execution.multilaunch.execution.executables.Executable
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MultiLaunchConfigurationViewModel(val project: Project, val configuration: MultiLaunchConfiguration) {
   val rows = mutableListOf<ExecutableRow?>()
   val tableModel = ExecutablesTableModel(this)

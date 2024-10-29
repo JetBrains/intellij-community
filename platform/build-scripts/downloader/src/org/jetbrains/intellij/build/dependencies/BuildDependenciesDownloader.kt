@@ -13,10 +13,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTa
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractTarGz
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.extractZip
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil.listDirectory
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
-import org.jetbrains.intellij.build.dependencies.TeamCityHelper.systemProperties
 import org.jetbrains.intellij.build.downloadFileToCacheLocationSync
-import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.math.BigInteger
@@ -25,13 +22,10 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.channels.FileChannel
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.LinkOption
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.FileTime
 import java.time.Instant
-import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
@@ -46,7 +40,7 @@ object BuildDependenciesDownloader {
   private val cleanupFlag = AtomicBoolean(false)
 
   // increment on semantic changes in extract code to invalidate all current caches
-  private const val EXTRACT_CODE_VERSION = 4
+  private const val EXTRACT_CODE_VERSION = 5
 
   // increment on semantic changes in download code to invalidate all current caches,
   // e.g., when some issues in extraction code were fixed
@@ -89,14 +83,9 @@ object BuildDependenciesDownloader {
     return Files.createDirectories(communityRoot.communityRoot.resolve("build/download"))
   }
 
-  @Throws(IOException::class)
   private fun getDownloadCachePath(communityRoot: BuildDependenciesCommunityRoot): Path {
-    val path: Path = if (isUnderTeamCity) {
-      val persistentCachePath = systemProperties["agent.persistent.cache"]
-      check(!persistentCachePath.isNullOrBlank()) {
-        "'agent.persistent.cache' system property is required under TeamCity"
-      }
-      Paths.get(persistentCachePath)
+    val path: Path = if (TeamCityHelper.isUnderTeamCity) {
+      TeamCityHelper.persistentCachePath ?: error ("'agent.persistent.cache' system property is required under TeamCity")
     }
     else {
       getProjectLocalDownloadCache(communityRoot)
@@ -127,7 +116,7 @@ object BuildDependenciesDownloader {
                                  vararg options: BuildDependenciesExtractOptions): Path {
     cleanUpIfRequired(communityRoot)
     val cachePath = getDownloadCachePath(communityRoot)
-    val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options)).substring(0, 6)
+    val hash = hashString(archiveFile.toString() + getExtractOptionsShortString(options) + EXTRACT_CODE_VERSION).substring(0, 6)
     val directoryName = "${archiveFile.fileName}.${hash}.d"
     val targetDirectory = cachePath.resolve(directoryName)
     val flagFile = cachePath.resolve("${directoryName}.flag")
@@ -142,11 +131,21 @@ object BuildDependenciesDownloader {
   private fun getExpectedFlagFileContent(archiveFile: Path,
                                          targetDirectory: Path,
                                          options: Array<out BuildDependenciesExtractOptions>): ByteArray {
-    var numberOfTopLevelEntries: Long
-    Files.list(targetDirectory).use { stream -> numberOfTopLevelEntries = stream.count() }
+    var fileCount = 0L
+    var fileSizeSum = 0L
+
+    Files.walkFileTree(targetDirectory, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        fileCount++
+        fileSizeSum += attrs.size()
+        return FileVisitResult.CONTINUE
+      }
+    })
+
     return """$EXTRACT_CODE_VERSION
 ${archiveFile.toRealPath(LinkOption.NOFOLLOW_LINKS)}
-topLevelEntries:$numberOfTopLevelEntries
+fileCount:$fileCount
+fileSizeSum:$fileSizeSum
 options:${getExtractOptionsShortString(options)}
 """.toByteArray(StandardCharsets.UTF_8)
   }
@@ -246,7 +245,7 @@ options:${getExtractOptionsShortString(options)}
       // run only once per process
       return
     }
-    if (isUnderTeamCity) {
+    if (TeamCityHelper.isUnderTeamCity) {
       // Cleanup on TeamCity is handled by TeamCity
       return
     }

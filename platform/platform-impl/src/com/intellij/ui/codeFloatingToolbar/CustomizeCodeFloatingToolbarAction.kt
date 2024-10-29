@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.util.NlsActions.ActionText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class CustomizeCodeFloatingToolbarAction(private val targetGroupActionId: String): AnAction(getActionText()) {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

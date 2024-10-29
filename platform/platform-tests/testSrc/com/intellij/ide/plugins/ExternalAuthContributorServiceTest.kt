@@ -33,7 +33,7 @@ class PluginRepositoryAuthServiceTest {
   private inner class FakeUrlMatchingContributor(private val myDomain: String,
                                                  private val contributorHeaders: Map<String, String> = headers): PluginRepositoryAuthProvider {
     override fun canHandle(url: String): Boolean = (url.contains(myDomain))
-    override fun getAuthHeaders(url: String?): Map<String, String>  = contributorHeaders
+    override fun getAuthHeaders(url: String): Map<String, String>  = contributorHeaders
   }
 
   @Test

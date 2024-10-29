@@ -1,27 +1,29 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.SaveAndSyncHandler;
+import com.intellij.ide.plugins.newui.EventHandler;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ShortcutSet;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,39 +39,39 @@ import java.util.List;
 
 import static com.intellij.openapi.actionSystem.IdeActions.ACTION_FIND;
 
-public class SettingsDialog extends DialogWrapper implements DataProvider {
+public class SettingsDialog extends DialogWrapper implements UiCompatibleDataProvider {
   public static final String DIMENSION_KEY = "SettingsEditor";
 
-  private final String myDimensionServiceKey;
-  private final AbstractEditor myEditor;
-  private final boolean myApplyButtonNeeded;
-  private final boolean myResetButtonNeeded;
+  private final String dimensionServiceKey;
+  private final AbstractEditor editor;
+  private final boolean isApplyButtonNeeded;
+  private final boolean isResetButtonNeeded;
   private final JLabel myHintLabel = new JLabel();
 
   public SettingsDialog(Project project, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(project, true);
-    myDimensionServiceKey = key;
-    myEditor = new SingleSettingEditor(myDisposable, configurable);
-    myApplyButtonNeeded = showApplyButton;
-    myResetButtonNeeded = showResetButton;
+    dimensionServiceKey = key;
+    editor = new SingleSettingEditor(myDisposable, configurable);
+    isApplyButtonNeeded = showApplyButton;
+    isResetButtonNeeded = showResetButton;
     init(configurable, project);
   }
 
   public SettingsDialog(@NotNull Component parent, String key, @NotNull Configurable configurable, boolean showApplyButton, boolean showResetButton) {
     super(parent, true);
-    myDimensionServiceKey = key;
-    myEditor = new SingleSettingEditor(myDisposable, configurable);
-    myApplyButtonNeeded = showApplyButton;
-    myResetButtonNeeded = showResetButton;
+    dimensionServiceKey = key;
+    editor = new SingleSettingEditor(myDisposable, configurable);
+    isApplyButtonNeeded = showApplyButton;
+    isResetButtonNeeded = showResetButton;
     init(configurable, null);
   }
 
   public SettingsDialog(@NotNull Project project, @NotNull List<? extends ConfigurableGroup> groups, @Nullable Configurable configurable, @Nullable String filter) {
     super(project, true);
-    myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
-    myApplyButtonNeeded = true;
-    myResetButtonNeeded = false;
+    dimensionServiceKey = DIMENSION_KEY;
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    isApplyButtonNeeded = true;
+    isResetButtonNeeded = false;
     init(null, project);
   }
 
@@ -79,15 +81,15 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
                         @Nullable Configurable configurable,
                         @Nullable String filter) {
     super(project, parentComponent, true, IdeModalityType.IDE);
-    myDimensionServiceKey = DIMENSION_KEY;
-    myEditor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
-    myApplyButtonNeeded = true;
-    myResetButtonNeeded = false;
+    dimensionServiceKey = DIMENSION_KEY;
+    editor = new SettingsEditor(myDisposable, project, groups, configurable, filter, this::treeViewFactory, this::spotlightPainterFactory);
+    isApplyButtonNeeded = true;
+    isResetButtonNeeded = false;
     init(null, project);
   }
 
   protected final AbstractEditor getEditor() {
-    return myEditor;
+    return editor;
   }
 
   protected @NotNull SettingsTreeView treeViewFactory(@NotNull SettingsFilter filter, @NotNull List<? extends ConfigurableGroup> groups) {
@@ -95,8 +97,13 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @ApiStatus.Internal
-  protected @NotNull SpotlightPainter spotlightPainterFactory(@Nullable Project project, @NotNull JComponent target, @NotNull Disposable parent, @NotNull SpotlightPainter.SpotlightPainterUpdater updater) {
-    return new SpotlightPainter(target, parent, updater);
+  protected @NotNull SpotlightPainter spotlightPainterFactory(
+    @Nullable Project project,
+    @NotNull JComponent target,
+    @NotNull Disposable parent,
+    @NotNull Function1<? super SpotlightPainter, Unit> updater
+  ) {
+    return new SpotlightPainter(target, updater);
   }
 
   private void init(@Nullable Configurable configurable, @Nullable Project project) {
@@ -122,7 +129,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   protected void setHelpTooltip(@NotNull JButton helpButton) {
     //noinspection SpellCheckingInspection
-    if (Registry.is("ide.helptooltip.enabled")) {
+    if (UISettings.isIdeHelpTooltipEnabled()) {
       new HelpTooltip().setDescription(ActionsBundle.actionDescription("HelpTopics")).installOn(helpButton);
     }
     else {
@@ -131,21 +138,18 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    if (myEditor instanceof DataProvider provider) {
-      return provider.getData(dataId);
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    DataSink.uiDataSnapshot(sink, editor);
   }
 
   @Override
   protected String getDimensionServiceKey() {
-    return myDimensionServiceKey;
+    return dimensionServiceKey;
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myEditor.getPreferredFocusedComponent();
+    return editor.getPreferredFocusedComponent();
   }
 
   @Override
@@ -155,7 +159,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myEditor;
+    return editor;
   }
 
   @Override
@@ -167,10 +171,9 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     return panel;
   }
 
-  @SuppressWarnings("unused") // used in Rider
   protected void tryAddOptionsListener(OptionsEditorColleague colleague) {
-    if (myEditor instanceof SettingsEditor) {
-      ((SettingsEditor)myEditor).addOptionsListener(colleague);
+    if (editor instanceof SettingsEditor) {
+      ((SettingsEditor)editor).addOptionsListener(colleague);
     }
   }
 
@@ -179,12 +182,12 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     ArrayList<Action> actions = new ArrayList<>();
     actions.add(getOKAction());
     actions.add(getCancelAction());
-    Action apply = myEditor.getApplyAction();
-    if (apply != null && myApplyButtonNeeded) {
+    Action apply = editor.getApplyAction();
+    if (apply != null && isApplyButtonNeeded) {
       actions.add(new ApplyActionWrapper(apply));
     }
-    Action reset = myEditor.getResetAction();
-    if (reset != null && myResetButtonNeeded) {
+    Action reset = editor.getResetAction();
+    if (reset != null && isResetButtonNeeded) {
       actions.add(reset);
     }
     if (getHelpId() != null) {
@@ -195,7 +198,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
 
   @Override
   protected @Nullable String getHelpId() {
-    return myEditor.getHelpTopic();
+    return editor.getHelpTopic();
   }
 
   @Override
@@ -208,7 +211,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     if (window != null) {
       UIUtil.stopFocusedEditing(window);
     }
-    if (myEditor.apply()) {
+    if (editor.apply()) {
       if (scheduleSave) {
         SaveAndSyncHandler.getInstance().scheduleSave(new SaveAndSyncHandler.SaveTask(null, /* forceSavingAllSettings = */ true));
       }
@@ -219,7 +222,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doCancelAction(AWTEvent source) {
     if (source instanceof KeyEvent || source instanceof ActionEvent) {
-      if (!myEditor.cancel(source)) {
+      if (!editor.cancel(source)) {
         return;
       }
     }
@@ -227,11 +230,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   }
 
   static @Nullable ShortcutSet getFindActionShortcutSet() {
-    AnAction action = ActionManager.getInstance().getAction(ACTION_FIND);
-    return action == null ? null : action.getShortcutSet();
+    return EventHandler.getShortcuts(ACTION_FIND);
   }
 
-  private class ApplyActionWrapper extends AbstractAction {
+  private final class ApplyActionWrapper extends AbstractAction {
     private final @NotNull Action delegate;
 
     ApplyActionWrapper(@NotNull Action delegate) {
@@ -261,7 +263,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
     @Override
     public void actionPerformed(ActionEvent e) {
       delegate.actionPerformed(e);
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.getTOPIC()).afterApply(myEditor);
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SettingsDialogListener.TOPIC).afterApply(editor);
     }
 
     @Override

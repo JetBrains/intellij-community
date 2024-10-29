@@ -25,10 +25,12 @@ import com.intellij.platform.workspace.storage.query.CollectionQuery
 import com.intellij.platform.workspace.storage.query.StorageQuery
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.serviceContainer.AlreadyDisposedException
+import com.intellij.util.messages.impl.MessageBusImpl
 import com.intellij.workspaceModel.core.fileIndex.EntityStorageKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndex
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexImpl
 import com.intellij.workspaceModel.ide.impl.reactive.WmReactive
+import com.intellij.workspaceModel.ide.isCaseSensitive
 import io.opentelemetry.api.metrics.Meter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
@@ -64,7 +66,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   */
   private val updatesFlow = MutableSharedFlow<VersionedStorageChange>(replay = 1)
 
-  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl()
+  private val virtualFileManager: VirtualFileUrlManager = IdeVirtualFileUrlManagerImpl(project.isCaseSensitive)
 
   override val currentSnapshot: ImmutableEntityStorage
     get() = entityStorage.current
@@ -82,6 +84,9 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
     log.debug { "Loading workspace model" }
     val start = Milliseconds.now()
 
+    if (Registry.`is`("ide.workspace.model.assertions.on.long.listeners", true)) {
+      (project.messageBus as MessageBusImpl).addMessageDeliveryListener(WorkspaceModelMessageDeliveryListener)
+    }
     val initialContent = WorkspaceModelInitialTestContent.pop()
     val cache = WorkspaceModelCache.getInstance(project)?.apply { setVirtualFileUrlManager(virtualFileManager) }
     val (projectEntities, unloadedEntities) = when {
@@ -253,7 +258,7 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
       updatesCounter.incrementAndGet()
     }
 
-    log.info("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
+    log.debug("Project model updated silently to version ${entityStorage.pointer.version} in $generalTime ms: $description")
     if (generalTime > 1000) {
       log.info("Project model update details: Updater code: $updateTimeMillis ms, To snapshot: $toSnapshotTimeMillis m")
     }
@@ -385,11 +390,12 @@ open class WorkspaceModelImpl(private val project: Project, private val cs: Coro
   override suspend fun <T> flowOfDiff(query: CollectionQuery<T>): Flow<Diff<T>> = reactive.flowOfDiff(query)
 
   private fun initializeBridges(change: Map<Class<*>, List<EntityChange<*>>>, builder: MutableEntityStorage) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed()
-    if (project.isDisposed) return
+    if (project.isDisposed) {
+      return
+    }
 
     initializeBridgesTimeMs.addMeasuredTime {
-      BridgeInitializer.EP_NAME.extensionList.forEach { bridgeInitializer ->
+      for (bridgeInitializer in BridgeInitializer.EP_NAME.extensionList) {
         logErrorOnEventHandling {
           if (bridgeInitializer.isEnabled()) {
             bridgeInitializer.initializeBridges(project, change, builder)

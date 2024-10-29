@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.history.core.HistoryPathFilter
 import com.intellij.history.integration.LocalHistoryBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -16,16 +17,21 @@ import com.intellij.platform.lvcs.impl.ActivityDiffData
 import com.intellij.platform.lvcs.impl.ActivityFileChange
 import com.intellij.platform.lvcs.impl.DirectoryDiffMode
 import com.intellij.platform.lvcs.impl.settings.ActivityViewApplicationSettings
+import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.ui.ScrollableContentBorder
 import com.intellij.ui.Side
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.TreeSpeedSearch
+import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.NamedColorUtil
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionListener
 import java.util.Comparator.comparing
+import javax.swing.JTree
+import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultTreeModel
 
-internal class ActivityChangesBrowser(project: Project, private val isSwitchingDiffModeAllowed: Boolean) : AsyncChangesBrowserBase(project, false, false), Disposable {
+internal class ActivityChangesBrowser(private val project: Project, private val isSwitchingDiffModeAllowed: Boolean, private val searchField: JTextComponent) : AsyncChangesBrowserBase(project, false, false), Disposable {
   private var diffData: ActivityDiffData? = null
 
   init {
@@ -45,9 +51,10 @@ internal class ActivityChangesBrowser(project: Project, private val isSwitchingD
 
     val changesList = activityDiffData.presentableChanges
     val sortedChangesList = changesList.sortedWith(comparing(PresentableChange::getFilePath, PATH_COMPARATOR))
+    val matcher = HistoryPathFilter.create(searchField.text, project)?.matcher
     for (presentableChange in sortedChangesList) {
       val filePath = presentableChange.filePath
-      val filePathNode = if (filePath.isDirectory) PresentableDirectoryChangeNode(presentableChange) else PresentableChangeNode(presentableChange)
+      val filePathNode = if (filePath.isDirectory) PresentableDirectoryChangeNode(presentableChange, matcher) else PresentableChangeNode(presentableChange, matcher)
       insertChangeNode(filePath, myRoot, filePathNode)
     }
     if (isSwitchingDiffModeAllowed && activityDiffData.isSingleSelection && sortedChangesList.isNotEmpty()) {
@@ -102,13 +109,22 @@ internal class ActivityChangesBrowser(project: Project, private val isSwitchingD
   override fun dispose() = shutdown()
 }
 
-private open class PresentableChangeNode(presentableChange: PresentableChange)
+private open class PresentableChangeNode(presentableChange: PresentableChange, private val activityMatcher: MinusculeMatcher?)
   : AbstractChangesBrowserFilePathNode<PresentableChange>(presentableChange, presentableChange.fileStatus) {
   override fun filePath(userObject: PresentableChange): FilePath = userObject.filePath
+
+  override fun render(tree: JTree, renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+    super.render(tree, renderer, selected, expanded, hasFocus)
+    val speedSearch = TreeSpeedSearch.getSupply(tree)
+    if (speedSearch?.isPopupActive != true) {
+      val matchedFragments = activityMatcher?.matchingFragments(renderer.getCharSequence(true).toString())
+      SpeedSearchUtil.applySpeedSearchHighlighting(renderer, matchedFragments, selected)
+    }
+  }
 }
 
-private class PresentableDirectoryChangeNode(presentableChange: PresentableChange) : ChangesBrowserNode.NodeWithFilePath,
-                                                                                     PresentableChangeNode(presentableChange) {
+private class PresentableDirectoryChangeNode(presentableChange: PresentableChange, matcher: MinusculeMatcher?)
+  : ChangesBrowserNode.NodeWithFilePath, PresentableChangeNode(presentableChange, matcher) {
   override fun getNodeFilePath(): FilePath = filePath(getUserObject())
 }
 

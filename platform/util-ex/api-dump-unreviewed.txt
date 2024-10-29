@@ -23,60 +23,6 @@ f:com.intellij.credentialStore.OneTimeStringKt
 - sf:OneTimeString(B[],I,I):com.intellij.credentialStore.OneTimeString
 - sf:OneTimeString(B[],I,I,Z):com.intellij.credentialStore.OneTimeString
 - bs:OneTimeString$default(B[],I,I,Z,I,java.lang.Object):com.intellij.credentialStore.OneTimeString
-*f:com.intellij.diagnostic.Checks
-- sf:INVARIANT_IS_NOT_SATISFIED:java.lang.String
-- sf:POSTCONDITION_IS_NOT_SATISFIED:java.lang.String
-- sf:PRECONDITION_IS_NOT_SATISFIED:java.lang.String
-- s:check(java.lang.String,java.util.function.BooleanSupplier):V
-- s:check(java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:check(Z):V
-- s:check(Z,java.lang.String):V
-- s:check(Z,java.util.function.Supplier):V
-- s:checkAndLog(java.lang.Class,java.lang.String,java.util.function.BooleanSupplier):V
-- s:checkAndLog(java.lang.Class,java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:checkAndLog(java.lang.Class,Z):V
-- s:checkAndLog(java.lang.Class,Z,java.lang.String):V
-- s:checkAndLog(java.lang.Class,Z,java.lang.String,com.intellij.openapi.diagnostic.Attachment[]):V
-- s:checkAndLog(java.lang.Class,Z,java.util.function.Supplier):V
-- s:checkIndex(I,I):V
-- s:checkIndex(I,I,java.lang.String):V
-- s:checkIndexAndLog(java.lang.Class,I,I):V
-- s:checkIndexAndLog(java.lang.Class,I,I,java.lang.String):V
-- s:checkIndexAndLog(java.lang.Class,I,I,java.lang.String,com.intellij.openapi.diagnostic.Attachment[]):V
-- s:ensure(java.lang.String,java.util.function.BooleanSupplier):V
-- s:ensure(java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:ensure(Z):V
-- s:ensure(Z,java.lang.String):V
-- s:ensure(Z,java.util.function.Supplier):V
-- s:ensureAndLog(java.lang.Class,java.lang.String,java.util.function.BooleanSupplier):V
-- s:ensureAndLog(java.lang.Class,java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:ensureAndLog(java.lang.Class,Z):V
-- s:ensureAndLog(java.lang.Class,Z,java.lang.String):V
-- s:ensureAndLog(java.lang.Class,Z,java.lang.String,com.intellij.openapi.diagnostic.Attachment[]):V
-- s:ensureAndLog(java.lang.Class,Z,java.util.function.Supplier):V
-- s:fail(java.lang.Object):V
-- s:logError(java.lang.Class,java.lang.Object,com.intellij.openapi.diagnostic.Attachment[]):V
-- s:require(java.lang.String,java.util.function.BooleanSupplier):V
-- s:require(java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:require(Z):V
-- s:require(Z,java.lang.String):V
-- s:require(Z,java.util.function.Supplier):V
-- s:requireAndLog(java.lang.Class,java.lang.String,java.util.function.BooleanSupplier):V
-- s:requireAndLog(java.lang.Class,java.util.function.Supplier,java.util.function.BooleanSupplier):V
-- s:requireAndLog(java.lang.Class,Z):V
-- s:requireAndLog(java.lang.Class,Z,java.lang.String):V
-- s:requireAndLog(java.lang.Class,Z,java.lang.String,com.intellij.openapi.diagnostic.Attachment[]):V
-- s:requireAndLog(java.lang.Class,Z,java.util.function.Supplier):V
-- s:unreachable():V
-*f:com.intellij.diagnostic.Checks$IllegalPostconditionException
-- java.lang.RuntimeException
-- <init>():V
-- <init>(java.lang.String):V
-- <init>(java.lang.String,java.lang.Throwable):V
-- <init>(java.lang.String,java.lang.Throwable,Z,Z):V
-- <init>(java.lang.Throwable):V
-f:com.intellij.diagnostic.StartUpMeasurerKt
-- sf:runActivity(java.lang.String,kotlin.jvm.functions.Function0):java.lang.Object
 f:com.intellij.openapi.application.PathManagerEx
 - sf:getAppSystemDir():java.nio.file.Path
 f:com.intellij.openapi.util.ExtensionsKt
@@ -84,23 +30,15 @@ f:com.intellij.openapi.util.ExtensionsKt
 - sf:component2(com.intellij.openapi.util.Pair):java.lang.Object
 - sf:toNotNull(com.intellij.openapi.util.Pair):kotlin.Pair
 - sf:use(com.intellij.openapi.Disposable,kotlin.jvm.functions.Function1):java.lang.Object
-f:com.intellij.util.BinFiles
-- sf:INSTANCE:com.intellij.util.BinFiles
-- f:getBinFile-kDy-24E(java.lang.String,java.lang.Class):java.nio.file.Path
-- f:getDevFilesDir():java.nio.file.Path
 f:com.intellij.util.ErrorKt
 - sf:throwIfNotEmpty(java.util.List):V
-f:com.intellij.util.FileName
-- bsf:box-impl(java.lang.String):com.intellij.util.FileName
-- s:constructor-impl(java.lang.String):java.lang.String
-- equals(java.lang.Object):Z
-- s:equals-impl(java.lang.String,java.lang.Object):Z
-- sf:equals-impl0(java.lang.String,java.lang.String):Z
-- f:getValue():java.lang.String
-- hashCode():I
-- s:hashCode-impl(java.lang.String):I
-- s:toString-impl(java.lang.String):java.lang.String
-- bf:unbox-impl():java.lang.String
+f:com.intellij.util.FieldAccessor
+- <init>(java.lang.Class,java.lang.String):V
+- <init>(java.lang.Class,java.lang.String,java.lang.Class):V
+- b:<init>(java.lang.Class,java.lang.String,java.lang.Class,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:get(java.lang.Object):java.lang.Object
+- f:isAvailable():Z
+- f:set(java.lang.Object,java.lang.Object):V
 f:com.intellij.util.JdomKt
 - sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String):V
 - sf:addOptionTag(org.jdom.Element,java.lang.String,java.lang.String,java.lang.String):V
@@ -117,8 +55,6 @@ f:com.intellij.util.LazyKt
 - sf:lazyUnsafe(kotlin.jvm.functions.Function0):kotlin.Lazy
 - sf:recursionSafeLazy(java.lang.Object,kotlin.jvm.functions.Function0):kotlin.Lazy
 - bs:recursionSafeLazy$default(java.lang.Object,kotlin.jvm.functions.Function0,I,java.lang.Object):kotlin.Lazy
-- *sf:suspendingLazy(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):com.intellij.util.SuspendingLazy
-- *bs:suspendingLazy$default(kotlinx.coroutines.CoroutineScope,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):com.intellij.util.SuspendingLazy
 com.intellij.util.ResettableLazy
 - a:getValue():java.lang.Object
 - a:getValue(java.lang.Object,kotlin.reflect.KProperty):java.lang.Object
@@ -134,10 +70,6 @@ f:com.intellij.util.ResourceUtil
 - s:getResourceAsStream(java.lang.ClassLoader,java.lang.String,java.lang.String):java.io.InputStream
 - s:loadText(java.io.InputStream):java.lang.String
 - s:loadText(java.net.URL):java.lang.String
-*:com.intellij.util.SuspendingLazy
-- a:getInitialized():java.lang.Object
-- a:getValue(kotlin.coroutines.Continuation):java.lang.Object
-- a:isInitialized():Z
 c:com.intellij.util.containers.HashMap
 - java.util.HashMap
 - <init>():V
@@ -151,35 +83,12 @@ c:com.intellij.util.containers.HashSet
 - <init>(java.util.Collection):V
 - clear():V
 f:com.intellij.util.containers.LookbackSequenceKt
-- bsf:reverse(java.util.Map):java.util.Map
 - sf:withPrevious(kotlin.sequences.Sequence):kotlin.sequences.Sequence
-f:com.intellij.util.containers.Queue
-- <init>(I):V
-- addLast(java.lang.Object):V
-- clear():V
-- isEmpty():Z
-- peekFirst():java.lang.Object
-- process(com.intellij.util.Processor):Z
-- pullFirst():java.lang.Object
-- removeLast():java.lang.Object
-- size():I
 f:com.intellij.util.containers.hash.HashMap
 - java.util.HashMap
 - <init>():V
 - <init>(I):V
 - <init>(I,F):V
-f:com.intellij.util.flow.FlowKt
-- sf:collectLatestUndispatched(kotlinx.coroutines.flow.SharedFlow,kotlin.jvm.functions.Function2,kotlin.coroutines.Continuation):java.lang.Object
-- sf:debounceBatch-HG0u8IE(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
-- *sf:mapStateIn(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1):kotlinx.coroutines.flow.StateFlow
-- *bs:mapStateIn$default(kotlinx.coroutines.flow.StateFlow,kotlinx.coroutines.CoroutineScope,kotlinx.coroutines.flow.SharingStarted,kotlin.jvm.functions.Function1,I,java.lang.Object):kotlinx.coroutines.flow.StateFlow
-- sf:throttle(kotlinx.coroutines.flow.Flow,J):kotlinx.coroutines.flow.Flow
-- sf:zipWithNext(kotlinx.coroutines.flow.Flow):kotlinx.coroutines.flow.Flow
-- sf:zipWithNext(kotlinx.coroutines.flow.Flow,kotlin.jvm.functions.Function3):kotlinx.coroutines.flow.Flow
-f:com.intellij.util.io.Base62
-- <init>():V
-- s:decode(B[]):B[]
-- s:encode(B[]):B[]
 f:com.intellij.util.io.CloseableUtil
 - sf:runClosingOnFailure(java.lang.AutoCloseable,kotlin.jvm.functions.Function1):java.lang.Object
 f:com.intellij.util.io.HttpSecurityUtil
@@ -235,7 +144,3 @@ f:com.intellij.util.io.PathKt
 - sf:write(java.nio.file.Path,B[],I,I):java.nio.file.Path
 - bs:write$default(java.nio.file.Path,java.lang.CharSequence,java.nio.charset.Charset,Z,I,java.lang.Object):java.nio.file.Path
 - sf:writeChild(java.nio.file.Path,java.lang.String,java.lang.String):java.nio.file.Path
-*f:com.intellij.util.text.TextRangeUtils
-- sf:splitLineRanges(java.lang.CharSequence):kotlin.sequences.Sequence
-- sf:splitToTextRanges(java.lang.CharSequence,java.lang.String,Z):kotlin.sequences.Sequence
-- bs:splitToTextRanges$default(java.lang.CharSequence,java.lang.String,Z,I,java.lang.Object):kotlin.sequences.Sequence

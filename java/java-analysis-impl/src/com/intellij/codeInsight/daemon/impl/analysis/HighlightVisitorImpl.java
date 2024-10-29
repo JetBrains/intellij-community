@@ -1,8 +1,12 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.codeInsight.UnhandledExceptions;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.*;
+import com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.HighlightVisitor;
 import com.intellij.codeInsight.daemon.impl.quickfix.AdjustFunctionContextFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,6 +30,7 @@ import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.impl.IncompleteModelUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -774,7 +779,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (results.length == 0) {
       assert referenceNameElement != null : ref;
       if (IncompleteModelUtil.isIncompleteModel(ref) && ref.getClassReference().resolve() == null) {
-        add(IncompleteModelUtil.getPendingReferenceHighlightInfo(referenceNameElement));
+        add(HighlightUtil.getPendingReferenceHighlightInfo(referenceNameElement));
       } else {
         String description = JavaErrorBundle.message("cannot.resolve.symbol", refName);
         HighlightInfo.Builder info =
@@ -1037,13 +1042,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   @Override
   public void visitNameValuePair(@NotNull PsiNameValuePair pair) {
     add(AnnotationsHighlightUtil.checkNameValuePair(pair));
-    if (!hasErrorResults()) {
-      PsiIdentifier nameId = pair.getNameIdentifier();
-      if (nameId != null) {
-        HighlightInfo.Builder result = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.ANNOTATION_ATTRIBUTE_NAME).range(nameId);
-        add(result);
-      }
-    }
   }
 
   @Override
@@ -1432,8 +1430,8 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           PsiElement qualifier = expression.getQualifier();
           if (qualifier != null) {
             boolean pending = qualifier instanceof PsiJavaCodeReferenceElement ref &&
-                        IncompleteModelUtil.isIncompleteModel(expression) &&
-                        IncompleteModelUtil.canBePendingReference(ref);
+                              IncompleteModelUtil.isIncompleteModel(expression) &&
+                              IncompleteModelUtil.canBePendingReference(ref);
             if (!pending) {
               String description = JavaErrorBundle.message("cannot.find.class", qualifier.getText());
               add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description));
@@ -1449,7 +1447,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       }
       if (!hasErrorResults()) {
         boolean isFunctional = LambdaUtil.isFunctionalType(functionalInterfaceType);
-        if (!isFunctional && !(IncompleteModelUtil.isIncompleteModel(expression) && 
+        if (!isFunctional && !(IncompleteModelUtil.isIncompleteModel(expression) &&
                                IncompleteModelUtil.isUnresolvedClassType(functionalInterfaceType))) {
           String description =
             JavaErrorBundle.message("not.a.functional.interface", functionalInterfaceType.getPresentableText());
@@ -1546,7 +1544,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             if (IncompleteModelUtil.isIncompleteModel(expression) && IncompleteModelUtil.canBePendingReference(expression)) {
               PsiElement referenceNameElement = expression.getReferenceNameElement();
               if (referenceNameElement != null) {
-                add(IncompleteModelUtil.getPendingReferenceHighlightInfo(referenceNameElement));
+                add(HighlightUtil.getPendingReferenceHighlightInfo(referenceNameElement));
               }
               return;
             }
@@ -1734,14 +1732,15 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTryStatement(@NotNull PsiTryStatement statement) {
     super.visitTryStatement(statement);
     if (!hasErrorResults()) {
-      Set<PsiClassType> thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
+      UnhandledExceptions thrownTypes = HighlightUtil.collectUnhandledExceptions(statement);
+      if (thrownTypes.hasUnresolvedCalls()) return;
       for (PsiParameter parameter : statement.getCatchBlockParameters()) {
         HighlightUtil.checkExceptionAlreadyCaught(parameter, myErrorSink);
         if (!hasErrorResults()) {
-          HighlightUtil.checkExceptionThrownInTry(parameter, thrownTypes, myErrorSink);
+          HighlightUtil.checkExceptionThrownInTry(parameter, thrownTypes.exceptions(), myErrorSink);
         }
         if (!hasErrorResults()) {
-          HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes, myFile, myErrorSink);
+          HighlightUtil.checkWithImprovedCatchAnalysis(parameter, thrownTypes.exceptions(), myFile, myErrorSink);
         }
       }
     }

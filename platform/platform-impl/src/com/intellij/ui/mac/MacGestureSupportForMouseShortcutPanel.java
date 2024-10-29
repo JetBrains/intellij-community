@@ -12,7 +12,9 @@ import com.apple.eawt.event.PressureListener;
 import com.intellij.openapi.actionSystem.PressureShortcut;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.ui.MouseShortcutPanel;
+import org.jetbrains.annotations.ApiStatus;
 
+@ApiStatus.Internal
 public final class MacGestureSupportForMouseShortcutPanel {
   public MacGestureSupportForMouseShortcutPanel(MouseShortcutPanel panel, Runnable runnable) {
     try {

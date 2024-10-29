@@ -55,10 +55,6 @@ public class Replacer {
     replacementBuilder = new ReplacementBuilder(this.project, this.options);
   }
 
-  public static String stripTypedVariableDecoration(final String type) {
-    return type.substring(1, type.length() - 1);
-  }
-
   public static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
     if (!image.isEmpty()) {
       result.insert(offset + info.getStartIndex(), image);

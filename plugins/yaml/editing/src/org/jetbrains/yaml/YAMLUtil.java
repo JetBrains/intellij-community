@@ -244,7 +244,7 @@ public final class YAMLUtil {
           throw e;
         }
         else {
-          Logger.getInstance(YAMLUtil.class).warn(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE);
+          Logger.getInstance(YAMLUtil.class).error(YAMLBlockMappingImpl.EMPTY_MAP_MESSAGE);
         }
       }
     }

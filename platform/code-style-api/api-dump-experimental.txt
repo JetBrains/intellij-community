@@ -1,0 +1,35 @@
+com.intellij.formatting.Formatter
+- *a:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
+a:com.intellij.formatting.Indent
+- *s:getIndentEnforcedToChildrenToBeRelativeToMe():com.intellij.formatting.Indent
+- *s:getIndentEnforcedToChildrenToBeRelativeToMe(com.intellij.formatting.Indent$Type,I):com.intellij.formatting.Indent
+f:com.intellij.formatting.Indent$Type
+- *sf:OUTDENT_NORMAL:com.intellij.formatting.Indent$Type
+- *sf:OUTDENT_SPACES:com.intellij.formatting.Indent$Type
+c:com.intellij.openapi.editor.EditorModificationUtilEx
+- *s:calcAfterLineEnd(com.intellij.openapi.editor.Editor,I,com.intellij.openapi.editor.LogicalPosition,com.intellij.openapi.editor.VisualPosition):I
+*:com.intellij.psi.codeStyle.CommentStyleSettings
+- a:isBlockCommentIncludesSpace():Z
+- a:isLineCommentFollowedWithSpace():Z
+- a:isLineCommentInTheFirstColumn():Z
+*:com.intellij.psi.codeStyle.ExternalFormatProcessor
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- s:activeExternalFormatProcessor(com.intellij.psi.PsiFile):com.intellij.psi.codeStyle.ExternalFormatProcessor
+- a:activeForFile(com.intellij.psi.PsiFile):Z
+- createConfiguration(com.intellij.openapi.project.Project):V
+- s:findExternalFormatter(java.lang.String):java.util.Optional
+- a:format(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
+- s:formatElement(com.intellij.psi.PsiElement,com.intellij.openapi.util.TextRange,Z):com.intellij.psi.PsiElement
+- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z):com.intellij.openapi.util.TextRange
+- s:formatRangeInFile(com.intellij.psi.PsiFile,com.intellij.openapi.util.TextRange,Z,Z,Z,I):com.intellij.openapi.util.TextRange
+- a:getId():java.lang.String
+- a:indent(com.intellij.psi.PsiFile,I):java.lang.String
+- s:indentLine(com.intellij.psi.PsiFile,I):java.lang.String
+- s:useExternalFormatter(com.intellij.psi.PsiFile):Z
+*:com.intellij.psi.codeStyle.modifier.CodeStyleSettingsModifier
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- getDisablingFunction(com.intellij.openapi.project.Project):java.util.function.Consumer
+- a:getName():java.lang.String
+- a:getStatusBarUiContributor(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings):com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
+- mayOverrideSettingsOf(com.intellij.openapi.project.Project):Z
+- a:modifySettings(com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings,com.intellij.psi.PsiFile):Z

@@ -107,7 +107,7 @@ public final class DnDEventImpl extends UserDataHolderBase implements Transferab
   }
 
   @Override
-  public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
+  public @NotNull Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     if (myAttachedObject instanceof Transferable) {
       return ((Transferable)myAttachedObject).getTransferData(flavor);
     }
@@ -199,7 +199,6 @@ public final class DnDEventImpl extends UserDataHolderBase implements Transferab
 
   @Override
   public void setHighlighting(RelativeRectangle rectangle, int aType) {
-    getHandlerComponent();
     myManager.showHighlighter(rectangle, aType, this);
     myHighlighting = aType;
   }

@@ -9,14 +9,13 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.terminal.block.output.HighlightingInfo
+import org.jetbrains.plugins.terminal.block.prompt.TerminalPromptModelImpl.Companion.replaceHighlighters
 import org.jetbrains.plugins.terminal.block.ui.getCharSize
 import java.awt.Graphics
 import java.awt.Rectangle
@@ -53,11 +52,7 @@ internal class RightPromptManager(private val promptEditor: Editor,
     DocumentUtil.writeInRunUndoTransparentAction {
       inlayEditor.document.setText(text)
     }
-    inlayEditor.markupModel.removeAllHighlighters()
-    for (highlighting in highlightings) {
-      inlayEditor.markupModel.addRangeHighlighter(highlighting.startOffset, highlighting.endOffset, HighlighterLayer.SYNTAX,
-                                                  highlighting.textAttributesProvider.getTextAttributes(), HighlighterTargetArea.EXACT_RANGE)
-    }
+    inlayEditor.markupModel.replaceHighlighters(highlightings)
   }
 
   override fun dispose() {

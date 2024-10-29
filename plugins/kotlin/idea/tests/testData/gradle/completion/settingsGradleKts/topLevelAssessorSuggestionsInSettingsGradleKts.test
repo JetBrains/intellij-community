@@ -1,0 +1,16 @@
+// FILE: settings.gradle.kts
+// "EXPECTED-SUGGESTION": "projectDir"
+// "EXPECTED-SUGGESTION": "getProjectDir"
+// "EXPECTED-SUGGESTION": "setProjectDir"
+rootProject.name = "GradleKotlinFixture"
+
+rootProject.pro<caret>
+
+// FILE: build.gradle.kts
+plugins {
+    id("java")
+}
+
+repositories {
+    mavenCentral()
+}

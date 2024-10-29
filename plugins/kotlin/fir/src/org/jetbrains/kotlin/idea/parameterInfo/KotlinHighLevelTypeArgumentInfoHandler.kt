@@ -28,14 +28,14 @@ class KotlinHighLevelClassTypeArgumentInfoHandler : KotlinHighLevelTypeArgumentI
     override fun findParameterOwners(argumentList: KtTypeArgumentList): Collection<KaDeclarationSymbol>? {
         val typeReference = argumentList.parentOfType<KtTypeReference>() ?: return null
         return when (val ktType = typeReference.type) {
-            is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassOrObjectSymbol)
+            is KaClassType -> listOfNotNull(ktType.expandedSymbol as? KaNamedClassSymbol)
             is KaClassErrorType -> {
                 ktType.candidateSymbols.mapNotNull { candidateSymbol ->
                     when (candidateSymbol) {
                         is KaClassSymbol -> candidateSymbol
                         is KaTypeAliasSymbol -> candidateSymbol.expandedType.expandedSymbol
                         else -> null
-                    } as? KaNamedClassOrObjectSymbol
+                    } as? KaNamedClassSymbol
                 }
             }
             else -> return null
@@ -56,7 +56,7 @@ class KotlinHighLevelFunctionTypeArgumentInfoHandler : KotlinHighLevelTypeArgume
         // will NOT return a KaCall because there is no FirFunctionCall there. We find the symbols using the callee name instead.
         val reference = callElement.calleeExpression?.references?.singleOrNull() as? KtSimpleNameReference ?: return null
         val explicitReceiver = callElement.getQualifiedExpressionForSelector()?.receiverExpression
-        val fileSymbol = callElement.containingKtFile.getFileSymbol()
+        val fileSymbol = callElement.containingKtFile.symbol
         val symbols = callElement.resolveToCallCandidates()
             .mapNotNull { (it.candidate as? KaCallableMemberCall<*, *>)?.partiallyAppliedSymbol?.signature }
             .filterIsInstance<KaFunctionSignature<*>>()
@@ -110,9 +110,9 @@ abstract class KotlinHighLevelTypeArgumentInfoHandlerBase : AbstractKotlinTypeAr
     private fun fetchTypeParameterInfo(parameter: KaTypeParameterSymbol): TypeParameterInfo {
         val upperBounds = parameter.upperBounds.map {
             val isNullableAnyOrFlexibleAny = if (it is KaFlexibleType) {
-                it.lowerBound.isAny && !it.lowerBound.isMarkedNullable && it.upperBound.isAny && it.upperBound.isMarkedNullable
+                it.lowerBound.isAnyType && !it.lowerBound.isMarkedNullable && it.upperBound.isAnyType && it.upperBound.isMarkedNullable
             } else {
-                it.isAny && it.isMarkedNullable
+                it.isAnyType && it.isMarkedNullable
             }
             val renderedType = it.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.INVARIANT)
             UpperBoundInfo(isNullableAnyOrFlexibleAny, renderedType)

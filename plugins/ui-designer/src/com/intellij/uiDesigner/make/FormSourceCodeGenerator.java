@@ -538,16 +538,16 @@ public final class FormSourceCodeGenerator {
 
     String methodText =
       "private String " + methodName + "(String path, String key) {\n" +
-      " ResourceBundle bundle;\n" +
+      " java.util.ResourceBundle bundle;\n" +
       "try {\n" +
       "    Class<?> thisClass = this.getClass();\n" +
       "    if (" + fieldName + " == null) {\n" +
       "        Class<?> dynamicBundleClass = thisClass.getClassLoader().loadClass(\"" + dynamicBundleClassName + "\");\n" +
       "        " + fieldName + " = dynamicBundleClass.getMethod(\"getBundle\", String.class, Class.class);\n" +
       "    }\n" +
-      "    bundle = (ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
+      "    bundle = (java.util.ResourceBundle)" + fieldName + ".invoke(null, path, thisClass);\n" +
       "} catch (Exception e) {\n" +
-      "    bundle = ResourceBundle.getBundle(path);\n" +
+      "    bundle = java.util.ResourceBundle.getBundle(path);\n" +
       "}\n" +
       "return bundle.getString(key);\n" +
       "}";
@@ -977,11 +977,10 @@ public final class FormSourceCodeGenerator {
   }
 
   private void generateClientProperties(final LwComponent component, final String variable) throws CodeGenerationException {
-    HashMap props = component.getDelegeeClientProperties();
-    for (final Object o : props.entrySet()) {
-      Map.Entry e = (Map.Entry)o;
+    HashMap<String, Object> props = component.getDelegeeClientProperties();
+    for (final Map.Entry<String, Object> e : props.entrySet()) {
       startMethodCall(variable, "putClientProperty");
-      push((String) e.getKey());
+      push(e.getKey());
 
       Object value = e.getValue();
       if (value instanceof StringDescriptor) {

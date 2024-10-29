@@ -235,6 +235,170 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                             """);
   }
 
+  public void testNullableStuffWithDifferentTypeUse() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target({ElementType.TYPE_USE, ElementType.ANNOTATION_TYPE})
+                         public @interface NotNull {}""");
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target({ElementType.TYPE_USE, ElementType.ANNOTATION_TYPE})
+                         public @interface Size {}""");
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Size;
+      
+      class Foo {
+          @NotNull
+          @Size
+          private String myName;
+      
+          private List<@NotNull @Size String> parents;
+          private List<? extends @NotNull @Size String> extParents;
+          private @NotNull @Size String[] children;
+          <caret>
+      }
+      """);
+    generateGetter();
+    generateSetter();
+    myFixture.checkResult("""
+                            import java.util.List;
+                            import org.jetbrains.annotations.NotNull;
+                            import org.jetbrains.annotations.Size;
+                            
+                            class Foo {
+                                @NotNull
+                                @Size
+                                private String myName;
+                            
+                                private List<@NotNull @Size String> parents;
+                                private List<? extends @NotNull @Size String> extParents;
+                                private @NotNull @Size String[] children;
+                            
+                                public void setMyName(@NotNull String myName) {
+                                    this.myName = myName;
+                                }
+                            
+                                public void setParents(List<@NotNull String> parents) {
+                                    this.parents = parents;
+                                }
+                            
+                                public void setExtParents(List<? extends @NotNull String> extParents) {
+                                    this.extParents = extParents;
+                                }
+                            
+                                public void setChildren(@NotNull String[] children) {
+                                    this.children = children;
+                                }
+                            
+                                public @NotNull String getMyName() {
+                                    return myName;
+                                }
+                            
+                                public List<@NotNull String> getParents() {
+                                    return parents;
+                                }
+                            
+                                public List<? extends @NotNull String> getExtParents() {
+                                    return extParents;
+                                }
+                            
+                                public @NotNull String[] getChildren() {
+                                    return children;
+                                }
+                            }
+                            """);
+  }
+
+  public void testNullableStuffWithDifferentTypeUseAllAnnotations() {
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target(ElementType.TYPE_USE)
+                         public @interface NotNull {}""");
+    myFixture.addClass("""
+                         package org.jetbrains.annotations;
+                         import java.lang.annotation.ElementType;
+                         import java.lang.annotation.Target;
+                         
+                         @Target(ElementType.TYPE_USE)
+                         public @interface Size {}""");
+    myFixture.configureByText("a.java", """
+      import java.util.List;
+      import org.jetbrains.annotations.NotNull;
+      import org.jetbrains.annotations.Size;
+      
+      class Foo {
+          @NotNull
+          @Size
+          private String myName;
+
+          private List<@NotNull @Size String> parents;
+          private List<? extends @NotNull @Size String> extParents;
+          private @NotNull @Size String[] children;
+          <caret>
+      }
+      """);
+    generateGetter(true);
+    generateSetter(true);
+    myFixture.checkResult("""
+                            import java.util.List;
+                            import org.jetbrains.annotations.NotNull;
+                            import org.jetbrains.annotations.Size;
+                            
+                            class Foo {
+                                @NotNull
+                                @Size
+                                private String myName;
+                            
+                                private List<@NotNull @Size String> parents;
+                                private List<? extends @NotNull @Size String> extParents;
+                                private @NotNull @Size String[] children;
+                            
+                                public void setMyName(@NotNull @Size String myName) {
+                                    this.myName = myName;
+                                }
+                            
+                                public void setParents(List<@NotNull @Size String> parents) {
+                                    this.parents = parents;
+                                }
+                            
+                                public void setExtParents(List<? extends @NotNull @Size String> extParents) {
+                                    this.extParents = extParents;
+                                }
+                            
+                                public void setChildren(@NotNull @Size String[] children) {
+                                    this.children = children;
+                                }
+                            
+                                public @NotNull @Size String getMyName() {
+                                    return myName;
+                                }
+                            
+                                public List<@NotNull @Size String> getParents() {
+                                    return parents;
+                                }
+                            
+                                public List<? extends @NotNull @Size String> getExtParents() {
+                                    return extParents;
+                                }
+                            
+                                public @NotNull @Size String[] getChildren() {
+                                    return children;
+                                }
+                            }
+                            """);
+  }
+
   public void testLombokGeneratedFieldsWithoutContainingFile() {
     ServiceContainerUtil.registerExtension(ApplicationManager.getApplication(), GenerateAccessorProviderRegistrar.EP_NAME,
                                            new NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>>() {
@@ -284,6 +448,10 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void generateGetter() {
+    generateGetter(false);
+  }
+
+  private void generateGetter(boolean allAnnotations) {
     new GenerateGetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(ClassMember[] members,
@@ -292,6 +460,11 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                             Project project,
                                             @Nullable Editor editor) {
         return members;
+      }
+
+      @Override
+      protected @NotNull GetterSetterGenerationOptions getOptions() {
+        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();
@@ -375,6 +548,10 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
   }
 
   private void generateSetter() {
+    generateSetter(false);
+  }
+
+  private void generateSetter(boolean allAnnotations) {
     new GenerateSetterHandler() {
       @Override
       protected ClassMember[] chooseMembers(ClassMember[] members,
@@ -383,6 +560,11 @@ public class GenerateGetterSetterTest extends LightJavaCodeInsightFixtureTestCas
                                             Project project,
                                             @Nullable Editor editor) {
         return members;
+      }
+
+      @Override
+      protected @NotNull GetterSetterGenerationOptions getOptions() {
+        return allAnnotations ? new GetterSetterGenerationOptions(true) : super.getOptions();
       }
     }.invoke(getProject(), myFixture.getEditor(), myFixture.getFile());
     UIUtil.dispatchAllInvocationEvents();

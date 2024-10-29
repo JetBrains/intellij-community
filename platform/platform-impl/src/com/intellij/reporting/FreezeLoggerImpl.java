@@ -12,11 +12,13 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.management.ThreadInfo;
 
+@ApiStatus.Internal
 public final class FreezeLoggerImpl extends FreezeLogger {
   private static final Logger LOG = Logger.getInstance(FreezeLoggerImpl.class);
   private static final Alarm ALARM = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());

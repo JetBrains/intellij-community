@@ -1,0 +1,30 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "java-guiForms-jps",
+  module_name = "intellij.java.guiForms.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    "@community//platform/util",
+    "@community//jps/model-api:jps-model",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//jps/jps-builders:jps-build",
+    "@community//java/compiler/instrumentation-util:java-compiler-instrumentationUtil",
+    "@community//java/compiler/forms-compiler:java-guiForms-compiler",
+    "@community//platform/forms_rt:java-guiForms-rt",
+    "@libraries//:asm-all",
+    "@community//platform/util/jdom:util-jdom",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

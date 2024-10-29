@@ -191,7 +191,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   public void testAdditionalPropertiesDisabled() {
     @Language("JSON") final String schema = "{\"type\": \"object\", \"properties\": {\"prop\": {}}, \"additionalProperties\": false}";
     // not sure abt inner object
-    doTest(schema, "{\"prop\": {}, <warning descr=\"Property 'someStuff' is not allowed\">\"someStuff\": 20</warning>}");
+    doTest(schema, "{\"prop\": {}, <warning descr=\"Property 'someStuff' is not allowed\">\"someStuff\"</warning>: 20}");
   }
 
   public void testAdditionalPropertiesSchema() {
@@ -268,7 +268,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                                    "\"innerType\":{}, \"innerValue\":{}" +
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
-    doTest(schema, "{\"prop\": [{\"innerType\":{}, <warning descr=\"Property 'alien' is not allowed\">\"alien\":{}</warning>}]}");
+    doTest(schema, "{\"prop\": [{\"innerType\":{}, <warning descr=\"Property 'alien' is not allowed\">\"alien\"</warning>:{}}]}");
   }
 
   public void testObjectDeeperInArray() {
@@ -279,7 +279,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                                                    "}, \"additionalProperties\": false" +
                                                    "}}");
     doTest(schema,
-           "{\"prop\": [{\"innerType\":{\"only\": true, <warning descr=\"Property 'hidden' is not allowed\">\"hidden\": false</warning>}}]}");
+           "{\"prop\": [{\"innerType\":{\"only\": true, <warning descr=\"Property 'hidden' is not allowed\">\"hidden\"</warning>: false}}]}");
   }
 
   public void testInnerObjectPropValueInArray() {
@@ -292,7 +292,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"allOf\": [{\"type\": \"object\", \"properties\": {\"first\": {}}}," +
                                                                                 " {\"properties\": {\"second\": {\"enum\": [33,44]}}}], \"additionalProperties\": false}";
     doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">null</warning>}");
-    doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\": 15</warning>}");
+    doTest(schema, "{\"first\": {}, \"second\": 44, <warning descr=\"Property 'other' is not allowed\">\"other\"</warning>: 15}");
     doTest(schema, "{\"first\": {}, \"second\": <warning descr=\"Value should be one of: 33, 44\">12</warning>}");
   }
 
@@ -302,7 +302,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     @Language("JSON") final String schema = "{\"properties\": {\"prop\": {\"oneOf\": [" + subSchema1 + ", " + subSchema2 + "]}}}";
     //doTest(schema, "{\"prop\": [{\"kilo\": 20}]}");
     //doTest(schema, "{\"prop\": 5}");
-    doTest(schema, "{\"prop\": [{<warning descr=\"Property 'foxtrot' is not allowed\">\"foxtrot\": 15</warning>, \"kilo\": 20}]}");
+    doTest(schema, "{\"prop\": [{<warning descr=\"Property 'foxtrot' is not allowed\">\"foxtrot\"</warning>: 15, \"kilo\": 20}]}");
   }
 
   public void testIntegerTypeWithMinMax() throws Exception {
@@ -454,7 +454,7 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   }
 
   public void testRootObjectRedefinedAdditionalPropertiesForbidden() {
-    doTest(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\": true</warning>," +
+    doTest(rootObjectRedefinedSchema(), "{<warning descr=\"Property 'a' is not allowed\">\"a\"</warning>: true," +
                                         "\"r1\": \"allowed!\"}");
   }
 
@@ -1204,14 +1204,14 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
         "subject": {
           "discriminator": "first",
           "first": false,
-          <warning descr="Property 'second' is not allowed">"second": false</warning>
+          <warning descr="Property 'second' is not allowed">"second"</warning>: false
         }
       }""");
     doTest(schemaText, """
       {
         "subject": {
           "discriminator": "second",
-          <warning descr="Property 'first' is not allowed">"first": false</warning>,
+          <warning descr="Property 'first' is not allowed">"first"</warning>: false,
           "second": false
         }
       }""");

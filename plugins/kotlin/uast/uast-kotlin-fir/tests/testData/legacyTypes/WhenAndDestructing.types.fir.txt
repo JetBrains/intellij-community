@@ -35,15 +35,15 @@ UFile (package = ) [public final class WhenAndDestructingKt {...]
                                         USimpleNameReferenceExpression (identifier = arr) [arr] : @org.jetbrains.annotations.NotNull() java.util.List<? extends @org.jetbrains.annotations.NotNull() java.lang.String>
                                     ULocalVariable (name = bindingContext) [@org.jetbrains.annotations.NotNull var bindingContext: java.lang.String = var837f2350.UIdentifier (Identifier (component1))()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component1))()] : <ErrorType>
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : <ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component1))()]
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350]
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component1))()] : T
                                                 UIdentifier (Identifier (component1)) [UIdentifier (Identifier (component1))]
                                     ULocalVariable (name = statementFilter) [@org.jetbrains.annotations.NotNull var statementFilter: java.lang.String = var837f2350.UIdentifier (Identifier (component2))()]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component2))()] : <ErrorType>
-                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350] : <ErrorType>
-                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : <ErrorType>
+                                        UQualifiedReferenceExpression [var837f2350.UIdentifier (Identifier (component2))()]
+                                            USimpleNameReferenceExpression (identifier = var837f2350) [var837f2350]
+                                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [UIdentifier (Identifier (component2))()] : T
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                                 UYieldExpression [yield return bindingContext]
                                     UReturnExpression [return bindingContext] : @org.jetbrains.annotations.NotNull() java.lang.Void

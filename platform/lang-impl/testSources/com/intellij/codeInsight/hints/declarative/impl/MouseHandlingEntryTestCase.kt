@@ -3,9 +3,11 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.*
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixture4TestCase
 import junit.framework.TestCase
 import org.junit.Test
+import java.awt.event.MouseEvent
 
 class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
   @Test
@@ -176,11 +178,13 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val presentationList = InlayPresentationList(state, HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     assertEquals(beforeClickText, toText(beforeClickEntries))
+    val editor = myFixture.editor
+    val event = MouseEvent(editor.getContentComponent(), 0, 0, 0, 0, 0, 0, false, 0)
     var occurence = 0
     for (beforeClickEntry in beforeClickEntries) {
       if ((beforeClickEntry as TextInlayPresentationEntry).text == clickPlace) {
         if (occurence == occurenceIndex) {
-          beforeClickEntry.handleClick(myFixture.editor, presentationList, true)
+          beforeClickEntry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
           break
         }
         occurence++
@@ -252,8 +256,10 @@ class MouseHandlingEntryTestCase : LightPlatformCodeInsightFixture4TestCase() {
     val presentationList = InlayPresentationList(root.complete(), HintFormat.default, false, null, javaClass, null, DeclarativeInlayHintsPass.passSourceId)
     val beforeClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(beforeClick, toText(beforeClickEntries))
-    beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!.handleClick(myFixture.editor, presentationList,
-                                                                                               true)
+    val entry = beforeClickEntries.find { (it as TextInlayPresentationEntry).text == click }!!
+    val editor = myFixture.editor
+    val event = MouseEvent(editor.getContentComponent(), 0, 0, 0, 0, 0, 0, false, 0)
+    entry.handleClick(EditorMouseEvent(editor, event, editor.getMouseEventArea(event)), presentationList, true)
     val afterClickEntries = presentationList.getEntries().toList()
     TestCase.assertEquals(afterClick, toText(afterClickEntries))
   }

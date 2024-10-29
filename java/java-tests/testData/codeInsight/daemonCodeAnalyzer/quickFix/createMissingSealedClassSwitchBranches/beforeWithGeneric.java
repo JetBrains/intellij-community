@@ -1,4 +1,4 @@
-// "Create missing branches: 'Test.Bar', and 'Test.Foo'" "true-preview"
+// "Create missing branches 'Test.Bar' and 'Test.Foo'" "true-preview"
 import java.util.List;
 
 class Test {

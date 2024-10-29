@@ -13,7 +13,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.UIBundle
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ZoomIdeAction : AnAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   protected val settingsUtils: UISettingsUtils = UISettingsUtils.getInstance()
 

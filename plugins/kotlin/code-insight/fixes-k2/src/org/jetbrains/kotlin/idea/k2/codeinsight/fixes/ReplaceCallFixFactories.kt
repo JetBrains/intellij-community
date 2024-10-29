@@ -102,19 +102,18 @@ object ReplaceCallFixFactories {
             } else emptyList()
         }
 
-    context(KaSession)
-    private fun shouldHaveNotNullType(expression: KtExpression): Boolean {
+    private fun KaSession.shouldHaveNotNullType(expression: KtExpression): Boolean {
         // This function is used to determine if we may need to add an elvis operator after the safe call. For example, to replace
         // `s.length` in `val x: Int = s.length` with a safe call, it should be replaced with `s.length ?: <caret>`.
         val expectedType = expression.expectedType ?: return false
-        return expectedType.nullability == KaTypeNullability.NON_NULLABLE && !expectedType.isUnit
+        return expectedType.nullability == KaTypeNullability.NON_NULLABLE && !expectedType.isUnitType
     }
 
     context(KaSession)
     private fun KaType.isMap(): Boolean {
         val symbol = this.expandedSymbol ?: return false
         if (symbol.name?.asString()?.endsWith("Map") != true) return false
-        val mapSymbol = getClassOrObjectSymbolByClassId(StandardClassIds.Map) ?: return false
+        val mapSymbol = findClass(StandardClassIds.Map) ?: return false
         return symbol.isSubClassOf(mapSymbol)
     }
 }

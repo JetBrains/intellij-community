@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -41,9 +41,8 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     myIncludeDoNotShow = includeDoNotShow;
   }
 
-  @NotNull
   @Override
-  public DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
+  public @NotNull DefaultActionGroup createPopupActionGroup(@NotNull JComponent button, @NotNull DataContext context) {
     final DefaultActionGroup group = new DefaultActionGroup();
     for (final HighlightSeverity severity : getSeverities(mySeverityRegistrar, myIncludeDoNotShow)) {
       final HighlightSeverityAction action = new HighlightSeverityAction(severity);
@@ -55,7 +54,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     group.addSeparator();
     group.add(new DumbAwareAction(InspectionsBundle.message("inspection.edit.severities.action")) {
       @Override
-      public void actionPerformed(@NotNull final AnActionEvent e) {
+      public void actionPerformed(final @NotNull AnActionEvent e) {
         Project project = e.getProject();
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         SeverityEditorDialog.show(project, myChosen, mySeverityRegistrar, true, severity -> {
@@ -67,13 +66,11 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     return group;
   }
 
-  @NotNull
-  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
+  public static @NotNull List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar) {
     return getSeverities(severityRegistrar, true);
   }
 
-  @NotNull
-  public static List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
+  public static @NotNull List<@NotNull HighlightSeverity> getSeverities(final SeverityRegistrar severityRegistrar, boolean includeDoNotShow) {
     final List<HighlightSeverity> severities = new ArrayList<>();
     for (final SeverityRegistrar.SeverityBasedTextAttributes type : SeverityUtil.getRegisteredHighlightingInfoTypes(severityRegistrar)) {
       if (type.getType().isApplicableToInspections()) {
@@ -96,8 +93,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
   }
 
   private final class HighlightSeverityAction extends DumbAwareAction {
-    @NotNull
-    private final HighlightSeverity mySeverity;
+    private final @NotNull HighlightSeverity mySeverity;
 
     @NotNull
     HighlightSeverity getSeverity() {
@@ -112,7 +108,7 @@ public abstract class LevelChooserAction extends ComboBoxAction implements DumbA
     }
 
     @Override
-    public void actionPerformed(@NotNull final AnActionEvent e) {
+    public void actionPerformed(final @NotNull AnActionEvent e) {
       final HighlightSeverity severity = getSeverity();
       setChosen(severity);
       onChosen(severity);

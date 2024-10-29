@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
 import com.intellij.collaboration.auth.ui.CompactAccountsPanelFactory
@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -42,6 +43,8 @@ import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.remote.GitRememberedInputs
+import git4idea.ui.GitShallowCloneComponentFactory
+import git4idea.ui.GitShallowCloneViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -91,13 +94,11 @@ internal abstract class GHCloneDialogExtensionComponentBase(
 
   private val searchField: SearchTextField
   private val directoryField = TextFieldWithBrowseButton().apply {
-    val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
-    fcd.isShowFileSystemRoots = true
-    fcd.isHideIgnored = false
-    addBrowseFolderListener(message("clone.destination.directory.browser.title"),
-                            message("clone.destination.directory.browser.description"),
-                            project,
-                            fcd)
+    addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withShowFileSystemRoots(true)
+      .withHideIgnored(false)
+      .withTitle(message("clone.destination.directory.browser.title"))
+      .withDescription(message("clone.destination.directory.browser.description")))
   }
   private val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle
     .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
@@ -110,6 +111,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   protected val content: JComponent get() = wrapper.targetComponent
 
   private val accountListModel: ListModel<GithubAccount> = createAccountsModel()
+
+  private val shallowCloneModel = GitShallowCloneViewModel()
 
   init {
     repositoryList = JBList(loader.listModel).apply {
@@ -170,6 +173,9 @@ internal abstract class GHCloneDialogExtensionComponentBase(
           .validationOnApply {
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
           }
+      }
+      if (Registry.`is`("git.clone.shallow")) {
+        GitShallowCloneComponentFactory.appendShallowCloneRow(this, shallowCloneModel)
       }
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
@@ -302,7 +308,16 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     val directoryName = Paths.get(directoryField.text).fileName.toString()
     val parentDirectory = parent.toAbsolutePath().toString()
 
-    GitCheckoutProvider.clone(project, Git.getInstance(), checkoutListener, destinationParent, selectedUrl, directoryName, parentDirectory)
+    GitCheckoutProvider.clone(
+      project,
+      Git.getInstance(),
+      checkoutListener,
+      destinationParent,
+      selectedUrl,
+      directoryName,
+      parentDirectory,
+      shallowCloneModel.getShallowCloneOptions(),
+    )
   }
 
   override fun onComponentSelected() {

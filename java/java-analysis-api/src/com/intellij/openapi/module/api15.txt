@@ -41,7 +41,6 @@ java.lang.StrictMath#absExact(long;)
 java.lang.CharSequence#isEmpty()
 java.text.DecimalFormatSymbols#getMonetaryGroupingSeparator()
 java.text.DecimalFormatSymbols#setMonetaryGroupingSeparator(char;)
-java.text.DecimalFormatSymbols#monetaryGroupingSeparator
 java.util.NoSuchElementException#NoSuchElementException(java.lang.String;java.lang.Throwable;)
 java.util.NoSuchElementException#NoSuchElementException(java.lang.Throwable;)
 java.security.spec.EdECPoint
@@ -53,6 +52,7 @@ java.security.spec.NamedParameterSpec#ED448
 java.security.interfaces.EdECKey
 java.security.interfaces.EdECPublicKey
 java.security.interfaces.EdECPrivateKey
+jdk.javadoc.doclet.Taglet#isBlockTag()
 com.sun.tools.javac.api.JavacTrees#getType(com.sun.source.util.DocTreePath;)
 com.sun.source.util.DocTrees#getType(com.sun.source.util.DocTreePath;)
 javax.lang.model.SourceVersion#RELEASE_15

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-public class FqnUtil {
+public final class FqnUtil {
   @Nullable
   public static String getQualifiedNameFromProviders(@Nullable PsiElement element) {
     if (element == null) return null;

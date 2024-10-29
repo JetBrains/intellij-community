@@ -7,7 +7,7 @@ class X(val x: Int)
 // SIBLING:
 class Y(val y: Int) {
     fun X.test() {
-        __dummyTestFun__(this@X, this@Y)
+        __dummyTestFun__(this@test, this@Y)
     }
 }
 

@@ -28,7 +28,7 @@ public final class ListModelEditor<T> extends ListModelEditorBase<T> {
       .setAddAction(button -> {
         if (!model.isEmpty()) {
           T lastItem = model.getElementAt(model.getSize() - 1);
-          if (ListModelEditor.this.itemEditor.isEmpty(lastItem)) {
+          if (this.itemEditor.isEmpty(lastItem)) {
             ScrollingUtil.selectItem(list, ContainerUtil.indexOfIdentity(model.getItems(), lastItem));
             return;
           }

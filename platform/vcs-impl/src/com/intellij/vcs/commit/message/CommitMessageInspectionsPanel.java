@@ -23,6 +23,7 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ import java.util.*;
 import static com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel.areToolDescriptorsChanged;
 import static com.intellij.util.containers.ContainerUtil.exists;
 
+@ApiStatus.Internal
 public class CommitMessageInspectionsPanel extends BorderLayoutPanel implements Disposable, UnnamedConfigurable {
   @NotNull private final Project myProject;
   @NotNull private final List<ToolDescriptors> myInitialToolDescriptors = new ArrayList<>();

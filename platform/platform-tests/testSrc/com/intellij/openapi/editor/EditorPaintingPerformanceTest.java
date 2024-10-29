@@ -19,7 +19,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.EditorTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 import java.awt.*;
 
@@ -45,7 +45,7 @@ public class EditorPaintingPerformanceTest extends AbstractEditorTest {
     EditorImpl editor = (EditorImpl)getEditor();
     int editorHeight = editor.getPreferredHeight();
     int[] result = {0};
-    PerformanceTestUtil.newPerformanceTest(message, () -> {
+    Benchmark.newBenchmark(message, () -> {
       for (int y = 0; y < editorHeight; y += 1000) {
         Rectangle clip = new Rectangle(0, y, EDITOR_WIDTH_PX, 1000);
         NullGraphics2D g = new NullGraphics2D(clip);

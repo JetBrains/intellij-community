@@ -46,6 +46,7 @@ class IdeaPluginDescriptorImpl(
   private val isBundled: Boolean,
   id: PluginId?,
   @JvmField val moduleName: String?,
+  @JvmField val moduleLoadingRule: ModuleLoadingRule? = null,
   @JvmField val useCoreClassLoader: Boolean = false,
   @JvmField var isDependentOnCoreClassLoader: Boolean = true,
 ) : IdeaPluginDescriptor {
@@ -87,6 +88,9 @@ class IdeaPluginDescriptorImpl(
   val incompatibilities: List<PluginId> = raw.incompatibilities ?: Java11Shim.INSTANCE.listOf()
 
   init {
+    if (moduleName != null) {
+      require(moduleLoadingRule != null) { "'moduleLoadingRule' parameter must be specified when creating a module descriptor, but it is missing for '$moduleName'" }
+    }
     // https://youtrack.jetbrains.com/issue/IDEA-206274
     val list = raw.depends
     if (list.isNullOrEmpty()) {
@@ -200,7 +204,7 @@ class IdeaPluginDescriptorImpl(
     raw: RawPluginDescriptor,
     descriptorPath: String,
     context: DescriptorListLoadingContext,
-    moduleName: String?,
+    module: PluginContentDescriptor.ModuleItem?,
   ): IdeaPluginDescriptorImpl {
     raw.name = name
     val result = IdeaPluginDescriptorImpl(
@@ -208,7 +212,8 @@ class IdeaPluginDescriptorImpl(
       path = path,
       isBundled = isBundled,
       id = id,
-      moduleName = moduleName,
+      moduleName = module?.name,
+      moduleLoadingRule = module?.loadingRule,
       useCoreClassLoader = useCoreClassLoader,
       isDependentOnCoreClassLoader = raw.isDependentOnCoreClassLoader,
     )
@@ -364,7 +369,7 @@ class IdeaPluginDescriptorImpl(
       checkCycle(descriptor = descriptor, configFile = configFile, visitedFiles = visitedFiles)
 
       visitedFiles.add(configFile)
-      val subDescriptor = descriptor.createSub(raw = raw, descriptorPath = configFile, context = context, moduleName = null)
+      val subDescriptor = descriptor.createSub(raw = raw, descriptorPath = configFile, context = context, module = null)
 
       if (subDescriptor.isIncomplete == null) {
         subDescriptor.processOldDependencies(
@@ -404,7 +409,7 @@ class IdeaPluginDescriptorImpl(
         plugin = this,
         detailedMessageSupplier = { CoreBundle.message("plugin.loading.error.long.kotlin.incompatible", getName(), mode) },
         shortMessageSupplier = { CoreBundle.message("plugin.loading.error.short.kotlin.incompatible", mode) },
-        isNotifyUser = true,
+        isNotifyUser = false,
       ))
       return
     }
@@ -512,12 +517,24 @@ class IdeaPluginDescriptorImpl(
                                    nameToPoint: Map<String, ExtensionPointImpl<*>>,
                                    listenerCallbacks: MutableList<in Runnable>?): Int {
     var registeredCount = 0
-    for (entry in map) {
-      val point = nameToPoint.get(entry.key) ?: continue
-      point.registerExtensions(descriptors = entry.value, pluginDescriptor = this, listenerCallbacks = listenerCallbacks)
+    for ((descriptors, point) in intersectMaps(map, nameToPoint)) {
+      point.registerExtensions(descriptors = descriptors, pluginDescriptor = this, listenerCallbacks = listenerCallbacks)
       registeredCount++
     }
     return registeredCount
+  }
+
+  private fun <K, V1, V2> intersectMaps(first: Map<K, V1>, second: Map<K, V2>): List<Pair<V1, V2>> {
+    // Make sure we iterate the smaller map
+    if (first.size < second.size) {
+      return first.mapNotNull { (key, firstValue) ->
+        second[key]?.let { secondValue -> firstValue to secondValue }
+      }
+    } else {
+      return second.mapNotNull { (key, secondValue) ->
+        first[key]?.let { firstValue -> firstValue to secondValue }
+      }
+    }
   }
 
   @Suppress("HardCodedStringLiteral")

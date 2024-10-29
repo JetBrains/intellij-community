@@ -7,11 +7,13 @@ import com.intellij.platform.workspace.jps.entities.ModuleEntity;
 import com.intellij.platform.workspace.jps.entities.ModuleExtensions;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ModuleCustomImlDataFilesIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleCustomImlDataEntity> {
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware
 import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -43,7 +44,22 @@ abstract class AbstractOpenProjectProvider {
     throw UnsupportedOperationException()
   }
 
-  open suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+  suspend fun linkToExistingProjectAsync(projectFile: VirtualFile, project: Project) {
+    unlinkOtherLinkedProjects(project, projectFile)
+    LOG.info("Linking $systemId project ${projectFile.path}")
+    linkProject(projectFile, project)
+  }
+
+  protected suspend fun unlinkOtherLinkedProjects(project: Project, projectFile: VirtualFile) {
+    val externalProjectPath = if (projectFile.isDirectory) projectFile.path else projectFile.parent.path
+    ExternalSystemUnlinkedProjectAware.unlinkOtherLinkedProjects(project, externalProjectPath, systemId)
+  }
+
+  open suspend fun unlinkProject(project: Project, externalProjectPath: String) {
+    throw UnsupportedOperationException()
+  }
+
+  protected open suspend fun linkProject(projectFile: VirtualFile, project: Project, ) {
     withContext(Dispatchers.EDT) {
       blockingContext {
         @Suppress("DEPRECATION")

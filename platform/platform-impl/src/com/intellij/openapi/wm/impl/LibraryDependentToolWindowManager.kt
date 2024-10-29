@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readActionBlocking
 import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.extensions.ExtensionPointListener
@@ -15,14 +16,11 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.milliseconds
 
 private class LibraryDependentToolWindowManager : ProjectActivity {
@@ -35,30 +33,34 @@ private class LibraryDependentToolWindowManager : ProjectActivity {
 
   @OptIn(FlowPreview::class)
   override suspend fun execute(project: Project) {
+    awaitToolwindowManager(project)
+
     coroutineScope {
       val checkRequests = MutableSharedFlow<String?>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
       checkRequests.emit(null)
 
-      val connection = project.messageBus.connect(this)
-      connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
-        override fun rootsChanged(event: ModuleRootEvent) {
-          check(checkRequests.tryEmit(null))
-        }
-      })
-      connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
-                           AdditionalLibraryRootsListener { _: String?, _: Collection<VirtualFile?>?, _: Collection<VirtualFile?>?, _: String? ->
-                             check(checkRequests.tryEmit(null))
-                           })
-      LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(
-        object : ExtensionPointListener<LibraryDependentToolWindow> {
-          override fun extensionAdded(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
+      readActionBlocking {
+        val connection = project.messageBus.connect(this)
+        connection.subscribe(ModuleRootListener.TOPIC, object : ModuleRootListener {
+          override fun rootsChanged(event: ModuleRootEvent) {
             check(checkRequests.tryEmit(null))
           }
+        })
+        connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                             AdditionalLibraryRootsListener { _: String?, _: Collection<VirtualFile?>?, _: Collection<VirtualFile?>?, _: String? ->
+                               check(checkRequests.tryEmit(null))
+                             })
+        LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(
+          object : ExtensionPointListener<LibraryDependentToolWindow> {
+            override fun extensionAdded(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
+              check(checkRequests.tryEmit(null))
+            }
 
-          override fun extensionRemoved(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
-            ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.remove()
-          }
-        }, project)
+            override fun extensionRemoved(extension: LibraryDependentToolWindow, pluginDescriptor: PluginDescriptor) {
+              ToolWindowManager.getInstance(project).getToolWindow(extension.id)?.remove()
+            }
+          }, project)
+      }
 
       checkRequests
         .debounce(100.milliseconds)
@@ -67,12 +69,22 @@ private class LibraryDependentToolWindowManager : ProjectActivity {
         }
     }
   }
+
+  private suspend fun awaitToolwindowManager(project: Project) {
+    return suspendCancellableCoroutine { continuation ->
+      ToolWindowManager.getInstance(project).invokeLater {
+        continuation.resumeWith(Result.success(Unit))
+      }
+    }
+  }
 }
 
 @JvmRecord
-private data class LibraryWindowsState(@JvmField val project: Project,
-                                       @JvmField val extensions: List<LibraryDependentToolWindow>,
-                                       @JvmField val existing: Set<LibraryDependentToolWindow>)
+private data class LibraryWindowsState(
+  @JvmField val project: Project,
+  @JvmField val extensions: List<LibraryDependentToolWindow>,
+  @JvmField val existing: Set<LibraryDependentToolWindow>,
+)
 
 private suspend fun checkToolWindowStatuses(project: Project, extensionId: String? = null) {
   var extensions = LibraryDependentToolWindow.EXTENSION_POINT_NAME.extensionList
@@ -109,15 +121,6 @@ private suspend fun applyWindowsState(state: LibraryWindowsState) {
     if (state.existing.contains(libraryToolWindow)) {
       if (toolWindow == null) {
         toolWindowManager.initToolWindow(libraryToolWindow, libraryToolWindow.pluginDescriptor)
-        if (!libraryToolWindow.showOnStripeByDefault) {
-          toolWindow = toolWindowManager.getToolWindow(libraryToolWindow.id)
-          if (toolWindow != null) {
-            val windowInfo = toolWindowManager.getLayout().getInfo(libraryToolWindow.id)
-            if (windowInfo != null && !windowInfo.isFromPersistentSettings) {
-              toolWindow.isShowStripeButton = false
-            }
-          }
-        }
       }
     }
     else {

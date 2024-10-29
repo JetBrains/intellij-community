@@ -30,9 +30,6 @@ public abstract class ModuleStructureExtension {
     return false;
   }
 
-  //public void moduleAdded(final Module module, final Runnable treeNodeNameUpdater) {
-  //}
-
   public void moduleRemoved(final Module module) {
   }
 

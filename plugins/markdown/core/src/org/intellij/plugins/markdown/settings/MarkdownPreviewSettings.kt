@@ -9,7 +9,7 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 @Service(Service.Level.APP)
 @State(name = "MarkdownSettings", storages = [(Storage("markdown.xml"))])
-internal class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownPreviewSettings.State>(State()) {
+class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownPreviewSettings.State>(State()) {
   class State: BaseState() {
     var fontSize by property(defaultFontSize)
   }
@@ -17,6 +17,10 @@ internal class MarkdownPreviewSettings: SimplePersistentStateComponent<MarkdownP
   fun update(block: (MarkdownPreviewSettings) -> Unit) {
     block(this)
     application.messageBus.syncPublisher(ChangeListener.TOPIC).settingsChanged(this)
+  }
+
+  override fun noStateLoaded() {
+    loadState(State())
   }
 
   fun interface ChangeListener {

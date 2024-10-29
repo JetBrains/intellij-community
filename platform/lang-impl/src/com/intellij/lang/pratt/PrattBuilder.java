@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.pratt;
 
 import com.intellij.lang.ITokenTypeRemapper;
@@ -26,8 +26,7 @@ public abstract class PrattBuilder {
     return createChildBuilder().withLowestPriority(priority);
   }
 
-  @Nullable
-  public IElementType parseChildren(int priority, @Nullable String expectedMessage) {
+  public @Nullable IElementType parseChildren(int priority, @Nullable String expectedMessage) {
     return createChildBuilder(priority, expectedMessage).parse();
   }
 
@@ -69,11 +68,9 @@ public abstract class PrattBuilder {
     return getTokenType() == type;
   }
 
-  @Nullable
-  public abstract IElementType getTokenType();
+  public abstract @Nullable IElementType getTokenType();
 
-  @Nullable
-  public abstract String getTokenText();
+  public abstract @Nullable String getTokenText();
 
   public abstract void reduce(@NotNull IElementType type);
 
@@ -94,6 +91,5 @@ public abstract class PrattBuilder {
 
   public abstract PrattBuilder withLowestPriority(int priority);
 
-  @Nullable
-  public abstract IElementType parse();
+  public abstract @Nullable IElementType parse();
 }

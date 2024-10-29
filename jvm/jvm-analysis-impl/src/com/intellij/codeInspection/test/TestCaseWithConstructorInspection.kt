@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.test
 
 import com.intellij.analysis.JvmAnalysisBundle
@@ -29,6 +29,7 @@ class TestCaseWithConstructorInspection : AbstractBaseUastLocalInspectionTool() 
 }
 
 private class TestCaseWithConstructorVisitor(private val holder: ProblemsHolder) : AbstractUastNonRecursiveVisitor() {
+  @Suppress("UastHintedVisitorAdapterHints")
   override fun visitInitializer(node: UClassInitializer): Boolean {
     if (node.isStatic) return true
     val containingClass = node.asSafely<UClassInitializerEx>()?.javaPsi?.containingClass ?: return true

@@ -1,0 +1,6 @@
+// "Add '@Throws' annotation" "true"
+
+@Throws(Throwable::class)
+fun test() {
+    <selection><caret></selection>throw Throwable()
+}

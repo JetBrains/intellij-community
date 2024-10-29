@@ -21,37 +21,40 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.psi.KtSimpleNameExpression
 
 internal abstract class AbstractForbidRenamingSymbolByReferenceHandler : RenameHandler {
-  override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
-    val file = CommonDataKeys.PSI_FILE.getData(dataContext) ?: return false
-    val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return false
-    val refExpression = file.findElementForRename<KtSimpleNameExpression>(editor.caretModel.offset) ?: return false
-    @OptIn(KaAllowAnalysisOnEdt::class)
-    allowAnalysisOnEdt {
-      analyze(refExpression) {
-        val target = refExpression.mainReference.resolveToSymbol() ?: return false
-        return shouldForbidRenaming(target)
-      }
+    override fun isAvailableOnDataContext(dataContext: DataContext): Boolean {
+        val file = CommonDataKeys.PSI_FILE.getData(dataContext) ?: return false
+        val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return false
+        if (shouldForbidRenamingFromJava(file, editor)) return true
+        val refExpression = file.findElementForRename<KtSimpleNameExpression>(editor.caretModel.offset) ?: return false
+        @OptIn(KaAllowAnalysisOnEdt::class)
+        allowAnalysisOnEdt {
+            analyze(refExpression) {
+                val target = refExpression.mainReference.resolveToSymbol() ?: return false
+                return shouldForbidRenaming(target)
+            }
+        }
     }
-  }
 
-  context(KaSession)
-  abstract fun shouldForbidRenaming(symbol: KaSymbol): Boolean
+    open fun shouldForbidRenamingFromJava(file: PsiFile, editor: Editor): Boolean = false
 
-  abstract fun getErrorMessage(): @DialogMessage String
+    context(KaSession)
+    abstract fun shouldForbidRenaming(symbol: KaSymbol): Boolean
 
-  override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)
+    abstract fun getErrorMessage(): @DialogMessage String
 
-  override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
-    CommonRefactoringUtil.showErrorHint(
-      project,
-      editor,
-      getErrorMessage(),
-      RefactoringBundle.message("rename.title"),
-      null
-    )
-  }
+    override fun isRenaming(dataContext: DataContext) = isAvailableOnDataContext(dataContext)
 
-  override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
-    // Do nothing: this method is not called from editor
-  }
+    override fun invoke(project: Project, editor: Editor, file: PsiFile, dataContext: DataContext?) {
+        CommonRefactoringUtil.showErrorHint(
+            project,
+            editor,
+            getErrorMessage(),
+            RefactoringBundle.message("rename.title"),
+            null
+        )
+    }
+
+    override fun invoke(project: Project, elements: Array<out PsiElement>, dataContext: DataContext?) {
+        // Do nothing: this method is not called from editor
+    }
 }

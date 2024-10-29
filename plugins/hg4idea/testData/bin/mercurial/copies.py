@@ -6,7 +6,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import collections
 import os
@@ -18,7 +17,6 @@ from . import (
     match as matchmod,
     pathutil,
     policy,
-    pycompat,
     util,
 )
 
@@ -69,7 +67,7 @@ def _filter(src, dst, t):
 def _chain(prefix, suffix):
     """chain two sets of copies 'prefix' and 'suffix'"""
     result = prefix.copy()
-    for key, value in pycompat.iteritems(suffix):
+    for key, value in suffix.items():
         result[key] = prefix.get(value, value)
     return result
 
@@ -94,7 +92,7 @@ def _dirstatecopies(repo, match=None):
     ds = repo.dirstate
     c = ds.copies().copy()
     for k in list(c):
-        if ds[k] not in b'anm' or (match and not match(k)):
+        if not ds.get_entry(k).tracked or (match and not match(k)):
             del c[k]
     return c
 
@@ -246,7 +244,6 @@ def _changesetforwardcopies(a, b, match):
         return {}
 
     repo = a.repo().unfiltered()
-    children = {}
 
     cl = repo.changelog
     isancestor = cl.isancestorrev
@@ -290,7 +287,7 @@ def _changesetforwardcopies(a, b, match):
         # no common revision to track copies from
         return {}
     if has_graph_roots:
-        # this deal with the special case mentionned in the [1] footnotes. We
+        # this deal with the special case mentioned in the [1] footnotes. We
         # must filter out revisions that leads to non-common graphroots.
         roots = list(roots)
         m = min(roots)
@@ -301,11 +298,11 @@ def _changesetforwardcopies(a, b, match):
 
     if repo.filecopiesmode == b'changeset-sidedata':
         # When using side-data, we will process the edges "from" the children.
-        # We iterate over the childre, gathering previous collected data for
+        # We iterate over the children, gathering previous collected data for
         # the parents. Do know when the parents data is no longer necessary, we
         # keep a counter of how many children each revision has.
         #
-        # An interresting property of `children_count` is that it only contains
+        # An interesting property of `children_count` is that it only contains
         # revision that will be relevant for a edge of the graph. So if a
         # children has parent not in `children_count`, that edges should not be
         # processed.
@@ -410,7 +407,7 @@ def _combine_changeset_copies(
 
                     if childcopies:
                         newcopies = copies.copy()
-                        for dest, source in pycompat.iteritems(childcopies):
+                        for dest, source in childcopies.items():
                             prev = copies.get(source)
                             if prev is not None and prev[1] is not None:
                                 source = prev[1]
@@ -449,7 +446,11 @@ def _combine_changeset_copies(
 
         # filter out internal details and return a {dest: source mapping}
         final_copies = {}
-        for dest, (tt, source) in all_copies[targetrev].items():
+
+        targetrev_items = all_copies[targetrev]
+        assert targetrev_items is not None  # help pytype
+
+        for dest, (tt, source) in targetrev_items.items():
             if source is not None:
                 final_copies[dest] = source
     if not alwaysmatch:
@@ -621,7 +622,7 @@ def _combine_changeset_copies_extra(
             newcopies = copies
             if childcopies:
                 newcopies = copies.copy()
-                for dest, source in pycompat.iteritems(childcopies):
+                for dest, source in childcopies.items():
                     prev = copies.get(source)
                     if prev is not None and prev[1] is not None:
                         source = prev[1]
@@ -719,7 +720,7 @@ def _reverse_renames(copies, dst, match):
     # can still exist (e.g. hg cp a b; hg mv a c). In those cases we
     # arbitrarily pick one of the renames.
     r = {}
-    for k, v in sorted(pycompat.iteritems(copies)):
+    for k, v in sorted(copies.items()):
         if match and not match(v):
             continue
         # remove copies
@@ -886,7 +887,7 @@ def _checksinglesidecopies(
             copy[dst] = src
 
 
-class branch_copies(object):
+class branch_copies:
     """Information about copies made on one side of a merge/graft.
 
     "copy" is a mapping from destination name -> source name,
@@ -1078,7 +1079,7 @@ def _dir_renames(repo, ctx, copy, fullcopy, addedfilesfn):
 
     # examine each file copy for a potential directory move, which is
     # when all the files in a directory are moved to a new directory
-    for dst, src in pycompat.iteritems(fullcopy):
+    for dst, src in fullcopy.items():
         dsrc, ddst = pathutil.dirname(src), pathutil.dirname(dst)
         if dsrc in invalid:
             # already seen to be uninteresting
@@ -1101,7 +1102,7 @@ def _dir_renames(repo, ctx, copy, fullcopy, addedfilesfn):
     if not dirmove:
         return {}, {}
 
-    dirmove = {k + b"/": v + b"/" for k, v in pycompat.iteritems(dirmove)}
+    dirmove = {k + b"/": v + b"/" for k, v in dirmove.items()}
 
     for d in dirmove:
         repo.ui.debug(
@@ -1184,7 +1185,7 @@ def _heuristicscopytracing(repo, c1, c2, base):
 
     copies2 = {}
     cp = _forwardcopies(base, c2)
-    for dst, src in pycompat.iteritems(cp):
+    for dst, src in cp.items():
         if src in m1:
             copies2[dst] = src
 
@@ -1302,5 +1303,5 @@ def graftcopies(wctx, ctx, base):
     for dest, __ in list(new_copies.items()):
         if dest in parent:
             del new_copies[dest]
-    for dst, src in pycompat.iteritems(new_copies):
+    for dst, src in new_copies.items():
         wctx[dst].markcopied(src)

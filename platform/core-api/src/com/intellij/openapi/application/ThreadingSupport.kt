@@ -65,24 +65,6 @@ interface ThreadingSupport {
   fun isWriteIntentLocked(): Boolean
 
   /**
-   * Runs specified action with disabled implicit read lock if this feature is enabled with system property.
-   *
-   * @see com.intellij.idea.StartupUtil.isImplicitReadOnEDTDisabled
-   * @param runnable action to run with disabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  fun runWithoutImplicitRead(runnable: Runnable)
-
-  /**
-   * Runs specified action with enabled implicit read lock if this feature is enabled with system property.
-   *
-   * @see com.intellij.idea.StartupUtil.isImplicitReadOnEDTDisabled
-   * @param runnable action to run with enabled implicit read lock.
-   */
-  @ApiStatus.Internal
-  fun runWithImplicitRead(runnable: Runnable)
-
-  /**
    * Requests pooled thread to execute the action.
    *
    * This pool is an
@@ -360,4 +342,10 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun isInImpatientReader(): Boolean
+
+  /**
+   * DO NOT USE
+   */
+  @ApiStatus.Internal
+  fun isInsideUnlockedWriteIntentLock(): Boolean
 }

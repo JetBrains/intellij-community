@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util;
 
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.DifferenceFilter;
+import com.intellij.util.lang.CompoundRuntimeException;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -333,8 +334,8 @@ public final class ReflectionUtil {
         continue;
       }
 
+      List<Exception> exceptions = null;
       Constructor<?>[] constructors = aClass.getDeclaredConstructors();
-      Exception exception = null;
       List<Constructor<?>> defaultCtors = new SmartList<>();
       ctorLoop:
       for (Constructor<?> constructor : constructors) {
@@ -362,7 +363,10 @@ public final class ReflectionUtil {
           return (T)constructor.newInstance(new Object[parameterTypes.length]);
         }
         catch (Exception e) {
-          exception = e;
+          if (exceptions == null) {
+            exceptions = new SmartList<>();
+          }
+          exceptions.add(new Exception("Failed to call constructor: " + constructor.toString(), e));
         }
       }
 
@@ -378,12 +382,20 @@ public final class ReflectionUtil {
           return (T)constructor.newInstance();
         }
         catch (Exception e) {
-          exception = e;
+          if (exceptions == null) {
+            exceptions = new SmartList<>();
+          }
+          exceptions.add(new Exception("Failed to call constructor: " + constructor.toString(), e));
         }
       }
 
-      if (exception != null) {
-        ExceptionUtil.rethrow(exception);
+      if (exceptions != null) {
+        if (exceptions.size() == 1) {
+          ExceptionUtil.rethrow(exceptions.get(0));
+        }
+        else {
+          ExceptionUtil.rethrow(new CompoundRuntimeException(exceptions));
+        }
       }
     }
     return null;

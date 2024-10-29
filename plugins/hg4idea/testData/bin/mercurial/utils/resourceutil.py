@@ -7,9 +7,8 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
-import imp
+import _imp
 import os
 import sys
 
@@ -23,9 +22,9 @@ def mainfrozen():
     (portable, not much used).
     """
     return (
-        pycompat.safehasattr(sys, "frozen")  # new py2exe
-        or pycompat.safehasattr(sys, "importers")  # old py2exe
-        or imp.is_frozen("__main__")  # tools/freeze
+        hasattr(sys, "frozen")  # new py2exe
+        or hasattr(sys, "importers")  # old py2exe
+        or _imp.is_frozen("__main__")  # tools/freeze
     )
 
 
@@ -57,41 +56,21 @@ else:
 try:
     # importlib.resources exists from Python 3.7; see fallback in except clause
     # further down
-    from importlib import resources
-
-    from .. import encoding
+    from importlib import resources  # pytype: disable=import-error
 
     # Force loading of the resources module
-    resources.open_binary  # pytype: disable=module-attr
+    if hasattr(resources, 'files'):
+        resources.files  # pytype: disable=module-attr
+    else:
+        resources.open_binary  # pytype: disable=module-attr
 
-    # pytype: disable=import-error
-    from importlib.resources import FileNotFoundError
-
-    # pytype: enable=import-error
-
-    def open_resource(package, name):
-        return resources.open_binary(  # pytype: disable=module-attr
-            pycompat.sysstr(package), pycompat.sysstr(name)
-        )
-
-    def is_resource(package, name):
-        return resources.is_resource(  # pytype: disable=module-attr
-            pycompat.sysstr(package), encoding.strfromlocal(name)
-        )
-
-    def contents(package):
-        # pytype: disable=module-attr
-        for r in resources.contents(pycompat.sysstr(package)):
-            # pytype: enable=module-attr
-            yield encoding.strtolocal(r)
-
+    # py2exe raises an AssertionError if uses importlib.resources
+    if getattr(sys, "frozen", None) in ("console_exe", "windows_exe"):
+        raise ImportError
 
 except (ImportError, AttributeError):
     # importlib.resources was not found (almost definitely because we're on a
     # Python version before 3.7)
-
-    class FileNotFoundError(RuntimeError):
-        pass
 
     def open_resource(package, name):
         path = os.path.join(_package_path(package), name)
@@ -110,3 +89,32 @@ except (ImportError, AttributeError):
 
         for p in os.listdir(path):
             yield pycompat.fsencode(p)
+
+
+else:
+    from .. import encoding
+
+    def open_resource(package, name):
+        if hasattr(resources, 'files'):
+            return (
+                resources.files(  # pytype: disable=module-attr
+                    pycompat.sysstr(package)
+                )
+                .joinpath(pycompat.sysstr(name))
+                .open('rb')
+            )
+        else:
+            return resources.open_binary(  # pytype: disable=module-attr
+                pycompat.sysstr(package), pycompat.sysstr(name)
+            )
+
+    def is_resource(package, name):
+        return resources.is_resource(  # pytype: disable=module-attr
+            pycompat.sysstr(package), encoding.strfromlocal(name)
+        )
+
+    def contents(package):
+        # pytype: disable=module-attr
+        for r in resources.contents(pycompat.sysstr(package)):
+            # pytype: enable=module-attr
+            yield encoding.strtolocal(r)

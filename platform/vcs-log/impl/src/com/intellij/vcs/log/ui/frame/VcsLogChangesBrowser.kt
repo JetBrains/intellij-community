@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.ValueTag
-import com.intellij.openapi.vcs.history.VcsDiffUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.*
 import com.intellij.ui.ScrollableContentBorder.Companion.setup
@@ -313,7 +312,7 @@ class VcsLogChangesBrowser internal constructor(project: Project,
         context[ChangeDiffRequestProducer.TAG_KEY] = tag
       }
     }
-    return createDiffRequestProducer(myProject, userObject, context, forDiffPreview)
+    return createDiffRequestProducer(myProject, userObject, context)
   }
 
   fun createChangeProcessor(isInEditor: Boolean): DiffEditorViewer {
@@ -422,35 +421,14 @@ class VcsLogChangesBrowser internal constructor(project: Project,
       }
     }
 
-    fun createDiffRequestProducer(project: Project,
-                                  change: Change,
-                                  context: MutableMap<Key<*>, Any>,
-                                  forDiffPreview: Boolean): ChangeDiffRequestChain.Producer? {
-      if (change is MergedChange) {
-        if (change.sourceChanges.size == 2) {
-          if (forDiffPreview) {
-            putFilePathsIntoMergedChangeContext(change, context)
-          }
-          return MergedChangeDiffRequestProvider.MyProducer(project, change, context)
-        }
-      }
-      if (forDiffPreview) {
-        VcsDiffUtil.putFilePathsIntoChangeContext(change, context)
-      }
-      return ChangeDiffRequestProducer.create(project, change, context)
-    }
-
-    private fun putFilePathsIntoMergedChangeContext(change: MergedChange, context: MutableMap<Key<*>, Any>) {
-      val centerRevision = change.afterRevision
-      val leftRevision = change.sourceChanges[0].beforeRevision
-      val rightRevision = change.sourceChanges[1].beforeRevision
-      val centerFile = centerRevision?.file
-      val leftFile = leftRevision?.file
-      val rightFile = rightRevision?.file
-      context[DiffUserDataKeysEx.VCS_DIFF_CENTER_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(centerRevision, centerFile, null)
-      context[DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(rightRevision, rightFile, centerFile)
-      context[DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE] = VcsDiffUtil.getRevisionTitle(leftRevision, leftFile,
-                                                                                             centerFile ?: rightFile)
-    }
+    fun createDiffRequestProducer(
+      project: Project,
+      change: Change,
+      context: MutableMap<Key<*>, Any>,
+    ): ChangeDiffRequestChain.Producer? =
+      if (change is MergedChange && change.sourceChanges.size == 2)
+        MergedChangeDiffRequestProvider.MyProducer(project, change, context)
+      else
+        ChangeDiffRequestProducer.create(project, change, context)
   }
 }

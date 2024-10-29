@@ -4,9 +4,11 @@ package com.intellij.execution;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class RunManagerConfig {
   public static final int MIN_RECENT_LIMIT = 0;
   public static final int DEFAULT_RECENT_LIMIT = 5;

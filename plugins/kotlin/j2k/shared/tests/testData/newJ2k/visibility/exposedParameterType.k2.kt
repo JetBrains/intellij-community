@@ -1,6 +1,4 @@
-// ERROR: Function 'public' exposes its 'internal' parameter type 'B'.
-import J.B
-
+// ERROR: 'public' function exposes its 'internal' parameter type 'B'.
 class J {
     internal class B
 

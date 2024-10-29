@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -21,7 +22,6 @@ import com.intellij.openapi.project.DumbService.Companion.isDumb
 import com.intellij.openapi.project.DumbService.DumbModeListener
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil.capitalize
@@ -47,8 +47,8 @@ import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTIO
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.PROGRESS_FRACTION_POST
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.lang.Runnable
 import kotlin.properties.Delegates.observable
 
 private val LOG = logger<NonModalCommitWorkflowHandler<*, *>>()
@@ -298,6 +298,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
     }
   }
 
+  @ApiStatus.Internal
   override suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     if (!sessionInfo.isVcsCommit) {
       return workflow.executeSession(sessionInfo, commitInfo)
@@ -366,7 +367,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
 
       if (!skipPostCommitChecks) {
         if (postCommitChecks.isNotEmpty()) {
-          if (Registry.`is`("vcs.non.modal.post.commit.checks") &&
+          if (VcsConfiguration.getInstance(project).NON_MODAL_COMMIT_POSTPONE_SLOW_CHECKS &&
               commitInfo.executor?.requiresSyncCommitChecks() != true &&
               postCommitChecksHandler.canHandle(commitInfo)) {
             pendingPostCommitChecks = PendingPostCommitChecks(commitInfo.asStaticInfo(), postCommitChecks)
@@ -423,7 +424,10 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         }
       }
 
-      FileDocumentManager.getInstance().saveAllDocuments()
+      //readaction is not enough
+      writeIntentReadAction {
+        FileDocumentManager.getInstance().saveAllDocuments()
+      }
       return@underChangelist null
     }
   }
@@ -435,7 +439,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
           AbstractCommitWorkflow.runCommitCheck(project, commitCheck, commitInfo)
         } ?: continue
 
-        val solution = problem.showModalSolution(project, commitInfo)
+        val solution = writeIntentReadAction { problem.showModalSolution(project, commitInfo) }
         if (solution == CheckinHandler.ReturnResult.COMMIT) continue
 
         reportCommitCheckFailure(problem)

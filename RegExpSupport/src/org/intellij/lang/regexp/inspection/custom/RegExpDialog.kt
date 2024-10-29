@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.lang.regexp.inspection.custom
 
 import com.intellij.find.FindBundle
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
+import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
@@ -200,7 +201,8 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
     }
   }
 
-  private inner class MyEditorTextField(document: Document, val search: Boolean) : EditorTextField(document, project, RegExpFileType.INSTANCE, false, false) {
+  private inner class MyEditorTextField(document: Document, val search: Boolean) 
+    : EditorTextField(document, project, if (search) RegExpFileType.INSTANCE else PlainTextFileType.INSTANCE, false, false) {
     override fun createEditor(): EditorEx {
       return super.createEditor().apply {
         setHorizontalScrollbarVisible(true)
@@ -208,7 +210,7 @@ class RegExpDialog(val project: Project?, val editConfiguration: Boolean, defaul
         val outerBorder = JBUI.Borders.customLine(JBColor.border(), 1, 0, if (search) 1 else 0, 0)
         scrollPane.border = CompoundBorder(
           outerBorder,
-          JBUI.Borders.empty(6, 8, 6, 8)
+          JBUI.Borders.empty(6, 8)
         )
         isEmbeddedIntoDialogWrapper = true
       }

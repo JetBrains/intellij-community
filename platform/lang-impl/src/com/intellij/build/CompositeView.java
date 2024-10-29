@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 public class CompositeView<T extends ComponentContainer> extends JPanel implements ComponentContainer, UiDataProvider {
   private final Map<String, T> myViewMap = new ConcurrentHashMap<>();

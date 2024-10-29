@@ -144,39 +144,29 @@ public class JavaSurroundWithTest extends LightJavaCodeInsightTestCase {
     doTest(new JavaWithCastSurrounder());
   }
 
-  public void testSurroundWithNotNullCheck() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNullCheckSurrounder());
-  }
-
-  public void testSurroundExpressionWithIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithIfForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithNotForBoxedBooleans() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithNotSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIf() {
-    TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfExpressionSurrounder());
-  }
-
-  public void testSurroundExpressionWithElseIfElse() {
-    //TemplateManagerImpl.setTemplateTesting(getTestRootDisposable());
-    doTest(new JavaWithIfElseExpressionSurrounder());
-  }
+  public void testSurroundWithNotNullCheck() { doTest(new JavaWithNullCheckSurrounder()); }
+  public void testSurroundExpressionWithIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithIfForBoxedBooleans() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithNotForBoxedBooleans() { doTest(new JavaWithNotSurrounder()); }
+  public void testSurroundExpressionWithElseIf() { doTest(new JavaWithIfExpressionSurrounder()); }
+  public void testSurroundExpressionWithElseIfElse() { doTest(new JavaWithIfElseExpressionSurrounder()); }
+  public void testCaseBlockWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseResultWithSynchronized() { doTest(new JavaWithSynchronizedSurrounder()); }
+  public void testCaseThrowWithBlock() { doTest(new JavaWithBlockSurrounder()); }
+  public void testCaseThrowWithIf() { doTest(new JavaWithIfSurrounder()); }
+  public void testCaseThrowWithTryCatch() { doTest(new JavaWithTryCatchSurrounder()); }
+  public void testCatchBlockWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testCatchResultWithFor() { doTest(new JavaWithForSurrounder()); }
+  public void testDefaultBlockWithDoWhile() { doTest(new JavaWithDoWhileSurrounder()); }
+  public void testDefaultBlockWithTryFinally() { doTest(new JavaWithTryFinallySurrounder()); }
+  public void testDefaultResultWithRunnable() { doTest(new JavaWithRunnableSurrounder()); }
+  public void testDefaultResultWithTryCatchFinally() { doTest(new JavaWithTryCatchFinallySurrounder()); }
+  public void testDefaultResultWithWhile() { doTest(new JavaWithWhileSurrounder()); }
+  public void testDefaultThrowWithIfElse() { doTest(new JavaWithIfElseSurrounder()); }
 
   public void testSurroundWithTryFinallyUsingIndents() {
     CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(JavaFileType.INSTANCE);
-    boolean oldUseTabs = indentOptions.USE_TAB_CHARACTER;
     indentOptions.USE_TAB_CHARACTER = true;
     doTest(new JavaWithTryFinallySurrounder());
   }

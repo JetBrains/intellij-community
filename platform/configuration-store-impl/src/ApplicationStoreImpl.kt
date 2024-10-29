@@ -69,7 +69,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 
     coroutineScope {
       launch {
-        super.doSave(saveResult = saveResult, forceSavingAllSettings = forceSavingAllSettings)
+        super.doSave(saveResult, forceSavingAllSettings)
       }
 
       val projectManager = serviceAsync<ProjectManager>() as ProjectManagerEx
@@ -94,10 +94,7 @@ open class ApplicationStoreImpl(private val app: Application) : ComponentStoreWi
 class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null, controller: SettingsController?)
   : StateStorageManagerImpl(rootTagName = "application", pathMacroManager?.createTrackingSubstitutor(), componentManager = null, controller)
 {
-  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String =
-    @Suppress("DEPRECATION")
-    if (component is com.intellij.openapi.util.NamedJDOMExternalizable) "${component.externalFileName}${PathManager.DEFAULT_EXT}"
-    else StoragePathMacros.NON_ROAMABLE_FILE
+  override fun getOldStorageSpec(component: Any, componentName: String, operation: StateStorageOperation): String = StoragePathMacros.NON_ROAMABLE_FILE
 
   override val isUseXmlProlog: Boolean
     get() = false
@@ -110,7 +107,7 @@ class ApplicationStateStorageManager(pathMacroManager: PathMacroManager? = null,
           Files.deleteIfExists(storage.file)
         }
         else {
-          writer.writeTo(file = storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
+          writer.writeTo(storage.file, requestor = null, LineSeparator.LF, isUseXmlProlog)
         }
       }.getOrLogException(LOG)
     }

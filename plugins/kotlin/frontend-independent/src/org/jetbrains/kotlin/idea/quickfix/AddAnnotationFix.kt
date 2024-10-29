@@ -2,42 +2,40 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
-import com.intellij.psi.util.parents
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.base.codeInsight.ShortenReferencesFacility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.idea.util.addAnnotation
 import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtAnnotationEntry
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.renderer.render
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 open class AddAnnotationFix(
     element: KtElement,
     private val annotationClassId: ClassId,
     private val kind: Kind = Kind.Self,
-    private val argumentClassFqName: FqName? = null,
+    private val arguments: List<String> = emptyList(),
     private val existingAnnotationEntry: SmartPsiElementPointer<KtAnnotationEntry>? = null
 ) : KotlinQuickFixAction<KtElement>(element) {
     override fun getText(): String {
-        val annotationArguments = (argumentClassFqName?.shortName()?.let { "($it::class)" } ?: "")
-        val annotationCall = annotationClassId.shortClassName.asString() + annotationArguments
+        val annotationCall = annotationClassId.shortClassName.render() + renderArgumentsForIntentionName()
         return when (kind) {
             Kind.Self -> KotlinBundle.message("fix.add.annotation.text.self", annotationCall)
             Kind.Constructor -> KotlinBundle.message("fix.add.annotation.text.constructor", annotationCall)
             is Kind.Declaration -> KotlinBundle.message("fix.add.annotation.text.declaration", annotationCall, kind.name ?: "?")
             is Kind.ContainingClass -> KotlinBundle.message("fix.add.annotation.text.containing.class", annotationCall, kind.name ?: "?")
+            is Kind.Copy -> KotlinBundle.message("fix.add.annotation.with.arguments.text.copy", annotationCall, kind.source, kind.target)
         }
+    }
+
+    protected open fun renderArgumentsForIntentionName(): String {
+        return arguments.takeIf { it.isNotEmpty() }?.joinToString(", ", "(", ")") ?: ""
     }
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.annotation.family")
@@ -45,7 +43,7 @@ open class AddAnnotationFix(
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
         val annotationEntry = existingAnnotationEntry?.element
-        val annotationInnerText = argumentClassFqName?.let { "${it.render()}::class" }
+        val annotationInnerText = arguments.takeIf { it.isNotEmpty() }?.joinToString(", ")
         if (annotationEntry != null) {
             if (annotationInnerText == null) return
             val psiFactory = KtPsiFactory(project)
@@ -58,24 +56,10 @@ open class AddAnnotationFix(
     }
 
     sealed class Kind {
-        object Self : Kind()
-        object Constructor : Kind()
-        class Declaration(val name: String?) : Kind()
-        class ContainingClass(val name: String?) : Kind()
-    }
-
-    object TypeVarianceConflictFactory :
-        QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val typeReference = psiElement.parent as? KtTypeReference ?: return emptyList()
-            return listOf(AddAnnotationFix(typeReference, ClassId.topLevel(StandardNames.FqNames.unsafeVariance), Kind.Self))
-        }
-    }
-
-    object AddConsistentCopyVisibilityAnnotationFactory : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            val containingClass = psiElement.parents(withSelf = true).firstIsInstanceOrNull<KtClass>() ?: return emptyList()
-            return listOf(AddAnnotationFix(containingClass, StandardClassIds.Annotations.ConsistentCopyVisibility))
-        }
+        data object Self : Kind()
+        data object Constructor : Kind()
+        data class Declaration(val name: String?) : Kind()
+        data class ContainingClass(val name: String?) : Kind()
+        data class Copy(val source: String, val target: String) : Kind()
     }
 }

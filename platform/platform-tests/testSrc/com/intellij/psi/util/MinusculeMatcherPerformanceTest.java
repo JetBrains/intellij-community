@@ -4,7 +4,7 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -28,7 +28,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
       nonMatching.add(NameUtil.buildMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    PerformanceTestUtil.newPerformanceTest("Matching", () -> {
+    Benchmark.newBenchmark("Matching", () -> {
       for (int i = 0; i < 100_000; i++) {
         for (MinusculeMatcher matcher : matching) {
           Assert.assertTrue(matcher.matches(longName));
@@ -42,7 +42,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   }
 
   public void testOnlyUnderscoresPerformance() {
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       String small = StringUtil.repeat("_", 50000);
       String big = StringUtil.repeat("_", small.length() + 1);
       assertMatches("*" + small, big);
@@ -51,7 +51,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   }
 
   public void testRepeatedLetterPerformance() {
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       String big = StringUtil.repeat("Aaaaaa", 50000);
       assertMatches("aaaaaaaaaaaaaaaaaaaaaaaa", big);
       assertDoesntMatch("aaaaaaaaaaaaaaaaaaaaaaaab", big);
@@ -59,7 +59,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   }
 
   public void testMatchingLongHtmlWithShortHtml() {
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       String pattern = "*<p> aaa <div id=\"a";
       String html =
         "<html> <body> <H2> <FONT SIZE=\"-1\"> com.sshtools.cipher</FONT> <BR> Class AES128Cbc</H2> <PRE> java.lang.Object   <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.cipher.SshCipher       <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\">com.maverick.ssh.crypto.engines.CbcBlockCipher           <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by\"><B>com.sshtools.cipher.AES128Cbc</B> </PRE> <HR> <DL> <DT>public class <B>AES128Cbc</B><DT>extends com.maverick.ssh.crypto.engines.CbcBlockCipher</DL>  <P> This cipher can optionally be added to the J2SSH Maverick API. To add  the ciphers from this package simply add them to the <A HREF=\"../../../com/maverick/ssh2/Ssh2Context.html\" title=\"class in com.maverick.ssh2\"><CODE>Ssh2Context</CODE></A>  <blockquote><pre>   import com.sshtools.cipher.*;   </pre></blockquote> <P>  <P> <DL> <DT><B>Version:</B></DT>   <DD>Revision: 1.20</DD> </DL> <HR> </body> </html>";
@@ -82,11 +82,11 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   }
 
   private void assertDoesntMatchFast(String pattern, String name, String subTestName) {
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> assertDoesntMatch(pattern, name)).startAsSubtest(subTestName);
+    Benchmark.newBenchmark(getName(), () -> assertDoesntMatch(pattern, name)).startAsSubtest(subTestName);
   }
 
   public void testMatchingLongRuby() {
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       String pattern = "*# -*- coding: utf-8 -*-$:. unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App. setup do |app|  # Use `rake config' to see complete project settings.   app. sdk_version = '4. 3'end";
       String name    = "# -*- coding: utf-8 -*-$:.unshift(\"/Library/RubyMotion/lib\")require 'motion/project'Motion::Project::App.setup do |app|  # Use `rake config' to see complete project settings.  app.sdk_version = '4.3'  app.frameworks -= ['UIKit']end";
       assertDoesntMatch(pattern, name);
@@ -96,7 +96,7 @@ public class MinusculeMatcherPerformanceTest extends TestCase {
   public void testLongStringMatchingWithItself() {
     String s =
       "the class with its attributes mapped to fields of records parsed by an {@link AbstractParser} or written by an {@link AbstractWriter}.";
-    PerformanceTestUtil.newPerformanceTest(getName(), () -> {
+    Benchmark.newBenchmark(getName(), () -> {
       assertMatches(s, s);
       assertMatches("*" + s, s);
 

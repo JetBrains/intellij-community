@@ -15,5 +15,6 @@
     <orderEntry type="library" name="jps-javac-extension" level="project" />
     <orderEntry type="library" name="netty-buffer" level="project" />
     <orderEntry type="library" name="protobuf" level="project" />
+    <orderEntry type="library" name="netty-codec-protobuf" level="project" />
   </component>
 </module>

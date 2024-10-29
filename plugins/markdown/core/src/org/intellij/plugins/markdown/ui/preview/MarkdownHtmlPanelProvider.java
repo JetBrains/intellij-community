@@ -40,6 +40,10 @@ public abstract class MarkdownHtmlPanelProvider {
 
   public abstract @NotNull ProviderInfo getProviderInfo();
 
+  public @NotNull SourceTextPreprocessor getSourceTextPreprocessor() {
+    return SourceTextPreprocessor.getDefault();
+  }
+
   public static  @NotNull List<MarkdownHtmlPanelProvider> getProviders() {
     return EP_NAME.getExtensionList();
   }

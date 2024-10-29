@@ -24,7 +24,6 @@ import com.intellij.internal.inspector.UiInspectorPreciseContextProvider;
 import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.internal.statistic.collectors.fus.PluginInfoValidationRule;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.BooleanEventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.StringEventField;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
@@ -88,7 +87,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
 import com.intellij.util.animation.AlphaAnimationContext;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -100,7 +99,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterable;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -120,7 +118,6 @@ import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.Callable;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
@@ -157,8 +154,10 @@ import static com.intellij.openapi.ui.ex.lineNumber.LineNumberConvertersKt.getSt
  * </ul>
  */
 @DirtyUI
-final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider,
-                                                                                 Accessible, UiInspectorPreciseContextProvider {
+final class EditorGutterComponentImpl extends EditorGutterComponentEx
+  implements MouseListener, MouseMotionListener, UiCompatibleDataProvider,
+             Accessible, UiInspectorPreciseContextProvider {
+
   static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
@@ -252,8 +251,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Disposer.register(editor.getDisposable(), myAlphaContext.getDisposable());
   }
 
-  @NotNull
-  EditorImpl getEditor() {
+  public @NotNull EditorImpl getEditor() {
     return myEditor;
   }
 
@@ -845,24 +843,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (myEditor.isDisposed()) return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myEditor.isDisposed()) return;
 
-    if (KEY.is(dataId)) {
-      return this;
-    }
-    if (CommonDataKeys.EDITOR.is(dataId)) {
-      return myEditor;
-    }
-    if (LOGICAL_LINE_AT_CURSOR.is(dataId)) {
-      if (myLastActionableClick == null) return null;
-      return myLastActionableClick.myLogicalLineAtCursor;
-    }
-    if (ICON_CENTER_POSITION.is(dataId)) {
-      if (myLastActionableClick == null) return null;
-      return myLastActionableClick.myIconCenterPosition;
-    }
-    return null;
+    sink.set(KEY, this);
+    sink.set(CommonDataKeys.EDITOR, myEditor);
+    sink.set(LOGICAL_LINE_AT_CURSOR, myLastActionableClick == null ? null : myLastActionableClick.myLogicalLineAtCursor);
+    sink.set(ICON_CENTER_POSITION, myLastActionableClick == null ? null : myLastActionableClick.myIconCenterPosition);
   }
 
   boolean isShowGapAfterAnnotations() {
@@ -2690,12 +2677,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     ClickInfo clickInfo = myLastActionableClick;
     if (clickInfo == null) return;
     boolean[] removed = {false};
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
+    EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.popup.progress.icon.delay", 500), () -> {
       if (myLastActionableClick != clickInfo || removed[0]) return;
       clickInfo.myProgressVisualLine = info.visualLine;
       clickInfo.myProgressGutterMark = info.renderer;
       repaint();
-    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
+    });
     myLastActionableClick.myProgressRemover = () -> {
       EDT.assertIsEdt();
       removed[0] = true;
@@ -2917,14 +2904,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final class GutterIconClickCollectors extends CounterUsagesCollector {
     private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 5);
 
-    private static final BooleanEventField IS_DUMB_MODE = EventFields.Boolean("dumb");
     private static final StringEventField ICON = EventFields.StringValidatedByCustomRule("icon_id", PluginInfoValidationRule.class);
 
     private static final VarargEventId CLICKED = GROUP.registerVarargEvent(
       "clicked",
       EventFields.Language,
       ICON,
-      IS_DUMB_MODE,
+      EventFields.Dumb,
       EventFields.PluginInfo
     );
 
@@ -2942,7 +2928,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         project,
         EventFields.Language.with(language),
         ICON.with(icon),
-        IS_DUMB_MODE.with(isDumb),
+        EventFields.Dumb.with(isDumb),
         EventFields.PluginInfo.with(pluginInfo)
       );
     }

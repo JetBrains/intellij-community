@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +45,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     assert rootTag != null;
     XmlAttribute anchor = getAnchor(rootTag);
 
-    final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
+    List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
     String prefix = getPrefix(file, nsPrefix, namespace, providers);
 
     final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
@@ -59,7 +59,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
       }
     }
 
-    final @NonNls String qname = "xmlns" + (prefix.length() > 0 ? ":" + prefix : "");
+    final @NonNls String qname = "xmlns" + (!prefix.isEmpty() ? ":" + prefix : "");
     final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);
     if (anchor == null) {
       rootTag.add(attribute);
@@ -88,7 +88,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
     }
     XmlUtil.reformatTagStart(rootTag);
 
-    if (editor != null && namespace.length() == 0) {
+    if (editor != null && namespace.isEmpty()) {
       final XmlAttribute xmlAttribute = rootTag.getAttribute(qname);
       if (xmlAttribute != null) {
         final XmlAttributeValue value = xmlAttribute.getValueElement();
@@ -135,7 +135,7 @@ public class DefaultXmlNamespaceHelper extends XmlNamespaceHelper {
 
   private static String getLocation(XmlFile file, String namespace, List<XmlSchemaProvider> providers) {
     String location = null;
-    if (namespace.length() > 0) {
+    if (!namespace.isEmpty()) {
       for (XmlSchemaProvider provider : providers) {
         Set<String> locations = provider.getLocations(namespace, file);
         if (locations != null && !locations.isEmpty()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationBundle;
@@ -17,10 +17,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -30,6 +27,7 @@ import java.util.*;
 
 import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
+@ApiStatus.Internal
 public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel {
 
   private static final Logger LOG = Logger.getInstance(CodeStyleBlankLinesPanel.class);
@@ -89,8 +87,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     return LanguageCodeStyleSettingsProvider.SettingsType.BLANK_LINES_SETTINGS;
   }
 
-  @NotNull
-  private List<IntOption> getOptions(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
+  private @NotNull List<IntOption> getOptions(@NotNull @NlsContexts.BorderTitle String groupName, @NotNull List<? extends CodeStyleSettingPresentation> settings) {
     final List<IntOption> groupOptions = new SmartList<>();
     for (CodeStyleSettingPresentation setting: settings) {
       if (myAllOptionsAllowed || myAllowedOptions.contains(setting.getFieldName())) {

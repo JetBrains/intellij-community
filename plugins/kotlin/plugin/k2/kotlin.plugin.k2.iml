@@ -69,7 +69,6 @@
     <orderEntry type="module" module-name="kotlin.run-configurations.jvm" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.spellchecker" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.fir.fir-low-level-api-ide-impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.base.fir.analysis-api-platform" scope="RUNTIME" />
@@ -92,6 +91,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.line-markers.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.base.util" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.navigation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.refactorings.move.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.refactorings.rename.k2" scope="RUNTIME" />
@@ -105,6 +106,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.common.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.gradle" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.assignment.maven" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.code-insight.structural-search.k2" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="RUNTIME" />
@@ -119,5 +121,8 @@
     <orderEntry type="module" module-name="kotlin.code-insight.fixes.k2" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.jsr223" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.performanceExtendedPlugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation.k2" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.features-trainer" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.k2.internal" scope="RUNTIME" />
   </component>
 </module>

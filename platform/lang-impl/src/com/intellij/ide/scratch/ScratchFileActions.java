@@ -3,6 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
+import com.intellij.ide.actions.NewFileActionWithCategory;
 import com.intellij.ide.actions.RecentLocationsAction;
 import com.intellij.ide.scratch.ScratchImplUtil.LanguageItem;
 import com.intellij.ide.util.DeleteHandler;
@@ -27,10 +28,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorState;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.NaturalComparator;
@@ -65,8 +63,7 @@ public final class ScratchFileActions {
     return ourCurrentBuffer;
   }
 
-
-  public static final class NewFileAction extends DumbAwareAction {
+  static final class NewFileAction extends DumbAwareAction implements NewFileActionWithCategory {
     private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.lazy(() -> {
@@ -93,7 +90,7 @@ public final class ScratchFileActions {
       boolean enabled = project != null && (
         e.isFromActionToolbar() ||
         ActionPlaces.isMainMenuOrActionSearch(place) ||
-        ActionPlaces.isPopupPlace(place) && e.getData(LangDataKeys.IDE_VIEW) != null);
+        e.isFromContextMenu() && e.getData(LangDataKeys.IDE_VIEW) != null);
 
       e.getPresentation().setEnabledAndVisible(enabled);
       updatePresentationTextAndIcon(e, e.getPresentation());
@@ -172,9 +169,14 @@ public final class ScratchFileActions {
         presentation.setIcon(null);
       }
     }
+
+    @Override
+    public @NotNull String getCategory() {
+      return "Scratch";
+    }
   }
 
-  public static final class NewBufferAction extends DumbAwareAction {
+  static final class NewBufferAction extends DumbAwareAction {
 
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
@@ -224,7 +226,8 @@ public final class ScratchFileActions {
     return context;
   }
 
-  static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+  @IntellijInternalApi
+  public static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     if (context.fileExtension == null && context.language != null) {
       LanguageFileType fileType = context.language.getAssociatedFileType();
       if (fileType != null) {
@@ -390,7 +393,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ShowFilesPopupAction extends DumbAwareAction {
+  static final class ShowFilesPopupAction extends DumbAwareAction {
     @Override
     public @NotNull ActionUpdateThread getActionUpdateThread() {
       return ActionUpdateThread.BGT;
@@ -449,7 +452,7 @@ public final class ScratchFileActions {
     }
   }
 
-  public static final class ExportToScratchAction extends DumbAwareAction {
+  static final class ExportToScratchAction extends DumbAwareAction {
     {
       setEnabledInModalContext(true);
     }

@@ -34,9 +34,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
+@ApiStatus.Internal
 public final class X11UiUtil {
   private static final Logger LOG = Logger.getInstance(X11UiUtil.class);
 
@@ -84,6 +86,8 @@ public final class X11UiUtil {
     "wmii",
     "xmonad"
   );
+
+  private static final ConcurrentHashMap<String, Boolean> unsupportedCommands = new ConcurrentHashMap<>();
 
   @SuppressWarnings("SpellCheckingInspection")
   private static final class Xlib {
@@ -283,7 +287,7 @@ public final class X11UiUtil {
       }
     }
 
-    private Long findProcessWindow(long window, int pid, int recursionLevel) {
+    private Long findProcessWindow(long window, long pid, int recursionLevel) {
       if (recursionLevel > 100) {
         LOG.warn("Recursion level exceeded. Deep lying windows will be skipped");
         return null;
@@ -322,7 +326,7 @@ public final class X11UiUtil {
       }
     }
 
-    private boolean isProcessWindowOwner(Long window, int pid) {
+    private boolean isProcessWindowOwner(Long window, long pid) {
       long[] value;
       try {
         value = getWindowProperty(window, _NET_WM_PID, ANY_PROPERTY_TYPE, FORMAT_LONG);
@@ -537,7 +541,7 @@ public final class X11UiUtil {
   }
 
   @ApiStatus.Internal
-  public static Long findVisibleWindowByPid(int pid) {
+  public static Long findVisibleWindowByPid(long pid) {
     if (X11 == null) return null;
     try {
       var rootWindow = X11.getRootWindow(0);
@@ -587,6 +591,16 @@ public final class X11UiUtil {
   }
 
   private static @Nullable String exec(String errorMessage, String... command) {
+    if (command.length == 0) {
+      LOG.error(errorMessage, "No command provided");
+      return null;
+    }
+
+    if (unsupportedCommands.containsKey(command[0])) {
+      // Avoid running and logging unsupported commands
+      return null;
+    }
+
     try {
       Process process = new ProcessBuilder(command).start();
       if (!process.waitFor(5, TimeUnit.SECONDS)) {
@@ -604,6 +618,11 @@ public final class X11UiUtil {
     }
     catch (Exception e) {
       LOG.info(errorMessage, e);
+
+      if (e.getMessage().contains("No such file or directory")) {
+        unsupportedCommands.put(command[0], true);
+      }
+
       return null;
     }
   }

@@ -3,11 +3,13 @@ package com.intellij.xml.breadcrumbs;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class BreadcrumbsForceShownSettings {
   private BreadcrumbsForceShownSettings() { }
 

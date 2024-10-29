@@ -4,6 +4,7 @@ package com.intellij.vcs.log.graph.impl.facade;
 import com.intellij.vcs.log.graph.api.LinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.impl.facade.GraphChanges.EdgeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class GraphChangesUtil {
   public static final GraphChanges<Integer> SOME_CHANGES = new GraphChanges<>() {
     @NotNull

@@ -428,7 +428,7 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
                        name: ReadOnly[Required[str]]
                    
                    class Movie(VisualArt):
-                       <warning descr="Cannot overwrite TypedDict field">name</warning>: Required[str]
+                       name: Required[str]
                    
                    m: Movie = {"name": "Blur"}
                    print(m["name"])
@@ -447,6 +447,41 @@ public class PyTypedDictInspectionTest extends PyInspectionTestCase {
 
 
         movie = Movie(name="")
+        """
+    );
+  }
+
+  public void testUpdateReadOnlyMember() {
+    doTestByText(
+      """
+        from typing import TypedDict, NotRequired
+        from typing_extensions import ReadOnly
+        
+        class A(TypedDict):
+            x: NotRequired[ReadOnly[int]]
+            y: int
+        
+        a1: A = { "x": 1, "y": 1 }
+        a2: A = { "x": 2, "y": 4 }
+        a1.<warning descr="TypedDict key \\"x\\" is ReadOnly">update</warning>(a2)
+        """
+    );
+  }
+
+  public void testCorrectOverriden() {
+    doTestByText(
+      """
+        from typing import TypedDict
+        from typing_extensions import ReadOnly
+        
+        
+        class NamedDict(TypedDict):
+            name: ReadOnly[str]
+        
+        
+        class Album(NamedDict):
+            name: str
+            year: int
         """
     );
   }

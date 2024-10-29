@@ -5,6 +5,7 @@ package com.intellij.refactoring.copy;
 import com.intellij.ide.TwoPaneIdeView;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.structureView.StructureViewFactoryEx;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbModeBlockedFunctionality;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.content.Content;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +62,9 @@ public final class CopyHandler {
           return;
         }
         //todo warn that something can be broken https://youtrack.jetbrains.com/issue/IJPL-402
-        delegate.doCopy(elements, defaultTargetDirectory);
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          delegate.doCopy(elements, defaultTargetDirectory);
+        }
         break;
       }
     }

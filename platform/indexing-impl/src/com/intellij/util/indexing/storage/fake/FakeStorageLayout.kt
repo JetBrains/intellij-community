@@ -10,6 +10,7 @@ import com.intellij.util.indexing.impl.forward.EmptyForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndex
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor
 import com.intellij.util.indexing.impl.forward.MapForwardIndexAccessor
+import com.intellij.util.indexing.impl.storage.defaultMapExternalizerFor
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -48,7 +49,7 @@ internal class FakeStorageLayout<K, V>(private val extension: FileBasedIndexExte
   }
 
   override fun getForwardIndexAccessor(): ForwardIndexAccessor<K, V> {
-    return MapForwardIndexAccessor(InputMapExternalizer(extension))
+    return MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
   }
 
   override fun clearIndexData() {}

@@ -24,6 +24,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class CommandMerger {
   private final UndoManagerImpl myManager;
   private final UndoManagerImpl.ClientState myState;

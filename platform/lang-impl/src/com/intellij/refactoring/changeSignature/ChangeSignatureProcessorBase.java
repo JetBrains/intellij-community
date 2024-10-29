@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.diagnostic.PluginException;
@@ -58,7 +58,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return findUsages(myChangeInfo);
   }
 
-  public static void collectConflictsFromExtensions(@NotNull final Ref<UsageInfo[]> refUsages,
+  public static void collectConflictsFromExtensions(final @NotNull Ref<UsageInfo[]> refUsages,
                                                     final MultiMap<PsiElement, @DialogMessage String> conflictDescriptions,
                                                     final ChangeInfo changeInfo) {
     Computable<Boolean> computable = () -> {
@@ -125,15 +125,13 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return super.isPreviewUsages(usages);
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return REFACTORING_ID;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     ChangeInfo changeInfo = getChangeInfo();
     data.addElement(changeInfo.getMethod());
@@ -151,9 +149,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(getChangeInfo().getMethod());
     return data;
@@ -221,9 +218,8 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
   }
 
-  @NotNull
   @Override
-  protected @Command String getCommandName() {
+  protected @NotNull @Command String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }
 

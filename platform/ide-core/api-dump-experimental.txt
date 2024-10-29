@@ -1,0 +1,83 @@
+com.intellij.ide.dnd.DnDEvent$DropTargetHighlightingType
+- *sf:BOTTOM:I
+*c:com.intellij.ide.ui.IdeUiService
+- <init>():V
+- askForUnlock(com.intellij.openapi.project.Project,java.util.List):com.intellij.openapi.fileEditor.UnlockOption
+- browse(java.lang.String):V
+- browse(java.net.URL):V
+- chooseFile(com.intellij.openapi.fileChooser.FileChooserDescriptor,javax.swing.JComponent,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile
+- chooseFiles(com.intellij.openapi.fileChooser.FileChooserDescriptor,com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):com.intellij.openapi.vfs.VirtualFile[]
+- createAsyncDataContext(com.intellij.openapi.actionSystem.DataContext):com.intellij.openapi.actionSystem.DataContext
+- createCustomizedDataContext(com.intellij.openapi.actionSystem.DataContext,com.intellij.openapi.actionSystem.DataProvider):com.intellij.openapi.actionSystem.DataContext
+- createUiDataContext(java.awt.Component):com.intellij.openapi.actionSystem.DataContext
+- getComponentFromRecentMouseEvent():java.awt.Component
+- s:getInstance():com.intellij.ide.ui.IdeUiService
+- getPlainProxyPassword():java.lang.String
+- getProxyList(java.net.URL):java.util.List
+- getProxyLogin():java.lang.String
+- getSslContext():javax.net.ssl.SSLContext
+- getSslSocketFactory():javax.net.ssl.SSLSocketFactory
+- initUpdateSession(com.intellij.openapi.actionSystem.AnActionEvent):V
+- isFileRecentlyChanged(com.intellij.openapi.project.Project,com.intellij.openapi.vfs.VirtualFile):Z
+- isProxyAuth():Z
+- isUseSafeWrite():Z
+- logIdeScriptUsageEvent(java.lang.Class):V
+- notifyByBalloon(com.intellij.openapi.project.Project,java.lang.String,com.intellij.openapi.ui.MessageType,java.lang.String,javax.swing.Icon,javax.swing.event.HyperlinkListener):Z
+- openHttpConnection(java.lang.String):java.net.URLConnection
+- performActionDumbAwareWithCallbacks(com.intellij.openapi.actionSystem.AnAction,com.intellij.openapi.actionSystem.AnActionEvent):V
+- prepareURL(java.lang.String):V
+- revealFile(java.nio.file.Path):V
+- showErrorDialog(java.lang.String,java.lang.String):Z
+- showErrorHint(com.intellij.openapi.editor.Editor,java.lang.String):V
+- showRefactoringMessageDialog(java.lang.String,java.lang.String,java.lang.String,java.lang.String,Z,com.intellij.openapi.project.Project):V
+- systemNotify(java.lang.String,java.lang.String):V
+f:com.intellij.notification.Notifications$Bus
+- *s:notifyAndHide(com.intellij.notification.Notification,com.intellij.openapi.project.Project):V
+*:com.intellij.openapi.options.Configurable$InnerWithModifiableParent
+- a:getModifiableParents():java.util.List
+*:com.intellij.openapi.options.ConfigurationQuickFix
+- a:applyFix(com.intellij.openapi.actionSystem.DataContext):V
+f:com.intellij.openapi.project.ProjectUtil
+- *sf:clearCachesForAllProjects(java.lang.String):V
+- *sf:clearCachesForAllProjectsStartingWith(java.lang.String):V
+*f:com.intellij.openapi.ui.MessageDialogBuilder$Message
+- com.intellij.openapi.ui.MessageDialogBuilder
+- <init>(java.lang.String,java.lang.String):V
+- f:buttons(java.lang.String[]):com.intellij.openapi.ui.MessageDialogBuilder$Message
+- f:defaultButton(java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$Message
+- f:focusedButton(java.lang.String):com.intellij.openapi.ui.MessageDialogBuilder$Message
+- f:show(com.intellij.openapi.project.Project,java.awt.Component):java.lang.String
+- bs:show$default(com.intellij.openapi.ui.MessageDialogBuilder$Message,com.intellij.openapi.project.Project,java.awt.Component,I,java.lang.Object):java.lang.String
+*:com.intellij.openapi.wm.IconWidgetPresentation
+- com.intellij.openapi.wm.WidgetPresentation
+- a:icon():kotlinx.coroutines.flow.Flow
+*:com.intellij.openapi.wm.TextWidgetPresentation
+- com.intellij.openapi.wm.WidgetPresentation
+- a:getAlignment():F
+- a:text():kotlinx.coroutines.flow.Flow
+*:com.intellij.openapi.wm.WidgetPresentation
+- getClickConsumer():kotlin.jvm.functions.Function1
+- getShortcutText(kotlin.coroutines.Continuation):java.lang.Object
+- bs:getShortcutText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
+- getTooltipText(kotlin.coroutines.Continuation):java.lang.Object
+- bs:getTooltipText$suspendImpl(com.intellij.openapi.wm.WidgetPresentation,kotlin.coroutines.Continuation):java.lang.Object
+*:com.intellij.openapi.wm.WidgetPresentationDataContext
+- a:getCurrentFileEditor():kotlinx.coroutines.flow.StateFlow
+- a:getProject():com.intellij.openapi.project.Project
+*:com.intellij.openapi.wm.WidgetPresentationFactory
+- a:createPresentation(com.intellij.openapi.wm.WidgetPresentationDataContext,kotlinx.coroutines.CoroutineScope):com.intellij.openapi.wm.WidgetPresentation
+c:com.intellij.projectImport.ProjectAttachProcessor
+- *:attachToProjectAsync(com.intellij.openapi.project.Project,java.nio.file.Path,com.intellij.projectImport.ProjectOpenedCallback,kotlin.coroutines.Continuation):java.lang.Object
+c:com.intellij.ui.AnimatedIcon
+- javax.swing.Icon
+- *sf:REFRESH_DELEGATE:com.intellij.openapi.util.Key
+c:com.intellij.ui.UserActivityWatcher
+- com.intellij.ui.ComponentTreeWatcher
+- *sf:DO_NOT_WATCH:com.intellij.openapi.util.Key
+f:com.intellij.util.ui.ShowingScopeKt
+- *sf:showingScope(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3):kotlinx.coroutines.Job
+- *sf:showingScope(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
+- *bs:showingScope$default(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function1,kotlin.jvm.functions.Function3,I,java.lang.Object):kotlinx.coroutines.Job
+- *bs:showingScope$default(java.awt.Component,java.lang.String,kotlin.coroutines.CoroutineContext,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job
+f:com.intellij.util.ui.update.UiNotifyConnector$Companion
+- *f:forceNotifyIsShown(java.awt.Component):V

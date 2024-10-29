@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,29 +55,25 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   }
 
   @Override
-  @NotNull
-  protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
+  protected @NotNull UsageViewDescriptor createUsageViewDescriptor(UsageInfo @NotNull [] usages) {
     return new PushDownUsageViewDescriptor<>((Klass)myPushDownData.getSourceClass(), myPushDownData.getMembersToMove());
   }
 
-  @NotNull
   @Override
-  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
+  protected @NotNull Collection<? extends PsiElement> getElementsToWrite(@NotNull UsageViewDescriptor descriptor) {
     return Collections.singletonList(myPushDownData.getSourceClass());
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getBeforeData() {
+  protected @Nullable RefactoringEventData getBeforeData() {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(myPushDownData.getSourceClass());
     data.addElements(ContainerUtil.map(myPushDownData.getMembersToMove(), MemberInfoBase::getMember));
     return data;
   }
 
-  @Nullable
   @Override
-  protected RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
+  protected @Nullable RefactoringEventData getAfterData(UsageInfo @NotNull [] usages) {
     final List<PsiElement> elements = new ArrayList<>();
     for (UsageInfo usage : usages) {
       elements.add(usage.getElement());
@@ -94,7 +90,7 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
   }
 
   @Override
-  protected boolean preprocessUsages(@NotNull final Ref<UsageInfo[]> refUsages) {
+  protected boolean preprocessUsages(final @NotNull Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, @DialogMessage String> conflicts = new MultiMap<>();
     myDelegate.checkSourceClassConflicts(myPushDownData, conflicts);
     final UsageInfo[] usagesIn = refUsages.get();
@@ -174,15 +170,13 @@ public class PushDownProcessor<MemberInfo extends MemberInfoBase<Member>,
     }
   }
 
-  @NotNull
   @Override
-  protected @DialogTitle String getCommandName() {
+  protected @NotNull @DialogTitle String getCommandName() {
     return RefactoringBundle.message("push.members.down.title");
   }
 
-  @Nullable
   @Override
-  protected String getRefactoringId() {
+  protected @Nullable String getRefactoringId() {
     return "refactoring.push.down";
   }
 }

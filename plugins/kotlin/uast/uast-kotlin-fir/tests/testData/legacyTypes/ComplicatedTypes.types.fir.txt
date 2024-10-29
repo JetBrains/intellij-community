@@ -12,7 +12,7 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                                     UBlockExpression [{...}]
                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [TypeBase()]
                                             UIdentifier (Identifier (TypeBase)) [UIdentifier (Identifier (TypeBase))]
-                                            USimpleNameReferenceExpression (identifier = TypeBase, resolvesTo = PsiClass: TypeBase) [TypeBase] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                                            USimpleNameReferenceExpression (identifier = TypeBase, resolvesTo = PsiClass: TypeBase) [TypeBase]
                 UDeclarationsExpression [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!]
                     ULocalVariable (name = superType) [var superType: java.lang.reflect.Type = TypeBase<T>.java.genericSuperclass!!]
                         UPostfixExpression (operator = !!) [TypeBase<T>.java.genericSuperclass!!] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
@@ -26,16 +26,16 @@ UFile (package = ) [import java.lang.reflect.ParameterizedType...]
                                         UIdentifier (Identifier (genericSuperclass)) [UIdentifier (Identifier (genericSuperclass))]
                 UReturnExpression [return (superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UPostfixExpression (operator = !!) [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()!!] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
-                        UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()] : java.lang.reflect.Type
-                            UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments] : java.lang.reflect.Type[]
+                        UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments.first()] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
+                            UQualifiedReferenceExpression [(superType as java.lang.reflect.ParameterizedType).actualTypeArguments] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type[]
                                 UParenthesizedExpression [(superType as java.lang.reflect.ParameterizedType)] : @org.jetbrains.annotations.NotNull() java.lang.reflect.ParameterizedType
                                     UBinaryExpressionWithType [superType as java.lang.reflect.ParameterizedType] : @org.jetbrains.annotations.NotNull() java.lang.reflect.ParameterizedType
                                         USimpleNameReferenceExpression (identifier = superType) [superType] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
                                         UTypeReferenceExpression (name = java.lang.reflect.ParameterizedType) [java.lang.reflect.ParameterizedType]
-                                USimpleNameReferenceExpression (identifier = actualTypeArguments) [actualTypeArguments] : java.lang.reflect.Type[]
+                                USimpleNameReferenceExpression (identifier = actualTypeArguments) [actualTypeArguments] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type[]
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [getActualTypeArguments()]
                                         UIdentifier (Identifier (actualTypeArguments)) [UIdentifier (Identifier (actualTypeArguments))]
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : java.lang.reflect.Type
+                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [first()] : @org.jetbrains.annotations.NotNull() java.lang.reflect.Type
                                 UIdentifier (Identifier (first)) [UIdentifier (Identifier (first))]
     UClass (name = TypeBase) [public class TypeBase {...}]
         UAnnotation (fqName = kotlin.PublishedApi) [@kotlin.PublishedApi]

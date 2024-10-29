@@ -33,11 +33,9 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
   public void update(@NotNull AnActionEvent event) {
     boolean toEnable = getPlace(event) != null;
 
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    event.getPresentation().setEnabled(toEnable);
+    if (event.isFromContextMenu()) {
       event.getPresentation().setVisible(toEnable);
-    }
-    else {
-      event.getPresentation().setEnabled(toEnable);
     }
   }
 
@@ -53,9 +51,6 @@ public class ToggleMethodBreakpointAction extends AnAction implements ActionRemo
       return;
     }
     DebuggerManagerEx debugManager = DebuggerManagerEx.getInstanceEx(project);
-    if (debugManager == null) {
-      return;
-    }
     final BreakpointManager manager = debugManager.getBreakpointManager();
     final PlaceInDocument place = getPlace(e);
     if (place != null && DocumentUtil.isValidOffset(place.getOffset(), place.getDocument())) {

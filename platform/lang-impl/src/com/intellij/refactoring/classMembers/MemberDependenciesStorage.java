@@ -6,12 +6,15 @@ import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import java.util.HashMap;
+
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Set;
 
 
+@ApiStatus.Internal
 public final class MemberDependenciesStorage<T extends NavigatablePsiElement, C extends PsiElement> {
   private final C myClass;
   private C mySuperClass;

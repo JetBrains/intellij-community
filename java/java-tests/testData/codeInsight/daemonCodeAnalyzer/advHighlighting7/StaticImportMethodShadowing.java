@@ -27,5 +27,5 @@ class Base {
 
 class Derived extends Base {
   final static Object o1 = <error descr="Non-static method 'getObject()' cannot be referenced from a static context">getObject</error>(null);
-  final Object o2 = getObject<error descr="'getObject()' in 'P1.Base' cannot be applied to '(null)'">(null)</error>;
+  final Object o2 = getObject<error descr="Expected no arguments but found 1">(null)</error>;
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.hierarchy.*;
@@ -17,6 +17,7 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageContextPanelBase;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,13 +25,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
   private HierarchyBrowser myBrowser;
 
   public static final class Provider implements UsageContextPanel.Provider {
-    @NotNull
     @Override
-    public UsageContextPanel create(@NotNull UsageView usageView) {
+    public @NotNull UsageContextPanel create(@NotNull UsageView usageView) {
       return new UsageContextCallHierarchyPanel(usageView.getPresentation());
     }
 
@@ -53,9 +54,8 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
       PsiElement providerTarget = provider.getTarget(context);
       return providerTarget != null;
     }
-    @NotNull
     @Override
-    public String getTabTitle() {
+    public @NotNull String getTabTitle() {
       return LangBundle.message("tab.title.call.hierarchy");
     }
   }
@@ -71,7 +71,7 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
   }
 
   @Override
-  public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
+  public void updateLayoutLater(final @Nullable List<? extends UsageInfo> infos) {
     PsiElement element = ContainerUtil.isEmpty(infos) ? null : getElementToSliceOn(infos);
     if (myBrowser instanceof Disposable) {
       Disposer.dispose((Disposable)myBrowser);
@@ -99,8 +99,7 @@ public final class UsageContextCallHierarchyPanel extends UsageContextPanelBase 
     revalidate();
   }
 
-  @Nullable
-  private static HierarchyBrowser createCallHierarchyPanel(@NotNull PsiElement element) {
+  private static @Nullable HierarchyBrowser createCallHierarchyPanel(@NotNull PsiElement element) {
     DataContext context = SimpleDataContext.builder()
       .add(CommonDataKeys.PROJECT, element.getProject())
       .add(CommonDataKeys.PSI_ELEMENT, element)

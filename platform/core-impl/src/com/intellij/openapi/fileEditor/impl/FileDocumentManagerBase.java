@@ -10,10 +10,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.FileContentUtilCore;
@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public abstract class FileDocumentManagerBase extends FileDocumentManager {
   public static final Key<Document> HARD_REF_TO_DOCUMENT_KEY = Key.create("HARD_REF_TO_DOCUMENT_KEY");
@@ -55,7 +56,7 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
       return null;
     }
 
-    boolean tooLarge = FileUtilRt.isTooLarge(file.getLength());
+    boolean tooLarge = FileSizeLimit.isTooLarge(file.getLength(), file.getExtension());
     if (file.getFileType().isBinary() && tooLarge) {
       return null;
     }
@@ -176,6 +177,13 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   }
 
   @Override
+  @ApiStatus.Internal
+  public void reloadFileTypes(@NotNull Set<FileType> fileTypes) {
+    List<VirtualFile> supported = ContainerUtil.filter(myDocumentCache.keySet(), file -> fileTypes.contains(file.getFileType()));
+    FileContentUtilCore.reparseFiles(supported);
+  }
+
+  @Override
   public boolean isPartialPreviewOfALargeFile(@NotNull Document document) {
     return document.getUserData(BIG_FILE_PREVIEW) == Boolean.TRUE;
   }
@@ -195,7 +203,9 @@ public abstract class FileDocumentManagerBase extends FileDocumentManager {
   protected static int getPreviewCharCount(@NotNull VirtualFile file) {
     Charset charset = EncodingManager.getInstance().getEncoding(file, false);
     float bytesPerChar = charset == null ? 2 : charset.newEncoder().averageBytesPerChar();
-    return (int)(FileUtilRt.LARGE_FILE_PREVIEW_SIZE / bytesPerChar);
+
+    int largeFilePreviewSize = FileSizeLimit.getPreviewLimit(file.getExtension());
+    return (int)(largeFilePreviewSize / bytesPerChar);
   }
 
   private void cacheDocument(@NotNull VirtualFile file, @NotNull Document document) {

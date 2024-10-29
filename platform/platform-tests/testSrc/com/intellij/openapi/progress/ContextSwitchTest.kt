@@ -1,10 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.*
 import com.intellij.concurrency.TestElement
 import com.intellij.concurrency.TestElementKey
-import com.intellij.concurrency.currentThreadContext
-import com.intellij.concurrency.currentThreadContextOrNull
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.readActionBlocking
@@ -136,21 +135,21 @@ class ContextSwitchTest : CancellationTest() {
     }
 
     withContext(testElement) {
-      assertNull(currentThreadContextOrNull())
+      assertNull(currentThreadOverriddenContextOrNull())
       blockingContext {
         assertThreadContext()
         runBlockingCancellable {
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
           withContext(Dispatchers.Default) {
             blockingContext {
               assertThreadContext()
             }
           }
-          assertNull(currentThreadContextOrNull())
+          assertNull(currentThreadOverriddenContextOrNull())
         }
         assertThreadContext()
       }
-      assertNull(currentThreadContextOrNull())
+      assertNull(currentThreadOverriddenContextOrNull())
     }
   }
 }

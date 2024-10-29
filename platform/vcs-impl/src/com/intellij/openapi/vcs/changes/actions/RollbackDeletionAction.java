@@ -13,11 +13,13 @@ import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.RollbackProgressModifier;
 import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public class RollbackDeletionAction extends AbstractMissingFilesAction {
   @Override
   protected List<VcsException> processFiles(final AbstractVcs vcs, final List<? extends FilePath> files) {

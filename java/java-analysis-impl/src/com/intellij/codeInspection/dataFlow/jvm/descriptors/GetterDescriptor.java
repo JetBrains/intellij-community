@@ -29,13 +29,16 @@ import java.util.Objects;
 public final class GetterDescriptor extends PsiVarDescriptor {
   private static final CallMatcher STABLE_METHODS = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "trim", "stripLeading", "stripTrailing", "strip").parameterCount(0),
     CallMatcher.instanceCall("java.lang.reflect.Member", "getName", "getModifiers", "getDeclaringClass", "isSynthetic"),
     CallMatcher.instanceCall("java.lang.reflect.Executable", "getParameterCount", "isVarArgs"),
     CallMatcher.instanceCall("java.lang.reflect.Field", "getType"),
     CallMatcher.instanceCall("java.lang.reflect.Method", "getReturnType"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "getName", "isInterface", "isArray", "isPrimitive", "isSynthetic",
                              "isAnonymousClass", "isLocalClass", "isMemberClass", "getDeclaringClass", "getEnclosingClass",
-                             "getSimpleName", "getCanonicalName")
+                             "getSimpleName", "getCanonicalName"),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getName", "getParent", "getPath", "getAbsolutePath", 
+                             "getParentFile", "getAbsoluteFile", "toPath")
   );
   private final @NotNull PsiMethod myGetter;
   private final boolean myStable;

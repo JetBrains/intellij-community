@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeEditor.printing;
 
@@ -16,13 +16,13 @@ final class PageSizes {
   private static ArrayList<PageSize> myPageSizes = null;
   private static HashMap<String, PageSize> myNamesToPageSizes = null;
   private static final double MM_TO_INCH = 1/25.4;
-  @NonNls private static final String PAGE_SIZES_RESOURCE = "/PageSizes.xml";
-  @NonNls private static final String ELEMENT_SIZE = "size";
-  @NonNls private static final String ATTRIBUTE_NAME = "name";
-  @NonNls private static final String ATTRIBUTE_WIDTH = "width";
-  @NonNls private static final String ATTRIBUTE_HEIGHT = "height";
-  @NonNls private static final String ATTRIBUTE_UNIT = "unit";
-  @NonNls private static final String UNIT_MM = "mm";
+  private static final @NonNls String PAGE_SIZES_RESOURCE = "/PageSizes.xml";
+  private static final @NonNls String ELEMENT_SIZE = "size";
+  private static final @NonNls String ATTRIBUTE_NAME = "name";
+  private static final @NonNls String ATTRIBUTE_WIDTH = "width";
+  private static final @NonNls String ATTRIBUTE_HEIGHT = "height";
+  private static final @NonNls String ATTRIBUTE_UNIT = "unit";
+  private static final @NonNls String UNIT_MM = "mm";
 
   public static String[] getNames() {
     init();

@@ -155,7 +155,11 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (targetContainer instanceof PsiDirectory) {
       if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
         if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
-          createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
+          var dialogue = createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback);
+          if (Boolean.getBoolean("ide.performance.skip.refactoring.dialogs"))
+            dialogue.performOKAction();
+          else
+            dialogue.show();
           return;
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -25,12 +25,12 @@ import java.util.*;
 
 public final class ArrangementGroupingRulesControl extends JBTable {
 
-  @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
+  public static final @NotNull DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
 
-  @NotNull private final Map<ArrangementSettingsToken, ArrangementGroupingComponent> myComponents =
+  private final @NotNull Map<ArrangementSettingsToken, ArrangementGroupingComponent> myComponents =
     new HashMap<>();
 
-  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  private final @NotNull ArrangementStandardSettingsManager mySettingsManager;
 
   public ArrangementGroupingRulesControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                          @NotNull ArrangementColorsProvider colorsProvider)
@@ -93,8 +93,7 @@ public final class ArrangementGroupingRulesControl extends JBTable {
     }
   }
 
-  @NotNull
-  public List<ArrangementGroupingRule> getRules() {
+  public @NotNull List<ArrangementGroupingRule> getRules() {
     List<ArrangementGroupingRule> result = new ArrayList<>();
     DefaultTableModel model = getModel();
     for (int i = 0, max = model.getRowCount(); i < max; i++) {

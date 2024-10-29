@@ -4,7 +4,7 @@ package git4idea.ui.branch.tree
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.MinusculeMatcher
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.popup.GitBranchesTreePopup
+import git4idea.ui.branch.popup.GitBranchesTreePopupBase
 import javax.swing.tree.TreePath
 
 class GitBranchesTreeSelectedRepoModel(
@@ -15,8 +15,8 @@ class GitBranchesTreeSelectedRepoModel(
 ) : GitBranchesTreeSingleRepoModel(project, selectedRepository, topLevelActions) {
   val selectedRepository get() = repository
 
-  private val actionsSeparator = GitBranchesTreePopup.createTreeSeparator()
-  private val branchesSubtreeSeparator = GitBranchesTreePopup.createTreeSeparator()
+  private val actionsSeparator = GitBranchesTreePopupBase.createTreeSeparator()
+  private val branchesSubtreeSeparator = GitBranchesTreePopupBase.createTreeSeparator()
 
   private lateinit var repositoriesTree: LazyRepositoryHolder
 

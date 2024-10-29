@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.prepareCombinedBlocksFromPr
 import com.intellij.openapi.vcs.changes.patch.PatchFileType
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.MutableDiffRequestChainProcessor
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.getTitleCustomizers
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.util.ui.update.MergingUpdateQueue
@@ -172,7 +173,10 @@ private class PatchDiffRequestProducer(private val patch: FilePatch) : ChangeDif
   @Throws(ProcessCanceledException::class)
   override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {
     if (patch is TextFilePatch) {
-      return PatchDiffRequest(patch, null, patch.beforeName, patch.afterName)
+      val patchDiffRequest = PatchDiffRequest(patch, null, patch.beforeName, patch.afterName)
+      return DiffUtil.addTitleCustomizers(
+        patchDiffRequest, getTitleCustomizers(patchDiffRequest.patch.beforeName, patchDiffRequest.patch.afterName)
+      )
     }
     if (patch is BinaryFilePatch) {
       return MessageDiffRequest(VcsBundle.message("patch.is.binary.text"))

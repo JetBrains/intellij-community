@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.id;
 
@@ -56,6 +56,11 @@ public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @Override
   public boolean dependsOnFileContent() {
     return true;
+  }
+
+  @Override
+  public int getCacheSize() {
+    return 64 * super.getCacheSize();
   }
 
   @Override

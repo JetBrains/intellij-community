@@ -15,22 +15,26 @@
  */
 package org.jetbrains.jps.model;
 
-import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
+import org.jetbrains.jps.model.serialization.JpsProjectData;
+import org.junit.jupiter.api.Test;
 
-import java.io.File;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
-public class JpsEncodingConfigurationServiceTest extends JpsSerializationTestCase {
+public class JpsEncodingConfigurationServiceTest {
+  @Test
   public void test() {
-    loadProject("/jps/model-serialization/testData/fileEncoding/fileEncoding.ipr");
-    JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(myProject);
+    JpsProjectData projectData = JpsProjectData.loadFromTestData("jps/model-serialization/testData/fileEncoding/fileEncoding.ipr", getClass());
+    JpsEncodingProjectConfiguration configuration = JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(projectData.getProject());
     assertNotNull(configuration);
-    assertEncoding("windows-1251", "dir/a.txt", configuration);
-    assertEncoding("UTF-8", "dir/with-encoding.xml", configuration);
-    assertEncoding("windows-1251", "dir/without-encoding.xml", configuration);
-    assertEncoding("windows-1251", "dir/non-existent.xml", configuration);
+    assertEncoding("windows-1251", "dir/a.txt", configuration, projectData);
+    assertEncoding("UTF-8", "dir/with-encoding.xml", configuration, projectData);
+    assertEncoding("windows-1251", "dir/without-encoding.xml", configuration, projectData);
+    assertEncoding("windows-1251", "dir/non-existent.xml", configuration, projectData);
   }
 
-  protected void assertEncoding(final String encoding, final String path, JpsEncodingProjectConfiguration configuration) {
-    assertEquals(encoding, configuration.getEncoding(new File(getAbsolutePath(path))));
+  protected void assertEncoding(final String encoding, final String path, JpsEncodingProjectConfiguration configuration,
+                                JpsProjectData projectData) {
+    assertEquals(encoding, configuration.getEncoding(projectData.resolvePath(path).toFile()));
   }
 }

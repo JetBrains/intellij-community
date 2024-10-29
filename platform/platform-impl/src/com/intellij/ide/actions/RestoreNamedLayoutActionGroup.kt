@@ -14,6 +14,7 @@ import com.intellij.toolWindow.ToolWindowDefaultLayoutManager
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 class RestoreNamedLayoutActionGroup : ActionGroup(), DumbAware {
 
   private val childrenCache = NamedLayoutListBasedCache<AnAction>(

@@ -24,6 +24,8 @@ import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.registry.RegistryManager
 import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.platform.diagnostic.telemetry.Scope
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.AppScheduledExecutorService
@@ -415,11 +417,27 @@ internal class PerformanceWatcherImpl(private val coroutineScope: CoroutineScope
     private val startMillis = System.currentTimeMillis()
 
     override fun logResponsivenessSinceCreation(activityName: @NonNls String) {
-      LOG.info(getLogResponsivenessSinceCreationMessage(activityName))
+      logResponsivenessSinceCreation(activityName, null)
+    }
+
+    override fun logResponsivenessSinceCreation(activityName: @NonNls String, spanName: String?) {
+      LOG.info(getLogResponsivenessSinceCreationMessage(activityName, spanName))
     }
 
     override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String): String {
-      return "$activityName took ${System.currentTimeMillis() - startMillis}ms; general responsiveness: ${
+      return getLogResponsivenessSinceCreationMessage(activityName, null)
+    }
+
+    override fun getLogResponsivenessSinceCreationMessage(activityName: @NonNls String, spanName: String?): String {
+      val currentTime = System.currentTimeMillis()
+      if (spanName != null) {
+        TelemetryManager.getTracer(Scope("PerformanceWatcher"))
+          .spanBuilder(spanName)
+          .setStartTimestamp(startMillis, TimeUnit.MILLISECONDS)
+          .startSpan()
+          .end(currentTime, TimeUnit.MILLISECONDS)
+      }
+      return "$activityName took ${currentTime - startMillis}ms; general responsiveness: ${
         watcher.generalApdex.summarizePerformanceSince(startGeneralSnapshot)
       }; EDT responsiveness: ${watcher.swingApdex.summarizePerformanceSince(startSwingSnapshot)}"
     }

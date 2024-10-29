@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testIntegration;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,9 +21,8 @@ import java.util.List;
  */
 @InternalIgnoreDependencyViolation
 final class GotoTestRelatedProvider extends GotoRelatedProvider {
-  @NotNull
   @Override
-  public List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
+  public @NotNull List<? extends GotoRelatedItem> getItems(@NotNull DataContext context) {
     final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file == null) return Collections.emptyList();
 

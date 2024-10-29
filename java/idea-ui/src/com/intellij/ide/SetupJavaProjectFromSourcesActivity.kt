@@ -16,6 +16,7 @@ import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationIdsHolder
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -201,10 +202,12 @@ private suspend fun setupFromSources(project: Project, projectDir: VirtualFile) 
   }
 
   withContext(Dispatchers.EDT) {
-    builder.commit(project)
+    writeIntentReadAction {
+      builder.commit(project)
 
-    val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
-    setCompilerOutputPath(project, compileOutput)
+      val compileOutput = if (projectPath.endsWith('/')) "${projectPath}out" else "$projectPath/out"
+      setCompilerOutputPath(project, compileOutput)
+    }
   }
 
   val modules = ModuleManager.getInstance(project).modules

@@ -6,11 +6,9 @@ import com.intellij.openapi.ui.playback.commands.PlaybackCommandCoroutineAdapter
 import com.intellij.settingsSync.*
 import com.intellij.settingsSync.config.SettingsSyncEnabler
 import com.jetbrains.performancePlugin.commands.Waiter
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.NonNls
+import java.util.concurrent.TimeUnit
 
 enum class EnableSettingSyncOptions {
   GET, PUSH, NONE
@@ -67,15 +65,28 @@ class EnableSettingsSyncCommand(text: @NonNls String, line: Int) : PlaybackComma
       })
       settingsSyncEnabler.checkServerState()
       serverRespondedOnCheck.await()
+
+      var startTime = System.currentTimeMillis()
+      while (!SettingsSyncMain.getInstance().controls.bridge.isInitialized) {
+        delay(50)
+        if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(10)) {
+          throw Exception("Settings Sync initialization timeout exceeded")
+        }
+      }
+
       if(SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled != isCrossIdeSync){
         SettingsSyncLocalSettings.getInstance().isCrossIdeSyncEnabled = isCrossIdeSync
         SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.CrossIdeSyncStateChanged(isCrossIdeSync))
       }
       //there is no event that cross-ide sync was enabled, so we need to check that file appears and wait a bit :(
-      Waiter.checkCondition {
-        CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE) == isCrossIdeSync
+      startTime = System.currentTimeMillis()
+      while (CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE) != isCrossIdeSync) {
+        delay(500)
+        if (System.currentTimeMillis() - startTime > TimeUnit.SECONDS.toMillis(5)) {
+          val fileExists = CloudConfigServerCommunicator().isFileExists(CROSS_IDE_SYNC_MARKER_FILE)
+          throw Exception("Cross-IDE sync marker file was not updated in 5 seconds. File exists=$fileExists, expected=$isCrossIdeSync")
+        }
       }
-      delay(5000L)
     }
   }
 }

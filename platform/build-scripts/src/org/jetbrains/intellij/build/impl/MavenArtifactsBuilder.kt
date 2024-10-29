@@ -1,7 +1,6 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.text.NameUtilCore
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -14,8 +13,9 @@ import org.apache.maven.model.Model
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.DirSource
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.buildJar
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.java.*
 import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
@@ -48,7 +48,15 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
       if (names.size < 2) {
         throw RuntimeException("Cannot generate Maven artifacts: incorrect module name '${moduleName}'")
       }
-
+      // handle "fleet.*" modules
+      if (names.first() == "fleet") {
+        val groupId = "com.jetbrains.intellij.fleet"
+        val artifactId = names.drop(1).flatMap { s ->
+          splitByCamelHumpsMergingNumbers(s).map { it.lowercase(Locale.US) }
+        }.joinToString(separator = "-")
+        return MavenCoordinates(groupId, artifactId, version)
+      }
+      // handle "intellij.*" modules
       val groupId = "com.jetbrains.${names.take(2).joinToString(separator = ".")}"
       val firstMeaningful = if (names.size > 2 && COMMON_GROUP_NAMES.contains(names[1])) 2 else 1
       val artifactId = names.drop(firstMeaningful).flatMap { s ->
@@ -91,6 +99,18 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     fun createDependencyTagByLibrary(descriptor: JpsMavenRepositoryLibraryDescriptor): Dependency {
       return createDependencyTag(createArtifactDependencyByLibrary(descriptor, DependencyScope.COMPILE))
     }
+
+    private val FLEET_MODULES_IN_COMMUNITY = setOf(
+      "fleet.kernel",
+      "fleet.preferences",
+      "fleet.reporting.api",
+      "fleet.rhizomedb",
+      "fleet.rpc",
+      "fleet.rpc.server",
+      "fleet.util.core",
+      "fleet.util.logging.api",
+      "fleet.util.os",
+    )
   }
 
   suspend fun generateMavenArtifacts(
@@ -141,7 +161,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
     spanBuilder("layout maven artifacts")
       .setAttribute(AttributeKey.stringArrayKey("modules"), artifactsToBuild.entries.map { entry ->
         "  [${entry.value.joinToString(separator = ",") { it.name }}] -> ${entry.key.coordinates}"
-      }).useWithScope {
+      }).use {
         layoutMavenArtifacts(artifactsToBuild, context.paths.artifactDir.resolve(outputDir), context)
       }
     builtArtifacts += artifactsToBuild.keys
@@ -230,7 +250,7 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
         else if (!isOptionalDependency(library)) {
           Span.current().addEvent("module depends on non-maven library", Attributes.of(
             AttributeKey.stringKey("module"), module.name,
-            AttributeKey.stringKey("library"), LibraryLicensesListGenerator.getLibraryName(library),
+            AttributeKey.stringKey("library"), getLibraryFilename(library),
           ))
           mavenizable = false
         }
@@ -248,7 +268,8 @@ open class MavenArtifactsBuilder(protected val context: BuildContext) {
   }
 
   protected open fun shouldSkipModule(moduleName: String, moduleIsDependency: Boolean): Boolean {
-    return if (moduleIsDependency) false else !moduleName.startsWith("intellij.")
+    val moduleShouldBePublished = moduleIsDependency || moduleName in FLEET_MODULES_IN_COMMUNITY || moduleName.startsWith("intellij.")
+    return !moduleShouldBePublished
   }
 
   protected open fun generateMavenCoordinatesForModule(module: JpsModule): MavenCoordinates {

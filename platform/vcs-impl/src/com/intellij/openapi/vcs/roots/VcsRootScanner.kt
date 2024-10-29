@@ -1,13 +1,13 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.roots
 
 import com.intellij.ide.impl.isTrusted
 import com.intellij.ide.trustedProjects.TrustedProjectsListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.coroutineToIndicator
@@ -26,33 +26,35 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.vcsUtil.VcsUtil
+import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
+import kotlin.coroutines.coroutineContext
 import kotlin.time.Duration.Companion.seconds
 
 private val LOG = logger<VcsRootScanner>()
 
 @Service(Service.Level.PROJECT)
-internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) : Disposable {
+internal class VcsRootScanner(private val project: Project, coroutineScope: CoroutineScope) {
   private val rootProblemNotifier = VcsRootProblemNotifier.createInstance(project)
 
   private val scanRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
   init {
-    AsyncVfsEventsPostProcessor.getInstance().addListener(::filesChanged, this)
-    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(::scheduleScan, this)
-    VcsEP.EP_NAME.addChangeListener(::scheduleScan, this)
+    AsyncVfsEventsPostProcessor.getInstance().addListener(object : AsyncVfsEventsListener {
+      override suspend fun filesChanged(events: List<VFileEvent>) {
+        this@VcsRootScanner.filesChanged(events)
+      }
+    }, coroutineScope)
+    VcsRootChecker.EXTENSION_POINT_NAME.addChangeListener(coroutineScope, ::scheduleScan)
+    VcsEP.EP_NAME.addChangeListener(coroutineScope, ::scheduleScan)
 
     coroutineScope.launch {
       @OptIn(FlowPreview::class)
@@ -149,9 +151,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     }
   }
 
-  override fun dispose() {}
-
-  private fun filesChanged(events: List<VFileEvent>) {
+  private suspend fun filesChanged(events: List<VFileEvent>) {
     val checkers = VcsRootChecker.EXTENSION_POINT_NAME.extensionList
     if (checkers.isEmpty()) {
       return
@@ -160,7 +160,8 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     for (event in events) {
       val file = event.file
       if (file != null && file.isDirectory) {
-        visitDirsRecursivelyWithoutExcluded(project, file, true) { dir ->
+        coroutineContext.ensureActive()
+        visitDirsRecursivelyWithoutExcluded(project = project, root = file, visitIgnoredFoldersThemselves = true) { dir ->
           if (isVcsDir(checkers, dir.name)) {
             scheduleScan()
             return@visitDirsRecursivelyWithoutExcluded VirtualFileVisitor.skipTo(file)
@@ -188,7 +189,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
     override val order: Int
       get() = VcsInitObject.AFTER_COMMON.order
 
-    override fun runActivity(project: Project) {
+    override suspend fun execute(project: Project) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return
       }
@@ -198,7 +199,7 @@ internal class VcsRootScanner(private val project: Project, coroutineScope: Coro
       }
 
       ProjectLevelVcsManagerEx.MAPPING_DETECTION_LOG.debug("VcsRootScanner.start activity")
-      getInstance(project).scheduleScan()
+      project.serviceAsync<VcsRootScanner>().scheduleScan()
     }
   }
 

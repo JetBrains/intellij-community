@@ -10,11 +10,14 @@ import com.intellij.gradle.toolingExtension.impl.modelAction.GradleModelHolderSt
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassBuildModelProvider;
 import com.intellij.gradle.toolingExtension.modelProvider.GradleClassProjectModelProvider;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.platform.externalSystem.rt.ExternalSystemRtClass;
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
 import org.codehaus.groovy.runtime.typehandling.ShortTypeHandling;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -25,11 +28,12 @@ import org.gradle.tooling.model.idea.IdeaProject;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.ProjectImportModelProvider;
-import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
+import org.jetbrains.plugins.gradle.service.modelAction.GradleIdeaModelHolder;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.GradleJvmResolver;
+import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction;
 import org.jetbrains.plugins.gradle.tooling.TargetJavaVersionWatcher;
 import org.jetbrains.plugins.gradle.tooling.VersionMatcherRule;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -42,12 +46,15 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.gradle.toolingExtension.util.GradleVersionUtil.isGradleAtLeast;
 
 /**
  * @author Vladislav.Soroka
@@ -59,7 +66,8 @@ public abstract class AbstractModelBuilderTest {
 
   @Rule public TestName name = new TestName();
   @Rule public VersionMatcherRule versionMatcherRule = new VersionMatcherRule();
-  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher = new TargetJavaVersionWatcher();
+  @Rule public TargetJavaVersionWatcher myTargetJavaVersionWatcher =
+    new TargetJavaVersionWatcher(new ModelBuilderTestJavaVersionRestriction());
 
   @ClassRule public static final ApplicationRule ourApplicationRule = new ApplicationRule();
 
@@ -153,7 +161,7 @@ public abstract class AbstractModelBuilderTest {
     ExternalSystemExecutionSettings executionSettings = new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false)
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, targetPathMapperInitScript.toString())
       .withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, mainInitScript.toString())
-      .withVmOptions("-Xmx128m", "-XX:MaxPermSize=64m", "-Dorg.gradle.warning.mode=fail");
+      .withVmOptions(getDefaultGradleVmOptions());
 
     GradleConnector connector = GradleConnector.newConnector()
       .useDistribution(GradleUtil.getWrapperDistributionUri(gradleVersion))
@@ -185,6 +193,20 @@ public abstract class AbstractModelBuilderTest {
     return 5;
   }
 
+  private String[] getDefaultGradleVmOptions() {
+    List<String> vmOptions = new ArrayList<>(3);
+    vmOptions.add("-Xmx128m");
+    vmOptions.add("-Dorg.gradle.warning.mode=fail");
+    vmOptions.add(isJava17UsedToRunGradle() ? "-XX:MaxMetaspaceSize=256m" : "-XX:MaxPermSize=64m");
+    return ArrayUtil.toStringArray(vmOptions);
+  }
+
+  private boolean isJava17UsedToRunGradle() {
+    String daemonJavaVersion = JavaSdk.getInstance().getVersionString(gradleJvmHomePath);
+    JavaVersion javaVersion = JavaVersion.tryParse(daemonJavaVersion);
+    return javaVersion.isAtLeast(17);
+  }
+
   @NotNull
   public static Set<Class<?>> getToolingExtensionClasses() {
     return ContainerUtil.newHashSet(
@@ -197,5 +219,15 @@ public abstract class AbstractModelBuilderTest {
       IonType.class,  // ion-java jar
       SystemInfoRt.class // jar containing classes of `intellij.platform.util.rt` module
     );
+  }
+
+  private static final class ModelBuilderTestJavaVersionRestriction implements JavaVersionRestriction {
+    @Override
+    public boolean isRestricted(@NotNull GradleVersion gradleVersion, @NotNull JavaVersion source) {
+      if (isGradleAtLeast(gradleVersion, "8.10") && source.feature < 17) {
+        return true;
+      }
+      return false;
+    }
   }
 }

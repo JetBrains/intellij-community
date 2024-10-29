@@ -46,7 +46,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                         UIdentifier (Identifier (atan2)) [UIdentifier (Identifier (atan2))]
                         ULiteralExpression (value = 1.3) [1.3] : double
                         ULiteralExpression (value = 3.4) [3.4] : double
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (unresolvedMethod))("param1", "param2")] : <ErrorType>
+                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [UIdentifier (Identifier (unresolvedMethod))("param1", "param2")]
                     UIdentifier (Identifier (unresolvedMethod)) [UIdentifier (Identifier (unresolvedMethod))]
                     UPolyadicExpression (operator = +) ["param1"] : java.lang.String
                         ULiteralExpression (value = "param1") ["param1"] : java.lang.String
@@ -145,7 +145,7 @@ UFile (package = ) [public final class ParametersDisorderKt {...]
                             UBlockExpression [{...}]
                                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [Parent(1, "foo")]
                                     UIdentifier (Identifier (Parent)) [UIdentifier (Identifier (Parent))]
-                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                                    USimpleNameReferenceExpression (identifier = Parent, resolvesTo = PsiClass: Parent) [Parent]
                                     ULiteralExpression (value = 1) [1] : int
                                     UPolyadicExpression (operator = +) ["foo"] : java.lang.String
                                         ULiteralExpression (value = "foo") ["foo"] : java.lang.String

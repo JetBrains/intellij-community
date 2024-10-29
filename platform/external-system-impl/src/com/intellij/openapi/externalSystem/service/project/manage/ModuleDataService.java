@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,7 @@ import java.util.*;
 /**
  * Encapsulates functionality of importing external system module to the intellij project.
  */
+@ApiStatus.Internal
 @Order(ExternalSystemConstants.BUILTIN_MODULE_DATA_SERVICE_ORDER)
 public final class ModuleDataService extends AbstractModuleDataService<ModuleData> {
   @Override

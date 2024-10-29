@@ -6,8 +6,8 @@ import com.intellij.ide.extensionResources.ExtensionsRootType
 import com.intellij.ide.scratch.RootType
 import com.intellij.ide.script.IdeConsoleRootType
 import com.intellij.openapi.application.PathManager
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import kotlin.io.path.nameWithoutExtension
 import kotlin.script.experimental.api.*
@@ -32,11 +32,7 @@ object ScriptDefinitionForExtensionAndIdeConsoleRoots : ScriptDefinition.FromCon
 
 private const val SCRIPT_DEFINITION_NAME = "Script definition for extension scripts and IDE console"
 
-// Deprecated API is used because actual one doesn't support this way of identifying scripts. Will be fixed eventually.
-@Suppress("DEPRECATION")
-class ScriptDefinitionForExtensionAndIdeConsoleRootsSource : ScriptDefinitionSourceAsContributor {
-    override val id: String = SCRIPT_DEFINITION_NAME
-
+class ScriptDefinitionForExtensionAndIdeConsoleRootsSource : ScriptDefinitionsSource {
     override val definitions: Sequence<ScriptDefinition>
         get() = sequenceOf(ScriptDefinitionForExtensionAndIdeConsoleRoots)
 }

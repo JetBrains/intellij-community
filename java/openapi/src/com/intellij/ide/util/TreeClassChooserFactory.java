@@ -91,7 +91,7 @@ public abstract class TreeClassChooserFactory {
   /**
    * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,
@@ -102,7 +102,7 @@ public abstract class TreeClassChooserFactory {
   /**
    * @deprecated Use {@link TreeFileChooserFactory#createFileChooser(String, PsiFile, FileType, TreeFileChooser.PsiFileFilter, boolean, boolean)}
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   @NotNull
   public abstract TreeFileChooser createFileChooser(@NotNull @NlsContexts.DialogTitle String title,
                                                     @Nullable PsiFile initialFile,

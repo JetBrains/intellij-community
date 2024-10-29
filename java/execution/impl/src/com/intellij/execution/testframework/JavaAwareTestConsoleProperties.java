@@ -111,7 +111,6 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
   @Nullable
   public DebuggerSession getDebugSession() {
     final DebuggerManagerEx debuggerManager = DebuggerManagerEx.getInstanceEx(getProject());
-    if (debuggerManager == null) return null;
     final Collection<DebuggerSession> sessions = debuggerManager.getSessions();
     for (final DebuggerSession debuggerSession : sessions) {
       if (getConsole() == debuggerSession.getProcess().getExecutionResult().getExecutionConsole()) return debuggerSession;

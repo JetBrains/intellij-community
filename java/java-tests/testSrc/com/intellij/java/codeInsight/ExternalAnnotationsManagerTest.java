@@ -103,15 +103,78 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     PsiFile psiFile = getPsiManager().findFile(file);
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> map = manager.getDataFromFile(psiFile);
     for (String externalName : map.keySet()) {
-      checkExternalName(psiFile, externalName, assumedPackage);
+      PsiModifierListOwner listOwner = checkExternalName(psiFile, externalName, assumedPackage);
 
       // 'annotation name="org.jetbrains.annotations.NotNull"' should have FQN
       for (BaseExternalAnnotationsManager.AnnotationData annotationData : map.get(externalName)) {
         PsiAnnotation annotation = annotationData.getAnnotation(manager);
         String nameText = annotation.getNameReferenceElement().getText();
         assertClassFqn(nameText, psiFile, externalName, null);
+
+        String typePath = annotationData.getTypePath();
+        if (typePath != null) {
+          PsiType type;
+          if (listOwner instanceof PsiVariable variable) {
+            type = variable.getType();
+          } else if (listOwner instanceof PsiMethod method) {
+            type = method.getReturnType();
+          } else {
+            fail("typePath is not allowed for " + listOwner.getClass().getSimpleName(), psiFile, externalName);
+            break;
+          }
+          String error = validatePath(typePath, type);
+          if (error != null) {
+            fail("Invalid typePath: " + error, psiFile, externalName);
+          }
+        }
       }
     }
+  }
+
+  private static String validatePath(String pathString, PsiType type) {
+    if (!pathString.startsWith("/")) {
+      return "Must start with '/'";
+    }
+    String[] components = pathString.split("/", -1);
+    // The first component is always empty
+    for (int i = 1; i < components.length; i++) {
+      String component = components[i];
+      if (component.equals("[]")) {
+        if (!(type instanceof PsiArrayType arrayType)) {
+          return "Invalid path: " + pathString + "; [] is only allowed for array types; type is "+type.getCanonicalText();
+        }
+        type = arrayType.getComponentType();
+        continue;
+      }
+      else if (component.equals("*")) {
+        if (!(type instanceof PsiWildcardType wildcardType)) {
+          return "Invalid path: " + pathString + "; * is only allowed for wildcard types; type is "+type.getCanonicalText();
+        }
+        type = wildcardType.getBound();
+        continue;
+      }
+      else if (component.equals(".")) {
+        // TODO: not used currently anyway
+        continue;
+      }
+      try {
+        int number = Integer.parseInt(component);
+        if (number >= 1 && number <= 255) {
+          if (!(type instanceof PsiClassType classType)) {
+            return "Invalid path: " + pathString + "; only class types can have components; type is "+type.getCanonicalText();
+          }
+          PsiType[] parameters = classType.getParameters();
+          if (number > parameters.length) {
+            return "Invalid path: " + pathString + "; component " + number + " is out of bounds; type is "+type.getCanonicalText();
+          }
+          type = parameters[number - 1];
+          continue;
+        }
+      }
+      catch (NumberFormatException ignored) { }
+      return "Invalid path: " + pathString + "; invalid component: " + component;
+    }
+    return null;
   }
 
   private PsiClass assertClassFqn(@NotNull String text,
@@ -140,16 +203,19 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     fail(error + "\nFile: " + psiFile.getVirtualFile().getPath() + ":" + (line+1) + " (offset: "+offset+")");
   }
 
-  private void checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
+  private PsiModifierListOwner checkExternalName(@NotNull PsiFile psiFile, @NotNull String externalName, @NotNull String assumedPackage) {
     // 'item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String) 0"' should have all FQNs
     String unescaped = StringUtil.unescapeXmlEntities(externalName);
     List<String> words = StringUtil.split(unescaped, " ");
     String className = words.get(0);
-    if (words.size() == 1 && JavaPsiFacade.getInstance(getProject()).findPackage(className) != null) {
-      return;
+    if (words.size() == 1) {
+      PsiPackage psiPackage = JavaPsiFacade.getInstance(getProject()).findPackage(className);
+      if (psiPackage != null) {
+        return psiPackage;
+      }
     }
     PsiClass aClass = assertClassFqn(className, psiFile, externalName, assumedPackage);
-    if (words.size() == 1) return;
+    if (words.size() == 1) return aClass;
 
     String rest = unescaped.substring(className.length() + " ".length());
 
@@ -160,7 +226,7 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
       if (psiField == null) {
         fail("Field '"+field+"' not found in class '"+aClass.getQualifiedName()+"'", psiFile, externalName);
       }
-      return;
+      return psiField;
     }
     String methodName = ContainerUtil.getLastItem(StringUtil.getWordsIn(rest.substring(0, rest.indexOf('('))));
 
@@ -180,25 +246,29 @@ public class ExternalAnnotationsManagerTest extends LightPlatformTestCase {
     }
     boolean found = !methods.isEmpty();
     if (!found) {
-      if (KNOWN_EXCEPTIONS.contains(methodSignature)) return;
+      if (KNOWN_EXCEPTIONS.contains(methodSignature)) return null;
       List<String> candidates = ContainerUtil.map(aClass.findMethodsByName(methodName, true), method ->
         XmlUtil.escape(PsiFormatUtil.getExternalName(method, false, Integer.MAX_VALUE)));
       String additionalMsg = candidates.isEmpty() ? "" : "\nMaybe you have meant one of these methods instead:\n"+StringUtil.join(candidates, "\n")+"\n";
       fail("This method was not found in class '"+aClass.getQualifiedName()+"':\n"+"'"+methodSignature+"'"+additionalMsg, psiFile, externalName);
+      return null;
     }
 
+    PsiMethod method = methods.get(0);
     String parameterNumberText = StringUtil.trim(rest.substring(rest.indexOf(')') + 1));
-    if (parameterNumberText.isEmpty()) return;
+    if (parameterNumberText.isEmpty()) return method;
 
     try {
       int paramNumber = Integer.parseInt(parameterNumberText);
-      PsiMethod method = methods.get(0);
-      if (method.getParameterList().getParametersCount() <= paramNumber) {
+      PsiParameter parameter = method.getParameterList().getParameter(paramNumber);
+      if (parameter == null) {
         fail("Parameter number '"+paramNumber+"' is too big for a method '"+methodSignature+"'", psiFile, externalName);
       }
+      return parameter; 
     }
     catch (NumberFormatException e) {
       fail("Parameter number is not an integer: '"+parameterNumberText+"'", psiFile, externalName);
     }
+    return null;
   }
 }

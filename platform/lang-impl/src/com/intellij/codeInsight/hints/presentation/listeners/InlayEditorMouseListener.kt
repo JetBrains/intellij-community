@@ -42,7 +42,7 @@ class InlayEditorMouseListener : EditorMouseListener {
     val bounds = inlay.bounds ?: return
     val inlayPoint = Point(bounds.x, bounds.y)
     val translated = Point(event.x - inlayPoint.x, event.y - inlayPoint.y)
-    SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM).use {
+    SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
       handler(renderer, event, translated)
     }
   }

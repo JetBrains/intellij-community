@@ -9,11 +9,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class LibraryScopeBase extends GlobalSearchScope {
-  private final Object2IntMap<VirtualFile> myEntries; // Maps each classpath root to its position in the classpath.
+  private final Object2IntMap<VirtualFile> myEntries;
   protected final ProjectFileIndex myIndex;
 
   public LibraryScopeBase(Project project, VirtualFile[] classes, VirtualFile[] sources) {
@@ -59,6 +60,14 @@ public abstract class LibraryScopeBase extends GlobalSearchScope {
   @Override
   public boolean isSearchInLibraries() {
     return true;
+  }
+
+  /**
+   * Maps each classpath root to its position in the classpath.
+   */
+  @ApiStatus.Internal
+  protected Object2IntMap<VirtualFile> getEntries() {
+    return myEntries;
   }
 
   @Override

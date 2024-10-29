@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -9,6 +9,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,25 +21,22 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class JavaHomeFinder {
   public static class SystemInfoProvider {
-    @Nullable
-    public String getEnvironmentVariable(@NotNull String name) {
+    public @Nullable String getEnvironmentVariable(@NotNull String name) {
       return EnvironmentUtil.getValue(name);
     }
 
-    @NotNull
-    public Path getPath(String path, String... more) {
+    public @NotNull Path getPath(String path, String... more) {
       return Path.of(path, more);
     }
 
-    @Nullable
-    public Path getUserHome() {
+    public @Nullable Path getUserHome() {
       return Path.of(SystemProperties.getUserHome());
     }
 
-    @NotNull
-    public Collection<@NotNull Path> getFsRoots() {
+    public @NotNull Collection<@NotNull Path> getFsRoots() {
       Iterable<Path> rootDirectories = FileSystems.getDefault().getRootDirectories();
       return rootDirectories != null ? ContainerUtil.newArrayList(rootDirectories) : Collections.emptyList();
     }

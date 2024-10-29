@@ -43,7 +43,7 @@ public class ResourceBundleReference extends PsiReferenceBase<PsiElement>
   }
 
   @Override
-  public boolean canResolveTo(Class<? extends PsiElement> elementClass) {
+  public boolean canResolveTo(@NotNull Class<? extends PsiElement> elementClass) {
     return ReflectionUtil.isAssignable(PsiFile.class, elementClass);
   }
 

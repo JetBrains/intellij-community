@@ -1,5 +1,6 @@
 #  Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 import numpy as np
+import io
 
 TABLE_TYPE_NEXT_VALUE_SEPARATOR = '__pydev_table_column_type_val__'
 MAX_COLWIDTH = 100000
@@ -31,7 +32,7 @@ def get_shape(arr):
 
 def get_head(arr):
     # type: (np.ndarray) -> str
-    return repr(_create_table(arr).head().to_html(notebook=True, max_cols=None))
+    return repr(_create_table(arr).head().to_html(notebook=True))
 
 
 def get_column_types(arr):
@@ -43,19 +44,34 @@ def get_column_types(arr):
         TABLE_TYPE_NEXT_VALUE_SEPARATOR.join(cols_types)
 
 
-def get_data(arr, start_index=None, end_index=None, format=None):
+def get_data(arr, use_csv_serialization, start_index=None, end_index=None, format=None):
     # type: (Union[np.ndarray, dict], int, int) -> str
-    def convert_data_to_html(data, max_cols):
-        return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True, max_cols=max_cols))
+    def convert_data_to_html(data):
+        return repr(_create_table(data, start_index, end_index, format).to_html(notebook=True))
 
-    return _compute_data(arr, convert_data_to_html, format)
+    def convert_data_to_csv(data):
+        return repr(_create_table(data, start_index, end_index, format).to_csv())
+
+    if use_csv_serialization:
+        computed_data = _compute_data(arr, convert_data_to_csv, format)
+    else:
+        computed_data = _compute_data(arr, convert_data_to_html, format)
+    return computed_data
 
 
-def display_data(arr, start_index=None, end_index=None):
+def display_data_html(arr, start_index=None, end_index=None):
     # type: (np.ndarray, int, int) -> None
-    def ipython_display(data, max_cols):
+    def ipython_display(data):
         from IPython.display import display, HTML
-        display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True, max_cols=max_cols)))
+        display(HTML(_create_table(data, start_index, end_index).to_html(notebook=True)))
+
+    _compute_data(arr, ipython_display)
+
+
+def display_data_csv(arr, start_index=None, end_index=None):
+    # type: (np.ndarray, int, int) -> None
+    def ipython_display(data):
+        print(_create_table(data, start_index, end_index).to_csv())
 
     _compute_data(arr, ipython_display)
 
@@ -89,31 +105,37 @@ class _NpTable:
 
         return _NpTable(self.array[:5]).sort()
 
-    def to_html(self, notebook, max_cols):
+    def to_html(self, notebook):
         html = ['<table class="dataframe">\n']
 
         # columns names
         html.append('<thead>\n'
                     '<tr style="text-align: right;">\n'
                     '<th></th>\n')
-        html += self._collect_cols_names()
+        html += self._collect_cols_names_html()
         html.append('</tr>\n'
                     '</thead>\n')
 
         # tbody
-        html += self._collect_values(max_cols)
+        html += self._collect_values_html(None)
 
         html.append('</table>\n')
 
         return "".join(html)
 
-    def _collect_cols_names(self):
+    def to_csv(self):
+        csv_stream = io.StringIO()
+        np.savetxt(csv_stream, self.array, delimiter=',')
+        csv_string = csv_stream.getvalue()
+        return csv_string
+
+    def _collect_cols_names_html(self):
         if self.type == ONE_DIM:
             return ['<th>0</th>\n']
 
         return ['<th>{}</th>\n'.format(i) for i in range(len(self.array[0]))]
 
-    def _collect_values(self, max_cols):
+    def _collect_values_html(self, max_cols):
         html = ['<tbody>\n']
         rows = self.array.shape[0]
         for row_num in range(rows):
@@ -236,7 +258,7 @@ def _compute_data(arr, fun, format=None):
         arr['data'] = data
         data = arr
 
-    data = fun(data, None)
+    data = fun(data)
 
     if is_pd:
         _reset_pd_options(jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options)

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing.pyTestFixtures
 
+import com.intellij.extapi.psi.StubBasedPsiElementBase
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.psi.PsiDirectory
@@ -13,8 +14,9 @@ import com.intellij.util.Processor
 import com.intellij.util.ThreeState
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.getNamedArgument
+import com.jetbrains.python.psi.stubs.PyDecoratorStub
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
+import com.jetbrains.python.psi.stubs.PyTestFixtureDecoratorStub
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.basePath
 import com.jetbrains.python.testing.PyTestFactory
@@ -22,12 +24,10 @@ import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.autoDetectTests.PyAutoDetectionConfigurationFactory
 import com.jetbrains.python.testing.isTestElement
 
-private val decoratorNames = arrayOf("pytest.fixture", "fixture", "pytest_asyncio.fixture")
-
 private val PyFunction.asFixture: PyTestFixture?
-  get() = decoratorList?.decorators?.firstOrNull { it.name in decoratorNames }?.let { createFixture(it) }
+  get() = decoratorList?.decorators?.firstOrNull { it.name in TEST_FIXTURE_DECORATOR_NAMES }?.let { createFixture(it) }
 
-private fun PyDecoratorList.hasDecorator(vararg names: String) = names.any { findDecorator(it) != null }
+private fun PyDecoratorList.hasDecorator(names: Iterable<String>) = names.any { findDecorator(it) != null }
 
 private fun PyElement.getFixtureName() = name ?: (this as? PyStringLiteralExpression)?.stringValue
 
@@ -270,8 +270,9 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
   val fixtures: List<PyExpression> = when (assignedValue) {
     is PyListLiteralExpression -> assignedValue.elements.toList()
     is PyStringLiteralExpression -> listOf(assignedValue)
+    is PyQualifiedExpression -> listOf(getFixtureNameFromQualifiedName(assignedValue))
     is PyParenthesizedExpression -> assignedValue.children.find { it is PyTupleExpression }?.let { tuple ->
-      (tuple as PyTupleExpression).elements.filterIsInstance<PyStringLiteralExpression>()
+      (tuple as PyTupleExpression).elements.mapNotNull { resolve(it) }
     } ?: emptyList()
     else -> emptyList()
   }
@@ -292,6 +293,12 @@ private fun getFixtureFromPytestPlugins(targetFile: PyFile, fixtureCandidates: L
   return NamedFixtureLink(candidate, null)
 }
 
+private fun getFixtureNameFromQualifiedName(assignedValue: PyQualifiedExpression): PyStringLiteralExpression {
+  val factory = PyElementGenerator.getInstance(assignedValue.project)
+  val qualifiedName = assignedValue.asQualifiedName().toString().substringBeforeLast(".__name__", "")
+  return factory.createStringLiteralFromString(qualifiedName)
+}
+
 /**
  * @return Boolean If named parameter has fixture or not
  */
@@ -301,7 +308,7 @@ fun PyNamedParameter.isFixture(typeEvalContext: TypeEvalContext) = getFixtureLin
 /**
  * @return Boolean is function decorated as fixture or marked so by EP
  */
-internal fun PyFunction.isFixture() = decoratorList?.hasDecorator(*decoratorNames) ?: false || isCustomFixture()
+internal fun PyFunction.isFixture() = decoratorList?.hasDecorator(TEST_FIXTURE_DECORATOR_NAMES) ?: false || isCustomFixture()
 
 
 /**
@@ -312,7 +319,7 @@ internal fun PyFunction.isFixture() = decoratorList?.hasDecorator(*decoratorName
 data class PyTestFixture(val function: PyFunction? = null, val resolveTarget: PyElement? = function, val name: String)
 
 
-fun findDecoratorsByName(module: Module, vararg names: String): Iterable<PyDecorator> =
+fun findDecoratorsByName(module: Module, names: Iterable<String>): Iterable<PyDecorator> =
   names.flatMap { name ->
     StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,
                           GlobalSearchScope.union(
@@ -321,10 +328,26 @@ fun findDecoratorsByName(module: Module, vararg names: String): Iterable<PyDecor
   }
 
 
+internal fun resolve(expr: PyExpression): PyExpression? {
+  when (expr) {
+    is PyStringLiteralExpression -> return expr
+    is PyQualifiedExpression -> return getFixtureNameFromQualifiedName(expr)
+    }
+  return null
+}
+
+
 private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   val target = decorator.target ?: return null
-  return (decorator.getNamedArgument("name") ?: target.name)?.let { name ->
+  return (decorator.getTestFixtureName() ?: target.name)?.let { name ->
     PyTestFixture(target, target, name)
+  }
+}
+
+private fun PyDecorator.getTestFixtureName(): String? {
+  return when (@Suppress("UNCHECKED_CAST") val stub = (this as StubBasedPsiElementBase<PyDecoratorStub>).greenStub) {
+    null -> getTestFixtureName(this)
+    else -> stub.getCustomStub(PyTestFixtureDecoratorStub::class.java)?.name
   }
 }
 
@@ -345,7 +368,7 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
     forWhat.isSubjectForFixture()
   ) {
     //Fixtures
-    (findDecoratorsByName(module, *decoratorNames)
+    (findDecoratorsByName(module, TEST_FIXTURE_DECORATOR_NAMES)
        .filter { it.target?.containingClass == null } //We need only top-level functions, class-based fixtures processed above
        .mapNotNull { createFixture(it) }
      + getCustomFixtures(typeEvalContext, forWhat))
@@ -367,7 +390,7 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
 
 private fun getModuleFixtures(module: Module): List<PyTestFixture> {
   return if (isPyTestEnabled(module)) {
-    findDecoratorsByName(module, *decoratorNames).mapNotNull { createFixture(it) }
+    findDecoratorsByName(module, TEST_FIXTURE_DECORATOR_NAMES).mapNotNull { createFixture(it) }
   }
   else emptyList()
 }
@@ -381,6 +404,3 @@ internal fun isPyTestEnabled(module: Module): Boolean {
   val factoryId = (if (factory is PyAutoDetectionConfigurationFactory) factory.getFactory(sdk) else factory).id
   return factoryId == PyTestFactory.id
 }
-
-
-

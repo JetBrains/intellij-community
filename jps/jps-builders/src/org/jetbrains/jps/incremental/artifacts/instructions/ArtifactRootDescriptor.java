@@ -1,6 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.artifacts.instructions;
 
+import com.dynatrace.hash4j.hashing.HashSink;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -13,8 +15,8 @@ import org.jetbrains.jps.incremental.relativizer.PathRelativizerService;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
-import java.io.PrintWriter;
 
+@ApiStatus.Internal
 public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
   protected final File myRoot;
   private final SourceFileFilter myFilter;
@@ -41,9 +43,9 @@ public abstract class ArtifactRootDescriptor extends BuildRootDescriptor {
 
   protected abstract String getFullPath();
 
-  public void writeConfiguration(PrintWriter out, PathRelativizerService relativizer) {
-    out.println(relativizer.toRelative(getFullPath()));
-    out.println("->" + relativizer.toRelative(myDestinationInfo.getOutputPath()));
+  public void writeConfiguration(@NotNull HashSink hash, PathRelativizerService relativizer) {
+    hash.putString(relativizer.toRelative(getFullPath()));
+    hash.putString(relativizer.toRelative(myDestinationInfo.getOutputPath()));
   }
 
   @Override

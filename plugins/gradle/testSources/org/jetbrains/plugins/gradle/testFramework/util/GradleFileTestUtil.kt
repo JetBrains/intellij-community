@@ -13,7 +13,6 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
 import org.jetbrains.plugins.gradle.testFramework.configuration.TestFilesConfiguration
-import org.jetbrains.plugins.gradle.testFramework.util.buildscript.TestGradleBuildScriptBuilder
 
 private fun settingsScript(
   useKotlinDsl: Boolean = false,
@@ -26,7 +25,7 @@ private fun buildScript(
   gradleVersion: GradleVersion,
   useKotlinDsl: Boolean = false,
   configure: GradleBuildScriptBuilder<*>.() -> Unit
-) = TestGradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
+) = GradleBuildScriptBuilder.create(gradleVersion, useKotlinDsl)
   .apply(configure)
   .generate()
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.getOrCreateUserData
+import com.intellij.openapi.util.getOrCreateUserDataUnsafe
 import com.jetbrains.rd.util.assert
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
@@ -69,7 +70,7 @@ fun <TThis : UserDataHolder, TValue> userData(lazyDefaultValue: (TThis) -> TValu
 
     override fun getValue(thisRef: TThis, property: KProperty<*>): TValue {
       return thisRef.getUserData(getKey(property)) ?: synchronized(this) {
-        return thisRef.getOrCreateUserData(getKey(property)) { lazyDefaultValue(thisRef) }
+        return thisRef.getOrCreateUserDataUnsafe(getKey(property)) { lazyDefaultValue(thisRef) }
       }
     }
 
@@ -84,7 +85,7 @@ fun <TThis : UserDataHolder, TValue> userData(key: Key<TValue>, lazyDefaultValue
   return object : ReadWriteProperty<TThis, TValue> {
     override fun getValue(thisRef: TThis, property: KProperty<*>): TValue {
       return thisRef.getUserData(key) ?: synchronized(this) {
-        return thisRef.getOrCreateUserData(key) { lazyDefaultValue(thisRef) }
+        return thisRef.getOrCreateUserDataUnsafe(key) { lazyDefaultValue(thisRef) }
       }
     }
 

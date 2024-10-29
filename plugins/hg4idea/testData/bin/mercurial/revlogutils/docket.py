@@ -15,9 +15,7 @@
 #
 # * a data file, containing variable width data for these revisions,
 
-from __future__ import absolute_import
 
-import errno
 import os
 import random
 import struct
@@ -26,7 +24,6 @@ from .. import (
     encoding,
     error,
     node,
-    pycompat,
     util,
 )
 
@@ -53,16 +50,9 @@ if stable_docket_file:
         try:
             with open(stable_docket_file, mode='rb') as f:
                 seed = f.read().strip()
-        except IOError as inst:
-            if inst.errno != errno.ENOENT:
-                raise
+        except FileNotFoundError:
             seed = b'04'  # chosen by a fair dice roll. garanteed to be random
-        if pycompat.ispy3:
-            iter_seed = iter(seed)
-        else:
-            # pytype: disable=wrong-arg-types
-            iter_seed = (ord(c) for c in seed)
-            # pytype: enable=wrong-arg-types
+        iter_seed = iter(seed)
         # some basic circular sum hashing on 64 bits
         int_seed = 0
         low_mask = int('1' * 35, 2)
@@ -71,10 +61,7 @@ if stable_docket_file:
             low_part = (int_seed & low_mask) << 28
             int_seed = high_part + low_part + i
         r = random.Random()
-        if pycompat.ispy3:
-            r.seed(int_seed, version=1)
-        else:
-            r.seed(int_seed)
+        r.seed(int_seed, version=1)
         # once we drop python 3.8 support we can simply use r.randbytes
         raw = r.getrandbits(id_size * 4)
         assert id_size == 8
@@ -103,13 +90,13 @@ if stable_docket_file:
 # * 8 bytes: pending size of data
 # * 8 bytes: pending size of sidedata
 # * 1 bytes: default compression header
-S_HEADER = struct.Struct(constants.INDEX_HEADER_FMT + b'BBBBBBLLLLLLc')
+S_HEADER = struct.Struct(constants.INDEX_HEADER_FMT + b'BBBBBBQQQQQQc')
 # * 1 bytes: size of index uuid
 # * 8 bytes: size of file
 S_OLD_UID = struct.Struct('>BL')
 
 
-class RevlogDocket(object):
+class RevlogDocket:
     """metadata associated with revlog"""
 
     def __init__(
@@ -343,7 +330,9 @@ def default_docket(revlog, version_header):
     rl_version = version_header & 0xFFFF
     if rl_version not in (constants.REVLOGV2, constants.CHANGELOGV2):
         return None
-    comp = util.compengines[revlog._compengine].revlogheader()
+    comp = util.compengines[
+        revlog.feature_config.compression_engine
+    ].revlogheader()
     docket = RevlogDocket(
         revlog,
         version_header=version_header,

@@ -445,12 +445,14 @@ val PsiElement.firstLeaf: PsiElement
 @Suppress("unused")
 @Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
 val PsiElement.lastLeaf: PsiElement
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use lastLeaf() instead", ReplaceWith("lastLeaf()"))
   get() = lastLeaf()
 
 @Suppress("unused")
 @Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
 val PsiElement.childLeafs: Sequence<PsiElement>
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use childLeafs() instead", ReplaceWith("childLeafs()"))
   get() = childLeafs()
 //</editor-fold>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.starters.local
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor
@@ -8,7 +8,7 @@ import com.intellij.ide.starters.JavaStartersBundle
 import com.intellij.ide.starters.StarterModuleImporter
 import com.intellij.ide.starters.StarterModuleProcessListener
 import com.intellij.ide.starters.local.generator.AssetsProcessor
-import com.intellij.ide.starters.local.generator.*
+import com.intellij.ide.starters.local.generator.convertOutputLocationForTests
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.local.wizard.StarterLibrariesStep
 import com.intellij.ide.starters.shared.*
@@ -61,16 +61,15 @@ import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
+import kotlin.Throws
 
 abstract class StarterModuleBuilder : ModuleBuilder() {
-
   companion object {
     @JvmField
     val INVALID_PACKAGE_NAME_SYMBOL_PATTERN: Regex = Regex("[^a-zA-Z\\d_.]")
 
     @JvmStatic
-    private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> =
-      ExtensionPointName.create("com.intellij.starter.moduleImporter")
+    private val IMPORTER_EP_NAME: ExtensionPointName<StarterModuleImporter> = ExtensionPointName("com.intellij.starter.moduleImporter")
 
     @JvmStatic
     fun suggestPackageName(group: String, artifact: String): String {
@@ -204,7 +203,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return true
   }
 
-  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+  override fun isSuitableSdkType(sdkType: SdkTypeId): Boolean {
     return sdkType is JavaSdkType && !sdkType.isDependent
   }
 
@@ -213,7 +212,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
-  override fun createProject(name: String?, path: String?): Project? {
+  override fun createProject(name: String, path: String): Project? {
     val project = super.createProject(name, path)
     project?.let { setupProject(it) }
     return project
@@ -223,7 +222,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
-    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) ?: false
+    val isMaven = starterContext.projectType?.id?.contains("Maven", ignoreCase = true) == true
     ExternalSystemUtil.configureNewModule(module, starterContext.isCreatingNewProject, isMaven)
 
     startGenerator(module)

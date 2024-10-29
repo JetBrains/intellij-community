@@ -18,11 +18,13 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public abstract class CommonBinaryFilePatchInProgress<T extends FilePatch> extends AbstractFilePatchInProgress<T> {
   protected CommonBinaryFilePatchInProgress(T patch, Collection<VirtualFile> autoBases, VirtualFile baseDir) {
     super(patch, autoBases, baseDir);

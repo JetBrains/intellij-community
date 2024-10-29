@@ -11,7 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
-public final class TargetCounterUsagesCollector extends CounterUsagesCollector {
+final class TargetCounterUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP;
   private static final EventId1<String> TARGET_CREATION_BEGAN_EVENT;
   private static final EventId2<String, Integer> TARGET_CREATION_CANCELLED_EVENT;

@@ -71,6 +71,7 @@ object KotlinPluginBuilder {
     "kotlin.compiler-plugins.kapt",
     "kotlin.compiler-plugins.kotlinx-serialization.common",
     "kotlin.compiler-plugins.kotlinx-serialization.gradle",
+    "kotlin.compiler-plugins.kotlinx-serialization.k2",
     "kotlin.compiler-plugins.kotlinx-serialization.maven",
     "kotlin.compiler-plugins.noarg.common",
     "kotlin.compiler-plugins.noarg.gradle",
@@ -136,12 +137,13 @@ Android Studio: workaround for b/218317110 */
     "kotlin.project-wizard.gradle",
     "kotlin.project-wizard.compose",
     "kotlin.jvm-debugger.base.util",
-    "kotlin.jvm-debugger.util",
     "kotlin.jvm-debugger.core",
     "kotlin.jvm-debugger.core-fe10",
     "kotlin.jvm-debugger.evaluation",
+    "kotlin.jvm-debugger.evaluation.k1",
+    "kotlin.jvm-debugger.evaluation.k2",
     "kotlin.jvm-debugger.coroutines",
-    "kotlin.jvm-debugger.sequence",
+    "kotlin.jvm-debugger.sequence.k1",
     "kotlin.jvm-debugger.eval4j",
     "kotlin.uast.uast-kotlin-base",
     "kotlin.uast.uast-kotlin",
@@ -188,7 +190,6 @@ Android Studio: workaround for b/218317110 */
     "kotlin.highlighting.k2",
     "kotlin.uast.uast-kotlin.k2",
     "kotlin.uast.uast-kotlin-idea.k2",
-    "kotlin.fir.fir-low-level-api-ide-impl",
     "kotlin.navigation",
     "kotlin.refactorings.common",
     "kotlin.refactorings.k2",
@@ -196,7 +197,8 @@ Android Studio: workaround for b/218317110 */
     "kotlin.refactorings.rename.k2",
     "kotlin.performanceExtendedPlugin",
     "kotlin.bundled-compiler-plugins-support",
-    "kotlin.jsr223"
+    "kotlin.jsr223",
+    "kotlin.k2.internal",
   )
 
   private val KOTLIN_SCRIPTING_LIBRARIES = java.util.List.of(
@@ -247,6 +249,7 @@ Android Studio: workaround for b/218317110 */
     "kotlinc.parcelize-compiler-plugin",
     "kotlinc.lombok-compiler-plugin",
     "kotlinc.compose-compiler-plugin",
+    "kotlinc.js-plain-objects-compiler-plugin",
   )
 
   fun kotlinPlugin(ultimateSources: KotlinUltimateSources, addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
@@ -316,7 +319,7 @@ Android Studio: workaround for b/218317110 */
       spec.withProjectLibrary("kotlinc.kotlin-jps-plugin-classpath", "jps/kotlin-jps-plugin.jar")
       spec.withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
-      spec.withProjectLibrary("javaslang")
+      spec.withProjectLibrary("vavr")
       spec.withProjectLibrary("javax-inject")
 
       withKotlincInPluginDirectory(spec)

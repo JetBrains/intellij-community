@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.DirtyScopeTrackingHighlightingPassFactory;
@@ -60,6 +60,8 @@ public final class FileStatusMap implements Disposable {
   public static @Nullable("null means the file is clean") TextRange getDirtyTextRange(@NotNull Editor editor, int passId) {
     Document document = editor.getDocument();
     Project project = editor.getProject();
+    if (project == null) return null;
+
     PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     return psiFile == null ? null : getDirtyTextRange(document, psiFile, passId);
   }
@@ -104,6 +106,7 @@ public final class FileStatusMap implements Disposable {
       setDirtyScope(Pass.LOCAL_INSPECTIONS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
       setDirtyScope(Pass.SLOW_LINE_MARKERS, WHOLE_FILE_DIRTY_MARKER);
+      setDirtyScope(Pass.INJECTED_GENERAL, WHOLE_FILE_DIRTY_MARKER);
       TextEditorHighlightingPassRegistrarEx registrar = (TextEditorHighlightingPassRegistrarEx) TextEditorHighlightingPassRegistrar.getInstance(project);
       for(DirtyScopeTrackingHighlightingPassFactory factory: registrar.getDirtyScopeTrackingFactories()) {
         setDirtyScope(factory.getPassId(), WHOLE_FILE_DIRTY_MARKER);
@@ -223,7 +226,7 @@ public final class FileStatusMap implements Disposable {
   /**
    * @return null for up-to-date file, whole file for untouched or entirely dirty file, range(usually code block) for the dirty region (optimization)
    */
-  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @Nullable PsiFile file, int passId) {
+  public @Nullable TextRange getFileDirtyScope(@NotNull Document document, @NotNull PsiFile file, int passId) {
     RangeMarker marker;
     synchronized (myDocumentToStatusMap) {
       FileStatus status = myDocumentToStatusMap.get(document);
@@ -243,7 +246,7 @@ public final class FileStatusMap implements Disposable {
       return null;
     }
     if (marker == WHOLE_FILE_DIRTY_MARKER) {
-      return file == null ? null : file.getTextRange();
+      return file.getTextRange();
     }
     return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }

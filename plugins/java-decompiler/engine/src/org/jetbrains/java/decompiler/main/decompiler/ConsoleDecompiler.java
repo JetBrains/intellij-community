@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.decompiler;
 
 import org.jetbrains.java.decompiler.main.CancellationManager;
@@ -11,8 +11,9 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.time.Instant;
 import java.util.*;
-import java.util.jar.JarOutputStream;
+import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -31,6 +32,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     Map<String, Object> mapOptions = new HashMap<>();
     List<File> sources = new ArrayList<>();
     List<File> libraries = new ArrayList<>();
+    Set<String> mustBeDecompiledList = new HashSet<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -52,6 +54,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
         if (arg.startsWith("-e=")) {
           addPath(libraries, arg.substring(3));
+        }
+        else if (arg.startsWith("-only=")) {
+          mustBeDecompiledList.add(arg.substring(6));
         }
         else {
           addPath(sources, arg);
@@ -78,6 +83,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
     for (File source : sources) {
       decompiler.addSource(source);
+    }
+    for (String prefix : mustBeDecompiledList) {
+      decompiler.addToMustBeDecompiled(prefix);
     }
 
     decompiler.decompileContext();
@@ -119,6 +127,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
   public void addLibrary(File library) {
     engine.addLibrary(library);
+  }
+
+  public void addToMustBeDecompiled(String prefix) {
+    engine.addToMustBeDecompiled(prefix);
   }
 
   public void decompileContext() {
@@ -195,7 +207,15 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       }
 
       FileOutputStream fileStream = new FileOutputStream(file);
-      ZipOutputStream zipStream = manifest != null ? new JarOutputStream(fileStream, manifest) : new ZipOutputStream(fileStream);
+      ZipOutputStream zipStream = new ZipOutputStream(fileStream);
+      if (manifest != null) {
+        final ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
+        Instant now = Instant.now();
+        manifestEntry.setTime(now.toEpochMilli());
+        zipStream.putNextEntry(manifestEntry);
+        manifest.write(zipStream);
+        zipStream.closeEntry();
+      }
       mapArchiveStreams.put(file.getPath(), zipStream);
     }
     catch (IOException ex) {
@@ -221,7 +241,9 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       if (entry != null) {
         try (InputStream in = srcArchive.getInputStream(entry)) {
           ZipOutputStream out = mapArchiveStreams.get(file);
-          out.putNextEntry(new ZipEntry(entryName));
+          final ZipEntry newEntry = new ZipEntry(entryName);
+          newEntry.setTime(entry.getTime());
+          out.putNextEntry(newEntry);
           InterpreterUtil.copyStream(in, out);
         }
       }
@@ -242,7 +264,10 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
 
     try {
       ZipOutputStream out = mapArchiveStreams.get(file);
-      out.putNextEntry(new ZipEntry(entryName));
+      ZipEntry entry = new ZipEntry(entryName);
+      Instant now = Instant.now();
+      entry.setTime(now.toEpochMilli());
+      out.putNextEntry(entry);
       if (content != null) {
         out.write(content.getBytes(StandardCharsets.UTF_8));
       }

@@ -70,14 +70,31 @@ def consecutive_calls():
     return i.__code__
 
 
-def test_candidates_for_inner_decorator(inner_decorator_code):
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_inner_decorator_py2(inner_decorator_code):
+    variants = list(get_stepping_variants(inner_decorator_code))
+    assert len(variants) == 1
+    assert variants[0].argval == 'f'
+
+
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_inner_decorator_py3(inner_decorator_code):
     variants = list(get_stepping_variants(inner_decorator_code))
     assert len(variants) == 2
     assert variants[0].argval == 'f'
     assert variants[1].argval == '__pow__'
 
 
-def test_candidates_for_function_with_try_except(function_with_try_except_code):
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_function_with_try_except_py2(function_with_try_except_code):
+    variants = list(get_stepping_variants(function_with_try_except_code))
+    assert len(variants) == 2
+    assert variants[0].argval == 'print'
+    assert variants[1].argval == 'print'
+
+
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_function_with_try_except_py3(function_with_try_except_code):
     variants = list(get_stepping_variants(function_with_try_except_code))
     assert len(variants) == 3
     assert variants[0].argval == '__div__'
@@ -85,7 +102,17 @@ def test_candidates_for_function_with_try_except(function_with_try_except_code):
     assert variants[2].argval == 'print'
 
 
-def test_candidates_for_consecutive_calls(consecutive_calls):
+@pytest.mark.python2(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_consecutive_calls_py2(consecutive_calls):
+    variants = list(get_stepping_variants(consecutive_calls))
+    assert len(variants) == 3
+    assert variants[0].argval == 'f'
+    assert variants[1].argval == 'g'
+    assert variants[2].argval == 'h'
+
+
+@pytest.mark.python3(reason="Python 3 is required to step into binary operators")
+def test_candidates_for_consecutive_calls_py3(consecutive_calls):
     variants = list(get_stepping_variants(consecutive_calls))
     assert len(variants) == 5
     assert variants[0].argval == 'f'

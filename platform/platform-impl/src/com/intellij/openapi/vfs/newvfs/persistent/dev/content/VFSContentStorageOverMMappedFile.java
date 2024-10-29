@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSContentAccessor;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogFactory;
 import com.intellij.platform.util.io.storages.appendonlylog.AppendOnlyLogOverMMappedFile;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleHashMap;
 import com.intellij.platform.util.io.storages.intmultimaps.extendiblehashmap.ExtendibleMapFactory;
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
@@ -43,7 +44,7 @@ import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.VFS;
  * [content] stores records (contentHash, compressed | uncompressed content)
  * [content.hashToId] stores mapping from contentHash to [content] records with such contentHash
  * <p>
- * Compresses (currently: java.util.zip or lz4) content larger than threshold, configured in the ctor.
+ * Compresses (currently: java.util.zip or lz4) content larger than the threshold, configured in the ctor.
  * <p/>
  * Max record size (compressed) is limited by the pageSize.
  * <p>
@@ -140,7 +141,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
 
     contentStorage = AppendOnlyLogFactory.withDefaults()
       .pageSize(pageSize)
-      .failFileIfIncompatible()
+      .failIfFileIncompatible()
       .failIfDataFormatVersionNotMatch(storageFormatVersion)
       .open(storagePath);
 
@@ -174,7 +175,7 @@ public class VFSContentStorageOverMMappedFile implements VFSContentStorage, Unma
   }
 
   @Override
-  public int storeRecord(@NotNull ByteArraySequence bytes) throws IOException {
+  public int storeRecord(@NotNull ByteArraySequence bytes) throws IOException, ContentTooBigException {
     byte[] cryptoHash = PersistentFSContentAccessor.calculateHash(bytes);
     int hash = hashCodeOf(cryptoHash);
     ByteBuffer cryptoHashWrapped = ByteBuffer.wrap(cryptoHash);

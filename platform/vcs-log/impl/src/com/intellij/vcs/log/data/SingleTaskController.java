@@ -220,6 +220,8 @@ public abstract class SingleTaskController<Request, Result> implements Disposabl
           LOG.debug(e);
         }
       }
+      catch (CancellationException ignored) {
+      }
       catch (TimeoutException e) {
         if (longTimeOut) LOG.warn(formMessage("Wait time out "), e);
       }

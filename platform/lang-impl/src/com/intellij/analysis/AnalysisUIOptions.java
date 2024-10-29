@@ -144,7 +144,7 @@ public final class AnalysisUIOptions implements PersistentStateComponent<Analysi
   }
 
   private abstract static class InspectionResultsViewToggleAction extends ToggleAction implements DumbAware {
-    @NotNull private final InspectionResultsView myView;
+    private final @NotNull InspectionResultsView myView;
 
     InspectionResultsViewToggleAction(@NotNull InspectionResultsView view,
                                       @NotNull @NlsActions.ActionText String text,

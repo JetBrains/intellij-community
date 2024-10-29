@@ -14,7 +14,7 @@ UFile (package = ) [public final class ObjectLiteralKt {...]
                                     UBlockExpression [{...}]
                                         UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0)) [A()]
                                             UIdentifier (Identifier (A)) [UIdentifier (Identifier (A))]
-                                            USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A] : @org.jetbrains.annotations.NotNull() kotlin.Unit
+                                            USimpleNameReferenceExpression (identifier = A, resolvesTo = PsiClass: A) [A]
                 UReturnExpression [return o.foo()] : @org.jetbrains.annotations.NotNull() java.lang.Void
                     UQualifiedReferenceExpression [o.foo()] : int
                         USimpleNameReferenceExpression (identifier = o) [o] : @org.jetbrains.annotations.NotNull() java.lang.Object

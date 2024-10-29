@@ -26,5 +26,8 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin.k2" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base.tests" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.uast.ide" />
+    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" />
   </component>
 </module>

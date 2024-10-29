@@ -2,11 +2,13 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.options.OptPane;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
 import static com.intellij.codeInspection.options.OptPane.pane;
 
+@ApiStatus.Internal
 public class RedundantSuppressInspection extends RedundantSuppressInspectionBase {
 
   @Override

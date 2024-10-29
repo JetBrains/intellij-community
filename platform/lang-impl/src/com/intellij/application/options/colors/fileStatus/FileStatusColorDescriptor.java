@@ -1,12 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class FileStatusColorDescriptor {
   private final FileStatus myStatus;
   private Color myColor;
@@ -18,8 +20,7 @@ public final class FileStatusColorDescriptor {
     myDefaultColor = defaultColor;
   }
 
-  @NotNull
-  public FileStatus getStatus() {
+  public @NotNull FileStatus getStatus() {
     return myStatus;
   }
 

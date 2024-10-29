@@ -39,7 +39,7 @@ abstract class GroovycTestBase extends GroovyCompilerTest {
     GroovyCompilerConfiguration.getInstance(project).configScript = script.path
 
     myFixture.addFileToProject("a.groovy", "class A { int s = 'foo' }")
-    shouldFail { make() }
+    shouldFail make()
   }
 
   void "test user-level diagnostic for missing dependency of groovy-all"() {

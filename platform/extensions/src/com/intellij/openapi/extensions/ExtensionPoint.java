@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.Disposable;
@@ -82,10 +82,13 @@ public interface ExtensionPoint<T> {
   /**
    * @return {@code true} if the EP allows adding/removing extensions at runtime
    */
+  @ApiStatus.Internal
   boolean isDynamic();
 
+  @ApiStatus.Internal
   @NotNull PluginDescriptor getPluginDescriptor();
 
+  @ApiStatus.Internal
   @ApiStatus.Experimental
   <K> @Nullable T getByKey(@NotNull K key, @NotNull Class<?> cacheId, @NotNull Function<T, @Nullable K> keyMapper);
 

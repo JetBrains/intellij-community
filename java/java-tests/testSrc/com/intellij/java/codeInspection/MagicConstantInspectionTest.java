@@ -37,6 +37,7 @@ public class MagicConstantInspectionTest extends LightJavaCodeInsightFixtureTest
   public void testEnumConstructor() { doTest(); }
   public void testFieldInitializer() { doTest(); }
   public void testSwitchBlock() { doTest(); }
+  public void testPropagate() { doTest(); }
   public void testSwitchExpression1() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, () -> doTest()); }
   public void testSwitchExpression2() { IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_14, () -> doTest()); }
 

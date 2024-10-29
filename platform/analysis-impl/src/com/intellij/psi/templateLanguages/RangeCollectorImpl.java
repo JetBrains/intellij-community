@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
@@ -15,6 +15,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.templateLanguages.TemplateDataElementType.OuterLanguageRangePatcher;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,7 +24,8 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Function;
 
-public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
+@ApiStatus.Internal
+public final class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
   private final TemplateDataElementType myTemplateDataElementType;
   private final List<TextRange> myOuterAndRemoveRanges;
 

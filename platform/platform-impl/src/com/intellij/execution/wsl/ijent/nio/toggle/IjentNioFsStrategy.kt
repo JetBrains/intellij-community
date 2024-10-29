@@ -6,10 +6,13 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem
 import com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystemProvider
+import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.ijent.community.impl.IjentFailSafeFileSystemPosixApi
 import com.intellij.platform.ijent.community.impl.nio.IjentNioFileSystemProvider
 import com.intellij.platform.ijent.community.impl.nio.telemetry.TracingFileSystemProvider
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.forEachGuaranteed
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.coroutineScope
@@ -26,15 +29,18 @@ import java.util.function.BiConsumer
 
 @ApiStatus.Internal
 @VisibleForTesting
+// TODO: should be merged with IjentNioFsRegistry
 class IjentWslNioFsToggleStrategy(
   multiRoutingFileSystemProvider: FileSystemProvider,
   private val coroutineScope: CoroutineScope,
 ) {
   private val ownFileSystems = OwnFileSystems(multiRoutingFileSystemProvider)
+  internal val enabledInDistros: MutableSet<WSLDistribution> = ContainerUtil.newConcurrentSet()
 
   init {
     coroutineScope.coroutineContext.job.invokeOnCompletion {
       unregisterAll()
+      enabledInDistros.clear()
     }
   }
 
@@ -67,21 +73,31 @@ class IjentWslNioFsToggleStrategy(
   }
 
   private suspend fun handleWslDistributionAddition(distro: WSLDistribution) {
-    val ijentApi = WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
-    switchToIjentFs(distro, ijentApi.id)
+    enabledInDistros += distro
+    switchToIjentFs(distro)
   }
 
   private fun handleWslDistributionDeletion(distro: WSLDistribution) {
+    enabledInDistros -= distro
     ownFileSystems.compute(distro) { _, ownFs, actualFs ->
-      if (ownFs == actualFs) null
+      if (ownFs == actualFs) {
+        LOG.info("Unregistering a custom filesystem $actualFs from a removed WSL distribution $distro")
+        null
+      }
       else actualFs
     }
   }
 
-  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
+  suspend fun switchToIjentFs(distro: WSLDistribution) {
     val ijentFsProvider = TracingFileSystemProvider(IjentNioFileSystemProvider.getInstance())
     try {
-      ijentFsProvider.newFileSystem(ijentId.uri, null)
+      val ijentFs = IjentFailSafeFileSystemPosixApi(coroutineScope) {
+        WslIjentManager.instanceAsync().getIjentApi(distro, null, false)
+      }
+      ijentFsProvider.newFileSystem(
+        URI("ijent", "wsl", "/${distro.id}", null, null),
+        IjentNioFileSystemProvider.newFileSystemMap(ijentFs),
+      )
     }
     catch (_: FileSystemAlreadyExistsException) {
       // Nothing.
@@ -89,21 +105,30 @@ class IjentWslNioFsToggleStrategy(
 
     ownFileSystems.compute(distro) { underlyingProvider, _, actualFs ->
       if (actualFs is IjentWslNioFileSystem) {
+        LOG.debug {
+          "Tried to switch $distro to IJent WSL nio.FS, but it had already been so. The old filesystem: $actualFs"
+        }
         actualFs
       }
       else {
-        IjentWslNioFileSystemProvider(
-          ijentId = ijentId,
-          wslLocalRoot = underlyingProvider.getLocalFileSystem().getPath(distro.getWindowsPath("/")),
+        val fileSystem = IjentWslNioFileSystemProvider(
+          wslDistribution = distro,
           ijentFsProvider = ijentFsProvider,
           originalFsProvider = TracingFileSystemProvider(underlyingProvider),
-        ).getFileSystem(ijentId.uri)
+        ).getFileSystem(distro.getUNCRootPath().toUri())
+        LOG.info("Switching $distro to IJent WSL nio.FS: $fileSystem")
+        fileSystem
       }
     }
   }
 
   fun switchToTracingWsl9pFs(distro: WSLDistribution) {
-    ownFileSystems.compute(distro) { underlyingProvider, _, _ ->
+    ownFileSystems.compute(distro) { underlyingProvider, ownFs, actualFs ->
+      LOG.info("Switching $distro to the original file system but with tracing")
+
+      actualFs?.close()
+      ownFs?.close()
+
       TracingFileSystemProvider(underlyingProvider).getLocalFileSystem()
     }
   }
@@ -115,6 +140,8 @@ class IjentWslNioFsToggleStrategy(
 
 private fun FileSystemProvider.getLocalFileSystem(): FileSystem =
   getFileSystem(URI.create("file:/"))
+
+private val LOG = logger<IjentWslNioFsToggleStrategy>()
 
 /**
  * This class accesses two synchronization primitives simultaneously.

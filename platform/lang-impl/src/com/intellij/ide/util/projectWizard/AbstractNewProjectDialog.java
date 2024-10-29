@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.wizard.Step;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
@@ -44,7 +45,7 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   }
 
   @Override
-  protected void init() {
+  protected final void init() {
     super.init();
     DialogWrapperPeer peer = getPeer();
     JRootPane pane = peer.getRootPane();
@@ -55,18 +56,15 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     }
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected final @Nullable JComponent createCenterPanel() {
     setTitle(AbstractNewProjectStep.EP_NAME.hasAnyExtensions() ? ProjectBundle.message("dialog.title.new.project")
-                                                                  : ProjectBundle.message("dialog.title.create.project"));
-    DefaultActionGroup root = createRootStep();
+                                                               : ProjectBundle.message("dialog.title.create.project"));
+    var root = createNewProjectStep();
     Disposer.register(getDisposable(), () -> root.removeAll());
 
     Pair<JPanel, JBList<AnAction>> pair = ActionGroupPanelWrapper.createActionGroupPanel(root, null, getDisposable());
-    if (root instanceof AbstractNewProjectStep<?> projectStep) {
-      projectStep.setWizardContext(createWizardContext(pair, getDisposable()));
-    }
+    root.setWizardContext(createWizardContext(pair, getDisposable()));
     JPanel component = pair.first;
     myPair = pair;
     UiNotifyConnector.doWhenFirstShown(myPair.second, () -> ScrollingUtil.ensureSelectionExists(myPair.second));
@@ -99,25 +97,39 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
     return wizardContext;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return FlatWelcomeFrame.getPreferredFocusedComponent(myPair);
   }
 
-  @Nullable
   @Override
-  protected JComponent createSouthPanel() {
+  protected @Nullable JComponent createSouthPanel() {
+    return null;
+  }
+
+  @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
+
+  /**
+   * @deprecated use {@link #createNewProjectStep()}
+   */
+  @Deprecated
+  @Nullable
+  protected DefaultActionGroup createRootStep() {
     return null;
   }
 
   @NotNull
-  @Override
-  protected DialogStyle getStyle() {
-    return DialogStyle.COMPACT;
+  protected AbstractNewProjectStep<?> createNewProjectStep() {
+    var step = createRootStep();
+    if (step instanceof AbstractNewProjectStep<?> abstractNewProjectStep) {
+      return abstractNewProjectStep;
+    }
+    throw PluginException.createByClass(new AssertionError("override 'createNewProjectStep' instead of deprecated 'createRootStep'"), getClass());
   }
 
-  protected abstract DefaultActionGroup createRootStep();
 
   @Override
   protected String getHelpId() {
@@ -125,12 +137,13 @@ public abstract class AbstractNewProjectDialog extends DialogWrapper {
   }
 
   @Override
-  protected Action @NotNull [] createActions() {
+  protected final Action @NotNull [] createActions() {
     return new Action[0];
   }
 
   static class ProjectStepPeerHolder extends StepAdapter {
     private final ProjectGeneratorPeer<?> myPeer;
+
     ProjectStepPeerHolder(ProjectGeneratorPeer<?> peer) {
       myPeer = peer;
     }

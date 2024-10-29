@@ -11,11 +11,13 @@ import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.DiskQueryRelay;
 import com.intellij.platform.ide.customization.ExternalProductResourceUrls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+@ApiStatus.Internal
 public final class RefCardAction extends DumbAwareAction implements ActionRemoteBehaviorSpecification.Frontend {
   private final NullableLazyValue<Path> myRefCardPath = NullableLazyValue.volatileLazyNullable(() -> {
     var file = Path.of(PathManager.getHomePath() + "/help/ReferenceCard" + (SystemInfo.isMac ? "ForMac" : "") + ".pdf");

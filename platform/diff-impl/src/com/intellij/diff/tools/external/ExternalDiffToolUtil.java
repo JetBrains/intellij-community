@@ -18,6 +18,7 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -297,6 +298,8 @@ public final class ExternalDiffToolUtil {
                                  @NotNull List<String> titles,
                                  @Nullable String windowTitle) throws IOException {
     try {
+      DiffUsageTriggerCollector.logShowExternalTool(project, false);
+
       GeneralCommandLine commandLine = createDiffCommandLine(project, externalTool, contents, titles, windowTitle);
       commandLine.createProcess();
     }
@@ -337,6 +340,8 @@ public final class ExternalDiffToolUtil {
                                   @NotNull ExternalDiffSettings.ExternalTool externalTool,
                                   @NotNull ThreesideMergeRequest request,
                                   @Nullable JComponent parentComponent) throws IOException {
+    DiffUsageTriggerCollector.logShowExternalTool(project, true);
+
     handleMergeRequest(request, () -> tryExecuteMerge(project, externalTool, request, parentComponent));
   }
 

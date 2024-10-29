@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.awt.event.*;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getActionLinkSelectionColor;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainBackground;
 
+@ApiStatus.Internal
 public final class WelcomeScreenFocusManager {
 
   static void installFocusable(final @NotNull Container parentContainer,

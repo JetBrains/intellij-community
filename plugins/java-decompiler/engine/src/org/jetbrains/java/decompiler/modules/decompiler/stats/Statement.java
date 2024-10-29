@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,9 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+import org.jetbrains.java.decompiler.util.StartEndPair;
 import org.jetbrains.java.decompiler.util.TextBuffer;
+import org.jetbrains.java.decompiler.util.TextUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -437,13 +439,26 @@ public abstract class Statement implements IMatchable {
     return false;
   }
 
+  public TextBuffer toJava() {
+    return toJava(0, BytecodeMappingTracer.DUMMY);
+  }
+
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
     throw new RuntimeException("not implemented");
   }
 
   // TODO: make obsolete and remove
-  public List<Object> getSequentialObjects() {
+  public List<IMatchable> getSequentialObjects() {
     return new ArrayList<>(stats);
+  }
+
+  @NotNull
+  public List<? extends IMatchable> getExprentsOrSequentialObjects() {
+    List<? extends IMatchable> exprents = getExprents();
+    if (exprents != null) {
+      return exprents;
+    }
+    return getSequentialObjects();
   }
 
   public void initExprents() {
@@ -777,6 +792,14 @@ public abstract class Statement implements IMatchable {
     this.parent = parent;
   }
 
+  public Statement getTopParent() {
+    Statement ret = this;
+    while (ret.getParent() != null) {
+      ret = ret.getParent();
+    }
+    return ret;
+  }
+
   public HashSet<StatEdge> getLabelEdges() {  // FIXME: why HashSet?
     return labelEdges;
   }
@@ -786,6 +809,13 @@ public abstract class Statement implements IMatchable {
     return varDefinitions;
   }
 
+  /**
+   * Retrieves the list of expression statements associated with this instance.
+   * This method also checks if the current operation has been canceled via the cancellation manager.
+   *
+   * @return a list of {@link Exprent} objects representing expression statements (can be empty if BlockStatement is empty),
+   * or null if it is a SequenceStatement or this Block is not processed
+   */
   @Nullable
   public List<Exprent> getExprents() {
     cancellationManager.checkCanceled();
@@ -806,8 +836,51 @@ public abstract class Statement implements IMatchable {
 
   // helper methods
   public String toString() {
-    return Integer.toString(id);
+    return toString(0);
   }
+
+  protected String toString(int indent) {
+    var buf = new StringBuilder();
+    buf.append(TextUtil.getIndentString(indent)).append(type).append(": ").append(id);
+    for (var stat : this.stats) {
+      buf.append(DecompilerContext.getNewLineSeparator());
+      buf.append(stat.toString(indent + 1));
+    }
+    return buf.toString();
+  }
+
+  //TODO: Cleanup/cache?
+  public void getOffset(@Nullable BitSet values) {
+    if (values == null) return;
+    if (this instanceof DummyExitStatement && ((DummyExitStatement)this).bytecode != null)
+      values.or(((DummyExitStatement)this).bytecode);
+    if (this.getExprents() != null) {
+      for (Exprent e : this.getExprents()) {
+        e.fillBytecodeRange(values);
+      }
+    } else {
+      for (IMatchable obj : this.getSequentialObjects()) {
+        if (obj == null) {
+          //Humm? Skip it
+        } else if (obj instanceof Statement) {
+          ((Statement)obj).getOffset(values);
+        } else if (obj instanceof Exprent) {
+          ((Exprent)obj).fillBytecodeRange(values);
+        }
+      }
+    }
+  }
+
+  private StartEndPair endpoints;
+  public StartEndPair getStartEndRange() {
+    if (endpoints == null) {
+      BitSet set = new BitSet();
+      getOffset(set);
+      endpoints = new StartEndPair(set.nextSetBit(0), set.length() - 1);
+    }
+    return endpoints;
+  }
+
 
   // *****************************************************************************
   // IMatchable implementation

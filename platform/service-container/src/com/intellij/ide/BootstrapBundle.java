@@ -4,6 +4,7 @@ package com.intellij.ide;
 import com.intellij.DynamicBundle;
 import org.jetbrains.annotations.*;
 
+@ApiStatus.Internal
 public final class BootstrapBundle {
   private static final String BUNDLE = "messages.BootstrapBundle";
 

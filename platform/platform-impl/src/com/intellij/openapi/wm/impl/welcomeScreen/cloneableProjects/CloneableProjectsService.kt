@@ -5,6 +5,7 @@ import com.intellij.CommonBundle
 import com.intellij.ide.RecentProjectMetaInfo
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.components.Service.Level
@@ -21,6 +22,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.Topic
 import com.intellij.util.messages.Topic.AppLevel
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.SystemIndependent
@@ -39,7 +41,7 @@ class CloneableProjectsService {
 
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().runProcess(Runnable {
-        val activity = VcsCloneCollector.cloneStarted()
+        val activity = VcsCloneCollector.cloneStarted(taskInfo)
         val cloneStatus: CloneStatus = try {
           cloneTask.run(progressIndicator)
         }
@@ -50,7 +52,7 @@ class CloneableProjectsService {
           logger<CloneableProjectsService>().error(exception)
           CloneStatus.FAILURE
         }
-        VcsCloneCollector.cloneFinished(activity, cloneStatus)
+        VcsCloneCollector.cloneFinished(activity, cloneStatus, taskInfo)
 
         when (cloneStatus) {
           CloneStatus.SUCCESS -> onSuccess(cloneableProject)
@@ -171,7 +173,7 @@ class CloneableProjectsService {
     CANCEL
   }
 
-  class CloneTaskInfo(
+  open class CloneTaskInfo(
     private val title: @NlsContexts.ProgressTitle String,
     private val cancelTooltipText: @Nls String,
     val actionTitle: @Nls String,
@@ -179,12 +181,15 @@ class CloneableProjectsService {
     val failedTitle: @Nls String,
     val canceledTitle: @Nls String,
     val stopTitle: @Nls String,
-    val stopDescription: @Nls String
+    val stopDescription: @Nls String,
   ) : TaskInfo {
     override fun getTitle(): String = title
     override fun getCancelText(): String = CommonBundle.getCancelButtonText()
     override fun getCancelTooltipText(): String = cancelTooltipText
     override fun isCancellable(): Boolean = true
+
+    @ApiStatus.Internal
+    open fun getActivityData(): List<EventPair<*>> = emptyList()
   }
 
   data class CloneableProject(

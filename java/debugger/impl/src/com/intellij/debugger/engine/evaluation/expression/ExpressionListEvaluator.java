@@ -25,6 +25,6 @@ public class ExpressionListEvaluator implements Evaluator {
       strings.add(DebuggerUtils.getValueAsString(context, (Value)evaluator.evaluate(context)));
     }
     return DebuggerUtilsEx.mirrorOfString(StringUtil.join(strings, ", "),
-                                          context.getDebugProcess().getVirtualMachineProxy(), context);
+                                          context.getSuspendContext().getVirtualMachineProxy(), context);
   }
 }

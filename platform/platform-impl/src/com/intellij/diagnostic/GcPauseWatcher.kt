@@ -18,11 +18,13 @@ package com.intellij.diagnostic
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.concurrency.AppExecutorUtil
+import org.jetbrains.annotations.ApiStatus
 import java.lang.management.GarbageCollectorMXBean
 import java.lang.management.ManagementFactory
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
+@ApiStatus.Internal
 open class GcPauseWatcher {
   private val watchers = ManagementFactory.getGarbageCollectorMXBeans().map(::SingleCollectorWatcher)
   private val counter = AtomicInteger()

@@ -5,81 +5,76 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.IntentionAction
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import com.intellij.psi.PsiElement
 import com.intellij.util.containers.addIfNotNull
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.QuickFixesPsiBasedFactory
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 
-class CommaInWhenConditionWithoutArgumentFix(element: KtWhenExpression) : KotlinPsiOnlyQuickFixAction<KtWhenExpression>(element),
-                                                                          CleanupFix {
-    override fun getFamilyName(): String = text
-    override fun getText(): String = KotlinBundle.message("replace.with.in.when")
+class CommaInWhenConditionWithoutArgumentFix(
+    element: KtWhenExpression,
+) : PsiUpdateModCommandAction<KtWhenExpression>(element), CleanupFix.ModCommand {
 
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val whenExpression = element ?: return
-        replaceCommasWithOrsInWhenExpression(whenExpression)
+    override fun getFamilyName(): String = KotlinBundle.message("replace.with.in.when")
+
+    override fun invoke(
+        context: ActionContext,
+        element: KtWhenExpression,
+        updater: ModPsiUpdater,
+    ) {
+        replaceCommasWithOrsInWhenExpression(element)
     }
 
-    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
-        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
-            return listOfNotNull((psiElement.parent?.parent as? KtWhenExpression)?.let(::CommaInWhenConditionWithoutArgumentFix))
-        }
+    private class WhenEntryConditionsData(
+        val conditions: List<KtExpression>,
+        val first: PsiElement,
+        val last: PsiElement,
+        val arrow: PsiElement
+    )
 
-        private class WhenEntryConditionsData(
-            val conditions: List<KtExpression>,
-            val first: PsiElement,
-            val last: PsiElement,
-            val arrow: PsiElement
-        )
-
-        private fun replaceCommasWithOrsInWhenExpression(whenExpression: KtWhenExpression) {
-            for (whenEntry in whenExpression.entries) {
-                if (whenEntry.conditions.size > 1) {
-                    val conditionsData = getConditionsDataOrNull(whenEntry) ?: return
-                    // Leave branch untouched if there are no valid conditions
-                    if (conditionsData.conditions.isEmpty()) continue
-                    val replacement = KtPsiFactory(whenEntry.project).buildExpression {
-                        appendExpressions(conditionsData.conditions, separator = "||")
-                    }
-                    whenEntry.deleteChildRange(conditionsData.first, conditionsData.last)
-                    whenEntry.addBefore(replacement, conditionsData.arrow)
+    private fun replaceCommasWithOrsInWhenExpression(whenExpression: KtWhenExpression) {
+        for (whenEntry in whenExpression.entries) {
+            if (whenEntry.conditions.size > 1) {
+                val conditionsData = getConditionsDataOrNull(whenEntry) ?: return
+                // Leave branch untouched if there are no valid conditions
+                if (conditionsData.conditions.isEmpty()) continue
+                val replacement = KtPsiFactory(whenEntry.project).buildExpression {
+                    appendExpressions(conditionsData.conditions, separator = "||")
                 }
+                whenEntry.deleteChildRange(conditionsData.first, conditionsData.last)
+                whenEntry.addBefore(replacement, conditionsData.arrow)
             }
         }
+    }
 
-        private fun getConditionsDataOrNull(whenEntry: KtWhenEntry): WhenEntryConditionsData? {
-            val conditions = mutableListOf<KtExpression>()
+    private fun getConditionsDataOrNull(whenEntry: KtWhenEntry): WhenEntryConditionsData? {
+        val conditions = mutableListOf<KtExpression>()
 
-            var arrow: PsiElement? = null
+        var arrow: PsiElement? = null
 
-            var child = whenEntry.firstChild
-            whenEntryChildren@ while (child != null) {
-                when {
-                    child is KtWhenConditionWithExpression -> {
-                        conditions.addIfNotNull(child.expression)
-                    }
-                    child.node.elementType == KtTokens.ARROW -> {
-                        arrow = child
-                        break@whenEntryChildren
-                    }
+        var child = whenEntry.firstChild
+        whenEntryChildren@ while (child != null) {
+            when {
+                child is KtWhenConditionWithExpression -> {
+                    conditions.addIfNotNull(child.expression)
                 }
-                child = child.nextSibling
+                child.node.elementType == KtTokens.ARROW -> {
+                    arrow = child
+                    break@whenEntryChildren
+                }
             }
-
-            val last = child?.prevSibling
-
-            return if (arrow != null && last != null)
-                WhenEntryConditionsData(conditions, whenEntry.firstChild, last, arrow)
-            else
-                null
+            child = child.nextSibling
         }
+
+        val last = child?.prevSibling
+
+        return if (arrow != null && last != null)
+            WhenEntryConditionsData(conditions, whenEntry.firstChild, last, arrow)
+        else
+            null
     }
 }

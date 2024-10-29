@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
@@ -23,11 +25,20 @@ public final class BuildTargetsState {
   private final BuildDataPaths myDataPaths;
   private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
   private long myLastSuccessfulRebuildDuration = -1;
-  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> typeToState = new ConcurrentHashMap<>(16, 0.75f, 1);
   private final JpsModel myModel;
-  private final BuildRootIndexImpl myBuildRootIndex;
+  private final BuildRootIndex myBuildRootIndex;
 
+  /**
+   * @deprecated temporary available to enable kotlin tests running. Should be removed eventually
+   */
+  @Deprecated
+  @ApiStatus.Internal
   public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
+    this(dataPaths, model, (BuildRootIndex)buildRootIndex);
+  }
+
+  public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndex buildRootIndex) {
     myDataPaths = dataPaths;
     myModel = model;
     myBuildRootIndex = buildRootIndex;
@@ -52,7 +63,7 @@ public final class BuildTargetsState {
   public void save() {
     try {
       File targetTypesFile = getTargetTypesFile();
-      FileUtil.createParentDirs(targetTypesFile);
+      FileUtilRt.createParentDirs(targetTypesFile);
       try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(targetTypesFile)))) {
         output.writeInt(myMaxTargetId.get());
         output.writeLong(myLastSuccessfulRebuildDuration);
@@ -61,7 +72,7 @@ public final class BuildTargetsState {
     catch (IOException e) {
       LOG.info("Cannot save targets info: " + e.getMessage(), e);
     }
-    for (BuildTargetTypeState state : myTypeStates.values()) {
+    for (BuildTargetTypeState state : typeToState.values()) {
       state.save();
     }
   }
@@ -89,7 +100,7 @@ public final class BuildTargetsState {
     return getTypeState(type).getStaleTargetIds();
   }
 
-  public void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
+  void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
     getTypeState(type).removeStaleTarget(targetId);
   }
 
@@ -101,16 +112,8 @@ public final class BuildTargetsState {
     return getTypeState(type).getAverageTargetBuildTime();
   }
 
-  private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {
-    BuildTargetTypeState state = myTypeStates.get(type);
-    if (state == null) {
-      final BuildTargetTypeState newState = new BuildTargetTypeState(type, this);
-      state = myTypeStates.putIfAbsent(type, newState);
-      if (state == null) {
-        state = newState;
-      }
-    }
-    return state;
+  private @NotNull BuildTargetTypeState getTypeState(@NotNull BuildTargetType<?> type) {
+    return typeToState.computeIfAbsent(type, it -> new BuildTargetTypeState(it, this));
   }
 
   public void markUsedId(int id) {
@@ -128,14 +131,14 @@ public final class BuildTargetsState {
   }
 
   public void clean() {
-    FileUtil.delete(myDataPaths.getTargetsDataRoot());
+    FileUtilRt.delete(myDataPaths.getTargetsDataRoot());
   }
 
   public JpsModel getModel() {
     return myModel;
   }
 
-  public BuildRootIndexImpl getBuildRootIndex() {
+  public BuildRootIndex getBuildRootIndex() {
     return myBuildRootIndex;
   }
 

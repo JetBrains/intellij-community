@@ -3,8 +3,10 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class XStackFrameNode extends XValueContainerNode<XStackFrame> {
 
   public XStackFrameNode(final @NotNull XDebuggerTree tree, final @NotNull XStackFrame xStackFrame) {

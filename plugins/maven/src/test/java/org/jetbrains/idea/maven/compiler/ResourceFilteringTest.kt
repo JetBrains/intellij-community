@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package org.jetbrains.idea.maven.compiler
 
+import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.maven.testFramework.MavenCompilingTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.module.ModuleManager.Companion.getInstance
@@ -26,6 +16,7 @@ import com.intellij.psi.PsiDocumentManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
+import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.jps.maven.model.impl.MavenIdBean
@@ -549,7 +540,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=1")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <version>1</version>
@@ -562,7 +553,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                          </resources>
                        </build>
                        """.trimIndent())
-    importProjectAsync()
+    updateAllProjects()
     compileModules("project")
 
     assertResult("target/classes/file.properties", "value=\${project.version}")
@@ -594,7 +585,9 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
 
     WriteAction.runAndWait<IOException> { VfsUtil.saveText(filter, "xxx=2") }
     withContext(Dispatchers.EDT) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      writeIntentReadAction {
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
     }
     compileModules("project")
     assertResult("target/classes/file.properties", "value=2")
@@ -623,7 +616,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -639,6 +632,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val2")
   }
@@ -684,7 +678,7 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val1")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>project</artifactId>
                     <version>1</version>
@@ -698,17 +692,25 @@ class ResourceFilteringTest : MavenCompilingTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
     val modelMap2 = mavenProjectsManager.findProject(
       moduleManager.findModuleByName("project")!!)!!.modelMap
     val config2 = newMavenModuleResourceConfiguration(modelMap2)
 
     assertResources("project", "resources")
-    assertEquals("val2", modelMap2["name"])
-    assertFalse("Config hash didn't change. Module may not be recompiled properly",
-                config1.computeModuleConfigurationHash() == config2.computeModuleConfigurationHash())
+    assertEquals("val2", modelMap2.get("name"))
+    assertThat(getHash(config1))
+      .isNotEqualTo(getHash(config2))
+      .describedAs("Config hash didn't change. Module may not be recompiled properly")
 
     compileModules("project")
     assertResult("target/classes/file.properties", "value=val2")
+  }
+
+  private fun getHash(config: MavenModuleResourceConfiguration): Long {
+    val hash = Hashing.komihash5_0().hashStream()
+    config.computeModuleConfigurationHash(hash)
+    return hash.asLong
   }
 
   @Test

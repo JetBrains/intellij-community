@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemShortcutsManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +50,7 @@ public class ExternalProjectsViewAdapter implements ExternalProjectsView {
     return delegate.getStructure();
   }
 
+  @ApiStatus.Internal
   @Override
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return delegate.getShortcutsManager();

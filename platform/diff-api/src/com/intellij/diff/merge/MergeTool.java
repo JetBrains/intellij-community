@@ -44,6 +44,10 @@ public interface MergeTool {
    * {@link MergeRequest#applyResult(MergeResult)} will be performed by the caller, so it shouldn't be called by MergeViewer directly.
    */
   interface MergeViewer extends Disposable {
+    /**
+     * The component will be used for {@link com.intellij.openapi.actionSystem.ActionToolbar#setTargetComponent(JComponent)}
+     * and might want to implement {@link com.intellij.openapi.actionSystem.UiDataProvider} for {@link ToolbarComponents#toolbarActions}.
+     */
     @NotNull
     JComponent getComponent();
 

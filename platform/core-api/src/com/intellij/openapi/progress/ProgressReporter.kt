@@ -9,7 +9,9 @@ import com.intellij.platform.util.progress.indeterminateStep
 import com.intellij.platform.util.progress.progressStep
 import com.intellij.platform.util.progress.withRawProgressReporter
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.util.progress",
   ReplaceWith("indeterminateStep(text, action)", "com.intellij.platform.util.progress.indeterminateStep"),
@@ -22,6 +24,7 @@ suspend fun <T> indeterminateStep(
   return indeterminateStep(text, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.util.progress",
   ReplaceWith("progressStep(endFraction, text, action)", "com.intellij.platform.util.progress.progressStep"),
@@ -35,6 +38,7 @@ suspend fun <T> progressStep(
   return progressStep(endFraction, text, action)
 }
 
+@ApiStatus.ScheduledForRemoval
 @Deprecated(
   "Moved to com.intellij.platform.util.progress",
   ReplaceWith("durationStep(duration, text, action)", "com.intellij.platform.util.progress.durationStep"),

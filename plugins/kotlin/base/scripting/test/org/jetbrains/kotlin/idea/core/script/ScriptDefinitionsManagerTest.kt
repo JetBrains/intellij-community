@@ -254,16 +254,6 @@ class ScriptDefinitionsManagerTest {
     }
 
     @Test
-    fun `Default definition is available via both new and legacy API`() {
-        val defaultDefinition = manager.getDefaultDefinition()
-        val defaultScriptDefinition = manager.getDefaultScriptDefinition()
-
-        assertNotNull(defaultDefinition.asLegacyOrNull<BundledIdeScriptDefinition>())
-        assertInstanceOf(BundledIdeScriptDefinition::class.java, defaultScriptDefinition)
-    }
-
-
-    @Test
     fun `Provided file extensions match known definitions`() {
         manager.definitionSources = listOf(
             sourceA.returning(TestDefinition("A", "a.kts"), TestDefinition("AA", "aa.kts")),
@@ -323,9 +313,6 @@ private class ScriptDefinitionsManagerUnderTest(val project: Project) : ScriptDe
     override fun tryGetScriptDefinitionFast(locationId: String): ScriptDefinition? = null
 
     override fun isScratchFile(script: SourceCode): Boolean = false
-
-    override fun getBundledScriptDefinitionContributor(): BundledScriptDefinitionContributor =
-        BundledScriptDefinitionContributor(project)
 
     override fun executeUnderReadLock(block: () -> Unit) = block()
 }

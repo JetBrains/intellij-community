@@ -199,7 +199,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
     return fileSet != null;
   }
 
-  // a slightly faster implementation then the default one
+  // a slightly faster implementation than the default one
   @Override
   public boolean isInLibrary(@NotNull VirtualFile fileOrDir) {
     WorkspaceFileSet fileSet = myWorkspaceFileIndex.findFileSet(fileOrDir, true, false, true, true, false);

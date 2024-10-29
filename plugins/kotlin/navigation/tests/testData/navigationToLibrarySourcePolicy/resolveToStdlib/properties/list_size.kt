@@ -3,4 +3,4 @@ fun a() {
     list.si<caret>ze
 }
 
-// REF: (kotlin.collections.List.size) override val size: Int
+// REF: (kotlin.collections.List.size) actual override val size: Int

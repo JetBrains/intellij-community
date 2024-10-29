@@ -22,12 +22,14 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.bindIntText
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
 import javax.swing.JComponent
 import kotlin.math.max
 
+@ApiStatus.Internal
 class AddInlayBlockInternalAction : AnAction(), DumbAware {
 
   override fun actionPerformed(e: AnActionEvent) {

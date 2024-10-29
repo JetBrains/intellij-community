@@ -21,6 +21,7 @@ package com.intellij.openapi.project;
  * @see DumbService
  * @see DumbAwareRunnable
  * @see PossiblyDumbAware
+ * @see <a href="https://plugins.jetbrains.com/docs/intellij/indexing-and-psi-stubs.html#DumbAwareAPI">DumbAware API (IntelliJ Platform Docs)</a>
  */
 public interface DumbAware {
 }

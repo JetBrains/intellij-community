@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.completion.actions;
 
@@ -19,11 +19,13 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public final class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<>("HIPPIE_COMPLETION_STATE");
   private final boolean myForward;
@@ -33,7 +35,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
   }
 
   @Override
-  public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull PsiFile file) {
+  public void invoke(@NotNull Project project, final @NotNull Editor editor, @NotNull PsiFile file) {
     if (!EditorModificationUtil.requestWriting(editor)) {
       return;
     }
@@ -123,14 +125,13 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
     public int startOffset;
   }
 
-  @Nullable
-  private CompletionVariant computeNextVariant(final Editor editor,
-                                               @Nullable final String prefix,
-                                               @Nullable CompletionVariant lastProposedVariant,
-                                               final CompletionData data,
-                                               PsiFile file,
-                                               boolean includeWordsFromOtherFiles,
-                                               boolean weAlreadyDoBestAttempt
+  private @Nullable CompletionVariant computeNextVariant(final Editor editor,
+                                                         final @Nullable String prefix,
+                                                         @Nullable CompletionVariant lastProposedVariant,
+                                                         final CompletionData data,
+                                                         PsiFile file,
+                                                         boolean includeWordsFromOtherFiles,
+                                                         boolean weAlreadyDoBestAttempt
   ) {
     final List<CompletionVariant> variants = computeVariants(editor, new CamelHumpMatcher(StringUtil.notNullize(prefix)), file, includeWordsFromOtherFiles);
     if (variants.isEmpty()) {
@@ -248,7 +249,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
     return false;
   }
 
-  private static List<CompletionVariant> computeVariants(@NotNull final Editor editor,
+  private static List<CompletionVariant> computeVariants(final @NotNull Editor editor,
                                                          CamelHumpMatcher matcher,
                                                          PsiFile file,
                                                          boolean includeWordsFromOtherFiles) {
@@ -411,8 +412,7 @@ public final class HippieWordCompletionHandler implements CodeInsightActionHandl
     return state;
   }
 
-  @NotNull
-  private static List<Integer> getCaretOffsets(Editor editor) {
+  private static @NotNull List<Integer> getCaretOffsets(Editor editor) {
     return ContainerUtil.map(editor.getCaretModel().getAllCarets(), caret -> caret.getOffset());
   }
 

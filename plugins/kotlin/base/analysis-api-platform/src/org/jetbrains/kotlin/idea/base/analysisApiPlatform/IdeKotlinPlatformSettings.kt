@@ -1,0 +1,10 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.analysisApiPlatform
+
+import org.jetbrains.kotlin.analysis.api.platform.KotlinDeserializedDeclarationsOrigin
+import org.jetbrains.kotlin.analysis.api.platform.KotlinPlatformSettings
+
+internal class IdeKotlinPlatformSettings : KotlinPlatformSettings {
+    override val deserializedDeclarationsOrigin: KotlinDeserializedDeclarationsOrigin
+        get() = KotlinDeserializedDeclarationsOrigin.STUBS
+}

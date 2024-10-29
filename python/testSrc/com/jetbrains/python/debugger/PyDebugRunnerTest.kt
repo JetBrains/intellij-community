@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger
 
+import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.local.LocalTargetEnvironment
 import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.constant
@@ -14,7 +15,7 @@ class PyDebugRunnerTest {
     AutoCloseableSoftAssertions().use { softAssertions ->
       val debuggerScriptExecution = PythonScriptExecution()
       val localTargetEnvironment = LocalTargetEnvironment(LocalTargetEnvironmentRequest())
-      PyDebugRunner.configureServerModeDebugConnectionParameters(debuggerScriptExecution, constant(8787))
+      PyDebugRunner.configureServerModeDebugConnectionParameters(debuggerScriptExecution, constant(HostPort("", 8787)))
       softAssertions
         .assertThat(debuggerScriptExecution.pythonScriptPath)
         .isNull()

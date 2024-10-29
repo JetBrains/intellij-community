@@ -253,4 +253,14 @@
     <problem_class severity="WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
     <description>Remove explicit type arguments</description>
   </problem>
+
+  <problem>
+    <file>KTIJ-31286.kt</file>
+    <line>9</line>
+    <module>light_idea_test_case</module>
+    <package>KTIJ-31286</package>
+    <entry_point TYPE="method" FQNAME="KTIJ-31286.kt" />
+    <problem_class severity="WEAK WARNING" attribute_key="NOT_USED_ELEMENT_ATTRIBUTES">Type arguments are unnecessary</problem_class>
+    <description>Remove explicit type arguments</description>
+  </problem>
 </problems>

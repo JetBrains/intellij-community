@@ -43,7 +43,7 @@ public final class GroovyImportOptimizerRefactoringHelper implements Refactoring
   }
 
   @Override
-  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements) {
+  public Set<GroovyFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
     Set<GroovyFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), GroovyFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }

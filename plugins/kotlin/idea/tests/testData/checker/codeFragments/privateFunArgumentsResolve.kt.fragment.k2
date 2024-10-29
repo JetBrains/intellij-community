@@ -1,2 +1,2 @@
 @Suppress("INVISIBLE_MEMBER")
-MyClass().privateFun("s")
+MyClass().privateFun(<error>"s"</error>)

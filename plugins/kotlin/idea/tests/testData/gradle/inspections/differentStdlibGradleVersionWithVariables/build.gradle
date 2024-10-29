@@ -16,5 +16,5 @@ buildscript {
 apply plugin: 'kotlin'
 
 dependencies {
-    compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: lib_version
+    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: lib_version
 }

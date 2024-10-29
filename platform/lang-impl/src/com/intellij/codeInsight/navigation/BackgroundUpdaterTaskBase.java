@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
@@ -17,11 +18,13 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
   protected JBPopup myPopup;
   private GenericListComponentUpdater<T> myUpdater;
@@ -46,11 +49,9 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myUsageView = usageView;
   }
 
-  @Nullable
-  public abstract @PopupTitle String getCaption(int size);
+  public abstract @Nullable @PopupTitle String getCaption(int size);
 
-  @Nullable
-  protected abstract Usage createUsage(@NotNull T element);
+  protected abstract @Nullable Usage createUsage(@NotNull T element);
 
   protected void replaceModel(@NotNull List<? extends T> data) {
     myUpdater.replaceModel(data);
@@ -121,10 +122,10 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
       if (!myData.add(element)) return true;
     }
 
-    myAlarm.addRequest(() -> {
+    myAlarm.addRequest(() -> WriteIntentReadAction.run((Runnable)() -> {
       myAlarm.cancelAllRequests();
       refreshModelImmediately();
-    }, 200, ModalityState.stateForComponent(myPopup.getContent()));
+    }), 200, ModalityState.stateForComponent(myPopup.getContent()));
     return true;
   }
 
@@ -169,8 +170,7 @@ public abstract class BackgroundUpdaterTaskBase<T> extends Task.Backgroundable {
     myFinished = true;
   }
 
-  @Nullable
-  protected T getTheOnlyOneElement() {
+  protected @Nullable T getTheOnlyOneElement() {
     synchronized (lock) {
       if (myData.size() == 1) {
         return myData.iterator().next();

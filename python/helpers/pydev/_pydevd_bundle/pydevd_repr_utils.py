@@ -40,8 +40,12 @@ def _get_df_variable_repr(data_frame):
     # large data frames. df.__str__() is already optimised and works fast enough.
     data_preview = []
     column_row = 0
-
-    rows = str(data_frame).split('\n')
+    shape_rows, shape_cols = data_frame.shape
+    if shape_cols > 1000 or shape_rows > 10000:
+        head_number = 1
+    else:
+        head_number = 3
+    rows = str(data_frame.head(head_number)).split('\n')
     for (i, r) in enumerate(rows):
         if i != column_row:
             data_preview.append("[%s]" % r)
@@ -51,7 +55,7 @@ def _get_df_variable_repr(data_frame):
 
     # The string provided is used for column name completion
     # by JupyterVarsFrameExecutor.parseFrameVars
-    return '{} {}'.format(list(data_frame.columns), ' '.join(data_preview))
+    return '%s %s' % (list(data_frame.columns), ' '.join(data_preview))
 
 
 def _trim_string_repr_if_needed(value, do_trim=True, max_length=MAX_REPR_LENGTH):
@@ -67,9 +71,9 @@ def _get_external_collection_repr(collection, raise_exception=False):
 
     # pandas var
     try:
-        if typename == "Series":
+        if typename == "Series" or typename == "GeoSeries":
             return _get_series_variable_repr(collection)
-        if typename == "DataFrame":
+        if typename == "DataFrame" or typename == "GeoDataFrame":
             return _get_df_variable_repr(collection)
     except Exception as e:
         pydev_log.warn("Failed to format pandas variable: " + str(e))

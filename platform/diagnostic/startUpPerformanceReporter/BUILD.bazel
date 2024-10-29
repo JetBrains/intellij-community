@@ -1,0 +1,38 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "17",
+  x_optin = ["kotlinx.serialization.ExperimentalSerializationApi"]
+)
+
+kt_jvm_library(
+  name = "diagnostic-startUpPerformanceReporter",
+  module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = ":custom",
+  plugins = ["@libraries//:serialization_plugin"],
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:jackson-core",
+    "@community//platform/core-impl",
+    "@community//platform/util-ex",
+    "@community//platform/util/ui:util-ui",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/platform-util-io-impl:ide-util-io-impl",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlinx-serialization-core-jvm",
+    "@libraries//:kotlinx-serialization-protobuf-jvm",
+    "@community//platform/diagnostic/telemetry-impl:diagnostic-telemetry-impl",
+    "@community//platform/diagnostic",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+  ]
+)
+### auto-generated section `build` end

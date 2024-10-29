@@ -145,8 +145,10 @@ public final class TerminalNewPredefinedSessionAction extends DumbAwareAction {
       if (pwsh != null && StringUtil.startsWithIgnoreCase(pwsh.getAbsolutePath(), "C:\\Program Files\\PowerShell\\")) {
         ContainerUtil.addIfNotNull(actions, create(pwsh.getAbsolutePath(), List.of(), "PowerShell"));
       }
-      File gitBash = new File("C:\\Program Files\\Git\\bin\\bash.exe");
-      if (gitBash.isFile()) {
+      File gitBashGlobal = new File("C:\\Program Files\\Git\\bin\\bash.exe");
+      File gitBashLocal = new File(System.getenv("LocalAppData") + "\\Programs\\Git\\bin\\bash.exe");
+      File gitBash = gitBashLocal.isFile() ? gitBashLocal : (gitBashGlobal.isFile() ? gitBashGlobal : null);
+      if (gitBash != null) {
         ContainerUtil.addIfNotNull(actions, create(gitBash.getAbsolutePath(), List.of(), "Git Bash"));
       }
       String cmderRoot = EnvironmentUtil.getValue("CMDER_ROOT");

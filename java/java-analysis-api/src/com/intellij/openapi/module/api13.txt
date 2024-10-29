@@ -4,7 +4,6 @@ javax.xml.parsers.SAXParserFactory#newNSInstance(java.lang.String;java.lang.Clas
 javax.xml.parsers.DocumentBuilderFactory#newDefaultNSInstance()
 javax.xml.parsers.DocumentBuilderFactory#newNSInstance()
 javax.xml.parsers.DocumentBuilderFactory#newNSInstance(java.lang.String;java.lang.ClassLoader;)
-jdk.internal.misc.Unsafe#throwNoSuchMethodError()
 jdk.internal.misc.UnsafeConstants
 sun.security.util.GCMParameters
 java.nio.file.FileSystems#newFileSystem(java.nio.file.Path;java.util.Map<java.lang.String,?>;)
@@ -152,15 +151,11 @@ java.text.DecimalFormatSymbols#getPercentText()
 java.text.DecimalFormatSymbols#setPercentText(java.lang.String;)
 java.text.DecimalFormatSymbols#getMinusSignText()
 java.text.DecimalFormatSymbols#setMinusSignText(java.lang.String;)
-java.text.DecimalFormatSymbols#perMillText
-java.text.DecimalFormatSymbols#percentText
-java.text.DecimalFormatSymbols#minusSignText
 java.time.chrono.JapaneseEra#REIWA
 java.security.Signature#initVerify(java.security.cert.Certificate;java.security.spec.AlgorithmParameterSpec;)
 com.sun.tools.javac.api.BasicJavacTask#setParameterNameProvider(com.sun.source.util.ParameterNameProvider;)
 com.sun.tools.javac.api.ClientCodeWrapper.WrappedStandardJavaFileManager#getJavaFileObjectsFromPaths(java.util.Collection<? extends java.nio.file.Path>;)
 com.sun.tools.javac.file.JavacFileManager#getJavaFileObjectsFromPaths(java.util.Collection<? extends java.nio.file.Path>;)
-com.sun.tools.javac.main.DelegatingJavaFileManager.DelegatingSJFM#getJavaFileObjectsFromPaths(java.util.Collection<? extends java.nio.file.Path>;)
 com.sun.tools.javac.tree.TreeCopier#visitYield(com.sun.source.tree.YieldTree;P;)
 com.sun.tools.javac.processing.JavacProcessingEnvironment#isPreviewEnabled()
 com.sun.source.tree.Tree.Kind#YIELD
@@ -171,6 +166,7 @@ com.sun.source.util.ParameterNameProvider
 javax.lang.model.SourceVersion#RELEASE_13
 javax.tools.StandardJavaFileManager#getJavaFileObjectsFromPaths(java.util.Collection<? extends java.nio.file.Path>;)
 javax.annotation.processing.ProcessingEnvironment#isPreviewEnabled()
+javax.xml.crypto.dsig.keyinfo.KeyValue#EC_TYPE
 javax.xml.crypto.dsig.CanonicalizationMethod#INCLUSIVE_11
 javax.xml.crypto.dsig.CanonicalizationMethod#INCLUSIVE_11_WITH_COMMENTS
 javax.security.auth.kerberos.KerberosPrincipal#KRB_NT_ENTERPRISE

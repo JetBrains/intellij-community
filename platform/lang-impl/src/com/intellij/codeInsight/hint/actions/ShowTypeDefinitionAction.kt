@@ -21,9 +21,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.presentation.java.SymbolPresentationUtil
 import com.intellij.util.Processor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Component
 
+@ApiStatus.Internal
 open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

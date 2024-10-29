@@ -7,7 +7,7 @@ Value file: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 Navigation item #0: CLASS
 Navigation item file #0: kotlin-stdlib.jar!/kotlin/annotation/AnnotationTarget.class
 Navigation item #1: CLASS
-Navigation item file #1: kotlin-stdlib-sources.jar!/jvmMain/kotlin/annotation/Annotations.kt
+Navigation item file #1: kotlin-stdlib-sources.jar!/commonMain/kotlin/annotation/Annotations.kt
 
 
 -Project
@@ -46,6 +46,7 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/jvmMain/kotlin/annotation/An
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
+     +PsiDirectory: uuid
      _Assertions
      BuilderInference
      ConsistentCopyVisibility
@@ -146,4 +147,4 @@ Navigation item file #1: kotlin-stdlib-sources.jar!/jvmMain/kotlin/annotation/An
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.jar
+   +PsiDirectory: kotlin-stdlib-common.klib

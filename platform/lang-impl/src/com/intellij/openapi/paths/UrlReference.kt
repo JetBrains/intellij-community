@@ -19,8 +19,10 @@ import com.intellij.platform.backend.navigation.NavigationTarget
 import com.intellij.platform.backend.presentation.TargetPresentation
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class UrlReference(private val element: PsiElement,
                    private val rangeInElement: TextRange,
                    val url: String) : PsiHighlightedReference {

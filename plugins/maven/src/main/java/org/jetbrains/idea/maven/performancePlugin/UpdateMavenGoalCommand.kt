@@ -6,6 +6,7 @@ import com.intellij.execution.impl.SingleConfigurationConfigurable
 import com.intellij.execution.ui.RunnerAndConfigurationSettingsEditor
 import com.intellij.execution.ui.SettingsEditorFragment
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.jetbrains.performancePlugin.commands.PerformanceCommandCoroutineAdapter
@@ -45,7 +46,7 @@ class UpdateMavenGoalCommand(text: String, line: Int) : PerformanceCommandCorout
 
 
     withContext(Dispatchers.EDT) {
-      val configurable = SingleConfigurationConfigurable.editSettings<RunConfiguration>(configSettings, null)
+      val configurable = writeIntentReadAction { SingleConfigurationConfigurable.editSettings<RunConfiguration>(configSettings, null) }
       val editor = (configurable.editor as RunnerAndConfigurationSettingsEditor)
       val configEditorRef = editor.javaClass.getDeclaredField("myConfigurationEditor")
       configEditorRef.isAccessible = true

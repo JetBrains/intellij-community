@@ -11,18 +11,24 @@ import java.util.function.Supplier
 @NonNls
 private const val BUNDLE = "messages.CredentialStoreBundle"
 
-object CredentialStoreBundle : DynamicBundle(BUNDLE) {
-  val passwordSafeConfigurable: @Nls String get() = message("password.safe.configurable")
+@ApiStatus.Internal
+object CredentialStoreBundle {
+  private val bundle = DynamicBundle(CredentialStoreBundle::class.java, BUNDLE)
 
-  @ApiStatus.Internal
-  fun message(@PropertyKey(resourceBundle = BUNDLE) key: String,
-              vararg params: Any): @Nls String {
-    return getMessage(key, *params)
+  val passwordSafeConfigurable: @Nls String
+    get() = message("password.safe.configurable")
+
+  fun message(
+    @PropertyKey(resourceBundle = BUNDLE) key: String,
+    vararg params: Any,
+  ): @Nls String {
+    return bundle.getMessage(key, *params)
   }
 
-  @ApiStatus.Internal
-  fun messagePointer(@PropertyKey(resourceBundle = BUNDLE) key: String,
-                  vararg params: Any): Supplier<@Nls String> {
-    return getLazyMessage(key, *params)
+  fun messagePointer(
+    @PropertyKey(resourceBundle = BUNDLE) key: String,
+    vararg params: Any,
+  ): Supplier<@Nls String> {
+    return bundle.getLazyMessage(key, *params)
   }
 }

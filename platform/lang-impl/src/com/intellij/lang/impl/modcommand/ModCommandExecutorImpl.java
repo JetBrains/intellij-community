@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.impl.modcommand;
 
 import com.intellij.codeInsight.generation.ClassMember;
@@ -18,6 +18,7 @@ import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.injected.editor.EditorWindow;
@@ -31,6 +32,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -40,17 +42,13 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -64,11 +62,13 @@ import com.intellij.refactoring.rename.Renamer;
 import com.intellij.refactoring.rename.RenamerFactory;
 import com.intellij.refactoring.suggested.*;
 import com.intellij.refactoring.ui.ConflictsDialog;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -82,6 +82,7 @@ import java.util.concurrent.Callable;
 
 import static java.util.Objects.requireNonNullElse;
 
+@ApiStatus.Internal
 public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
   private static final Key<List<RangeHighlighter>> HIGHLIGHTERS_ON_NAVIGATED_ELEMENTS = Key.create("mod.command.existing.highlighters");
   
@@ -108,13 +109,16 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
       return executeComposite(context, cmp, editor);
     }
     if (command instanceof ModNavigate nav) {
-      return executeNavigate(project, nav);
+      return executeNavigate(project, nav, editor);
     }
     if (command instanceof ModHighlight highlight) {
       return executeHighlight(project, highlight);
     }
     if (command instanceof ModCopyToClipboard copyToClipboard) {
       return executeCopyToClipboard(copyToClipboard);
+    }
+    if (command instanceof ModOpenUrl openUrl) {
+      return executeOpenUrl(project, openUrl);
     }
     if (command instanceof ModNothing) {
       return true;
@@ -157,8 +161,7 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return false;
   }
 
-  @Nullable
-  private static PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
+  private static @Nullable PsiElement findElementAtRange(PsiFile psiFile, TextRange declarationRange) {
     PsiElement element = psiFile.findElementAt(declarationRange.getStartOffset());
     while (element != null && !element.getTextRange().contains(declarationRange)) {
       element = element.getParent();
@@ -318,6 +321,11 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return true;
   }
 
+  private static boolean executeOpenUrl(@NotNull Project project, @NotNull ModOpenUrl openUrl) {
+    BrowserUtil.browse(openUrl.url(), project);
+    return true;
+  }
+
   private static boolean executeRename(@NotNull Project project, @NotNull ModStartRename rename, @Nullable Editor editor) {
     VirtualFile file = actualize(rename.file());
     if (file == null) return false;
@@ -352,11 +360,16 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return true;
   }
 
-  @Nullable
-  private static Editor getEditor(@NotNull Project project, @Nullable Editor editor, VirtualFile file) {
-    Editor finalEditor = editor == null || !file.equals(editor.getVirtualFile()) ? getEditor(project, file) : editor;
-    if (finalEditor == null) return null;
-    return finalEditor;
+  private static @Nullable Editor getEditor(@NotNull Project project, @Nullable Editor editor, @NotNull VirtualFile file) {
+    if (editor == null) return getEditor(project, file);
+    VirtualFile editorVirtualFile = editor.getVirtualFile(); // EditorComboBox and similar components might provide no virtual file
+    if (editorVirtualFile != null &&
+        !file.equals(editorVirtualFile) && !editor.getDocument().equals(FileDocumentManager.getInstance().getDocument(file))) {
+      return getEditor(project, file);
+    }
+    else {
+      return editor;
+    }
   }
 
   private static final class ErrorInTestException extends RuntimeException {
@@ -382,79 +395,74 @@ public class ModCommandExecutorImpl extends ModCommandBatchExecutorImpl {
     return true;
   }
 
-  private boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
+  private static boolean executeChoose(@NotNull ActionContext context, ModChooseAction chooser, @Nullable Editor editor) {
     record ActionAndPresentation(@NotNull ModCommandAction action, @NotNull Presentation presentation) {}
-    List<ActionAndPresentation> actions = StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
-      .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
-    if (actions.isEmpty()) return true;
-    
-    String name = chooser.title();
-    if (actions.size() == 1) {
-      ModCommandAction action = actions.get(0).action();
-      executeNextStep(context, name, editor, () -> {
-        if (action.getPresentation(context) == null) return null;
-        return action.perform(context);
-      });
-      return true;
-    }
     VirtualFile file = context.file().getVirtualFile();
     if (file == null) return false;
     Editor finalEditor = editor == null ? getEditor(context.project(), file) : editor;
     if (finalEditor == null) return false;
-    List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
-      actions, (actionAndPresentation) -> {
-        IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
-        return new IntentionActionWithTextCaching(intention);
-      });
-    IntentionContainer intentions = new IntentionContainer() {
-      @Override
-      public @NotNull String getTitle() {
-        return chooser.title();
-      }
+    ReadAction.nonBlocking(() -> {
+      return StreamEx.of(chooser.actions()).mapToEntry(action -> action.getPresentation(context))
+        .nonNullValues().mapKeyValue(ActionAndPresentation::new).toList();
+    }).finishOnUiThread(ModalityState.defaultModalityState(), actions -> {
+      if (actions.isEmpty()) return;
 
-      @Override
-      public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
-        return actionsWithTextCaching;
+      String name = chooser.title();
+      if (actions.size() == 1) {
+        ModCommandAction action = actions.get(0).action();
+        ModCommandExecutor.executeInteractively(context, name, editor, () -> {
+          if (action.getPresentation(context) == null) return ModCommand.nop();
+          return action.perform(context);
+        });
+        return;
       }
+      List<IntentionActionWithTextCaching> actionsWithTextCaching = ContainerUtil.map(
+        actions, (actionAndPresentation) -> {
+          IntentionAction intention = new ModCommandActionWrapper(actionAndPresentation.action(), actionAndPresentation.presentation());
+          return new IntentionActionWithTextCaching(intention);
+        });
+      IntentionContainer intentions = new IntentionContainer() {
+        @Override
+        public @NotNull String getTitle() {
+          return chooser.title();
+        }
 
-      @Override
-      public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
-        return IntentionGroup.OTHER;
-      }
+        @Override
+        public @NotNull List<IntentionActionWithTextCaching> getAllActions() {
+          return actionsWithTextCaching;
+        }
 
-      @Override
-      public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching action) {
-        return action.getIcon();
-      }
-    };
-    IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
+        @Override
+        public @NotNull IntentionGroup getGroup(@NotNull IntentionActionWithTextCaching action) {
+          return IntentionGroup.OTHER;
+        }
+
+        @Override
+        public @Nullable Icon getIcon(@NotNull IntentionActionWithTextCaching action) {
+          return action.getIcon();
+        }
+      };
+      IntentionHintComponent.showIntentionHint(context.project(), context.file(), finalEditor, true, intentions);
+    }).submit(AppExecutorUtil.getAppExecutorService());
     return true;
   }
 
-  private void executeNextStep(@NotNull ActionContext context, @NotNull @NlsContexts.Command String name, @Nullable Editor editor,
-                               Callable<? extends ModCommand> supplier) {
-    ModCommand next = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-        return ReadAction.nonBlocking(supplier).expireWhen(context.project()::isDisposed).executeSynchronously();
-      }, name, true, context.project());
-    if (next == null) return;
-    executeInteractively(context, next, editor);
-  }
-
-  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav) {
+  private static boolean executeNavigate(@NotNull Project project, ModNavigate nav, @Nullable Editor editor) {
     VirtualFile file = actualize(nav.file());
     if (file == null) return false;
     int selectionStart = nav.selectionStart();
     int selectionEnd = nav.selectionEnd();
     int caret = nav.caret();
 
-    Editor editor = getEditor(project, file);
-    if (editor == null) return false;
+    Editor fileEditor = getEditor(project, editor, file);
+
+    if (fileEditor == null) return false;
     if (caret != -1) {
-      editor.getCaretModel().moveToOffset(caret);
-      editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
+      fileEditor.getCaretModel().moveToOffset(caret);
+      fileEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     }
     if (selectionStart != -1 && selectionEnd != -1) {
-      editor.getSelectionModel().setSelection(selectionStart, selectionEnd);
+      fileEditor.getSelectionModel().setSelection(selectionStart, selectionEnd);
     }
     return true;
   }

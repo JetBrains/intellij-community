@@ -1,6 +1,7 @@
 // "Add 'lateinit' modifier" "false"
 // ACTION: Add initializer
 // ACTION: Make 'a' 'abstract'
+// ACTION: Initialize with constructor parameter
 // ACTION: Move to constructor parameters
 // ACTION: Move to constructor
 // ACTION: Add getter

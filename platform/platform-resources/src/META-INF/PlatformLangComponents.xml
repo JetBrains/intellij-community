@@ -86,7 +86,7 @@
                         serviceImplementation="com.intellij.ide.impl.DataManagerImpl"
                         testServiceImplementation="com.intellij.ide.impl.HeadlessDataManager"/>
     <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
-    <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
+    <backgroundPostStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
     <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
@@ -127,14 +127,13 @@
     <!--suppress PluginXmlDynamicPlugin -->
     <actionConfigurationCustomizer implementation="com.intellij.ide.actionMacro.ActionMacroManager$MyActionTuner"/>
 
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.HighlighterTextEditorInitializer" order="first"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FoldingTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.InlayHintsEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.daemon.impl.DeclarativeHintsEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.codeInsight.hints.ParameterHintsEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.DocRenderTextEditorInitializer"/>
-    <textEditorInitializer implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneTextEditorInitializer"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.HighlightingNecromancerAwaker" order="first"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.folding.impl.CodeFoldingNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.daemon.impl.DeclarativeHintsNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.hints.ParameterHintsNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.codeInsight.documentation.render.DocRenderNecromancerAwaker"/>
+    <textEditorNecromancerAwaker implementation="com.intellij.openapi.fileEditor.impl.text.FocusZoneNecromancerAwaker"/>
 
     <postStartupActivity implementation="com.intellij.codeInsight.navigation.InitCtrlMouseHandlerActivity"/>
 
@@ -150,14 +149,12 @@
       serviceInterface="com.intellij.formatting.visualLayer.VirtualFormattingIndentGuideInfo"
       serviceImplementation="com.intellij.formatting.visualLayer.PlatformVirtualFormattingIndentGuideInfo" />
 
-    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
-
     <applicationService serviceInterface="com.intellij.refactoring.RefactoringUiService" serviceImplementation="com.intellij.refactoring.RefactoringUiServiceImpl"/>
     
     <projectService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater"
                     serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl" preload="await"/>
 
-    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.experimental.NewToolbarRootPaneManager"/>
+    <projectService serviceImplementation="com.intellij.ide.navigationToolbar.rider.RiderMainToolbarRootPaneManager"/>
 
     <!-- Android Studio: disabled by Change I9217935c
     <idePerformanceListener implementation="com.intellij.diagnostic.IdeaFreezeReporter"/>
@@ -246,9 +243,6 @@
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$ReparseListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
 
-    <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
-              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
-
     <listener class="com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler$MyAnActionListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
@@ -261,6 +255,9 @@
               topic="com.intellij.ide.AppLifecycleListener"
               activeInHeadlessMode="true"
               activeInTestMode="false" />
+
+    <listener class="com.intellij.refactoring.suggested.SuggestedRefactoringEditorHintAdvSettingListener"
+              topic="com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"

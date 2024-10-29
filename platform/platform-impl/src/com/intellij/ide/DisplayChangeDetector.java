@@ -2,12 +2,14 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import sun.awt.DisplayChangedListener;
 
 import java.awt.*;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@ApiStatus.Internal
 public final class DisplayChangeDetector {
   private static final Logger LOG = Logger.getInstance(DisplayChangeDetector.class);
   private static final DisplayChangeDetector INSTANCE = new DisplayChangeDetector();

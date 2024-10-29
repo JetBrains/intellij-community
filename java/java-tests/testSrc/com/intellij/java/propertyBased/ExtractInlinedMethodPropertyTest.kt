@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -6,12 +6,14 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.RangeMarker
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.PsiDocumentManagerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.BaseRefactoringProcessor
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodService
 import com.intellij.refactoring.extractMethod.newImpl.MethodExtractor
 import com.intellij.refactoring.inline.InlineMethodHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
@@ -19,10 +21,17 @@ import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.propertyBased.MadTestingUtil
 import com.intellij.testFramework.propertyBased.RandomActivityInterceptor
 import com.intellij.ui.UiInterceptors
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.job
+import kotlinx.coroutines.yield
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.ImperativeCommand
 import org.jetbrains.jetCheck.PropertyChecker
 import org.jetbrains.plugins.groovy.lang.psi.util.isWhiteSpaceOrNewLine
+import java.util.concurrent.TimeUnit.SECONDS
 
 @SkipSlowTestLocally
 class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
@@ -48,6 +57,7 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
     try {
       UiInterceptors.register(RandomActivityInterceptor(env, disposable))
       val file = env.generateValue(javaFiles, null)
+      if (myCompilerTester.make().isNotEmpty()) return@ImperativeCommand
 
       env.logMessage("Open file in editor: ${file.virtualFile.path}")
       val editor = FileEditorManager.getInstance(myProject)
@@ -58,11 +68,11 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
       val methodCall = env.generateValue(methodCalls, null)
       val method = methodCall.resolveMethod() ?: return@ImperativeCommand
       if (method.isConstructor) return@ImperativeCommand
+      if (method.body?.isEmpty != false) return@ImperativeCommand
       val parentStatement = PsiTreeUtil.getParentOfType(methodCall, PsiStatement::class.java) ?: return@ImperativeCommand
       val rangeToExtract = createGreedyMarker(editor.document, parentStatement)
 
       MadTestingUtil.changeAndRevert(myProject) {
-        val numberOfMethods = countMethodsInsideFile(file)
         val caret = methodCall.methodExpression.textRange.endOffset
         val logicalPosition = editor.offsetToLogicalPosition(caret)
         env.logMessage("Move caret to ${logicalPosition.line + 1}:${logicalPosition.column + 1}")
@@ -72,11 +82,13 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
           env.logMessage("Inline method call: ${methodCall.text}")
           InlineMethodHandler.performInline(myProject, editor, method, true)
           PsiDocumentManager.getInstance(myProject).commitAllDocuments()
+          val numberOfMethods = countMethodsInsideFile(file) + 1
 
           val range = TextRange(rangeToExtract.startOffset, rangeToExtract.endOffset)
           env.logMessage("Extract inlined lines: ${editor.document.getText(range)}")
           MethodExtractor().doExtract(file, range)
-          require(numberOfMethods != countMethodsInsideFile(file)) { "Method is not extracted" }
+          waitCoroutinesBlocking(ExtractMethodService.getInstance(file.project).scope, SECONDS.toMillis(10))
+          require(numberOfMethods == countMethodsInsideFile(file)) { "Method is not extracted" }
           PsiDocumentManager.getInstance(myProject).commitAllDocuments()
 
           checkCompiles(myCompilerTester.make())
@@ -91,8 +103,10 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
   private fun ignoreRefactoringErrorHints(runnable: Runnable) {
     try {
       runnable.run()
-    } catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
-    } catch (_: BaseRefactoringProcessor.ConflictsInTestsException) {
+    }
+    catch (_: CommonRefactoringUtil.RefactoringErrorHintException) {
+    }
+    catch (_: BaseRefactoringProcessor.ConflictsInTestsException) {
     }
   }
 
@@ -119,4 +133,22 @@ class ExtractInlinedMethodPropertyTest : BaseUnivocityTest() {
     return rangeMarker
   }
 
+  @RequiresEdt
+  fun waitCoroutinesBlocking(cs: CoroutineScope, timeoutMs: Long = -1) {
+    runBlockingMaybeCancellable {
+      val job = cs.coroutineContext.job
+      val start = System.currentTimeMillis()
+
+      while (true) {
+        UIUtil.dispatchAllInvocationEvents()
+        yield()
+        delay(1) //prevent too frequent pooling, otherwise may load cpu with billions of context switches
+
+        if (timeoutMs != -1L && System.currentTimeMillis() - start > timeoutMs) break
+
+        val jobs = job.children.toList()
+        if (jobs.isEmpty()) break
+      }
+    }
+  }
 }

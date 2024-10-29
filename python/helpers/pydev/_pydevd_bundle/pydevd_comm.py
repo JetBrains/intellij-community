@@ -71,8 +71,10 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import time
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, GlobalDebuggerHolder, \
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, \
+    IS_PY2, IS_PY3K, \
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON, \
+    GlobalDebuggerHolder, \
     get_global_debugger, GetGlobalDebugger, set_global_debugger, NEXT_VALUE_SEPARATOR
 from _pydev_bundle.pydev_override import overrides
 import json
@@ -96,9 +98,7 @@ from _pydevd_bundle import pydevd_vm_type
 from _pydevd_bundle.smart_step_into import find_stepping_variants
 from pydevd_file_utils import get_abs_path_real_path_and_base_from_frame, norm_file_to_client, is_real_file
 import pydevd_file_utils
-import os
 import sys
-import inspect
 import traceback
 from _pydevd_bundle.pydevd_utils import quote_smart as quote, compare_object_attrs_key, to_string, \
     get_non_pydevd_threads, is_pandas_container, is_numpy_container
@@ -422,14 +422,19 @@ def start_server(port):
         newSock, _addr = s.accept()
         pydevd_log(1, "Connection accepted")
         # closing server socket is not necessary but we don't need it
-        s.shutdown(SHUT_RDWR)
-        s.close()
+        try:
+            s.shutdown(SHUT_RDWR)
+        except:
+            pass
+        finally:
+            s.close()
         return newSock
 
     except:
         sys.stderr.write("Could not bind to port: %s\n" % (port,))
         sys.stderr.flush()
         traceback.print_exc()
+        raise
 
 #=======================================================================================================================
 # start_client

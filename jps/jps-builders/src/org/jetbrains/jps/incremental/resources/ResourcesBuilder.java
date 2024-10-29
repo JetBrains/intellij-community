@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.resources;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -24,8 +24,6 @@ import java.util.*;
  * @author Eugene Zhuravlev
  */
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
-  private static final Logger LOG = Logger.getInstance(ResourcesBuilder.class);
-
   private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
@@ -89,20 +87,21 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
   }
 
   private static void copyResource(CompileContext context, ResourceRootDescriptor rd, File file, BuildOutputConsumer outputConsumer) {
-    final File outputRoot = rd.getTarget().getOutputDir();
+    File outputRoot = rd.getTarget().getOutputDir();
     if (outputRoot == null) {
       return;
     }
-    final String sourceRootPath = FileUtil.toCanonicalPath(rd.getRootFile().getAbsolutePath());
-    String relativePath = FileUtil.getRelativePath(sourceRootPath, FileUtil.toCanonicalPath(file.getPath()), '/');
+
+    String sourceRootPath = FileUtilRt.toCanonicalPath(rd.getRootFile().getAbsolutePath(), File.separatorChar, true);
+    String relativePath = FileUtilRt.getRelativePath(sourceRootPath, FileUtilRt.toCanonicalPath(file.getPath(), File.separatorChar, true), '/');
     if (".".equals(relativePath)) {
       relativePath = file.getName();
     }
-    final String prefix = rd.getPackagePrefix();
+    String prefix = rd.getPackagePrefix();
 
-    final StringBuilder targetPath = new StringBuilder();
+    StringBuilder targetPath = new StringBuilder();
     targetPath.append(FileUtil.toCanonicalPath(outputRoot.getPath()));
-    if (prefix.length() > 0) {
+    if (!prefix.isEmpty()) {
       targetPath.append('/').append(prefix.replace('.', '/'));
     }
     targetPath.append('/').append(relativePath);
@@ -111,9 +110,9 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
       new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0", rd.getTarget().getModule().getName()))
     );
     try {
-      final File targetFile = new File(targetPath.toString());
+      File targetFile = new File(targetPath.toString());
       FSOperations.copy(file, targetFile);
-      outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
+      outputConsumer.registerOutputFile(targetFile, List.of(file.getPath()));
     }
     catch (Exception e) {
       context.processMessage(

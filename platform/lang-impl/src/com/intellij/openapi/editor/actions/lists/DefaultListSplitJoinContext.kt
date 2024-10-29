@@ -357,4 +357,4 @@ abstract class CommaListSplitJoinContext : DefaultListSplitJoinContext() {
   }
 }
 
-fun isComma(element: PsiElement?): Boolean = element is LeafElement && element.textMatches(",")
+internal fun isComma(element: PsiElement?): Boolean = element is LeafElement && element.textMatches(",")

@@ -2,11 +2,9 @@
 package com.jetbrains.python.newProject
 
 import com.intellij.ide.highlighter.ModuleFileType
-import com.intellij.ide.projectWizard.NewProjectWizardConstants.Language.PYTHON
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
-import com.intellij.ide.wizard.language.LanguageGeneratorNewProjectWizard
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
@@ -17,20 +15,18 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
 import com.jetbrains.python.newProject.steps.PyAddExistingSdkPanel
-import com.jetbrains.python.psi.icons.PythonPsiApiIcons
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PySdkSettings
-import com.jetbrains.python.sdk.add.PyAddNewCondaEnvPanel
-import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewCondaEnvPanel
+import com.jetbrains.python.sdk.add.v1.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
-import com.jetbrains.python.sdk.pythonSdk
+import com.jetbrains.python.sdk.configurePythonSdk
 import java.nio.file.Path
 
 /**
@@ -56,15 +52,6 @@ interface NewProjectWizardPythonData : NewProjectWizardBaseData {
    * The Python module after it has been created during [NewProjectWizardStep.setupProject].
    */
   val module: Module?
-
-  companion object {
-
-    val KEY = Key.create<NewProjectWizardPythonData>(NewProjectWizardPythonData::class.java.name)
-
-    @JvmStatic
-    val NewProjectWizardStep.pythonData: NewProjectWizardPythonData?
-      get() = data.getUserData(KEY)
-  }
 }
 
 /**
@@ -117,17 +104,14 @@ class NewPythonProjectStep(parent: NewProjectWizardStep)
     else {
       SdkConfigurationUtil.addSdk(sdk)
     }
-    val module = intellijModule
-    if (module != null) {
-      module.pythonSdk = sdk
+
+    // TODO: ensure module exists
+    if (intellijModule != null) {
+      configurePythonSdk(project, intellijModule!!, sdk)
     }
     else {
       SdkConfigurationUtil.setDirectoryProjectSdk(project, sdk)
     }
-  }
-
-  init {
-    data.putUserData(NewProjectWizardPythonData.KEY, this)
   }
 }
 

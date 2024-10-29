@@ -1,4 +1,5 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.execution.wsl
 
 import com.intellij.openapi.diagnostic.Logger
@@ -6,6 +7,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.sun.jna.platform.win32.Kernel32
 import com.sun.jna.platform.win32.Kernel32Util
 import com.sun.jna.platform.win32.WinBase
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 
 /**

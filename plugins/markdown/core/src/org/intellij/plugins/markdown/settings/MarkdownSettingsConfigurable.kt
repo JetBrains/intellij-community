@@ -19,6 +19,7 @@ import com.intellij.openapi.fileTypes.UnknownFileType
 import com.intellij.openapi.options.BoundSearchableConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
@@ -27,7 +28,6 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.ValidationInfoBuilder
 import com.intellij.util.application
@@ -159,15 +159,19 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
     }
   }
 
-  private fun Row.previewFontSizeField(): Cell<JBTextField> {
-    return intTextField(range = 0..300).bindIntText(
+  private fun Row.previewFontSizeField(): Cell<ComboBox<Int>> {
+    return comboBox(fontSizeOptions).bindItem(
       getter = { service<MarkdownPreviewSettings>().state.fontSize },
       setter = { value ->
         service<MarkdownPreviewSettings>().update { settings ->
-          settings.state.fontSize = value
+          if (value != null) {
+            settings.state.fontSize = value
+          }
         }
       }
-    )
+    ).applyToComponent {
+      isEditable = true
+    }
   }
 
   private fun validateCustomStylesheetPath(builder: ValidationInfoBuilder, textField: TextFieldWithBrowseButton): ValidationInfo? {
@@ -374,5 +378,7 @@ internal class MarkdownSettingsConfigurable(private val project: Project): Bound
         else -> ""
       }
     }
+
+    val fontSizeOptions = listOf(8, 9, 10, 11, 12, 14, 16, 18, 20, 22, 24, 26, 28, 36, 48, 72)
   }
 }

@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.InternalCoroutineContextKey
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.platform.util.coroutines.attachAsChildTo
@@ -9,6 +10,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import kotlin.coroutines.AbstractCoroutineContextElement
 import kotlin.coroutines.CoroutineContext
@@ -41,7 +43,10 @@ internal fun ComponentManagerImpl.asContextElement(): CoroutineContext.Element {
 
 private class ComponentManagerElement(
   val componentManager: ComponentManagerImpl,
-) : AbstractCoroutineContextElement(ComponentManagerElementKey) {
+) : AbstractCoroutineContextElement(ComponentManagerElementKey), IntelliJContextElement {
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   override fun toString(): String = "ComponentManager(${componentManager.debugString()})"
 }
 
@@ -59,6 +64,7 @@ private object ComponentManagerElementKey : CoroutineContext.Key<ComponentManage
  * @see withContext
  * @see attachAsChildTo
  */
+@Internal
 @TestOnly // Originally implemented to bind the test coroutine to the container. This can be lifted later
 suspend fun <T> withContainerContext(container: ComponentManager, action: suspend CoroutineScope.() -> T): T {
   val containerScope = (container as ComponentManagerImpl).getCoroutineScope()

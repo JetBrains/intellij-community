@@ -50,4 +50,4 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                             ULiteralExpression (value = "s") ["s"] : java.lang.String
             UBlockExpression [{...}]
                 UReturnExpression [return t]
-                    USimpleNameReferenceExpression (identifier = t) [t] : <ErrorType>
+                    USimpleNameReferenceExpression (identifier = t) [t]

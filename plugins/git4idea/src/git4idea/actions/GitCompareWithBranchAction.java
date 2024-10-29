@@ -1,7 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.actions;
 
-import com.intellij.dvcs.actions.DvcsCompareWithBranchAction;
+import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -9,62 +9,26 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import git4idea.GitBranch;
-import git4idea.GitContentRevision;
-import git4idea.GitRevisionNumber;
-import git4idea.GitUtil;
+import git4idea.*;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
 import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 import static com.intellij.openapi.vcs.history.VcsDiffUtil.createChangesWithCurrentContentForFile;
 
-public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitRepository> {
-  @Override
-  protected boolean nothingToCompare(@NotNull GitRepository repository) {
-    int locals = repository.getBranches().getLocalBranches().size();
-    boolean haveRemotes = !repository.getBranches().getRemoteBranches().isEmpty();
-    if (repository.isOnBranch()) {  // there are other branches to compare
-      return locals < 2 && !haveRemotes;
-    }
-    return locals == 0 && !haveRemotes; // there are at least 1 branch to compare
-  }
-
-  @Override
-  protected @NotNull List<String> getBranchNamesExceptCurrent(@NotNull GitRepository repository) {
-    List<GitBranch> localBranches = new ArrayList<>(repository.getBranches().getLocalBranches());
-    Collections.sort(localBranches);
-    List<GitBranch> remoteBranches = new ArrayList<>(repository.getBranches().getRemoteBranches());
-    Collections.sort(remoteBranches);
-
-    var repositoryInfo = repository.getInfo();
-    if (repositoryInfo.isOnBranch()) {
-      localBranches.remove(repositoryInfo.getCurrentBranch());
-    }
-
-    List<String> branchNames = new ArrayList<>();
-    for (GitBranch branch : localBranches) {
-      branchNames.add(branch.getName());
-    }
-    for (GitBranch branch : remoteBranches) {
-      branchNames.add(branch.getName());
-    }
-    return branchNames;
-  }
-
-  @Override
-  protected @NotNull GitRepositoryManager getRepositoryManager(@NotNull Project project) {
-    return GitUtil.getRepositoryManager(project);
-  }
-
-  @Override
+/**
+ * @deprecated Replaced with {@link GitCompareWithRefAction}
+ */
+@Deprecated(forRemoval = true)
+public class GitCompareWithBranchAction {
+  /**
+   * @deprecated Consider using {@link GitCompareWithRefAction#getDiffChanges(GitRepository, VirtualFile, GitReference)}
+   */
+  @Deprecated(forRemoval = true)
   protected @NotNull Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                                        @NotNull String branchName) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
@@ -79,7 +43,8 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     // if git returned no changes, we need to check that file exists in compareWith branch to avoid this error in diff dialog
     // a.e. when you perform compareWith for unversioned file
     if (changes.isEmpty() && GitHistoryUtils.getCurrentRevision(project, filePath, branchToCompare) == null) {
-      throw new VcsException(fileDoesntExistInBranchError(file, branchToCompare));
+      throw new VcsException(DvcsBundle.message("error.text.file.not.found.in.branch",
+                                                file.isDirectory() ? 2 : 1, file.getPresentableUrl(), branchToCompare));
     }
     ContentRevision revision = GitContentRevision.createRevision(filePath, compareRevisionNumber, project);
     return changes.isEmpty() && !filePath.isDirectory() ? createChangesWithCurrentContentForFile(filePath, revision) : changes;

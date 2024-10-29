@@ -1,4 +1,4 @@
 // AFTER-WARNING: Parameter 'convertable' is never used
 fun conflict() {}
 class Convertable {}
-fun <caret>conflict(convertable: Convertable) {}
+fun conflict(convertable: Convertable) {}

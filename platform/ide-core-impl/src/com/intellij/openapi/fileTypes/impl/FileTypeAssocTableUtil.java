@@ -11,6 +11,7 @@ import java.util.Map;
 
 @ApiStatus.Internal
 public final class FileTypeAssocTableUtil {
+  @NotNull
   public static <T> FileTypeAssocTable<T> newScalableFileTypeAssocTable() {
     return new FileTypeAssocTable<>(FileTypeAssocTableUtil::createScalableCharSequenceConcurrentMap);
   }

@@ -4,6 +4,7 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.diff.DiffTool;
 import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
+import com.intellij.diff.util.DiffPlaces;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
@@ -20,10 +21,12 @@ import java.util.List;
 
 @ApiStatus.Internal
 public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
-  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 5);
+  private final static EventLogGroup GROUP = new EventLogGroup("vcs.diff.trigger", 6);
   private static final StringEventField DIFF_PLACE_FIELD = EventFields.String("diff_place",
-                                                                             List.of("Default", "ChangesView", "VcsLogView", "CommitDialog",
-                                                                                     "TestsFiledAssertions", "Merge", "DirDiff", "External",
+                                                                              List.of(DiffPlaces.DEFAULT, DiffPlaces.CHANGES_VIEW,
+                                                                                      DiffPlaces.VCS_LOG_VIEW, DiffPlaces.COMMIT_DIALOG,
+                                                                                      DiffPlaces.TESTS_FAILED_ASSERTIONS, DiffPlaces.MERGE,
+                                                                                      DiffPlaces.DIR_DIFF, DiffPlaces.EXTERNAL,
                                                                                      "unknown"));
   private final static EventId2<HighlightPolicy, String> TOGGLE_HIGHLIGHT_POLICY =
     GROUP.registerEvent("toggle.highlight.policy", EventFields.Enum("value", HighlightPolicy.class, value -> value.name()),
@@ -31,15 +34,17 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
   private final static EventId2<IgnorePolicy, String> TOGGLE_IGNORE_POLICY =
     GROUP.registerEvent("toggle.ignore.policy", EventFields.Enum("value", IgnorePolicy.class, value -> value.name()),
                         DIFF_PLACE_FIELD);
-  private static final StringEventField DIFF_TOOL_NAME = EventFields.String("value",
-                                                                            List.of("Side-by-side_viewer", "Binary_file_viewer", "Unified_viewer",
-                                                                           "Error_viewer", "Patch_content_viewer", "Apply_patch_somehow",
-                                                                           "Data_Diff_Viewer", "Jupyter_side-by-side_viewer", "Database_Schema_Diff_Viewer",
-                                                                           "Directory_viewer", "SVN_properties_viewer"));
-  private final static EventId3<PluginInfo, String, String> TOGGLE_DIFF_TOOL =
-    GROUP.registerEvent("toggle.diff.tool", EventFields.PluginInfo, DIFF_TOOL_NAME, DIFF_PLACE_FIELD);
+  private static final ClassEventField DIFF_TOOL_CLASS = EventFields.Class("value");
+  private final static EventId3<PluginInfo, Class<?>, String> TOGGLE_DIFF_TOOL =
+    GROUP.registerEvent("toggle.diff.tool", EventFields.PluginInfo, DIFF_TOOL_CLASS, DIFF_PLACE_FIELD);
 
   private final static EventId TOGGLE_COMBINED_DIFF_BLOCK_COLLAPSE = GROUP.registerEvent("toggle.combined.diff.block.collapse");
+
+  private final static EventId3<PluginInfo, Class<?>, String> SHOW_DIFF_TOOL =
+    GROUP.registerEvent("show.diff.tool", EventFields.PluginInfo, DIFF_TOOL_CLASS, DIFF_PLACE_FIELD);
+
+  private static final BooleanEventField IS_MERGE = EventFields.Boolean("is_merge");
+  private final static EventId1<Boolean> SHOW_EXTERNAL_DIFF_TOOL = GROUP.registerEvent("show.external.diff.tool", IS_MERGE);
 
   @Override
   public EventLogGroup getGroup() {
@@ -57,7 +62,23 @@ public final class DiffUsageTriggerCollector extends CounterUsagesCollector {
   public static void logToggleDiffTool(@Nullable Project project,
                                        @NotNull DiffTool diffTool,
                                        @Nullable @NonNls String place) {
-    TOGGLE_DIFF_TOOL.log(project, PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()), diffTool.getName(), getPlaceName(place));
+    TOGGLE_DIFF_TOOL.log(project, PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()), diffTool.getClass(), getPlaceName(place));
+  }
+
+  public static void logShowDiffTool(@Nullable Project project,
+                                     @NotNull DiffTool diffTool,
+                                     @Nullable @NonNls String place) {
+    SHOW_DIFF_TOOL.log(project, PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()), diffTool.getClass(), getPlaceName(place));
+  }
+
+  public static void logShowExternalTool(@Nullable Project project, boolean isMerge) {
+    SHOW_EXTERNAL_DIFF_TOOL.log(project, isMerge);
+  }
+
+  public static void logShowCombinedDiffTool(@Nullable Project project,
+                                             @NotNull DiffTool diffTool,
+                                             @Nullable @NonNls String place) {
+    SHOW_DIFF_TOOL.log(project, PluginInfoDetectorKt.getPluginInfo(diffTool.getClass()), diffTool.getClass(), getPlaceName(place));
   }
 
   public static void logToggleCombinedDiffBlockCollapse(@Nullable Project project) {

@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.caches.project
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestSourceKotlinRootType
 import org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType
@@ -69,6 +70,7 @@ fun IdeaModuleInfo.projectSourceModules(): List<ModuleSourceInfo> {
     }
 }
 
+@get:ApiStatus.Internal
 @Deprecated("Use org.jetbrains.kotlin.idea.base.projectStructure.kotlinSourceRootType' instead.")
 val ModuleSourceInfo.sourceType: SourceType
     get() = when (kotlinSourceRootType) {

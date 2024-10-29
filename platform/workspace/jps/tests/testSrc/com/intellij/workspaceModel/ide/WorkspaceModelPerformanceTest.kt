@@ -14,7 +14,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.junit5.RunInEdt
 import com.intellij.testFramework.junit5.TestApplication
@@ -100,7 +100,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `add remove module`() {
-    PerformanceTestUtil.newPerformanceTest("Adding and removing a module 10 times") {
+    Benchmark.newBenchmark("Adding and removing a module 10 times") {
       repeat(10) {
         val module = ourProjectModel.createModule("newModule")
         ourProjectModel.removeModule(module)
@@ -110,7 +110,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `add remove project library`() {
-    PerformanceTestUtil.newPerformanceTest("Adding and removing a project library 30 times") {
+    Benchmark.newBenchmark("Adding and removing a project library 30 times") {
       repeat(30) {
         val library = ourProjectModel.addProjectLevelLibrary("newLibrary") {
           it.addRoot(ourProjectRoot.append("newLibrary/classes").url, OrderRootType.CLASSES)
@@ -125,7 +125,7 @@ class WorkspaceModelPerformanceTest {
   @Test
   fun `add remove module library`() {
     val module = ourProjectModel.moduleManager.findModuleByName("module50")!!
-    PerformanceTestUtil.newPerformanceTest("Adding and removing a module library 10 times") {
+    Benchmark.newBenchmark("Adding and removing a module library 10 times") {
       repeat(10) {
         val library = ourProjectModel.addModuleLevelLibrary(module, "newLibrary") {
           it.addRoot(ourProjectRoot.append("newLibrary/classes").url, OrderRootType.CLASSES)
@@ -141,7 +141,7 @@ class WorkspaceModelPerformanceTest {
   fun `add remove dependency`() {
     val module = ourProjectModel.moduleManager.findModuleByName("module50")!!
     val library = ourProjectModel.projectLibraryTable.getLibraryByName("lib40")!!
-    PerformanceTestUtil.newPerformanceTest("Adding and removing a dependency 20 times") {
+    Benchmark.newBenchmark("Adding and removing a dependency 20 times") {
       repeat(20) {
         ModuleRootModificationUtil.addDependency(module, library)
         ModuleRootModificationUtil.removeDependency(module, library)
@@ -151,7 +151,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `process content roots`() {
-    PerformanceTestUtil.newPerformanceTest("Iterate through content roots of all modules 1000 times") {
+    Benchmark.newBenchmark("Iterate through content roots of all modules 1000 times") {
       var count = 0
       repeat(1000) {
         ourProjectModel.moduleManager.modules.forEach { module ->
@@ -164,7 +164,7 @@ class WorkspaceModelPerformanceTest {
 
   @Test
   fun `process order entries`() {
-    PerformanceTestUtil.newPerformanceTest("Iterate through order entries of all modules 1000 times") {
+    Benchmark.newBenchmark("Iterate through order entries of all modules 1000 times") {
       var count = 0
       repeat(1000) {
         ourProjectModel.moduleManager.modules.forEach { module ->

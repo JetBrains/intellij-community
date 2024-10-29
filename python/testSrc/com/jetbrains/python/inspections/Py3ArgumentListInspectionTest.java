@@ -27,6 +27,18 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    """);
   }
 
+  // PY-59198
+  public void testAttrFieldAliasParameter() {
+    runWithAdditionalClassEntryInSdkRoots("packages", () -> {
+      doMultiFileTest();
+    });
+  }
+
+  // PY-54560
+  public void testDataclassTransformFieldAliasParameter() {
+    doMultiFileTest();
+  }
+
   // PY-50404
   public void testPassingKeywordArgumentsToParamSpec() {
     doTestByText("""
@@ -310,5 +322,48 @@ public class Py3ArgumentListInspectionTest extends PyInspectionTestCase {
                    Derived2(0, <warning descr="Unexpected argument">0</warning>, qq=0<warning descr="Parameter 'b' unfilled">)</warning>
                    Derived2(0, <warning descr="Unexpected argument">0</warning>, b=0<warning descr="Parameter 'qq' unfilled">)</warning>
                    """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWraps() {
+    doTestByText("""
+                   import functools
+                                      
+                   class MyClass:
+                     def foo(self, s: str, i: int):
+                         pass
+                                      
+                   class Route:
+                       @functools.wraps(MyClass.foo)
+                       def __init__(self):
+                           pass
+                                      
+                   class Router:
+                       @functools.wraps(wrapped=Route.__init__)
+                       def route(self, s: str):
+                           pass
+                                      
+                   r = Router()
+                   r.route("", 13)
+                   r.route(""<warning descr="Parameter 'i' unfilled">)</warning>
+                   r.route("", 13, <warning descr="Unexpected argument">1</warning>)
+                   """);
+  }
+
+  // PY-23067
+  public void testFunctoolsWrapsMultiFile() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnDecorator() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnBaseClass() {
+    doMultiFileTest();
+  }
+
+  public void testInitByDataclassTransformOnMetaClass() {
+    doMultiFileTest();
   }
 }

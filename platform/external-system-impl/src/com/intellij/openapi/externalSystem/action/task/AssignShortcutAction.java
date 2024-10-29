@@ -20,11 +20,13 @@ import com.intellij.openapi.externalSystem.view.ProjectNode;
 import com.intellij.openapi.keymap.impl.ui.EditKeymapsDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class AssignShortcutAction extends ExternalSystemNodeAction<TaskData> {
 
   public AssignShortcutAction() {

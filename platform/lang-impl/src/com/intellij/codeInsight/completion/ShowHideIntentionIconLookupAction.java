@@ -5,10 +5,12 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.lookup.LookupElementAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class ShowHideIntentionIconLookupAction extends LookupElementAction {
   static final String KEY = "completion.show.intention.icon";
 

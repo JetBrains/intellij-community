@@ -20,6 +20,7 @@ import com.intellij.profile.codeInspection.ui.LevelChooserAction;
 import com.intellij.profile.codeInspection.ui.table.ScopesAndSeveritiesTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,6 +29,7 @@ import java.util.EventListener;
 import static com.intellij.ui.GuiUtils.enableChildren;
 import static java.util.Collections.singletonList;
 
+@ApiStatus.Internal
 public class CommitMessageInspectionDetails implements UnnamedConfigurable, Disposable {
   @NotNull private final Project myProject;
   @NotNull private final InspectionProfileImpl myProfile;

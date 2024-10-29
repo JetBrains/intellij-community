@@ -6,10 +6,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Random;
 
+@ApiStatus.Internal
 @SuppressWarnings("HardCodedStringLiteral")
 public final class TestMessageBoxAction extends AnAction {
   private final Random myRandom = new Random();

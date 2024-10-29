@@ -26,7 +26,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import static com.intellij.execution.dashboard.actions.RunDashboardActionUtils.g
  * @author konstantin.aleev
  */
 public abstract class ExecutorAction extends DumbAwareAction {
-  private static final Key<List<RunDashboardRunConfigurationNode>> RUNNABLE_LEAVES_KEY =
+  private static final Key<List<Integer>> RUNNABLE_LEAVES_KEY =
     Key.create("RUNNABLE_LEAVES_KEY");
 
   protected ExecutorAction() {
@@ -62,19 +63,33 @@ public abstract class ExecutorAction extends DumbAwareAction {
       update(e, false);
       return;
     }
-    JBIterable<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e);
-    boolean running = targetNodes.filter(node -> {
+    List<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e).toList();
+    boolean running = ContainerUtil.find(targetNodes, node -> {
       Content content = node.getContent();
       return content != null && !RunContentManagerImpl.isTerminated(content);
-    }).isNotEmpty();
+    }) != null;
     update(e, running);
-    List<RunDashboardRunConfigurationNode> runnableLeaves = targetNodes.filter(this::canRun).toList();
+    List<Integer> runnableLeaves = getRunnableLeaves(targetNodes);
     Presentation presentation = e.getPresentation();
     if (!runnableLeaves.isEmpty()) {
       presentation.putClientProperty(RUNNABLE_LEAVES_KEY, runnableLeaves);
     }
+    else {
+      presentation.putClientProperty(RUNNABLE_LEAVES_KEY, null);
+    }
     presentation.setEnabled(!runnableLeaves.isEmpty());
-    presentation.setVisible(targetNodes.isNotEmpty());
+    presentation.setVisible(!targetNodes.isEmpty());
+  }
+
+  private List<Integer> getRunnableLeaves(List<RunDashboardRunConfigurationNode> targetNodes) {
+    List<Integer> runnableLeaves = new SmartList<>();
+    for (int i = 0; i < targetNodes.size(); i++) {
+      RunDashboardRunConfigurationNode node = targetNodes.get(i);
+      if (canRun(node)) {
+        runnableLeaves.add(i);
+      }
+    }
+    return runnableLeaves;
   }
 
   private boolean canRun(@NotNull RunDashboardRunConfigurationNode node) {
@@ -86,17 +101,18 @@ public abstract class ExecutorAction extends DumbAwareAction {
                   DumbService.isDumb(project));
   }
 
-  private boolean canRun(RunnerAndConfigurationSettings settings, ExecutionTarget target, boolean isDumb) {
+  private boolean canRun(@NotNull RunnerAndConfigurationSettings settings,
+                         @Nullable ExecutionTarget target,
+                         boolean isDumb) {
     if (isDumb && !settings.getType().isDumbAware()) return false;
 
     String executorId = getExecutor().getId();
     RunConfiguration configuration = settings.getConfiguration();
     Project project = configuration.getProject();
-    if (configuration instanceof CompoundRunConfiguration) {
-      if (ExecutionTargetManager.getInstance(project).getTargetsFor(configuration).isEmpty()) return false;
+    if (configuration instanceof CompoundRunConfiguration comp) {
+      if (ExecutionTargetManager.getInstance(project).getTargetsFor(comp).isEmpty()) return false;
 
-      List<SettingsAndEffectiveTarget> subConfigurations =
-        ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets();
+      List<SettingsAndEffectiveTarget> subConfigurations = comp.getConfigurationsWithEffectiveRunTargets();
       if (subConfigurations.isEmpty()) return false;
 
       RunManager runManager = RunManager.getInstance(project);
@@ -121,7 +137,8 @@ public abstract class ExecutorAction extends DumbAwareAction {
     else if (!ExecutionTargetManager.canRun(configuration, target)) {
       return false;
     }
-    return !ExecutionManager.getInstance(project).isStarting(executorId, runner.getRunnerId());
+    return !ExecutionManager.getInstance(project).isStarting(
+      settings.getUniqueID(), executorId, runner.getRunnerId());
   }
 
   private static boolean isValid(RunnerAndConfigurationSettings settings) {
@@ -142,11 +159,21 @@ public abstract class ExecutorAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    List<RunDashboardRunConfigurationNode> runnableLeaves = e.getPresentation().getClientProperty(RUNNABLE_LEAVES_KEY);
-    if (runnableLeaves == null) return;
+    List<RunDashboardRunConfigurationNode> targetNodes = getLeafTargets(e).toList();
+    List<Integer> runnableLeaves = e.getPresentation().getClientProperty(RUNNABLE_LEAVES_KEY);
+    if (runnableLeaves == null) {
+      // We try to recalculate it because in the backend + frontend case update & perform are 2 different
+      // requests to backend, and for now this client property won't be saved between them.
+      // We won't count leaves twice in case they are empty because in that case update will disable the action.
+      runnableLeaves = getRunnableLeaves(targetNodes);
+      if (runnableLeaves.isEmpty()) return;
+    }
 
-    for (RunDashboardRunConfigurationNode node : runnableLeaves) {
-      run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext());
+    for (int i: runnableLeaves) {
+      if (targetNodes.size() > i) {
+        RunDashboardRunConfigurationNode node = targetNodes.get(i);
+        run(node.getConfigurationSettings(), node.getDescriptor(), e.getDataContext());
+      }
     }
   }
 

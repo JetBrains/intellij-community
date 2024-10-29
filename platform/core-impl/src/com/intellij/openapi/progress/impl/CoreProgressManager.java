@@ -8,6 +8,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -155,7 +156,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       return;
     }
 
-    Cancellation.checkCancelled();
+    Cancellation.ensureActive();
 
     CheckCanceledBehavior behavior = ourCheckCanceledBehavior;
     if (behavior == CheckCanceledBehavior.NONE) return;
@@ -213,6 +214,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
           throw new RuntimeException(e);
         }
         Span span = startProcessSpan(progress);
+        logProcessIndicator(progress, true);
         if (span == null) {
           process.run();
         }
@@ -222,6 +224,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
             return null;
           });
         }
+        logProcessIndicator(progress, false);
       }
       finally {
         if (progress != null && progress.isRunning()) {
@@ -234,12 +237,23 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }, progress);
   }
 
-  private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
+  private static String getProgressIndicatorText(@Nullable ProgressIndicator progress) {
     if (!(progress instanceof TitledIndicator)) {
       return null;
     }
+    return  ((TitledIndicator)progress).getTitle();
+  }
 
-    String progressText = ((TitledIndicator)progress).getTitle();
+  private static void logProcessIndicator(@Nullable ProgressIndicator progress, Boolean started) {
+    String progressText = getProgressIndicatorText(progress);
+    if (progressText == null) return;
+    if (ApplicationManagerEx.isInIntegrationTest()) {
+      LOG.info("Progress indicator:" + (started ? "started" : "finished") + ":" + progressText);
+    }
+  }
+
+  private static @Nullable Span startProcessSpan(@Nullable ProgressIndicator progress) {
+    String progressText = getProgressIndicatorText(progress);
     return progressManagerTracer.spanBuilder("Progress: " + progressText, TracerLevel.DEFAULT).startSpan();
   }
 
@@ -404,7 +418,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   public void run(@NotNull Task task) {
     if (isSynchronousHeadless(task)) {
       if (SwingUtilities.isEventDispatchThread()) {
-        runProcessWithProgressSynchronously(task);
+        WriteIntentReadAction.run((Runnable)() -> runProcessWithProgressSynchronously(task));
       }
       else {
         runProcessWithProgressInCurrentThread(task, new EmptyProgressIndicator(), ModalityState.defaultModalityState());

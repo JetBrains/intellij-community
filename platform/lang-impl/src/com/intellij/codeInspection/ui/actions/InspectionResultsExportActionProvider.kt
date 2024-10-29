@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui.actions
 
 import com.intellij.codeInspection.InspectionsBundle
@@ -8,7 +8,8 @@ import com.intellij.codeInspection.ui.InspectionResultsView
 import com.intellij.codeInspection.ui.InspectionTree
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.extensions.ExtensionPointName
@@ -32,7 +33,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
+private val LOG: Logger = Logger.getInstance(InspectionResultsExportActionProvider::class.java)
 
 /**
  * Extension point to add actions in the inspection results export popup.
@@ -134,9 +135,8 @@ abstract class InspectionResultsExportActionProvider(text: Supplier<String?>,
           .bottomGap(BottomGap.SMALL)
         row(EditorBundle.message("export.to.html.output.directory.label")) {
           textFieldWithBrowseButton(
-            EditorBundle.message("export.to.html.select.output.directory.title"),
-            view.project,
-            FileChooserDescriptorFactory.createSingleFolderDescriptor()
+            FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(EditorBundle.message("export.to.html.select.output.directory.title")),
+            view.project
           )
             .columns(COLUMNS_LARGE)
             .bindText(locationProperty)

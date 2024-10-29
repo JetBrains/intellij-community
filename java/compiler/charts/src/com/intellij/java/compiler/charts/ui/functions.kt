@@ -1,50 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
-import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
 import com.intellij.util.JBHiDPIScaledImage
-import java.awt.*
-import java.awt.geom.AffineTransform
 import java.awt.geom.Path2D
+import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
-import java.awt.image.ImageObserver
 import kotlin.math.hypot
-
-fun Graphics2D.withColor(color: Color, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldColor = this.color
-  this.color = color
-  block()
-  this.color = oldColor
-  return this
-}
-
-fun Graphics2D.withFont(font: Font, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldFont = this.font
-  this.font = font
-  block()
-  this.font = oldFont
-  return this
-}
-
-fun Graphics2D.withAntialiasing(block: Graphics2D.() -> Unit): Graphics2D {
-  setupAntialiasing(this)
-
-  val old = getRenderingHint(RenderingHints.KEY_ANTIALIASING)
-
-  setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-  block()
-
-  setRenderingHint(RenderingHints.KEY_ANTIALIASING, old)
-  return this
-}
-
-fun Graphics2D.withStroke(stroke: Stroke, block: Graphics2D.() -> Unit): Graphics2D {
-  val oldStroke = this.stroke
-  this.stroke = stroke
-  block()
-  this.stroke = oldStroke
-  return this
-}
 
  fun <E> MutableSet<E>.getAndClean(): MutableSet<E> {
   val result = HashSet(this)
@@ -56,13 +17,6 @@ fun Graphics2D.withStroke(stroke: Stroke, block: Graphics2D.() -> Unit): Graphic
   val result = HashMap(this)
   result.entries.forEach { this.remove(it.key, it.value) }
   return result
-}
-
-fun Graphics2D.drawImage(img: BufferedImage, observer: ImageObserver?) {
-  val transform = AffineTransform().apply {
-    if (img is JBHiDPIScaledImage) scale(1 / img.scale, 1 / img.scale)
-  }
-  drawImage(img, transform, observer)
 }
 
 internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
@@ -120,4 +74,20 @@ internal fun Path2D.Double.curveTo(neighbour: DoubleArray) {
   curveTo(cx0, cy0, cx1, cy1, x2, y2)
 }
 
+internal fun BufferedImage.height(): Double = if (this is JBHiDPIScaledImage)
+  height * 1 / scale
+else
+  height.toDouble()
+
 private fun Double.orZero() = if (this.isNaN()) 0.0 else this
+
+internal fun compareWithViewport(startTime: Long, finishTime: Long?, settings: ChartSettings, zoom: Zoom, viewport: Rectangle2D): Int {
+  val x0 = viewport.x
+  val x1 = x0 + viewport.width
+  val startPixel = zoom.toPixels(startTime - settings.duration.from)
+  if (startPixel > x1) return 1
+  if (finishTime == null) return 0
+  val finishPixel = zoom.toPixels(finishTime - settings.duration.from)
+  if (finishPixel < x0) return -1
+  return 0
+}

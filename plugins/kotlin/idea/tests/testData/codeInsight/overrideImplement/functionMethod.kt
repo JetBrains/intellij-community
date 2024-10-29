@@ -7,3 +7,5 @@ interface T {
 class C : T {
   <caret>
 }
+
+// MEMBER: "Foo(): (String) -> Unit"

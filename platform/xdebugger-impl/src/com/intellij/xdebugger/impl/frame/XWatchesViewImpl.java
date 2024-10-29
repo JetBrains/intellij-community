@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.execution.ui.UIExperiment;
@@ -25,19 +25,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.toolWindow.InternalDecoratorImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xdebugger.XDebugSession;
-import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -57,7 +55,7 @@ import com.intellij.xdebugger.impl.ui.*;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XWatchTransferable;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,6 +70,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView, XInlineWatchesView {
   private static final JBColor EVALUATE_FIELD_BACKGROUND_COLOR =
     JBColor.namedColor("Debugger.EvaluateExpression.background", new JBColor(0xFFFFFF, 0x45494A));
@@ -273,7 +272,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       addToWatchesActionRef.get()
         .registerCustomShortcutSet(new CustomShortcutSet(XDebuggerEvaluationDialog.getAddWatchKeystroke()), editorComponent);
       JComponent component = myEvaluateComboBox.getComponent();
-      //component.setBackground(tree.getBackground());
+      InternalDecoratorImpl.preventRecursiveBackgroundUpdateOnToolwindow(component);
+      component.setBackground(EVALUATE_FIELD_BACKGROUND_COLOR);
       component.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 0, 1, 0));
       if (!UIExperiment.isNewDebuggerUIEnabled()) {
         XToggleEvaluateExpressionFieldAction.markAsEvaluateExpressionField(component);
@@ -295,6 +295,13 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     if (!XDebuggerUtilImpl.isEmptyExpression(expression)) {
       myEvaluateComboBox.saveTextInHistory();
       XDebugSession session = getSession(getTree());
+      if (session != null) {
+        ApplicationManager.getApplication().getMessageBus().syncPublisher(XEvaluationListener.TOPIC)
+          .inlineEvaluatorInvoked(session, expression);
+      }
+      else {
+        LOG.error("No session available while trying evaluate " + expression);
+      }
       myRootNode.addResultNode(session != null ? session.getCurrentStackFrame() : null, expression);
       DebuggerEvaluationStatisticsCollector.INLINE_EVALUATE.log(getTree().getProject());
     }
@@ -310,8 +317,8 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
 
   private void installEditListeners() {
     final XDebuggerTree watchTree = getTree();
-    final Alarm quitePeriod = new Alarm();
-    final Alarm editAlarm = new Alarm();
+    SingleEdtTaskScheduler quitePeriod = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+    SingleEdtTaskScheduler editAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
     final ClickListener mouseListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent event, int clickCount) {
@@ -321,7 +328,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         }
         boolean sameRow = isAboveSelectedItem(event, watchTree, false);
         if (!sameRow || clickCount > 1) {
-          editAlarm.cancelAllRequests();
+          editAlarm.cancel();
           return false;
         }
         final AnAction editWatchAction = ActionManager.getInstance().getAction(XDebuggerActions.XEDIT_WATCH);
@@ -330,9 +337,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
         final AnActionEvent actionEvent = new AnActionEvent(null, context, "WATCH_TREE", presentation, ActionManager.getInstance(), 0);
         Runnable runnable = () -> editWatchAction.actionPerformed(actionEvent);
         if (editAlarm.isEmpty() && quitePeriod.isEmpty()) {
-          editAlarm.addRequest(runnable, UIUtil.getMultiClickInterval());
-        } else {
-          editAlarm.cancelAllRequests();
+          editAlarm.request(UIUtil.getMultiClickInterval(), runnable);
+        }
+        else {
+          editAlarm.cancel();
         }
         return false;
       }
@@ -353,12 +361,12 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     final FocusListener focusListener = new FocusListener() {
       @Override
       public void focusGained(@NotNull FocusEvent e) {
-        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+        quitePeriod.cancelAndRequest(UIUtil.getMultiClickInterval(), EmptyRunnable.getInstance());
       }
 
       @Override
       public void focusLost(@NotNull FocusEvent e) {
-        editAlarm.cancelAllRequests();
+        editAlarm.cancel();
       }
     };
     ListenerUtil.addFocusListener(watchTree, focusListener);
@@ -366,7 +374,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     final TreeSelectionListener selectionListener = new TreeSelectionListener() {
       @Override
       public void valueChanged(@NotNull TreeSelectionEvent e) {
-        quitePeriod.addRequest(EmptyRunnable.getInstance(), UIUtil.getMultiClickInterval());
+        quitePeriod.cancelAndRequest(UIUtil.getMultiClickInterval(), EmptyRunnable.getInstance());
       }
     };
     watchTree.addTreeSelectionListener(selectionListener);
@@ -524,13 +532,10 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     return expressions;
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (XWatchesView.DATA_KEY.is(dataId)) {
-      return this;
-    }
-    return super.getData(dataId);
+  protected void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(XWatchesView.DATA_KEY, this);
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.jetbrains.python.highlighting;
 
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -26,7 +27,9 @@ public final class PySyntaxHighlighterFactory extends PySyntaxHighlighterFactory
     if (virtualFile == null || project == null || virtualFile instanceof VirtualFileWindow) {
       return false;
     }
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
-    return psiFile != null && PydevConsoleRunnerUtil.isInPydevConsole(psiFile);
+    return ReadAction.compute(() -> {
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+      return psiFile != null && PydevConsoleRunnerUtil.isInPydevConsole(psiFile);
+    });
   }
 }

@@ -70,7 +70,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
       }
     };
   }
-  
+
   public static void simplifyAllLambdas(@NotNull PsiElement context) {
     List<@NotNull Problem> problems = SyntaxTraverser.psiTraverser(context)
       .filter(PsiLambdaExpression.class)
@@ -96,7 +96,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
       if (callParent instanceof PsiReturnStatement) {
         return true;
       }
-      
+
       PsiStatement[] statements = ((PsiCodeBlock)body).getStatements();
       if (statements.length == 1) {
         return statements[0] instanceof PsiReturnStatement && expression.isValueCompatible();
@@ -192,12 +192,14 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
 
     List<PsiStatement> statements = new ArrayList<>();
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(lambda.getProject());
+    List<List<PsiExpression>> allSideEffects = ContainerUtil.map(arguments, SideEffectChecker::extractSideEffectExpressions);
+    int lastSideEffectIndex = ContainerUtil.lastIndexOf(allSideEffects, se -> !se.isEmpty());
 
     for (int i = 0; i < arguments.length; i++) {
       PsiExpression argument = arguments[i];
       PsiParameter parameter = parameters[i];
       List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(argument);
-      if (!sideEffects.isEmpty()) {
+      if (i <= lastSideEffectIndex) {
         boolean used = VariableAccessUtils.variableIsUsed(parameter, lambda.getBody());
         if (used) {
           String name = parameter.getName();
@@ -262,7 +264,7 @@ public final class TrivialFunctionalExpressionUsageInspection extends AbstractBa
       }
     }
   }
-  
+
   private static void solveNameConflicts(PsiStatement[] statements, @NotNull PsiElement anchor, @NotNull PsiLambdaExpression lambda) {
     Predicate<PsiVariable> allowedVar = variable -> PsiTreeUtil.isAncestor(lambda, variable, true);
     Project project = anchor.getProject();

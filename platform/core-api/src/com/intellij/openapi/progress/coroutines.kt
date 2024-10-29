@@ -33,7 +33,7 @@ private val LOG = Logger.getInstance("#com.intellij.openapi.progress")
  * This function might suspend if the coroutine is paused,
  * or yield if the coroutine has a lower priority while a higher priority task is running.
  *
- * @throws CancellationException if the coroutine is canceled; the exception is also thrown if coroutine is canceled while suspended
+ * @throws CancellationException if the coroutine is canceled. The exception is also thrown if the coroutine is canceled while suspended.
  * @see ensureActive
  * @see coroutineSuspender
  */
@@ -325,6 +325,7 @@ fun currentThreadCoroutineScope() : CoroutineScope {
         | If the transition from coroutines to blocking code happens in the same stack frame as the call to this function, the transition should use `blockingContext`.
         | If the transition occurs in the different stack frame, then the transition should use `blockingContextScope` to set up a `Job` on this frame.""".trimMargin()))
   }
+  @Suppress("SSBasedInspection")
   return CoroutineScope(threadContext)
 }
 

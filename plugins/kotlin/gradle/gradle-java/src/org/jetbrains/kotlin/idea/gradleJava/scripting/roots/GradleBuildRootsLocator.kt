@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.idea.core.script.K2ScriptDependenciesProvider
+import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurationsProviderImpl
 import kotlin.script.experimental.api.valueOrNull
 
 /**
@@ -116,14 +116,20 @@ abstract class GradleBuildRootsLocator(private val project: Project) {
             get() {
                 if (KotlinPluginModeProvider.isK2Mode()) {
                     val virtualFile = StandardFileSystems.local()?.refreshAndFindFileByPath(filePath) ?: return false
-                    return K2ScriptDependenciesProvider.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
+                    return ScriptConfigurationsProviderImpl.getInstanceIfCreated(project)?.getConfiguration(virtualFile)?.valueOrNull() != null
                 }
                 return script != null
             }
 
         private val wasImportedAndNotEvaluated: Boolean
-            get() = nearest is Imported &&
-                    getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            get() {
+                if (KotlinPluginModeProvider.isK2Mode()) {
+                    return false
+                }
+
+                return nearest is Imported &&
+                        getScriptFirstSeenTs(filePath) < nearest.data.importTs
+            }
 
         override fun toString(): String {
             return "ScriptUnderRoot(root=$root, script=$script, standalone=$standalone, nearest=$nearest)"

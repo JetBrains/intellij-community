@@ -18,9 +18,11 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 interface VcsConsoleTabService {
   companion object {
     @JvmStatic
@@ -39,6 +41,9 @@ interface VcsConsoleTabService {
   @RequiresEdt
   fun isConsoleEmpty(): Boolean
 
+  @CalledInAny
+  fun hadMessages(): Boolean
+
   @RequiresEdt
   fun showConsoleTab(selectContent: Boolean, onShown: Runnable?)
 
@@ -46,6 +51,7 @@ interface VcsConsoleTabService {
   fun showConsoleTabAndScrollToTheEnd()
 }
 
+@ApiStatus.Internal
 class MockVcsConsoleTabService : VcsConsoleTabService {
   @CalledInAny
   override fun addMessage(message: @Nls String?, contentType: ConsoleViewContentType) {
@@ -65,6 +71,10 @@ class MockVcsConsoleTabService : VcsConsoleTabService {
     return true
   }
 
+  override fun hadMessages(): Boolean {
+    return false
+  }
+
   @RequiresEdt
   override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {
   }
@@ -79,6 +89,8 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     @JvmStatic
     fun getInstance(project: Project): VcsConsoleTabService = project.service()
   }
+
+  private var hadMessages: Boolean = false
 
   private val consoleView: VcsConsoleView = VcsConsoleView(project)
 
@@ -98,6 +110,7 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     if (project.isDisposed || project.isDefault) return
 
     line.print(consoleView)
+    hadMessages = true
 
     if (Registry.`is`("vcs.showConsole")) {
       runInEdt(ModalityState.nonModal()) {
@@ -120,6 +133,9 @@ internal class VcsConsoleTabServiceImpl(val project: Project) : VcsConsoleTabSer
     if (project.isDisposed || project.isDefault) return true
     return consoleView.contentSize == 0
   }
+
+  @CalledInAny
+  override fun hadMessages(): Boolean = hadMessages
 
   @RequiresEdt
   override fun showConsoleTab(selectContent: Boolean, onShown: Runnable?) {

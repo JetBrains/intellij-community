@@ -4,6 +4,7 @@ package com.jetbrains.env
 import com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.io.File
 
 
@@ -13,19 +14,22 @@ import java.io.File
  * Configures env test environment using env vars and properties.
  * Environment variables are also used in gradle script (setup-test-environment)
  */
-internal data class PyEnvTestSettings(private val folderWithCPythons: String?,
-                                      private val folderWithCondas: String?,
-                                      private val additionalInterpreters: List<File>,
-                                      @get:JvmName("useRemoteSdk")
-                                      val useRemoteSdk: Boolean,
-                                      val isEnvConfiguration: Boolean,
-                                      val isUnderTeamCity: Boolean) {
+internal data class PyEnvTestSettings(
+  private val folderWithCPythons: String?,
+  private val folderWithCondas: String?,
+  private val additionalInterpreters: List<File>,
+  @get:JvmName("useRemoteSdk")
+  val useRemoteSdk: Boolean,
+  val isEnvConfiguration: Boolean,
+  val isUnderTeamCity: Boolean,
+) {
   private val foldersWithPythons: List<File> = listOfNotNull(folderWithCPythons, folderWithCondas).map { File(it) }
 
   /**
    * Paths to all existing python SDKs
    */
-  val pythons: List<File> = foldersWithPythons
+  @TestOnly
+  internal val pythons: List<File> = foldersWithPythons
     .filter(File::exists)
     .flatMap { it.listFiles()?.toList() ?: emptyList() }
     .filter { !it.name.startsWith('.') }
@@ -71,7 +75,8 @@ internal data class PyEnvTestSettings(private val folderWithCPythons: String?,
                                    ?.toList()
                                  ?: if (isUnderTeamCity) {
                                    emptyList()
-                                 } else {
+                                 }
+                                 else {
                                    detectDefaultPyInterpretersFolders()
                                  },
       )

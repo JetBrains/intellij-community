@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 abstract class SegmentedCustomAction : DumbAwareAction(), CustomComponentAction {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
@@ -23,6 +25,7 @@ abstract class SegmentedCustomAction : DumbAwareAction(), CustomComponentAction 
   }
 }
 
+@ApiStatus.Internal
 open class SegmentedCustomPanel(protected val presentation: Presentation) : JPanel() {
   private var project: Project? = null
 

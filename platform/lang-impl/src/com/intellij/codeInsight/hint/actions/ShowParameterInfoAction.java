@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint.actions;
 
@@ -13,10 +13,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class ShowParameterInfoAction extends BaseCodeInsightAction implements DumbAware {
   private boolean myRequestFocus;
 
@@ -24,14 +26,13 @@ public final class ShowParameterInfoAction extends BaseCodeInsightAction impleme
     setEnabledInModalContext(true);
   }
 
-  @NotNull
   @Override
-  protected CodeInsightActionHandler getHandler() {
+  protected @NotNull CodeInsightActionHandler getHandler() {
     return new ShowParameterInfoHandler(myRequestFocus);
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
     final Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     return ShowParameterInfoHandler.getHandlers(project, language, file.getViewProvider().getBaseLanguage()).length != 0;
   }

@@ -107,6 +107,9 @@ interface IconManager {
   fun getPluginAndModuleId(classLoader: ClassLoader): Pair<String, String?> = "com.intellij" to null
 
   fun getClassLoader(pluginId: String, moduleId: String?): ClassLoader? = IconManager::class.java.classLoader
+
+  @Internal
+  fun getClassLoaderByClassName(className: String): ClassLoader? = IconManager::class.java.classLoader
 }
 
 private object DummyIconManager : IconManager {

@@ -34,10 +34,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Unmodifiable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -47,6 +44,7 @@ import java.util.*;
 
 import static com.intellij.diff.util.DiffUtil.isUserDataFlagSet;
 
+@ApiStatus.Internal
 public final class TextDiffViewerUtil {
   private static final Logger LOG = Logger.getInstance(TextDiffViewerUtil.class);
 

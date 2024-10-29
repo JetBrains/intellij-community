@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.actions;
 
@@ -44,8 +44,7 @@ public class SilentCodeCleanupAction extends AnAction {
   }
 
   @SuppressWarnings("WeakerAccess")
-  @Nullable
-  protected Runnable getPostRunnable() { return null; }
+  protected @Nullable Runnable getPostRunnable() { return null; }
 
   @SuppressWarnings("WeakerAccess")
   protected void runInspections(@NotNull Project project, @NotNull AnalysisScope scope) {
@@ -59,14 +58,12 @@ public class SilentCodeCleanupAction extends AnAction {
   }
 
   @SuppressWarnings("WeakerAccess")
-  @Nullable
-  protected InspectionProfile getProfileForSilentCleanup(@NotNull Project project) {
+  protected @Nullable InspectionProfile getProfileForSilentCleanup(@NotNull Project project) {
     return InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
   }
 
-  @Nullable
   @SuppressWarnings("WeakerAccess")
-  protected AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
+  protected @Nullable AnalysisScope getInspectionScope(@NotNull DataContext dataContext, @NotNull Project project) {
     return AnalysisActionUtils.getInspectionScope(dataContext, project, false);
   }
 }

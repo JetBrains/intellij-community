@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -13,6 +13,7 @@ import com.intellij.platform.testFramework.io.ExternalResourcesChecker;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -34,15 +35,17 @@ public class RealFetchTest extends BasePlatformTestCase {
     Assume.assumeFalse(IS_UNDER_SAFE_PUSH);
   }
 
-  public void testFetchDtd() {
-    final String url = "http://java.sun.com/dtd/preferences.dtd";
-    assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
-    myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
-    invokeFetchIntention(url);
-    String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
-    assertNotSame(url, location);
-    assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+  public void testFetchDtd() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      final String url = "http://java.sun.com/dtd/preferences.dtd";
+      assertEquals(url, ExternalResourceManager.getInstance().getResourceLocation(url, getProject()));
+      myFixture.configureByText(XmlFileType.INSTANCE, "<!DOCTYPE images SYSTEM \"http://java.sun.com/dtd/prefer<caret>ences.dtd\">");
+      invokeFetchIntention(url);
+      String location = ExternalResourceManager.getInstance().getResourceLocation(url, getProject());
+      assertNotSame(url, location);
+      assertTrue(location.endsWith("preferences.dtd")); // no ".xml" suffix added
+      ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+    });
   }
 
   private void invokeFetchIntention(String url) {
@@ -117,19 +120,21 @@ public class RealFetchTest extends BasePlatformTestCase {
   }
 
   public void testOverwriteFetchDtd() throws Exception {
-    final String url = "http://java.sun.com/dtd/preferences.dtd";
-    VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
-    ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      final String url = "http://java.sun.com/dtd/preferences.dtd";
+      VirtualFile virtualFile = myFixture.getTempDirFixture().createFile("images.dtd", "");
+      ExternalResourceManagerExImpl.registerResourceTemporarily(url, virtualFile.getPath(), getTestRootDisposable());
 
-    myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
-    myFixture.configureByText(XmlFileType.INSTANCE, """
-      <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
-        <root type="system"><map/></root>
-      </preferences>""");
-    myFixture.testHighlighting();
-    invokeFetchIntention(url);
-    List<HighlightInfo> infos = myFixture.doHighlighting();
-    assertEmpty(infos);
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+      myFixture.enableInspections(new XmlUnresolvedReferenceInspection());
+      myFixture.configureByText(XmlFileType.INSTANCE, """
+        <!DOCTYPE preferences SYSTEM "<error descr="Resource registered by this uri is not recognized (Settings | Languages & Frameworks | Schemas and DTDs)">http://java.sun.com/dtd/prefe<caret>rences.dtd</error>"><preferences>
+          <root type="system"><map/></root>
+        </preferences>""");
+      myFixture.testHighlighting();
+      invokeFetchIntention(url);
+      List<HighlightInfo> infos = myFixture.doHighlighting();
+      assertEmpty(infos);
+      ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManager.getInstance().removeResource(url));
+    });
   }
 }

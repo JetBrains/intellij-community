@@ -2,16 +2,36 @@
 package com.intellij.testFramework.junit5.fixture
 
 import com.intellij.ide.impl.OpenProjectTask
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.components.serviceAsync
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.toCanonicalPath
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
+import com.intellij.util.io.createDirectories
+import com.intellij.util.io.delete
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Files
 import java.nio.file.Path
+import kotlin.io.path.exists
 
 @TestOnly
 fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
@@ -20,12 +40,15 @@ fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
       Files.createTempDirectory("IJ")
     }
     else {
+      if (!root.exists()) {
+        root.createDirectories()
+      }
       Files.createTempDirectory(root, "IJ")
     }
   }
   initialized(tempDir) {
     withContext(Dispatchers.IO) {
-      Files.deleteIfExists(tempDir)
+      tempDir.delete(recursively = true)
     }
   }
 }
@@ -34,9 +57,13 @@ fun tempPathFixture(root: Path? = null): TestFixture<Path> = testFixture {
 fun projectFixture(
   pathFixture: TestFixture<Path> = tempPathFixture(null),
   openProjectTask: OpenProjectTask = OpenProjectTask.build(),
+  openAfterCreation: Boolean = false,
 ): TestFixture<Project> = testFixture {
   val path = pathFixture.init()
   val project = ProjectManagerEx.getInstanceEx().newProjectAsync(path, openProjectTask)
+  if (openAfterCreation) {
+    ProjectManagerEx.getInstanceEx().openProject(path, openProjectTask.withProject(project))
+  }
   initialized(project) {
     ProjectManagerEx.getInstanceEx().forceCloseProjectAsync(project, save = false)
   }
@@ -72,5 +99,85 @@ fun TestFixture<Project>.moduleFixture(
     writeAction {
       manager.disposeModule(module)
     }
+  }
+}
+
+@TestOnly
+fun disposableFixture(): TestFixture<Disposable> = testFixture { debugString ->
+  val disposable = Disposer.newCheckedDisposable(debugString)
+  initialized(disposable) {
+    Disposer.dispose(disposable)
+  }
+}
+
+@TestOnly
+fun TestFixture<Module>.sourceRootFixture(isTestSource: Boolean = false, pathFixture: TestFixture<Path> = tempPathFixture()): TestFixture<PsiDirectory> =
+  testFixture { _ ->
+    val module = this@sourceRootFixture.init()
+    val directoryPath: Path = pathFixture.init()
+    val directoryVfs = VfsUtil.createDirectories(directoryPath.toCanonicalPath())
+    ModuleRootModificationUtil.updateModel(module) { model ->
+      model.addContentEntry(directoryVfs).addSourceFolder(directoryVfs, isTestSource)
+    }
+    val directory = readAction {
+      PsiManager.getInstance(module.project).findDirectory(directoryVfs) ?: error("Fail to find directory $directoryVfs")
+    }
+    initialized(directory) {
+      writeAction {
+        directory.delete()
+      }
+    }
+  }
+
+@TestOnly
+fun TestFixture<PsiDirectory>.psiFileFixture(
+  name: String,
+  content: String,
+): TestFixture<PsiFile> = testFixture { _ ->
+  val sor = this@psiFileFixture.init()
+  val file = writeAction {
+    sor.createFile(name).also {
+      it.virtualFile.setBinaryContent(content.toByteArray())
+    }
+  }
+  initialized(file) {
+    writeAction {
+      file.delete()
+    }
+  }
+}
+
+@TestOnly
+fun TestFixture<PsiFile>.editorFixture(): TestFixture<Editor> = testFixture { _ ->
+  val psiFile = this@editorFixture.init()
+  val project = psiFile.project
+  val file = psiFile.virtualFile
+  val editor = withContext(Dispatchers.EDT) {
+    val fileEditorManager = project.serviceAsync<FileEditorManager>()
+    writeIntentReadAction {
+      val editor = fileEditorManager.openTextEditor(OpenFileDescriptor(project, file), true)
+      requireNotNull(editor)
+    }
+  }
+  initialized(editor) {
+    withContext(Dispatchers.EDT) {
+      project.serviceAsync<FileEditorManager>().closeFile(file)
+    }
+    val editorHistoryManager = project.serviceAsync<EditorHistoryManager>()
+    readAction {
+      val virtualFile = PsiManager.getInstance(project).findFile(file)?.virtualFile
+      if (virtualFile != null) {
+        editorHistoryManager.removeFile(file)
+      }
+    }
+  }
+}
+
+@TestOnly
+fun <T : Any> extensionPointFixture(epName: ExtensionPointName<T>, extension: T): TestFixture<T> = testFixture {
+  val disposable = Disposer.newDisposable()
+  epName.point.registerExtension(extension, disposable)
+  initialized(extension) {
+    Disposer.dispose(disposable)
   }
 }

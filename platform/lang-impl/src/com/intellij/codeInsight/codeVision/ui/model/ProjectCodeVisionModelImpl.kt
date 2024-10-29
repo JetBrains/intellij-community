@@ -11,7 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.jetbrains.rd.util.reactive.Property
 import com.jetbrains.rd.util.reactive.ViewableMap
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class ProjectCodeVisionModel(val project: Project) {
   companion object {
     fun getInstance(project: Project): ProjectCodeVisionModel = project.service()

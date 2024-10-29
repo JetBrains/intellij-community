@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.annotations.NotNull;
@@ -8,6 +8,7 @@ import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.main.collectors.ImportCollector;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
+import org.jetbrains.java.decompiler.main.extern.IVariableNamingFactory;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
 import org.jetbrains.java.decompiler.struct.StructContext;
@@ -20,6 +21,9 @@ public class DecompilerContext {
   public static final String CURRENT_CLASS_WRAPPER = "CURRENT_CLASS_WRAPPER";
   public static final String CURRENT_CLASS_NODE = "CURRENT_CLASS_NODE";
   public static final String CURRENT_METHOD_WRAPPER = "CURRENT_METHOD_WRAPPER";
+  public static final String CURRENT_VAR_PROCESSOR = "CURRENT_VAR_PROCESSOR";
+  public static final String IN_CLASS_TYPE_PARAMS = "IN_CLASS_TYPE_PARAMS";
+  public static final String RENAMER_FACTORY = "RENAMER_FACTORY";
 
   @NotNull
   private final Map<String, Object> properties;
@@ -33,6 +37,8 @@ public class DecompilerContext {
   private final PoolInterceptor poolInterceptor;
   @NotNull
   private final CancellationManager cancellationManager;
+  @NotNull
+  private final IVariableNamingFactory renamerFactory;
   private ImportCollector importCollector;
   private VarProcessor varProcessor;
   private CounterContainer counterContainer;
@@ -42,16 +48,9 @@ public class DecompilerContext {
                            @NotNull IFernflowerLogger logger,
                            @NotNull StructContext structContext,
                            @NotNull ClassesProcessor classProcessor,
-                           @Nullable PoolInterceptor interceptor) {
-    this(properties, logger, structContext, classProcessor, interceptor, null);
-  }
-
-  public DecompilerContext(@NotNull Map<String, Object> properties,
-                           @NotNull IFernflowerLogger logger,
-                           @NotNull StructContext structContext,
-                           @NotNull ClassesProcessor classProcessor,
                            @Nullable PoolInterceptor interceptor,
-                           @Nullable CancellationManager cancellationManager) {
+                           @Nullable CancellationManager cancellationManager,
+                           @NotNull IVariableNamingFactory renamerFactory) {
     Objects.requireNonNull(properties);
     Objects.requireNonNull(logger);
     Objects.requireNonNull(structContext);
@@ -67,6 +66,7 @@ public class DecompilerContext {
     this.structContext = structContext;
     this.classProcessor = classProcessor;
     this.poolInterceptor = interceptor;
+    this.renamerFactory = renamerFactory;
     this.counterContainer = new CounterContainer();
     this.cancellationManager = cancellationManager;
   }
@@ -137,6 +137,10 @@ public class DecompilerContext {
 
   public static PoolInterceptor getPoolInterceptor() {
     return getCurrentContext().poolInterceptor;
+  }
+
+  public static IVariableNamingFactory getNamingFactory() {
+    return getCurrentContext().renamerFactory;
   }
 
   public static ImportCollector getImportCollector() {

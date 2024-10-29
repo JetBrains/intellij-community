@@ -2,11 +2,13 @@ package com.intellij.execution.multilaunch.design.components
 
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 open class BadgeLabel(cornerRadius: Int = 4) : JPanel(BorderLayout()) {
   public var text: String
     get() = badgeContent.text

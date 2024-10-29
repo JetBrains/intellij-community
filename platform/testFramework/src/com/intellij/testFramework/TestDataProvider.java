@@ -3,6 +3,7 @@ package com.intellij.testFramework;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -10,15 +11,12 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.ImaginaryEditor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import static com.intellij.openapi.actionSystem.DataContext.EMPTY_CONTEXT;
 
 public class TestDataProvider implements DataProvider {
   private final Project myProject;
@@ -56,7 +54,7 @@ public class TestDataProvider implements DataProvider {
     }
     FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
     if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
-      return manager instanceof FileEditorManagerImpl ? ((FileEditorManagerImpl)manager).getSelectedTextEditor(true) : manager.getSelectedTextEditor();
+      return manager.getSelectedTextEditor(true);
     }
     else if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId)) {
       Editor editor = manager.getSelectedTextEditor();
@@ -81,7 +79,7 @@ public class TestDataProvider implements DataProvider {
       }
 
       if (myWithRules) {
-        return DataManager.getInstance().getCustomizedData(dataId, EMPTY_CONTEXT, myDelegateWithoutRules);
+        return DataManager.getInstance().getCustomizedData(dataId, DataContext.EMPTY_CONTEXT, myDelegateWithoutRules);
       }
       return null;
     }

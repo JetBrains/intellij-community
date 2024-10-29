@@ -823,16 +823,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   private void initAndRun(@NotNull Sdk sdk) throws ExecutionException {
     // Create Server process
     ConsoleProcessCreationResult processCreationResult;
-    boolean isUseTargetsAPI = Registry.is("python.use.targets.api");
-    if (isUseTargetsAPI) {
-      processCreationResult = createProcessUsingTargetsAPI(sdk);
-    }
-    else if (PyRunnerUtil.isTargetBased(sdk)) {
-      throw new ExecutionException(PySdkBundle.message("python.sdk.please.reconfigure.interpreter"));
-    }
-    else {
-      processCreationResult = createProcess(sdk);
-    }
+    processCreationResult = createProcessUsingTargetsAPI(sdk);
     TargetEnvironment targetEnvironment = processCreationResult.getTargetEnvironment();
     UIUtil.invokeAndWaitIfNeeded(() -> {
       // Init console view

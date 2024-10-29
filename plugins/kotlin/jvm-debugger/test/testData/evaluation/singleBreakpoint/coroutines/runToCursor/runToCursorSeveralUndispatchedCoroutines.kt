@@ -25,6 +25,3 @@ suspend fun foo(i: Int) {
     delay(1)
     println("End foo $i")
 }
-
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-// REGISTRY: debugger.always.suspend.thread.before.switch=true

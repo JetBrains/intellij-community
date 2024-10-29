@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -12,13 +12,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.BaseOutputReader;
 import com.intellij.util.io.CorruptedException;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +29,7 @@ import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
 import org.jetbrains.jps.builders.impl.TargetOutputIndexImpl;
+import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.*;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -55,7 +56,9 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -70,12 +73,16 @@ import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-
+@ApiStatus.Internal
 public final class JavaBuilder extends ModuleLevelBuilder {
   private static final Logger LOG = Logger.getInstance(JavaBuilder.class);
   private static final String JAVA_EXTENSION = "java";
 
   private static final String USE_MODULE_PATH_ONLY_OPTION = "compiler.force.module.path";
+
+  // the compiler sdk version from which specifying -proc:full is required for annotation processing to work
+  // if the option is set, it will override the hardcoded logic in 'addCompilerOptions'
+  private static final String PROC_FULL_REQUIRED_OPTION = "compiler.proc.full.required";
 
   public static final String BUILDER_ID = "java";
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
@@ -89,26 +96,29 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   private static final List<String> COMPILABLE_EXTENSIONS = Collections.singletonList(JAVA_EXTENSION);
 
   private static final String PROC_ONLY_OPTION = "-proc:only";
+  private static final String PROC_FULL_OPTION = "-proc:full";
+  private static final String PROC_NONE_OPTION = "-proc:none";
   private static final String RELEASE_OPTION = "--release";
   private static final String TARGET_OPTION = "-target";
-  private static final String PROC_NONE_OPTION = "-proc:none";
   private static final String PROCESSORPATH_OPTION = "-processorpath";
   private static final String ENCODING_OPTION = "-encoding";
   private static final String ENABLE_PREVIEW_OPTION = "--enable-preview";
   private static final String PROCESSOR_MODULE_PATH_OPTION = "--processor-module-path";
   private static final String SOURCE_OPTION = "-source";
-  private static final Set<String> FILTERED_OPTIONS = ContainerUtil.newHashSet(
+  private static final String SYSTEM_OPTION = "--system";
+  private static final Set<String> FILTERED_OPTIONS = Set.of(
     TARGET_OPTION, RELEASE_OPTION, "-d"
   );
-  private static final Set<String> FILTERED_SINGLE_OPTIONS = ContainerUtil.newHashSet(
-    "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, "-proceedOnError"
+  private static final Set<String> FILTERED_SINGLE_OPTIONS = Set.of(
+    "-g", "-deprecation", "-nowarn", "-verbose", PROC_NONE_OPTION, PROC_ONLY_OPTION, PROC_FULL_OPTION, "-proceedOnError"
   );
-  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = ContainerUtil.newHashSet(
-    SOURCE_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
+  private static final Set<String> POSSIBLY_CONFLICTING_OPTIONS = Set.of(
+    SOURCE_OPTION, SYSTEM_OPTION, "--boot-class-path", "-bootclasspath", "--class-path", "-classpath", "-cp", PROCESSORPATH_OPTION, "-sourcepath", "--module-path", "-p", "--module-source-path"
   );
 
   private static final List<ClassPostProcessor> ourClassProcessors = new ArrayList<>();
   private static final @Nullable File ourDefaultRtJar;
+  private static final int ourProcFullRequiredFrom; // 0, if not set
   static {
     File rtJar = null;
     StringTokenizer tokenizer = new StringTokenizer(System.getProperty("sun.boot.class.path", ""), File.pathSeparator, false);
@@ -120,6 +130,14 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
     ourDefaultRtJar = rtJar;
+
+    int procFullRequired = 0;
+    try {
+      procFullRequired = Math.max(Integer.parseInt(System.getProperty(PROC_FULL_REQUIRED_OPTION, "0")), 0);
+    }
+    catch (NumberFormatException ignored) {
+    }
+    ourProcFullRequiredFrom = procFullRequired;
   }
 
   private static final class CompilableModuleTypesHolder {
@@ -183,7 +201,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     // before the first compilation round starts: find and mark dirty all classes that depend on removed or moved classes so
     // that all such files are compiled in the first round.
     try {
-      JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, new DirtyFilesHolderBase<JavaSourceRootDescriptor, ModuleBuildTarget>(context) {
+      JavaBuilderUtil.markDirtyDependenciesForInitialRound(context, new DirtyFilesHolderBase<>(context) {
         @Override
         public void processDirtyFiles(@NotNull FileProcessor<JavaSourceRootDescriptor, ModuleBuildTarget> processor) throws IOException {
           FSOperations.processFilesToRecompile(context, chunk, processor);
@@ -707,7 +725,10 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (compilerVersion <= 11) {
       return targetPlatformVersion >= 6;
     }
-    return targetPlatformVersion >= 7;
+    if (compilerVersion <= 19) {
+      return targetPlatformVersion >= 7;
+    }
+    return targetPlatformVersion >= 8;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -927,7 +948,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       vmOptions.addAll(extension.getOptions(compilingTool, compilerSdkVersion));
     }
 
-    addCompilationOptions(compilerSdkVersion, compilationOptions, context, chunk, profile, true);
+    addCompilationOptions(compilerSdkVersion, compilingTool, compilationOptions, context, chunk, profile, true);
 
     return Pair.create(vmOptions, compilationOptions);
   }
@@ -946,17 +967,13 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     }
   }
 
-  public static void addCompilationOptions(List<? super String> options,
-                                           CompileContext context,
-                                           ModuleChunk chunk,
-                                           @Nullable ProcessorConfigProfile profile) {
-    addCompilationOptions(JavaVersion.current().feature, options, context, chunk, profile, false);
+  public static void addCompilationOptions(List<? super String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile) {
+    addCompilationOptions(JavaVersion.current().feature, JavaBuilderUtil.findCompilingTool(JavacCompilerTool.ID), options, context, chunk, profile, false);
   }
 
-  private static void addCompilationOptions(int compilerSdkVersion,
-                                            List<? super String> options,
-                                            CompileContext context, ModuleChunk chunk,
-                                            @Nullable ProcessorConfigProfile profile, boolean procOnlySupported) {
+  private static void addCompilationOptions(
+    int compilerSdkVersion, JavaCompilingTool compilingTool, List<? super String> options, CompileContext context, ModuleChunk chunk, @Nullable ProcessorConfigProfile profile, boolean procOnlySupported
+  ) {
     if (!options.contains(ENCODING_OPTION)) {
       final CompilerEncodingConfiguration config = context.getProjectDescriptor().getEncodingConfiguration();
       final String encoding = config.getPreferredModuleChunkEncoding(chunk);
@@ -984,6 +1001,21 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
       if (procOnlySupported && profile.isProcOnly()) {
         options.add(PROC_ONLY_OPTION);
+      }
+      else {
+        // for newer compilers need to enable annotation processing explicitly
+
+        if (ourProcFullRequiredFrom > 0 /*the requirement explicitly configured*/) {
+          if (compilerSdkVersion >= ourProcFullRequiredFrom) {
+            options.add(PROC_FULL_OPTION);
+          }
+        }
+        else {
+          // by default required for javac from version 23
+          if (compilerSdkVersion > 22 && isJavac(compilingTool)){
+            options.add(PROC_FULL_OPTION);
+          }
+        }
       }
 
       final File srcOutput = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(
@@ -1037,22 +1069,20 @@ public final class JavaBuilder extends ModuleLevelBuilder {
 
     @NotNull JpsModule module = chunk.representativeTarget().getModule();
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
-    final int languageLevel = level != null ? level.feature() : 0;
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
-
-    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration,
-                                                 (level == LanguageLevel.JDK_X) ? chunkSdkVersion : languageLevel);
+    final int languageLevel = level == null? 0 : level == LanguageLevel.JDK_X? chunkSdkVersion : level.feature();
+    int bytecodeTarget = level == LanguageLevel.JDK_X? chunkSdkVersion : getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add(RELEASE_OPTION);
-      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(bytecodeTarget));
+      options.add(complianceOption(bytecodeTarget));
       return;
     }
 
-    // using older -source, -target and -bootclasspath options
+    // alternatively using -source, -target and --system (or -bootclasspath) options
     if (languageLevel > 0 && !options.contains(SOURCE_OPTION)) {
       options.add(SOURCE_OPTION);
-      options.add(level == LanguageLevel.JDK_X ? complianceOption(chunkSdkVersion) : complianceOption(languageLevel));
+      options.add(complianceOption(languageLevel));
     }
 
     if (bytecodeTarget > 0) {
@@ -1079,6 +1109,17 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     if (bytecodeTarget > 0) {
       options.add(TARGET_OPTION);
       options.add(complianceOption(bytecodeTarget));
+    }
+
+    if (compilerSdkVersion >= 9) {
+      Pair<@NotNull JpsSdk<JpsDummyElement>, @NotNull Integer> associatedSdk = getAssociatedSdk(chunk);
+      if (associatedSdk != null && associatedSdk.getSecond() >= 9 && associatedSdk.getSecond() != compilerSdkVersion) {
+        String homePath = associatedSdk.getFirst().getHomePath();
+        if (homePath != null) {
+          options.add(SYSTEM_OPTION);
+          options.add(FileUtil.toSystemIndependentName(homePath));
+        }
+      }
     }
   }
 

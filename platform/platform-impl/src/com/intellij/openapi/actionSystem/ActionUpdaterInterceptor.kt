@@ -23,18 +23,18 @@ interface ActionUpdaterInterceptor {
                                original: suspend () -> Array<AnAction>): Array<AnAction> =
     original()
 
-  suspend fun expandActionGroup(presentationFactory: PresentationFactory,
+  suspend fun expandActionGroup(group: ActionGroup,
                                 context: DataContext,
                                 place: String,
-                                group: ActionGroup,
-                                isToolbarAction: Boolean,
+                                uiKind: ActionUiKind,
+                                presentationFactory: PresentationFactory,
                                 updateSession: SuspendingUpdateSession,
                                 original: suspend () -> List<AnAction>): List<AnAction> =
     original()
 
   suspend fun <R> runUpdateSessionForInputEvent(actions: List<AnAction>,
-                                                place: String,
                                                 context: DataContext,
+                                                place: String,
                                                 updateSession: SuspendingUpdateSession,
                                                 original: suspend (List<AnAction>) -> R): R =
     original(emptyList())
@@ -48,16 +48,16 @@ interface ActionUpdaterInterceptor {
       if (isDefaultImpl) false
       else serviceIfCreated<ActionUpdaterInterceptor>()?.treatDefaultActionGroupAsDynamic() == true
 
-    suspend inline fun expandActionGroup(presentationFactory: PresentationFactory,
+    suspend inline fun expandActionGroup(group: ActionGroup,
                                          context: DataContext,
                                          place: String,
-                                         group: ActionGroup,
-                                         isToolbarAction: Boolean,
+                                         uiKind: ActionUiKind,
+                                         presentationFactory: PresentationFactory,
                                          updateSession: SuspendingUpdateSession,
                                          noinline original: suspend () -> List<AnAction>): List<AnAction> =
       if (isDefaultImpl) original()
       else serviceAsync<ActionUpdaterInterceptor>().expandActionGroup(
-        presentationFactory, context, place, group, isToolbarAction, updateSession, original)
+        group, context, place, uiKind, presentationFactory, updateSession, original)
 
     suspend inline fun getGroupChildren(group: ActionGroup,
                                         event: AnActionEvent,
@@ -72,12 +72,12 @@ interface ActionUpdaterInterceptor {
       else serviceAsync<ActionUpdaterInterceptor>().updateAction(action, event, original)
 
     suspend inline fun <R> runUpdateSessionForInputEvent(actions: List<AnAction>,
-                                                         place: String,
                                                          context: DataContext,
+                                                         place: String,
                                                          updateSession: SuspendingUpdateSession,
                                                          noinline original: suspend (List<AnAction>) -> R): R =
       if (isDefaultImpl) original(emptyList())
       else serviceAsync<ActionUpdaterInterceptor>().runUpdateSessionForInputEvent(
-        actions, place, context, updateSession, original)
+        actions, context, place, updateSession, original)
   }
 }

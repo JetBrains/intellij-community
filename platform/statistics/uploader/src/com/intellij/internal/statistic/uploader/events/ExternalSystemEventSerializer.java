@@ -33,7 +33,7 @@ public final class ExternalSystemEventSerializer {
              " " + hashedFiles + " " + errors;
     }
     else if (event instanceof ExternalSystemErrorEvent error) {
-      return prefix + " " + escape(error.getEvent()) + " " + escape(error.getErrorClass());
+      return prefix + " " + escape(error.getErrorClass());
     }
     return prefix;
   }
@@ -69,10 +69,9 @@ public final class ExternalSystemEventSerializer {
     else if (type == ExternalSystemEventType.STARTED && length == payloadStartIndex) {
       return new ExternalUploadStartedEvent(timestamp, recorderId);
     }
-    else if (type == ExternalSystemEventType.ERROR && length == payloadStartIndex + 2) {
-      String event = parts[payloadStartIndex].trim();
-      String errorClass = parts[payloadStartIndex + 1].trim();
-      return new ExternalSystemErrorEvent(timestamp, event, errorClass, recorderId);
+    else if (type == ExternalSystemEventType.ERROR && length == payloadStartIndex + 1) {
+      String errorClass = parts[payloadStartIndex].trim();
+      return new ExternalSystemErrorEvent(timestamp, errorClass, recorderId);
     }
     return null;
   }

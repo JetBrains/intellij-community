@@ -7,6 +7,7 @@ import com.intellij.testFramework.LightPlatformTestCase;
 public class JavaFilePasteProviderTest extends LightPlatformTestCase {
   public void testDetectClassName() {
     Project project = getProject();
+    assertNull(JavaFilePasteProvider.detectClassName(project, "random text pasted"));
     assertEquals("X", JavaFilePasteProvider.detectClassName(project, "class X {}"));
     assertEquals("Y", JavaFilePasteProvider.detectClassName(project, "class X {} public class Y{}"));
     assertEquals("R", JavaFilePasteProvider.detectClassName(project, "record R() {}"));

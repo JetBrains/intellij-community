@@ -13,7 +13,7 @@ public class BlockStatementEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    Object result = context.getDebugProcess().getVirtualMachineProxy().mirrorOfVoid();
+    Object result = context.getSuspendContext().getVirtualMachineProxy().mirrorOfVoid();
     for (Evaluator statement : myStatements) {
       result = statement.evaluate(context);
     }

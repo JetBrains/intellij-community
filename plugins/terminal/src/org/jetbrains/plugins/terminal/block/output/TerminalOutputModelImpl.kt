@@ -202,7 +202,9 @@ internal class TerminalOutputModelImpl(override val editor: EditorEx) : Terminal
     val block = blocks.firstOrNull() ?: return
     val outputStartOffset = block.outputStartOffset
     val outputLengthToRemove = min(block.endOffset - outputStartOffset, textLengthToRemove)
+    val linesCountBefore = document.lineCount
     deleteDocumentRange(block, TextRange(outputStartOffset, outputStartOffset + outputLengthToRemove))
+    block.trimmedLinesCount += linesCountBefore - document.lineCount
   }
 
   private fun findTopBlockCountToRemove(maxCapacity: Int, textLength: Int): Int {

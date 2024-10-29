@@ -45,6 +45,11 @@ public class ReferenceResolveInLibrarySourcesFirTestGenerated extends AbstractRe
         runTest("../../idea/tests/testData/resolve/referenceInLib/toFunParameter.kt");
     }
 
+    @TestMetadata("toLazyCall.kt")
+    public void testToLazyCall() throws Exception {
+        runTest("../../idea/tests/testData/resolve/referenceInLib/toLazyCall.kt");
+    }
+
     @TestMetadata("toLocalFun.kt")
     public void testToLocalFun() throws Exception {
         runTest("../../idea/tests/testData/resolve/referenceInLib/toLocalFun.kt");

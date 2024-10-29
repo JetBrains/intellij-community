@@ -132,7 +132,10 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public int logicalPositionToOffset(@NotNull LogicalPosition pos) {
-    throw notImplemented();
+    int line = MathUtil.clamp(pos.line, 0, myDocument.getLineCount());
+    int startOffset = myDocument.getLineStartOffset(line);
+    int endOffset = myDocument.getLineEndOffset(line);
+    return MathUtil.clamp(startOffset + pos.column, startOffset, endOffset);
   }
 
   @Override

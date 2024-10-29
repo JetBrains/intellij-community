@@ -1,26 +1,28 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("Propagation")
 @file:Internal
-@file:Suppress("NAME_SHADOWING")
+@file:Suppress("NAME_SHADOWING", "OPT_IN_USAGE")
 
 package com.intellij.util.concurrency
 
-import com.intellij.concurrency.ContextAwareCallable
-import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.*
 import com.intellij.concurrency.client.captureClientIdInBiConsumer
 import com.intellij.concurrency.client.captureClientIdInCallable
 import com.intellij.concurrency.client.captureClientIdInFunction
 import com.intellij.concurrency.client.captureClientIdInRunnable
-import com.intellij.concurrency.currentThreadContext
+import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.CeProcessCanceledException
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Ref
+import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.Callable
 import java.util.concurrent.FutureTask
@@ -43,6 +45,7 @@ private object Holder {
 }
 
 @TestOnly
+@ApiStatus.Internal
 fun runWithContextPropagationEnabled(runnable: Runnable) {
   val propagateThreadContext = Holder.propagateThreadContext
   Holder.propagateThreadContext = true
@@ -55,6 +58,7 @@ fun runWithContextPropagationEnabled(runnable: Runnable) {
 }
 
 @TestOnly
+@ApiStatus.Internal
 fun runWithImplicitBlockingContextEnabled(runnable: Runnable) {
   val propagateThreadContext = Holder.useImplicitBlockingContext
   Holder.useImplicitBlockingContext = true
@@ -76,37 +80,65 @@ internal val useImplicitBlockingContext: Boolean
   get() = Holder.useImplicitBlockingContext
 
 @Internal
-class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob) {
+class BlockingJob(val blockingJob: Job) : AbstractCoroutineContextElement(BlockingJob), IntelliJContextElement {
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   companion object : CoroutineContext.Key<BlockingJob>
 }
 
+@OptIn(DelicateCoroutinesApi::class)
 @Internal
 data class ChildContext internal constructor(
   val context: CoroutineContext,
   val continuation: Continuation<Unit>?,
+  val ijElements: List<IntelliJContextElement>,
 ) {
 
   val job: Job? get() = continuation?.context?.job
 
-  fun runAsCoroutine(action: Runnable) {
-    runAsCoroutine(completeOnFinish = true, action::run)
+  fun runInChildContext(action: Runnable) {
+    runInChildContext(completeOnFinish = true, action::run)
   }
 
-  fun <T> runAsCoroutine(completeOnFinish: Boolean, action: () -> T): T {
+  fun <T> runInChildContext(completeOnFinish: Boolean, action: () -> T): T {
     return if (continuation == null) {
-      action()
+      applyContextActions().use {
+        action()
+      }
     }
     else {
-      runAsCoroutine(continuation, completeOnFinish, action)
+      runAsCoroutine(continuation, completeOnFinish) { applyContextActions().use { action() } }
+    }
+  }
+
+  @DelicateCoroutinesApi
+  fun applyContextActions(installThreadContext: Boolean = true): AccessToken {
+    val installToken = if (installThreadContext) {
+      installThreadContext(context, replace = false)
+    }
+    else {
+      AccessToken.EMPTY_ACCESS_TOKEN
+    }
+    for (elem in ijElements) {
+      elem.beforeChildStarted(context)
+    }
+    return object : AccessToken() {
+      override fun finish() {
+        installToken.finish()
+        for (elem in ijElements.reversed()) {
+          elem.afterChildCompleted(context)
+        }
+      }
     }
   }
 }
 
 @Internal
-fun createChildContext() : ChildContext = doCreateChildContext(false)
+fun createChildContext(debugName: @NonNls String) : ChildContext = doCreateChildContext(debugName, false)
 
 @Internal
-fun createChildContextWithContextJob() : ChildContext = doCreateChildContext(true)
+fun createChildContextWithContextJob(debugName: @NonNls String) : ChildContext = doCreateChildContext(debugName, true)
 
 /**
  * Use `unconditionalCancellationPropagation` only when you are sure that the current context will always outlive a child computation.
@@ -114,8 +146,11 @@ fun createChildContextWithContextJob() : ChildContext = doCreateChildContext(tru
  * but it is not the case with `invokeLater`
  */
 @Internal
-private fun doCreateChildContext(unconditionalCancellationPropagation: Boolean): ChildContext {
+private fun doCreateChildContext(debugName: @NonNls String, unconditionalCancellationPropagation: Boolean): ChildContext {
   val currentThreadContext = currentThreadContext()
+  val isStructured = unconditionalCancellationPropagation || currentThreadContext[BlockingJob] != null
+
+  val (childContext, ijElements) = gatherAppliedChildContext(currentThreadContext, isStructured)
 
   // Problem: a task may infinitely reschedule itself
   //   => each re-scheduling adds a child Job and completes the current Job
@@ -136,29 +171,51 @@ private fun doCreateChildContext(unconditionalCancellationPropagation: Boolean):
     if (unconditionalCancellationPropagation) currentThreadContext[Job]
     else currentThreadContext[BlockingJob]?.blockingJob
   val (cancellationContext, childContinuation) = if (parentBlockingJob != null) {
-    val continuation: Continuation<Unit> = childContinuation(parentBlockingJob)
+    val continuation: Continuation<Unit> = childContinuation(debugName, parentBlockingJob)
     Pair((currentThreadContext[BlockingJob] ?: EmptyCoroutineContext) + continuation.context.job, continuation)
   }
   else {
     Pair(EmptyCoroutineContext, null)
   }
-  val childContext = if (isPropagateThreadContext) {
-    currentThreadContext.minusKey(Job)
+
+  return ChildContext(childContext.minusKey(Job) + cancellationContext, childContinuation, ijElements)
+}
+
+private fun gatherAppliedChildContext(parentContext: CoroutineContext, isStructured: Boolean): Pair<CoroutineContext, List<IntelliJContextElement>> {
+  val ijElements = SmartList<IntelliJContextElement>()
+  val newContext = parentContext.fold<CoroutineContext>(EmptyCoroutineContext) { old, elem ->
+    old + produceChildContextElement(parentContext, elem, isStructured, ijElements)
   }
-  else {
-    EmptyCoroutineContext
+  return Pair(newContext, ijElements)
+}
+
+private fun produceChildContextElement(parentContext: CoroutineContext, element: CoroutineContext.Element, isStructured: Boolean, ijElements: MutableList<IntelliJContextElement>): CoroutineContext {
+  return when {
+    element is IntelliJContextElement -> {
+      val forked = element.produceChildElement(parentContext, isStructured)
+      if (forked != null) {
+        ijElements.add(forked)
+        forked
+      }
+      else {
+        EmptyCoroutineContext
+      }
+    }
+    isStructured -> element
+    else -> {
+      EmptyCoroutineContext
+    }
   }
-  return ChildContext(childContext + cancellationContext, childContinuation)
 }
 
 @OptIn(DelicateCoroutinesApi::class)
-private fun childContinuation(parent: Job): Continuation<Unit> {
+private fun childContinuation(debugName: @NonNls String, parent: Job): Continuation<Unit> {
   if (parent.isCompleted) {
     LOG.warn("Attempt to create a child continuation for an already completed job", Throwable())
   }
   lateinit var continuation: Continuation<Unit>
   GlobalScope.launch(
-    parent + Dispatchers.Unconfined,
+    parent + CoroutineName("IJ Structured concurrency: $debugName") + Dispatchers.Unconfined,
     start = CoroutineStart.UNDISPATCHED,
   ) {
     suspendCancellableCoroutine {
@@ -173,16 +230,13 @@ internal fun captureRunnableThreadContext(command: Runnable): Runnable {
 }
 
 internal fun <V> captureCallableThreadContext(callable: Callable<V>): Callable<V> {
-  val (childContext, childContinuation) = createChildContext()
+  val childContext = createChildContext(callable.toString())
   var callable = captureClientIdInCallable(callable)
   callable = ContextCallable(true, childContext, callable)
-  if (childContinuation != null) {
-    callable = CancellationCallable(childContinuation, callable)
-  }
   return callable
 }
 
-private fun isContextAwareComputation(runnable: Any): Boolean {
+fun isContextAwareComputation(runnable: Any): Boolean {
   return runnable is Continuation<*> || runnable is ContextAwareRunnable || runnable is ContextAwareCallable<*> || runnable is CancellationFutureTask<*>
 }
 
@@ -261,43 +315,40 @@ fun <T> runAsCoroutine(continuation: Continuation<Unit>, completeOnFinish: Boole
 }
 
 internal fun capturePropagationContext(r: Runnable, forceUseContextJob : Boolean = false): Runnable {
-  var command = captureClientIdInRunnable(r)
   if (isContextAwareComputation(r)) {
-    return command
+    return r
   }
-  val (childContext, childContinuation) =
-    if (forceUseContextJob) createChildContextWithContextJob()
-    else createChildContext()
-  command = ContextRunnable(true, childContext, command)
-  if (childContinuation != null) {
-    command = CancellationRunnable(childContinuation, command)
-  }
+  var command = captureClientIdInRunnable(r)
+  val childContext =
+    if (forceUseContextJob) createChildContextWithContextJob(r.toString())
+    //TODO: do we really need .toString() here? It allocates ~6 Gb during indexing
+    else createChildContext(r.toString())
+  command = ContextRunnable(childContext, command)
   return command
 }
 
-fun capturePropagationContext(r: Runnable, expired: Condition<*>): JBPair<Runnable, Condition<*>> {
-  var command = captureClientIdInRunnable(r)
-  if (isContextAwareComputation(r)) {
-    return JBPair.create(command, expired)
+@ApiStatus.Internal
+fun capturePropagationContext(r: Runnable, expired: Condition<*>, signalRunnable: Runnable): JBPair<Runnable, Condition<*>> {
+  if (isContextAwareComputation(signalRunnable)) {
+    return JBPair.create(r, expired)
   }
-  val (childContext, childContinuation) = createChildContext()
+  var command = captureClientIdInRunnable(r)
+  val childContext = createChildContext(r.toString())
   var expired = expired
-  command = ContextRunnable(true, childContext, command)
-  if (childContinuation != null) {
-    command = CancellationRunnable(childContinuation, command)
-    val childJob = childContinuation.context.job
+  command = ContextRunnable(childContext, command)
+  val cont = childContext.continuation
+  if (cont != null) {
+    val childJob = cont.context.job
     expired = cancelIfExpired(expired, childJob)
   }
   return JBPair.create(command, expired)
 }
 
+@ApiStatus.Internal
 fun <T, U> captureBiConsumerThreadContext(f: BiConsumer<T, U>): BiConsumer<T, U> {
-  val (childContext, childContinuation) = createChildContext()
+  val childContext = createChildContext(f.toString())
   var f = captureClientIdInBiConsumer(f)
-  f = ContextBiConsumer(false, childContext, f)
-  if (childContinuation != null) {
-    f = CancellationBiConsumer(childContinuation, f)
-  }
+  f = ContextBiConsumer(childContext, f)
   return f
 }
 
@@ -317,46 +368,44 @@ private fun <T> cancelIfExpired(expiredCondition: Condition<in T>, childJob: Job
 }
 
 internal fun <V> capturePropagationContext(c: Callable<V>): FutureTask<V> {
-  var callable = captureClientIdInCallable(c)
   if (isContextAwareComputation(c)) {
-    return FutureTask(callable)
+    return FutureTask(c)
   }
-  val (childContext, childContinuation) = createChildContext()
-  callable = ContextCallable(false, childContext, callable)
-  if (childContinuation != null) {
-    callable = CancellationCallable(childContinuation, callable)
-    val childJob = childContinuation.context.job
-    return CancellationFutureTask(childJob, callable)
+  val callable = captureClientIdInCallable(c)
+  val childContext = createChildContext(c.toString())
+  val wrappedCallable = ContextCallable(false, childContext, callable)
+  val cont = childContext.continuation
+  if (cont != null) {
+    val childJob = cont.context.job
+    return CancellationFutureTask(childJob, wrappedCallable)
   }
   else {
-    return FutureTask(callable)
+    return FutureTask(wrappedCallable)
   }
 }
 
 internal fun <T, R> capturePropagationContext(function: Function<T, R>): Function<T, R> {
-  val (childContext, childContinuation) = createChildContext()
+  val childContext = createChildContext(function.toString())
   var f = captureClientIdInFunction(function)
   f = ContextFunction(childContext, f)
-  if (childContinuation != null) {
-    f = CancellationFunction(childContinuation, f)
-  }
   return f
 }
 
 internal fun <V> capturePropagationContext(wrapper: SchedulingWrapper, c: Callable<V>, ns: Long): MyScheduledFutureTask<V> {
-  var callable = captureClientIdInCallable(c)
   if (isContextAwareComputation(c)) {
-    return wrapper.MyScheduledFutureTask(callable, ns)
+    return wrapper.MyScheduledFutureTask(c, ns)
   }
-  val (childContext, childContinuation) = createChildContext()
-  callable = ContextCallable(false, childContext, callable)
-  if (childContinuation != null) {
-    callable = CancellationCallable(childContinuation, callable)
-    val childJob = childContinuation.context.job
-    return CancellationScheduledFutureTask(wrapper, childJob, callable, ns)
+  val callable = captureClientIdInCallable(c)
+  val childContext = createChildContext("$c (scheduled: $ns)")
+  val wrappedCallable = ContextCallable(false, childContext, callable)
+
+  val cont = childContext.continuation
+  if (cont != null) {
+    val childJob = cont.context.job
+    return CancellationScheduledFutureTask(wrapper, childJob, wrappedCallable, ns)
   }
   else {
-    return wrapper.MyScheduledFutureTask(callable, ns)
+    return wrapper.MyScheduledFutureTask(wrappedCallable, ns)
   }
 }
 
@@ -366,19 +415,31 @@ internal fun capturePropagationContext(
   ns: Long,
   period: Long,
 ): MyScheduledFutureTask<*> {
-  val (childContext, childContinuation) = createChildContext()
-  var runnable = captureClientIdInRunnable(runnable)
-  runnable = ContextRunnable(false, childContext, runnable)
-  if (childContinuation != null) {
-    runnable = PeriodicCancellationRunnable(childContinuation, runnable)
-    val childJob = childContinuation.context.job
-    return CancellationScheduledFutureTask<Void>(wrapper, childJob, runnable, ns, period)
+  val childContext = createChildContext("$runnable (scheduled: $ns, period: $period)")
+  val capturedRunnable1 = captureClientIdInRunnable(runnable)
+  val capturedRunnable2 = Runnable {
+    installThreadContext(childContext.context, false).use {
+      childContext.applyContextActions(false).use {
+        capturedRunnable1.run()
+      }
+    }
+  }
+  val cont = childContext.continuation
+  if (cont != null) {
+    val capturedRunnable3 = PeriodicCancellationRunnable(childContext.continuation, capturedRunnable2)
+    val childJob = cont.context.job
+    return CancellationScheduledFutureTask<Void>(wrapper, childJob, capturedRunnable3, ns, period)
   }
   else {
-    return wrapper.MyScheduledFutureTask<Void>(runnable, null, ns, period)
+    return wrapper.MyScheduledFutureTask<Void>(capturedRunnable2, null, ns, period)
   }
 }
 
+@ApiStatus.Internal
 fun contextAwareCallable(r: Runnable): Callable<*> = ContextAwareCallable {
   r.run()
+}
+
+fun Runnable.unwrapContextRunnable(): Runnable {
+  return if (this is ContextRunnable) this.delegate.unwrapContextRunnable() else this
 }

@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.VcsShowToolWindowTabAction;
 import git4idea.i18n.GitBundle;
 import git4idea.stash.ui.GitStashContentProvider;
 import git4idea.ui.GitUnstashDialog;
@@ -14,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabAvailable;
-import static git4idea.stash.ui.GitStashContentProviderKt.isStashTabVisible;
+import static git4idea.stash.ui.GitStashContentProviderKt.*;
 
 /**
  * Git unstash action
@@ -30,17 +28,6 @@ public class GitUnstash extends GitRepositoryAction {
     return GitBundle.message("unstash.action.name");
   }
 
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null && isStashTabAvailable() && ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) != null) {
-      VcsShowToolWindowTabAction.activateVcsTab(project, GitStashContentProvider.TAB_NAME, false);
-      return;
-    }
-
-    super.actionPerformed(e);
-  }
-
   /**
    * {@inheritDoc}
    */
@@ -48,7 +35,11 @@ public class GitUnstash extends GitRepositoryAction {
   protected void perform(final @NotNull Project project,
                          final @NotNull List<VirtualFile> gitRoots,
                          final @NotNull VirtualFile defaultRoot) {
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (isStashTabAvailable() && ChangesViewContentManager.getToolWindowFor(project, GitStashContentProvider.TAB_NAME) != null) {
+      showStashes(project, defaultRoot);
+      return;
+    }
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     if (changeListManager.isFreezedWithNotification(GitBundle.message("unstash.error.can.not.unstash.changes.now"))) return;
     GitUnstashDialog.showUnstashDialog(project, gitRoots, defaultRoot);
   }

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.io.CanonicalPathPrefixTreeFactory
 import com.intellij.openapi.util.io.relativizeToClosestAncestor
+import com.intellij.openapi.vfs.limits.FileSizeLimit
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightVirtualFileBase
@@ -20,6 +21,7 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.containers.prefix.map.AbstractPrefixTreeFactory
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 import org.jetbrains.annotations.SystemIndependent
 import java.io.IOException
@@ -49,6 +51,15 @@ fun VirtualFile.readBytes(): ByteArray {
 @RequiresWriteLock
 fun VirtualFile.writeBytes(content: ByteArray) {
   setBinaryContent(content)
+}
+
+fun VirtualFile.isTooLarge(): Boolean {
+  return FileSizeLimit.isTooLarge(length, extension)
+}
+
+fun VirtualFile.isTooLargeForIntellijSense(): Boolean {
+  val maxFileSize = FileSizeLimit.getIntellisenseLimit(extension)
+  return length > maxFileSize
 }
 
 fun VirtualFile.toNioPathOrNull(): Path? {
@@ -206,6 +217,7 @@ fun Path.refreshAndFindVirtualDirectory(): VirtualFile? {
   return file
 }
 
+@ApiStatus.Internal
 object VirtualFilePrefixTreeFactory : AbstractPrefixTreeFactory<VirtualFile, String>() {
 
   override fun convertToList(element: VirtualFile): List<String> {

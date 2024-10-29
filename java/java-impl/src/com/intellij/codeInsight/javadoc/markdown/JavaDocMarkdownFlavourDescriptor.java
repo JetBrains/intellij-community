@@ -6,11 +6,18 @@ import org.intellij.markdown.MarkdownElementTypes;
 import org.intellij.markdown.MarkdownTokenTypes;
 import org.intellij.markdown.ast.ASTNode;
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor;
+import org.intellij.markdown.flavours.gfm.GFMTokenTypes;
+import org.intellij.markdown.flavours.gfm.StrikeThroughDelimiterParser;
 import org.intellij.markdown.html.GeneratingProvider;
 import org.intellij.markdown.html.HtmlGenerator;
+import org.intellij.markdown.html.TransparentInlineHolderProvider;
 import org.intellij.markdown.html.TrimmingInlineHolderProvider;
 import org.intellij.markdown.parser.LinkMap;
 import org.intellij.markdown.parser.MarkerProcessorFactory;
+import org.intellij.markdown.parser.sequentialparsers.EmphasisLikeParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParser;
+import org.intellij.markdown.parser.sequentialparsers.SequentialParserManager;
+import org.intellij.markdown.parser.sequentialparsers.impl.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,8 +30,29 @@ import java.util.Map;
  * Flavour descriptor which describes how to generate html text from markdown documentation
  */
 public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
+  public static final IElementType RAW_TYPE = new IElementType("RAW_TYPE");
+
   public JavaDocMarkdownFlavourDescriptor() {
     super(true, false, true);
+  }
+
+  @Override
+  public @NotNull SequentialParserManager getSequentialParserManager() {
+    return new SequentialParserManager() {
+      @Override
+      public @NotNull List<SequentialParser> getParserSequence() {
+        return List.of(
+          new AutolinkParser(List.of(MarkdownTokenTypes.AUTOLINK, GFMTokenTypes.GFM_AUTOLINK)),
+          new BacktickParser(),
+          new CodeTagParser(), // Custom parser excluding <code> blocks content to be processed as markdown
+          new MathParser(),
+          new ImageParser(),
+          new InlineLinkParser(),
+          new ReferenceLinkParser(),
+          new EmphasisLikeParser(new EmphStrongDelimiterParser(), new StrikeThroughDelimiterParser())
+        );
+      }
+    };
   }
 
   @NotNull
@@ -37,6 +65,9 @@ public class JavaDocMarkdownFlavourDescriptor extends GFMFlavourDescriptor {
 
     // Paragraphs may need to be inlined
     result.put(MarkdownElementTypes.PARAGRAPH, new JavaDocParagraphProvider());
+
+    // Custom type, no processing
+    result.put(RAW_TYPE, new TransparentInlineHolderProvider());
 
     return result;
   }

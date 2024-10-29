@@ -12,8 +12,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.util.withSyncIOBackgroundContext
-import com.intellij.openapi.rd.util.withUiContext
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiserDialogPluginInstaller
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.getInstallAndEnableTask
@@ -99,7 +97,9 @@ class DefaultImportPerformer(private val partials: Collection<PartialImportPerfo
   override fun perform(project: Project?, settings: Settings, pi: ProgressIndicator) {
     onlyRequiredPartials(settings).forEach {
       logger.info("perform: ${it.javaClass.simpleName}")
-      it.perform(project, settings, pi)
+      logger.runAndLogException {
+        it.perform(project, settings, pi)
+      }
     }
   }
 
@@ -146,7 +146,7 @@ private suspend fun doInstallPlugins(
   val installationFinished = CompletableDeferred<Boolean>()
   val installer = createInstaller(installationFinished)
 
-  val installationStarted = withUiContext {
+  val installationStarted = withContext(Dispatchers.EDT) {
     installer.doInstallPlugins({ true }, pi.modalityState)
   }
 
@@ -167,7 +167,7 @@ private suspend fun doDownloadPlugins(
   var success: Boolean
   val operation = PluginInstallOperation(plugins, customPlugins, PluginEnabler.HEADLESS, pi)
   operation.setAllowInstallWithoutRestart(true)
-  withSyncIOBackgroundContext {
+  withContext(Dispatchers.IO) {
     operation.run()
   }
   success = operation.isSuccess

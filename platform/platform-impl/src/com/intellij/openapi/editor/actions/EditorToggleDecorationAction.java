@@ -10,9 +10,11 @@ import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware, LightEditCompatible,
                                                                                    ActionRemoteBehaviorSpecification.Frontend {
   @Override

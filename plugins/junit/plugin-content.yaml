@@ -1,0 +1,9 @@
+- name: lib/junit-rt.jar
+  modules:
+  - name: intellij.junit.rt
+- name: lib/junit.jar
+  modules:
+  - name: intellij.junit
+- name: lib/junit5-rt.jar
+  modules:
+  - name: intellij.junit.v5.rt

@@ -14,6 +14,7 @@ import com.intellij.diff.util.DiffDividerDrawUtil.DividerPaintable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.editor.Editor;
@@ -23,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -322,22 +322,20 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   // Helpers
   //
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE.is(dataId)) {
-      return myPrevNextDifferenceIterable;
+  public @Nullable PrevNextDifferenceIterable getDifferenceIterable() {
+    return myPrevNextDifferenceIterable;
+  }
+
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    ThreesideDiffChangeBase change = getSelectedChange(getCurrentSide());
+    if (change != null) {
+      sink.set(DiffDataKeys.CURRENT_CHANGE_RANGE, new LineRange(
+        change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide())));
     }
-    else if (DiffDataKeys.CURRENT_CHANGE_RANGE.is(dataId)) {
-      ThreesideDiffChangeBase change = getSelectedChange(getCurrentSide());
-      if (change != null) {
-        return new LineRange(change.getStartLine(getCurrentSide()), change.getEndLine(getCurrentSide()));
-      }
-    }
-    else if (DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER.is(dataId)) {
-      return new MyChangedRangeProvider();
-    }
-    return super.getData(dataId);
+    sink.set(DiffDataKeys.EDITOR_CHANGED_RANGE_PROVIDER, new MyChangedRangeProvider());
   }
 
   protected class MySyncScrollable extends BaseSyncScrollable {

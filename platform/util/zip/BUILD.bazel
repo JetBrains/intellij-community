@@ -1,0 +1,16 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "util-zip",
+  module_name = "intellij.platform.util.zip",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    "@libraries//:annotations",
+    "@community//platform/util/rt-java8:util-rt-java8",
+  ]
+)
+### auto-generated section `build` end

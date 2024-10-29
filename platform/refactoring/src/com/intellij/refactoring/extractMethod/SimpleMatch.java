@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.psi.PsiElement;
@@ -6,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleMatch {
+public final class SimpleMatch {
   PsiElement myStartElement;
   PsiElement myEndElement;
   private final Map<String, String> myChangedParameters;

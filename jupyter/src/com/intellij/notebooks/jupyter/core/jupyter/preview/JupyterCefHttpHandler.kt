@@ -45,12 +45,23 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
      */
     private fun getResource(javaClass: Class<*>, path: String): URL {
       // After optimizations in PluginClassLoader, classLoader.getResource return null in debug,
-      // so we have additional logic with PluginClassLoader.pluginDescriptor.
-      val url = javaClass.classLoader.getResource(path)
+      // so we have additional logic with PluginClassLoader.pluginDescriptor. This is only for debugging purposes.
+      var url = javaClass.classLoader.getResource(path)
                 ?: (javaClass.classLoader as? PluginAwareClassLoader)?.pluginDescriptor?.getPluginPath()?.let { Path.of(it.toCanonicalPath(), path) }?.toUri()?.toURL()
+
+      // In remote dev, when we running remote-front via 'split (dev-build) run config, we have:
+      // (javaClass.classLoader as PluginClassLoader).getAllParents().mapNotNull{it as? PluginClassLoader}.map() { loader -> loader.pluginDescriptor.pluginPath }
+      // = out/classes/production/intellij.jupyter.plugin.frontend or out/classes/production/intellij.notebooks.plugin
+      // PathUtil.getJarPathForClass(javaClass) = out/classes/production/intellij.jupyter.core
+      // But our resources lie not in out/classes but in out/dev-run
+      if (url.toString().contains("out/classes/production/intellij.jupyter.plugin.frontend")) {
+        url = URL(url.toString().replace("out/classes/production/intellij.jupyter.plugin.frontend", "out/dev-run/Python/Python/plugins/jupyter-plugin"))
+      }
+
       if (url != null) {
         return url
       }
+
       val myPath = PathUtil.getJarPathForClass(javaClass)
       // static/css/.. <--our resource
       // lib/python.jar <--getJarPathForClass
@@ -112,17 +123,12 @@ abstract class JupyterCefHttpHandlerBase(private val absolutePathFiles: Collecti
 
   abstract val appName: String
 
-  // Each handler implementation has resources in its own module.
-  // If this contract is changed in the future, then please override
-  // this property in the subclasses
-  private val classToLoadResources: Class<*> get() = this::class.java
-
   private fun readFile(file: String): ByteArray? {
     //Ignore this one because it is used for Widget support
     if (file.contains("BASE_EXTENSION_PATH"))
       return null
     val appName = appName
-    val resource = getResource(classToLoadResources, "$appName/$file")
+    val resource = getResource(this::class.java, "$appName/$file")
     return resource.readBytes()
   }
 }

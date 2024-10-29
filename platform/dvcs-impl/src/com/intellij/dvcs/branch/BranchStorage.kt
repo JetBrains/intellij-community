@@ -6,7 +6,9 @@ import com.intellij.openapi.components.BaseState
 import com.intellij.util.xmlb.annotations.MapAnnotation
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Tag("branch-storage")
 class BranchStorage : BaseState() {
   @get:Property(surroundWithTag = false)

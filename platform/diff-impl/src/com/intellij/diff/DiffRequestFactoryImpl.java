@@ -22,10 +22,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -60,7 +57,7 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     String title1 = getContentTitle(file1);
     String title2 = getContentTitle(file2);
 
-    String title = getTitle(file1, file2);
+    String title = getTitleForComparison(file1, file2);
 
     return new SimpleDiffRequest(title, content1, content2, title1, title2);
   }
@@ -104,21 +101,23 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
   @Override
   public String getContentTitle(@Nullable VirtualFile file) {
     if (file == null) return null;
-    return getContentTitle(new LocalFilePath(file.getPath(), file.isDirectory()));
+    return getContentTitle(toFilePath(file));
   }
 
-  @NotNull
   @Override
-  public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
-    FilePath path1 = file1 != null ? new LocalFilePath(file1.getPath(), file1.isDirectory()) : null;
-    FilePath path2 = file2 != null ? new LocalFilePath(file2.getPath(), file2.isDirectory()) : null;
-    return getTitle(path1, path2, DIFF_TITLE_SEPARATOR);
+  public @NotNull String getTitleForModification(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+    return getTitleForModification(toFilePath(file1), toFilePath(file2));
+  }
+
+  @Override
+  public @NotNull String getTitleForComparison(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+    return getTitleForComparison(toFilePath(file1), toFilePath(file2));
   }
 
   @NotNull
   @Override
   public String getTitle(@NotNull VirtualFile file) {
-    return getTitle(file, null);
+    return getTitleForComparison(file, null);
   }
 
   @Nls
@@ -129,10 +128,27 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     return getContentTitle(path.getName(), path.getPresentableUrl(), parent != null ? parent.getPresentableUrl() : null);
   }
 
+  @Override
+  public @NotNull String getTitle(@NotNull FilePath path) {
+    return getTitleForComparison(path, null);
+  }
+
+  @Override
+  public @NotNull String getTitleForComparison(@Nullable FilePath path1, @Nullable FilePath path2) {
+    return getTitle(path1, path2, DIFF_TITLE_SEPARATOR);
+  }
+
+  @Override
+  public @NotNull String getTitleForModification(@Nullable FilePath path1, @Nullable FilePath path2) {
+    return getTitle(path1, path2, DIFF_TITLE_RENAME_SEPARATOR);
+  }
+
   @Nls
   @NotNull
   public static String getTitle(@Nullable FilePath path1, @Nullable FilePath path2, @NotNull @Nls String separator) {
-    assert path1 != null || path2 != null;
+    if (path1 == null && path2 == null) {
+      return DiffBundle.message("diff.files.dialog.title");
+    }
 
     if (path1 == null || path2 == null) {
       return getContentTitle(chooseNotNull(path1, path2));
@@ -452,5 +468,11 @@ public class DiffRequestFactoryImpl extends DiffRequestFactory {
     catch (IOException e) {
       throw new InvalidDiffRequestException("Can't read from file", e);
     }
+  }
+
+  @Contract("!null -> !null; null -> null")
+  private static @Nullable LocalFilePath toFilePath(@Nullable VirtualFile file) {
+    if (file == null) return null;
+    return new LocalFilePath(file.getPath(), file.isDirectory());
   }
 }

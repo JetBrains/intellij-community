@@ -7,9 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.jcef.JBCefApp;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
+import org.intellij.plugins.markdown.ui.preview.SourceTextPreprocessor;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
 
@@ -37,6 +36,11 @@ public final class JCEFHtmlPanelProvider extends MarkdownHtmlPanelProvider {
   @Override
   public ProviderInfo getProviderInfo() {
     return new ProviderInfo("JCEF Browser", JCEFHtmlPanelProvider.class.getName());
+  }
+
+  @Override
+  public @NotNull SourceTextPreprocessor getSourceTextPreprocessor() {
+    return new HtmlSourceTextPreprocessor();
   }
 
   public static boolean canBeUsed() {

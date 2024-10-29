@@ -194,7 +194,7 @@ object ChangeSignatureFixFactory {
                         usedNames.add(parameters[i].name!!)
                         val argumentType = getKtType(expression)
                         val parameterType = parameters[i].returnType
-                        if (argumentType != null && !argumentType.isSubTypeOf(parameterType)) {
+                        if (argumentType != null && !argumentType.isSubtypeOf(parameterType)) {
                             changeInfo.newParameters[i + if ((ktCallableDeclaration as? KtCallableDeclaration)?.receiverTypeReference != null) 1 else 0].setType(
                                 argumentType.render(position = Variance.IN_VARIANCE)
                             )
@@ -229,14 +229,14 @@ object ChangeSignatureFixFactory {
             val paramName = paramInfo.name
             changeInfo.addParameter(
                 KotlinParameterInfo(
-                    -1,
-                    KotlinTypeInfo(paramInfo.type, callable),
-                    suggestNameByName(paramName, nameValidator),
-                    KotlinValVar.None,
-                    null,
-                    false,
-                    null,
-                    callable
+                    originalIndex = -1,
+                    originalType = KotlinTypeInfo(paramInfo.type, callable),
+                    name = suggestNameByName(paramName, nameValidator),
+                    valOrVar = KotlinValVar.None,
+                    defaultValueForCall = null,
+                    defaultValueAsDefaultParameter = false,
+                    defaultValue = null,
+                    context = callable
                 )
             )
         }
@@ -322,7 +322,7 @@ object ChangeSignatureFixFactory {
         val valueArguments = callElement.valueArguments
         val idx = valueArguments.indexOf(valueArgument)
         val hasTypeMismatch = idx > 0 && valueArguments.take(idx).zip(ktCallableSymbol.valueParameters).any { (arg, s) ->
-            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubTypeOf(s.returnType) != true
+            (arg as? KtValueArgument)?.getArgumentExpression()?.expressionType?.isSubtypeOf(s.returnType) != true
         }
 
         val input = Input(
@@ -413,7 +413,7 @@ internal fun getDeclarationName(functionLikeSymbol: KaFunctionSymbol): String? {
     return when(functionLikeSymbol) {
         is KaConstructorSymbol -> {
             val constructorSymbol = functionLikeSymbol
-            if ((constructorSymbol.containingDeclaration as? KaNamedClassOrObjectSymbol)?.isInline == true) {
+            if ((constructorSymbol.containingDeclaration as? KaNamedClassSymbol)?.isInline == true) {
                 null
             } else constructorSymbol.containingClassId?.shortClassName
         }

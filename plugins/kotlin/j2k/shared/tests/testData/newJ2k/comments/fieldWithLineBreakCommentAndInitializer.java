@@ -1,6 +1,3 @@
-// IGNORE_K2
-// KTIJ-29640
-
 package some;
 
 public class Foo {

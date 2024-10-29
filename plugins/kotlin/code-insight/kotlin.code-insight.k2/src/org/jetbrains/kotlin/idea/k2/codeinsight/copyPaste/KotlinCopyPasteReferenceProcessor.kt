@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
-import org.jetbrains.kotlin.analysis.project.structure.DanglingFileResolutionMode
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.KotlinCopyPasteActionInfo.declarationsSuggestedToBeImported
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.RestoreReferencesDialog
 import org.jetbrains.kotlin.idea.base.codeInsight.copyPaste.ReviewAddedImports.reviewAddedImports
@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.idea.util.application.executeCommand
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.getSourceRoot
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -55,12 +56,17 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
     ): List<KotlinReferenceTransferableData> {
         if (file !is KtFile || DumbService.getInstance(file.project).isDumb) return listOf()
 
+        if (file is KtCodeFragment) return listOf()
+
         check(startOffsets.size == endOffsets.size) {
             "startOffsets ${startOffsets.contentToString()} has to have the same size as endOffsets ${endOffsets.contentToString()}"
         }
 
         val sourceLocation = getFqNameAtOffset(file, startOffsets.min())?.takeIf { it == getFqNameAtOffset(file, endOffsets.max()) }
-        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset -> TextRange(startOffset, endOffset) }
+        val sourceRanges = startOffsets.zip(endOffsets) { startOffset, endOffset ->
+            checkRangeIsProper(startOffset, endOffset, file)
+            TextRange(startOffset, endOffset)
+        }
         val sourceReferenceInfos = Helper.collectSourceReferenceInfos(file, startOffsets, endOffsets)
 
         // we need to store text of the file at the moment of CUT/COPY because references are resolved during PASTE
@@ -72,8 +78,8 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
         if (CodeInsightSettings.getInstance().ADD_IMPORTS_ON_PASTE != CodeInsightSettings.NO) {
             try {
                 return listOf(content.getTransferData(KotlinReferenceTransferableData.dataFlavor) as KotlinReferenceTransferableData)
-            } catch (ignored: UnsupportedFlavorException) {
-            } catch (ignored: IOException) {
+            } catch (_: UnsupportedFlavorException) {
+            } catch (_: IOException) {
             }
         }
         return emptyList()
@@ -114,7 +120,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
                 withBackgroundProgress(project, KotlinBundle.message("copy.paste.resolve.pasted.references"), cancellable = true) {
                     // Step 2. Resolve references in source file.
                     val resolvedSourceReferences = readAction {
-                        analyzeCopy(sourceFileCopy, DanglingFileResolutionMode.PREFER_SELF) {
+                        analyzeCopy(sourceFileCopy, KaDanglingFileResolutionMode.PREFER_SELF) {
                             Helper.getResolvedSourceReferencesThatMightRequireRestoring(sourceFileCopy, sourceReferenceInfos, sourceRanges)
                         }
                     }
@@ -130,7 +136,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<KotlinReference
 
                     targetReferencesToRestore
                 }
-            } catch (e: CancellationException) {
+            } catch (_: CancellationException) {
                 emptyList()
             }
 

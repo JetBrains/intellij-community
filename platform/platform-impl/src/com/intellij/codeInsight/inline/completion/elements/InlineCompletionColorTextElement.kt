@@ -12,6 +12,7 @@ import java.awt.Color
  *
  * It uses [InlineCompletionFontUtils.attributes] with changed [TextAttributes.getForegroundColor].
  */
+@ApiStatus.Internal
 @ApiStatus.Experimental
 open class InlineCompletionColorTextElement(
   override val text: String,

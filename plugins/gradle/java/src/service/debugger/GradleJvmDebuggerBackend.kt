@@ -14,7 +14,10 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.service.execution.loadJvmDebugInitScript
 
 class GradleJvmDebuggerBackend : DebuggerBackendExtension {
+
   override fun id() = "Gradle JVM"
+
+  override fun isAlwaysAttached(): Boolean = true
 
   override fun debugConfigurationSettings(project: Project,
                                           processName: String,
@@ -31,11 +34,24 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     return runSettings
   }
 
-  override fun initializationCode(project: Project?, dispatchPort: String, parameters: String): List<String> {
+  override fun initializationCode(project: Project?, dispatchPort: String?, parameters: String): List<String> {
+    return listOf(
+      loadJvmDebugInitScript()
+    )
+  }
+
+  override fun executionEnvironmentVariables(project: Project?, dispatchPort: String?, parameters: String): Map<String, String> {
+    // no debugging required, as a result, no need to provide any environment
+    if (dispatchPort == null) {
+      return emptyMap()
+    }
     val javaParameters = JavaParameters()
     RemoteConnectionBuilder.addDebuggerAgent(javaParameters, project, false)
     val jvmArgs = javaParameters.vmParametersList.list.filterNot { it.startsWith("-agentlib:jdwp=") }
-    val initScript = loadJvmDebugInitScript(id(), parameters, jvmArgs)
-    return initScript.split("\n")
+    return mapOf(
+      "DEBUGGER_ID" to id(),
+      "PROCESS_PARAMETERS" to parameters,
+      "PROCESS_OPTIONS" to jvmArgs.joinToString(", ")
+    )
   }
 }

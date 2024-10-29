@@ -9,12 +9,14 @@ import com.intellij.codeInsight.hints.presentation.PresentationRenderer
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
+import com.intellij.ide.ui.IdeUiService
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollector
 import com.intellij.internal.statistic.collectors.fus.ui.GotItUsageCollectorGroup
 import com.intellij.internal.statistic.eventLog.events.FusInputEvent
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.colors.EditorColors
@@ -36,14 +38,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
-import com.intellij.refactoring.extractMethod.ExtractMethodHandler
-import com.intellij.refactoring.extractMethod.newImpl.ExtractException
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
-import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.SmartList
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import java.awt.Point
 import java.awt.event.KeyEvent
@@ -67,11 +67,18 @@ object InplaceExtractUtils {
     return true
   }
 
-  fun showExtractErrorHint(editor: Editor, exception: ExtractException){
-    val file = exception.file
-    val message = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + (exception.message ?: "")
-    CommonRefactoringUtil.showErrorHint(file.project, editor, message, ExtractMethodHandler.getRefactoringName(), HelpID.EXTRACT_METHOD)
-    highlightErrors(editor, exception.problems)
+  suspend fun showExtractErrorHint(editor: Editor, error: @Nls String) {
+    val message: @Nls String = JavaRefactoringBundle.message("extract.method.error.prefix") + " " + error
+    withContext(Dispatchers.EDT) {
+      IdeUiService.getInstance().showErrorHint(editor, message)
+    }
+  }
+
+  suspend fun showExtractErrorHint(editor: Editor, error: @Nls String, highlightedRanges: List<TextRange>){
+    showExtractErrorHint(editor, error)
+    withContext(Dispatchers.EDT) {
+      highlightErrors(editor, highlightedRanges)
+    }
   }
 
   private fun highlightErrors(editor: Editor, ranges: List<TextRange>) {
@@ -284,11 +291,15 @@ object InplaceExtractUtils {
     return PsiTreeUtil.findElementOfClassAtOffset(file, offset, T::class.java, false)
   }
 
-  fun createGreedyRangeMarker(document: Document, range: TextRange): RangeMarker {
+  internal fun createGreedyRangeMarker(document: Document, range: TextRange): RangeMarker {
     return document.createRangeMarker(range).apply {
       isGreedyToLeft = true
       isGreedyToRight = true
     }
+  }
+
+  internal fun textRangeOf(first: PsiElement, last: PsiElement): TextRange {
+    return TextRange(first.textRange.startOffset, last.textRange.endOffset)
   }
 
   private fun IntRange.trim(maxLength: Int) = first until first + minOf(maxLength, last - first + 1)

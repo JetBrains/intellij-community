@@ -2,6 +2,8 @@
 package com.intellij.ui.plaf.beg;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
@@ -14,6 +16,7 @@ import java.awt.*;
 /**
  * @author Eugene Belyaev
  */
+@ApiStatus.Internal
 public final class BegBorders {
   private static Border ourTextFieldBorder;
   private static Border ourScrollPaneBorder;

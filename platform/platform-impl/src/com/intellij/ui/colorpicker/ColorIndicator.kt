@@ -16,12 +16,14 @@
 package com.intellij.ui.colorpicker
 
 import com.intellij.ui.JBColor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.swing.JComponent
 
 private val BORDER = JBColor(Color(0, 0, 0, 26), Color(255, 255, 255, 26))
 private val BORDER_STROKE = BasicStroke(2f)
 
+@ApiStatus.Internal
 class ColorIndicator(color: Color = DEFAULT_PICKER_COLOR) : JComponent() {
 
   var color: Color = color

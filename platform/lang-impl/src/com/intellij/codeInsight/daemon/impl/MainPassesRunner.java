@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -62,8 +62,7 @@ public final class MainPassesRunner {
   public @NotNull Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck) {
     return runMainPasses(filesToCheck, null);
   }
-  @NotNull
-  public Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck, @Nullable HighlightSeverity minimumSeverity) {
+  public @NotNull Map<Document, List<HighlightInfo>> runMainPasses(@NotNull List<? extends VirtualFile> filesToCheck, @Nullable HighlightSeverity minimumSeverity) {
     Map<Document, List<HighlightInfo>> result = new ConcurrentHashMap<>();
     if (ApplicationManager.getApplication().isDispatchThread()) {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();

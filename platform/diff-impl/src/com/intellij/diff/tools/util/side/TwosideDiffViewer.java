@@ -29,10 +29,10 @@ import com.intellij.diff.tools.util.base.ListenerDiffViewerBase;
 import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Side;
+import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +56,13 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
     myFocusTrackerSupport = new FocusTrackerSupport.Twoside(myHolders);
     myContentPanel = TwosideContentPanel.createFromHolders(myHolders);
 
-    myPanel = new SimpleDiffPanel(myContentPanel, this, context);
+    myPanel = new SimpleDiffPanel(myContentPanel, context) {
+      @Override
+      public void uiDataSnapshot(@NotNull DataSink sink) {
+        super.uiDataSnapshot(sink);
+        DataSink.uiDataSnapshot(sink, TwosideDiffViewer.this);
+      }
+    };
   }
 
   @Override
@@ -156,13 +162,10 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
     return getCurrentSide().select(getEditorHolders());
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (DiffDataKeys.CURRENT_CONTENT.is(dataId)) {
-      return getCurrentSide().select(myRequest.getContents());
-    }
-    return super.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
+    sink.set(DiffDataKeys.CURRENT_CONTENT, getCurrentSide().select(myRequest.getContents()));
   }
 
   //
@@ -171,7 +174,7 @@ public abstract class TwosideDiffViewer<T extends EditorHolder> extends Listener
 
   @Nullable
   @Override
-  protected Navigatable getNavigatable() {
+  public Navigatable getNavigatable() {
     Navigatable navigatable1 = getCurrentSide().select(getRequest().getContents()).getNavigatable();
     if (navigatable1 != null) return navigatable1;
     return getCurrentSide().other().select(getRequest().getContents()).getNavigatable();

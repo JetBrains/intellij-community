@@ -1286,6 +1286,35 @@
         "horizontalAxisColor": "#515151"
       }
     },
+    "CompilationCharts": {
+      "background":{
+        "odd": "#F7F8FA",
+        "even": "#EBECF0",
+        "default": "#F7F8FA"
+      },
+      "test": {
+        "enabled": "#89C398",
+        "disabled": "#E3F7E7",
+        "stroke": "#369650",
+        "selected": "#55A76A"
+      },
+      "production": {
+        "enabled": "#88ADF7",
+        "disabled": "#D4E2FF",
+        "stroke": "#3574F0",
+        "selected": "#4682FA"
+      },
+      "memory": {
+        "background": "#C2D6FC",
+        "stroke": "#4682FA"
+      },
+      "cpu": {
+        "background": "#C5E5CC",
+        "stroke": "#89C398"
+      },
+      "lineColor": "#EBECF0",
+      "textColor": "#27282E"
+    },
     "FlameGraph.Tooltip": {
       "scaleBackground": "#EBEBEB",
       "scaleColor": "#A7D1EC",

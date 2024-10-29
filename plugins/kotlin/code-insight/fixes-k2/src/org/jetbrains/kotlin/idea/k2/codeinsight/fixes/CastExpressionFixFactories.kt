@@ -83,7 +83,7 @@ object CastExpressionFixFactories {
     }
 
     val throwableTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ThrowableTypeMismatch ->
-        createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, builtinTypes.THROWABLE, diagnostic.psi)
+        createFixes(diagnostic.isMismatchDueToNullability, diagnostic.actualType, builtinTypes.throwable, diagnostic.psi)
     }
 
     val argumentTypeMismatch = KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.ArgumentTypeMismatch ->
@@ -110,8 +110,7 @@ object CastExpressionFixFactories {
         )
     }
 
-    context(KaSession)
-    private fun createFixes(
+    private fun KaSession.createFixes(
         isDueToNullability: Boolean,
         actualType: KaType,
         expectedType: KaType,
@@ -122,14 +121,14 @@ object CastExpressionFixFactories {
 
         if (element is KtExpression) {
             val actualExpressionType = element.expressionType
-            if (actualExpressionType != null && !actualExpressionType.isEqualTo(actualType)) {
+            if (actualExpressionType != null && !actualExpressionType.semanticallyEquals(actualType)) {
                 //don't suggest cast for nested generic argument incompatibilities
                 return emptyList()
             }
         }
 
         // Do not offer to cast to an incompatible type.
-        if (!actualType.hasCommonSubTypeWith(expectedType)) {
+        if (!actualType.hasCommonSubtypeWith(expectedType)) {
             return emptyList()
         }
 

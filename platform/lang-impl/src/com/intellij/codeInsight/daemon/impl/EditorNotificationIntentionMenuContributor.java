@@ -26,7 +26,7 @@ final class EditorNotificationIntentionMenuContributor implements IntentionMenuC
     List<IntentionActionWithOptions> actions = EditorNotifications.getInstance(project).getStoredFileLevelIntentions(fileEditor);
     for (IntentionActionWithOptions action : actions) {
       intentions.notificationActionsToShow.add(new HighlightInfo.IntentionActionDescriptor(
-        action, action.getOptions(), null, null, null, null, null));
+        action, action.getOptions(), null, null, null, null, null, null));
     }
   }
 }

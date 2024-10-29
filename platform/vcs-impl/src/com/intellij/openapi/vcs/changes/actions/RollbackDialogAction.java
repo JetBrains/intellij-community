@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
-public class RollbackDialogAction extends AnAction implements DumbAware {
+public final class RollbackDialogAction extends AnAction implements DumbAware {
   public RollbackDialogAction() {
     ActionUtil.copyFrom(this, IdeActions.CHANGES_VIEW_ROLLBACK);
   }

@@ -11,6 +11,8 @@ import java.util.List;
  * A helper object for {@link RecursionManager}. It's obtained from {@link RecursionManager#createGuard(String)}.
  */
 public abstract class RecursionGuard<Key> {
+  RecursionGuard() {
+  }
 
   /**
    * Run the given computation, unless it's already running in this thread.

@@ -29,13 +29,13 @@ import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.BalloonHandler
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.Strings
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.*
 import com.intellij.openapi.wm.WidgetPresentation
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.openapi.wm.impl.status.TextPanel.WithIconAndArrows
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
@@ -44,8 +44,11 @@ import com.intellij.openapi.wm.impl.welcomeScreen.cloneableProjects.CloneablePro
 import com.intellij.platform.diagnostic.telemetry.impl.span
 import com.intellij.platform.ide.progress.ModalTaskOwner
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.platform.util.progress.impl.ProgressState
+import com.intellij.platform.util.progress.reportRawProgress
 import com.intellij.ui.*
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.awt.RelativeRectangle
@@ -80,11 +83,12 @@ private val WIDGET_ID = Key.create<String>("STATUS_BAR_WIDGET_ID")
 private val minIconHeight: Int
   get() = JBUIScale.scale(18 + 1 + 1)
 
-open class IdeStatusBarImpl internal constructor(
-  private val coroutineScope: CoroutineScope,
-  private val frameHelper: ProjectFrameHelper,
+open class IdeStatusBarImpl @ApiStatus.Internal constructor(
+  parentCs: CoroutineScope,
+  private val getProject : () -> Project?,
   addToolWindowWidget: Boolean,
-) : JComponent(), Accessible, StatusBarEx, DataProvider {
+) : JComponent(), Accessible, StatusBarEx, UiDataProvider {
+  private val coroutineScope = parentCs.childScope("IdeStatusBarImpl", supervisor = false)
   private var infoAndProgressPanel: InfoAndProgressPanel? = null
 
   internal enum class WidgetEffect {
@@ -104,7 +108,7 @@ open class IdeStatusBarImpl internal constructor(
 
   private var preferredTextHeight: Int = 0
 
-  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider(frameHelper)
+  private var editorProvider: () -> FileEditor? = createDefaultEditorProvider()
 
   @Volatile
   private var children = persistentHashSetOf<IdeStatusBarImpl>()
@@ -139,7 +143,7 @@ open class IdeStatusBarImpl internal constructor(
   @RequiresEdt
   override fun createChild(coroutineScope: CoroutineScope, frame: IdeFrame, editorProvider: () -> FileEditor?): StatusBar {
     EDT.assertIsEdt()
-    val bar = IdeStatusBarImpl(frameHelper = frameHelper, addToolWindowWidget = false, coroutineScope = coroutineScope)
+    val bar = IdeStatusBarImpl(parentCs = coroutineScope, getProject = ::project, addToolWindowWidget = false)
     bar.editorProvider = editorProvider
     bar.isVisible = isVisible
     synchronized(this) {
@@ -229,13 +233,10 @@ open class IdeStatusBarImpl internal constructor(
     return Dimension(size.width, size.height.coerceAtLeast(minHeight))
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.PROJECT.`is`(dataId) -> project
-      PlatformDataKeys.STATUS_BAR.`is`(dataId) -> this
-      HOVERED_WIDGET_ID.`is`(dataId) -> ClientProperty.get(effectComponent, WIDGET_ID)
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.PROJECT] = project
+    sink[PlatformDataKeys.STATUS_BAR] = this
+    sink[HOVERED_WIDGET_ID] = ClientProperty.get(effectComponent, WIDGET_ID)
   }
 
   override fun setVisible(aFlag: Boolean) {
@@ -251,7 +252,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String) {
-    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
+    val order = LoadingOrder.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded { addWidget(widget, Position.RIGHT, order) }
   }
 
@@ -262,7 +263,7 @@ open class IdeStatusBarImpl internal constructor(
   }
 
   override fun addWidget(widget: StatusBarWidget, anchor: String, parentDisposable: Disposable) {
-    val order = StatusBarWidgetsManager.anchorToOrder(anchor)
+    val order = LoadingOrder.anchorToOrder(anchor)
     EdtInvocationManager.invokeLaterIfNeeded {
       addWidget(widget = widget, position = Position.RIGHT, anchor = order)
       val id = widget.ID()
@@ -457,7 +458,84 @@ open class IdeStatusBarImpl internal constructor(
 
   override fun getInfo(): @NlsContexts.StatusBarText String? = info
 
+  @Suppress("UsagesOfObsoleteApi")
   override fun addProgress(indicator: ProgressIndicatorEx, info: TaskInfo) {
+    if (!Registry.`is`("rhizome.progress")) {
+      addProgressImpl(indicator, info)
+      return
+    }
+
+    val indicatorFinished = CompletableDeferred<Unit>()
+    indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+      override fun stop() {
+        super.stop()
+        indicatorFinished.complete(Unit)
+      }
+    })
+
+    coroutineScope.launch {
+      val project = project ?: return@launch
+
+      withBackgroundProgress(project, info.title, info.isCancellable) {
+        val job1 = launch {
+          reportRawProgress { reporter ->
+            indicator.addStateDelegate(reporter.toBridgeIndicator())
+            indicatorFinished.await() // Keeps the reporter active, so the indicator can report new statuses there
+          }
+        }
+
+        val job2 = launch {
+          try {
+            awaitCancellation()
+          }
+          finally {
+            // User can cancel the job from UI, which will cause the job cancellation,
+            // so we need to cancel the original indicator as well
+            if (indicator.isRunning) {
+              indicator.cancel()
+            }
+          }
+        }
+
+        // Wait for the indicator to finish under the "NonCancellable" block,
+        // so we won't stop reporting progress if the job has been canceled but the indicator is yet to finish.
+        withContext(NonCancellable) {
+          indicatorFinished.await()
+          job1.cancel()
+          job2.cancel()
+        }
+      }
+    }
+  }
+
+  @Suppress("UsagesOfObsoleteApi")
+  private fun RawProgressReporter.toBridgeIndicator(): ProgressIndicatorEx {
+    val reporter = this
+    return object : AbstractProgressIndicatorExBase() {
+      override fun setText(text: String?) {
+        super.setText(text)
+        reporter.text(text)
+      }
+
+      override fun setText2(text: String?) {
+        super.setText2(text)
+        reporter.details(text)
+      }
+
+      override fun setIndeterminate(indeterminate: Boolean) {
+        super.setIndeterminate(indeterminate)
+        if (indeterminate)
+          reporter.fraction(null)
+      }
+
+      override fun setFraction(fraction: Double) {
+        super.setFraction(fraction)
+        reporter.fraction(fraction)
+      }
+    }
+  }
+
+  internal fun addProgressImpl(indicator: ProgressIndicatorEx, info: TaskInfo) {
     check(progressFlow.tryEmit(ProgressSetChangeEvent(newProgress = Triple(info, indicator, ClientId.currentOrNull),
                                                       existingProgresses = infoAndProgressPanel?.backgroundProcesses ?: emptyList())))
     createInfoAndProgressPanel().addProgress(indicator, info)
@@ -703,7 +781,7 @@ open class IdeStatusBarImpl internal constructor(
   fun getWidgetComponent(id: String): JComponent? = widgetMap.get(id)?.component
 
   override val project: Project?
-    get() = frameHelper.project
+    get() = getProject()
 
   override val currentEditor: () -> FileEditor?
     get() = editorProvider
@@ -715,7 +793,14 @@ open class IdeStatusBarImpl internal constructor(
 
   @ApiStatus.Internal
   fun resetEditorProvider() {
-    editorProvider = createDefaultEditorProvider(frameHelper)
+    editorProvider = createDefaultEditorProvider()
+  }
+
+  private fun createDefaultEditorProvider(): () -> FileEditor? {
+    return p@{
+      val project = project ?: return@p null
+      project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
+    }
   }
 
   override fun getAccessibleContext(): AccessibleContext {
@@ -880,13 +965,6 @@ private fun wrapCustomStatusBarWidget(widget: CustomStatusBarWidget): JComponent
     component
   }
   return result
-}
-
-private fun createDefaultEditorProvider(frameHelper: ProjectFrameHelper): () -> FileEditor? {
-  return p@{
-    val project = frameHelper.project ?: return@p null
-    project.service<StatusBarWidgetsManager>().dataContext.currentFileEditor.value
-  }
 }
 
 private class IconPresentationComponent(private val presentation: IconPresentation) : WithIconAndArrows(presentation::getTooltipText),

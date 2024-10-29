@@ -43,18 +43,19 @@ public class SPIFile extends PsiFileBase {
       while ((d = fileName.indexOf(".", idx)) > -1) {
         final PsiPackage aPackage = JavaPsiFacade.getInstance(getProject()).findPackage(fileName.substring(0, d));
         if (aPackage != null) {
-          refs.add(new SPIFileName2PackageReference(SPIFile.this, aPackage));
+          refs.add(new SPIFileName2PackageReference(this, aPackage));
         }
         idx = d + 1;
       }
       final PsiReference reference = getReference();
       PsiElement resolve = reference.resolve();
       while (resolve instanceof PsiClass) {
-        resolve = ((PsiClass)resolve).getContainingClass();
+        PsiClass psiClass = (PsiClass)resolve;
+        resolve = psiClass.getContainingClass();
         if (resolve != null) {
-          final String jvmClassName = ClassUtil.getJVMClassName((PsiClass)resolve);
+          final String jvmClassName = ClassUtil.getJVMClassName(psiClass);
           if (jvmClassName != null) {
-            refs.add(new SPIFileName2PackageReference(SPIFile.this, resolve));
+            refs.add(new SPIFileName2PackageReference(this, resolve));
           }
         }
       }

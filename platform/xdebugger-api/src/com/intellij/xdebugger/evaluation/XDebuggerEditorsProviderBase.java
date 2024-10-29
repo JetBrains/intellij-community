@@ -5,8 +5,8 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
@@ -20,6 +20,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvider {
+  public static final Key<Boolean> DEBUGGER_FILE_KEY = Key.create("debugger.file");
   @NotNull
   @Override
   public Document createDocument(@NotNull Project project,
@@ -42,6 +43,7 @@ public abstract class XDebuggerEditorsProviderBase extends XDebuggerEditorsProvi
     try (AccessToken ignore = SlowOperations.knownIssue("IDEA-304707, EA-597817, EA-832153, ...")) {
       codeFragment = createExpressionCodeFragment(project, expression, context, true);
     }
+    codeFragment.putUserData(DEBUGGER_FILE_KEY, true);
     Document document = codeFragment.getViewProvider().getDocument();
     assert document != null;
     return document;

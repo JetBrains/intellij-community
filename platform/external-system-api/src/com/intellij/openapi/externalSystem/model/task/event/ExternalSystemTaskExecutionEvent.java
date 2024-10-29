@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import org.jetbrains.annotations.NotNull;
 
 public class ExternalSystemTaskExecutionEvent extends ExternalSystemTaskNotificationEvent {
-  private static final long serialVersionUID = 1L;
 
   @NotNull private final ExternalSystemProgressEvent<?> myProgressEvent;
 

@@ -52,4 +52,7 @@ internal class ConsentAttributes {
 
   @JvmField
   var acceptanceTime: Long = 0
+
+  @JvmField
+  var locale: String = "en"
 }

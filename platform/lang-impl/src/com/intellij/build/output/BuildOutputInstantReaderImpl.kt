@@ -198,6 +198,7 @@ open class BuildOutputInstantReaderImpl @JvmOverloads constructor(
   }
 }
 
+@ApiStatus.Internal
 @ApiStatus.Experimental
 class BuildOutputCollector(private val reader: BuildOutputInstantReader) : BuildOutputInstantReader {
   private val readLines = LinkedList<String>()

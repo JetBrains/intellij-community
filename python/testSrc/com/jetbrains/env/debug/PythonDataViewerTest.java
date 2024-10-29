@@ -62,7 +62,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testSeries() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("series", 4, 1, arrayChunk -> {
@@ -76,17 +76,17 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   @Test
   public void testPandasRepeatingColumnNames() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_pandas_repeating_column_names.py",
-                                              ImmutableSet.of(7)) {
+                                              Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("c", 10, 2, (varName, session) -> getChunk(varName, "%d", session), arrayChunk -> {
           for (ArrayChunk.ColHeader header : arrayChunk.getColHeaders())
             assertEquals("A", header.getLabel());
           Object[][] data = arrayChunk.getData();
-          assertEquals("'0'", data[0][0].toString());
-          assertEquals("'0'", data[0][1].toString());
-          assertEquals("'6'", data[6][0].toString());
-          assertEquals("'9'", data[9][0].toString());
+          assertEquals("0", data[0][0].toString());
+          assertEquals("0", data[0][1].toString());
+          assertEquals("6", data[6][0].toString());
+          assertEquals("9", data[9][0].toString());
         });
       }
     });
@@ -94,15 +94,15 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testDataFrameFloatFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%.2f", session), arrayChunk -> {
           Object[][] data = arrayChunk.getData();
-          assertEquals("'1.10'", data[0][1].toString());
-          assertEquals("'1.22'", data[1][4].toString());
-          assertEquals("'2019.00'", data[1][2].toString());
-          assertEquals("'1.00'", data[2][3].toString());
+          assertEquals("1.10", data[0][1].toString());
+          assertEquals("1.22", data[1][4].toString());
+          assertEquals("2019.00", data[1][2].toString());
+          assertEquals("1.00", data[2][3].toString());
         });
       }
     });
@@ -110,15 +110,15 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testDataFrameDefaultFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 5, (varName, session) -> getChunk(varName, "%", session), arrayChunk -> {
           Object[][] data = arrayChunk.getData();
-          assertEquals("'1.10000'", data[0][1].toString());
-          assertEquals("'1.22000'", data[1][4].toString());
-          assertEquals("'2019'", data[1][2].toString());
-          assertEquals("'True'", data[2][3].toString());
+          assertEquals("1.10000", data[0][1].toString());
+          assertEquals("1.22000", data[1][4].toString());
+          assertEquals("2019", data[1][2].toString());
+          assertEquals("True", data[2][3].toString());
         });
       }
     });
@@ -126,15 +126,15 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testSeriesFormatting() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", Collections.singleton(7)) {
       @Override
       public void testing() throws Exception {
         doTest("series", 4, 1, (varName, session) -> getChunk(varName, "%03d", session), arrayChunk -> {
           Object[][] data = arrayChunk.getData();
-          assertEquals("'000'", data[0][0].toString());
-          assertEquals("'002'", data[1][0].toString());
-          assertEquals("'004'", data[2][0].toString());
-          assertEquals("'006'", data[3][0].toString());
+          assertEquals("000", data[0][0].toString());
+          assertEquals("002", data[1][0].toString());
+          assertEquals("004", data[2][0].toString());
+          assertEquals("006", data[3][0].toString());
         });
       }
     });
@@ -142,7 +142,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testLabelWithPercentSign() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(33)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", Collections.singleton(33)) {
       @Override
       public void testing() throws Exception {
         doTest("df5", 10, 1, chunk -> {
@@ -156,19 +156,19 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
   public void testTuples() {
-    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", ImmutableSet.of(5)) {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", Collections.singleton(5)) {
       @Override
       public void testing() throws Exception {
         doTest("df1", 3, 3, chunk -> {
           final Object[][] data = chunk.getData();
 
-          assertEquals("'{1: (1, 2)}'", data[0][1].toString());
-          assertEquals("'{2: (3,)}'", data[1][1].toString());
-          assertEquals("'{4: 5}'", data[2][1].toString());
+          assertEquals("{1: (1, 2)}", data[0][1].toString());
+          assertEquals("{2: (3,)}", data[1][1].toString());
+          assertEquals("{4: 5}", data[2][1].toString());
 
-          assertEquals("'(1, 2, 3)'", data[0][2].toString());
-          assertEquals("'()'", data[1][2].toString());
-          assertEquals("'(4,)'", data[2][2].toString());
+          assertEquals("(1, 2, 3)", data[0][2].toString());
+          assertEquals("()", data[1][2].toString());
+          assertEquals("(4,)", data[2][2].toString());
         });
       }
     });
@@ -232,7 +232,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
     @NotNull
     @Override
     public Set<String> getTags() {
-      return ImmutableSet.of("pandas");
+      return Collections.singleton("pandas");
     }
   }
 

@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.TextComponentAccessor
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.TextAccessor
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.ActionListener
 import java.util.function.Supplier
@@ -53,6 +54,7 @@ class WslTargetType : TargetEnvironmentType<WslTargetEnvironmentConfiguration>(T
     return WslTargetEnvironmentRequest(config)
   }
 
+  @ApiStatus.Internal
   override fun createConfigurable(project: Project,
                                   config: WslTargetEnvironmentConfiguration,
                                   defaultLanguage: LanguageRuntimeType<*>?,

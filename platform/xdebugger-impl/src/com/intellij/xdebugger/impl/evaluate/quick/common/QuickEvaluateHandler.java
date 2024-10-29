@@ -5,9 +5,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.evaluation.ExpressionInfo;
+import kotlinx.coroutines.Deferred;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.CancellablePromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -33,14 +33,14 @@ public abstract class QuickEvaluateHandler {
 
   public abstract int getValueLookupDelay(final Project project);
 
-  public record CancellableHint(@NotNull Promise<AbstractValueHint> hintPromise, @Nullable Promise<ExpressionInfo> infoPromise) {
+  public record CancellableHint(@NotNull Promise<AbstractValueHint> hintPromise, @Nullable Deferred<ExpressionInfo> infoDeferred) {
     public static CancellableHint resolved(@Nullable AbstractValueHint hint)  {
       return new CancellableHint(Promises.resolvedPromise(hint), null);
     }
 
     public void tryCancel() {
-      if (infoPromise instanceof CancellablePromise<ExpressionInfo>) {
-        ((CancellablePromise<ExpressionInfo>)infoPromise).cancel();
+      if (infoDeferred != null) {
+        infoDeferred.cancel(null);
       }
     }
   }

@@ -31,10 +31,10 @@ import com.intellij.util.system.OS
 import com.jetbrains.rd.util.lifetime.Lifetime
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
-import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 import kotlin.io.path.*
+import kotlin.io.path.exists
 
 @ApiStatus.Internal
 class EmbeddedClientLauncher private constructor(private val moduleRepository: RuntimeModuleRepository, 
@@ -77,6 +77,10 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       PlatformUtils.RUSTROVER_PREFIX -> RuntimeModuleId.module("intellij.rustrover.frontend")
       else -> RuntimeModuleId.module("intellij.platform.frontend.split")
     }
+
+    fun isThinClientCustomCommand(customCommandData: ProductInfo.CustomCommandLaunchData): Boolean {
+      return customCommandData.commands.contains("thinClient")
+    }
   }
 
   fun launch(urlToOpen: String, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
@@ -84,14 +88,14 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
   }
 
   fun launch(url: String, extraArguments: List<String>, lifetime: Lifetime, errorReporter: EmbeddedClientErrorReporter): Lifetime {
-    val launcherData = findJetBrainsClientLauncher()
+    val launcherData = createLauncherViaIdeExecutable() ?: findOldJetBrainsClientLauncher()
     if (launcherData != null) {
       LOG.debug("Start embedded client using launcher")
       val workingDirectory = Path(PathManager.getHomePath())
       return CodeWithMeClientDownloader.runJetBrainsClientProcess(
-        launcherData, 
+        launcherData,
         workingDirectory,
-        clientVersion = ApplicationInfo.getInstance().build.asStringWithoutProductCode(),
+        clientBuild = ApplicationInfo.getInstance().build.withoutProductCode(),
         url,
         extraArguments,
         lifetime
@@ -125,35 +129,40 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
     return processLifetimeDef
   }
 
-  private fun findJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
+  private fun createLauncherViaIdeExecutable(): JetBrainsClientLauncherData? {
+    val ideHome = Path(PathManager.getHomePath())
+    val productInfoPath = if (SystemInfo.isMac) ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC else ApplicationEx.PRODUCT_INFO_FILE_NAME
+    val productInfoData = CodeWithMeClientDownloader.parseProductInfo(ideHome.resolve(productInfoPath)) ?: return null
+    val frontendLaunchData = productInfoData.launch.find { launchData ->
+      launchData.customCommands.orEmpty().any { isThinClientCustomCommand(it) }
+    }
+    if (frontendLaunchData == null) {
+      LOG.info("Cannot use IDE's launcher because product info under $ideHome doesn't have special handling for 'thinClient' command")
+      return null
+    }
+
+    if (SystemInfo.isMac) {
+      val appPath = ideHome.parent
+      if (appPath != null && appPath.name.endsWith(".app")) {
+        CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
+      }
+      else {
+        LOG.info("Cannot use launcher because $ideHome doesn't look like a path with installation")
+        null
+      }
+    }
+    val executable = ideHome.resolve(frontendLaunchData.launcherPath)
+    if (!executable.exists()) {
+      LOG.warn("Cannot use IDE's launcher because $executable does not exist")
+      return null
+    }
+    return JetBrainsClientLauncherData(executable, listOf(executable.pathString))
+  }
+  
+  private fun findOldJetBrainsClientLauncher(): JetBrainsClientLauncherData? {
     return when (OS.CURRENT) {
       OS.macOS -> {
-        val homePath = Path(PathManager.getHomePath())
-        val productInfoPath = homePath.resolve(ApplicationEx.PRODUCT_INFO_FILE_NAME_MAC)
-        if (!productInfoPath.exists()) {
-          LOG.warn("$productInfoPath does not exist")
-          return null
-        }
-        val productInfoData = try {
-          ProductInfo.fromJson(productInfoPath.readText())
-        }
-        catch (e: IOException) {
-          LOG.warn("Failed to parse $productInfoPath: $e", e)
-          return null
-        }
-        if (productInfoData.launch.none { launchData -> launchData.customCommands.any { it.commands.contains("thinClient") } }) {
-          LOG.info("Cannot use launcher because $productInfoPath doesn't have special handling for 'thinClient' command")
-          return null
-        }
-        
-        val appPath = homePath.parent 
-        if (appPath != null && appPath.name.endsWith(".app")) {
-          CodeWithMeClientDownloader.createLauncherDataForMacOs(appPath)
-        }
-        else {
-          LOG.info("Cannot use launcher because $homePath doesn't look like a path with installation")
-          null
-        }
+        return null
       }
       OS.Windows -> PathManager.findBinFile("jetbrains_client64.exe")?.let { 
         JetBrainsClientLauncherData(it, listOf(it.pathString))
@@ -228,6 +237,7 @@ class EmbeddedClientLauncher private constructor(private val moduleRepository: R
       "-Didea.platform.prefix=JetBrainsClient",
       "-Dide.no.platform.update=true",
       "-Didea.initially.ask.config=never",
+      "-Dnosplash=true",
       "-Didea.paths.customizer=com.intellij.platform.ide.impl.startup.multiProcess.FrontendProcessPathCustomizer",
       "-Dintellij.platform.runtime.repository.path=${moduleRepositoryPath.pathString}",
       "-Dintellij.platform.root.module=${getRootFrontendModule().stringId}",

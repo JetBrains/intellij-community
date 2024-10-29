@@ -4,10 +4,12 @@ package com.intellij.diff.comparison;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.openapi.progress.ProgressIndicator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ByLine {
   @NotNull
   public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,

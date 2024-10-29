@@ -27,6 +27,7 @@ import kotlinx.coroutines.coroutineScope
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.jps.model.serialization.CannotLoadJpsModelException
 import org.jetbrains.jps.util.JpsPathUtil
 import java.io.IOException
 import java.nio.file.Files
@@ -231,7 +232,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     val orphanage = MutableEntityStorage.create()
     val unloadedEntityBuilder = MutableEntityStorage.create()
     affectedFileLoaders.forEach {
-      val unloaded = unloadedModuleNames.isUnloaded((it as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
+      val unloaded = it is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(it.modulePath.moduleName)
       val targetBuilder = if (unloaded) unloadedEntityBuilder else builder
       loadEntitiesAndReportExceptions(it, targetBuilder, orphanage, reader, errorReporter)
     }
@@ -259,7 +260,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val result = MutableEntityStorage.create()
           val orphanage = MutableEntityStorage.create()
           loadEntitiesAndReportExceptions(serializer, result, orphanage, reader, errorReporter)
-          val unloaded = unloadedModuleNames.isUnloaded((serializer as? ModuleImlFileEntitiesSerializer)?.modulePath?.moduleName)
+          val unloaded = serializer is ModuleImlFileEntitiesSerializer && unloadedModuleNames.isUnloaded(serializer.modulePath.moduleName)
           BuilderWithLoadedState(result, orphanage, unloaded)
         }
       }
@@ -292,6 +293,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     when (newEntities.exception) {
       is JDOMException -> reportError(newEntities.exception, serializer.fileUrl)
       is IOException -> reportError(newEntities.exception, serializer.fileUrl)
+      is CannotLoadJpsModelException -> reportError(newEntities.exception, serializer.fileUrl)
       else -> newEntities.exception?.let { throw it }
     }
   }

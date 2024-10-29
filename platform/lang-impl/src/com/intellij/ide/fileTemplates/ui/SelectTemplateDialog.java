@@ -14,6 +14,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.*;
@@ -22,6 +23,7 @@ import java.awt.event.ActionListener;
 /*
  * @author MYakovlev
  */
+@ApiStatus.Internal
 public final class SelectTemplateDialog extends DialogWrapper{
   private ComboBox<FileTemplate> myCbxTemplates;
   private FileTemplate mySelectedTemplate;

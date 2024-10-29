@@ -3,6 +3,7 @@ package com.intellij.execution.process;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -34,7 +35,8 @@ public class CapturingProcessRunner {
   }
 
   @NotNull
-  public ProcessOutput runProcess() {
+  @RequiresBackgroundThread(generateAssertion = false)
+  public final ProcessOutput runProcess() {
     myProcessHandler.startNotify();
     if (myProcessHandler.waitFor()) {
       setErrorCodeIfNotYetSet();
@@ -46,11 +48,13 @@ public class CapturingProcessRunner {
   }
 
   @NotNull
+  @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds) {
     return runProcess(timeoutInMilliseconds, true);
   }
 
   @NotNull
+  @RequiresBackgroundThread(generateAssertion = false)
   public ProcessOutput runProcess(int timeoutInMilliseconds, boolean destroyOnTimeout) {
     // keep in sync with runProcessWithProgressIndicator
     if (timeoutInMilliseconds <= 0) {

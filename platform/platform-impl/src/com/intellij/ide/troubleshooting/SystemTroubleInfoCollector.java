@@ -3,9 +3,11 @@ package com.intellij.ide.troubleshooting;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.troubleshooting.GeneralTroubleInfoCollector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SystemTroubleInfoCollector implements GeneralTroubleInfoCollector {
   @Override
   public @NotNull @NonNls String getTitle() {

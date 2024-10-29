@@ -113,8 +113,7 @@ public class RncFoldingBuilder implements FoldingBuilder {
     }
   }
 
-  @Nullable
-  private static ASTNode checkNodeAndSiblings(@Nullable ASTNode node, TokenSet tokens, ArrayList<? super FoldingDescriptor> regions, Document document) {
+  private static @Nullable ASTNode checkNodeAndSiblings(@Nullable ASTNode node, TokenSet tokens, ArrayList<? super FoldingDescriptor> regions, Document document) {
     if (node != null && tokens.contains(node.getElementType())) {
       final ASTNode start = node;
       ASTNode end = start;

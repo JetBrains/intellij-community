@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.psi.stubs.StubIndexKey
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeAlias
 
 class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubIndexExtension<KtTypeAlias>() {
@@ -14,6 +15,7 @@ class KotlinTopLevelTypeAliasFqNameIndex internal constructor() : StringStubInde
             StubIndexKey.createIndexKey("org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex")
 
         @JvmField
+        @ApiStatus.ScheduledForRemoval
         @Deprecated("Use the Helper object instead", level = DeprecationLevel.ERROR)
         val INSTANCE: KotlinTopLevelTypeAliasFqNameIndex = KotlinTopLevelTypeAliasFqNameIndex()
     }

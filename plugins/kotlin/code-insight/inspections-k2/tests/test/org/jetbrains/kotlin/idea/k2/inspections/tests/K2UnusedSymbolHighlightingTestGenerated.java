@@ -103,6 +103,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/functionReference.kt");
         }
 
+        @TestMetadata("importedDeclarationMember.kt")
+        public void testImportedDeclarationMember() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/importedDeclarationMember.kt");
+        }
+
         @TestMetadata("parameterOnlyUsedAsNamedArgument.kt")
         public void testParameterOnlyUsedAsNamedArgument() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/multifile/parameterOnlyUsedAsNamedArgument.kt");
@@ -165,6 +170,16 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("abstractFunctionParameter.kt")
         public void testAbstractFunctionParameter() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/abstractFunctionParameter.kt");
+        }
+
+        @TestMetadata("actualClassParameter.kt")
+        public void testActualClassParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/actualClassParameter.kt");
+        }
+
+        @TestMetadata("actualFunctionParameter.kt")
+        public void testActualFunctionParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/actualFunctionParameter.kt");
         }
 
         @TestMetadata("annotationConstructor.kt")
@@ -280,6 +295,11 @@ public abstract class K2UnusedSymbolHighlightingTestGenerated extends AbstractK2
         @TestMetadata("enumSecondaryConstructor.kt")
         public void testEnumSecondaryConstructor() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/enumSecondaryConstructor.kt");
+        }
+
+        @TestMetadata("expectClassParameter.kt")
+        public void testExpectClassParameter() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/unusedSymbol/expectClassParameter.kt");
         }
 
         @TestMetadata("expectFunctionParameter.kt")

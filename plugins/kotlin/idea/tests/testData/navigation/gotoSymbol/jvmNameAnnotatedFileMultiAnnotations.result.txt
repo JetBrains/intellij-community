@@ -1,0 +1,8 @@
+NavigationItem:
+    name: null
+ItemPresentation:
+    presentableText: MyCustomFacade
+    locationString: jvmNameAnnotatedFileMultiAnnotations.kt in <root>
+    icon: org/jetbrains/kotlin/idea/icons/kotlin_file.svg
+TargetElement: JvmName("MyCustomFacade")
+QualifiedName: MyCustomFacade

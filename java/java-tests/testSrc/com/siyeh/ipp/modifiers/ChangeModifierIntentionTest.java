@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ipp.modifiers;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -6,6 +6,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.ui.ChooserInterceptor;
 import com.intellij.ui.UiInterceptors;
 import com.siyeh.IntentionPowerPackBundle;
@@ -50,17 +51,19 @@ public class ChangeModifierIntentionTest extends IPPTestCase {
     doTestWithChooser("protected");
   }
 
-  public void testAccessConflict() {
+  public void testAccessConflict() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    try {
-      doTestWithChooser("protected");
-      fail("Must have an exception");
-    }
-    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals(
-        "method <b><code>fooooooo()</code></b> will have incompatible access privileges with overriding method <b><code>Y.fooooooo()</code></b>",
-        e.getMessage());
-    }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      try {
+        doTestWithChooser("protected");
+        fail("Must have an exception");
+      }
+      catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+        assertEquals(
+          "method <b><code>fooooooo()</code></b> will have incompatible access privileges with overriding method <b><code>Y.fooooooo()</code></b>",
+          e.getMessage());
+      }
+    });
   }
 
   public void testAccessConflictIgnore() {

@@ -17,6 +17,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.project.stateStore
@@ -36,7 +37,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromStream
 import org.jetbrains.ide.HttpRequestHandler
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.io.send
 import org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope
 import kotlin.io.path.invariantSeparatorsPathString
@@ -75,7 +75,7 @@ private class BuildHttpRequestHandler : HttpRequestHandler() {
       return true
     }
 
-    if (!PsiUtil.isIdeaProject(project)) {
+    if (!IntelliJProjectUtil.isIntelliJPlatformProject(project)) {
       LOG.info("Build requests are currently handled for 'intellij' project only, so request won't be processed (query=$query)")
       HttpResponseStatus.NOT_FOUND.send(context.channel(), request)
       return true

@@ -8,10 +8,9 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.signatures.KaVariableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassifierSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
+import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.idea.completion.lookups.CompletionShortNamesRenderer
-import org.jetbrains.kotlin.idea.completion.lookups.renderNonErrorOrUnsubstituted
-import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.idea.completion.lookups.renderVerbose
 
 internal object TypeTextProvider {
     /**
@@ -20,7 +19,7 @@ internal object TypeTextProvider {
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     fun getTypeTextForClassifier(symbol: KaClassifierSymbol): String? = when (symbol) {
-        is KaTypeAliasSymbol -> symbol.expandedType.render(renderer, position = Variance.INVARIANT)
+        is KaTypeAliasSymbol -> symbol.expandedType.renderVerbose()
         else -> null
     }
 
@@ -40,20 +39,18 @@ internal object TypeTextProvider {
     fun getTypeTextForCallable(
         signature: KaCallableSignature<*>,
         treatAsFunctionCall: Boolean
-    ): String? = when (signature) {
-        is KaFunctionSignature<*> -> signature.returnType.renderNonErrorOrUnsubstituted(signature.symbol.returnType)
+    ): String {
+        val type = signature.returnType
+        val typeToRender = when (signature) {
+            is KaFunctionSignature<*> -> type.takeUnless { it is KaErrorType }
+                ?: signature.symbol.returnType
 
-        is KaVariableSignature<*> -> {
-            val type = signature.returnType
-            val typeToRender = when {
+            is KaVariableSignature<*> -> when {
                 treatAsFunctionCall && type is KaFunctionType -> type.returnType
                 else -> type
             }
-
-            typeToRender.render(renderer, position = Variance.INVARIANT)
         }
-    }
 
-    @KaExperimentalApi
-    private val renderer = CompletionShortNamesRenderer.rendererVerbose
+        return typeToRender.renderVerbose()
+    }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.util;
 
 import com.intellij.lang.ASTNode;
@@ -85,8 +85,7 @@ public final class XmlTagUtil {
     return c==-1?0:(char)c;
   }
 
-  @Nullable
-  public static XmlToken getStartTagNameElement(@NotNull XmlTag tag) {
+  public static @Nullable XmlToken getStartTagNameElement(@NotNull XmlTag tag) {
     final ASTNode node = tag.getNode();
     if (node == null) return null;
 
@@ -100,8 +99,7 @@ public final class XmlTagUtil {
     return current == null ? null : (XmlToken)current.getPsi();
   }
 
-  @Nullable
-  public static XmlToken getEndTagNameElement(@NotNull XmlTag tag) {
+  public static @Nullable XmlToken getEndTagNameElement(@NotNull XmlTag tag) {
     final ASTNode node = tag.getNode();
     if (node == null) return null;
 
@@ -121,8 +119,7 @@ public final class XmlTagUtil {
     return null;
   }
 
-  @NotNull
-  public static TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
+  public static @NotNull TextRange getTrimmedValueRange(final @NotNull XmlTag tag) {
     XmlTagValue tagValue = tag.getValue();
     final String text = tagValue.getText();
     final String trimmed = text.trim();
@@ -131,21 +128,18 @@ public final class XmlTagUtil {
     return new TextRange(startOffset, startOffset + trimmed.length());
   }
 
-  @Nullable
-  public static TextRange getStartTagRange(@NotNull XmlTag tag) {
+  public static @Nullable TextRange getStartTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getStartTagNameElement(tag);
     return getTagRange(tagName, XmlTokenType.XML_START_TAG_START);
   }
 
 
-  @Nullable
-  public static TextRange getEndTagRange(@NotNull XmlTag tag) {
+  public static @Nullable TextRange getEndTagRange(@NotNull XmlTag tag) {
     XmlToken tagName = getEndTagNameElement(tag);
     return getTagRange(tagName, XmlTokenType.XML_END_TAG_START);
   }
 
-  @Nullable
-  private static TextRange getTagRange(@Nullable XmlToken tagName, IElementType tagStart) {
+  private static @Nullable TextRange getTagRange(@Nullable XmlToken tagName, IElementType tagStart) {
     if (tagName == null) {
       return null;
     }

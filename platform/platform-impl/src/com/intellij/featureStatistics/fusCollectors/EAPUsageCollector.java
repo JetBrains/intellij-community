@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LicensingFacade;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -16,6 +17,7 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
+@ApiStatus.Internal
 public final class EAPUsageCollector extends ApplicationUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("user.advanced.info", 6);
   private static final EventId1<BuildType> BUILD = GROUP.registerEvent("build", EventFields.Enum("value", BuildType.class));
@@ -64,10 +66,18 @@ public final class EAPUsageCollector extends ApplicationUsagesCollector {
     return Collections.emptySet();
   }
 
+  @ApiStatus.Internal
+  public static boolean isJBTeam() {
+    LicensingFacade licensingFacade = LicensingFacade.getInstance();
+    if (licensingFacade == null) return false;
+    String licensedToMessage = licensingFacade.getLicensedToMessage();
+    return licensedToMessage != null && licensedToMessage.contains("JetBrains Team");
+  }
+
   private static @NotNull MetricEvent newLicencingMetric(@NotNull LicenceType value, @NotNull LicensingFacade licensingFacade) {
     List<EventPair<?>> data = new ArrayList<>();
-    String licensedToMessage = licensingFacade.getLicensedToMessage();
-    if (licensedToMessage != null && licensedToMessage.contains("JetBrains Team")) {
+
+    if (isJBTeam()) {
       data.add(IS_JB_TEAM.with(true));
     }
     String metadata = licensingFacade.metadata;

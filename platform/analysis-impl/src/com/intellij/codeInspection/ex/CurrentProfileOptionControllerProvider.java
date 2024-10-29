@@ -5,6 +5,7 @@ import com.intellij.codeInspection.options.OptionController;
 import com.intellij.codeInspection.options.OptionControllerProvider;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *   <li>currentProfile.&lt;InspectionShortName&gt;.options.&lt;InspectionOptionId&gt; - option of a given inspection</li>
  * </ul>
  */
+@ApiStatus.Internal
 public final class CurrentProfileOptionControllerProvider implements OptionControllerProvider {
   @Override
   public @NotNull OptionController forContext(@NotNull PsiElement context) {

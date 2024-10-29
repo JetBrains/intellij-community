@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.template.Expression;
@@ -6,11 +6,13 @@ import com.intellij.codeInsight.template.ExpressionContext;
 import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.PatternSyntaxException;
 
+@ApiStatus.Internal
 public final class RegExMacro extends MacroBase {
   private static final Logger LOG = Logger.getInstance(RegExMacro.class);
 
@@ -18,9 +20,8 @@ public final class RegExMacro extends MacroBase {
     super("regularExpression", "regularExpression(String, Pattern, Replacement)");
   }
 
-  @Nullable
   @Override
-  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
+  protected @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     if (params.length != 3) {
       return null;
     }

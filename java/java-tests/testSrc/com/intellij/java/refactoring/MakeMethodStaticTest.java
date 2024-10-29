@@ -227,6 +227,10 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
       checkResultByFile("/refactoring/makeMethodStatic/after" + getTestName(false) + ".java");
     });
   }
+  
+  public void testCallSuperClassMethod() {
+    doTest(true, false);
+  }
 
   private void doTest() {
     doTest(false);

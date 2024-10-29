@@ -14,9 +14,11 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionsConfigTreeComparator;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Comparator;
 
+@ApiStatus.Internal
 public final class InspectionResultsViewComparator implements Comparator<InspectionTreeNode> {
   private static final Logger LOG = Logger.getInstance(InspectionResultsViewComparator.class);
 

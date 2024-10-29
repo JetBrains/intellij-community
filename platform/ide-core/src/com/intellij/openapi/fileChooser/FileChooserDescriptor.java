@@ -4,25 +4,25 @@ package com.intellij.openapi.fileChooser;
 import com.intellij.ide.IdeCoreBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 /**
  * Allows customizing {@link FileChooser} dialog options.
@@ -42,13 +42,14 @@ public class FileChooserDescriptor implements Cloneable {
 
   private @NlsContexts.DialogTitle String myTitle = IdeCoreBundle.message("file.chooser.default.title");
   private @NlsContexts.Label String myDescription;
-
   private boolean myHideIgnored = true;
   private final List<VirtualFile> myRoots = new ArrayList<>();
   private boolean myShowFileSystemRoots = true;
   private boolean myTreeRootVisible = false;
   private boolean myShowHiddenFiles = false;
-  private Condition<? super VirtualFile> myFileFilter = null;
+  private @Nullable Pair<@Nls String, List<String>> myExtensionFilter = null;
+  private FileType @Nullable [] myFileTypeFilter = null;
+  private @Nullable Predicate<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
   private final Map<String, Object> myUserData = new HashMap<>();
@@ -63,12 +64,14 @@ public class FileChooserDescriptor implements Cloneable {
    * @param chooseJarContents controls whether .jar file contents can be chosen
    * @param chooseMultiple    controls whether multiple files can be chosen
    */
-  public FileChooserDescriptor(boolean chooseFiles,
-                               boolean chooseFolders,
-                               boolean chooseJars,
-                               boolean chooseJarsAsFiles,
-                               boolean chooseJarContents,
-                               boolean chooseMultiple) {
+  public FileChooserDescriptor(
+    boolean chooseFiles,
+    boolean chooseFolders,
+    boolean chooseJars,
+    boolean chooseJarsAsFiles,
+    boolean chooseJarContents,
+    boolean chooseMultiple
+  ) {
     myChooseFiles = chooseFiles;
     myChooseFolders = chooseFolders;
     myChooseJars = chooseJars;
@@ -79,13 +82,18 @@ public class FileChooserDescriptor implements Cloneable {
 
   public FileChooserDescriptor(@NotNull FileChooserDescriptor d) {
     this(d.isChooseFiles(), d.isChooseFolders(), d.isChooseJars(), d.isChooseJarsAsFiles(), d.isChooseJarContents(), d.isChooseMultiple());
-    withTitle(d.getTitle());
-    withDescription(d.getDescription());
-    withHideIgnored(d.isHideIgnored());
-    withRoots(d.getRoots());
-    withShowFileSystemRoots(d.isShowFileSystemRoots());
-    withTreeRootVisible(d.isTreeRootVisible());
-    withShowHiddenFiles(d.isShowHiddenFiles());
+    myTitle = d.getTitle();
+    myDescription = d.getDescription();
+    myHideIgnored = d.isHideIgnored();
+    myRoots.addAll(d.getRoots());
+    myShowFileSystemRoots = d.isShowFileSystemRoots();
+    myTreeRootVisible = d.isTreeRootVisible();
+    myShowHiddenFiles = d.isShowHiddenFiles();
+    myExtensionFilter = d.myExtensionFilter;
+    myFileTypeFilter = d.myFileTypeFilter;
+    myFileFilter = d.myFileFilter;
+    myForcedToUseIdeaFileChooser = false;
+    myUserData.putAll(d.myUserData);
   }
 
   public boolean isChooseFiles() {
@@ -207,21 +215,72 @@ public class FileChooserDescriptor implements Cloneable {
 
   /**
    * Sets simple boolean condition for use in {@link #isFileVisible(VirtualFile, boolean)} and {@link #isFileSelectable(VirtualFile)}.
+   * <p/>
+   * In native choosers, has no effect on visibility (use {@link #withExtensionFilter} for that), only on a final eligibility check.
+   * So for simple file type- or extension-based filtering it is better to use {@link #withExtensionFilter}.
    */
   public FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter) {
-    return withFileFilter(filter, "other");
+    myFileFilter = filter;
+    return this;
   }
 
-  @ApiStatus.Internal
-  FileChooserDescriptor withFileFilter(@Nullable Condition<? super VirtualFile> filter, String type) {
-    myFileFilter = filter;
-    putUserData(FILTER_TYPE, filter != null ? "other" : null);
+  /**
+   * @see #withExtensionFilter(String, String...)
+   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(FileType)
+   * @see FileChooserDescriptorFactory#createSingleFileOrFolderDescriptor(FileType)
+   */
+  public FileChooserDescriptor withExtensionFilter(@NotNull FileType type) {
+    return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", type.getName()), type);
+  }
+
+  /**
+   * @see #withExtensionFilter(String, String...)
+   */
+  public FileChooserDescriptor withExtensionFilter(@NlsContexts.Label @NotNull String label, @NotNull FileType @NotNull ... types) {
+    if (types.length == 0) throw new IllegalArgumentException("The list must not be empty");
+    var extensions = Stream.of(types)
+      .flatMap(type -> FileTypeManager.getInstance().getAssociations(type).stream())
+      .map(matcher -> matcher instanceof ExtensionFileNameMatcher em ? em.getExtension() : null)
+      .filter(Objects::nonNull)
+      .toArray(String[]::new);
+    myFileTypeFilter = types;
+    return withExtensionFilter(label, extensions);
+  }
+
+  /**
+   * @see #withExtensionFilter(String, String...)
+   * @see FileChooserDescriptorFactory#createSingleFileDescriptor(String)
+   */
+  public FileChooserDescriptor withExtensionFilter(@NotNull String extension) {
+    return withExtensionFilter(IdeCoreBundle.message("file.chooser.files.label", extension.toUpperCase(Locale.ROOT)), extension);
+  }
+
+  /**
+   * Adds a simple filter based on file extensions that is compatible with native (OS) file chooser dialogs.
+   * The behavior is platform-dependent (some dialogs make non-matching files non-selectable, others hide them completely).
+   * The {@code label} parameter is used in a combobox to switch between showing only matching or all files
+   * in dialogs supporting this feature.
+   */
+  public FileChooserDescriptor withExtensionFilter(@NlsContexts.Label @NotNull String label, @NotNull String @NotNull ... extensions) {
+    if (extensions.length == 0) throw new IllegalArgumentException("The list must not be empty");
+    if (ContainerUtil.find(extensions, String::isBlank) != null) throw new IllegalArgumentException("The list must not contain empty strings");
+    myExtensionFilter = new Pair<>(label, List.of(extensions));
+    return this;
+  }
+
+  public FileChooserDescriptor withoutExtensionFilter() {
+    myExtensionFilter = null;
+    myFileTypeFilter = null;
     return this;
   }
 
   /**
    * Defines whether a file is visible in the tree.
+   *
+   * @deprecated ignored by native file choosers; use {@link #withFileFilter} and {@link #withExtensionFilter} instead.
    */
+  @Deprecated
+  @ApiStatus.NonExtendable
   public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
     if (file.is(VFileProperty.SYMLINK) && file.getCanonicalPath() == null) {
       return false;
@@ -236,7 +295,13 @@ public class FileChooserDescriptor implements Cloneable {
       else if (!myChooseFiles) {
         return false;
       }
-      if (myFileFilter != null && !myFileFilter.value(file)) {
+      if (myExtensionFilter != null && !matchesExtFilter(file, myExtensionFilter.second)) {
+        return false;
+      }
+      if (myFileTypeFilter != null && !matchesTypeFilter(file, myFileTypeFilter)) {
+        return false;
+      }
+      if (myFileFilter != null && !myFileFilter.test(file)) {
         return false;
       }
     }
@@ -265,13 +330,36 @@ public class FileChooserDescriptor implements Cloneable {
     if (file.isDirectory() && myChooseFolders) {
       return true;
     }
-
-    if (myFileFilter != null && !file.isDirectory()) {
-      return myFileFilter.value(file);
+    if (!file.isDirectory()) {
+      if (myExtensionFilter != null) {
+        return matchesExtFilter(file, myExtensionFilter.second);
+      }
+      if (myFileTypeFilter != null) {
+        return matchesTypeFilter(file, myFileTypeFilter);
+      }
+      if (myFileFilter != null) {
+        return myFileFilter.test(file);
+      }
     }
-
     return acceptAsJarFile(file) || acceptAsGeneralFile(file);
   }
+
+  private static boolean matchesExtFilter(VirtualFile file, List<String> extensions) {
+    return ContainerUtil.exists(extensions, ext -> Strings.endsWithIgnoreCase(file.getName(), '.' + ext));
+  }
+
+  private static boolean matchesTypeFilter(VirtualFile file, FileType[] types) {
+    return ContainerUtil.exists(types, type -> FileTypeRegistry.getInstance().isFileOfType(file, type));
+  }
+
+  /**
+   * Called upon <em>OK</em> action before closing dialog.
+   * Override to customize validation of user input.
+   *
+   * @param files selected files to be checked
+   * @throws Exception if selected files cannot be accepted, the exception message will be shown in the UI.
+   */
+  public void validateSelectedFiles(@NotNull VirtualFile @NotNull [] files) throws Exception { }
 
   public Icon getIcon(final VirtualFile file) {
     return dressIcon(file, IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));
@@ -289,14 +377,9 @@ public class FileChooserDescriptor implements Cloneable {
     return null;
   }
 
-  /**
-   * Called upon <em>OK</em> action before closing dialog.
-   * Override to customize validation of user input.
-   *
-   * @param files selected files to be checked
-   * @throws Exception if selected files cannot be accepted, exception message will be shown in UI.
-   */
-  public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
+  private boolean acceptAsGeneralFile(VirtualFile file) {
+    if (FileElement.isArchive(file)) return false; // should be handled by `acceptAsJarFile`
+    return !file.isDirectory() && myChooseFiles;
   }
 
   public boolean isForcedToUseIdeaFileChooser() {
@@ -307,17 +390,8 @@ public class FileChooserDescriptor implements Cloneable {
     myForcedToUseIdeaFileChooser = forcedToUseIdeaFileChooser;
   }
 
-  private boolean acceptAsGeneralFile(VirtualFile file) {
-    if (FileElement.isArchive(file)) return false; // should be handle by acceptsAsJarFile
-    return !file.isDirectory() && myChooseFiles;
-  }
-
-  private boolean acceptAsJarFile(VirtualFile file) {
-    return myChooseJars && FileElement.isArchive(file);
-  }
-
-  @Nullable
-  public final VirtualFile getFileToSelect(VirtualFile file) {
+  @ApiStatus.Internal
+  public final @Nullable VirtualFile getFileToSelect(@NotNull VirtualFile file) {
     if (file.isDirectory() && (myChooseFolders || isFileSelectable(file))) {
       return file;
     }
@@ -335,6 +409,17 @@ public class FileChooserDescriptor implements Cloneable {
     return JarFileSystem.getInstance().findFileByPath(path + JarFileSystem.JAR_SEPARATOR);
   }
 
+  private boolean acceptAsJarFile(VirtualFile file) {
+    return myChooseJars && FileElement.isArchive(file);
+  }
+
+  @ApiStatus.Internal
+  public @Nullable Pair<@Nls String, List<String>> getExtensionFilter() {
+    return myExtensionFilter;
+  }
+
+  /** @deprecated use the copy constructor ({@link #FileChooserDescriptor(FileChooserDescriptor)}) instead */
+  @Deprecated(forRemoval = true)
   @Override
   public final Object clone() {
     try {
@@ -345,15 +430,22 @@ public class FileChooserDescriptor implements Cloneable {
     }
   }
 
-  @Nullable
-  public Object getUserData(@NotNull String dataId) {
+  public @Nullable Object getUserData(@NotNull String dataId) {
     return myUserData.get(dataId);
   }
 
-  @Nullable
-  public <T> T getUserData(@NotNull DataKey<T> key) {
-    @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
-    return t;
+  public @Nullable <T> T getUserData(@NotNull DataKey<T> key) {
+    if (key == FILTER_TYPE) {
+      var result = "";
+      if (myExtensionFilter != null) result += 'e';
+      if (myFileFilter != null) result += 'f';
+      @SuppressWarnings("unchecked") T t = (T)result;
+      return t;
+    }
+    else {
+      @SuppressWarnings("unchecked") T t = (T)myUserData.get(key.getName());
+      return t;
+    }
   }
 
   public <T> void putUserData(@NotNull DataKey<T> key, @Nullable T data) {

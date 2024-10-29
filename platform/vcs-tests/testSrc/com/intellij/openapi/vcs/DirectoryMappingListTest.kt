@@ -1,6 +1,7 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs
 
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.IoTestUtil
@@ -15,8 +16,8 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.concurrency.ThreadingAssertions
 import com.intellij.vcsUtil.VcsUtil
 import java.io.File
@@ -60,7 +61,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
     vcses.registerManually(vcsCVS)
 
     vcsManager = ProjectLevelVcsManager.getInstance(myProject) as ProjectLevelVcsManagerImpl
-    mappings = NewMappings(myProject, vcsManager)
+    mappings = NewMappings(myProject, vcsManager, (myProject as ComponentManagerEx).getCoroutineScope())
     Disposer.register(testRootDisposable, mappings)
     mappings.activateActiveVcses()
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
@@ -339,7 +340,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ).map { it.filePath }
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings few roots FilePaths") {
+    Benchmark.newBenchmark("NewMappings few roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -362,7 +363,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ).map { it.filePath }
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings many roots FilePaths") {
+    Benchmark.newBenchmark("NewMappings many roots FilePaths") {
       for (i in 0..20000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -389,7 +390,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(220)
     ).map { it.filePath }
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings nested roots FilePaths") {
+    Benchmark.newBenchmark("NewMappings nested roots FilePaths") {
       for (i in 0..2000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -413,7 +414,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/non_existent/some/path"
     ))
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings few roots VirtualFiles") {
+    Benchmark.newBenchmark("NewMappings few roots VirtualFiles") {
       for (i in 0..60000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -436,7 +437,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/non_existent/some/path"
     ))
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings many roots VirtualFiles") {
+    Benchmark.newBenchmark("NewMappings many roots VirtualFiles") {
       for (i in 0..80000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)
@@ -463,7 +464,7 @@ class DirectoryMappingListTest : HeavyPlatformTestCase() {
       "$rootPath/parent/" + "dir/".repeat(200)
     ))
 
-    PerformanceTestUtil.newPerformanceTest("NewMappings nested roots VirtualFiles") {
+    Benchmark.newBenchmark("NewMappings nested roots VirtualFiles") {
       for (i in 0..15000) {
         for (filePath in toCheck) {
           mappings.getMappedRootFor(filePath)

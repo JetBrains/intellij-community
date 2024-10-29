@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.cfgView;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
@@ -93,7 +93,7 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
     return false;
   }
 
-  public static boolean toSvgFile(@NotNull final String outSvgFile, @NotNull final PsiElement target) throws IOException, ExecutionException {
+  public static boolean toSvgFile(final @NotNull String outSvgFile, final @NotNull PsiElement target) throws IOException, ExecutionException {
     String dotUtilName = SystemInfo.isUnix ? "dot" : "dot.exe";
     File dotFullPath = PathEnvironmentVariableUtil.findInPath(dotUtilName);
     if (dotFullPath == null) {
@@ -128,8 +128,7 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  @NotNull
-  private static String toDot(@NotNull final ControlFlow flow, @NotNull final ControlFlowProvider provider) {
+  private static @NotNull String toDot(final @NotNull ControlFlow flow, final @NotNull ControlFlowProvider provider) {
     StringBuilder builder = new StringBuilder();
     builder.append("digraph {");
     for (Instruction instruction : flow.getInstructions()) {
@@ -175,8 +174,7 @@ public final class ShowControlFlowHandler implements CodeInsightActionHandler {
     }
   }
 
-  @NotNull
-  private static String escape(@NotNull String text) {
+  private static @NotNull String escape(@NotNull String text) {
     return StringUtil.replace(StringUtil.escapeChars(text, '"'), "\n", "\\n");
   }
 }

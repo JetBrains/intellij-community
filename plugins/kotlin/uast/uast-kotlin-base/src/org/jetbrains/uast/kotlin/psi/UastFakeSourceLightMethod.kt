@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.kotlin.psi
 
@@ -8,7 +8,7 @@ import com.intellij.psi.impl.light.LightReferenceListBuilder
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.UastLazyPart
 import org.jetbrains.uast.getOrBuild
@@ -65,30 +65,24 @@ open class UastFakeSourceLightMethod(
                     val parameterList = this
 
                     original.receiverTypeReference?.let { receiver ->
-                        this.addParameter(
+                        addParameter(
                             UastKotlinPsiParameterBase(
                                 "\$this\$${original.name}",
-                                baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod)
-                                    ?: UastErrorType,
                                 parameterList,
-                                receiver
-                            )
+                                receiver,
+                                isVarArgs = false,
+                                ktDefaultValue = null,
+                            ) {
+                                baseResolveProviderService.resolveToType(receiver, this@UastFakeSourceLightMethod) ?: UastErrorType
+                            }
                         )
                     }
 
                     for ((i, p) in original.valueParameters.withIndex()) {
-                        val type = baseResolveProviderService.getType(p, this@UastFakeSourceLightMethod, isForFake = true)
-                            ?: UastErrorType
-                        val adjustedType = if (p.isVarArg && type is PsiArrayType)
-                            PsiEllipsisType(type.componentType, type.annotationProvider)
-                        else type
-                        this.addParameter(
+                        addParameter(
                             UastKotlinPsiParameter(
-                                baseResolveProviderService,
                                 p.name ?: "p$i",
-                                adjustedType,
                                 parameterList,
-                                original.language,
                                 p.isVarArg,
                                 p.defaultValue,
                                 p
@@ -97,9 +91,7 @@ open class UastFakeSourceLightMethod(
                     }
 
                     if (isSuspendFunction()) {
-                        this.addParameter(
-                            UastKotlinPsiSuspendContinuationParameter.create(this@UastFakeSourceLightMethod, original)
-                        )
+                        addParameter(UastKotlinPsiSuspendContinuationParameter(this@UastFakeSourceLightMethod, original))
                     }
                 }
             }

@@ -3,6 +3,7 @@ package com.intellij.maven.server.telemetry;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import io.opentelemetry.api.OpenTelemetry;
+import io.opentelemetry.api.incubator.trace.ExtendedTracer;
 import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.opentelemetry.exporter.internal.marshal.MarshalerWithSize;
 import io.opentelemetry.exporter.internal.otlp.traces.TraceRequestMarshaler;
@@ -26,6 +27,7 @@ public final class MavenServerTelemetryClasspathUtil {
     SdkLoggerProvider.class,
     TraceRequestMarshaler.class,
     MarshalerWithSize.class,
-    JsonGenerator.class
+    JsonGenerator.class,
+    ExtendedTracer.class
   );
 }

@@ -1,6 +1,7 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.api;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Semaphore;
@@ -8,9 +9,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author Eugene Zhuravlev
- */
+@ApiStatus.Internal
 public class BasicFuture<T> implements TaskFuture<T> {
   private final Semaphore mySemaphore = new Semaphore(1);
   private final AtomicBoolean myDone = new AtomicBoolean(false);

@@ -9,20 +9,22 @@ import org.jetbrains.annotations.NonNls;
  */
 public final class Consent extends ConsentBase {
   private final @NlsSafe String myName;
-  private final @NlsSafe String myText;
+  private final String myText;
   private final boolean myAccepted;
   private final boolean myDeleted;
+  private String myLocale;
 
   public Consent(ConsentAttributes attributes) {
-    this(attributes.consentId, Version.fromString(attributes.version), attributes.printableName, attributes.text, attributes.accepted, attributes.deleted);
+    this(attributes.consentId, Version.fromString(attributes.version), attributes.printableName, attributes.text, attributes.accepted, attributes.deleted, attributes.locale);
   }
 
-  public Consent(String id, Version version, @NlsSafe String name, String text, boolean isAccepted, boolean deleted) {
+  public Consent(String id, Version version, @NlsSafe String name, String text, boolean isAccepted, boolean deleted, String locale) {
     super(id, version);
     myName = name;
     myText = text;
     myAccepted = isAccepted;
     myDeleted = deleted;
+    myLocale = locale;
   }
 
   public @NlsSafe String getName() {
@@ -42,6 +44,10 @@ public final class Consent extends ConsentBase {
     return myDeleted;
   }
 
+  public String getLocale() {
+    return myLocale;
+  }
+
   public ConsentAttributes toConsentAttributes() {
     final ConsentAttributes attributes = new ConsentAttributes();
     attributes.consentId = getId();
@@ -50,6 +56,7 @@ public final class Consent extends ConsentBase {
     attributes.text = getText();
     attributes.accepted = isAccepted();
     attributes.deleted = isDeleted();
+    attributes.locale = getLocale();
     return attributes;
   }
 
@@ -61,10 +68,11 @@ public final class Consent extends ConsentBase {
       ", name='" + myName + '\'' +
       ", accepted=" + myAccepted +
       ", deleted=" + myDeleted +
+      ", locale=" + myLocale +
       '}';
   }
 
   public Consent derive(boolean accepted) {
-    return accepted == isAccepted()? this : new Consent(getId(), getVersion(), getName(), getText(), accepted, isDeleted());
+    return accepted == isAccepted()? this : new Consent(getId(), getVersion(), getName(), getText(), accepted, isDeleted(), getLocale());
   }
 }

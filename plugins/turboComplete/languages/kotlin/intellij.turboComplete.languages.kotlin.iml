@@ -30,6 +30,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="intellij.turboComplete" />
+    <orderEntry type="module" module-name="intellij.platform.ide.internal" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
   </component>
 </module>

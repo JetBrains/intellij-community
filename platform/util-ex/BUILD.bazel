@@ -1,0 +1,29 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "util-ex",
+  module_name = "intellij.platform.util.ex",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlin-reflect",
+    "@community//platform/util",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:jcip-annotations",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:netty-buffer",
+    "@libraries//:caffeine",
+    "@community//platform/util/base:util-base",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@libraries//:lz4-java",
+    "@community//platform/diagnostic",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@libraries//:h2-mvstore",
+  ]
+)
+### auto-generated section `build` end

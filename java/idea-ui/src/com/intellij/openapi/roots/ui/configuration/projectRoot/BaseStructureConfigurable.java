@@ -144,6 +144,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
     myUiDisposed = true;
 
     myAutoScrollHandler.cancelAllRequests();
+    myAutoScrollHandler.resetAlarm();
 
     myContext.getDaemonAnalyzer().clear();
 

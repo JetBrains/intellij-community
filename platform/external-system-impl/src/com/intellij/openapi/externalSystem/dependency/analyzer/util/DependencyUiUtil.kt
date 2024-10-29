@@ -2,16 +2,16 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.observable.util.transform
-import com.intellij.openapi.ui.asSequence
 import com.intellij.openapi.observable.util.whenTreeChanged
+import com.intellij.openapi.ui.asSequence
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -25,6 +25,7 @@ import javax.swing.JTree
 import javax.swing.ListModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerDependency as Dependency
 
 
 internal fun Dependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
@@ -53,8 +54,7 @@ private fun SimpleColoredComponent.customizeCellRenderer(group: DependencyGroup,
 
 internal abstract class AbstractDependencyList(
   model: ListModel<DependencyGroup>,
-  private val dataProvider: DataProvider
-) : JBList<DependencyGroup>(model), DataProvider {
+) : JBList<DependencyGroup>(model), UiDataProvider {
 
   private val dependencyProperty = AtomicProperty<Dependency?>(null)
   private val dependencyGroupProperty = AtomicProperty<DependencyGroup?>(null)
@@ -63,12 +63,9 @@ internal abstract class AbstractDependencyList(
     dependencyProperty.bind(property)
   }
 
-  override fun getData(dataId: String): Any? {
-    return when (dataId) {
-      DependencyAnalyzerView.DEPENDENCY.name -> dependencyProperty.get()
-      DependencyAnalyzerView.DEPENDENCIES.name -> dependencyGroupProperty.get()
-      else -> dataProvider.getData(dataId)
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[DependencyAnalyzerView.DEPENDENCY] = dependencyProperty.get()
+    sink[DependencyAnalyzerView.DEPENDENCIES] = dependencyGroupProperty.get()?.variances
   }
 
   init {
@@ -87,8 +84,7 @@ internal abstract class AbstractDependencyList(
 
 internal abstract class AbstractDependencyTree(
   model: TreeModel,
-  private val dataProvider: DataProvider
-) : SimpleTree(model), DataProvider {
+) : SimpleTree(model), UiDataProvider {
 
   private val dependencyProperty = AtomicProperty<Dependency?>(null)
   private val dependencyGroupProperty = AtomicProperty<DependencyGroup?>(null)
@@ -97,12 +93,9 @@ internal abstract class AbstractDependencyTree(
     dependencyProperty.bind(property)
   }
 
-  override fun getData(dataId: String): Any? {
-    return when (dataId) {
-      DependencyAnalyzerView.DEPENDENCY.name -> dependencyProperty.get()
-      DependencyAnalyzerView.DEPENDENCIES.name -> dependencyGroupProperty.get()
-      else -> dataProvider.getData(dataId)
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[DependencyAnalyzerView.DEPENDENCY] = dependencyProperty.get()
+    sink[DependencyAnalyzerView.DEPENDENCIES] = dependencyGroupProperty.get()?.variances
   }
 
   init {
@@ -118,11 +111,10 @@ internal abstract class AbstractDependencyTree(
   }
 }
 
-internal class DependencyList(
+internal open class DependencyList(
   model: ListModel<DependencyGroup>,
   showGroupIdProperty: ObservableProperty<Boolean>,
-  dataProvider: DataProvider
-) : AbstractDependencyList(model, dataProvider) {
+) : AbstractDependencyList(model) {
   init {
     ListUiUtil.Selection.installSelectionOnRightClick(this)
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.DependencyListGroup", DependencyAnalyzerView.ACTION_PLACE)
@@ -130,22 +122,20 @@ internal class DependencyList(
   }
 }
 
-internal class DependencyTree(
+internal open class DependencyTree(
   model: TreeModel,
   showGroupIdProperty: ObservableProperty<Boolean>,
-  dataProvider: DataProvider
-) : AbstractDependencyTree(model, dataProvider) {
+) : AbstractDependencyTree(model) {
   init {
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.DependencyTreeGroup", DependencyAnalyzerView.ACTION_PLACE)
     setCellRenderer(DependencyTreeRenderer(showGroupIdProperty))
   }
 }
 
-internal class UsagesTree(
+internal open class UsagesTree(
   model: TreeModel,
   showGroupIdProperty: ObservableProperty<Boolean>,
-  dataProvider: DataProvider
-) : AbstractDependencyTree(model, dataProvider) {
+) : AbstractDependencyTree(model) {
   init {
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.UsagesTreeGroup", DependencyAnalyzerView.ACTION_PLACE)
     setCellRenderer(UsagesTreeRenderer(showGroupIdProperty))

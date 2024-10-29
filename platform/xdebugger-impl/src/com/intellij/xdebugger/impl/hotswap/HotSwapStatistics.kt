@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
 
+@Suppress("PublicApiImplicitType")
 @ApiStatus.Internal
 object HotSwapStatistics : CounterUsagesCollector() {
   private val group = EventLogGroup("debugger.hotswap", 1)

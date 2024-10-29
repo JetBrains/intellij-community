@@ -13,23 +13,24 @@ import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nullable;
+
+import static java.util.Objects.requireNonNullElse;
 
 @ApiStatus.Internal
 public class FileChooserUsageCollector extends CounterUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("ui.file.chooser", 2);
+  private static final EventLogGroup GROUP = new EventLogGroup("ui.file.chooser", 4);
 
   private static final EnumEventField<Type> TYPE = EventFields.Enum("type", Type.class);
   private static final BooleanEventField FORCED = EventFields.Boolean("forced");
   private static final BooleanEventField JAR_CONTENTS = EventFields.Boolean("jar_contents");
   private static final BooleanEventField NON_LOCAL_ROOTS = EventFields.Boolean("non_local_roots");
-  private static final EnumEventField<Filter> FILTER = EventFields.Enum("filter", Filter.class);
+  private static final BooleanEventField EXT_FILTER = EventFields.Boolean("ext_filter");
+  private static final BooleanEventField FILE_FILTER = EventFields.Boolean("file_filter");
   private static final BooleanEventField NON_LOCAL_FILES = EventFields.Boolean("non_local_files");
   private static final VarargEventId CHOOSER_SHOWN = GROUP.registerVarargEvent(
-    "chooser_shown", TYPE, FORCED, JAR_CONTENTS, NON_LOCAL_ROOTS, FILTER, NON_LOCAL_FILES);
+    "chooser_shown", TYPE, FORCED, JAR_CONTENTS, NON_LOCAL_ROOTS, EXT_FILTER, FILE_FILTER, NON_LOCAL_FILES);
 
   private enum Type {NATIVE, CLASSIC, NEW, OTHER}
-  private enum Filter {NONE, TYPE, EXT, OTHER}
 
   @Override
   public EventLogGroup getGroup() {
@@ -37,12 +38,14 @@ public class FileChooserUsageCollector extends CounterUsagesCollector {
   }
 
   public static void log(FileChooserDialog chooser, FileChooserDescriptor descriptor, VirtualFile[] files) {
+    var filter = requireNonNullElse(descriptor.getUserData(FileChooserDescriptor.FILTER_TYPE), "");
     CHOOSER_SHOWN.log(
       TYPE.with(chooserType(chooser)),
       FORCED.with(descriptor.isForcedToUseIdeaFileChooser()),
       JAR_CONTENTS.with(descriptor.isChooseJarContents()),
       NON_LOCAL_ROOTS.with(ContainerUtil.exists(descriptor.getRoots(), root -> !root.isInLocalFileSystem())),
-      FILTER.with(filterType(descriptor.getUserData(FileChooserDescriptor.FILTER_TYPE))),
+      EXT_FILTER.with(filter.indexOf('e') != 0),
+      FILE_FILTER.with(filter.indexOf('f') != 0),
       NON_LOCAL_FILES.with(ContainerUtil.exists(files, file -> !file.isInLocalFileSystem()))
     );
   }
@@ -52,12 +55,5 @@ public class FileChooserUsageCollector extends CounterUsagesCollector {
            chooser instanceof NewFileChooserDialogImpl ? Type.NEW :
            chooser instanceof FileChooserDialogImpl ? Type.CLASSIC :
            Type.OTHER;
-  }
-
-  private static Filter filterType(@Nullable String filterType) {
-    return filterType == null ? Filter.NONE :
-           filterType.equals("file-type") ? Filter.TYPE :
-           filterType.equals("file-ext") ? Filter.EXT :
-           Filter.OTHER;
   }
 }

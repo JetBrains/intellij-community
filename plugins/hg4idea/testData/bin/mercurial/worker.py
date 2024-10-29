@@ -5,21 +5,14 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
-import errno
 import os
+import pickle
+import selectors
 import signal
 import sys
 import threading
 import time
-
-try:
-    import selectors
-
-    selectors.BaseSelector
-except ImportError:
-    from .thirdparty import selectors2 as selectors
 
 from .i18n import _
 from . import (
@@ -27,7 +20,6 @@ from . import (
     error,
     pycompat,
     scmutil,
-    util,
 )
 
 
@@ -65,54 +57,13 @@ def _numworkers(ui):
     return min(max(countcpus(), 4), 32)
 
 
-if pycompat.ispy3:
-
-    def ismainthread():
-        return threading.current_thread() == threading.main_thread()
-
-    class _blockingreader(object):
-        def __init__(self, wrapped):
-            self._wrapped = wrapped
-
-        # Do NOT implement readinto() by making it delegate to
-        # _wrapped.readinto(), since that is unbuffered. The unpickler is fine
-        # with just read() and readline(), so we don't need to implement it.
-
-        def readline(self):
-            return self._wrapped.readline()
-
-        # issue multiple reads until size is fulfilled
-        def read(self, size=-1):
-            if size < 0:
-                return self._wrapped.readall()
-
-            buf = bytearray(size)
-            view = memoryview(buf)
-            pos = 0
-
-            while pos < size:
-                ret = self._wrapped.readinto(view[pos:])
-                if not ret:
-                    break
-                pos += ret
-
-            del view
-            del buf[pos:]
-            return bytes(buf)
+def ismainthread():
+    return threading.current_thread() == threading.main_thread()
 
 
-else:
-
-    def ismainthread():
-        # pytype: disable=module-attr
-        return isinstance(threading.current_thread(), threading._MainThread)
-        # pytype: enable=module-attr
-
-    def _blockingreader(wrapped):
-        return wrapped
-
-
-if pycompat.isposix or pycompat.iswindows:
+if (
+    pycompat.isposix and pycompat.sysplatform != b'OpenVMS'
+) or pycompat.iswindows:
     _STARTUP_COST = 0.01
     # The Windows worker is thread based. If tasks are CPU bound, threads
     # in the presence of the GIL result in excessive context switching and
@@ -137,7 +88,14 @@ def worthwhile(ui, costperop, nops, threadsafe=True):
 
 
 def worker(
-    ui, costperarg, func, staticargs, args, hasretval=False, threadsafe=True
+    ui,
+    costperarg,
+    func,
+    staticargs,
+    args,
+    hasretval=False,
+    threadsafe=True,
+    prefork=None,
 ):
     """run a function, possibly in parallel in multiple worker
     processes.
@@ -161,6 +119,10 @@ def worker(
     threadsafe - whether work items are thread safe and can be executed using
     a thread-based worker. Should be disabled for CPU heavy tasks that don't
     release the GIL.
+
+    prefork - a parameterless Callable that is invoked prior to forking the
+    process.  fork() is only used on non-Windows platforms, but is also not
+    called on POSIX platforms if the work amount doesn't warrant a worker.
     """
     enabled = ui.configbool(b'worker', b'enabled')
     if enabled and _platformworker is _posixworker and not ismainthread():
@@ -169,11 +131,13 @@ def worker(
         enabled = False
 
     if enabled and worthwhile(ui, costperarg, len(args), threadsafe=threadsafe):
-        return _platformworker(ui, func, staticargs, args, hasretval)
+        return _platformworker(
+            ui, func, staticargs, args, hasretval, prefork=prefork
+        )
     return func(*staticargs + (args,))
 
 
-def _posixworker(ui, func, staticargs, args, hasretval):
+def _posixworker(ui, func, staticargs, args, hasretval, prefork=None):
     workers = _numworkers(ui)
     oldhandler = signal.getsignal(signal.SIGINT)
     signal.signal(signal.SIGINT, signal.SIG_IGN)
@@ -188,27 +152,18 @@ def _posixworker(ui, func, staticargs, args, hasretval):
         for p in pids:
             try:
                 os.kill(p, signal.SIGTERM)
-            except OSError as err:
-                if err.errno != errno.ESRCH:
-                    raise
+            except ProcessLookupError:
+                pass
 
     def waitforworkers(blocking=True):
         for pid in pids.copy():
             p = st = 0
-            while True:
-                try:
-                    p, st = os.waitpid(pid, (0 if blocking else os.WNOHANG))
-                    break
-                except OSError as e:
-                    if e.errno == errno.EINTR:
-                        continue
-                    elif e.errno == errno.ECHILD:
-                        # child would already be reaped, but pids yet been
-                        # updated (maybe interrupted just after waitpid)
-                        pids.discard(pid)
-                        break
-                    else:
-                        raise
+            try:
+                p, st = os.waitpid(pid, (0 if blocking else os.WNOHANG))
+            except ChildProcessError:
+                # child would already be reaped, but pids yet been
+                # updated (maybe interrupted just after waitpid)
+                pids.discard(pid)
             if not p:
                 # skip subsequent steps, because child process should
                 # be still running in this case
@@ -228,6 +183,10 @@ def _posixworker(ui, func, staticargs, args, hasretval):
     parentpid = os.getpid()
     pipes = []
     retval = {}
+
+    if prefork:
+        prefork()
+
     for pargs in partition(args, min(workers, len(args))):
         # Every worker gets its own pipe to send results on, so we don't have to
         # implement atomic writes larger than PIPE_BUF. Each forked process has
@@ -255,8 +214,10 @@ def _posixworker(ui, func, staticargs, args, hasretval):
                         os.close(r)
                         os.close(w)
                     os.close(rfd)
-                    for result in func(*(staticargs + (pargs,))):
-                        os.write(wfd, util.pickle.dumps(result))
+                    with os.fdopen(wfd, 'wb') as wf:
+                        for result in func(*(staticargs + (pargs,))):
+                            pickle.dump(result, wf)
+                            wf.flush()
                     return 0
 
                 ret = scmutil.callcatch(ui, workerfunc)
@@ -278,7 +239,26 @@ def _posixworker(ui, func, staticargs, args, hasretval):
     selector = selectors.DefaultSelector()
     for rfd, wfd in pipes:
         os.close(wfd)
-        selector.register(os.fdopen(rfd, 'rb', 0), selectors.EVENT_READ)
+        # Buffering is needed for performance, but it also presents a problem:
+        # selector doesn't take the buffered data into account,
+        # so we have to arrange it so that the buffers are empty when select is called
+        # (see [peek_nonblock])
+        selector.register(os.fdopen(rfd, 'rb', 4096), selectors.EVENT_READ)
+
+    def peek_nonblock(f):
+        os.set_blocking(f.fileno(), False)
+        res = f.peek()
+        os.set_blocking(f.fileno(), True)
+        return res
+
+    def load_all(f):
+        # The pytype error likely goes away on a modern version of
+        # pytype having a modern typeshed snapshot.
+        # pytype: disable=wrong-arg-types
+        yield pickle.load(f)
+        while len(peek_nonblock(f)) > 0:
+            yield pickle.load(f)
+        # pytype: enable=wrong-arg-types
 
     def cleanup():
         signal.signal(signal.SIGINT, oldhandler)
@@ -292,19 +272,17 @@ def _posixworker(ui, func, staticargs, args, hasretval):
         while openpipes > 0:
             for key, events in selector.select():
                 try:
-                    res = util.pickle.load(_blockingreader(key.fileobj))
-                    if hasretval and res[0]:
-                        retval.update(res[1])
-                    else:
-                        yield res
+                    for res in load_all(key.fileobj):
+                        if hasretval and res[0]:
+                            retval.update(res[1])
+                        else:
+                            yield res
                 except EOFError:
                     selector.unregister(key.fileobj)
+                    # pytype: disable=attribute-error
                     key.fileobj.close()
+                    # pytype: enable=attribute-error
                     openpipes -= 1
-                except IOError as e:
-                    if e.errno == errno.EINTR:
-                        continue
-                    raise
     except:  # re-raises
         killworkers()
         cleanup()
@@ -329,7 +307,7 @@ def _posixexitstatus(code):
         return -(os.WTERMSIG(code))
 
 
-def _windowsworker(ui, func, staticargs, args, hasretval):
+def _windowsworker(ui, func, staticargs, args, hasretval, prefork=None):
     class Worker(threading.Thread):
         def __init__(
             self, taskqueue, resultqueue, func, staticargs, *args, **kwargs

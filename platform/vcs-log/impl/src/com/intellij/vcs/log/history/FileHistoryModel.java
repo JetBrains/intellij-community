@@ -10,12 +10,14 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogDiffHandler;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePack;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class FileHistoryModel {
   private final @NotNull VcsLogData myLogData;
   private final @NotNull VcsLogDiffHandler myDiffHandler;

@@ -134,7 +134,7 @@ public abstract class AbstractCommand<T> {
     return false;
   }
 
-  public void execute() throws PyDebuggerException {
+  public final void execute() throws PyDebuggerException {
     final int sequence = myDebugger.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
@@ -167,7 +167,7 @@ public abstract class AbstractCommand<T> {
     }
   }
 
-  public void execute(final PyDebugCallback<T> callback) {
+  public final void execute(final PyDebugCallback<? super T> callback) {
     final int sequence = myDebugger.getNextSequence();
 
     final ResponseProcessor<T> processor = getResponseProcessor();
@@ -304,7 +304,7 @@ public abstract class AbstractCommand<T> {
     }
 
     private Payload doAdd(String text) {
-      if (myBuilder.length() > 0) {
+      if (!myBuilder.isEmpty()) {
         return separator().append(text);
       }
       else {

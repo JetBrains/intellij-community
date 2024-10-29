@@ -46,7 +46,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
         refresh(repository);
         markSuccessful(repository);
       }
-      else if (unmergedDetector.hasHappened()) {
+      else if (unmergedDetector.isDetected()) {
         fatalUnmergedFilesError();
         fatalErrorHappened = true;
       }

@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
 import org.jetbrains.kotlin.analysis.low.level.api.fir.projectStructure.LLFirBuiltinsSessionFactory
 
 @OptIn(LLFirInternals::class)
-internal fun Project.invalidateAllCachesForUastTests() {
+fun Project.invalidateAllCachesForUastTests() {
     runWriteAction {
         KotlinGlobalModificationService.getInstance(this).publishGlobalModuleStateModification()
     }

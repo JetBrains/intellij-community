@@ -23,6 +23,7 @@ import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
 
+@ApiStatus.Internal
 public class DiffLineSeparatorRenderer implements LineMarkerRendererEx, LineSeparatorRenderer, ActiveGutterRenderer {
   private static Object[] ourCachedImageKey = null;
   private static BufferedImage outCachedImage = null;

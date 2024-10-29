@@ -64,7 +64,7 @@ class NewUsersOnboardingService(private val project: Project, private val corout
   }
 
   fun shouldShowOnboardingDialog(): Boolean {
-    return NewUsersOnboardingExperiment.getInstance().isEnabled() &&
+    return service<NewUsersOnboardingExperiment>().isEnabled() &&
            !PropertiesComponent.getInstance().getBoolean(NEW_USERS_ONBOARDING_DIALOG_SHOWN_PROPERTY) &&
            ConfigImportHelper.isNewUser()
   }

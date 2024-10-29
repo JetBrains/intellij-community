@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.ide.IdeTooltip;
@@ -27,13 +27,13 @@ import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ListenerUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +43,8 @@ import java.awt.event.*;
 import java.util.EventObject;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class LocalHintManager implements ClientHintManager {
-
   private static final Logger LOG = Logger.getInstance(LocalHintManager.class);
 
   private final EditorMouseListener myEditorMouseListener;
@@ -58,7 +58,6 @@ public final class LocalHintManager implements ClientHintManager {
 
   private final List<HintManagerImpl.HintInfo> myHintsStack = ContainerUtil.createLockFreeCopyOnWriteList();
   private Editor myLastEditor;
-  private final Alarm myHideAlarm = new Alarm();
   private boolean myRequestFocusForNextHint;
 
   @Override
@@ -131,7 +130,8 @@ public final class LocalHintManager implements ClientHintManager {
 
   /**
    * Sets whether the next {@code showXxx} call will request the focus to the
-   * newly shown tooltip. Note the flag applies only to the next call, i.e. is
+   * newly shown tooltip.
+   * Note the flag applies only to the next call, i.e., is
    * reset to {@code false} after any {@code showXxx} is called.
    *
    * <p>Note: This method was created to avoid the code churn associated with
@@ -220,7 +220,6 @@ public final class LocalHintManager implements ClientHintManager {
                              boolean reviveOnEditorChange,
                              @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
-    myHideAlarm.cancelAllRequests();
 
     hideHints(HintManager.HIDE_BY_OTHER_HINT, false, false);
 
@@ -245,19 +244,6 @@ public final class LocalHintManager implements ClientHintManager {
     }
     HintManagerImpl.doShowInGivenLocation(hint, editor, p, hintInfo, true);
 
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-    ListenerUtil.addFocusListener(component, new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-
     if (BitUtil.isSet(flags, HintManager.HIDE_BY_MOUSEOVER)) {
       ListenerUtil.addMouseMotionListener(component, new MouseMotionAdapter() {
         @Override
@@ -278,7 +264,6 @@ public final class LocalHintManager implements ClientHintManager {
   @Override
   public void showHint(final @NotNull JComponent component, @NotNull RelativePoint p, int flags, int timeout, @Nullable Runnable onHintHidden) {
     EDT.assertIsEdt();
-    myHideAlarm.cancelAllRequests();
 
     hideHints(HintManager.HIDE_BY_OTHER_HINT, false, false);
 
@@ -294,19 +279,6 @@ public final class LocalHintManager implements ClientHintManager {
 
     final JBPopup popup = builder.createPopup();
     popup.show(p);
-
-    ListenerUtil.addMouseListener(component, new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
-    ListenerUtil.addFocusListener(component, new FocusAdapter() {
-      @Override
-      public void focusGained(FocusEvent e) {
-        myHideAlarm.cancelAllRequests();
-      }
-    });
 
     final HintManagerImpl.HintInfo info = new HintManagerImpl.HintInfo(new LightweightHint(component) {
       @Override
@@ -340,7 +312,7 @@ public final class LocalHintManager implements ClientHintManager {
   }
 
   /**
-   * @return coordinates in layered pane coordinate system.
+   * @return coordinates in a layered pane coordinate system.
    */
   @Override
   public Point getHintPosition(@NotNull LightweightHint hint, @NotNull Editor editor, @HintManager.PositionFlags short constraint) {

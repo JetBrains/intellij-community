@@ -1,11 +1,13 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,6 +25,13 @@ public class AnnotationExprent extends Exprent {
     this.className = className;
     this.parNames = parNames;
     this.parValues = parValues;
+  }
+
+  @Override
+  protected List<Exprent> getAllExprents(List<Exprent> list) {
+    list.addAll(this.parValues);
+
+    return list;
   }
 
   @Override
@@ -96,5 +105,11 @@ public class AnnotationExprent extends Exprent {
     return className.equals(ann.className) &&
            parNames.equals(ann.parNames) &&
            parValues.equals(ann.parValues);
+  }
+  
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, parValues);
+    measureBytecode(values);
   }
 }

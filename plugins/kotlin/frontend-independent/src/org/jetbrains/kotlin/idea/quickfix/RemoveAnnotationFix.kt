@@ -21,9 +21,9 @@ import org.jetbrains.kotlin.psi.KtPropertyAccessor
 class RemoveAnnotationFix(@Nls private val text: String, annotationEntry: KtAnnotationEntry) :
     KotlinPsiOnlyQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
-    override fun getText() = text
+    override fun getText(): String = text
 
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = element
 

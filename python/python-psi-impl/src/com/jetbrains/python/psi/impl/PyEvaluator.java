@@ -128,9 +128,7 @@ public class PyEvaluator {
   private static Object evaluateNumeric(@NotNull PyNumericLiteralExpression expression) {
     if (expression.isIntegerLiteral()) {
       final BigInteger value = expression.getBigIntegerValue();
-      if (value != null) {
-        return fromBigInteger(value);
-      }
+      return fromBigInteger(value);
     }
 
     return null;

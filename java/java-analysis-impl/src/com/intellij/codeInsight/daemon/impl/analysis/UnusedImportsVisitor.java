@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -171,7 +171,7 @@ class UnusedImportsVisitor extends JavaElementVisitor {
     String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
                          JavaAnalysisBundle.message("text.unused.import.in.template");
     InspectionProfile profile = getCurrentProfile(myFile);
-    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.toString(), myFile),
+    TextAttributesKey key = ObjectUtils.notNull(profile.getEditorAttributes(unusedImportKey.getShortName(), myFile),
                                                 JavaHighlightInfoTypes.UNUSED_IMPORT.getAttributesKey());
     HighlightInfoType.HighlightInfoTypeImpl configHighlightType =
       new HighlightInfoType.HighlightInfoTypeImpl(profile.getErrorLevel(unusedImportKey, myFile).getSeverity(), key);

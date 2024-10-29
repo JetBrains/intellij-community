@@ -20,7 +20,6 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.ScrollPaneFactory;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel implements DataProvider, PaletteToolWindowContent {
+public class PalettePanel extends JPanel implements UiDataProvider, PaletteToolWindowContent {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -212,10 +211,7 @@ public class PalettePanel extends JPanel implements DataProvider, PaletteToolWin
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (PlatformCoreDataKeys.FILE_EDITOR.is(dataId) && myDesigner != null) {
-      return myDesigner.getEditor();
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.FILE_EDITOR, myDesigner == null ? null : myDesigner.getEditor());
   }
 }

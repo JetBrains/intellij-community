@@ -18,43 +18,13 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 
 object TransformToJavaUtil {
     fun transformToJavaMemberIfApplicable(declaration: KtNamedDeclaration, packageFqName: FqName, isExtension:Boolean, needStatic: Boolean, targetClass: PsiClass): Boolean {
-        fun convertToJava(targetClass: PsiClass): PsiMember? {
-            val psiFactory = KtPsiFactory(declaration.project)
-
-            psiFactory.createPackageDirectiveIfNeeded(packageFqName)?.let {
-                declaration.containingFile.addBefore(it, null)
-            }
-
-            val adjustedDeclaration = when (declaration) {
-                is KtNamedFunction, is KtProperty -> {
-                    val klass = psiFactory.createClass("class Foo {}")
-                    klass.body!!.add(declaration)
-                    (declaration.replace(klass) as KtClass).body!!.declarations.first()
-                }
-                else -> declaration
-            }
-
-            return when (adjustedDeclaration) {
-                is KtNamedFunction, is KtSecondaryConstructor -> {
-                    createJavaMethod(adjustedDeclaration as KtFunction, targetClass)
-                }
-                is KtProperty -> {
-                    createJavaField(adjustedDeclaration, targetClass)
-                }
-                is KtClass -> {
-                    createJavaClass(adjustedDeclaration, targetClass, getClassKind(adjustedDeclaration))
-                }
-                else -> null
-            }
-        }
-
         if (isExtension) return false
 
         if (!targetClass.canRefactorElement()) return false
 
         val project = declaration.project
 
-        val newJavaMember = convertToJava(targetClass) ?: return false
+        val newJavaMember = convertToJava(declaration, packageFqName, targetClass) ?: return false
 
         val modifierList = newJavaMember.modifierList!!
         if (newJavaMember is PsiMethod || newJavaMember is PsiClass) {
@@ -97,6 +67,35 @@ object TransformToJavaUtil {
             declaration is KtClass && declaration.isEnum() -> org.jetbrains.kotlin.descriptors.ClassKind.ENUM_CLASS
             declaration is KtClass && declaration.isInterface() -> org.jetbrains.kotlin.descriptors.ClassKind.INTERFACE
             else -> org.jetbrains.kotlin.descriptors.ClassKind.CLASS
+        }
+    }
+    fun convertToJava(declaration: KtNamedDeclaration, packageFqName: FqName, targetClass: PsiClass): PsiMember? {
+        val psiFactory = KtPsiFactory(declaration.project)
+
+        psiFactory.createPackageDirectiveIfNeeded(packageFqName)?.let {
+            declaration.containingFile.addBefore(it, null)
+        }
+
+        val adjustedDeclaration = when (declaration) {
+            is KtNamedFunction, is KtProperty -> {
+                val klass = psiFactory.createClass("class Foo {}")
+                klass.body!!.add(declaration)
+                (declaration.replace(klass) as KtClass).body!!.declarations.first()
+            }
+            else -> declaration
+        }
+
+        return when (adjustedDeclaration) {
+            is KtNamedFunction, is KtSecondaryConstructor -> {
+                createJavaMethod(adjustedDeclaration as KtFunction, targetClass)
+            }
+            is KtProperty -> {
+                createJavaField(adjustedDeclaration, targetClass)
+            }
+            is KtClass -> {
+                createJavaClass(adjustedDeclaration, targetClass, getClassKind(adjustedDeclaration))
+            }
+            else -> null
         }
     }
 }

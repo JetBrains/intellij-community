@@ -11,6 +11,7 @@ import com.intellij.refactoring.util.TextOccurrencesUtil
 import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.idea.base.util.quoteIfNeeded
+import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveRenameUsageInfo.Companion.markInternalUsages
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 
@@ -87,17 +88,20 @@ internal val KtNamedDeclaration.needsReferenceUpdate: Boolean
         return when (this) {
             is KtFunction -> !isLocal && !isClassMember
             is KtProperty -> !isLocal && !isClassMember
-            is KtClassOrObject -> true
+            is KtClassLikeDeclaration -> true
             else -> false
         }
     }
 
-internal fun KtDeclarationContainer.findUsages(
+internal fun KtFile.findUsages(
     searchInCommentsAndStrings: Boolean,
     searchForText: Boolean,
     newPkgName: FqName
 ): List<UsageInfo> {
-    return topLevelDeclarationsToUpdate.flatMap { it.findUsages(searchInCommentsAndStrings, searchForText, newPkgName) }
+    markInternalUsages(this, this)
+    return topLevelDeclarationsToUpdate.flatMap { decl ->
+        K2MoveRenameUsageInfo.findExternalUsages(decl) + decl.findNonCodeUsages(searchInCommentsAndStrings, searchForText, newPkgName)
+    }
 }
 
 /**
@@ -154,14 +158,6 @@ private fun KtNamedDeclaration.findNonCodeUsages(
 }
 
 /**
- * Filters out usages that are not updatable, such usages might be needed for conflict checking but don't need to be touched during the
- * retargeting process.
- */
-internal fun List<UsageInfo>.filterUpdatable(movedElements: List<KtNamedDeclaration>) = filter {
-    if (it is K2MoveRenameUsageInfo) it.isUpdatable(movedElements) else true
-}
-
-/**
  * Retargets [usages] to the moved elements stored in [oldToNewMap].
  */
 internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<PsiElement, PsiElement>) {
@@ -172,7 +168,13 @@ internal fun retargetUsagesAfterMove(usages: List<UsageInfo>, oldToNewMap: Map<P
 
 internal fun <T : MoveRenameUsageInfo> List<T>.groupByFile(): Map<PsiFile, List<T>> = groupBy {
     it.element?.containingFile ?: error("Could not find containing file")
-}
+}.toSortedMap(object : Comparator<PsiFile> {
+    // Use a sorted map to get consistent results by the refactoring
+    // This is done to reduce flakiness and make the results reproducible
+    override fun compare(o1: PsiFile?, o2: PsiFile?): Int {
+        return o1?.virtualFile?.path?.compareTo(o2?.virtualFile?.path ?: return -1) ?: -1
+    }
+})
 
 internal fun <T : MoveRenameUsageInfo> Map<PsiFile, List<T>>.sortedByOffset(): Map<PsiFile, List<T>> = mapValues { (_, value) ->
     value.sortedBy { it.element?.textOffset }

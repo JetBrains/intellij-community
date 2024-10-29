@@ -11,7 +11,7 @@ interface BringProcessWindowToForegroundSupport {
     fun getInstance(): BringProcessWindowToForegroundSupport = ApplicationManager.getApplication().service<BringProcessWindowToForegroundSupport>()
   }
 
-  fun bring(pid: Int) : Boolean
+  fun bring(pid: UInt) : Boolean
 }
 
 @ApiStatus.Internal

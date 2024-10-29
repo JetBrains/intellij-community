@@ -196,84 +196,78 @@ final class KeyHashLog<Key> implements Closeable {
   }
 
   private void performCompaction() throws IOException {
+    Int2ObjectMap<IntSet> data = new Int2ObjectOpenHashMap<>();
+    Path oldDataFile = getDataFile();
+
+    AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
     try {
-      Int2ObjectMap<IntSet> data = new Int2ObjectOpenHashMap<>();
-      Path oldDataFile = getDataFile();
+      oldMapping.processAll((offset, key) -> {
+        int inputId = key[1];
+        int keyHash = key[0];
+        int absInputId = Math.abs(inputId);
 
-      AppendableStorageBackedByResizableMappedFile<int[]> oldMapping = openMapping(oldDataFile, 0);
+        if (inputId > 0) {
+          data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(absInputId);
+        }
+        else {
+          IntSet associatedInputIds = data.get(keyHash);
+          if (associatedInputIds != null) {
+            associatedInputIds.remove(absInputId);
+          }
+        }
+        return true;
+      });
+    }
+    finally {
+      oldMapping.lockRead();
       try {
-        oldMapping.processAll((offset, key) -> {
-          int inputId = key[1];
-          int keyHash = key[0];
-          int absInputId = Math.abs(inputId);
-
-          if (inputId > 0) {
-            data.computeIfAbsent(keyHash, __ -> new IntOpenHashSet()).add(absInputId);
-          }
-          else {
-            IntSet associatedInputIds = data.get(keyHash);
-            if (associatedInputIds != null) {
-              associatedInputIds.remove(absInputId);
-            }
-          }
-          return true;
-        });
+        oldMapping.close();
       }
       finally {
-        oldMapping.lockRead();
-        try {
-          oldMapping.close();
-        }
-        finally {
-          oldMapping.unlockRead();
-        }
-      }
-
-      String dataFileName = oldDataFile.getFileName().toString();
-      String newDataFileName = "new." + dataFileName;
-      Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
-      AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
-
-      newMapping.lockWrite();
-      try {
-        try {
-          for (Int2ObjectMap.Entry<IntSet> entry : data.int2ObjectEntrySet()) {
-            int keyHash = entry.getIntKey();
-            IntIterator inputIdIterator = entry.getValue().iterator();
-            while (inputIdIterator.hasNext()) {
-              int inputId = inputIdIterator.nextInt();
-              newMapping.append(new int[]{keyHash, inputId});
-            }
-          }
-        }
-        finally {
-          newMapping.close();
-        }
-      }
-      finally {
-        newMapping.unlockWrite();
-      }
-
-      IOUtil.deleteAllFilesStartingWith(oldDataFile);
-
-      try (DirectoryStream<Path> paths = Files.newDirectoryStream(newDataFile.getParent())) {
-        for (Path path : paths) {
-          String name = path.getFileName().toString();
-          if (name.startsWith(newDataFileName)) {
-            FileUtil.rename(path.toFile(), dataFileName + name.substring(newDataFileName.length()));
-          }
-        }
-      }
-
-      try {
-        Files.delete(getCompactionMarker());
-      }
-      catch (IOException ignored) {
+        oldMapping.unlockRead();
       }
     }
-    catch (ProcessCanceledException e) {
-      LOG.error(e);
-      throw e;
+
+    String dataFileName = oldDataFile.getFileName().toString();
+    String newDataFileName = "new." + dataFileName;
+    Path newDataFile = oldDataFile.resolveSibling(newDataFileName);
+    AppendableStorageBackedByResizableMappedFile<int[]> newMapping = openMapping(newDataFile, 32 * 2 * data.size());
+
+    newMapping.lockWrite();
+    try {
+      try {
+        for (Int2ObjectMap.Entry<IntSet> entry : data.int2ObjectEntrySet()) {
+          int keyHash = entry.getIntKey();
+          IntIterator inputIdIterator = entry.getValue().iterator();
+          while (inputIdIterator.hasNext()) {
+            int inputId = inputIdIterator.nextInt();
+            newMapping.append(new int[]{keyHash, inputId});
+          }
+        }
+      }
+      finally {
+        newMapping.close();
+      }
+    }
+    finally {
+      newMapping.unlockWrite();
+    }
+
+    IOUtil.deleteAllFilesStartingWith(oldDataFile);
+
+    try (DirectoryStream<Path> paths = Files.newDirectoryStream(newDataFile.getParent())) {
+      for (Path path : paths) {
+        String name = path.getFileName().toString();
+        if (name.startsWith(newDataFileName)) {
+          FileUtil.rename(path.toFile(), dataFileName + name.substring(newDataFileName.length()));
+        }
+      }
+    }
+
+    try {
+      Files.delete(getCompactionMarker());
+    }
+    catch (IOException ignored) {
     }
   }
 

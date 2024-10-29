@@ -5,8 +5,6 @@ import com.intellij.codeInsight.ExternalAnnotationsArtifactsResolver
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocation
 import com.intellij.codeInsight.externalAnnotation.location.AnnotationsLocationSearcher
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.libraries.Library
@@ -15,19 +13,13 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryBrid
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.project.MavenProjectChanges
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.tasks.TasksBundle
 
 @ApiStatus.Internal
-private class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.maven.plugins", "maven-compiler-plugin"),
-                                             MavenWorkspaceConfigurator {
+private class MavenExternalAnnotationsConfigurator : MavenWorkspaceConfigurator {
 
   private val myProcessedLibraries = hashSetOf<MavenArtifact>()
-
-  override fun processChangedModulesOnly(): Boolean = false
-
-  override fun isMigratedToConfigurator(): Boolean = true
 
   override fun afterModelApplied(context: MavenWorkspaceConfigurator.AppliedModelContext) {
     if (!shouldRun(context.project)) return
@@ -40,16 +32,6 @@ private class MavenExternalAnnotationsConfigurator : MavenImporter("org.apache.m
       .associateBy { it.name }
 
     doConfigure(context.project, projectsWithChanges) { libraryName -> libraryNameMap[libraryName] }
-  }
-
-  override fun postProcess(module: Module,
-                           mavenProject: MavenProject,
-                           changes: MavenProjectChanges,
-                           modifiableModelsProvider: IdeModifiableModelsProvider) {
-    if (!shouldRun(module.project)) return
-    doConfigure(module.project, sequenceOf(mavenProject)) { libraryName ->
-      modifiableModelsProvider.getLibraryByName(libraryName)
-    }
   }
 
   private fun shouldRun(project: Project): Boolean {

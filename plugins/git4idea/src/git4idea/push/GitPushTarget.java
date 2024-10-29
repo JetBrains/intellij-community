@@ -20,6 +20,7 @@ import java.text.ParseException;
 import java.util.Collection;
 import java.util.List;
 
+import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 import static git4idea.GitUtil.findRemoteBranch;
 import static git4idea.GitUtil.getDefaultOrFirstRemote;
@@ -31,15 +32,28 @@ public class GitPushTarget implements PushTarget {
   private final @NotNull GitRemoteBranch myRemoteBranch;
   private final boolean myIsNewBranchCreated;
   private final boolean myPushingToSpecialRef;
+  private final @Nullable GitPushTargetType myTargetType;
+
+  private boolean shouldSetNewUpstream;
 
   public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated) {
-    this(remoteBranch, isNewBranchCreated, false);
+    this(remoteBranch, isNewBranchCreated, false, null);
   }
 
-  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch, boolean isNewBranchCreated, boolean isPushingToSpecialRef) {
+  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch,
+                       boolean isNewBranchCreated,
+                       @NotNull GitPushTargetType targetType) {
+    this(remoteBranch, isNewBranchCreated, false, targetType);
+  }
+
+  public GitPushTarget(@NotNull GitRemoteBranch remoteBranch,
+                       boolean isNewBranchCreated,
+                       boolean isPushingToSpecialRef,
+                       @Nullable GitPushTargetType targetType) {
     myRemoteBranch = remoteBranch;
     myIsNewBranchCreated = isNewBranchCreated;
     myPushingToSpecialRef = isPushingToSpecialRef;
+    myTargetType = targetType;
   }
 
   public @NotNull GitRemoteBranch getBranch() {
@@ -64,6 +78,22 @@ public class GitPushTarget implements PushTarget {
     return myPushingToSpecialRef;
   }
 
+  public void shouldSetNewUpstream(boolean value) {
+    shouldSetNewUpstream = value;
+  }
+
+  public boolean shouldSetUpstream(@NotNull GitPushSource pushSource, @NotNull GitRepository repository) {
+    GitLocalBranch sourceBranch = pushSource.getBranch();
+
+    return sourceBranch != null &&
+           pushSource.isBranchRef() &&
+           ((isNewBranchCreated() && !branchTrackingInfoIsSet(repository, sourceBranch)) || shouldSetNewUpstream);
+  }
+
+  public @Nullable GitPushTargetType getTargetType() {
+    return myTargetType;
+  }
+
   public static @NotNull GitPushTarget parse(@NotNull GitRepository repository, @Nullable String remoteName, @NotNull String branchName) throws
                                                                                                                         ParseException {
     if (remoteName == null) {
@@ -82,10 +112,10 @@ public class GitPushTarget implements PushTarget {
 
     GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, branchName);
     if (existingRemoteBranch != null) {
-      return new GitPushTarget(existingRemoteBranch, false);
+      return new GitPushTarget(existingRemoteBranch, false, GitPushTargetType.CUSTOM);
     }
     GitRemoteBranch rb = new GitStandardRemoteBranch(remote, branchName);
-    return new GitPushTarget(rb, true);
+    return new GitPushTarget(rb, true, GitPushTargetType.CUSTOM);
   }
 
   static @Nullable GitRemote findRemote(@NotNull Collection<GitRemote> remotes, final @NotNull String candidate) {
@@ -101,19 +131,25 @@ public class GitPushTarget implements PushTarget {
     List<String> specs = remote.getPushRefSpecs();
     if (specs.isEmpty()) return null;
 
-    String targetRef = GitPushSpecParser.getTargetRef(repository, sourceBranch.getName(), specs);
+    String targetRef = GitPushSpecParser.getTargetRef(repository, sourceBranch, specs);
     if (targetRef == null) return null;
 
     String remotePrefix = REFS_REMOTES_PREFIX + remote.getName() + "/";
+    if (targetRef.startsWith(REFS_HEADS_PREFIX)) {
+      targetRef = targetRef.substring(REFS_HEADS_PREFIX.length());
+      GitRemoteBranch remoteBranch = GitUtil.findOrCreateRemoteBranch(repository, remote, targetRef);
+      boolean existingBranch = repository.getBranches().getRemoteBranches().contains(remoteBranch);
+      return new GitPushTarget(remoteBranch, !existingBranch, GitPushTargetType.PUSH_SPEC);
+    }
     if (targetRef.startsWith(remotePrefix)) {
       targetRef = targetRef.substring(remotePrefix.length());
       GitRemoteBranch remoteBranch = GitUtil.findOrCreateRemoteBranch(repository, remote, targetRef);
       boolean existingBranch = repository.getBranches().getRemoteBranches().contains(remoteBranch);
-      return new GitPushTarget(remoteBranch, !existingBranch, false);
+      return new GitPushTarget(remoteBranch, !existingBranch, GitPushTargetType.PUSH_SPEC);
     }
     else {
       GitRemoteBranch remoteBranch = new GitSpecialRefRemoteBranch(targetRef, remote);
-      return new GitPushTarget(remoteBranch, true, true);
+      return new GitPushTarget(remoteBranch, true, true, GitPushTargetType.PUSH_SPEC);
     }
   }
 
@@ -124,6 +160,10 @@ public class GitPushTarget implements PushTarget {
     return getDefaultOrFirstRemote(repository.getRemotes());
   }
 
+  private static boolean branchTrackingInfoIsSet(@NotNull GitRepository repository, final @NotNull GitLocalBranch source) {
+    return ContainerUtil.exists(repository.getBranchTrackInfos(), info -> info.getLocalBranch().equals(source));
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -131,6 +171,7 @@ public class GitPushTarget implements PushTarget {
 
     if (myIsNewBranchCreated != target.myIsNewBranchCreated) return false;
     if (!myRemoteBranch.equals(target.myRemoteBranch)) return false;
+    if (shouldSetNewUpstream != target.shouldSetNewUpstream) return false;
 
     return true;
   }
@@ -139,6 +180,7 @@ public class GitPushTarget implements PushTarget {
   public int hashCode() {
     int result = myRemoteBranch.hashCode();
     result = 31 * result + (myIsNewBranchCreated ? 1 : 0);
+    result = 31 * result + (shouldSetNewUpstream ? 1 : 0);
     return result;
   }
 

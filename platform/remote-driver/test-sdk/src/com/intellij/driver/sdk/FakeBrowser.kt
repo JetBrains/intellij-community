@@ -11,6 +11,7 @@ fun Driver.replaceIdeBrowser(): FakeBrowser {
 @Remote("com.jetbrains.performancePlugin.FakeBrowser", plugin = "com.jetbrains.performancePlugin")
 interface FakeBrowser {
   fun getLatestUrl(): String?
+  fun open(url: String)
 }
 
 @Remote("com.jetbrains.performancePlugin.commands.ReplaceBrowser", plugin = "com.jetbrains.performancePlugin")

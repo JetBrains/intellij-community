@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
-import com.intellij.openapi.externalSystem.util.CompositeRunnable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
@@ -37,6 +36,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -143,6 +143,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     return myProject;
   }
 
+  @ApiStatus.Internal
   public ExternalSystemShortcutsManager getShortcutsManager() {
     return myShortcutsManager;
   }
@@ -275,6 +276,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     ExternalSystemUtil.scheduleExternalViewStructureUpdate(myProject, projectSystemId);
   }
 
+  @ApiStatus.Internal
   @Override
   @RequiresReadLock
   public @NotNull ExternalProjectsState getState() {
@@ -289,6 +291,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     return myState;
   }
 
+  @ApiStatus.Internal
   public @NotNull ExternalProjectsStateProvider getStateProvider() {
     return new ExternalProjectsStateProvider() {
       @Override
@@ -335,6 +338,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     ExternalSystemKeymapExtension.updateActions(myProject, ExternalSystemApiUtil.findAllRecursively(dataNode, TASK));
   }
 
+  @ApiStatus.Internal
   @Override
   public void loadState(@NotNull ExternalProjectsState state) {
     myState = state;
@@ -354,6 +358,7 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     myRunManagerListener.detach();
   }
 
+  @ApiStatus.Internal
   public interface ExternalProjectsStateProvider {
     class TasksActivation {
       public final ProjectSystemId systemId;
@@ -374,5 +379,24 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
     TaskActivationState getTasksActivation(@NotNull ProjectSystemId systemId, @NotNull String projectPath);
 
     Map<String, TaskActivationState> getProjectsTasksActivationMap(@NotNull ProjectSystemId systemId);
+  }
+
+  private static class CompositeRunnable implements Runnable {
+    private List<Runnable> list = new SmartList<>();
+
+    public boolean add(Runnable runnable) {
+      return list.add(runnable);
+    }
+
+    public void clear() {
+      list = new SmartList<>();
+    }
+
+    @Override
+    public void run() {
+      for (Runnable runnable : list) {
+        runnable.run();
+      }
+    }
   }
 }

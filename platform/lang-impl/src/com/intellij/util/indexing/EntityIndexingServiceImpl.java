@@ -4,6 +4,7 @@ package com.intellij.util.indexing;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
@@ -51,14 +52,18 @@ import static com.intellij.util.indexing.UnindexedFilesScannerStartupKt.invalida
 final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   private static final Logger LOG = Logger.getInstance(EntityIndexingServiceImpl.class);
   private static final RootChangesLogger ROOT_CHANGES_LOGGER = new RootChangesLogger();
-  @NotNull
-  private final CustomEntitiesCausingReindexTracker tracker = new CustomEntitiesCausingReindexTracker();
+  private final @NotNull CustomEntitiesCausingReindexTracker tracker = new CustomEntitiesCausingReindexTracker();
 
   @Override
   public void indexChanges(@NotNull Project project, @NotNull List<? extends RootsChangeRescanningInfo> changes) {
     if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) return;
     if (LightEdit.owns(project)) return;
     if (invalidateProjectFilterIfFirstScanningNotRequested(project)) return;
+
+    if (ModalityState.defaultModalityState() == ModalityState.any()) {
+      LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (130820241337)");
+    }
+
     if (changes.isEmpty()) {
       runFullRescan(project, "Project roots have changed");
     }
@@ -66,7 +71,12 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
       doIndexChanges(project, changes);
     }
     else {
-      ApplicationManager.getApplication().executeOnPooledThread(() -> doIndexChanges(project, changes));
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        if (ModalityState.defaultModalityState() == ModalityState.any()) {
+          LOG.error("Unexpected modality: should not be ANY. Replace with NON_MODAL (140820241138)");
+        }
+        doIndexChanges(project, changes);
+      });
     }
   }
 
@@ -166,9 +176,8 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @TestOnly
-  @NotNull
-  static List<IndexableFilesIterator> getIterators(@NotNull Project project,
-                                                   @NotNull Collection<? extends EntityChange<?>> events) {
+  static @NotNull List<IndexableFilesIterator> getIterators(@NotNull Project project,
+                                                            @NotNull Collection<? extends EntityChange<?>> events) {
     EntityStorage entityStorage = WorkspaceModel.getInstance(project).getCurrentSnapshot();
     List<IndexableIteratorBuilder> result = getBuildersOnWorkspaceChange(project, events, entityStorage);
     return IndexableIteratorBuilders.INSTANCE.instantiateBuilders(result, project, entityStorage);
@@ -185,10 +194,9 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     }
   }
 
-  @NotNull
-  private static List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
-                                                                             @NotNull Collection<? extends EntityChange<?>> events,
-                                                                             @NotNull EntityStorage entityStorage) {
+  private static @NotNull List<IndexableIteratorBuilder> getBuildersOnWorkspaceChange(@NotNull Project project,
+                                                                                      @NotNull Collection<? extends EntityChange<?>> events,
+                                                                                      @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     WorkspaceIndexingRootsBuilder descriptionsBuilder = new WorkspaceIndexingRootsBuilder(false);
     for (EntityChange<? extends WorkspaceEntity> change : events) {
@@ -363,10 +371,9 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     return builders;
   }
 
-  @NotNull
-  private static Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuiltRescanningInfo info,
-                                                                                                 @NotNull Project project,
-                                                                                                 @NotNull EntityStorage entityStorage) {
+  private static @NotNull Collection<? extends IndexableIteratorBuilder> getBuildersOnBuildableChangeInfo(@NotNull BuiltRescanningInfo info,
+                                                                                                          @NotNull Project project,
+                                                                                                          @NotNull EntityStorage entityStorage) {
     List<IndexableIteratorBuilder> builders = new SmartList<>();
     IndexableIteratorBuilders instance = IndexableIteratorBuilders.INSTANCE;
     for (ModuleId moduleId : info.modules()) {
@@ -386,8 +393,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   @Override
-  @NotNull
-  public BuildableRootsChangeRescanningInfo createBuildableInfoBuilder() {
+  public @NotNull BuildableRootsChangeRescanningInfo createBuildableInfoBuilder() {
     return new BuildableRootsChangeRescanningInfoImpl();
   }
 
@@ -396,9 +402,8 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
     return new WorkspaceEventRescanningInfo(changes);
   }
 
-  @NotNull
   @Override
-  public RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityPointer<WorkspaceEntity>> pointers) {
+  public @NotNull RootsChangeRescanningInfo createWorkspaceEntitiesRootsChangedInfo(@NotNull List<EntityPointer<WorkspaceEntity>> pointers) {
     return new WorkspaceEntitiesRootsChangedRescanningInfo(pointers);
   }
 
@@ -419,8 +424,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   private static final class WorkspaceEventRescanningInfo implements RootsChangeRescanningInfo {
-    @NotNull
-    private final List<EntityChange<?>> events;
+    private final @NotNull List<EntityChange<?>> events;
 
     private WorkspaceEventRescanningInfo(@NotNull List<EntityChange<?>> events) {
       this.events = events;
@@ -428,8 +432,7 @@ final class EntityIndexingServiceImpl implements EntityIndexingServiceEx {
   }
 
   private static final class WorkspaceEntitiesRootsChangedRescanningInfo implements RootsChangeRescanningInfo {
-    @NotNull
-    private final List<EntityPointer<WorkspaceEntity>> pointers;
+    private final @NotNull List<EntityPointer<WorkspaceEntity>> pointers;
 
     private WorkspaceEntitiesRootsChangedRescanningInfo(@NotNull List<EntityPointer<WorkspaceEntity>> entities) {
       this.pointers = entities;

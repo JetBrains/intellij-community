@@ -29,7 +29,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -134,7 +133,7 @@ public final class CachedNumberConstructorCallInspection extends BaseInspection 
       if (!cachedNumberTypes.contains(canonicalText)) {
         return;
       }
-      final PsiClass aClass = ClassUtils.getContainingClass(expression);
+      final PsiClass aClass = PsiUtil.getContainingClass(expression);
       if (aClass != null) {
         String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName != null && cachedNumberTypes.contains(qualifiedName)) {

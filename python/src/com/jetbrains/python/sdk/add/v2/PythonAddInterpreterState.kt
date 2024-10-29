@@ -8,16 +8,14 @@ import com.intellij.openapi.projectRoots.Sdk
 import kotlinx.coroutines.CoroutineScope
 
 class PythonAddInterpreterState(
-  val propertyGraph: PropertyGraph,
+  val propertyGraph: PropertyGraph, // todo move to presenter
   val projectPath: ObservableProperty<String>,
   val scope: CoroutineScope,
-  val basePythonSdks: ObservableMutableProperty<List<Sdk>>,
-  val allExistingSdks: ObservableMutableProperty<List<Sdk>>,
-  val installableSdks: ObservableMutableProperty<List<Sdk>>,
-  val selectedVenv: ObservableMutableProperty<Sdk?>,
+  // todo replace with flow, local properties for every creator
+  val allExistingSdks: ObservableMutableProperty<List<Sdk>>, // todo merge with allSdks, replace with flow and local properties
+  val installableSdks: ObservableMutableProperty<List<Sdk>>, // todo not needed
   val condaExecutable: ObservableMutableProperty<String>,
 ) {
   internal val allSdks: ObservableMutableProperty<List<Sdk>> = propertyGraph.property(initial = allExistingSdks.get())
 
-  val selectedVenvPath: ObservableMutableProperty<String?> = selectedVenv.transformToHomePathProperty(allSdks)
 }

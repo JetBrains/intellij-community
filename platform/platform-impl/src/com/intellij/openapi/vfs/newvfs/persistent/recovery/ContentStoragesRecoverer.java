@@ -2,7 +2,10 @@
 package com.intellij.openapi.vfs.newvfs.persistent.recovery;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.newvfs.persistent.*;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSLoader;
+import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSRecordsStorage;
+import com.intellij.openapi.vfs.newvfs.persistent.VFSInitException;
 import com.intellij.util.io.storage.VFSContentStorage;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,8 +60,6 @@ public final class ContentStoragesRecoverer implements VFSRecoverer {
         loader.setContentsStorage(emptyContentStorage);
 
         cleanAllContentIds(records);
-        // FIXME MAYBE VfsLog recovery related: we don't place a special event in VfsLog about content storage being cleared.
-        //  Clearing all references to old contents from records should suffice.
 
         //inform others (LocalHistory) that old contentIds are no longer valid:
         loader.contentIdsInvalidated(true);

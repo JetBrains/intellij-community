@@ -1,15 +1,21 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.jdk;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestCase {
   @Override
@@ -38,6 +44,22 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
   }
 
   public void testUnqualifiedYield() { doTest(); }
+
+  public void testQualifiedYieldWithUnexpectedToken() {
+    withLevel(LanguageLevel.JDK_1_8, () -> {
+      myFixture.configureByFile(getTestName(false) + ".java");
+      List<HighlightInfo> list = ContainerUtil.filter(myFixture.doHighlighting(HighlightSeverity.WARNING), it -> it.getSeverity().equals(HighlightSeverity.WARNING));
+      assertEquals(1, list.size());
+      HighlightInfo info = ContainerUtil.getOnlyItem(list);
+      assertEquals("yield", info.getText());
+      assertEquals("Unqualified call to 'yield' method is not supported in releases since Java 14", info.getDescription());
+      assertEquals(60, info.getStartOffset());
+      assertEquals(65, info.getEndOffset());
+      assertFalse(info.findRegisteredQuickFix((descriptor, textRange) -> {
+        return descriptor.getAction().getFamilyName().equals(InspectionGadgetsBundle.message("qualify.call.fix.family.name"));
+      }));
+    });
+  }
 
   public void testUnderscore() { doTest(); }
 

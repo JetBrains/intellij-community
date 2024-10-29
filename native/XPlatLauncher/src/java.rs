@@ -169,7 +169,8 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     let (jvm_init_args, jni_options) = get_jvm_init_args(vm_options)?;
 
     debug!("[JVM] Creating JVM");
-    *HOOK_MESSAGES.lock().unwrap() = Some(Vec::new());
+    *HOOK_MESSAGES.lock()
+        .map_err(|x| anyhow!("failed to acquire HOOK_MESSAGES mutex {x:?}"))? = Some(Vec::new());
     let create_jvm_result = unsafe {
         create_jvm_call(
             &mut java_vm as *mut *mut jni::sys::JavaVM,
@@ -181,11 +182,15 @@ fn load_and_start_jvm(jre_home: &Path, vm_options: Vec<String>) -> Result<JNIEnv
     release_jvm_init_args(jni_options);
 
     if create_jvm_result != jni::sys::JNI_OK {
-        let text = HOOK_MESSAGES.lock().unwrap().as_ref().unwrap().join("");
+        let text = HOOK_MESSAGES.lock()
+            .map_err(|x| anyhow!("failed to acquire HOOK_MESSAGES mutex {x:?}"))?
+            .as_ref()
+            .context("failed to get as_ref from HOOK_MESSAGES.lock()")?.join("");
         bail!("{}", if text.is_empty() { format!("Unknown error (JNI_CreateJavaVM: {})", create_jvm_result) } else { text });
     }
 
-    *HOOK_MESSAGES.lock().unwrap() = None;
+    *HOOK_MESSAGES.lock()
+        .map_err(|x| anyhow!("failed to acquire HOOK_MESSAGES mutex {x:?}"))? = None;
 
     let jni_env = unsafe { JNIEnv::from_raw(jni_env) }?;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -17,13 +17,16 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.lang.documentation.ide.impl.DocumentationPopupListener;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IncompleteDependenciesService;
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +39,11 @@ import static com.intellij.codeInsight.completion.CompletionData.LOOKUP_ELEMENT_
 import static com.intellij.codeInsight.lookup.LookupElement.LOOKUP_ELEMENT_SHOW_TIMESTAMP_MILLIS;
 import static com.intellij.codeInsight.lookup.impl.LookupTypedHandler.CANCELLATION_CHAR;
 
+@ApiStatus.Internal
 public final class LookupUsageTracker extends CounterUsagesCollector {
   public static final String FINISHED_EVENT_ID = "finished";
   public static final String GROUP_ID = "completion";
-  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 31);
+  public static final EventLogGroup GROUP = new EventLogGroup(GROUP_ID, 32);
   private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", FileTypeSchemaValidator.class);
   private static final BooleanEventField ALPHABETICALLY = EventFields.Boolean("alphabetically");
   private static final EnumEventField<EditorKind> EDITOR_KIND = EventFields.Enum("editor_kind", EditorKind.class);
@@ -206,7 +210,10 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
 
     private void triggerLookupUsed(@NotNull FinishType finishType, @Nullable LookupElement currentItem,
                                    char completionChar) {
-      final List<EventPair<?>> data = getCommonUsageInfo(finishType, currentItem, completionChar);
+      final List<EventPair<?>> data = WriteIntentReadAction.compute(
+        //maybe readaction
+        (Computable<List<EventPair<?>>>)() -> getCommonUsageInfo(finishType, currentItem, completionChar)
+      );
 
       final List<EventPair<?>> additionalData = new ArrayList<>();
       LookupUsageDescriptor.EP_NAME.forEachExtensionSafe(usageDescriptor -> {
@@ -295,8 +302,7 @@ public final class LookupUsageTracker extends CounterUsagesCollector {
       return data;
     }
 
-    @Nullable
-    private static Language getLanguageAtCaret(@NotNull LookupImpl lookup) {
+    private static @Nullable Language getLanguageAtCaret(@NotNull LookupImpl lookup) {
       PsiFile psiFile = lookup.getPsiFile();
       if (psiFile != null) {
         return PsiUtilCore.getLanguageAtOffset(psiFile, lookup.getEditor().getCaretModel().getOffset());

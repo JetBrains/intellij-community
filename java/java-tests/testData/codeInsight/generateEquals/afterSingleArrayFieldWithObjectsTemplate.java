@@ -6,7 +6,6 @@ class X {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final X x = (X) o;
         return Objects.deepEquals(s, x.s);

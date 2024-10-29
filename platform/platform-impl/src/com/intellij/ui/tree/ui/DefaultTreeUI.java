@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui;
 
 import com.intellij.ide.ui.UISettings;
@@ -11,8 +11,8 @@ import com.intellij.ui.*;
 import com.intellij.ui.hover.TreeHoverListener;
 import com.intellij.ui.render.RenderingHelper;
 import com.intellij.ui.render.RenderingUtil;
-import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
+import com.intellij.ui.treeStructure.BgtAwareTreeModel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.TreeUiBulkExpandCollapseSupport;
 import com.intellij.util.ObjectUtils;
@@ -57,7 +57,6 @@ import static com.intellij.util.containers.ContainerUtil.createWeakSet;
 
 @DirtyUI
 public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollapseSupport {
-
   @ApiStatus.Internal
   public static final Key<Boolean> LARGE_MODEL_ALLOWED = Key.create("allows to use large model (only for synchronous tree models)");
   public static final Key<Boolean> AUTO_EXPAND_ALLOWED = Key.create("allows to expand a single child node automatically in tests");
@@ -500,11 +499,11 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (treeState instanceof DefaultTreeLayoutCache cache) {
       // If the cache decided to invalidate sizes, we need to propagate it here,
       // so super() will query the cache again.
-      if (!cache.isCachedSizeValid$intellij_platform_ide_impl()) {
+      if (!cache.isCachedSizeValid) {
         validCachedPreferredSize = false;
       }
       var result = super.getPreferredSize(c, checkConsistency);
-      cache.setCachedSizeValid$intellij_platform_ide_impl(true);
+      cache.isCachedSizeValid = true;
       return result;
     }
     else {
@@ -602,7 +601,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
 
   @Override
   protected void setRootVisible(boolean newValue) {
-    if (treeModel instanceof AsyncTreeModel) {
+    if (treeModel instanceof BgtAwareTreeModel) {
       // this method must be called on EDT to be consistent with ATM,
       // because it modifies a list of visible nodes in the layout cache
       EdtInvocationManager.invokeLaterIfNeeded(() -> super.setRootVisible(newValue));
@@ -720,7 +719,7 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
         JTree tree = getTree();
         if (!shouldAutoExpand(tree, path)) return;
         TreeModel model = tree.getModel();
-        if (model instanceof AsyncTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
+        if (model instanceof BgtAwareTreeModel && 1 == model.getChildCount(path.getLastPathComponent())) {
           int pathCount = 1 + path.getPathCount();
           for (int i = 0; i <= oldRowCount; i++) {
             TreePath row = getPathForRow(i);
@@ -799,10 +798,10 @@ public class DefaultTreeUI extends BasicTreeUI implements TreeUiBulkExpandCollap
     if (!shouldAutoExpand(tree, row.getParentPath())) {
       return;
     }
-    if (tree.getModel() instanceof AsyncTreeModel asyncTreeModel) {
+    if (tree.getModel() instanceof BgtAwareTreeModel) {
       Object node = row.getLastPathComponent();
       if (isAutoExpandAllowed(tree, node)) {
-        asyncTreeModel.onValidThread(() -> tree.expandPath(row));
+        EdtInvocationManager.invokeLaterIfNeeded(() -> tree.expandPath(row));
       }
     }
   }

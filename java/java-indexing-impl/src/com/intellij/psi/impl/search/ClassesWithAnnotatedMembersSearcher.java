@@ -23,14 +23,14 @@ public final class ClassesWithAnnotatedMembersSearcher extends QueryExecutorBase
                            @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
     for (QueryExecutor<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> executor : ClassesWithAnnotatedMembersSearch.EP_NAME.getExtensionList()) {
-      if (executor instanceof ScopedQueryExecutor) {
-        scope = scope.intersectWith(GlobalSearchScope.notScope(((ScopedQueryExecutor) executor).getScope(queryParameters)));
+      if (executor instanceof ScopedQueryExecutor<PsiClass, ClassesWithAnnotatedMembersSearch.Parameters> scopedQueryExecutor) {
+        scope = scope.intersectWith(GlobalSearchScope.notScope(scopedQueryExecutor.getScope(queryParameters)));
       }
     }
 
     final Set<PsiClass> processed = new HashSet<>();
     AnnotatedElementsSearch.searchPsiMembers(queryParameters.getAnnotationClass(), scope).forEach(member -> {
-      PsiClass psiClass = ReadAction.compute(() -> member instanceof PsiClass ? (PsiClass)member : member.getContainingClass());
+      PsiClass psiClass = ReadAction.compute(() -> member instanceof PsiClass cls ? cls : member.getContainingClass());
 
       if (psiClass != null && processed.add(psiClass)) {
         consumer.process(psiClass);

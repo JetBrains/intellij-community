@@ -15,7 +15,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.IndexingTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -95,7 +95,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-     PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+     Benchmark.newBenchmark(getTestName(false), () -> {
        PsiElement[] impls = getTargets(file);
        assertEquals(3, impls.length);
      }).start();
@@ -126,7 +126,7 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     final PsiFile file = myFixture.addFileToProject("Foo.java", fileText);
     myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
 
-    PerformanceTestUtil.newPerformanceTest(getTestName(false), () -> {
+    Benchmark.newBenchmark(getTestName(false), () -> {
       PsiElement[] impls = getTargets(file);
       assertEquals(3, impls.length);
     }).start();

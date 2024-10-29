@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -19,7 +19,6 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Path
 
 @Suppress("DEPRECATION", "DeprecatedCallableAddReplaceWith")
 @Deprecated("Use com.intellij.ide.impl.trustedProjects.TrustedProjectsDialog instead")
@@ -29,9 +28,15 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-): Boolean = TrustedProjectsDialog.confirmLoadingUntrustedProject(
-  project, title, message, trustButtonText, distrustButtonText
-)
+): Boolean {
+  return TrustedProjectsDialog.confirmLoadingUntrustedProject(
+    project = project,
+    title = title,
+    message = message,
+    trustButtonText = trustButtonText,
+    distrustButtonText = distrustButtonText
+  )
+}
 
 @ApiStatus.Internal
 enum class OpenUntrustedProjectChoice {
@@ -99,9 +104,13 @@ interface TrustStateListener {
   }
 }
 
+/**
+ * Used in MPS
+ */
+@ApiStatus.Internal
 const val TRUSTED_PROJECTS_HELP_TOPIC: String = "Project_security"
 
-class ShowTrustProjectDialogAction : DumbAwareAction() {
+private class ShowTrustProjectDialogAction : DumbAwareAction() {
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 
   override fun update(e: AnActionEvent) {
@@ -111,12 +120,13 @@ class ShowTrustProjectDialogAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project!!
-    if (confirmLoadingUntrustedProject(
-        project,
-        IdeBundle.message("untrusted.project.general.dialog.title"),
-        IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
-        IdeBundle.message("untrusted.project.dialog.trust.button"),
-        IdeBundle.message("untrusted.project.dialog.distrust.button"))
+    if (TrustedProjectsDialog.confirmLoadingUntrustedProject(
+        project = project,
+        title = IdeBundle.message("untrusted.project.general.dialog.title"),
+        message = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+        trustButtonText = IdeBundle.message("untrusted.project.dialog.trust.button"),
+        distrustButtonText = IdeBundle.message("untrusted.project.dialog.distrust.button")
+      )
     ) {
       ApplicationManager.getApplication().messageBus
         .syncPublisher(TrustedProjectsListener.TOPIC)

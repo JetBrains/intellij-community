@@ -36,7 +36,7 @@ fun <VM : DiffMapped> DiffViewerBase.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   when (this) {
     is SimpleOnesideDiffViewer -> controlInlaysIn(cs, vmsFlow, vmKeyExtractor, rendererFactory)
@@ -52,7 +52,7 @@ private fun <VM : DiffMapped> SimpleOnesideDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
   val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
@@ -71,7 +71,7 @@ private fun <VM : DiffMapped> UnifiedDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
   val vmsForEditor = combine(viewerReady, vmsFlow) { ready, vms ->
@@ -90,7 +90,7 @@ private fun <VM : DiffMapped> TwosideTextDiffViewer.controlInlaysIn(
   cs: CoroutineScope,
   vmsFlow: Flow<Collection<VM>>,
   vmKeyExtractor: (VM) -> Any,
-  rendererFactory: CodeReviewRendererFactory<VM>
+  rendererFactory: CodeReviewRendererFactory<VM>,
 ) {
   val viewerReady = viewerReadyFlow()
 
@@ -131,7 +131,7 @@ fun <M : CodeReviewEditorModel<I>, I : CodeReviewInlayModel> DiffViewerBase.cont
   cs: CoroutineScope,
   modelFactory: CoroutineScope.(locationToLine: (DiffLineLocation) -> Int?, lineToLocation: (Int) -> DiffLineLocation?) -> M,
   modelKey: Key<M>,
-  rendererFactory: CodeReviewRendererFactory<I>
+  rendererFactory: CodeReviewRendererFactory<I>,
 ) {
   cs.launchNow { showCodeReview(modelFactory, modelKey, rendererFactory) }
 }
@@ -249,11 +249,8 @@ private suspend fun <I, M> EditorEx.showCodeReview(model: M, modelKey: Key<M>?, 
   }
 }
 
-private fun <V : DiffViewerBase> V.viewerReadyFlow(
-): Flow<Boolean> {
-  val isViewerGood: V.() -> Boolean = {
-    if (this is UnifiedDiffViewer) isContentGood else true
-  }
+internal fun <V : DiffViewerBase> V.viewerReadyFlow(): Flow<Boolean> {
+  val isViewerGood: V.() -> Boolean = { !hasPendingRediff() }
   return callbackFlow {
     val listener = object : DiffViewerListener() {
       // for now this utility is only used for constant diffs
@@ -285,8 +282,10 @@ private class Wrapper<VM : DiffMapped>(val vm: VM, val mapper: (DiffLineLocation
 }
 
 /**
+ * @see com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer
  * @see com.intellij.openapi.vcs.history.VcsDiffUtil.putFilePathsIntoChangeContext
  */
+@Deprecated("Path of changed files is shown via DiffTitleFilePathCustomizer")
 fun RefComparisonChange.buildChangeContext(): Map<Key<*>, Any> {
   val titleLeft = VcsDiffUtil.getRevisionTitle(revisionNumberBefore.toShortString(), filePathBefore, filePathAfter)
   val titleRight = VcsDiffUtil.getRevisionTitle(revisionNumberAfter.toShortString(), filePathAfter, null)

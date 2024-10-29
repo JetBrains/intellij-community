@@ -30,9 +30,6 @@
     <action id="Terminal.RenameSession" class="org.jetbrains.plugins.terminal.action.RenameTerminalSessionAction">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>
-    <action id="Terminal.MoveToEditor" class="org.jetbrains.plugins.terminal.action.MoveTerminalSessionToEditorAction">
-      <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
-    </action>
     <action id="Terminal.SplitVertically" class="org.jetbrains.plugins.terminal.action.TerminalSplitActionBase$Vertical">
       <add-to-group group-id="ToolWindowContextMenu" anchor="last"/>
     </action>

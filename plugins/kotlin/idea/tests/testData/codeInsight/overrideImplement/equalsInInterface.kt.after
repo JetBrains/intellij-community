@@ -4,3 +4,7 @@ interface A
 interface B : A {
     override fun equals(other: Any?): Boolean
 }
+
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

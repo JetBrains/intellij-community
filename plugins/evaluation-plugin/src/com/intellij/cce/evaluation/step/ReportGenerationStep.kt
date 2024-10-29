@@ -18,16 +18,15 @@ import com.intellij.cce.workspace.info.FileSessionsInfo
 import com.intellij.cce.workspace.storages.FileErrorsStorage
 import com.intellij.cce.workspace.storages.SessionsStorage
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.diagnostic.Logger
 import java.nio.file.Path
 
 class ReportGenerationStep<T : EvaluationStrategy>(
   private val inputWorkspaces: List<EvaluationWorkspace>?,
   filters: List<SessionsFilter>,
   comparisonFilters: List<CompareSessionsFilter>,
-  project: Project,
   private val feature: EvaluableFeature<T>
-) : BackgroundEvaluationStep(project) {
+) : BackgroundEvaluationStep {
   override val name: String = "Report generation"
 
   override val description: String = "Generation of HTML-report"
@@ -134,8 +133,8 @@ class ReportGenerationStep<T : EvaluationStrategy>(
       }
       if (sessionsInfo == null) throw IllegalStateException("Sessions file doesn't exist")
       for (file in sessionFile.value) {
-        val sessionsEvaluation = FileSessionsInfo(
-          sessionsInfo.projectName, sessionsInfo.filePath, sessionsInfo.text, comparisonStorage.get(file.evaluationType)
+        val sessionsEvaluation = sessionsInfo.copy(
+          sessions = comparisonStorage.get(file.evaluationType)
         )
         val metricsEvaluation = title2evaluator.getValue(file.evaluationType).evaluate(
           sessionsEvaluation.sessions)
@@ -155,3 +154,5 @@ class ReportGenerationStep<T : EvaluationStrategy>(
     }
   }
 }
+
+private val LOG = Logger.getInstance(ReportGenerationStep::class.java)

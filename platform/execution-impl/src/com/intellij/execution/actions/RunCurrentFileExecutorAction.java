@@ -21,12 +21,6 @@ public class RunCurrentFileExecutorAction extends ExecutorAction {
   }
 
   @Override
-  protected boolean hideDisabledExecutorButtons() {
-    // no need in a list of disabled actions in the secondary menu of the 'Current File' item in the combo box drop-down menu.
-    return true;
-  }
-
-  @Override
   public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     if (e.getProject() == null || !RunConfigurationsComboBoxAction.hasRunCurrentFileItem(e.getProject())) {
@@ -35,5 +29,12 @@ public class RunCurrentFileExecutorAction extends ExecutorAction {
     }
 
     super.update(e);
+
+    // no need in a list of disabled actions in the secondary menu
+    // of the 'Current File' item in the combo box drop-down menu
+    if (!presentation.isEnabled() &&
+        presentation.getClientProperty(WOULD_BE_ENABLED_BUT_STARTING) != Boolean.TRUE) {
+      presentation.setVisible(false);
+    }
   }
 }

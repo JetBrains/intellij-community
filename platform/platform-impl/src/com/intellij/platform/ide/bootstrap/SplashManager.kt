@@ -5,7 +5,7 @@ package com.intellij.platform.ide.bootstrap
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.StartUpMeasurer
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.ProjectUtil.getRootFrameForWindow
 import com.intellij.idea.AppMode
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -29,12 +29,10 @@ import com.intellij.util.lang.ByteBufferCleaner
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.StartupUiUtil
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus.Internal
 import sun.awt.image.SunWritableRaster
 import java.awt.*
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
+import java.awt.event.*
 import java.awt.geom.RoundRectangle2D
 import java.awt.image.*
 import java.nio.ByteBuffer
@@ -60,9 +58,10 @@ private val SHOW_SPLASH_LONGER = System.getProperty("idea.show.splash.longer", "
 
 private fun isTooLateToShowSplash(): Boolean = !SHOW_SPLASH_LONGER && LoadingState.COMPONENTS_LOADED.isOccurred
 
-internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
+@Internal
+fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>, args: List<String>) {
   launch(CoroutineName("showSplashIfNeeded")) {
-    if (!AppMode.isLightEdit() && CommandLineArgs.isSplashNeeded(args)) {
+    if (!AppMode.isLightEdit() && !isRealRemoteDevHost(args) && CommandLineArgs.isSplashNeeded(args)) {
       lockSystemDirsJob.join()
       try {
         showSplashIfNeeded(initUiScale = initUiScale, appInfoDeferred = appInfoDeferred)
@@ -76,6 +75,8 @@ internal fun CoroutineScope.scheduleShowSplashIfNeeded(lockSystemDirsJob: Job, i
     }
   }
 }
+
+private fun isRealRemoteDevHost(args: List<String>): Boolean = AppMode.isRemoteDevHost() && args.firstOrNull() != AppMode.SPLIT_MODE_COMMAND
 
 private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred: Deferred<ApplicationInfo>) {
   val oldJob = splashJob.get()
@@ -135,14 +136,20 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
         return@span
       }
 
-      // Hide if splash was deactivated because of focusing some other window in the OS (not IDE Frame).
-      splash.addWindowListener(object : WindowAdapter() {
-        override fun windowDeactivated(e: WindowEvent?) {
-          if (ProjectUtil.getRootFrameForWindow(e?.oppositeWindow) == null) {
-            hideSplash()
+      val deactivationListener = if (SHOW_SPLASH_LONGER) {
+        // Hide if splash or IDE frame was deactivated because of focusing some other window in the OS (not IDE Frame).
+        val listener = AWTEventListener { e ->
+          if (e.id == WindowEvent.WINDOW_DEACTIVATED) {
+            val windowEvent = e as WindowEvent
+            if (getRootFrameForWindow(windowEvent.oppositeWindow) == null) {
+              hideSplash()
+            }
           }
         }
-      })
+        Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.WINDOW_EVENT_MASK)
+        listener
+      }
+      else null
 
       StartUpMeasurer.addInstantEvent("splash shown")
       try {
@@ -168,8 +175,9 @@ private fun CoroutineScope.showSplashIfNeeded(initUiScale: Job, appInfoDeferred:
           showJob.join()
         }
       }
-      catch (ignore: CancellationException) {
+      catch (_: CancellationException) {
         SPLASH_WINDOW = null
+        Toolkit.getDefaultToolkit().removeAWTEventListener(deactivationListener)
         splash.isVisible = false
         splash.dispose()
         StartUpMeasurer.addInstantEvent("splash hidden")
@@ -269,7 +277,7 @@ private fun doShowFrame(savedBounds: Rectangle, backgroundColor: Color, extended
   frame.isAutoRequestFocus = false
   frame.defaultCloseOperation = WindowConstants.DO_NOTHING_ON_CLOSE
   val devicePair = FrameBoundsConverter.convertFromDeviceSpaceAndFitToScreen(savedBounds)
-  // this functionality under the flag - fully correct behavior is not needed here (that's default is not applied if null)
+  // this functionality under the flag - fully correct behavior is unnecessary here (that's default is not applied if null)
   if (devicePair != null) {
     frame.bounds = devicePair.first
   }
@@ -401,7 +409,7 @@ private suspend fun readImage(file: Path, scale: Float, isJreHiDPIEnabled: Boole
       }
     }
   }
-  catch (ignore: NoSuchFileException) {
+  catch (_: NoSuchFileException) {
     return null
   }
 
@@ -471,7 +479,7 @@ private fun writeImage(file: Path, image: BufferedImage) {
   try {
     Files.move(tempFile, file, StandardCopyOption.ATOMIC_MOVE)
   }
-  catch (e: AtomicMoveNotSupportedException) {
+  catch (_: AtomicMoveNotSupportedException) {
     Files.move(tempFile, file)
   }
 }

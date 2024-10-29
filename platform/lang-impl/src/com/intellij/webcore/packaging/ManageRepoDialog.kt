@@ -14,11 +14,13 @@ import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBList
 import com.intellij.util.CatchingConsumer
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.DefaultListModel
 import javax.swing.JComponent
 import javax.swing.ListSelectionModel
 import javax.swing.event.ListSelectionEvent
 
+@ApiStatus.Internal
 class ManageRepoDialog(project: Project?, private val controller: PackageManagementService) : DialogWrapper(project, false) {
   private var myEnabled = false
 

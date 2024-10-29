@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,6 +31,7 @@ import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class InplaceEditor implements AWTEventListener {
   public static final Key<Boolean> IGNORE_MOUSE_EVENT = Key.create("InplaceEditor.Ignore.Mouse.Event");
   private static final Logger LOG = Logger.getInstance(InplaceEditor.class);

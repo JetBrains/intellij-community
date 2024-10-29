@@ -4,15 +4,15 @@ LineBreakpoint created at lambdas.kt:18 lambdaOrdinal = 2
 Run Java
 Connected to the target VM
 lambdas.kt:7
-Highlight lambda range: '{ boo() }'
+Highlight lambda range: 'boo()'
 lambdas.kt:23
 Highlight whole line
 lambdas.kt:13
-Highlight lambda range: '{ boo() }'
+Highlight lambda range: 'boo()'
 lambdas.kt:23
 Highlight whole line
 lambdas.kt:18
-Highlight lambda range: '{ boo2() }'
+Highlight lambda range: 'boo2()'
 lambdas.kt:24
 Highlight whole line
 Disconnected from the target VM

@@ -1,17 +1,15 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.newUsersOnboarding
 
-import com.intellij.ide.ApplicationInitializedListener
+import com.intellij.ide.ApplicationActivity
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.experiment.ab.impl.experiment.getABExperimentInstance
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
@@ -35,21 +33,17 @@ class NewUsersOnboardingExperiment {
    * Since some clients require knowing the state in EDT quite early (especially on the Welcome Screen),
    * better to calculate it safely and eagerly before instead of EDT.
    */
-  private class Initializer : ApplicationInitializedListener {
+  internal class Initializer : ApplicationActivity {
     init {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         throw ExtensionNotApplicableException.create()
       }
     }
 
-    override suspend fun execute(asyncScope: CoroutineScope) {
-      asyncScope.launch(Dispatchers.IO) {
+    override suspend fun execute() {
+      withContext(Dispatchers.IO) {
         serviceAsync<NewUsersOnboardingExperiment>().isExperimentEnabled
       }
     }
-  }
-
-  companion object {
-    fun getInstance(): NewUsersOnboardingExperiment = service()
   }
 }

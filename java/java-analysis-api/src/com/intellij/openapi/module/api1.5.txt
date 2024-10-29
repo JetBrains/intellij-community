@@ -135,7 +135,6 @@ javax.xml.transform.dom.DOMResult#DOMResult(org.w3c.dom.Node;org.w3c.dom.Node;)
 javax.xml.transform.dom.DOMResult#DOMResult(org.w3c.dom.Node;org.w3c.dom.Node;java.lang.String;)
 javax.xml.transform.dom.DOMResult#setNextSibling(org.w3c.dom.Node;)
 javax.xml.transform.dom.DOMResult#getNextSibling()
-javax.xml.transform.dom.DOMResult#nextSibling
 javax.xml.transform.Transformer#reset()
 javax.xml.transform.TransformerFactory
 javax.xml.validation.Schema
@@ -187,7 +186,9 @@ com.sun.crypto.provider.RC2Parameters
 com.sun.crypto.provider.KeyGeneratorCore
 com.sun.crypto.provider.GaloisCounterMode#engineUpdate(java.nio.ByteBuffer;java.nio.ByteBuffer;)
 com.sun.crypto.provider.GaloisCounterMode#engineDoFinal(java.nio.ByteBuffer;java.nio.ByteBuffer;)
+jdk.internal.misc.CarrierThread#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler;)
 jdk.internal.misc.InnocuousThread#setUncaughtExceptionHandler(java.lang.Thread.UncaughtExceptionHandler;)
+jdk.internal.misc.CarrierThreadLocal#remove()
 jdk.internal.misc.TerminatingThreadLocal#remove()
 jdk.internal.util.xml.SAXParser#isXIncludeAware()
 sun.net.www.protocol.ftp.Handler#openConnection(java.net.URL;java.net.Proxy;)
@@ -195,7 +196,6 @@ sun.net.www.protocol.ftp.FtpURLConnection#setConnectTimeout(int;)
 sun.net.www.protocol.ftp.FtpURLConnection#getConnectTimeout()
 sun.net.www.protocol.ftp.FtpURLConnection#setReadTimeout(int;)
 sun.net.www.protocol.ftp.FtpURLConnection#getReadTimeout()
-sun.net.www.protocol.jar.URLJarFile.URLJarFileEntry#getCodeSigners()
 sun.net.www.protocol.file.Handler#openConnection(java.net.URL;java.net.Proxy;)
 sun.net.www.protocol.http.Handler#openConnection(java.net.URL;java.net.Proxy;)
 sun.net.www.protocol.http.HttpURLConnection#setConnectTimeout(int;)
@@ -231,13 +231,12 @@ sun.reflect.generics.reflectiveObjects.ParameterizedTypeImpl#getActualTypeArgume
 sun.reflect.annotation.AnnotationType
 sun.reflect.annotation.ExceptionProxy
 sun.reflect.annotation.AnnotationParser
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotations()
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getAnnotation(java.lang.Class<T>;)
-sun.reflect.annotation.AnnotatedTypeFactory.AnnotatedTypeBaseImpl#getDeclaredAnnotations()
 sun.reflect.annotation.AnnotationInvocationHandler
 sun.reflect.annotation.TypeNotPresentExceptionProxy
 sun.reflect.annotation.AnnotationTypeMismatchExceptionProxy
 sun.reflect.annotation.EnumConstantNotPresentExceptionProxy
+sun.security.ec.ECDSASignature.RawECDSA#engineUpdate(java.nio.ByteBuffer;)
+sun.security.ec.ECDSASignature#engineUpdate(java.nio.ByteBuffer;)
 sun.security.jca.JCAUtil
 sun.security.jca.Providers
 sun.security.jca.ServiceId
@@ -343,7 +342,6 @@ java.net.ProxySelector
 java.net.ResponseCache#getDefault()
 java.net.ResponseCache#setDefault(java.net.ResponseCache;)
 java.net.ResponseCache
-java.net.URLConnection#connectTimeout
 java.net.URLConnection#setConnectTimeout(int;)
 java.net.URLConnection#getConnectTimeout()
 java.net.URLConnection#setReadTimeout(int;)
@@ -664,7 +662,6 @@ java.lang.IllegalArgumentException#IllegalArgumentException(java.lang.Throwable;
 java.lang.UnsupportedOperationException#UnsupportedOperationException(java.lang.String;java.lang.Throwable;)
 java.lang.UnsupportedOperationException#UnsupportedOperationException(java.lang.Throwable;)
 java.lang.EnumConstantNotPresentException
-java.math.BigDecimal#precision
 java.math.BigDecimal#ZERO
 java.math.BigDecimal#ONE
 java.math.BigDecimal#TEN
@@ -719,12 +716,6 @@ java.math.MathContext
 java.math.RoundingMode
 java.text.DecimalFormat#isParseBigDecimal()
 java.text.DecimalFormat#setParseBigDecimal(boolean;)
-java.text.DecimalFormat#parseBigDecimal
-java.text.DecimalFormat#maximumIntegerDigits
-java.text.DecimalFormat#minimumIntegerDigits
-java.text.DecimalFormat#maximumFractionDigits
-java.text.DecimalFormat#minimumFractionDigits
-java.util.jar.JarFile.JarFileEntry#getCodeSigners()
 java.util.jar.JarEntry#getCodeSigners()
 java.util.zip.Deflater#getBytesRead()
 java.util.zip.Deflater#getBytesWritten()
@@ -939,7 +930,6 @@ java.security.Provider#putService(java.security.Provider.Service;)
 java.security.Provider#removeService(java.security.Provider.Service;)
 java.security.Provider.Service
 java.security.Signature#update(java.nio.ByteBuffer;)
-java.security.Signature.Delegate#engineUpdate(java.nio.ByteBuffer;)
 java.security.Timestamp
 java.security.CodeSigner
 java.security.CodeSource#CodeSource(java.net.URL;java.security.CodeSigner[];)
@@ -952,11 +942,9 @@ java.security.KeyStoreSpi#engineEntryInstanceOf(java.lang.String;java.lang.Class
 java.security.AuthProvider
 java.security.KeyException#KeyException(java.lang.String;java.lang.Throwable;)
 java.security.KeyException#KeyException(java.lang.Throwable;)
-java.security.SecureRandom#algorithm
 java.security.SecureRandom#getAlgorithm()
 java.security.SignatureSpi#engineUpdate(java.nio.ByteBuffer;)
 java.security.MessageDigest#update(java.nio.ByteBuffer;)
-java.security.MessageDigest.Delegate#engineUpdate(java.nio.ByteBuffer;)
 java.security.DigestException#DigestException(java.lang.String;java.lang.Throwable;)
 java.security.DigestException#DigestException(java.lang.Throwable;)
 java.security.MessageDigestSpi#engineUpdate(java.nio.ByteBuffer;)
@@ -1053,8 +1041,6 @@ com.sun.java.swing.plaf.windows.WindowsClassicLookAndFeel
 com.sun.media.sound.SoftMixingClip#getLongFramePosition()
 com.sun.media.sound.SoftSynthesizer#getReceivers()
 com.sun.media.sound.SoftSynthesizer#getTransmitters()
-com.sun.media.sound.DirectAudioDevice.DirectDL#getLongFramePosition()
-com.sun.media.sound.DirectAudioDevice.DirectClip#getLongFramePosition()
 com.sun.media.sound.RealTimeSequencer#setLoopStartPoint(long;)
 com.sun.media.sound.RealTimeSequencer#getLoopStartPoint()
 com.sun.media.sound.RealTimeSequencer#setLoopEndPoint(long;)
@@ -1119,7 +1105,6 @@ java.awt.Image#getCapabilities(java.awt.GraphicsConfiguration;)
 java.awt.Image#setAccelerationPriority(float;)
 java.awt.Image#getAccelerationPriority()
 java.awt.Insets#set(int;int;int;int;)
-java.awt.Window#alwaysOnTop
 java.awt.Window#setAlwaysOnTop(boolean;)
 java.awt.Window#isAlwaysOnTop()
 java.awt.Window#canContainFocusOwner(java.awt.Component;)
@@ -1139,15 +1124,10 @@ java.awt.Component#firePropertyChange(java.lang.String;long;long;)
 java.awt.Component#firePropertyChange(java.lang.String;float;float;)
 java.awt.Component#firePropertyChange(java.lang.String;double;double;)
 java.awt.Component#canBeFocusOwnerRecursively()
-java.awt.Container#focusTraversalPolicyProvider
-java.awt.Container#checkAdding(java.awt.Component;int;)
 java.awt.Container#canContainFocusOwner(java.awt.Component;)
 java.awt.Container#hasHeavyweightDescendants()
 java.awt.Container#getHeavyweightContainer()
 java.awt.Container#setComponentZOrder(java.awt.Component;int;)
-java.awt.Container#reparentTraverse(java.awt.peer.ContainerPeer;java.awt.Container;)
-java.awt.Container#reparentChild(java.awt.Component;)
-java.awt.Container#addDelicately(java.awt.Component;java.awt.Container;int;)
 java.awt.Container#getComponentZOrder(java.awt.Component;)
 java.awt.Container#getMousePosition(boolean;)
 java.awt.Container#setFocusTraversalPolicyProvider(boolean;)
@@ -1170,7 +1150,6 @@ java.awt.GraphicsEnvironment#preferProportionalFonts()
 java.awt.KeyboardFocusManager#clearMarkers()
 java.awt.GraphicsConfiguration#createCompatibleVolatileImage(int;int;int;)
 java.awt.GraphicsConfiguration#createCompatibleVolatileImage(int;int;java.awt.ImageCapabilities;int;)
-java.awt.DefaultKeyboardFocusManager#hasMarker(java.awt.Component;)
 java.awt.DefaultKeyboardFocusManager#clearMarkers()
 java.beans.XMLDecoder#XMLDecoder(java.io.InputStream;java.lang.Object;java.beans.ExceptionListener;java.lang.ClassLoader;)
 java.beans.PropertyDescriptor#createPropertyEditor(java.lang.Object;)
@@ -1223,7 +1202,6 @@ javax.swing.plaf.basic.BasicToolBarUI#paintDragWindow(java.awt.Graphics;)
 javax.swing.plaf.basic.BasicComboPopup#getAccessibleContext()
 javax.swing.plaf.basic.BasicTextAreaUI#getPreferredSize(javax.swing.JComponent;)
 javax.swing.plaf.basic.BasicTextAreaUI#getMinimumSize(javax.swing.JComponent;)
-javax.swing.plaf.basic.BasicPopupMenuUI.BasicMenuKeyListener
 javax.swing.plaf.basic.BasicScrollBarUI#setThumbRollover(boolean;)
 javax.swing.plaf.basic.BasicScrollBarUI#isThumbRollover()
 javax.swing.plaf.basic.BasicScrollBarUI#getSupportsAbsolutePositioning()
@@ -1316,7 +1294,6 @@ javax.swing.JPopupMenu#removeMenuKeyListener(javax.swing.event.MenuKeyListener;)
 javax.swing.JPopupMenu#getMenuKeyListeners()
 javax.swing.JPopupMenu.AccessibleJPopupMenu#AccessibleJPopupMenu()
 javax.swing.JPopupMenu.AccessibleJPopupMenu#propertyChange(java.beans.PropertyChangeEvent;)
-javax.swing.JPopupMenu#processMenuKeyEvent(javax.swing.event.MenuKeyEvent;)
 javax.swing.JEditorPane#W3C_LENGTH_UNITS
 javax.swing.JEditorPane#HONOR_DISPLAY_PROPERTIES
 javax.swing.JScrollPane.AccessibleJScrollPane#propertyChange(java.beans.PropertyChangeEvent;)
@@ -1327,7 +1304,6 @@ javax.swing.JLayeredPane#removeAll()
 javax.swing.SpringLayout.Constraints#Constraints(java.awt.Component;)
 javax.swing.AbstractButton#addImpl(java.awt.Component;java.lang.Object;int;)
 javax.swing.AbstractButton#setLayout(java.awt.LayoutManager;)
-javax.swing.ProgressMonitor.ProgressOptionPane#getAccessibleContext()
 javax.swing.ProgressMonitor#accessibleContext
 javax.swing.ProgressMonitor#getAccessibleContext()
 javax.swing.ProgressMonitor.AccessibleProgressMonitor
@@ -1371,8 +1347,11 @@ java.util.logging.Logging
 java.util.logging.LogManager#LOGGING_MXBEAN_NAME
 java.util.logging.LogManager#getLoggingMXBean()
 java.util.logging.LoggingMXBean
+com.sun.tools.javac.Main
 sun.tools.jconsole.Plotter#getComponentPopupMenu()
 sun.tools.jconsole.PlotterPanel#getComponentPopupMenu()
+netscape.javascript.JSObject
+netscape.javascript.JSException
 jdk.internal.net.http.common.ImmutableSSLSession#isValid()
 jdk.internal.net.http.common.ImmutableSSLSession#getPeerPrincipal()
 jdk.internal.net.http.common.ImmutableSSLSession#getLocalPrincipal()
@@ -1635,16 +1614,12 @@ javax.sql.rowset.CachedRowSet
 javax.sql.rowset.RowSetWarning
 javax.sql.rowset.FilteredRowSet
 javax.sql.rowset.RowSetMetaDataImpl
-java.awt.datatransfer.Clipboard#flavorListeners
-java.awt.datatransfer.Clipboard#currentDataFlavors
 java.awt.datatransfer.Clipboard#getAvailableDataFlavors()
 java.awt.datatransfer.Clipboard#isDataFlavorAvailable(java.awt.datatransfer.DataFlavor;)
 java.awt.datatransfer.Clipboard#getData(java.awt.datatransfer.DataFlavor;)
 java.awt.datatransfer.Clipboard#addFlavorListener(java.awt.datatransfer.FlavorListener;)
 java.awt.datatransfer.Clipboard#removeFlavorListener(java.awt.datatransfer.FlavorListener;)
 java.awt.datatransfer.Clipboard#getFlavorListeners()
-java.awt.datatransfer.Clipboard#fireFlavorsChanged()
-java.awt.datatransfer.Clipboard#getAvailableDataFlavorSet()
 java.awt.datatransfer.FlavorEvent
 java.awt.datatransfer.FlavorListener
 sun.security.mscapi.CSignature.NONEwithRSA#engineUpdate(java.nio.ByteBuffer;)
@@ -1679,9 +1654,10 @@ javax.management.remote.rmi.RMIConnector
 javax.management.remote.rmi.RMIConnection
 javax.management.remote.rmi.RMIServerImpl
 javax.management.remote.rmi.RMIConnectionImpl
-javax.management.remote.rmi.RMIIIOPServerImpl
 javax.management.remote.rmi.RMIJRMPServerImpl
 javax.management.remote.rmi.RMIConnectorServer
+javax.management.remote.rmi.RMIServerImpl_Stub
+javax.management.remote.rmi.RMIConnectionImpl_Stub
 sun.security.pkcs11.Token
 sun.security.pkcs11.Config
 sun.security.pkcs11.P11Key

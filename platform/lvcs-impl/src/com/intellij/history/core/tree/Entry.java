@@ -24,6 +24,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -141,6 +142,7 @@ public abstract class Entry {
     return getTimestamp() != timestamp;
   }
 
+  @ApiStatus.Internal
   public Content getContent() {
     throw new UnsupportedOperationException(formatPath());
   }
@@ -157,6 +159,7 @@ public abstract class Entry {
     return myParent;
   }
 
+  @ApiStatus.Internal
   protected void setParent(DirectoryEntry parent) {
     myParent = parent;
   }
@@ -228,6 +231,7 @@ public abstract class Entry {
     myNameHash = calcNameHash(newName);
   }
 
+  @ApiStatus.Internal
   public void setContent(Content newContent, long timestamp) {
     throw new UnsupportedOperationException(formatPath());
   }

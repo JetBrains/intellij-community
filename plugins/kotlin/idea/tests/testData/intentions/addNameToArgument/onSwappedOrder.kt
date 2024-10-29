@@ -1,0 +1,20 @@
+// INTENTION_TEXT: "Add 'c =' to argument"
+// IGNORE_K1
+// SKIP_ERRORS_BEFORE
+// AFTER-WARNING: Parameter 'a' is never used
+// AFTER-WARNING: Parameter 'b' is never used
+// AFTER-WARNING: Parameter 'c' is never used
+
+fun foo(
+    a: Int?,
+    b: String?,
+    c: Boolean,
+){}
+
+fun bar() {
+    foo(
+        b = "foo",
+        a = 2,
+        <caret>false,
+    )
+}

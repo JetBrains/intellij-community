@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="jackson-module-kotlin" level="project" />
+    <orderEntry type="library" name="jackson-databind" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="library" name="jetbrains-annotations" level="project" />
+    <orderEntry type="module-library">
+      <library name="jline.terminal" type="repository">
+        <properties maven-id="org.jline:jline-terminal:3.27.0">
+          <verification>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0.jar">
+              <sha256sum>2f461c75091ec3810a42184afc80c96910f54e9dd2110e9ecb9902a5ee6c244b</sha256sum>
+            </artifact>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0.jar">
+              <sha256sum>d8bc77bc80edc7d9a02a06a069b2d7085629421db0843aba7c153a869ffe525d</sha256sum>
+            </artifact>
+          </verification>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0.jar!/" />
+        </CLASSES>
+        <JAVADOC>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0-javadoc.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0-javadoc.jar!/" />
+        </JAVADOC>
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-terminal/3.27.0/jline-terminal-3.27.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jline/jline-native/3.27.0/jline-native-3.27.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="jline.terminal.jansi" level="project" />
+    <orderEntry type="library" name="jline.terminal.jna" level="project" />
+  </component>
+</module>

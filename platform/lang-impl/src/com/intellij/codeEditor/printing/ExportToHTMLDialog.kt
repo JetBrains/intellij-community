@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeEditor.printing
 
 import com.intellij.openapi.editor.EditorBundle
@@ -13,10 +13,12 @@ import com.intellij.ui.dsl.builder.AlignX
 import com.intellij.ui.dsl.builder.LabelPosition
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.selected
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JRadioButton
 
+@ApiStatus.Internal
 class ExportToHTMLDialog(private val fileName: String?,
                          private val directoryName: String?,
                          private val selectedTextEnabled: Boolean,
@@ -25,9 +27,9 @@ class ExportToHTMLDialog(private val fileName: String?,
   companion object {
     @JvmStatic
     fun addBrowseDirectoryListener(targetDirectoryField: TextFieldWithBrowseButton, project: Project) {
-      targetDirectoryField.addBrowseFolderListener(EditorBundle.message("export.to.html.select.output.directory.title"),
-                                                   EditorBundle.message("export.to.html.select.output.directory.description"),
-                                                   project, FileChooserDescriptorFactory.createSingleFolderDescriptor())
+      targetDirectoryField.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(EditorBundle.message("export.to.html.select.output.directory.title"))
+        .withDescription(EditorBundle.message("export.to.html.select.output.directory.description")))
     }
   }
 

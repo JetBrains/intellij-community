@@ -1,4 +1,3 @@
-// IGNORE_K2
 class A {
     // Comment for field1
     private int field1 = 0;

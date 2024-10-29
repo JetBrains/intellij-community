@@ -5,11 +5,13 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeListImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 
+@ApiStatus.Internal
 public class ReceivedChangeList extends CommittedChangeListImpl {
   @NotNull private final CommittedChangeList myBaseList;
   private final int myBaseCount;

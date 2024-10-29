@@ -85,13 +85,14 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
     }
 
     override fun enhanceTaskProcessing(
-      project: Project?,
-      taskNames: MutableList<String>,
-      initScriptConsumer: Consumer<String>,
-      parameters: MutableMap<String, String>
-    ) {
-        if (!Registry.`is`(ENABLED_REGISTRY_KEY))
-            return
+        project: Project?,
+        taskNames: MutableList<String>,
+        initScriptConsumer: Consumer<String>,
+        parameters: MutableMap<String, String>
+    ): Map<String, String> {
+        if (!Registry.`is`(ENABLED_REGISTRY_KEY)) {
+            return emptyMap()
+        }
 
         val isRunAsTest = parameters[GradleProjectResolverExtension.IS_RUN_AS_TEST_KEY].toBoolean()
         val isBuiltInTestEventsUsed = parameters[GradleProjectResolverExtension.IS_BUILT_IN_TEST_EVENTS_USED_KEY].toBoolean()
@@ -110,6 +111,7 @@ open class KotlinTestTasksResolver : AbstractProjectResolverExtension() {
 
         val jvmParametersSetup = parameters[GradleProjectResolverExtension.JVM_PARAMETERS_SETUP_KEY]
         enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer)
+        return emptyMap()
     }
 
     override fun enhanceTaskProcessing(taskNames: MutableList<String>, jvmAgentSetup: String?, initScriptConsumer: Consumer<String>) {

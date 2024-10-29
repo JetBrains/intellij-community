@@ -3,8 +3,8 @@ package com.intellij.execution.wsl
 
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.processTools.getResultStdoutStr
+import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus.Internal
 
 
@@ -19,8 +19,7 @@ internal fun AbstractWslDistribution.createWslCommandLine(vararg commands: Strin
 @Internal
 fun AbstractWslDistribution.runCommand(vararg commands: String, options: WSLCommandLineOptions = WSLCommandLineOptions()): Result<String> {
   val process = createProcess(commands = commands, options = options)
-  // TODO: Use runBlockingCancellable
-  return runBlocking {
+  return runBlockingMaybeCancellable {
     process.getResultStdoutStr()
   }
 }

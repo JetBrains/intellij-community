@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="commons-lang3" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-lang3:3.14.0">
+    <properties include-transitive-deps="false" maven-id="org.apache.commons:commons-lang3:3.17.0">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar">
-          <sha256sum>7b96bf3ee68949abb5bc465559ac270e0551596fa34523fddf890ec418dde13c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar">
+          <sha256sum>6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.14.0/commons-lang3-3.14.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.17.0/commons-lang3-3.17.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

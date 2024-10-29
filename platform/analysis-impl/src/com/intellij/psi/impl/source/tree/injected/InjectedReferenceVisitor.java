@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.injection.ReferenceInjector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -25,6 +26,7 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public abstract class InjectedReferenceVisitor implements PsiLanguageInjectionHost.InjectedPsiVisitor {
   @Override
   public void visit(@NotNull PsiFile injectedPsi, @NotNull List<? extends PsiLanguageInjectionHost.Shred> places) {}

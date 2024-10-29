@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.awt.event.MouseEvent;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public abstract class OpenInEditorWithMouseAction extends AnAction implements DumbAware {
   @NotNull private List<? extends Editor> myEditors = Collections.emptyList();
 

@@ -2,7 +2,7 @@
 package com.intellij.platform.runtime.product.serialization;
 
 import com.intellij.platform.runtime.product.IncludedRuntimeModule;
-import com.intellij.platform.runtime.product.ModuleImportance;
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule;
 import com.intellij.platform.runtime.repository.*;
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl;
 import org.jetbrains.annotations.ApiStatus;
@@ -11,20 +11,20 @@ import org.jetbrains.annotations.Nullable;
 
 public final class RawIncludedRuntimeModule {
   private final RuntimeModuleId myModuleId;
-  private final ModuleImportance myImportance;
+  private final RuntimeModuleLoadingRule myLoadingRule;
 
   @ApiStatus.Internal
-  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull ModuleImportance importance) {
+  public RawIncludedRuntimeModule(@NotNull RuntimeModuleId moduleId, @NotNull RuntimeModuleLoadingRule loadingRule) {
     myModuleId = moduleId;
-    myImportance = importance;
+    myLoadingRule = loadingRule;
   }
 
   public @NotNull RuntimeModuleId getModuleId() {
     return myModuleId;
   }
 
-  public @NotNull ModuleImportance getImportance() {
-    return myImportance;
+  public @NotNull RuntimeModuleLoadingRule getLoadingRule() {
+    return myLoadingRule;
   }
 
   @Override
@@ -34,7 +34,7 @@ public final class RawIncludedRuntimeModule {
 
   public @Nullable IncludedRuntimeModule resolve(@NotNull RuntimeModuleRepository repository) {
     RuntimeModuleDescriptor descriptor;
-    if (getImportance() == ModuleImportance.FUNCTIONAL) {
+    if (getLoadingRule() == RuntimeModuleLoadingRule.REQUIRED) {
       descriptor = repository.getModule(getModuleId());
     }
     else {
@@ -42,7 +42,7 @@ public final class RawIncludedRuntimeModule {
       descriptor = repository.resolveModule(getModuleId()).getResolvedModule();
     }
     if (descriptor != null) {
-      return new IncludedRuntimeModuleImpl(descriptor, myImportance);
+      return new IncludedRuntimeModuleImpl(descriptor, myLoadingRule);
     }
     return null;
   }

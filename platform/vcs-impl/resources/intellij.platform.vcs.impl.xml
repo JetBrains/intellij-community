@@ -42,14 +42,12 @@
         key="ignore.codeInspection.duplicateEntry"
         level="WARNING"/>
 
-    <projectService serviceInterface="com.intellij.diff.editor.DiffEditorTabFilesManager"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager"
-                    overrides="true"/>
     <vcsStartupActivity implementation="com.intellij.vcs.commit.CommitModeManager$MyStartupActivity"/>
 
     <projectService serviceInterface="com.intellij.diff.tools.combined.CombinedDiffManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.actions.diff.CombinedDiffManagerImpl"/>
     <intentionAction>
+      <language/>
       <className>com.intellij.openapi.vcs.intentions.SelectedBlockHistoryIntention</className>
     </intentionAction>
   </extensions>
@@ -60,8 +58,4 @@
     <listener class="com.intellij.platform.ide.impl.statistic.ToolWindowStateListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
   </projectListeners>
-  <applicationListeners>
-    <listener class="com.intellij.openapi.vcs.changes.DiffEditorTabStateListener"
-              topic="com.intellij.openapi.vcs.changes.VcsEditorTabFilesListener"/>
-  </applicationListeners>
 </idea-plugin>

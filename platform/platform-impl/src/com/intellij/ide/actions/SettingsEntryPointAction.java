@@ -10,6 +10,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
@@ -62,8 +63,7 @@ import java.util.concurrent.CancellationException;
  * @author Alexander Lobas
  */
 public final class SettingsEntryPointAction extends ActionGroup
-  implements AlwaysVisibleActionGroup, CustomComponentAction, Toggleable, DumbAware,
-             RightAlignedToolbarAction, TooltipDescriptionProvider {
+  implements CustomComponentAction, Toggleable, DumbAware, RightAlignedToolbarAction, TooltipDescriptionProvider {
 
   private static final Logger LOG = Logger.getInstance(SettingsEntryPointAction.class);
 
@@ -73,6 +73,9 @@ public final class SettingsEntryPointAction extends ActionGroup
   private static final BadgeIconSupplier IDE_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.IdeUpdate);
   private static final BadgeIconSupplier PLUGIN_UPDATE_ICON = new BadgeIconSupplier(AllIcons.Ide.Notification.PluginUpdate);
 
+  public SettingsEntryPointAction() {
+    getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
+  }
 
   @Override
   public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -186,7 +189,7 @@ public final class SettingsEntryPointAction extends ActionGroup
     }
     else {
       return JBPopupFactory.getInstance().createActionGroupPopup(
-        null, group, context, ActionSelectionAid.MNEMONICS, true);
+        null, group, context, ActionSelectionAid.MNEMONICS, true, ActionPlaces.getPopupPlace("SettingsEntryPoint"));
     }
   }
 

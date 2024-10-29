@@ -12,7 +12,7 @@ import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
-import com.intellij.java.codeInspection.DataFlowInspection8Test;
+import com.intellij.java.codeInspection.DataFlowInspectionTestCase;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -112,7 +112,8 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
   public void testOverloadWithVarargsSingleArg() {
     doTest2CandidatesWithPreselection();
   }
- 
+
+  @NeedsIndex.ForStandardLibrary
   public void testOverloadWithOneIncompatibleVarargs() {
     assertNotNull(doTest2CandidatesWithPreselection().getHighlightedParameter());
   }
@@ -531,7 +532,7 @@ public class ParameterInfoTest extends AbstractParameterInfoTestCase {
 
   @NeedsIndex.SmartMode(reason = "MethodParameterInfoHandler.appendModifierList doesn't work in dumb mode")
   public void testInferredAnnotation() {
-    DataFlowInspection8Test.setupTypeUseAnnotations("tu", myFixture);
+    DataFlowInspectionTestCase.setupTypeUseAnnotations("tu", myFixture);
     NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
     String defaultNotNull = nnnManager.getDefaultNotNull();
     nnnManager.setDefaultNotNull("tu.NotNull");

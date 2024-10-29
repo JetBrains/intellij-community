@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeView;
@@ -21,8 +21,7 @@ public final class DirectoryChooserUtil {
   private DirectoryChooserUtil() {
   }
 
-  @Nullable
-  public static PsiDirectory getOrChooseDirectory(@NotNull IdeView view) {
+  public static @Nullable PsiDirectory getOrChooseDirectory(@NotNull IdeView view) {
     PsiDirectory[] dirs = view.getDirectories();
     if (dirs.length == 0) return null;
     if (dirs.length == 1) {
@@ -34,11 +33,10 @@ public final class DirectoryChooserUtil {
     }
   }
 
-  @Nullable
-  public static PsiDirectory selectDirectory(@NotNull Project project,
-                                             PsiDirectory @NotNull [] packageDirectories,
-                                             @Nullable PsiDirectory defaultDirectory,
-                                             @Nullable String postfixToShow) {
+  public static @Nullable PsiDirectory selectDirectory(@NotNull Project project,
+                                                       PsiDirectory @NotNull [] packageDirectories,
+                                                       @Nullable PsiDirectory defaultDirectory,
+                                                       @Nullable String postfixToShow) {
     ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
     List<PsiDirectory> possibleDirs = new ArrayList<>();
@@ -60,11 +58,10 @@ public final class DirectoryChooserUtil {
     return chooser.showAndGet() ? chooser.getSelectedDirectory() : null;
   }
 
-  @Nullable
-  public static PsiDirectory chooseDirectory(PsiDirectory @NotNull [] targetDirectories,
-                                             @Nullable PsiDirectory initialDirectory,
-                                             @NotNull Project project,
-                                             @Nullable Map<PsiDirectory, String> relativePathsToCreate) {
+  public static @Nullable PsiDirectory chooseDirectory(PsiDirectory @NotNull [] targetDirectories,
+                                                       @Nullable PsiDirectory initialDirectory,
+                                                       @NotNull Project project,
+                                                       @Nullable Map<PsiDirectory, String> relativePathsToCreate) {
     final DirectoryChooser chooser = new DirectoryChooser(project, new DirectoryChooserModuleTreeView(project));
     chooser.setTitle(RefactoringBundle.message("choose.destination.directory"));
     chooser.fillList(

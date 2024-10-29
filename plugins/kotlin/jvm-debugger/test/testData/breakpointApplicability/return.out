@@ -1,4 +1,4 @@
 R 2 Highlight range: 'return'
-λ 7 Highlight range: '{ if (x == 2) return@run; println(42) }'
+λ 7 Highlight range: 'if (x == 2) return@run; println(42)'
 R 7 Highlight range: 'return'
-λ 12 Highlight range: '{ if (x == 2) return@run; println(42) }'
+λ 12 Highlight range: 'if (x == 2) return@run; println(42)'

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.ui;
 
@@ -37,19 +37,19 @@ import java.util.Properties;
 
 public class CreateFromTemplateDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(CreateFromTemplateDialog.class);
-  @NotNull private final PsiDirectory myDirectory;
-  @NotNull private final Project myProject;
+  private final @NotNull PsiDirectory myDirectory;
+  private final @NotNull Project myProject;
   private PsiElement myCreatedElement;
   private final CreateFromTemplatePanel myAttrPanel;
   private final JComponent myAttrComponent;
-  @NotNull private final FileTemplate myTemplate;
+  private final @NotNull FileTemplate myTemplate;
   private final Properties myDefaultProperties;
 
   public CreateFromTemplateDialog(@NotNull Project project,
                                   @NotNull PsiDirectory directory,
                                   @NotNull FileTemplate template,
-                                  @Nullable final AttributesDefaults attributesDefaults,
-                                  @Nullable final Properties defaultProperties) {
+                                  final @Nullable AttributesDefaults attributesDefaults,
+                                  final @Nullable Properties defaultProperties) {
     super(project, true);
     myDirectory = directory;
     myProject = project;
@@ -183,8 +183,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return FileTemplateUtil.findHandler(myTemplate).getErrorMessage();
   }
 
-  @Nullable
-  private @NlsContexts.DialogMessage String filterMessage(@NlsContexts.DialogMessage String message){
+  private @Nullable @NlsContexts.DialogMessage String filterMessage(@NlsContexts.DialogMessage String message){
     if (message == null) {
       message = IdeBundle.message("dialog.message.unknown.error");
     }

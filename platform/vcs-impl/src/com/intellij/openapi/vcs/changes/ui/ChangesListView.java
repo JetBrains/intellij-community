@@ -149,40 +149,30 @@ public abstract class ChangesListView extends ChangesTree implements DnDAware {
 
     VcsTreeModelData treeSelection = VcsTreeModelData.selected(this);
     VcsTreeModelData exactSelection = VcsTreeModelData.exactlySelected(this);
-    sink.set(PlatformCoreDataKeys.BGT_DATA_PROVIDER,
-             slowId -> getSlowData(myProject, treeSelection, exactSelection, slowId));
-  }
-
-  @Nullable
-  private static Object getSlowData(@NotNull Project project,
-                                    @NotNull VcsTreeModelData treeSelection,
-                                    @NotNull VcsTreeModelData exactSelection,
-                                    @NotNull String slowId) {
-    if (SelectInContext.DATA_KEY.is(slowId)) {
+    sink.lazy(SelectInContext.DATA_KEY, () -> {
       VirtualFile file = VcsTreeModelData.mapObjectToVirtualFile(exactSelection.iterateRawUserObjects()).first();
       if (file == null) return null;
-      return new FileSelectInContext(project, file, null);
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(slowId)) {
+      return new FileSelectInContext(myProject, file, null);
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection)
         .toArray(VirtualFile.EMPTY_ARRAY);
-    }
-    if (VcsDataKeys.VIRTUAL_FILES.is(slowId)) {
+    });
+    sink.lazy(VcsDataKeys.VIRTUAL_FILES, () -> {
       return VcsTreeModelData.mapToVirtualFile(treeSelection);
-    }
-    if (CommonDataKeys.NAVIGATABLE.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       VirtualFile file = VcsTreeModelData.mapToNavigatableFile(treeSelection).single();
       return file != null && !file.isDirectory()
-             ? PsiNavigationSupport.getInstance().createNavigatable(project, file, 0)
+             ? PsiNavigationSupport.getInstance().createNavigatable(myProject, file, 0)
              : null;
-    }
-    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(slowId)) {
-      return getNavigatableArray(project, VcsTreeModelData.mapToNavigatableFile(treeSelection));
-    }
-    if (EXACTLY_SELECTED_FILES_DATA_KEY.is(slowId)) {
+    });
+    sink.lazy(CommonDataKeys.NAVIGATABLE_ARRAY, () -> {
+      return getNavigatableArray(myProject, VcsTreeModelData.mapToNavigatableFile(treeSelection));
+    });
+    sink.lazy(EXACTLY_SELECTED_FILES_DATA_KEY, () -> {
       return VcsTreeModelData.mapToExactVirtualFile(exactSelection);
-    }
-    return null;
+    });
   }
 
   @NotNull

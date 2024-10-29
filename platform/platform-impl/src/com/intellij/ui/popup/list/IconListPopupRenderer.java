@@ -15,10 +15,12 @@
  */
 package com.intellij.ui.popup.list;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+@ApiStatus.Internal
 public interface IconListPopupRenderer {
 
   boolean isIconAt(@NotNull Point point);

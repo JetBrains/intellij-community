@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.filters.HyperlinkInfo;
@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ConsoleTokenUtil {
   private static final char BACKSPACE = '\b';
   private static final Key<ConsoleViewContentType> CONTENT_TYPE = Key.create("ConsoleViewContentType");
@@ -70,7 +72,7 @@ public final class ConsoleTokenUtil {
     text.setLength(newLength);
   }
 
-  static int evaluateBackspacesInTokens(@NotNull List<? extends TokenBuffer.TokenInfo> source,
+  static int evaluateBackspacesInTokens(@NotNull List<TokenBuffer.TokenInfo> source,
                                         int sourceStartIndex,
                                         @NotNull List<? super TokenBuffer.TokenInfo> dest) {
     int backspacesFromNextToken = 0;
@@ -99,8 +101,7 @@ public final class ConsoleTokenUtil {
     return StringUtil.countChars(text, BACKSPACE, 0, true);
   }
 
-  @Nullable
-  public static ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
+  public static @Nullable ConsoleViewContentType getTokenType(@NotNull RangeMarker m) {
     return m.getUserData(CONTENT_TYPE);
   }
 
@@ -147,7 +148,7 @@ public final class ConsoleTokenUtil {
     model.addRangeHighlighterAndChangeAttributes(
       contentType.getAttributesKey(), startOffset, endOffset, layer, HighlighterTargetArea.EXACT_RANGE, false,
       rm -> {
-        // fallback for contentTypes which provide only attributes
+        // fallback for contentTypes that provides only attributes
         if (rm.getTextAttributesKey() == null) {
           rm.setTextAttributes(contentType.getAttributes());
         }
@@ -165,8 +166,7 @@ public final class ConsoleTokenUtil {
     }
   }
 
-  @NotNull
-  static CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
+  static @NotNull CharSequence computeTextToSend(@NotNull Editor editor, @NotNull Project project) {
     StringBuilder textToSend = new StringBuilder();
     // compute text input from the console contents:
     // all range markers beginning from the caret offset backwards, marked as user input and not marked as already sent
@@ -187,7 +187,7 @@ public final class ConsoleTokenUtil {
 
   static void highlightTokenTextAttributes(@NotNull Editor editor,
                                            @NotNull Project project,
-                                           @NotNull List<? extends TokenBuffer.TokenInfo> tokens,
+                                           @NotNull List<TokenBuffer.TokenInfo> tokens,
                                            @NotNull EditorHyperlinkSupport hyperlinks,
                                            @NotNull Collection<? super ConsoleViewContentType> contentTypes,
                                            @NotNull List<? super Pair<String, ConsoleViewContentType>> contents) {

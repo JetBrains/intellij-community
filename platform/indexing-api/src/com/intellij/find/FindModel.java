@@ -563,14 +563,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.directoryName = directoryName;
       notifyObservers();
-      if (directoryName != null) {
-        String path = FileUtil.toSystemIndependentName(directoryName);
-        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
-          setSearchInProjectFiles(true);
-        }
-      }
     }
-
   }
 
   /**
@@ -694,12 +687,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (changed) {
       this.fileFilter = fileFilter;
       notifyObservers();
-      if (fileFilter != null) {
-        List<String> split = StringUtil.split(fileFilter, ",");
-        if (ContainerUtil.exists(split, s -> s.endsWith("*.iml") || s.endsWith("*.ipr") || s.endsWith("*.iws"))) {
-          setSearchInProjectFiles(true);
-        }
-      }
     }
   }
 
@@ -883,6 +870,20 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   public boolean isSearchInProjectFiles() {
+    if (!mySearchInProjectFiles) {
+      if (fileFilter != null) {
+        List<String> split = StringUtil.split(fileFilter, ",");
+        if (ContainerUtil.exists(split, s -> s.endsWith(".iml") || s.endsWith(".ipr") || s.endsWith(".iws"))) {
+          return true;
+        }
+      }
+      if (directoryName != null) {
+        String path = FileUtil.toSystemIndependentName(directoryName);
+        if (path.endsWith("/.idea") || path.contains("/.idea/")) {
+          return true;
+        }
+      }
+    }
     return mySearchInProjectFiles;
   }
 

@@ -1,25 +1,21 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
-import com.intellij.ide.actions.cache.RecoverVfsFromLogService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageHelper;
+import com.intellij.platform.util.io.storages.blobstorage.StreamlinedBlobStorageOverMMappedFile;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.CompressingAlgo;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentHashEnumeratorOverDurableEnumerator;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.ContentStorageAdapter;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.content.VFSContentStorageOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageHelper;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverLockFreePagedStorage;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverMMappedFile;
-import com.intellij.openapi.vfs.newvfs.persistent.dev.blobstorage.StreamlinedBlobStorageOverPagedStorage;
 import com.intellij.openapi.vfs.newvfs.persistent.dev.enumerator.DurableStringEnumerator;
-import com.intellij.openapi.vfs.newvfs.persistent.intercept.*;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogEx;
-import com.intellij.openapi.vfs.newvfs.persistent.log.VfsLogImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoverer;
 import com.intellij.openapi.vfs.newvfs.persistent.recovery.VFSRecoveryInfo;
+import com.intellij.platform.util.io.storages.StorageFactory;
+import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.hash.ContentHashEnumerator;
@@ -27,9 +23,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy;
 import com.intellij.util.io.blobstorage.SpaceAllocationStrategy.DataLengthPlusFixedPercentStrategy;
 import com.intellij.util.io.blobstorage.StreamlinedBlobStorage;
-import com.intellij.platform.util.io.storages.StorageFactory;
-import com.intellij.platform.util.io.storages.mmapped.MMappedFileStorageFactory;
-import com.intellij.util.io.pagecache.impl.PageContentLockingStrategy;
 import com.intellij.util.io.storage.*;
 import com.intellij.util.io.storage.lf.RefCountingContentStorageImplLF;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -43,7 +36,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
@@ -114,21 +110,15 @@ public final class PersistentFSLoader {
 
   private final VFSAsyncTaskExecutor executorService;
 
-  public final boolean enableVfsLog;
-
   public final @NotNull Path namesFile;
   public final @NotNull Path attributesFile;
   public final @NotNull Path contentsFile;
   public final @NotNull Path contentsHashesFile;
   public final @NotNull Path recordsFile;
   public final @NotNull Path enumeratedAttributesFile;
-  public final @NotNull Path vfsLogDir;
 
   public final @NotNull Path corruptionMarkerFile;
-  public final @NotNull Path storagesReplacementMarkerFile;
-  public final @NotNull Path recoveryInProgressMarkerFile;
 
-  private @Nullable VfsLogEx vfsLog = null;
   private PersistentFSRecordsStorage recordsStorage = null;
   private ScannableDataEnumeratorEx<String> namesStorage = null;
   private VFSAttributesStorage attributesStorage = null;
@@ -156,7 +146,6 @@ public final class PersistentFSLoader {
   private boolean invalidateContentIds;
 
   PersistentFSLoader(@NotNull PersistentFSPaths persistentFSPaths,
-                     boolean enableVfsLog,
                      @NotNull VFSAsyncTaskExecutor pool) {
     recordsFile = persistentFSPaths.storagePath("records");
     namesFile = persistentFSPaths.storagePath("names");
@@ -164,22 +153,11 @@ public final class PersistentFSLoader {
     contentsFile = persistentFSPaths.storagePath("content");
     contentsHashesFile = persistentFSPaths.storagePath("contentHashes");
     enumeratedAttributesFile = persistentFSPaths.storagePath("attributes_enums");
-    vfsLogDir = persistentFSPaths.getVfsLogStorage();
 
     corruptionMarkerFile = persistentFSPaths.getCorruptionMarkerFile();
-    storagesReplacementMarkerFile = persistentFSPaths.getStoragesReplacementMarkerFile();
-    recoveryInProgressMarkerFile = persistentFSPaths.getRecoveryInProgressMarkerFile();
 
     vfsPaths = persistentFSPaths;
     this.executorService = pool;
-
-    this.enableVfsLog = enableVfsLog;
-  }
-
-  public boolean replaceStoragesIfMarkerPresent() {
-    var applied = VfsRecoveryUtils.INSTANCE.applyStoragesReplacementIfMarkerExists(storagesReplacementMarkerFile);
-    if (applied) LOG.info("PersistentFS storages replacement was applied");
-    return applied;
   }
 
   public void failIfCorruptionMarkerPresent() throws IOException {
@@ -190,13 +168,6 @@ public final class PersistentFSLoader {
   }
 
   public void initializeStorages() throws IOException {
-    if (enableVfsLog) {
-      vfsLog = VfsLogImpl.open(vfsLogDir, false, true);
-    }
-    else {
-      vfsLog = null;
-    }
-
     CompletableFuture<ScannableDataEnumeratorEx<String>> namesStorageFuture =
       executorService.async(() -> createFileNamesEnumerator(namesFile));
     CompletableFuture<VFSAttributesStorage> attributesStorageFuture =
@@ -260,45 +231,6 @@ public final class PersistentFSLoader {
     );
   }
 
-  public boolean recoverCachesFromVfsLog() throws IOException {
-    if (!vfsLogDir.toFile().isDirectory()) {
-      LOG.info("VfsLog directory does not exist");
-      return false;
-    }
-    VfsLogImpl vfsLog = VfsLogImpl.open(vfsLogDir, true);
-    try {
-      if (recoverCachesFromVfsLog(vfsLog)) {
-        LOG.info("Recovered caches from VfsLog");
-        return true;
-      }
-      else {
-        LOG.info("Failed to recover caches from VfsLog");
-        return false;
-      }
-    }
-    finally {
-      vfsLog.dispose();
-    }
-  }
-
-  private boolean recoverCachesFromVfsLog(@NotNull VfsLogImpl vfsLog) throws IOException {
-    if (!recoveryInProgressMarkerFile.toFile().createNewFile()) {
-      LOG.warn("Found \"recovery in progress\" marker. Not performing another recovery attempt"); // probably previous recovery has failed
-      return false;
-    }
-    boolean cachesWereRecovered = false;
-    try (var queryContext = vfsLog.query()) {
-      cachesWereRecovered = RecoverVfsFromLogService.Companion.recoverSynchronouslyFromLastRecoveryPoint(queryContext);
-    }
-    catch (Throwable e) {
-      LOG.error("VFS Caches recovery attempt has failed", e);
-    }
-    if (!recoveryInProgressMarkerFile.toFile().delete()) {
-      LOG.error("failed to remove \"recovery in progress\" marker");
-    }
-    return cachesWereRecovered;
-  }
-
   public void ensureStoragesVersionsAreConsistent(int currentImplVersion) throws IOException {
     LOG.info("VFS: impl (expected) version=" + currentImplVersion +
              ", " + recordsStorage.recordsCount() + " file records" +
@@ -357,23 +289,13 @@ public final class PersistentFSLoader {
       LOG.trace(t);
     }
 
-    PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentsStorage, vfsLog);
+    PersistentFSConnection.closeStorages(recordsStorage, namesStorage, attributesStorage, contentsStorage);
   }
 
   public void deleteEverything() throws IOException {
     boolean deleted = FileUtil.delete(corruptionMarkerFile.toFile());
     if (!deleted) {
       LOG.info("Can't delete " + corruptionMarkerFile);
-    }
-
-    deleted = FileUtil.delete(storagesReplacementMarkerFile.toFile());
-    if (!deleted) {
-      LOG.info("Can't delete " + storagesReplacementMarkerFile);
-    }
-
-    deleted = FileUtil.delete(recoveryInProgressMarkerFile.toFile());
-    if (!deleted) {
-      LOG.info("Can't delete " + recoveryInProgressMarkerFile);
     }
 
     makeBestEffortToCleanStorage(namesStorage, namesFile);
@@ -390,16 +312,9 @@ public final class PersistentFSLoader {
     if (!deleted) {
       LOG.info("Can't delete " + vfsPaths.getRootsBaseFile());
     }
-
-    try {
-      VfsLogImpl.clearStorage(vfsLogDir);
-    }
-    catch (IOException e) {
-      LOG.info("Can't clear " + vfsLogDir, e);
-    }
   }
 
-  public PersistentFSConnection createConnection(@NotNull List<ConnectionInterceptor> interceptors) throws IOException {
+  public PersistentFSConnection createConnection() throws IOException {
     return new PersistentFSConnection(
       vfsPaths,
       recordsStorage,
@@ -407,15 +322,13 @@ public final class PersistentFSLoader {
       attributesStorage,
       contentsStorage,
       attributesEnumerator,
-      vfsLog,
       reusableFileIdsLazy,
       new VFSRecoveryInfo(
         problemsRecovered,
         invalidateContentIds,
         directoriesIdsToRefresh,
         filesIdsToInvalidate
-      ),
-      interceptors
+      )
     );
   }
 
@@ -528,20 +441,6 @@ public final class PersistentFSLoader {
                    "file[#" + fileId + "].nameId(=" + nameId + ") is not present in namesEnumerator");
         return false;
       }
-      else if (!FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-        int reCheckNameId = namesStorage.tryEnumerate(name);
-        if (reCheckNameId != nameId) {
-          addProblem(NAME_STORAGE_INCOMPLETE,
-                     "namesEnumerator is corrupted: file[#" + fileId + "]" +
-                     ".nameId(=" + nameId + ") -> [" + name + "] -> tryEnumerate() -> " + reCheckNameId
-          );
-          return false;
-        }
-        //Fast (DurableStringEnumerator) implementation persists only forward (id->name) index, and re-build inverse
-        // (name->id) index in memory, on each loading, so:
-        // 1) no need to check inverse index since it can't be corrupted on disk
-        // 2) inverse index is building async, so by trying to check it we force the building and ruin async-ness
-      }
     }
     catch (Throwable t) {
       addProblem(NAME_STORAGE_INCOMPLETE,
@@ -595,121 +494,37 @@ public final class PersistentFSLoader {
 
 
   public @NotNull VFSAttributesStorage createAttributesStorage(@NotNull Path attributesFile) throws IOException {
-    VFSAttributesStorage storage = createAttributesStorage_makeStorage(attributesFile);
-    if (vfsLog != null) {
-      var attributesInterceptors = vfsLog.getConnectionInterceptors().stream()
-        .filter(AttributesInterceptor.class::isInstance)
-        .map(AttributesInterceptor.class::cast)
-        .toList();
-      storage = InterceptorInjection.INSTANCE.injectInAttributes(storage, attributesInterceptors);
-    }
-    return storage;
-  }
+    //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
+    SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
+      /*min: */64, /*default: */ 128,
+      /*max: */StreamlinedBlobStorageHelper.MAX_CAPACITY,
+      /*percentOnTop: */30
+    );
 
-  private static @NotNull VFSAttributesStorage createAttributesStorage_makeStorage(@NotNull Path attributesFile) throws IOException {
-    if (FSRecordsImpl.USE_STREAMLINED_ATTRIBUTES_IMPLEMENTATION) {
-      //avg record size is ~60b, hence I've chosen minCapacity=64 bytes, and defaultCapacity= 2*minCapacity
-      final SpaceAllocationStrategy allocationStrategy = new DataLengthPlusFixedPercentStrategy(
-        /*min: */64, /*default: */ 128,
-        /*max: */StreamlinedBlobStorageHelper.MAX_CAPACITY,
-        /*percentOnTop: */30
+    LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
+    int pageSize = 1 << 24;//16Mb
+    StreamlinedBlobStorage blobStorage = MMappedFileStorageFactory.withDefaults()
+      .pageSize(pageSize)
+      //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
+      // data from non-mmapped -- the only 'migration' needed is to page-align the file:
+      .ifFileIsNotPageAligned(EXPAND_FILE)
+      .wrapStorageSafely(
+        attributesFile,
+        storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
       );
-      final StreamlinedBlobStorage blobStorage;
-      boolean nativeBytesOrder = true;
-      if (FSRecordsImpl.USE_ATTRIBUTES_OVER_NEW_FILE_PAGE_CACHE && PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-        LOG.info("VFS uses streamlined attributes storage (over new FilePageCache)");
-        //RC: make page smaller for the transition period: new FPCache has quite a small memory and it's hard
-        //    to manage huge 10Mb pages having only ~100-150Mb budget in total, it ruins large-numbers assumptions
-        int pageSize = 1 << 20;//PageCacheUtils.DEFAULT_PAGE_SIZE,
-        blobStorage = IOUtil.wrapSafely(
-          new PagedFileStorageWithRWLockedPageContent(
-            attributesFile,
-            PERSISTENT_FS_STORAGE_CONTEXT,
-            pageSize,
-            nativeBytesOrder,
-            PageContentLockingStrategy.LOCK_PER_PAGE
-          ),
-          storage -> new StreamlinedBlobStorageOverLockFreePagedStorage(storage, allocationStrategy)
-        );
-      }
-      else if (FSRecordsImpl.USE_ATTRIBUTES_OVER_MMAPPED_FILE) {
-        LOG.info("VFS uses streamlined attributes storage (over mmapped file)");
-        int pageSize = 1 << 24;//16Mb
-        blobStorage = MMappedFileStorageFactory.withDefaults()
-          .pageSize(pageSize)
-          //mmapped and !mmapped storages have the same binary layout, so mmapped storage could inherit all the
-          // data from non-mmapped -- the only 'migration' needed is to page-align the file:
-          .ifFileIsNotPageAligned(EXPAND_FILE)
-          .wrapStorageSafely(
-            attributesFile,
-            storage -> new StreamlinedBlobStorageOverMMappedFile(storage, allocationStrategy)
-          );
-      }
-      else {
-        LOG.info("VFS uses streamlined attributes storage (over regular FilePageCache)");
-        blobStorage = IOUtil.wrapSafely(
-          new PagedFileStorage(
-            attributesFile,
-            PERSISTENT_FS_STORAGE_CONTEXT,
-            PageCacheUtils.DEFAULT_PAGE_SIZE,
-            /*valuesAreAligned: */ true,
-            nativeBytesOrder
-          ),
-          storage -> new StreamlinedBlobStorageOverPagedStorage(storage, allocationStrategy)
-        );
-      }
-      return new AttributesStorageOverBlobStorage(blobStorage);
-    }
-    else {
-      LOG.info("VFS uses regular attributes storage");
-      boolean bulkAttrReadSupport = false;
-      boolean inlineAttributes = true;
-      return new AttributesStorageOld(
-        bulkAttrReadSupport,
-        inlineAttributes,
-        new Storage(attributesFile, PersistentFSConnection.REASONABLY_SMALL) {
-          @Override
-          protected AbstractRecordsTable createRecordsTable(@NotNull StorageLockContext context,
-                                                            @NotNull Path recordsFile) throws IOException {
-            return new CompactRecordsTable(recordsFile, context, false);
-          }
-        });
-    }
+    return new AttributesStorageOverBlobStorage(blobStorage);
   }
 
   private @NotNull ScannableDataEnumeratorEx<String> createFileNamesEnumerator(@NotNull Path namesFile) throws IOException {
-    if (FSRecordsImpl.USE_FAST_NAMES_IMPLEMENTATION) {
-      LOG.info("VFS uses 'fast' names enumerator (over mmapped file)");
-      //if we use _same_ namesFile for fast/regular enumerator (which seems natural at a first glance), then
-      // on transition, fast enumerator couldn't recognize regular enumerator file format, and throws some
-      // bizare exception => VFS is rebuilt, but with rebuildCause=UNRECOGNIZED instead of 'version mismatch'.
-      //To get an expected exception on transition, we need regular/fast enumerator to use different files,
-      // e.g. 'names.dat' / 'names.dat.mmap'
-      Path namesPathEx = Path.of(namesFile + ".mmap");
-      return DurableStringEnumerator.openAsync(namesPathEx, executorService);
-    }
-    else {
-      LOG.info("VFS uses regular (btree) names enumerator");
-      return new PersistentStringEnumerator(namesFile, PERSISTENT_FS_STORAGE_CONTEXT);
-    }
+    LOG.info("VFS uses names enumerator over mmapped file");
+    //MAYBE RC: remove .mmap suffix, and use namesFile directly? Suffix was needed during transition from regular to mmapped impls,
+    //          and long unused
+    Path namesPathEx = Path.of(namesFile + ".mmap");
+    return DurableStringEnumerator.openAsync(namesPathEx, executorService);
   }
 
   public @NotNull VFSContentStorage createContentStorage(@NotNull Path contentsHashesFile,
                                                          @NotNull Path contentsFile) throws IOException {
-
-    VFSContentStorage storage = createContentStorage_makeStorage(contentsHashesFile, contentsFile);
-    if (vfsLog != null) {
-      var contentInterceptors = vfsLog.getConnectionInterceptors().stream()
-        .filter(ContentsInterceptor.class::isInstance)
-        .map(ContentsInterceptor.class::cast)
-        .toList();
-      storage = InterceptorInjection.INSTANCE.injectInContents(storage, contentInterceptors);
-    }
-    return storage;
-  }
-
-  private static @NotNull VFSContentStorage createContentStorage_makeStorage(@NotNull Path contentsHashesFile,
-                                                                             @NotNull Path contentsFile) throws IOException {
     if (FSRecordsImpl.USE_CONTENT_STORAGE_OVER_MMAPPED_FILE) {
       //Use larger pages: content storage is usually quite big.
       int pageSize = 64 * IOUtil.MiB;
@@ -779,19 +594,9 @@ public final class PersistentFSLoader {
 
   public @NotNull PersistentFSRecordsStorage createRecordsStorage(@NotNull Path recordsFile) throws IOException {
     StorageFactory<PersistentFSRecordsStorage> recordsStorageFactory = PersistentFSRecordsStorageFactory.storageImplementation();
-
     LOG.info("VFS uses " + recordsStorageFactory + " storage for main file records table");
     return recordsStorageFactory.wrapStorageSafely(recordsFile, records -> {
-      if (vfsLog != null) {
-        var recordsInterceptors = vfsLog.getConnectionInterceptors().stream()
-          .filter(RecordsInterceptor.class::isInstance)
-          .map(RecordsInterceptor.class::cast)
-          .toList();
-        return InterceptorInjection.INSTANCE.injectInRecords(records, recordsInterceptors);
-      }
-      else {
-        return records;
-      }
+      return records;
     });
   }
 
@@ -867,10 +672,6 @@ public final class PersistentFSLoader {
 
   public VFSContentStorage contentsStorage() {
     return contentsStorage;
-  }
-
-  public VfsLogEx vfsLog() {
-    return vfsLog;
   }
 
   public SimpleStringPersistentEnumerator attributesEnumerator() {

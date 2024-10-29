@@ -4,7 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.JUnit38AssumeSupportRunner;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
@@ -56,7 +56,7 @@ public class LineSetIncrementalUpdateTest extends UsefulTestCase {
 
   public void testTypingInLongLinePerformance() {
     String longLine = StringUtil.repeat("a ", 200000);
-    PerformanceTestUtil.newPerformanceTest("Document changes in a long line", () -> {
+    Benchmark.newBenchmark("Document changes in a long line", () -> {
       Document document = new DocumentImpl("a\n" + longLine + "<caret>" + longLine + "\n", true);
       for (int i = 0; i < 1000; i++) {
         int offset = i * 2 + longLine.length();

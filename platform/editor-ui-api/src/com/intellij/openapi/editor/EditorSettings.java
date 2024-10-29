@@ -154,6 +154,7 @@ public interface EditorSettings {
 
   boolean isWheelFontChangeEnabled();
   void setWheelFontChangeEnabled(boolean val);
+  void resetWheelFontChangeEnabled();
 
   boolean isMouseClickSelectionHonorsCamelWords();
   void setMouseClickSelectionHonorsCamelWords(boolean val);

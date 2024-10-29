@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
@@ -25,7 +25,7 @@ import java.util.List;
 
 public abstract class BasePlatformRefactoringAction extends BaseRefactoringAction {
   private final CachedValue<Boolean> myHidden = new CachedValueImpl<>(
-    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.INSTANCE));
+    () -> CachedValueProvider.Result.create(calcHidden(), LanguageRefactoringSupport.getInstance()));
   private final Condition<RefactoringSupportProvider> myCondition = provider -> getRefactoringHandler(provider) != null;
 
   @Override
@@ -76,9 +76,8 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return null;
   }
 
-  @Nullable
-  protected RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+  protected @Nullable RefactoringActionHandler getHandler(@NotNull Language language, PsiElement element) {
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     if (providers.isEmpty()) return null;
     if (element == null) return getRefactoringHandler(providers.get(0));
     for (RefactoringSupportProvider provider : providers) {
@@ -96,7 +95,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isAvailableForLanguage(final Language language) {
-    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
+    List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.getInstance().allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;
   }
 
@@ -110,11 +109,9 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
     return false;
   }
 
-  @Nullable
-  protected abstract RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
+  protected abstract @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider);
 
-  @Nullable
-  protected RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
+  protected @Nullable RefactoringActionHandler getRefactoringHandler(@NotNull RefactoringSupportProvider provider, PsiElement element) {
     return getRefactoringHandler(provider);
   }
 

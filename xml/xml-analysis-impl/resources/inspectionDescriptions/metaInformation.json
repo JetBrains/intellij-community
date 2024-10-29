@@ -1,0 +1,80 @@
+{
+  "inspections": [
+    {
+      "id": "HtmlUnknownBooleanAttribute",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckXmlFileWithXercesValidator",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlUnusedNamespaceDeclaration",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckDtdRefs",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CheckTagEmptyBody",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "CheckEmptyScriptTag",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlUnknownTarget",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlWrongRootElement",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlUnknownAttribute",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlExtraClosingTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlPathReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlMissingClosingTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlInvalidId",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlDeprecatedElement",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlUnresolvedReference",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "HtmlUnknownTag",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "XmlHighlighting",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlWrongAttributeValue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "HtmlUnknownAnchorTarget",
+      "codeQualityCategory": "Security"
+    }
+  ]
+}

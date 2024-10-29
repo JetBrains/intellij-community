@@ -1,1 +1,2 @@
 // INSPECTION_CLASS: org.jetbrains.kotlin.idea.inspections.ArrayInDataClassInspection
+// K2_INSPECTION_CLASS: org.jetbrains.kotlin.idea.k2.codeinsight.inspections.declarations.ArrayInDataClassInspection

@@ -26,7 +26,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
   private val pluginEnabledStateListener = PluginEnabledStateListener()
   private val LOCK = Object()
 
-  private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh")
+  private val PLUGIN_EXCEPTIONS = setOf("com.intellij.ja", "com.intellij.ko", "com.intellij.zh", "com.intellij.marketplace")
 
   // TODO: migrate to better solution in 2024.3.
   // Other places where these are mentioned:
@@ -63,7 +63,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
         LOG.info("Plugins ${removedPluginIds.joinToString()} have been deleted from disk")
         for (pluginId in removedPluginIds) {
           val pluginData = newPlugins[pluginId] ?: continue
-          if (checkDependencies(pluginId, pluginData)) {
+          if (checkDependencies(pluginId, pluginData) && isPluginSynceable(pluginId)) {
             newPlugins.computeIfPresent(pluginId) { _, data -> PluginData(enabled = false, data.category, data.dependencies) }
             removed2disable.add(pluginId)
           } else {
@@ -90,6 +90,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
 
           // also don't touch localization plugins as they become bundled in 242 and might cause issues:
           // see https://youtrack.jetbrains.com/issue/IJPL-157227/IDE-is-localized-after-Settings-Sync-between-2024.1-and-2024.2-if-language-plugins-had-updates
+          LOG.info("Plugin $id is not syncable!")
         }
         else if (shouldSaveState(plugin)) {
           newPlugins[id] = getPluginData(plugin)
@@ -160,7 +161,7 @@ internal class SettingsSyncPluginManager(private val cs: CoroutineScope) : Dispo
    * i.e. disables, enables and installs plugins according to the State.
    * It doesn't uninstall plugins - it only disable it.
    */
-  fun pushChangesToIde(newState: SettingsSyncPluginsState) {
+  suspend fun pushChangesToIde(newState: SettingsSyncPluginsState) {
     val pluginsToDisable = mutableSetOf<PluginId>()
     val pluginsToEnable = mutableSetOf<PluginId>()
     val pluginsToInstall = mutableListOf<PluginId>()

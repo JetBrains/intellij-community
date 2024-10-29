@@ -1,12 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ConstPropertyName")
+@file:Suppress("ConstPropertyName", "DuplicatedCode")
 
 package org.jetbrains.intellij.build.io
 
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufAllocator
+import io.netty.buffer.Unpooled
+import java.io.EOFException
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
 import java.nio.channels.FileChannel.MapMode
-import java.nio.channels.WritableByteChannel
+import java.nio.channels.GatheringByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -23,10 +27,13 @@ private const val compressThreshold = 8 * 1024
 // 8 MB (as JDK)
 private const val mappedTransferSize = 8L * 1024L * 1024L
 
-fun transformZipUsingTempFile(file: Path, task: (ZipFileWriter) -> Unit) {
+fun transformZipUsingTempFile(file: Path, indexWriter: IkvIndexBuilder?, task: (ZipFileWriter) -> Unit) {
   val tempFile = Files.createTempFile(file.parent, file.fileName.toString(), ".tmp")
   try {
-    ZipFileWriter(channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE))).use {
+    ZipFileWriter(
+      channel = FileChannel.open(tempFile, EnumSet.of(StandardOpenOption.WRITE)),
+      zipIndexWriter = ZipIndexWriter(indexWriter),
+    ).use {
       task(it)
     }
     Files.move(tempFile, file, StandardCopyOption.REPLACE_EXISTING)
@@ -45,15 +52,21 @@ inline fun writeNewZipWithoutIndex(
   ZipFileWriter(
     channel = FileChannel.open(file, W_CREATE_NEW),
     deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null,
+    zipIndexWriter = ZipIndexWriter(indexWriter = null),
   ).use {
     task(it)
   }
 }
 
 // you must pass SeekableByteChannel if files are written (`file` method)
-class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater? = null) : AutoCloseable {
+class ZipFileWriter(
+  channel: GatheringByteChannel,
+  private val deflater: Deflater? = null,
+  private val withCrc: Boolean = true,
+  private val zipIndexWriter: ZipIndexWriter,
+) : AutoCloseable {
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
-  internal val resultStream = ZipArchiveOutputStream(channel)
+  internal val resultStream = ZipArchiveOutputStream(channel = channel, zipIndexWriter = zipIndexWriter)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()
@@ -63,75 +76,99 @@ class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater
     get() = resultStream.getChannelPosition()
 
   @Suppress("DuplicatedCode")
-  fun file(nameString: String, file: Path, indexWriter: IkvIndexBuilder?) {
+  fun file(nameString: String, file: Path) {
     var isCompressed = deflater != null && !nameString.endsWith(".png")
 
     val name = nameString.toByteArray()
-    val headerSize = 30 + name.size
+    if (!withCrc) {
+      FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
+        val size = channel.size()
+        assert(size <= Int.MAX_VALUE)
+        resultStream.writeEntryHeaderWithoutCrc(name = name, size = size.toInt())
+        resultStream.transferFrom(fileChannel = channel, size.toLong())
+      }
+      return
+    }
 
     crc32.reset()
 
-    val input: ByteBuffer
-    val size: Int
-    FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
-      size = channel.size().toInt()
-      if (size == 0) {
-        writeEmptyFile(name, headerSize, indexWriter)
-        return
-      }
-      if (size < compressThreshold) {
-        isCompressed = false
-      }
-
-      if (size > largeFileThreshold || isCompressed) {
-        val headerPosition = resultStream.getChannelPositionAndAdd(headerSize)
-        var compressedSize = writeLargeFile(size.toLong(), channel, if (isCompressed) deflater else null).toInt()
-        val crc = crc32.value
-        val method: Int
-        if (compressedSize == -1) {
-          method = ZipEntry.STORED
-          compressedSize = size
+    val headerSize = 30 + name.size
+    var input: ByteBuf? = null
+    try {
+      val size: Int
+      FileChannel.open(file, EnumSet.of(StandardOpenOption.READ)).use { channel ->
+        size = channel.size().toInt()
+        if (size == 0) {
+          resultStream.writeEmptyFile(name = name)
+          return
         }
-        else {
-          method = ZipEntry.DEFLATED
+
+        if (size < compressThreshold) {
+          isCompressed = false
         }
-        val buffer = bufferAllocator.allocate(headerSize)
-        writeLocalFileHeader(name = name, size = size, compressedSize = compressedSize, crc32 = crc, method = method, buffer = buffer)
-        buffer.position(0)
-        assert(buffer.remaining() == headerSize)
-        resultStream.writeEntryHeaderAt(
-          name = name,
-          header = buffer,
-          position = headerPosition,
-          size = size,
-          compressedSize = compressedSize,
-          crc = crc,
-          method = method,
-          indexWriter = indexWriter,
-        )
-        return
+
+        if (size > largeFileThreshold || isCompressed) {
+          val headerPosition = resultStream.getChannelPositionAndAdd(headerSize)
+          var compressedSize = writeLargeFile(
+            fileSize = size.toLong(),
+            channel = channel,
+            deflater = if (isCompressed) deflater else null,
+          ).toInt()
+          val crc = crc32.value
+          val method = if (compressedSize == -1) {
+            compressedSize = size
+            ZipEntry.STORED
+          }
+          else {
+            ZipEntry.DEFLATED
+          }
+          resultStream.writeEntryHeaderAt(
+            name = name,
+            position = headerPosition,
+            size = size,
+            compressedSize = compressedSize,
+            crc = crc,
+            method = method,
+          )
+          return
+        }
+
+        input = ByteBufAllocator.DEFAULT.directBuffer(headerSize + size)
+        // set position to compute CRC
+        input.writerIndex(headerSize)
+        var toRead = size
+        var position = 0L
+        while (toRead > 0) {
+          val n = input.writeBytes(channel, position, toRead)
+          if (n == -1) {
+            throw EOFException()
+          }
+
+          toRead -= n
+          position += n
+        }
+        crc32.update(input.nioBuffer(headerSize, size))
       }
 
-      input = bufferAllocator.allocate(headerSize + size)
-      input.position(headerSize)
+      val crc = crc32.value
+      input!!.writerIndex(0)
 
-      // set position to compute CRC
-      input.mark()
-      do {
-        channel.read(input)
-      }
-      while (input.hasRemaining())
-      input.reset()
-      crc32.update(input)
+      writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = input)
+      input.writerIndex(size + headerSize)
+      assert(input.readableBytes() == (size + headerSize))
+      resultStream.writeRawEntry(
+        data = input,
+        name = name,
+        size = size,
+        compressedSize = size,
+        method = ZipEntry.STORED,
+        crc = crc,
+        headerSize = headerSize,
+      )
     }
-
-    val crc = crc32.value
-    input.position(0)
-
-    writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, input)
-    input.position(0)
-    assert(input.remaining() == (size + headerSize))
-    resultStream.writeRawEntry(input, name, size, size, ZipEntry.STORED, crc, headerSize, indexWriter)
+    finally {
+      input?.release()
+    }
   }
 
   private fun writeLargeFile(fileSize: Long, channel: FileChannel, deflater: Deflater?): Long {
@@ -225,31 +262,39 @@ class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater
     output.limit(output.position())
     output.position(0)
     val compressedSize = output.remaining() - headerSize
-    writeLocalFileHeader(name, size, compressedSize, crc, ZipEntry.DEFLATED, output)
-    output.position(0)
-    assert(output.remaining() == (compressedSize + headerSize))
+    val nettyBuffer = Unpooled.wrappedBuffer(output)
+    nettyBuffer.clear()
+    writeZipLocalFileHeader(
+      name = name,
+      size = size,
+      compressedSize = compressedSize,
+      crc32 = crc,
+      method = ZipEntry.DEFLATED,
+      buffer = nettyBuffer,
+    )
+    nettyBuffer.setIndex(0, compressedSize + headerSize)
+    assert(nettyBuffer.readableBytes() == (compressedSize + headerSize))
     resultStream.writeRawEntry(
-      content = output,
+      data = nettyBuffer,
       name = name,
       size = size,
       compressedSize = compressedSize,
       method = ZipEntry.DEFLATED,
       crc = crc,
       headerSize = headerSize,
-      indexWriter = null,
     )
   }
 
-  fun uncompressedData(nameString: String, data: String, indexWriter: IkvIndexBuilder?) {
-    uncompressedData(nameString, ByteBuffer.wrap(data.toByteArray()), indexWriter)
+  fun uncompressedData(nameString: String, data: String) {
+    uncompressedData(nameString = nameString, data = ByteBuffer.wrap(data.toByteArray()))
   }
 
-  fun uncompressedData(nameString: String, data: ByteBuffer, indexWriter: IkvIndexBuilder?) {
+  fun uncompressedData(nameString: String, data: ByteBuffer) {
     val name = nameString.toByteArray()
-    val headerSize = 30 + name.size
 
-    if (!data.hasRemaining()) {
-      writeEmptyFile(name, headerSize, indexWriter)
+    val size = data.remaining()
+    if (size == 0) {
+      resultStream.writeEmptyFile(name = name)
       return
     }
 
@@ -259,45 +304,47 @@ class ZipFileWriter(channel: WritableByteChannel, private val deflater: Deflater
     val crc = crc32.value
     data.reset()
 
-    val size = data.remaining()
-    val header = bufferAllocator.allocate(headerSize)
-    writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, header)
-    header.position(0)
-    resultStream.writeRawEntry(header, data, name, size, size, ZipEntry.STORED, crc, indexWriter = indexWriter)
+    resultStream.writeDataRawEntry(
+      data = data,
+      name = name,
+      size = size,
+      compressedSize = size,
+      method = ZipEntry.STORED,
+      crc = crc,
+    )
   }
 
-  fun uncompressedData(nameString: String, maxSize: Int, indexWriter: IkvIndexBuilder?, dataWriter: (ByteBuffer) -> Unit) {
+  fun uncompressedData(nameString: String, maxSize: Int, dataWriter: (ByteBuf) -> Unit) {
     val name = nameString.toByteArray()
     val headerSize = 30 + name.size
 
-    val output = bufferAllocator.allocate(headerSize + maxSize)
-    output.position(headerSize)
-    dataWriter(output)
-    output.limit(output.position())
-    output.position(headerSize)
-    val size = output.remaining()
+    ByteBufAllocator.DEFAULT.directBuffer(headerSize + maxSize).use { data ->
+      data.writerIndex(headerSize)
+      dataWriter(data)
+      val size = data.readableBytes() - headerSize
 
-    crc32.reset()
-    crc32.update(output)
-    val crc = crc32.value
-    output.position(0)
+      crc32.reset()
+      crc32.update(data.nioBuffer(headerSize, size))
+      val crc = crc32.value
 
-    writeLocalFileHeader(name, size, size, crc, ZipEntry.STORED, output)
-    output.position(0)
-    assert(output.remaining() == (size + headerSize))
-    resultStream.writeRawEntry(output, name, size, size, ZipEntry.STORED, crc, headerSize, indexWriter = indexWriter)
+      data.writerIndex(0)
+      writeZipLocalFileHeader(name = name, size = size, compressedSize = size, crc32 = crc, method = ZipEntry.STORED, buffer = data)
+      data.writerIndex(headerSize + size)
+      assert(data.readableBytes() == (size + headerSize))
+      resultStream.writeRawEntry(
+        data = data,
+        name = name,
+        size = size,
+        compressedSize = size,
+        method = ZipEntry.STORED,
+        crc = crc,
+        headerSize = headerSize,
+      )
+    }
   }
 
-  private fun writeEmptyFile(name: ByteArray, headerSize: Int, indexWriter: IkvIndexBuilder?) {
-    val input = bufferAllocator.allocate(headerSize)
-    writeLocalFileHeader(name, size = 0, compressedSize = 0, crc32 = 0, method = ZipEntry.STORED, buffer = input)
-    input.position(0)
-    input.limit(headerSize)
-    resultStream.writeRawEntry(input, name, 0, 0, ZipEntry.STORED, 0, headerSize, indexWriter)
-  }
-
-  fun dir(name: String, indexWriter: IkvIndexBuilder?) {
-    resultStream.addDirEntry(name, indexWriter)
+  fun dir(name: String) {
+    resultStream.addDirEntry(name)
   }
 
   override fun close() {

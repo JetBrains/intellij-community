@@ -2,4 +2,4 @@ fun a() {
     val array = Byte<caret>Array(10)
 }
 
-// REF: (<local>) (size: Int)
+// REF: (<local>) public constructor(size: Int)

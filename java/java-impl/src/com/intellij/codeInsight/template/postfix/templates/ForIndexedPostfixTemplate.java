@@ -9,11 +9,11 @@ import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditable
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,10 +64,14 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
 
   private static @NotNull String suggestIndexType(@NotNull PsiExpression expr) {
     PsiType type = expr.getType();
+    if (Boolean.TRUE.equals(JavaRefactoringSettings.getInstance().INTRODUCE_LOCAL_CREATE_VAR_TYPE) &&
+         PsiUtil.isAvailable(JavaFeature.LVTI, expr)) {
+      return PsiKeyword.VAR;
+    }
     if (isNumber(type)) {
       return type.getCanonicalText();
     }
-    return "int";
+    return PsiKeyword.INT;
   }
 
   @Override

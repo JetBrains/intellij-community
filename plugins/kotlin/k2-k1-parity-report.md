@@ -1,7 +1,7 @@
 # K2/K1 feature parity report
 
 
-Generated on Fri Jun 21 22:13:18 CEST 2024
+Generated on Thu Oct 03 11:27:07 CEST 2024
 
 ## K2 Success rate per category
 
@@ -11,22 +11,23 @@ to total number of files in this category.
 
 | Status | Category | Success rate, % | Success files | Total files |
 | -- | -- | --  | -- | -- |
- | :white_check_mark: | UNCATEGORIZED | 100 | 210 | 210 | 0 | 
- | :white_check_mark: | HIGHLIGHTING | 100 | 228 | 229 | 0 | 
- | :white_check_mark: | COMPLETION | 85 | 1413 | 1672 | 0 | 
- | :white_check_mark: | CODE_INSIGHT | 95 | 1696 | 1790 | 0 | 
- | :white_check_mark: | NAVIGATION | 99 | 87 | 88 | 0 | 
- | :white_check_mark: | FIND_USAGES | 100 | 455 | 455 | 0 | 
- | :white_check_mark: | REFACTORING | 99 | 361 | 363 | 0 | 
- | :white_check_mark: | RENAME_REFACTORING | 97 | 427 | 438 | 0 | 
- | :white_check_mark: | INLINE_REFACTORING | 98 | 355 | 362 | 0 | 
- | :x: | MOVE_REFACTORING | 74 | 154 | 208 | 0 | 
- | :white_check_mark: | EXTRACT_REFACTORING | 94 | 809 | 860 | 0 | 
- | :white_check_mark: | INSPECTIONS | 100 | 640 | 643 | 0 | 
- | :x: | INTENTIONS | 49 | 1688 | 3412 | 0 | 
- | :x: | QUICKFIXES | 50 | 1324 | 2634 | 0 | 
- | :white_check_mark: | DEBUGGER | 96 | 887 | 920 | 0 | 
- | :x: | J2K | 74 | 879 | 1183 | 0 | 
+ | :white_check_mark: | UNCATEGORIZED | 100 | 225 | 225 | 0 | 
+ | :white_check_mark: | HIGHLIGHTING | 100 | 265 | 266 | 0 | 
+ | :white_check_mark: | COMPLETION | 85 | 1456 | 1708 | 0 | 
+ | :white_check_mark: | CODE_INSIGHT | 96 | 1982 | 2064 | 0 | 
+ | :white_check_mark: | NAVIGATION | 100 | 91 | 91 | 0 | 
+ | :white_check_mark: | FIND_USAGES | 100 | 458 | 458 | 0 | 
+ | :white_check_mark: | REFACTORING | 99 | 363 | 365 | 0 | 
+ | :white_check_mark: | RENAME_REFACTORING | 98 | 432 | 443 | 0 | 
+ | :white_check_mark: | INLINE_REFACTORING | 98 | 456 | 463 | 0 | 
+ | :x: | MOVE_REFACTORING | 76 | 175 | 229 | 0 | 
+ | :white_check_mark: | EXTRACT_REFACTORING | 95 | 900 | 951 | 0 | 
+ | :white_check_mark: | INSPECTIONS | 100 | 653 | 656 | 0 | 
+ | :x: | INTENTIONS | 64 | 2254 | 3501 | 0 | 
+ | :x: | QUICKFIXES | 73 | 2051 | 2791 | 0 | 
+ | :white_check_mark: | DEBUGGER | 97 | 923 | 956 | 0 | 
+ | :white_check_mark: | J2K | 89 | 1080 | 1220 | 0 | 
+ | :white_check_mark: | ANALYSIS_API | 100 | 2 | 2 | 0 | 
 
 ## K2/K1 parity per category 
 
@@ -36,26 +37,27 @@ to number of files successfully passed in K1 in the same category.
 
 | Status | Category | Success rate, % | K2 files | K1 files |
 | -- | -- | --  | -- | -- |
- | :x: | UNCATEGORIZED | 14 | 210 | 1522 | 0 | 
- | :x: | HIGHLIGHTING | 80 | 228 | 285 | 0 | 
- | :x: | COMPLETION | 65 | 1413 | 2167 | 0 | 
- | :x: | CODE_INSIGHT | 66 | 1696 | 2586 | 0 | 
- | :x: | NAVIGATION | 61 | 87 | 142 | 0 | 
- | :white_check_mark: | FIND_USAGES | 117 | 455 | 390 | 0 | 
- | :white_check_mark: | REFACTORING | 93 | 361 | 388 | 0 | 
- | :white_check_mark: | RENAME_REFACTORING | 104 | 427 | 409 | 0 | 
- | :x: | INLINE_REFACTORING | 78 | 355 | 458 | 0 | 
- | :x: | MOVE_REFACTORING | 77 | 154 | 200 | 0 | 
- | :white_check_mark: | EXTRACT_REFACTORING | 132 | 809 | 615 | 0 | 
- | :x: | INSPECTIONS | 17 | 640 | 3819 | 0 | 
- | :x: | INTENTIONS | 44 | 1688 | 3808 | 0 | 
- | :x: | QUICKFIXES | 37 | 1324 | 3548 | 0 | 
- | :x: | SCRIPTS | 0 | 0 | 40 | 0 | 
- | :white_check_mark: | DEBUGGER | 89 | 887 | 993 | 0 | 
- | :x: | J2K | 74 | 879 | 1183 | 0 | 
+ | :x: | UNCATEGORIZED | 14 | 225 | 1558 | 0 | 
+ | :white_check_mark: | HIGHLIGHTING | 92 | 265 | 288 | 0 | 
+ | :x: | COMPLETION | 66 | 1456 | 2192 | 0 | 
+ | :x: | CODE_INSIGHT | 75 | 1982 | 2657 | 0 | 
+ | :x: | NAVIGATION | 58 | 91 | 157 | 0 | 
+ | :white_check_mark: | FIND_USAGES | 117 | 458 | 393 | 0 | 
+ | :white_check_mark: | REFACTORING | 94 | 363 | 388 | 0 | 
+ | :white_check_mark: | RENAME_REFACTORING | 104 | 432 | 414 | 0 | 
+ | :white_check_mark: | INLINE_REFACTORING | 98 | 456 | 465 | 0 | 
+ | :x: | MOVE_REFACTORING | 83 | 175 | 210 | 0 | 
+ | :white_check_mark: | EXTRACT_REFACTORING | 136 | 900 | 662 | 0 | 
+ | :x: | INSPECTIONS | 17 | 653 | 3850 | 0 | 
+ | :x: | INTENTIONS | 59 | 2254 | 3826 | 0 | 
+ | :x: | QUICKFIXES | 57 | 2051 | 3580 | 0 | 
+ | :x: | SCRIPTS | 0 | 0 | 20 | 0 | 
+ | :white_check_mark: | DEBUGGER | 91 | 923 | 1017 | 0 | 
+ | :white_check_mark: | J2K | 89 | 1080 | 1220 | 0 | 
+ | :white_check_mark: | ANALYSIS_API | 100 | 2 | 0 | 0 | 
 
 ## Shared cases
-shared 14670 files out of 1098 cases
+shared 15509 files out of 1140 cases
 
 | Status | Case name | Success rate, % | K2 files | K1 files | Total files |
 | -- | -- | --  | -- | -- | -- |
@@ -63,350 +65,25 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | [K2CodeFragmentHighlightingTestGenerated] | 89 | 25 | 28 | 28 | 
  | :x: | K2CodeFragmentHighlightingTestGenerated$Imports | 0 | 0 | 1 | 1 | 
  | :white_check_mark: | K2CodeFragmentHighlightingTestGenerated$CodeFragments | 93 | 25 | 27 | 27 | 
- | :white_check_mark: | [FirParameterInfoTestGenerated] | 94 | 118 | 126 | 126 | 
+ | :white_check_mark: | [FirParameterInfoTestGenerated] | 94 | 119 | 127 | 127 | 
  | :x: | FirParameterInfoTestGenerated$WithLib3 | 0 | 0 | 1 | 1 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$ArrayAccess | 88 | 7 | 8 | 8 | 
- | :white_check_mark: | FirParameterInfoTestGenerated$FunctionCall | 93 | 83 | 89 | 89 | 
+ | :white_check_mark: | FirParameterInfoTestGenerated$FunctionCall | 93 | 84 | 90 | 90 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$Annotations | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$TypeArguments | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib1 | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | FirParameterInfoTestGenerated$WithLib2 | 100 | 1 | 1 | 1 | 
- | :x: | [HighLevelQuickFixTestGenerated] | 48 | 1164 | 2401 | 2411 | 
- | :x: | HighLevelQuickFixTestGenerated$AddAnnotationTarget | 0 | 0 | 35 | 35 | 
- | :x: | HighLevelQuickFixTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameter | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$AddConstructorParameterFromSuperTypeCall | 0 | 0 | 10 | 10 | 
- | :x: | HighLevelQuickFixTestGenerated$AddConversionCall | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$AddDefaultConstructor | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$AddEmptyArgumentList | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$AddGenericUpperBound | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$AddJvmStaticAnnotation | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$AddNewLineAfterAnnotations | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$AddReturnToLastExpressionInFunction | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$AddReturnToUnusedLastExpressionInFunction | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$AddRunBeforeLambda | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$AddSemicolonBeforeLambdaExpression | 0 | 0 | 13 | 13 | 
- | :x: | HighLevelQuickFixTestGenerated$AddSuspend | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$AddUnsafeVarianceAnnotation | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$AddVarianceModifier | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$AssignToProperty | 0 | 0 | 12 | 12 | 
- | :x: | HighLevelQuickFixTestGenerated$CallFromPublicInline | 0 | 0 | 16 | 16 | 
- | :x: | HighLevelQuickFixTestGenerated$CanBeParameter | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$CanBePrimaryConstructorProperty | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$CastDueToProgressionResolveChange | 0 | 0 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$ChangeSignature | 0 | 0 | 64 | 64 | 
- | :x: | HighLevelQuickFixTestGenerated$ChangeSuperTypeListEntryTypeArgument | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$ChangeToMutableCollection | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$ChangeToPropertyAccess | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$CompilerError | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$ConvertIllegalEscapeToUnicodeEscape | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$ConvertPropertyInitializerToGetter | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$ConvertToAnonymousObject | 0 | 0 | 12 | 12 | 
- | :x: | HighLevelQuickFixTestGenerated$ConvertToIsArrayOfCall | 0 | 0 | 7 | 7 | 
- | :x: | HighLevelQuickFixTestGenerated$CreateFromUsage | 0 | 0 | 106 | 106 | 
- | :x: | HighLevelQuickFixTestGenerated$CreateLabel | 0 | 0 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$DeclarationCantBeInlined | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$DeclaringJavaClass | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$DecreaseVisibility | 0 | 0 | 14 | 14 | 
- | :x: | HighLevelQuickFixTestGenerated$DeprecatedJavaAnnotation | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$Final | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$FoldTryCatch | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$FunctionWithLambdaExpressionBody | 0 | 0 | 10 | 10 | 
- | :x: | HighLevelQuickFixTestGenerated$Implement | 0 | 0 | 39 | 39 | 
- | :x: | HighLevelQuickFixTestGenerated$ImportAlias | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$IncreaseVisibility | 0 | 0 | 33 | 33 | 
- | :x: | HighLevelQuickFixTestGenerated$InitializeWithConstructorParameter | 0 | 0 | 17 | 17 | 
- | :x: | HighLevelQuickFixTestGenerated$InlineClass | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$InlineTypeParameterFix | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$IsEnumEntry | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$JavaClassOnCompanion | 0 | 0 | 7 | 7 | 
- | :x: | HighLevelQuickFixTestGenerated$KdocMissingDocumentation | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$LeakingThis | 0 | 0 | 8 | 8 | 
- | :x: | HighLevelQuickFixTestGenerated$Libraries | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$MakeConstructorParameterProperty | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$MakeUpperBoundNonNullable | 0 | 0 | 11 | 11 | 
- | :x: | HighLevelQuickFixTestGenerated$MemberVisibilityCanBePrivate | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$Migration | 0 | 0 | 46 | 46 | 
- | :x: | HighLevelQuickFixTestGenerated$MissingConstructorBrackets | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$MoveMemberToCompanionObject | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$MoveReceiverAnnotation | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$MoveToConstructorParameters | 0 | 0 | 12 | 12 | 
- | :x: | HighLevelQuickFixTestGenerated$ObsoleteKotlinJsPackages | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$OptIn | 0 | 0 | 57 | 62 | 
- | :x: | HighLevelQuickFixTestGenerated$OptimizeImports | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$PlatformClasses | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$PlatformTypesInspection | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$Properties | 0 | 0 | 5 | 5 | 
- | :x: | HighLevelQuickFixTestGenerated$ProtectedInFinal | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantConst | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantFun | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantIf | 0 | 0 | 16 | 16 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantInline | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantLateinit | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantModalityModifier | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantSuspend | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$RedundantVisibilityModifier | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveAnnotation | 0 | 0 | 11 | 11 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveAtFromAnnotationArgument | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveFinalUpperBound | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveRedundantAssignment | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveRedundantInitializer | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveRedundantLabel | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveSingleLambdaParameter | 0 | 0 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveSuspend | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveToStringInStringTemplate | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveTypeVariance | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveUnusedParameter | 0 | 0 | 24 | 24 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveUnusedReceiver | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$RemoveUseSiteTarget | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$RenameToRem | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$RenameToUnderscore | 0 | 0 | 8 | 8 | 
- | :x: | HighLevelQuickFixTestGenerated$RenameUnresolvedReference | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$ReorderParameters | 0 | 0 | 11 | 11 | 
- | :x: | HighLevelQuickFixTestGenerated$ReplaceJvmFieldWithConst | 0 | 0 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$RestrictedRetentionForExpressionAnnotation | 0 | 0 | 16 | 16 | 
- | :x: | HighLevelQuickFixTestGenerated$SmartCastImpossibleInIfThen | 0 | 0 | 12 | 12 | 
- | :x: | HighLevelQuickFixTestGenerated$SpecifySuperExplicitly | 0 | 0 | 10 | 10 | 
- | :x: | HighLevelQuickFixTestGenerated$SpecifyTypeExplicitly | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$SuperTypeIsExtensionType | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$Suppress | 0 | 0 | 88 | 89 | 
- | :x: | HighLevelQuickFixTestGenerated$SuspiciousCollectionReassignment | 0 | 0 | 35 | 35 | 
- | :x: | HighLevelQuickFixTestGenerated$TypeInferenceExpectedTypeMismatch | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$TypeParameters | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$TypeProjection | 0 | 0 | 7 | 7 | 
- | :x: | HighLevelQuickFixTestGenerated$UnnecessaryLateinit | 0 | 0 | 6 | 6 | 
- | :x: | HighLevelQuickFixTestGenerated$UnusedSuppressAnnotation | 0 | 0 | 4 | 4 | 
- | :x: | HighLevelQuickFixTestGenerated$UseFullyqualifiedCall | 0 | 0 | 3 | 3 | 
- | :x: | HighLevelQuickFixTestGenerated$Variables | 0 | 0 | 10 | 10 | 
- | :x: | HighLevelQuickFixTestGenerated$WrapArgumentWithParentheses | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$WrapWhenExpressionInParentheses | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$WrongLongSuffix | 0 | 0 | 1 | 1 | 
- | :x: | HighLevelQuickFixTestGenerated$YieldUnsupported | 0 | 0 | 2 | 2 | 
- | :x: | HighLevelQuickFixTestGenerated$IncompatibleTypes | 29 | 2 | 7 | 7 | 
- | :x: | HighLevelQuickFixTestGenerated$SurroundWithArrayOfForNamedArgumentsToVarargs | 44 | 4 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$SupertypeInitialization | 50 | 16 | 32 | 32 | 
- | :x: | HighLevelQuickFixTestGenerated$AutoImports | 57 | 55 | 96 | 96 | 
- | :x: | HighLevelQuickFixTestGenerated$ParameterTypeMismatch | 67 | 12 | 18 | 18 | 
- | :x: | HighLevelQuickFixTestGenerated$ReplaceWithDotCall | 67 | 6 | 9 | 9 | 
- | :x: | HighLevelQuickFixTestGenerated$TypeMismatch | 67 | 56 | 83 | 84 | 
- | :x: | HighLevelQuickFixTestGenerated$AddTypeAnnotationToValueParameter | 70 | 7 | 10 | 10 | 
- | :x: | HighLevelQuickFixTestGenerated$When | 73 | 27 | 37 | 38 | 
- | :x: | HighLevelQuickFixTestGenerated$Suspend | 77 | 10 | 13 | 13 | 
- | :x: | HighLevelQuickFixTestGenerated$Modifiers | 81 | 56 | 69 | 69 | 
- | :x: | HighLevelQuickFixTestGenerated$Nullables | 81 | 13 | 16 | 16 | 
- | :x: | HighLevelQuickFixTestGenerated$Abstract | 83 | 29 | 35 | 35 | 
- | :x: | HighLevelQuickFixTestGenerated$MoveTypeAliasToTopLevel | 83 | 5 | 6 | 6 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceInfixOrOperatorCall | 86 | 19 | 22 | 22 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceWithSafeCall | 86 | 25 | 29 | 29 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddExclExclCall | 88 | 46 | 52 | 52 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveUnused | 89 | 25 | 28 | 28 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddValVar | 90 | 9 | 10 | 10 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Expressions | 90 | 36 | 40 | 40 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddFunModifier | 91 | 10 | 11 | 11 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$DeprecatedSymbolUsage | 91 | 160 | 175 | 175 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Override | 92 | 23 | 25 | 25 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeMutability | 93 | 14 | 15 | 15 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$WrapWithSafeLetCall | 94 | 32 | 34 | 34 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeAddition | 95 | 20 | 21 | 21 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeMismatchOnOverride | 95 | 19 | 20 | 20 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeMismatchOnReturnedExpression | 97 | 36 | 37 | 37 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddCrossinline | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddDataModifier | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddElseBranchToIf | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddEqEqTrue | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInitializer | 100 | 23 | 23 | 23 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInline | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddInlineToReifiedFunctionFix | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddIsToWhenCondition | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddJvmInline | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddNoinline | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddOpenToClassDeclaration | 100 | 18 | 18 | 18 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddPropertyAccessors | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddReifiedToTypeParameterOfFunctionFix | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddReturnExpression | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$AddStarProjections | 100 | 47 | 47 | 47 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeObjectToClass | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeToFunctionInvocation | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeToLabeledReturn | 100 | 11 | 11 | 11 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$CheckArguments | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ComponentFunctionReturnTypeMismatch | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ConflictingImports | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ConvertCollectionLiteralToIntArrayOf | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ConvertLateinitPropertyToNotNullDelegate | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ConvertToBlockBody | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$EqualityNotApplicable | 100 | 11 | 11 | 11 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$InsertDelegationCall | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Lateinit | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$LocalVariableWithTypeParameters | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$MakeTypeParameterReified | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$NumberConversion | 100 | 31 | 31 | 31 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$PrimitiveCastToConversion | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveArgument | 100 | 5 | 5 | 5 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveDefaultParameterValue | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveNoConstructor | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveRedundantSpreadOperator | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$RemoveValVarFromParameter | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ReplaceWithArrayCallInAnnotation | 100 | 5 | 5 | 5 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$SimplifyComparison | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$SpecifyOverrideExplicitly | 100 | 8 | 8 | 8 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$SpecifySuperType | 100 | 10 | 10 | 10 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$SpecifyVisibilityInExplicitApiMode | 100 | 5 | 5 | 5 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Supercalls | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$SurroundWithNullCheck | 100 | 24 | 24 | 24 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ToString | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TooLongCharLiteralToString | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeImports | 100 | 5 | 5 | 5 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$TypeOfAnnotationMember | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$WrongPrimitive | 100 | 14 | 14 | 14 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$Casts | 108 | 13 | 12 | 13 | 
- | :white_check_mark: | HighLevelQuickFixTestGenerated$ChangeToUseSpreadOperator | 111 | 10 | 9 | 10 | 
- | :x: | [K2IntentionTestGenerated] | 41 | 1190 | 2895 | 2914 | 
- | :x: | K2IntentionTestGenerated$AddAnnotationUseSiteTarget | 0 | 0 | 32 | 32 | 
- | :x: | K2IntentionTestGenerated$AddForLoopIndices | 0 | 0 | 14 | 14 | 
- | :x: | K2IntentionTestGenerated$AddJvmOverloads | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$AddJvmStatic | 0 | 0 | 13 | 13 | 
- | :x: | K2IntentionTestGenerated$AddLabeledReturnInLambda | 0 | 0 | 13 | 13 | 
- | :x: | K2IntentionTestGenerated$AddMissingDestructuring | 0 | 0 | 6 | 6 | 
- | :x: | K2IntentionTestGenerated$AddThrowsAnnotation | 0 | 0 | 29 | 29 | 
- | :x: | K2IntentionTestGenerated$AddValOrVar | 0 | 0 | 12 | 12 | 
- | :x: | K2IntentionTestGenerated$AnonymousFunctionToLambda | 0 | 0 | 26 | 26 | 
- | :x: | K2IntentionTestGenerated$Branched | 0 | 0 | 104 | 104 | 
- | :x: | K2IntentionTestGenerated$ConventionNameCalls | 0 | 0 | 53 | 53 | 
- | :x: | K2IntentionTestGenerated$ConvertArgumentToSet | 0 | 0 | 20 | 20 | 
- | :x: | K2IntentionTestGenerated$ConvertArrayParameterToVararg | 0 | 0 | 12 | 12 | 
- | :x: | K2IntentionTestGenerated$ConvertBlockCommentToLineComment | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ConvertCamelCaseTestFunctionToSpaced | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ConvertCollectionConstructorToFunction | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ConvertEnumToSealedClass | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$ConvertFilteringFunctionWithDemorgansLaw | 0 | 0 | 17 | 17 | 
- | :x: | K2IntentionTestGenerated$ConvertFunctionToProperty | 0 | 0 | 32 | 32 | 
- | :x: | K2IntentionTestGenerated$ConvertFunctionTypeParameterToReceiver | 0 | 0 | 19 | 19 | 
- | :x: | K2IntentionTestGenerated$ConvertFunctionTypeReceiverToParameter | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$ConvertLateinitPropertyToNullable | 0 | 0 | 4 | 4 | 
- | :x: | K2IntentionTestGenerated$ConvertLazyPropertyToOrdinary | 0 | 0 | 6 | 6 | 
- | :x: | K2IntentionTestGenerated$ConvertNullablePropertyToLateinit | 0 | 0 | 17 | 17 | 
- | :x: | K2IntentionTestGenerated$ConvertObjectLiteralToClass | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ConvertOrdinaryPropertyToLazy | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$ConvertParameterToReceiver | 0 | 0 | 22 | 22 | 
- | :x: | K2IntentionTestGenerated$ConvertPrimaryConstructorToSecondary | 0 | 0 | 40 | 40 | 
- | :x: | K2IntentionTestGenerated$ConvertPropertyInitializerToGetter | 0 | 0 | 16 | 16 | 
- | :x: | K2IntentionTestGenerated$ConvertPropertyToFunction | 0 | 0 | 23 | 23 | 
- | :x: | K2IntentionTestGenerated$ConvertRangeCheckToTwoComparisons | 0 | 0 | 12 | 12 | 
- | :x: | K2IntentionTestGenerated$ConvertReceiverToParameter | 0 | 0 | 17 | 17 | 
- | :x: | K2IntentionTestGenerated$ConvertSealedClassToEnum | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$ConvertSecondaryConstructorToPrimary | 0 | 0 | 26 | 26 | 
- | :x: | K2IntentionTestGenerated$ConvertSnakeCaseTestFunctionToSpaced | 0 | 0 | 2 | 2 | 
- | :x: | K2IntentionTestGenerated$ConvertToIndexedFunctionCall | 0 | 0 | 26 | 26 | 
- | :x: | K2IntentionTestGenerated$ConvertToScope | 0 | 0 | 105 | 105 | 
- | :x: | K2IntentionTestGenerated$ConvertTrimIndentToTrimMargin | 0 | 0 | 6 | 6 | 
- | :x: | K2IntentionTestGenerated$ConvertTrimMarginToTrimIndent | 0 | 0 | 10 | 10 | 
- | :x: | K2IntentionTestGenerated$ConvertTryFinallyToUseCall | 0 | 0 | 14 | 14 | 
- | :x: | K2IntentionTestGenerated$ConvertUnsafeCastCallToUnsafeCast | 0 | 0 | 2 | 2 | 
- | :x: | K2IntentionTestGenerated$ConvertUnsafeCastToUnsafeCastCall | 0 | 0 | 2 | 2 | 
- | :x: | K2IntentionTestGenerated$ConvertVarargParameterToArray | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ConvertVariableAssignmentToExpression | 0 | 0 | 4 | 4 | 
- | :x: | K2IntentionTestGenerated$CopyConcatenatedStringToClipboard | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$Declarations | 0 | 0 | 63 | 63 | 
- | :x: | K2IntentionTestGenerated$DestructuringInLambda | 0 | 0 | 26 | 26 | 
- | :x: | K2IntentionTestGenerated$DestructuringVariables | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$EvaluateCompileTimeExpression | 0 | 0 | 16 | 16 | 
- | :x: | K2IntentionTestGenerated$ExpandBooleanExpression | 0 | 0 | 13 | 13 | 
- | :x: | K2IntentionTestGenerated$ImplementAbstractMember | 0 | 0 | 26 | 26 | 
- | :x: | K2IntentionTestGenerated$ImplementAsConstructorParameter | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$InsertCurlyBracesToTemplate | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$IntroduceBackingProperty | 0 | 0 | 15 | 15 | 
- | :x: | K2IntentionTestGenerated$IntroduceImportAlias | 0 | 0 | 30 | 30 | 
- | :x: | K2IntentionTestGenerated$IntroduceVariable | 0 | 0 | 14 | 14 | 
- | :x: | K2IntentionTestGenerated$IterateExpression | 0 | 0 | 13 | 13 | 
- | :x: | K2IntentionTestGenerated$IterationOverMap | 0 | 0 | 40 | 40 | 
- | :x: | K2IntentionTestGenerated$JoinDeclarationAndAssignment | 0 | 0 | 48 | 48 | 
- | :x: | K2IntentionTestGenerated$MergeElseIf | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$MoveDeclarationToSeparateFile | 0 | 0 | 2 | 2 | 
- | :x: | K2IntentionTestGenerated$MoveLambdaInsideParentheses | 0 | 0 | 19 | 19 | 
- | :x: | K2IntentionTestGenerated$MoveMemberToTopLevel | 0 | 0 | 10 | 10 | 
- | :x: | K2IntentionTestGenerated$MoveOutOfCompanion | 0 | 0 | 10 | 10 | 
- | :x: | K2IntentionTestGenerated$MovePropertyToClassBody | 0 | 0 | 12 | 12 | 
- | :x: | K2IntentionTestGenerated$MoveToCompanion | 0 | 0 | 22 | 22 | 
- | :x: | K2IntentionTestGenerated$NullableBooleanEqualityCheckToElvis | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$ObjectLiteralToLambda | 0 | 0 | 30 | 30 | 
- | :x: | K2IntentionTestGenerated$ReconstructTypeInCastOrIs | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$RemoveEmptyPrimaryConstructor | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$RemoveExplicitLambdaParameterTypes | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$RemoveExplicitSuperQualifier | 0 | 0 | 11 | 11 | 
- | :x: | K2IntentionTestGenerated$RemoveForLoopIndices | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$RemoveRedundantCallsOfConversionMethods | 0 | 0 | 19 | 19 | 
- | :x: | K2IntentionTestGenerated$RemoveSingleExpressionStringTemplate | 0 | 0 | 7 | 7 | 
- | :x: | K2IntentionTestGenerated$ReplaceAddWithPlusAssign | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$ReplaceExplicitFunctionLiteralParamWithIt | 0 | 0 | 24 | 24 | 
- | :x: | K2IntentionTestGenerated$ReplaceItWithExplicitFunctionLiteralParam | 0 | 0 | 5 | 5 | 
- | :x: | K2IntentionTestGenerated$ReplaceMapGetOrDefault | 0 | 0 | 3 | 3 | 
- | :x: | K2IntentionTestGenerated$ReplaceSizeCheckWithIsNotEmpty | 0 | 0 | 21 | 21 | 
- | :x: | K2IntentionTestGenerated$ReplaceSizeZeroCheckWithIsEmpty | 0 | 0 | 17 | 17 | 
- | :x: | K2IntentionTestGenerated$ReplaceTypeArgumentWithUnderscore | 0 | 0 | 31 | 31 | 
- | :x: | K2IntentionTestGenerated$ReplaceUnderscoreWithParameterName | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$ReplaceUntilWithRangeTo | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$ReplaceWithOrdinaryAssignment | 0 | 0 | 9 | 9 | 
- | :x: | K2IntentionTestGenerated$SamConversionToAnonymousObject | 0 | 0 | 20 | 20 | 
- | :x: | K2IntentionTestGenerated$SimplifyBooleanWithConstants | 0 | 0 | 39 | 39 | 
- | :x: | K2IntentionTestGenerated$SwapStringEqualsIgnoreCase | 0 | 0 | 3 | 3 | 
- | :x: | K2IntentionTestGenerated$ToInfixCall | 0 | 0 | 20 | 20 | 
- | :x: | K2IntentionTestGenerated$ToOrdinaryStringLiteral | 0 | 0 | 28 | 28 | 
- | :x: | K2IntentionTestGenerated$UsePropertyAccessSyntax | 0 | 0 | 57 | 57 | 
- | :x: | K2IntentionTestGenerated$UseWithIndex | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$ValToObject | 0 | 0 | 8 | 8 | 
- | :x: | K2IntentionTestGenerated$ConvertLambdaToReference | 71 | 97 | 136 | 136 | 
- | :white_check_mark: | K2IntentionTestGenerated$ImportMember | 95 | 21 | 22 | 22 | 
- | :white_check_mark: | K2IntentionTestGenerated$SpecifyExplicitLambdaSignature | 95 | 18 | 19 | 19 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertReferenceToLambda | 98 | 46 | 47 | 47 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertToBlockBody | 98 | 40 | 41 | 41 | 
- | :white_check_mark: | K2IntentionTestGenerated$SpecifyTypeExplicitly | 98 | 47 | 48 | 48 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddFullQualifier | 100 | 51 | 51 | 51 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddMissingClassKeyword | 100 | 8 | 8 | 8 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddNameToArgument | 100 | 30 | 30 | 30 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddNamesInCommentToJavaCallArguments | 100 | 19 | 19 | 19 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddNamesToCallArguments | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddNamesToFollowingArguments | 100 | 11 | 11 | 11 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddOpenModifier | 100 | 14 | 14 | 14 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddPropertyAccessors | 100 | 46 | 46 | 46 | 
- | :white_check_mark: | K2IntentionTestGenerated$AddWhenRemainingBranches | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | K2IntentionTestGenerated$Chop | 100 | 22 | 22 | 22 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertBinaryExpressionWithDemorgansLaw | 100 | 25 | 25 | 25 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertConcatenationToBuildString | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertForEachToForLoop | 100 | 31 | 31 | 31 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertPropertyGetterToInitializer | 100 | 11 | 11 | 11 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertStringTemplateToBuildString | 100 | 8 | 8 | 8 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertToConcatenatedString | 100 | 37 | 37 | 37 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertToRawStringTemplate | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | K2IntentionTestGenerated$ImportAllMembers | 100 | 27 | 27 | 27 | 
- | :white_check_mark: | K2IntentionTestGenerated$InvertIfCondition | 100 | 59 | 59 | 59 | 
- | :white_check_mark: | K2IntentionTestGenerated$JoinArgumentList | 100 | 14 | 14 | 14 | 
- | :white_check_mark: | K2IntentionTestGenerated$JoinParameterList | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | K2IntentionTestGenerated$LambdaToAnonymousFunction | 100 | 31 | 31 | 31 | 
- | :white_check_mark: | K2IntentionTestGenerated$MergeIfs | 100 | 11 | 11 | 11 | 
- | :white_check_mark: | K2IntentionTestGenerated$MovePropertyToConstructor | 100 | 18 | 18 | 18 | 
- | :white_check_mark: | K2IntentionTestGenerated$RemoveAllArgumentNames | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitTypeArguments | 100 | 37 | 37 | 37 | 
- | :white_check_mark: | K2IntentionTestGenerated$RemoveSingleArgumentName | 100 | 21 | 21 | 21 | 
- | :white_check_mark: | K2IntentionTestGenerated$ReplaceUnderscoreWithTypeArgument | 100 | 27 | 27 | 27 | 
- | :white_check_mark: | K2IntentionTestGenerated$ToRawStringLiteral | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | K2IntentionTestGenerated$TrailingComma | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | K2IntentionTestGenerated$ChangeVisibility | 101 | 90 | 89 | 90 | 
- | :white_check_mark: | K2IntentionTestGenerated$ConvertToStringTemplate | 102 | 56 | 55 | 56 | 
- | :white_check_mark: | K2IntentionTestGenerated$InsertExplicitTypeArguments | 103 | 31 | 30 | 31 | 
- | :white_check_mark: | K2IntentionTestGenerated$IfToWhen | 107 | 45 | 42 | 45 | 
- | :white_check_mark: | K2IntentionTestGenerated$RemoveExplicitType | 114 | 64 | 56 | 68 | 
- | :white_check_mark: | K2IntentionTestGenerated$Flatten | 133 | 4 | 3 | 4 | 
- | :x: | [K2PsiUnifierTestGenerated] | 76 | 84 | 111 | 116 | 
+ | :x: | [K2PsiUnifierTestGenerated] | 76 | 85 | 112 | 117 | 
  | :x: | K2PsiUnifierTestGenerated$CallableReferences | 0 | 0 | 3 | 3 | 
  | :x: | K2PsiUnifierTestGenerated$ClassesAndObjects | 0 | 0 | 6 | 6 | 
  | :x: | K2PsiUnifierTestGenerated$TypeParameters | 0 | 0 | 1 | 1 | 
  | :x: | K2PsiUnifierTestGenerated$Super | 25 | 1 | 4 | 4 | 
  | :x: | K2PsiUnifierTestGenerated$Assignments | 60 | 3 | 5 | 5 | 
  | :x: | K2PsiUnifierTestGenerated$Blocks | 67 | 2 | 3 | 3 | 
- | :x: | K2PsiUnifierTestGenerated$Misc | 67 | 2 | 3 | 3 | 
  | :x: | K2PsiUnifierTestGenerated$Types | 67 | 4 | 6 | 6 | 
  | :x: | K2PsiUnifierTestGenerated$Conventions | 69 | 9 | 13 | 13 | 
  | :x: | K2PsiUnifierTestGenerated$Uncategorized | 69 | 9 | 13 | 13 | 
+ | :x: | K2PsiUnifierTestGenerated$Misc | 75 | 3 | 4 | 4 | 
  | :white_check_mark: | K2PsiUnifierTestGenerated$Lambdas | 88 | 7 | 8 | 8 | 
  | :white_check_mark: | K2PsiUnifierTestGenerated$This | 90 | 9 | 10 | 10 | 
  | :white_check_mark: | K2PsiUnifierTestGenerated$Calls | 100 | 15 | 15 | 17 | 
@@ -414,66 +91,60 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | K2PsiUnifierTestGenerated$Invoke | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2PsiUnifierTestGenerated$LocalCallables | 100 | 5 | 5 | 6 | 
  | :white_check_mark: | K2PsiUnifierTestGenerated$Expressions | 122 | 11 | 9 | 11 | 
- | :x: | [K2JavaToKotlinConverterSingleFileFullJDKTestGenerated] | 13 | 1 | 8 | 8 | 
- | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Collections | 0 | 0 | 5 | 5 | 
+ | :x: | [K2JavaToKotlinConverterSingleFileFullJDKTestGenerated] | 38 | 3 | 8 | 8 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Enum | 0 | 0 | 1 | 1 | 
+ | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Collections | 40 | 2 | 5 | 5 | 
  | :x: | K2JavaToKotlinConverterSingleFileFullJDKTestGenerated$Issues | 50 | 1 | 2 | 2 | 
- | :x: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 74 | 840 | 1128 | 1128 | 
+ | :white_check_mark: | [K2JavaToKotlinConverterSingleFileTestGenerated] | 89 | 1038 | 1165 | 1165 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Lambda | 0 | 0 | 2 | 2 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Projections | 0 | 0 | 1 | 1 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RawGenerics | 0 | 0 | 4 | 4 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RecordClass | 0 | 0 | 16 | 16 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ToArray | 0 | 0 | 1 | 1 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$JavaStreamsApi | 11 | 1 | 9 | 9 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DetectProperties | 16 | 12 | 76 | 76 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ToKotlinClasses | 17 | 1 | 6 | 6 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MutableCollections | 23 | 3 | 13 | 13 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$RawGenerics | 25 | 1 | 4 | 4 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousClass | 33 | 1 | 3 | 3 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeParameters | 40 | 6 | 15 | 15 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousBlock | 47 | 7 | 15 | 15 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$FunctionalInterfaces | 50 | 4 | 8 | 8 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Identifier | 50 | 2 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MutableCollections | 46 | 6 | 13 | 13 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Types | 50 | 3 | 6 | 6 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayType | 55 | 6 | 11 | 11 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Constructors | 56 | 25 | 45 | 45 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Inheritance | 60 | 3 | 5 | 5 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MethodCallExpression | 61 | 14 | 23 | 23 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayInitializerExpression | 62 | 8 | 13 | 13 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Comments | 63 | 12 | 19 | 19 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$IsOperator | 67 | 2 | 3 | 3 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Issues | 67 | 56 | 83 | 83 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 68 | 17 | 25 | 25 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DocComments | 73 | 11 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayAccessExpression | 75 | 3 | 4 | 4 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ClassExpression | 75 | 3 | 4 | 4 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Field | 75 | 12 | 16 | 16 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Overloads | 75 | 6 | 8 | 8 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Function | 76 | 34 | 45 | 45 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$AssertStatement | 80 | 4 | 5 | 5 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Identifier | 75 | 3 | 4 | 4 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Enum | 76 | 19 | 25 | 25 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ArrayInitializerExpression | 77 | 10 | 13 | 13 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Function | 78 | 35 | 45 | 45 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$BoxedType | 80 | 12 | 15 | 15 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$NewClassExpression | 80 | 12 | 15 | 15 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$DocComments | 80 | 12 | 15 | 15 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$ObjectLiteral | 80 | 4 | 5 | 5 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$MethodCallExpression | 83 | 19 | 23 | 23 | 
  | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$TryWithResource | 83 | 10 | 12 | 12 | 
- | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 84 | 26 | 31 | 31 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$AssignmentExpression | 85 | 23 | 27 | 27 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ParenthesizedExpression | 86 | 6 | 7 | 7 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Protected | 86 | 6 | 7 | 7 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Nullability | 88 | 46 | 52 | 52 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Annotations | 89 | 32 | 36 | 36 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$KotlinApiAccess | 89 | 17 | 19 | 19 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ImplicitCasts | 91 | 10 | 11 | 11 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Formatting | 92 | 12 | 13 | 13 | 
+ | :x: | K2JavaToKotlinConverterSingleFileTestGenerated$Comments | 84 | 16 | 19 | 19 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$DetectProperties | 86 | 66 | 77 | 77 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Issues | 86 | 71 | 83 | 83 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$FunctionalInterfaces | 88 | 7 | 8 | 8 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PostProcessing | 88 | 28 | 32 | 32 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Visibility | 92 | 12 | 13 | 13 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$For | 94 | 50 | 53 | 53 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$AnonymousBlock | 93 | 14 | 15 | 15 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ImplicitCasts | 93 | 13 | 14 | 14 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$NewClassExpression | 93 | 14 | 15 | 15 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Field | 94 | 15 | 16 | 16 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$For | 94 | 51 | 54 | 54 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$TypeCastExpression | 94 | 17 | 18 | 18 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LiteralExpression | 95 | 18 | 19 | 19 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$BinaryExpression | 96 | 25 | 26 | 26 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$KotlinApiAccess | 95 | 18 | 19 | 19 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$AssignmentExpression | 96 | 26 | 27 | 27 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Nullability | 98 | 52 | 53 | 53 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Annotations | 100 | 36 | 36 | 36 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$AssertStatement | 100 | 5 | 5 | 5 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$BinaryExpression | 100 | 26 | 26 | 26 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Blocks | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$BreakStatement | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$CallChainExpression | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$CaseConversion | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Class | 100 | 37 | 37 | 37 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ConditionalExpression | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ConditionalExpression | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Constructors | 100 | 45 | 45 | 45 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ContinueStatement | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$DeclarationStatement | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$DoWhileStatement | 100 | 5 | 5 | 5 | 
@@ -481,6 +152,7 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Equals | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ExplicitApiMode | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ForeachStatement | 100 | 6 | 6 | 6 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Formatting | 100 | 13 | 13 | 13 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$IfStatement | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ImportStatement | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Interface | 100 | 12 | 12 | 12 | 
@@ -489,14 +161,20 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LabelStatement | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LibraryUsage | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$List | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LiteralExpression | 100 | 19 | 19 | 19 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$LocalVariable | 100 | 9 | 9 | 9 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Misc | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$NullabilityGenerics | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$NullabilityGenerics | 100 | 27 | 27 | 27 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Overloads | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PackageStatement | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PatternMatching | 100 | 1 | 1 | 1 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ParenthesizedExpression | 100 | 8 | 8 | 8 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PatternMatching | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PolyadicExpression | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PostfixOperator | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PreAndPostprocessorExtensions | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$PrefixOperator | 100 | 6 | 6 | 6 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Protected | 100 | 7 | 7 | 7 | 
+ | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$RecordClass | 100 | 16 | 16 | 16 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$ReturnStatement | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$Settings | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2JavaToKotlinConverterSingleFileTestGenerated$SimplifyNegatedBinaryExpression | 100 | 6 | 6 | 6 | 
@@ -516,75 +194,62 @@ shared 14670 files out of 1098 cases
  | :x: | [K2CodeFragmentCompletionTestGenerated] | 72 | 13 | 18 | 19 | 
  | :x: | K2CodeFragmentCompletionTestGenerated$RuntimeType | 17 | 1 | 6 | 6 | 
  | :white_check_mark: | K2CodeFragmentCompletionTestGenerated$Uncategorized | 100 | 12 | 12 | 13 | 
- | :x: | [HighLevelWeigherTestGenerated] | 68 | 84 | 123 | 124 | 
+ | :x: | [HighLevelWeigherTestGenerated] | 69 | 85 | 123 | 125 | 
  | :x: | HighLevelWeigherTestGenerated$ExpectedInfo | 13 | 2 | 15 | 15 | 
  | :x: | HighLevelWeigherTestGenerated$TypesWithInstances | 29 | 2 | 7 | 7 | 
  | :x: | HighLevelWeigherTestGenerated$WithReturnType | 65 | 11 | 17 | 17 | 
- | :x: | HighLevelWeigherTestGenerated$Uncategorized | 79 | 45 | 57 | 58 | 
+ | :x: | HighLevelWeigherTestGenerated$Uncategorized | 81 | 46 | 57 | 59 | 
  | :x: | HighLevelWeigherTestGenerated$NoReturnType | 82 | 9 | 11 | 11 | 
  | :white_check_mark: | HighLevelWeigherTestGenerated$ExpectedType | 88 | 7 | 8 | 8 | 
  | :white_check_mark: | HighLevelWeigherTestGenerated$ParameterNameAndType | 100 | 8 | 8 | 8 | 
- | :x: | K2MultiModuleMoveTestGenerated | 35 | 9 | 26 | 26 | 
- | :x: | [FirJvmOptimizeImportsTestGenerated] | 71 | 85 | 120 | 120 | 
- | :x: | FirJvmOptimizeImportsTestGenerated$Jvm | 44 | 21 | 48 | 48 | 
- | :white_check_mark: | FirJvmOptimizeImportsTestGenerated$Common | 89 | 64 | 72 | 72 | 
  | :x: | K2MoveNestedTestGenerated | 50 | 29 | 58 | 58 | 
- | :x: | K2AutoImportTestGenerated | 64 | 18 | 28 | 28 | 
- | :x: | SharedK2MultiFileQuickFixTestGenerated | 67 | 2 | 3 | 3 | 
- | :x: | K2JvmBasicCompletionTestGenerated$Java | 68 | 41 | 60 | 65 | 
- | :x: | HighLevelBasicCompletionHandlerTestGenerated$Basic | 77 | 227 | 294 | 301 | 
+ | :x: | K2MultiModuleMoveTestGenerated | 50 | 13 | 26 | 31 | 
+ | :x: | K2IdeK2MultiplatformCodeKotlinEvaluateExpressionTestGenerated | 67 | 8 | 12 | 12 | 
+ | :x: | K2AutoImportTestGenerated | 69 | 22 | 32 | 32 | 
+ | :x: | K2JvmBasicCompletionTestGenerated$Java | 70 | 43 | 61 | 66 | 
+ | :x: | K2JavaAgainstKotlinBinariesCheckerTestGenerated | 76 | 29 | 38 | 38 | 
+ | :x: | HighLevelBasicCompletionHandlerTestGenerated$Basic | 78 | 240 | 307 | 314 | 
  | :white_check_mark: | [K2MultiFileLocalInspectionTestGenerated] | 95 | 18 | 19 | 19 | 
  | :x: | K2MultiFileLocalInspectionTestGenerated$RedundantQualifierName | 80 | 4 | 5 | 5 | 
  | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$ReconcilePackageWithDirectory | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | K2MultiFileLocalInspectionTestGenerated$UnusedSymbol | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | [KotlinFirInlineTestGenerated] | 99 | 355 | 357 | 362 | 
- | :x: | KotlinFirInlineTestGenerated$ExplicateTypeArgument | 60 | 6 | 10 | 10 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$AddParenthesis | 100 | 32 | 32 | 32 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$AnonymousFunction | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$ExplicateParameterTypes | 100 | 7 | 7 | 7 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$ExpressionBody | 100 | 40 | 40 | 40 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$FromIntellij | 100 | 19 | 19 | 19 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$LambdaExpression | 100 | 10 | 10 | 10 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$NamedFunction | 100 | 104 | 104 | 106 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$Property | 100 | 28 | 28 | 28 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$ReturnAtEnd | 100 | 46 | 46 | 46 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$StringTemplates | 100 | 8 | 8 | 8 | 
- | :white_check_mark: | KotlinFirInlineTestGenerated$InlineVariableOrProperty | 105 | 39 | 37 | 40 | 
+ | :x: | K2CompletionCharFilterTestGenerated | 83 | 29 | 35 | 35 | 
+ | :white_check_mark: | [FirJvmOptimizeImportsTestGenerated] | 91 | 147 | 162 | 162 | 
+ | :white_check_mark: | FirJvmOptimizeImportsTestGenerated$Jvm | 86 | 49 | 57 | 57 | 
+ | :white_check_mark: | FirJvmOptimizeImportsTestGenerated$Common | 93 | 98 | 105 | 105 | 
+ | :white_check_mark: | K2ChangePackageTestGenerated | 86 | 6 | 7 | 7 | 
  | :white_check_mark: | FirWithLibBasicCompletionTestGenerated | 88 | 15 | 17 | 17 | 
  | :white_check_mark: | FirShortenRefsTestGenerated$This | 88 | 7 | 8 | 8 | 
- | :white_check_mark: | K2ChangePackageTestGenerated | 88 | 7 | 8 | 8 | 
- | :white_check_mark: | K2CompletionCharFilterTestGenerated | 89 | 31 | 35 | 35 | 
- | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 90 | 83 | 92 | 97 | 
- | :white_check_mark: | [InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated] | 93 | 347 | 375 | 375 | 
+ | :white_check_mark: | [InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated] | 94 | 356 | 380 | 380 | 
  | :white_check_mark: | InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated$MultipleBreakpoints | 90 | 46 | 51 | 51 | 
- | :white_check_mark: | InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated$SingleBreakpoint | 93 | 301 | 324 | 324 | 
- | :white_check_mark: | K2JsBasicCompletionLegacyStdlibTestGenerated$Common | 92 | 581 | 631 | 661 | 
- | :x: | [K2JavaToKotlinConverterPartialTestGenerated] | 81 | 38 | 47 | 47 | 
- | :x: | K2JavaToKotlinConverterPartialTestGenerated$Function | 76 | 26 | 34 | 34 | 
+ | :white_check_mark: | InlineScopesAndK2IdeK2CodeEvaluateExpressionTestGenerated$SingleBreakpoint | 94 | 310 | 329 | 329 | 
+ | :white_check_mark: | HighLevelMultiFileJvmBasicCompletionTestGenerated | 92 | 88 | 96 | 102 | 
+ | :x: | [K2JavaToKotlinConverterPartialTestGenerated] | 83 | 39 | 47 | 47 | 
+ | :x: | K2JavaToKotlinConverterPartialTestGenerated$Function | 79 | 27 | 34 | 34 | 
  | :white_check_mark: | K2JavaToKotlinConverterPartialTestGenerated$Field | 92 | 12 | 13 | 13 | 
  | :white_check_mark: | K2KDocCompletionTestGenerated | 93 | 28 | 30 | 30 | 
+ | :white_check_mark: | K2JsBasicCompletionLegacyStdlibTestGenerated$Common | 94 | 601 | 637 | 672 | 
  | :white_check_mark: | [K2SelectExpressionForDebuggerTestGenerated] | 99 | 68 | 69 | 69 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$DisallowMethodCalls | 95 | 20 | 21 | 21 | 
  | :white_check_mark: | K2SelectExpressionForDebuggerTestGenerated$Uncategorized | 100 | 48 | 48 | 48 | 
- | :white_check_mark: | FirQuickDocTestGenerated | 96 | 82 | 85 | 85 | 
  | :white_check_mark: | FirKeywordCompletionTestGenerated$Keywords | 98 | 137 | 140 | 140 | 
- | :white_check_mark: | K2CopyTestGenerated | 98 | 42 | 43 | 44 | 
+ | :white_check_mark: | FirQuickDocTestGenerated | 98 | 83 | 85 | 85 | 
  | :white_check_mark: | FirRenameTestGenerated | 98 | 273 | 278 | 278 | 
  | :white_check_mark: | [FirLegacyUastValuesTestGenerated] | 100 | 79 | 79 | 79 | 
  | :white_check_mark: | [FirUastDeclarationTestGenerated] | 100 | 31 | 31 | 31 | 
  | :white_check_mark: | [FirUastTypesTestGenerated] | 100 | 15 | 15 | 15 | 
  | :white_check_mark: | [FirUastValuesTestGenerated] | 100 | 2 | 2 | 2 | 
- | :x: | [K2AddImportActionTestGenerated] | 62 | 24 | 39 | 39 | 
+ | :x: | [K2AddImportActionTestGenerated] | 65 | 26 | 40 | 41 | 
  | :white_check_mark: | [K2BytecodeToolWindowTestGenerated] | 100 | 19 | 19 | 19 | 
  | :white_check_mark: | [FirDumbCompletionTestGenerated] | 100 | 45 | 45 | 45 | 
  | :white_check_mark: | [FirKeywordCompletionHandlerTestGenerated] | 100 | 49 | 49 | 49 | 
  | :white_check_mark: | [HighLevelJavaCompletionHandlerTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [K2CompletionIncrementalResolveTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [FirLiteralKotlinToKotlinCopyPasteTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [FirLiteralTextToKotlinCopyPasteTestGenerated] | 100 | 18 | 18 | 18 | 
+ | :white_check_mark: | [FirLiteralTextToKotlinCopyPasteTestGenerated] | 100 | 19 | 19 | 19 | 
  | :white_check_mark: | [K2CodeFragmentAutoImportTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [K2ExternalAnnotationTestGenerated] | 100 | 4 | 4 | 4 | 
- | :white_check_mark: | [FindUsagesFirTestGenerated] | 100 | 297 | 296 | 297 | 
+ | :white_check_mark: | [FindUsagesFirTestGenerated] | 100 | 300 | 299 | 300 | 
  | :white_check_mark: | [FindUsagesWithDisableComponentSearchFirTestGenerated] | 100 | 21 | 21 | 21 | 
  | :white_check_mark: | [KotlinFindUsagesWithLibraryFirTestGenerated] | 100 | 52 | 52 | 52 | 
  | :white_check_mark: | [KotlinFindUsagesWithStdlibFirTestGenerated] | 100 | 1 | 1 | 1 | 
@@ -593,62 +258,73 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | [KotlinScriptFindUsagesFirTestGenerated] | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | [FirFoldingTestGenerated] | 100 | 25 | 25 | 25 | 
  | :white_check_mark: | [K2FilteringAutoImportTestGenerated] | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | [FirGotoTestGenerated] | 97 | 28 | 29 | 29 | 
+ | :white_check_mark: | [FirGotoTestGenerated] | 100 | 32 | 32 | 32 | 
  | :white_check_mark: | [K2ProjectViewTestGenerated] | 100 | 31 | 31 | 31 | 
  | :white_check_mark: | [FirReferenceResolveInJavaTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [FirReferenceResolveTestGenerated] | 101 | 166 | 164 | 166 | 
- | :white_check_mark: | [FirReferenceToCompiledKotlinResolveInJavaTestGenerated] | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | [ReferenceResolveInLibrarySourcesFirTestGenerated] | 100 | 4 | 4 | 4 | 
+ | :white_check_mark: | [FirReferenceResolveTestGenerated] | 101 | 167 | 165 | 167 | 
+ | :white_check_mark: | [FirReferenceToCompiledKotlinResolveInJavaTestGenerated] | 100 | 33 | 33 | 33 | 
+ | :white_check_mark: | [ReferenceResolveInLibrarySourcesFirTestGenerated] | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | [KotlinCompilerReferenceFirTestGenerated] | 100 | 27 | 27 | 27 | 
  | :white_check_mark: | [K2ExpressionTypeTestGenerated] | 100 | 37 | 37 | 37 | 
+ | :white_check_mark: | [K2JavaAgainstKotlinSourceCheckerTestGenerated] | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | [KotlinFirBreadcrumbsTestGenerated] | 100 | 15 | 15 | 15 | 
  | :white_check_mark: | [KotlinFirJoinLinesTestGenerated] | 100 | 89 | 89 | 89 | 
  | :white_check_mark: | [KotlinFirPairMatcherTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2SharedQuickFixTestGenerated] | 100 | 2 | 2 | 2 | 
  | :white_check_mark: | [SharedK2InspectionTestGenerated] | 100 | 9 | 9 | 9 | 
- | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 434 | 434 | 434 | 
+ | :white_check_mark: | [SharedK2LocalInspectionTestGenerated] | 100 | 441 | 439 | 441 | 
+ | :white_check_mark: | [SharedK2MultiFileQuickFixTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [SharedK2KDocHighlightingTestGenerated] | 100 | 2 | 2 | 2 | 
- | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 483 | 483 | 483 | 
- | :white_check_mark: | [LineMarkersK2TestGenerated] | 100 | 46 | 46 | 46 | 
- | :x: | [K2PostfixTemplateTestGenerated] | 83 | 48 | 58 | 58 | 
- | :x: | [HighLevelQuickFixMultiFileTestGenerated] | 69 | 120 | 174 | 182 | 
- | :white_check_mark: | [K2InsertImportOnPasteTestGenerated] | 100 | 102 | 102 | 106 | 
+ | :white_check_mark: | [SharedK2IntentionTestGenerated] | 100 | 484 | 484 | 484 | 
+ | :white_check_mark: | [LineMarkersK2TestGenerated] | 102 | 47 | 46 | 47 | 
+ | :x: | [K2PostfixTemplateTestGenerated] | 83 | 49 | 59 | 59 | 
+ | :x: | [HighLevelQuickFixMultiFileTestGenerated] | 74 | 134 | 181 | 190 | 
+ | :x: | [HighLevelQuickFixTestGenerated] | 72 | 1634 | 2279 | 2292 | 
+ | :white_check_mark: | [K2InsertImportOnPasteTestGenerated] | 100 | 104 | 104 | 108 | 
  | :white_check_mark: | [FirUpdateKotlinCopyrightTestGenerated] | 100 | 8 | 8 | 8 | 
- | :white_check_mark: | [K2BreakpointApplicabilityTestGenerated] | 100 | 8 | 8 | 8 | 
+ | :white_check_mark: | [K2BreakpointApplicabilityTestGenerated] | 100 | 9 | 9 | 9 | 
  | :white_check_mark: | [K2ClassNameCalculatorTestGenerated] | 100 | 8 | 8 | 8 | 
  | :white_check_mark: | [K2IdeK2CodeAsyncStackTraceTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2IdeK2CodeContinuationStackTraceTestGenerated] | 100 | 6 | 6 | 6 | 
+ | :white_check_mark: | [K2IdeK2CodeContinuationStackTraceTestGenerated] | 100 | 7 | 7 | 7 | 
  | :white_check_mark: | [K2IdeK2CodeCoroutineDumpTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2IdeK2CodeFileRankingTestGenerated] | 100 | 12 | 12 | 12 | 
  | :white_check_mark: | [K2IdeK2CodeKotlinVariablePrintingTestGenerated] | 100 | 9 | 9 | 9 | 
  | :white_check_mark: | [K2IdeK2CodeXCoroutinesStackTraceTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2IndyLambdaKotlinSteppingTestGenerated] | 99 | 330 | 334 | 334 | 
+ | :white_check_mark: | [K2IndyLambdaKotlinSteppingTestGenerated] | 99 | 346 | 350 | 350 | 
  | :white_check_mark: | [K2KotlinExceptionFilterTestGenerated] | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | [K2PositionManagerTestGenerated] | 100 | 20 | 20 | 20 | 
  | :white_check_mark: | [K2SmartStepIntoTestGenerated] | 100 | 47 | 47 | 47 | 
+ | :white_check_mark: | [FirGenerateHashCodeAndEqualsActionTestGenerated] | 100 | 32 | 32 | 32 | 
+ | :white_check_mark: | [FirGenerateSecondaryConstructorActionTestGenerated] | 100 | 15 | 15 | 15 | 
+ | :white_check_mark: | [FirGenerateTestSupportMethodActionTestGenerated] | 100 | 25 | 25 | 25 | 
+ | :white_check_mark: | [FirGenerateToStringActionTestGenerated] | 100 | 26 | 26 | 26 | 
  | :white_check_mark: | [K2HighlightExitPointsTestGenerated] | 100 | 53 | 53 | 53 | 
  | :white_check_mark: | [K2HighlightUsagesTestGenerated] | 100 | 1 | 1 | 1 | 
  | :white_check_mark: | [KtCallChainHintsProviderTestGenerated] | 100 | 11 | 11 | 11 | 
  | :white_check_mark: | [KtLambdasHintsProviderGenerated] | 100 | 19 | 19 | 19 | 
- | :white_check_mark: | [KtParameterHintsProviderTestGenerated] | 100 | 4 | 4 | 4 | 
+ | :white_check_mark: | [KtParameterHintsProviderTestGenerated] | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | [KtRangesHintsProviderTestGenerated] | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | [KtReferenceTypeHintsProviderTestGenerated] | 100 | 39 | 39 | 39 | 
- | :white_check_mark: | [K2InspectionTestGenerated] | 93 | 14 | 15 | 15 | 
+ | :white_check_mark: | [KtReferenceTypeHintsProviderTestGenerated] | 100 | 42 | 42 | 42 | 
+ | :white_check_mark: | [K2InspectionTestGenerated] | 94 | 16 | 17 | 17 | 
  | :white_check_mark: | [K2MultiFileInspectionTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [K2GotoTestOrCodeActionTestGenerated] | 100 | 11 | 11 | 11 | 
+ | :x: | [K2IntentionTestGenerated] | 60 | 1750 | 2923 | 2997 | 
+ | :white_check_mark: | [K2MultiFileIntentionTestGenerated] | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | [FirMoveLeftRightTestGenerated] | 100 | 16 | 16 | 16 | 
- | :white_check_mark: | [KotlinFirMoveStatementTestGenerated] | 99 | 281 | 283 | 283 | 
+ | :white_check_mark: | [KotlinFirMoveStatementTestGenerated] | 99 | 282 | 284 | 284 | 
+ | :white_check_mark: | [KotlinGotoImplementationMultifileTestGenerated] | 109 | 12 | 11 | 12 | 
+ | :white_check_mark: | [KotlinGotoImplementationTestGenerated] | 100 | 23 | 23 | 23 | 
  | :white_check_mark: | [FirRenderingKDocTestGenerated] | 100 | 5 | 5 | 5 | 
  | :white_check_mark: | [K2MultiFileQuickFixTestGenerated] | 100 | 6 | 6 | 6 | 
- | :white_check_mark: | [K2QuickFixTestGenerated] | 100 | 12 | 12 | 12 | 
+ | :white_check_mark: | [K2QuickFixTestGenerated] | 92 | 249 | 271 | 275 | 
+ | :white_check_mark: | [K2CopyTestGenerated] | 100 | 43 | 43 | 45 | 
  | :white_check_mark: | [K2MultiModuleCopyTestGenerated] | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 101 | 157 | 156 | 163 | 
- | :white_check_mark: | [K2IntroduceParameterTestGenerated] | 101 | 93 | 92 | 95 | 
+ | :white_check_mark: | [KotlinFirInlineTestGenerated] | 100 | 456 | 456 | 463 | 
+ | :white_check_mark: | [K2IntroduceFunctionTestGenerated] | 101 | 158 | 156 | 164 | 
+ | :white_check_mark: | [K2IntroduceParameterTestGenerated] | 102 | 132 | 130 | 134 | 
  | :white_check_mark: | [K2IntroducePropertyTestGenerated] | 100 | 55 | 55 | 56 | 
- | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 100 | 153 | 153 | 156 | 
- | :white_check_mark: | [K2MoveDirectoryTestGenerated] | 100 | 2 | 2 | 2 | 
+ | :white_check_mark: | [K2IntroduceVariableTestGenerated] | 103 | 200 | 194 | 203 | 
+ | :white_check_mark: | [K2MoveDirectoryTestGenerated] | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | [K2MovePackageTestGenerated] | 100 | 1 | 1 | 1 | 
- | :white_check_mark: | [K2MoveTopLevelTestGenerated] | 100 | 79 | 79 | 84 | 
  | :white_check_mark: | [K2MoveTopLevelToInnerTestGenerated] | 100 | 3 | 3 | 3 | 
  | :white_check_mark: | [FirMultiModuleRenameTestGenerated] | 100 | 26 | 26 | 29 | 
  | :white_check_mark: | [FirMultiModuleSafeDeleteTestGenerated] | 100 | 25 | 25 | 25 | 
@@ -658,26 +334,28 @@ shared 14670 files out of 1098 cases
  | :white_check_mark: | [KotlinFirSurroundWithTestGenerated] | 100 | 77 | 77 | 77 | 
  | :white_check_mark: | [KotlinFirUnwrapRemoveTestGenerated] | 100 | 63 | 63 | 63 | 
  | :white_check_mark: | [ParcelizeK2QuickFixTestGenerated] | 100 | 18 | 18 | 18 | 
- | :white_check_mark: | K2MoveFileOrDirectoriesTestGenerated | 104 | 24 | 23 | 26 | 
- | :white_check_mark: | [K2UnusedSymbolHighlightingTestGenerated] | 108 | 150 | 139 | 151 | 
- | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Multifile | 105 | 23 | 22 | 23 | 
- | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 109 | 127 | 117 | 128 | 
+ | :white_check_mark: | K2MoveTopLevelTestGenerated | 105 | 88 | 84 | 92 | 
+ | :white_check_mark: | [K2UnusedSymbolHighlightingTestGenerated] | 108 | 154 | 142 | 155 | 
+ | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Uncategorized | 108 | 130 | 120 | 131 | 
+ | :white_check_mark: | K2UnusedSymbolHighlightingTestGenerated$Multifile | 109 | 24 | 22 | 24 | 
  | :white_check_mark: | FirGotoTypeDeclarationTestGenerated | 111 | 20 | 18 | 20 | 
  | :white_check_mark: | FirGotoDeclarationTestGenerated | 113 | 17 | 15 | 17 | 
- | :white_check_mark: | K2InplaceRenameTestGenerated | 122 | 128 | 105 | 131 | 
+ | :white_check_mark: | K2MoveFileOrDirectoriesTestGenerated | 115 | 31 | 27 | 33 | 
+ | :white_check_mark: | K2SharedQuickFixTestGenerated$Quickfix | 117 | 7 | 6 | 7 | 
+ | :white_check_mark: | K2InplaceRenameTestGenerated | 121 | 133 | 110 | 136 | 
  | :white_check_mark: | K2InplaceIntroduceFunctionTestGenerated | 125 | 15 | 12 | 15 | 
  | :white_check_mark: | [K2IntroduceConstantTestGenerated] | 94 | 44 | 47 | 48 | 
  | :x: | K2IntroduceConstantTestGenerated$BinaryExpression | 83 | 19 | 23 | 23 | 
  | :white_check_mark: | K2IntroduceConstantTestGenerated$DotQualifiedExpression | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | K2IntroduceConstantTestGenerated$StringTemplates | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | K2IntroduceConstantTestGenerated$Uncategorized | 125 | 5 | 4 | 5 | 
- | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 104 | 59 | 57 | 60 | 
+ | :white_check_mark: | [K2HighlightingMetaInfoTestGenerated] | 103 | 61 | 59 | 62 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Diagnostics | 100 | 4 | 4 | 4 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Dsl | 100 | 6 | 6 | 6 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$SmartCasts | 100 | 10 | 10 | 10 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Uncategorized | 100 | 23 | 23 | 24 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Unresolved | 100 | 3 | 3 | 3 | 
- | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Jvm | 111 | 10 | 9 | 10 | 
+ | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$Jvm | 109 | 12 | 11 | 12 | 
  | :white_check_mark: | K2HighlightingMetaInfoTestGenerated$FocusMode | 150 | 3 | 2 | 3 | 
 
 ### Extensions
@@ -686,7 +364,7 @@ kt, test, before.Main.kt, before.Main.java, kts, main.java, main.kt, option1.kt,
 
 ---
 ## Total 
- * K1: 14492 rate: 99 % of 14670 files
- * K2: 10826 rate: 74 % of 14670 files
+ * K1: 15232 rate: 98 % of 15509 files
+ * K2: 12897 rate: 83 % of 15509 files
 ---
 

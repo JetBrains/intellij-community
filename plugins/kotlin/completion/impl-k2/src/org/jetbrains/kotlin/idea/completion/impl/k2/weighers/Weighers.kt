@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.getSymbolOfType
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
@@ -22,10 +21,10 @@ import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.base.projectStructure.compositeAnalysis.findAnalyzerServices
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.utils.fqname.ImportableFqNameClassifier
-import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
 import org.jetbrains.kotlin.idea.completion.isPositionInsideImportOrPackageDirective
@@ -48,6 +47,7 @@ internal class WeighingContext private constructor(
     val importableFqNameClassifier: ImportableFqNameClassifier,
     private val mySymbolsToSkip: Set<KaSymbol>,
 ) : KaLifetimeOwner {
+
     /**
      * Cache for contextual symbols, i.e. symbols which are overridden by callables containing current position.
      */
@@ -149,7 +149,7 @@ internal class WeighingContext private constructor(
             return element
                 .parentsOfType<KtCallableDeclaration>()
                 .filter { it !is KtParameter }
-                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).getSymbolOfType<KaCallableSymbol>() }
+                .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile).symbol as KaCallableSymbol }
                 .filter { it is KaNamedSymbol }
                 .groupBy { (it as KaNamedSymbol).name }
                 .let { ContextualSymbolsCache(it) }

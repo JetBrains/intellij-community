@@ -176,8 +176,30 @@ public final class TestIntegrationUtils {
                                            final PsiClass targetClass,
                                            final PsiMethod method,
                                            boolean automatic, final Template template) {
+    runTestMethodTemplate(editor, targetClass, method, method.getModifierList(), automatic, template);
+  }
 
-    final int startOffset = method.getModifierList().getTextRange().getStartOffset();
+  public static void runTestMethodTemplate(@NotNull MethodKind methodKind,
+                                           TestFramework framework,
+                                           final Editor editor,
+                                           final PsiElement targetClass,
+                                           @Nullable PsiClass sourceClass,
+                                           final PsiElement method,
+                                           final PsiElement methodModifierList,
+                                           @Nullable String name,
+                                           boolean automatic,
+                                           Set<? super String> existingNames) {
+    runTestMethodTemplate(editor, targetClass, method, methodModifierList, automatic,
+                          createTestMethodTemplate(methodKind, framework, targetClass, sourceClass, name, automatic, existingNames));
+  }
+
+  public static void runTestMethodTemplate(final Editor editor,
+                                           final PsiElement targetClass,
+                                           final PsiElement method,
+                                           final PsiElement methodModifierList,
+                                           boolean automatic,
+                                           final Template template) {
+    final int startOffset = methodModifierList.getTextRange().getStartOffset();
     final TextRange range = new TextRange(startOffset, method.getTextRange().getEndOffset());
     editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "");
     editor.getCaretModel().moveToOffset(range.getStartOffset());
@@ -228,14 +250,25 @@ public final class TestIntegrationUtils {
                                                   @Nullable String name,
                                                   boolean automatic,
                                                   Set<? super String> existingNames) {
+    return createTestMethodTemplate(methodKind, descriptor, (PsiElement) targetClass, sourceClass, name, automatic, existingNames);
+  }
+
+  public static Template createTestMethodTemplate(@NotNull MethodKind methodKind,
+                                                  TestFramework descriptor,
+                                                  @NotNull PsiElement targetClass,
+                                                  @Nullable PsiClass sourceClass,
+                                                  @Nullable String name,
+                                                  boolean automatic,
+                                                  Set<? super String> existingNames) {
     FileTemplateDescriptor templateDesc = methodKind.getFileTemplateDescriptor(descriptor);
     String templateName = templateDesc.getFileName();
-    FileTemplate fileTemplate = FileTemplateManager.getInstance(targetClass.getProject()).getCodeTemplate(templateName);
-    Template template = TemplateManager.getInstance(targetClass.getProject()).createTemplate("", "");
+    Project project = targetClass.getProject();
+    FileTemplate fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(templateName);
+    Template template = TemplateManager.getInstance(project).createTemplate("", "");
 
     String templateText;
     try {
-      Properties properties = FileTemplateManager.getInstance(targetClass.getProject()).getDefaultProperties();
+      Properties properties = FileTemplateManager.getInstance(project).getDefaultProperties();
       if (sourceClass != null && sourceClass.isValid()) {
         properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, sourceClass.getQualifiedName());
       }

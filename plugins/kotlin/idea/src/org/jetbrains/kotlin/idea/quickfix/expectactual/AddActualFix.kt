@@ -17,6 +17,8 @@ import org.jetbrains.kotlin.idea.base.util.module
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.utils.getExpressionShortText
 import org.jetbrains.kotlin.idea.core.ShortenReferences
+import org.jetbrains.kotlin.idea.core.expectActual.ExpectActualGenerationUtils
+import org.jetbrains.kotlin.idea.core.expectActual.KotlinTypeInaccessibleException
 import org.jetbrains.kotlin.idea.core.toDescriptor
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.quickfix.TypeAccessibilityChecker
@@ -50,9 +52,9 @@ class AddActualFix(
         for (missedDeclaration in missedDeclarationPointers.mapNotNull { it.element }) {
             val actualDeclaration = try {
                 when (missedDeclaration) {
-                    is KtClassOrObject -> psiFactory.generateClassOrObject(project, false, missedDeclaration, checker)
+                    is KtClassOrObject -> ExpectActualGenerationUtils.generateClassOrObject(project, psiFactory, false, missedDeclaration, checker)
                     is KtFunction, is KtProperty -> missedDeclaration.toDescriptor()?.safeAs<CallableMemberDescriptor>()?.let {
-                        generateCallable(project, false, missedDeclaration, it, element, checker = checker)
+                        ExpectActualGenerationUtils.generateCallable(project, false, missedDeclaration, it, element, checker = checker)
                     }
                     else -> null
                 } ?: continue

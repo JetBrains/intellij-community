@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.commands;
 
 import com.intellij.externalProcessAuthHelper.*;
@@ -17,7 +17,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import externalApp.nativessh.NativeSshAskPassAppHandler;
 import git4idea.GitUtil;
+import git4idea.commit.signing.GpgAgentConfigurator;
+import git4idea.commit.signing.PinentryService;
 import git4idea.config.*;
+import git4idea.config.gpg.GitGpgConfigUtilsKt;
 import git4idea.http.GitAskPassAppHandler;
 import git4idea.repo.GitProjectConfigurationCache;
 import git4idea.repo.GitRepository;
@@ -65,6 +68,7 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     GitUtil.tryRunOrClose(manager, () -> {
       manager.prepareHttpAuth();
       manager.prepareNativeSshAuth();
+      manager.prepareGpgAgentAuth();
       boolean useCredentialHelper = GitVcsApplicationSettings.getInstance().isUseCredentialHelper();
 
       boolean isConfigCommand = handler.getCommand() == GitCommand.CONFIG;
@@ -177,6 +181,35 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
     }
   }
 
+  private void prepareGpgAgentAuth() {
+    Project project = myHandler.project();
+    VirtualFile root = myHandler.getExecutableContext().getRoot();
+    if (project == null || root == null) {
+      return;
+    }
+
+    if (!GpgAgentConfigurator.isEnabled(project, myHandler.myExecutable)) {
+      return;
+    }
+
+    GitRepository repo = GitRepositoryManager.getInstance(myProject).getRepositoryForRoot(root);
+    if (repo == null) return;
+
+    GitCommand command = myHandler.getCommand();
+    boolean needGpgSigning =
+      (command == GitCommand.COMMIT || command == GitCommand.TAG || command == GitCommand.MERGE
+       || command == GitCommand.CHERRY_PICK || command == GitCommand.REBASE) &&
+      GitGpgConfigUtilsKt.isGpgSignEnabledCached(repo);
+
+    if (needGpgSigning) {
+      PinentryService.PinentryData pinentryData = PinentryService.getInstance(project).startSession();
+      if (pinentryData != null) {
+        myHandler.addCustomEnvironmentVariable(PinentryService.PINENTRY_USER_DATA_ENV, pinentryData.toEnv());
+        Disposer.register(myDisposable, () -> PinentryService.getInstance(project).stopSession());
+      }
+    }
+  }
+
   private void addHandlerPathToEnvironment(@NotNull String env,
                                            @NotNull ExternalProcessHandlerService<?> service) throws IOException {
     GitExecutable executable = myHandler.getExecutable();
@@ -190,9 +223,13 @@ public final class GitHandlerAuthenticationManager implements AutoCloseable {
   private boolean shouldUseBatchScript(@NotNull GitExecutable executable) {
     if (!SystemInfo.isWindows) return false;
     if (!executable.isLocal()) return false;
-    if (Registry.is("git.use.shell.script.on.windows") &&
-        GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion)) {
-      return isCustomSshExecutableConfigured();
+
+    String optionValue = Registry.get("git.windows.callback.script.type").asString();
+    if ("bat".equals(optionValue)) return true;
+    if ("sh".equals(optionValue)) return false;
+
+    if (GitVersionSpecialty.CAN_USE_SHELL_HELPER_SCRIPT_ON_WINDOWS.existsIn(myVersion)) {
+      return isCustomSshExecutableConfigured(); // OpenSSH.exe may not support shell scripts
     }
     return true;
   }

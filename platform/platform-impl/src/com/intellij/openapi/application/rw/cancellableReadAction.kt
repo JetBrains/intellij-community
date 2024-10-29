@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.application.rw
 
@@ -24,11 +24,15 @@ internal fun <X> cancellableReadActionInternal(ctx: CoroutineContext, action: ()
     installThreadContext(ctx.prepareForInstallation() + readJob).use {
       var resultRef: Value<X>? = null
       val application = ApplicationManagerEx.getApplicationEx()
-      runActionAndCancelBeforeWrite(application, CannotReadException.jobCancellation(readJob)) {
+      val cancellation = CannotReadException.jobCancellation(readJob)
+      runActionAndCancelBeforeWrite(application, cancellation) {
         readJob.ensureActive()
-        application.tryRunReadAction {
+        val tryResult = application.tryRunReadAction {
           readJob.ensureActive()
           resultRef = Value(action())
+        }
+        if (!tryResult) {
+          cancellation.run()
         }
       }
       val result = resultRef

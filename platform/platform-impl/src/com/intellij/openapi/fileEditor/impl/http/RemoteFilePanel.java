@@ -22,6 +22,7 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +33,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeListener;
 
+@ApiStatus.Internal
 public final class RemoteFilePanel {
   private static final Logger LOG = Logger.getInstance(RemoteFilePanel.class);
   private static final @NonNls String ERROR_CARD = "error";

@@ -80,9 +80,20 @@ class CodeReviewInEditorToolbarActionGroup(private val vm: CodeReviewInEditorVie
     override fun actionPerformed(e: AnActionEvent) = vm.updateBranch()
   }
 
-  private inner class ViewOptionToggleAction(private val option: DiscussionsViewOption,
-                                             text: @NlsActions.ActionText String) : ToggleAction(text), DumbAware {
+  private inner class ViewOptionToggleAction(
+    private val option: DiscussionsViewOption,
+    text: @NlsActions.ActionText String,
+  ) : ToggleAction(text), DumbAware {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+    override fun update(e: AnActionEvent) {
+      super.update(e)
+
+      if (option == DiscussionsViewOption.DONT_SHOW) {
+        e.presentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+      }
+    }
+
     override fun isSelected(e: AnActionEvent): Boolean = vm.discussionsViewOption.value == option
     override fun setSelected(e: AnActionEvent, state: Boolean) = vm.setDiscussionsViewOption(option)
   }

@@ -8,6 +8,7 @@ import com.intellij.platform.workspace.storage.ImmutableEntityStorage
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.VersionedStorageChange
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Obsolete
@@ -129,6 +130,7 @@ public interface WorkspaceModel {
 
   public companion object {
     @JvmStatic
+    @RequiresBlockingContext
     public fun getInstance(project: Project): WorkspaceModel = project.service()
   }
 }

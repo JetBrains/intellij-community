@@ -44,7 +44,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     Project project = e.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null && !LightEdit.owns(project));
-    if (ActionPlaces.isPopupPlace(e.getPlace()) && !e.getPlace().equals(ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION)) {
+    if (e.isFromContextMenu() && !ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION.equals(e.getPlace())) {
       presentation.setVisible(isValidSearchScope(e));
     }
   }

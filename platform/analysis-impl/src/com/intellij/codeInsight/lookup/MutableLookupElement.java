@@ -15,5 +15,8 @@
  */
 package com.intellij.codeInsight.lookup;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public abstract class MutableLookupElement extends LookupElement{
 }

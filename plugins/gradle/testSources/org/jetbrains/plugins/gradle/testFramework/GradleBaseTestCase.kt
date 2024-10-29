@@ -51,8 +51,8 @@ abstract class GradleBaseTestCase {
     )
   }
 
-  suspend fun openProject(relativePath: String, wait: Boolean = true): Project {
-    return gradleTestFixture.openProject(relativePath, wait)
+  suspend fun openProject(relativePath: String, numProjectSyncs: Int = 1): Project {
+    return gradleTestFixture.openProject(relativePath, numProjectSyncs)
   }
 
   suspend fun linkProject(project: Project, relativePath: String) {
@@ -63,8 +63,12 @@ abstract class GradleBaseTestCase {
     gradleTestFixture.reloadProject(project, relativePath, configure)
   }
 
-  suspend fun <R> awaitAnyGradleProjectReload(wait: Boolean = true, action: suspend () -> R): R {
-    return gradleTestFixture.awaitAnyGradleProjectReload(wait, action)
+  suspend fun awaitOpenProjectConfiguration(numProjectSyncs: Int = 1, openProject: suspend () -> Project): Project {
+    return gradleTestFixture.awaitOpenProjectConfiguration(numProjectSyncs, openProject)
+  }
+
+  suspend fun <R> awaitProjectConfiguration(project: Project, numProjectSyncs: Int = 1, action: suspend () -> R): R {
+    return gradleTestFixture.awaitProjectConfiguration(project, numProjectSyncs, action)
   }
 
   fun assertNotificationIsVisible(project: Project, isNotificationVisible: Boolean) {

@@ -63,9 +63,8 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
     return myProcessedElementsHeader;
   }
 
-  @NotNull
   @Override
-  public String getCodeReferencesText(int usagesCount, int filesCount) {
+  public @NotNull String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 

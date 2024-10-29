@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.compiler
 
 import com.intellij.compiler.options.JavaCompilersTab
@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.dsl.builder.*
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -45,9 +44,8 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
         cell(textField)
           .align(AlignX.FILL)
           .applyToComponent {
-            val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
-            addBrowseFolderListener(null, GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"), null,
-                                    descriptor)
+            val descriptor = FileChooserDescriptor(true, false, false, false, false, false).withDescription(GroovyBundle.message("settings.compiler.select.path.to.groovy.compiler.configscript"))
+            addBrowseFolderListener(null, descriptor)
           }.onReset {
             textField.text = normalizePath(config.configScript)
           }.onIsModified {
@@ -94,15 +92,11 @@ class GroovyCompilerConfigurable(private val project: Project) : BoundSearchable
   private fun createExcludedConfigurable(project: Project): ExcludedEntriesConfigurable {
     val configuration = config.excludeFromStubGeneration
     val index = if (project.isDefault) null else ProjectRootManager.getInstance(project).fileIndex
-    val descriptor = object : FileChooserDescriptor(true, true, false, false, false, true) {
-      override fun isFileVisible(file: VirtualFile, showHiddenFiles: Boolean): Boolean {
-        return super.isFileVisible(file, showHiddenFiles) && (index == null || !index.isExcluded(file))
-      }
-    }
-    descriptor.roots = getInstance(project).modules.flatMap { module ->
-      ModuleRootManager.getInstance(module)
-        .getSourceRoots(JavaModuleSourceRootTypes.SOURCES)
-    }
+    val descriptor = FileChooserDescriptor(true, true, false, false, false, true)
+      .withFileFilter { file -> index == null || !index.isExcluded(file) }
+      .withRoots(getInstance(project).modules.flatMap { module ->
+        ModuleRootManager.getInstance(module).getSourceRoots(JavaModuleSourceRootTypes.SOURCES)
+      })
     return ExcludedEntriesConfigurable(project, descriptor, configuration)
   }
 }

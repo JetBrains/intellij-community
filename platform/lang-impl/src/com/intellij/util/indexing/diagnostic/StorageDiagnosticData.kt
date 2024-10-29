@@ -12,6 +12,7 @@ import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords
 import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedStorageOTelMonitor
+import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.Storage
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.diagnostic.telemetry.impl.helpers.ReentrantReadWriteLockUsageMonitor
@@ -20,12 +21,17 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
+import com.intellij.util.indexing.contentQueue.dev.IndexWriter
+import com.intellij.util.indexing.impl.MapIndexStorageCacheProvider
 import com.intellij.util.io.*
 import com.intellij.util.io.stats.FilePageCacheStatistics
 import com.intellij.util.io.stats.PersistentEnumeratorStatistics
 import com.intellij.util.io.stats.PersistentHashMapStatistics
 import com.intellij.util.io.stats.StorageStatsRegistrar
 import io.opentelemetry.api.metrics.Meter
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.IOException
 import java.nio.file.Path
@@ -39,6 +45,8 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.pathString
 import kotlin.io.path.relativeTo
+import kotlin.math.max
+import kotlin.math.min
 
 /**
  * Dumps general storage diagnostic information. Almost every open [com.intellij.util.io.PersistentMapImpl],
@@ -158,8 +166,10 @@ object StorageDiagnosticData {
     }
   }
 
-  private fun otherGeneralStorageStatistics(mapStats: Map<Path, PersistentHashMapStatistics>,
-                                            enumeratorStats: Map<Path, PersistentEnumeratorStatistics>): StatsPerStorage {
+  private fun otherGeneralStorageStatistics(
+    mapStats: Map<Path, PersistentHashMapStatistics>,
+    enumeratorStats: Map<Path, PersistentEnumeratorStatistics>,
+  ): StatsPerStorage {
     val macroManager = PathMacroManager.getInstance(ApplicationManager.getApplication())
     return StatsPerStorage(
       mapStats.mapKeys { macroManager.collapsePath(it.key.pathString) }.toSortedMap(),
@@ -167,8 +177,10 @@ object StorageDiagnosticData {
     )
   }
 
-  private fun indexStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
-                                     enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>): IndexStorageStats {
+  private fun indexStorageStatistics(
+    mapStats: MutableMap<Path, PersistentHashMapStatistics>,
+    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>,
+  ): IndexStorageStats {
 
     val perIndexStats = TreeMap<String, StatsPerStorage>()
     for (id in ID.getRegisteredIds()) {
@@ -193,8 +205,10 @@ object StorageDiagnosticData {
     return IndexStorageStats(perIndexStats, otherIndexStorageStats)
   }
 
-  private fun vfsStorageStatistics(mapStats: MutableMap<Path, PersistentHashMapStatistics>,
-                                   enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>)
+  private fun vfsStorageStatistics(
+    mapStats: MutableMap<Path, PersistentHashMapStatistics>,
+    enumeratorStats: MutableMap<Path, PersistentEnumeratorStatistics>,
+  )
     : StatsPerStorage {
     val cacheDir = FSRecords.getCacheDir().toAbsolutePath()
     return StatsPerStorage(filterStatsForStoragesUnderDir(mapStats, cacheDir), filterStatsForStoragesUnderDir(enumeratorStats, cacheDir))
@@ -260,27 +274,89 @@ object StorageDiagnosticData {
   //         b) we already have monitoring of FilePageCache here, so better to keep old/new monitoring in one
   //            place for a while
   private fun setupReportingToOpenTelemetry() {
-    val otelMeter = TelemetryManager.getMeter(Storage)
+    val storageOtelMeter = TelemetryManager.getMeter(Storage)
 
     if (MONITOR_STORAGE_LOCK) {
       ReentrantReadWriteLockUsageMonitor(
         StorageLockContext.defaultContextLock(),
         "StorageLockContext",
-        otelMeter
+        storageOtelMeter
       )
     }
 
-    setupFilePageCacheReporting(otelMeter)
+    setupFilePageCacheReporting(storageOtelMeter)
 
     if (PageCacheUtils.LOCK_FREE_PAGE_CACHE_ENABLED) {
-      setupFilePageCacheLockFreeReporting(otelMeter)
+      setupFilePageCacheLockFreeReporting(storageOtelMeter)
     }
 
-    otelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
+    storageOtelMeter.counterBuilder("FileChannelInterruptsRetryer.totalRetriedAttempts").buildWithCallback {
       it.record(FileChannelInterruptsRetryer.totalRetriedAttempts())
     }
 
-    mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(otelMeter)
+
+    mmappedStoragesMonitoringHandle = MappedStorageOTelMonitor(storageOtelMeter)
+
+    setupIndexingReporting(TelemetryManager.getMeter(Indexes))
+  }
+
+  private fun setupIndexingReporting(otelMeter: Meter) {
+    //Indexes writers:
+    val defaultParallelWriter = IndexWriter.defaultParallelWriter()
+    (0..<defaultParallelWriter.workersCount).forEach { workerNo ->
+      otelMeter.counterBuilder("Indexing.writer_$workerNo.totalTimeSpentWritingMs").buildWithCallback {
+        it.record(defaultParallelWriter.totalTimeSpentWriting(MILLISECONDS, workerNo))
+      }
+    }
+
+    //Indexing queue (indexers->writers):
+    // To calculate unbiased stats we should sample the queue such that the sampling moments are _not_ correlated
+    // with enqueue/dequeue moments -- which is why we can't collect the stats at enqueue/dequeue methods, and
+    // must sample queue independently here:
+    var writesQueuedMax: Long = 0
+    var writesQueuedMin: Long = Long.MAX_VALUE
+    var writesQueuedSum: Long = 0
+    var writesQueuedMeasurements: Int = 0
+    GlobalScope.launch {
+      while (true) {
+        val writesQueued = defaultParallelWriter.writesQueued().toLong()
+        writesQueuedMax = max(writesQueuedMax, writesQueued)
+        writesQueuedMin = min(writesQueuedMin, writesQueued)
+        writesQueuedSum += writesQueued
+        writesQueuedMeasurements++
+        delay(542) // irregular number, uncorrelated with anything (supposedly)
+      }
+    }
+    otelMeter.gaugeBuilder("Indexing.writesQueuedAvg").buildWithCallback {
+      it.record(writesQueuedSum.toDouble() / writesQueuedMeasurements)
+      writesQueuedSum = 0
+      writesQueuedMeasurements = 0
+    }
+    otelMeter.gaugeBuilder("Indexing.writesQueuedMax").ofLongs().buildWithCallback {
+      it.record(writesQueuedMax)
+      writesQueuedMax = 0
+    }
+    otelMeter.gaugeBuilder("Indexing.writesQueuedMin").ofLongs().buildWithCallback {
+      it.record(writesQueuedMin)
+      writesQueuedMin = Long.MAX_VALUE
+    }
+
+    //indexers:
+    otelMeter.counterBuilder("Indexing.totalTimeIndexersSleptMs").buildWithCallback {
+      it.record(defaultParallelWriter.totalTimeIndexersSlept(MILLISECONDS))
+    }
+
+    //Indexes caches:
+    val indexCacheProvider = MapIndexStorageCacheProvider.actualProvider
+    otelMeter.counterBuilder("Indexing.cache.totalCacheAccesses").buildWithCallback {
+      it.record(indexCacheProvider.totalReads())
+    }
+    otelMeter.counterBuilder("Indexing.cache.totalCacheMisses").buildWithCallback {
+      it.record(indexCacheProvider.totalReadsUncached())
+    }
+    otelMeter.counterBuilder("Indexing.cache.totalCacheEvicted").buildWithCallback {
+      it.record(indexCacheProvider.totalEvicted())
+    }
   }
 
   private fun setupFilePageCacheLockFreeReporting(otelMeter: Meter) {

@@ -6,6 +6,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.vcs.log.VcsLogHighlighter
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer.VcsLogTableCellState
 import com.intellij.vcs.log.util.VcsLogUiUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Font
 import javax.swing.JTable
@@ -14,6 +15,7 @@ import javax.swing.JTable
  * @param contentSampleProvider used to estimate the width of the column,
  * null if content width may vary significantly and width cannot be estimated from the sample.
  */
+@ApiStatus.Internal
 class VcsLogStringCellRenderer internal constructor(
   private val withSpeedSearchHighlighting: Boolean = false,
   private val contentSampleProvider: (() -> @Nls String?)? = null

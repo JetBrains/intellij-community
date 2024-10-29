@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.RangeMarker;
@@ -132,5 +132,10 @@ public class EditorTextFieldRendererDocument extends UserDataHolderBase implemen
   @Override
   public @NotNull RangeMarker createGuardedBlock(int startOffset, int endOffset) {
     throw new UnsupportedOperationException("Not implemented");
+  }
+
+  @Override
+  public String toString() {
+    return "EditorTextFieldRendererDocument{myLength = "+ myChars.length + "; " + "myRangeMarkers = " + myRangeMarkers.size() +"}";
   }
 }

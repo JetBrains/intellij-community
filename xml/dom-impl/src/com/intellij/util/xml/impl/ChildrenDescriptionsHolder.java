@@ -83,12 +83,9 @@ public final class ChildrenDescriptionsHolder<T extends DomChildDescriptionImpl>
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
-    if (!(o instanceof ChildrenDescriptionsHolder holder)) return false;
+    if (!(o instanceof ChildrenDescriptionsHolder<?> holder)) return false;
 
-    if (myDelegate != null ? !myDelegate.equals(holder.myDelegate) : holder.myDelegate != null) return false;
-    if (!myMap.equals(holder.myMap)) return false;
-
-    return true;
+    return Objects.equals(myDelegate, holder.myDelegate) && myMap.equals(holder.myMap);
   }
 
   @Override

@@ -1,0 +1,9 @@
+def foo():
+    """
+    This is a docstring
+    """
+    print("now there is something in between")
+    """
+    :return: nothing
+    """
+    pass

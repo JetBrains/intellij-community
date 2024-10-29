@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.actions;
 
@@ -30,8 +30,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       .showInBestPositionFor(e.getDataContext());
   }
 
-  @NotNull
-  protected ListPopup createPopup(@NotNull DataContext dataContext) {
+  protected @NotNull ListPopup createPopup(@NotNull DataContext dataContext) {
     return JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(),
       getGroup(dataContext),
@@ -44,8 +43,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
       getPlace());
   }
 
-  @Nullable
-  protected JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
+  protected @Nullable JBPopupFactory.ActionSelectionAid getActionSelectionAid() {
     return null;
   }
 
@@ -53,13 +51,11 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     return -1;
   }
 
-  @Nullable
-  protected Condition<AnAction> getPreselectActionCondition(DataContext dataContext) {
+  protected @Nullable Condition<AnAction> getPreselectActionCondition(DataContext dataContext) {
     return LangDataKeys.PRESELECT_NEW_ACTION_CONDITION.getData(dataContext);
   }
 
-  @Nullable
-  protected Runnable getDisposeCallback() {
+  protected @Nullable Runnable getDisposeCallback() {
     return null;
   }
 
@@ -128,8 +124,7 @@ public class NewElementAction extends DumbAwareAction implements PopupAction {
     return false;
   }
 
-  @NotNull
-  protected String getPlace() {
+  protected @NotNull String getPlace() {
     return ActionPlaces.getActionGroupPopupPlace(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

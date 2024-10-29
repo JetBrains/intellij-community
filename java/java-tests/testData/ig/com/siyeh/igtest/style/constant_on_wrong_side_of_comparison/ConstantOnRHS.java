@@ -19,10 +19,11 @@ public class ConstantOnRHS
         return s == null;
     }
 }
+/*
 class C {
     void t() {
-        <error descr="Cannot resolve method 'method' in 'C'">method</error>(String.format("", <error descr="Expression expected">StringBuffer</error>)<error descr="',' or ')' expected">"</error>" +<EOLError descr="Expression expected"></EOLError>
-                                              <<error descr="',' or ')' expected"><error descr="Expression expected">/</error></error><error descr="Cannot resolve symbol 'plugin'">plugin</error>><error descr="Line end not allowed in string literals">" +</error>
-        <error descr="Not a statement">""</error><error descr="Unexpected token">)</error>;
+        method(String.format("", StringBuffer)"" +
+                                              </plugin>" +
+        "");
     }
-}
+}*/

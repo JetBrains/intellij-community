@@ -26,8 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public final class GrammarFactory {
-  @Nullable
-  public static Grammar getGrammar(@NotNull XmlFile element) {
+  public static @Nullable Grammar getGrammar(@NotNull XmlFile element) {
     if (element instanceof RncFile) {
       return ((RncFile)element).getGrammar();
     }

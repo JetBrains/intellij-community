@@ -72,14 +72,6 @@ public class MavenProjectProblem implements Serializable {
     return new MavenProjectProblem(path, description, ProblemType.DEPENDENCY, recoverable, mavenArtifact);
   }
 
-  public static Collection<MavenProjectProblem> createProblemsList() {
-    return createProblemsList(Collections.emptySet());
-  }
-
-  public static Collection<MavenProjectProblem> createProblemsList(Collection<? extends MavenProjectProblem> copyThis) {
-    return new LinkedHashSet<MavenProjectProblem>(copyThis);
-  }
-
   public MavenProjectProblem(String path, String description, ProblemType type, boolean recoverable) {
     this(path, description, type, recoverable, null);
   }

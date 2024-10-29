@@ -1,22 +1,17 @@
-group 'Again'
-version '1.0-SNAPSHOT'
+import org.jetbrains.kotlin.gradle.dsl.KotlinVersion
 
-buildscript {
-    repositories {
-        mavenCentral()
-    }
-
-    dependencies {
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.1.0")
-    }
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.8.0'
 }
 
-apply plugin: 'kotlin'
+group = 'org.example'
+version = '1.0-SNAPSHOT'
 
-dependencies {
-    compile "org.jetbrains.kotlin:kotlin-stdlib:1.1.0"
+repositories {
+    mavenCentral()
 }
-
 compileKotlin {
-    kotlinOptions.languageVersion = "1.1"
+    compilerOptions {
+        languageVersion.set(KotlinVersion.KOTLIN_1_9)
+    }
 }

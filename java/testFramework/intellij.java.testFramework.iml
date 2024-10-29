@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.java.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" exported="" />
     <orderEntry type="module" module-name="intellij.relaxng" exported="" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
@@ -33,6 +34,7 @@
     <orderEntry type="library" name="org.codehaus.groovy:groovy" level="project" />
     <orderEntry type="module" module-name="intellij.java.impl.refactorings" />
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" />
+    <orderEntry type="module" module-name="intellij.platform.backend.observation" />
   </component>
   <component name="copyright">
     <Base>

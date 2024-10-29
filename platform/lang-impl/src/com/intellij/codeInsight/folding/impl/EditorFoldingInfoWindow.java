@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.editor.FoldRegion;
@@ -15,9 +15,8 @@ final class EditorFoldingInfoWindow extends EditorFoldingInfo {
     myDelegate = delegate;
   }
 
-  @Nullable
   @Override
-  public PsiElement getPsiElement(@NotNull FoldRegion region) {
+  public @Nullable PsiElement getPsiElement(@NotNull FoldRegion region) {
     return myDelegate.getPsiElement(getHostRegion(region));
   }
 

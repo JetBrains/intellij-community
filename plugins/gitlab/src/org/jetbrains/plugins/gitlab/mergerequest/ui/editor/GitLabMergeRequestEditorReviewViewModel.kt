@@ -8,8 +8,12 @@ import com.intellij.collaboration.ui.codereview.diff.DiffLineLocation
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.editor.CodeReviewInEditorViewModel
 import com.intellij.collaboration.ui.icon.IconsProvider
-import com.intellij.collaboration.util.*
+import com.intellij.collaboration.ui.util.selectedItem
+import com.intellij.collaboration.util.ComputedResult
+import com.intellij.collaboration.util.RefComparisonChange
+import com.intellij.collaboration.util.getOrNull
 import com.intellij.diff.util.Side
+import com.intellij.openapi.ListSelection
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -18,6 +22,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.coroutines.childScope
+import com.intellij.util.EventDispatcher
 import git4idea.branch.GitBranchSyncStatus
 import git4idea.changes.GitBranchComparisonResult
 import git4idea.changes.GitTextFilePatchWithHistory
@@ -27,7 +32,6 @@ import kotlinx.coroutines.flow.*
 import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.GitLabMergeRequestsPreferences
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabMergeRequest
-import org.jetbrains.plugins.gitlab.mergerequest.diff.GitLabMergeRequestDiffBridge
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestDiscussionsViewModels
 import org.jetbrains.plugins.gitlab.mergerequest.ui.review.GitLabMergeRequestReviewViewModelBase
 import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.GitLabReviewTab
@@ -35,6 +39,7 @@ import org.jetbrains.plugins.gitlab.mergerequest.ui.toolwindow.model.GitLabToolW
 import org.jetbrains.plugins.gitlab.mergerequest.util.GitLabMergeRequestBranchUtil
 import org.jetbrains.plugins.gitlab.util.GitLabProjectMapping
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
+import java.util.*
 
 private val LOG = logger<GitLabMergeRequestEditorReviewViewModel>()
 
@@ -44,10 +49,9 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   private val projectMapping: GitLabProjectMapping,
   currentUser: GitLabUserDTO,
   private val mergeRequest: GitLabMergeRequest,
-  private val diffBridge: GitLabMergeRequestDiffBridge,
   private val projectVm: GitLabToolWindowProjectViewModel,
   private val discussions: GitLabMergeRequestDiscussionsViewModels,
-  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>
+  private val avatarIconsProvider: IconsProvider<GitLabUserDTO>,
 ) : GitLabMergeRequestReviewViewModelBase(
   parentCs.childScope("GitLab Merge Request Editor Review VM"),
   currentUser, mergeRequest
@@ -62,6 +66,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
   val actualChangesState: StateFlow<ChangesState> = _actualChangesState.asStateFlow()
 
   private val filesVms: MutableMap<FilePath, Flow<GitLabMergeRequestEditorReviewFileViewModel?>> = mutableMapOf()
+  private val diffRequestsMulticaster = EventDispatcher.create(DiffRequestListener::class.java)
 
   @OptIn(ExperimentalCoroutinesApi::class)
   val localRepositorySyncStatus: StateFlow<ComputedResult<GitBranchSyncStatus?>?> by lazy {
@@ -160,7 +165,7 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
           emit(null)
           return@transform
         }
-        val changeSelection = ChangesSelection.Precise(parsedChanges.changes, change)
+        val changeSelection = ListSelection.create(parsedChanges.changes, change)
         emit(changeSelection to diffData)
       }.mapNullableScoped { (change, diffData) ->
         createChangeVm(change, diffData)
@@ -168,14 +173,24 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     }
   }
 
-  private fun CoroutineScope.createChangeVm(change: ChangesSelection.Precise, diffData: GitTextFilePatchWithHistory) =
-    GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, mergeRequest, change.selectedChange!!, diffData,
+  suspend fun handleDiffRequests(listener: (ListSelection<RefComparisonChange>, DiffLineLocation?) -> Unit): Nothing {
+    val actualListener = DiffRequestListener { list, location -> listener(list, location) }
+    try {
+      diffRequestsMulticaster.addListener(actualListener)
+      awaitCancellation()
+    }
+    finally {
+      diffRequestsMulticaster.removeListener(actualListener)
+    }
+  }
+
+  private fun CoroutineScope.createChangeVm(change: ListSelection<RefComparisonChange>, diffData: GitTextFilePatchWithHistory) =
+    GitLabMergeRequestEditorReviewFileViewModelImpl(this, project, mergeRequest, change.selectedItem!!, diffData,
                                                     discussions,
                                                     discussionsViewOption, avatarIconsProvider).also { vm ->
       launchNow {
-        vm.showDiffRequests.collect {
-          val selection = if (it != null) change.withLocation(DiffLineLocation(Side.RIGHT, it)) else change
-          diffBridge.setChanges(selection)
+        vm.showDiffRequests.collect { line ->
+          diffRequestsMulticaster.multicaster.onChangesSelectionChanged(change, line?.let { DiffLineLocation(Side.RIGHT, it) })
           withContext(Dispatchers.Main) {
             projectVm.filesController.openDiff(mergeRequestIid, true)
           }
@@ -189,4 +204,8 @@ internal class GitLabMergeRequestEditorReviewViewModel internal constructor(
     data object Error : ChangesState
     class Loaded(val changes: GitBranchComparisonResult) : ChangesState
   }
+}
+
+private fun interface DiffRequestListener : EventListener {
+  fun onChangesSelectionChanged(changes: ListSelection<RefComparisonChange>, location: DiffLineLocation?)
 }

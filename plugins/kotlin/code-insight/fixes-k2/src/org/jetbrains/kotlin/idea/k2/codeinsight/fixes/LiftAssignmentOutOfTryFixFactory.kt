@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.codeinsight.api.applicators.fixes.KotlinQuickFixFactory
 import org.jetbrains.kotlin.idea.k2.refactoring.util.BranchedFoldingUtils
 import org.jetbrains.kotlin.psi.*
@@ -29,9 +29,7 @@ internal object LiftAssignmentOutOfTryFixFactory {
         )
     }
 
-    private class LiftAssignmentOutOfTryFix(
-        element: KtTryExpression,
-    ) : KotlinPsiUpdateModCommandAction.ElementBased<KtTryExpression, Unit>(element, Unit) {
+    private class LiftAssignmentOutOfTryFix(element: KtTryExpression) : PsiUpdateModCommandAction<KtTryExpression>(element) {
 
         override fun getFamilyName(): String = KotlinBundle.message("lift.assignment.out.of.try.expression")
 
@@ -43,7 +41,6 @@ internal object LiftAssignmentOutOfTryFixFactory {
         override fun invoke(
             actionContext: ActionContext,
             element: KtTryExpression,
-            elementContext: Unit,
             updater: ModPsiUpdater,
         ) {
             BranchedFoldingUtils.tryFoldToAssignment(element)

@@ -56,6 +56,7 @@ public class RecordVarExprent extends VarExprent {
   public RecordVarExprent copy() {
     VarExprent copy = (VarExprent)super.copy();
     RecordVarExprent newRoot = new RecordVarExprent(copy);
+    newRoot.setLVTEntry(copy.getLVTEntry());
     for (RecordVarExprent component : components) {
       newRoot.addComponent(component.copy());
     }
@@ -80,6 +81,7 @@ public class RecordVarExprent extends VarExprent {
     this.setVarType(varExprent.getVarType());
     this.setIndex(varExprent.getIndex());
     this.setVersion(varExprent.getVersion());
+    this.setLVTEntry(varExprent.getLVTEntry());
     return true;
   }
 

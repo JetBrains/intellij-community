@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl
 
 import com.intellij.icons.AllIcons
@@ -35,6 +35,7 @@ import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.content.ContentFactory
 import com.intellij.util.PlatformIcons
 import com.intellij.vcsUtil.VcsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.Icon
@@ -79,11 +80,12 @@ object RepositoryBrowser {
   private fun getIcon(): Icon? = if (ExperimentalUI.isNewUI()) AllIcons.Toolwindows.Repositories else null
 }
 
+@ApiStatus.Internal
 class RepositoryBrowserPanel(
   val project: Project,
   val root: AbstractVcsVirtualFile,
   private val localRoot: VirtualFile
-) : JPanel(BorderLayout()), DataProvider, Disposable {
+) : JPanel(BorderLayout()), UiDataProvider, Disposable {
   companion object {
     val REPOSITORY_BROWSER_DATA_KEY = DataKey.create<RepositoryBrowserPanel>("com.intellij.openapi.vcs.impl.RepositoryBrowserPanel")
   }
@@ -106,8 +108,7 @@ class RepositoryBrowserPanel(
         return FileTypeManager.getInstance().getFileTypeByFileName(file.nameSequence).icon
       }
     }
-    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) {
-    }
+    fileSystemTree = object : FileSystemTreeImpl(project, fileChooserDescriptor) { }
     fileSystemTree.addOkAction {
       val files = fileSystemTree.selectedFiles
       for (file in files) {
@@ -125,17 +126,13 @@ class RepositoryBrowserPanel(
     add(scrollPane, BorderLayout.CENTER)
   }
 
-  override fun getData(dataId: String): Any? {
-    return when {
-      CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId) -> fileSystemTree.selectedFiles
-      CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId) ->
-        fileSystemTree.selectedFiles
-          .filter { !it.isDirectory }
-          .map { OpenFileDescriptor(project, it) }
-          .toTypedArray()
-      REPOSITORY_BROWSER_DATA_KEY.`is`(dataId) -> this
-      else -> null
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[CommonDataKeys.VIRTUAL_FILE_ARRAY] = fileSystemTree.selectedFiles
+    sink[CommonDataKeys.NAVIGATABLE_ARRAY] = fileSystemTree.selectedFiles
+      .filter { !it.isDirectory }
+      .map { OpenFileDescriptor(project, it) }
+      .toTypedArray()
+    sink[REPOSITORY_BROWSER_DATA_KEY] = this
   }
 
   override fun dispose() {
@@ -163,14 +160,10 @@ class RepositoryBrowserPanel(
   }
 }
 
-class DiffRepoWithLocalAction : AnActionExtensionProvider {
-  override fun getActionUpdateThread(): ActionUpdateThread {
-    return ActionUpdateThread.EDT
-  }
+internal class DiffRepoWithLocalAction : AnActionExtensionProvider {
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
 
-  override fun isActive(e: AnActionEvent): Boolean {
-    return e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
-  }
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(REPOSITORY_BROWSER_DATA_KEY) != null
 
   override fun update(e: AnActionEvent) {
     val repoBrowser = e.getData(REPOSITORY_BROWSER_DATA_KEY) ?: return
@@ -185,20 +178,17 @@ class DiffRepoWithLocalAction : AnActionExtensionProvider {
   }
 }
 
+@ApiStatus.Internal
 class VcsVirtualFileContentRevision(private val vcsVirtualFile: VcsVirtualFile) : ContentRevision, ByteBackedContentRevision {
-  override fun getContent(): String? {
-    return contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }
-  }
+  override fun getContent(): String? =
+    contentAsBytes?.let { LoadTextUtil.getTextByBinaryPresentation(it, vcsVirtualFile).toString() }
 
-  override fun getContentAsBytes(): ByteArray? {
-    return vcsVirtualFile.fileRevision?.loadContent()
-  }
+  override fun getContentAsBytes(): ByteArray? =
+    vcsVirtualFile.fileRevision?.loadContent()
 
-  override fun getFile(): FilePath {
-    return RemoteFilePath(vcsVirtualFile.path, vcsVirtualFile.isDirectory)
-  }
+  override fun getFile(): FilePath =
+    RemoteFilePath(vcsVirtualFile.path, vcsVirtualFile.isDirectory)
 
-  override fun getRevisionNumber(): VcsRevisionNumber {
-    return vcsVirtualFile.fileRevision?.revisionNumber ?: VcsRevisionNumber.NULL
-  }
+  override fun getRevisionNumber(): VcsRevisionNumber =
+    vcsVirtualFile.fileRevision?.revisionNumber ?: VcsRevisionNumber.NULL
 }

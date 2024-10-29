@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
@@ -19,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 
-public final class InspectionDiff {
+final class InspectionDiff {
   private static HashMap<String, ArrayList<Element>> ourFileToProblem;
   @NonNls
   private static final String FILE_ELEMENT = "file";
@@ -90,17 +91,15 @@ public final class InspectionDiff {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static Document createDelta(@Nullable Element oldRoot, Element newRoot) {
+  private static @NotNull Document createDelta(@Nullable Element oldRoot, Element newRoot) {
     ourFileToProblem = new HashMap<>();
-    List newProblems = newRoot.getChildren("problem");
-    for (final Object o : newProblems) {
-      Element newProblem = (Element)o;
-      addProblem(newProblem);
+    List<Element> newProblems = newRoot.getChildren("problem");
+    for (Element problem : newProblems) {
+      addProblem(problem);
     }
 
     if (oldRoot != null) {
-      for (final Element oldProblem : oldRoot.getChildren("problem")) {
+      for (Element oldProblem : oldRoot.getChildren("problem")) {
         if (!removeIfEquals(oldProblem)) {
           addProblem(oldProblem);
         }

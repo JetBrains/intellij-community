@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.target.*
@@ -75,10 +75,12 @@ class GradleRuntimeTargetUI<C : TargetEnvironmentConfiguration>(private val conf
       return this
     }
 
-    private fun TargetPathFieldWithBrowseButton.addLocalActionListener(project: Project,
-                                                                       @NlsContexts.DialogTitle title: String): TargetPathFieldWithBrowseButton {
+    private fun TargetPathFieldWithBrowseButton.addLocalActionListener(
+      project: Project,
+      title: @NlsContexts.DialogTitle String
+    ): TargetPathFieldWithBrowseButton {
       addTargetActionListener(null, ActionListener(BrowseFolderActionListener(
-        title, null, this, project, createSingleFolderDescriptor(), TEXT_FIELD_WHOLE_TEXT
+        this, project, createSingleFolderDescriptor().withTitle(title), TEXT_FIELD_WHOLE_TEXT
       )::actionPerformed))
       return this
     }

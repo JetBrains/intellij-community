@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.engine.ReferringObject;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -54,10 +53,6 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
             valuePresenter.renderValue(renderer);
           }
         }, hasChildren);
-      }
-
-      @Override
-      public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
       }
     };
   }

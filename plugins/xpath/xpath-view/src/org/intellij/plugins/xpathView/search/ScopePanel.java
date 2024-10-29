@@ -120,9 +120,11 @@ public class ScopePanel extends JPanel implements Disposable{
         });
         final @NlsSafe String path = scope.getPath();
         myDirectory.setText(path);
-        myDirectory.addBrowseFolderListener(XPathBundle.message("dialog.title.select.path"), XPathBundle.message("label.select.path"), myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor());
+      myDirectory.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(XPathBundle.message("dialog.title.select.path"))
+        .withDescription(XPathBundle.message("label.select.path")));
 
-        myRecursive.setSelected(scope.isRecursive());
+      myRecursive.setSelected(scope.isRecursive());
     }
 
     @SuppressWarnings({"unchecked", "UseOfObsoleteCollectionType"})

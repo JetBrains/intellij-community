@@ -12,11 +12,10 @@ import com.intellij.psi.impl.PsiTreeChangePreprocessor
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtilBase
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
+import org.jetbrains.kotlin.analysis.api.platform.modification.KaElementModificationType
+import org.jetbrains.kotlin.analysis.api.platform.modification.KaSourceModificationService
 import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
 import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinProjectStructureProvider
-import org.jetbrains.kotlin.analysis.low.level.api.fir.LLFirInternals
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService
-import org.jetbrains.kotlin.analysis.low.level.api.fir.file.structure.LLFirDeclarationModificationService.ModificationType
 import org.jetbrains.kotlin.idea.util.publishGlobalSourceOutOfBlockModification
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.utils.exceptions.errorWithAttachment
@@ -24,6 +23,10 @@ import org.jetbrains.kotlin.utils.exceptions.withPsiEntry
 
 internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Project) : PsiTreeChangePreprocessor {
     override fun treeChanged(event: PsiTreeChangeEventImpl) {
+        if (project.isDefault) {
+            return
+        }
+
         if (!PsiModificationTrackerImpl.canAffectPsi(event) ||
             event.isGenericChange ||
             event.code == PsiEventType.BEFORE_CHILD_ADDITION
@@ -56,22 +59,20 @@ internal class FirIdeOutOfBlockPsiTreeChangePreprocessor(private val project: Pr
             return
         }
 
-        @OptIn(LLFirInternals::class)
-        LLFirDeclarationModificationService.getInstance(project).elementModified(
-            element = child ?: rootElement,
-            modificationType = when (event.code) {
-                PsiEventType.CHILD_ADDED -> ModificationType.ElementAdded
-                PsiEventType.CHILD_REMOVED -> {
-                    val removedElement = event.child ?:
-                        errorWithAttachment("A ${PsiEventType.CHILD_REMOVED} PSI tree change event should have a child element") {
-                            withEntry("psiTreeChangeEvent", event.toString())
-                            withPsiEntry("rootElement", rootElement)
-                        }
-                    ModificationType.ElementRemoved(removedElement)
-                }
-                else -> ModificationType.Unknown
-            },
-        )
+        val modificationType = when (event.code) {
+            PsiEventType.CHILD_ADDED -> KaElementModificationType.ElementAdded
+            PsiEventType.CHILD_REMOVED -> {
+                val removedElement = event.child ?:
+                    errorWithAttachment("A ${PsiEventType.CHILD_REMOVED} PSI tree change event should have a child element") {
+                        withEntry("psiTreeChangeEvent", event.toString())
+                        withPsiEntry("rootElement", rootElement)
+                    }
+                KaElementModificationType.ElementRemoved(removedElement)
+            }
+            else -> KaElementModificationType.Unknown
+        }
+
+        KaSourceModificationService.getInstance(project).handleElementModification(child ?: rootElement, modificationType)
     }
 
     private fun invalidateCachesInInjectedDocuments(rootElement: PsiElement) {

@@ -7,7 +7,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler
 import com.intellij.util.DocumentUtil
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TransposeAction : EditorAction(TransposeHandler()) {
   private class TransposeHandler : EditorWriteActionHandler() {
     override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {

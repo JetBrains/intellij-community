@@ -33,7 +33,6 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
-import java.util.function.Consumer
 
 private val LOG = logger<EntityStorageSerializerImpl>()
 
@@ -106,9 +105,9 @@ public class EntityStorageSerializerImpl(
 
       val cacheMetadata = getCacheMetadata(storage, typesResolver)
 
-      kryo.writeObject(output, cacheMetadata)// Serialize all Entities, Entity Source and Symbolic id metadata from the storage
+      kryo.writeObject(output, cacheMetadata) // Serialize all Entities, Entity Source and Symbolic id metadata from the storage
 
-      writeAndRegisterClasses(kryo, output, storage, cacheMetadata, classCache) // Register entities classes
+      registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
 
       // Write entity data and references
       kryo.writeClassAndObject(output, storage.entitiesByType)
@@ -161,7 +160,7 @@ public class EntityStorageSerializerImpl(
         time = logAndResetTime(time) { measuredTime -> "Read cache metadata and compare it with the existing metadata: $measuredTime ns" }
 
 
-        readAndRegisterClasses(kryo, input, cacheMetadata, classCache)
+        registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
         time = logAndResetTime(time) { measuredTime -> "Read and register classes: $measuredTime ns" }
 
 
@@ -235,35 +234,6 @@ public class EntityStorageSerializerImpl(
   private fun compareCacheMetadata(kryo: Kryo, input: Input): Pair<ComparisonResult, CacheMetadata> {
     val cacheMetadata = kryo.readObject(input, CacheMetadata::class.java)
     return compareWithCurrentEntitiesMetadata(cacheMetadata, typesResolver) to cacheMetadata
-  }
-
-  private fun writeAndRegisterClasses(kryo: Kryo, output: Output, entityStorage: ImmutableEntityStorageImpl,
-                                      cacheMetadata: CacheMetadata, classCache: Object2IntWithDefaultMap<TypeInfo>) {
-    registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
-
-    val vfsClasses = hashSetOf<Class<*>>()
-    entityStorage.indexes.virtualFileIndex.vfu2EntityId.keys.forEach(Consumer { virtualFileUrl ->
-      vfsClasses.add(virtualFileUrl::class.java)
-    })
-
-    output.writeVarInt(vfsClasses.size, true)
-    vfsClasses.forEach { clazz ->
-      kryo.register(clazz)
-      kryo.writeClassAndObject(output, clazz.typeInfo)
-    }
-  }
-
-  private fun readAndRegisterClasses(kryo: Kryo, input: Input, cacheMetadata: CacheMetadata,
-                                     classCache: Object2IntWithDefaultMap<TypeInfo>) {
-    registerEntitiesClasses(kryo, cacheMetadata, typesResolver, classCache)
-
-    val nonObjectCount = input.readVarInt(true)
-    repeat(nonObjectCount) {
-      val objectClass = kryo.readClassAndObject(input) as TypeInfo
-      val resolvedClass = typesResolver.resolveClass(objectClass.fqName, objectClass.pluginId, objectClass.pluginId)
-      classCache.putIfAbsent(objectClass, resolvedClass.toClassId())
-      kryo.register(resolvedClass)
-    }
   }
 
   internal val Class<*>.typeInfo: TypeInfo

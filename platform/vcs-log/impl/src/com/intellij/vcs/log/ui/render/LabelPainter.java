@@ -19,6 +19,7 @@ import com.intellij.util.ui.UpdateScaleHelper;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.ui.VcsBookmarkRef;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +60,7 @@ public class LabelPainter {
   private boolean myCompact;
   private boolean myLeftAligned;
 
+  @ApiStatus.Internal
   public LabelPainter(@NotNull JComponent component,
                       @NotNull LabelIconCache iconCache) {
     myComponent = component;

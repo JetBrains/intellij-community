@@ -6,11 +6,11 @@ import kotlinx.coroutines.flow.asFlow
 
 suspend fun main() {
     // Flow.collect() uses a FlowCollector which is a functional interface witha  suspend method.
-
+    val flow = listOf(1).asFlow()
     // SMART_STEP_INTO_BY_INDEX: 1
     // RESUME: 1
     //Breakpoint!
-    listOf(1).asFlow().collect {
+    flow.collect {
         println(it)
     }
 

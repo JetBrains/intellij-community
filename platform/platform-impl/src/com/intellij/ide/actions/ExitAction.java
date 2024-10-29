@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ExitAction extends AnAction implements DumbAware, LightEditCompatible {
   public ExitAction() {
     getTemplatePresentation().setApplicationScope(true);

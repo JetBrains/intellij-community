@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -6,13 +6,13 @@ import com.intellij.application.options.codeStyle.arrangement.color.ArrangementC
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,8 +24,8 @@ import java.util.List;
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public final class ArrangementRuleAliasesPanel extends JPanel implements DataProvider {
-  @NotNull private final ArrangementRuleAliasControl myControl;
+public final class ArrangementRuleAliasesPanel extends JPanel implements UiDataProvider {
+  private final @NotNull ArrangementRuleAliasControl myControl;
 
   public ArrangementRuleAliasesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                      @NotNull ArrangementColorsProvider colorsProvider) {
@@ -68,8 +68,7 @@ public final class ArrangementRuleAliasesPanel extends JPanel implements DataPro
     add(scrollPane, new GridBag().fillCell().weightx(1).weighty(1).insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, 0));
   }
 
-  @NotNull
-  public List<StdArrangementMatchRule> getRuleSequences() {
+  public @NotNull List<StdArrangementMatchRule> getRuleSequences() {
     return myControl.getRuleSequences();
   }
 
@@ -77,12 +76,8 @@ public final class ArrangementRuleAliasesPanel extends JPanel implements DataPro
     myControl.setRuleSequences(rules);
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (ArrangementRuleAliasControl.KEY.is(dataId)) {
-      return myControl;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ArrangementRuleAliasControl.KEY, myControl);
   }
 }

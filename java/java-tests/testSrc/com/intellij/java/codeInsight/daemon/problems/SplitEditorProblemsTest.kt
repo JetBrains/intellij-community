@@ -7,6 +7,7 @@ import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
@@ -19,6 +20,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.testFramework.EditorTestUtil
 import com.intellij.testFramework.UsefulTestCase
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertEmpty
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.assertSize
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.testFramework.replaceService
 import com.intellij.ui.docking.DockManager
@@ -31,7 +34,7 @@ internal class SplitEditorProblemsTest : ProjectProblemsViewTest() {
   override fun setUp() {
     super.setUp()
     val project = project
-    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
+    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
     project.putUserData(CodeVisionHost.isCodeVisionTestKey, true)
     manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope()).also { it.initDockableContentFactory() }
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)

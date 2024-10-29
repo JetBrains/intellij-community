@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scratch;
 
 import com.intellij.lang.LangBundle;
@@ -22,8 +22,7 @@ import java.io.IOException;
  * "Scratches and Consoles" section of the project view.
  */
 public final class ScratchRootType extends RootType {
-  @NotNull
-  public static ScratchRootType getInstance() {
+  public static @NotNull ScratchRootType getInstance() {
     return findByClass(ScratchRootType.class);
   }
 
@@ -42,20 +41,18 @@ public final class ScratchRootType extends RootType {
       return new ScratchFileTypeIcon(baseIcon);
   }
 
-  @Nullable
-  public VirtualFile createScratchFile(@Nullable Project project,
-                                       @NotNull String fileName,
-                                       @Nullable Language language,
-                                       @NotNull String text) {
+  public @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                 @NotNull String fileName,
+                                                 @Nullable Language language,
+                                                 @NotNull String text) {
     return createScratchFile(project, fileName, language, text, ScratchFileService.Option.create_new_always);
   }
 
-  @Nullable
-  public VirtualFile createScratchFile(@Nullable Project project,
-                                       @NotNull String fileName,
-                                       @Nullable Language language,
-                                       @NotNull String text,
-                                       @NotNull ScratchFileService.Option option) {
+  public @Nullable VirtualFile createScratchFile(@Nullable Project project,
+                                                 @NotNull String fileName,
+                                                 @Nullable Language language,
+                                                 @NotNull String text,
+                                                 @NotNull ScratchFileService.Option option) {
     try {
       return
         WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))

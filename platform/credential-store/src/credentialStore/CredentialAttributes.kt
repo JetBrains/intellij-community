@@ -19,19 +19,44 @@ fun generateServiceName(subsystem: String, key: String): String = "${SERVICE_NAM
 
 /**
  * Consider using [generateServiceName] to generate [serviceName].
- *
- * [requestor] is deprecated (never use it in a new code).
  */
 data class CredentialAttributes(
   val serviceName: String,
-  val userName: String? = null,
-  val requestor: Class<*>? = null,
-  val isPasswordMemoryOnly: Boolean = false,
-  val cacheDeniedItems: Boolean = true
+  val userName: String?,
+  val isPasswordMemoryOnly: Boolean,
+  val cacheDeniedItems: Boolean
 ) {
-  @JvmOverloads
-  constructor(serviceName: String, userName: String? = null, requestor: Class<*>? = null, isPasswordMemoryOnly: Boolean = false)
-    : this(serviceName, userName, requestor, isPasswordMemoryOnly, cacheDeniedItems = true)
+  constructor(serviceName: String)
+    : this(serviceName, userName = null, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String?)
+    : this(serviceName, userName, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+  constructor(serviceName: String, userName: String?, isPasswordMemoryOnly: Boolean)
+    : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
+
+  @Deprecated("use `Credentials(serviceName, userName)`", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?)
+    : this(serviceName, userName, isPasswordMemoryOnly = false, cacheDeniedItems = true)
+
+  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly)`", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean)
+    : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
+
+  @Deprecated("use `Credentials(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)`", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean) :
+    this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)
+
+  @Deprecated("use one of (service name [, ...]) constructors", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?)
+    : this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems = true)
+
+  @Deprecated("use one of (service name [, ...]) constructors", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(serviceName: String, userName: String?, requestor: Class<*>?, isPasswordMemoryOnly: Boolean, cacheDeniedItems: Boolean, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?) :
+    this(serviceName, userName, isPasswordMemoryOnly, cacheDeniedItems)
 }
 
 /**
@@ -40,12 +65,16 @@ data class CredentialAttributes(
  * @param user Account name ("John") or path to SSH key file ("/Users/john/.ssh/id_rsa").
  * @param password Can be empty.
  */
-class Credentials(user: String?, val password: OneTimeString? = null) {
+class Credentials(user: String?, val password: OneTimeString?) {
+  constructor(user: String?) : this(user, password = null as OneTimeString?)
   constructor(user: String?, password: String?) : this(user, password?.let(::OneTimeString))
-
   constructor(user: String?, password: CharArray?) : this(user, password?.let { OneTimeString(it) })
-
   constructor(user: String?, password: ByteArray?) : this(user, password?.let { OneTimeString(password) })
+
+  @Deprecated("use one of (user, password) constructors", level = DeprecationLevel.ERROR)
+  @Suppress("unused")
+  constructor(user: String?, password: OneTimeString?, i: Int, m: kotlin.jvm.internal.DefaultConstructorMarker?) :
+    this(user, password)
 
   val userName: @NlsSafe String? = user.nullize()
 

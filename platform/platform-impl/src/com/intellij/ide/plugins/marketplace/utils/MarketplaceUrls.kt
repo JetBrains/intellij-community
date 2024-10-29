@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace.utils
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -10,7 +10,6 @@ import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.io.URLUtil
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.Nullable
 import java.net.URL
 
 @ApiStatus.Internal
@@ -71,8 +70,7 @@ object MarketplaceUrls {
   }
 
   @JvmStatic
-  @Nullable
-  fun getPluginHomepage(pluginId: PluginId) = MarketplaceCustomizationService.getInstance().getPluginHomepageUrl(pluginId)
+  fun getPluginHomepage(pluginId: PluginId): String? = MarketplaceCustomizationService.getInstance().getPluginHomepageUrl(pluginId)
 
   @JvmStatic
   fun getPluginReviewNoteUrl() = "${getPluginManagerUrl()}/docs/marketplace/reviews-policy.html" // plugin manager url?

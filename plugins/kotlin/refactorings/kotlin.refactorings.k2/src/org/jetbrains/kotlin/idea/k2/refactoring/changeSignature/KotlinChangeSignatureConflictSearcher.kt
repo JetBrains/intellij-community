@@ -251,6 +251,8 @@ class KotlinChangeSignatureConflictSearcher(
         if (ReferencesSearch.search(element).filtering { ref ->
                 val refElement = ref.element
                 !(refElement is KtSimpleNameExpression && refElement.parent is KtValueArgumentName)
+            }.filtering { ref ->
+                KotlinChangeSignatureConflictFilter.EP_NAME.extensionList.none { it.skipUsage(element, ref) }
             }.findFirst() != null) {
             result.putValue(element, KotlinBundle.message("parameter.used.in.declaration.body.warning", element.name.toString()))
         }

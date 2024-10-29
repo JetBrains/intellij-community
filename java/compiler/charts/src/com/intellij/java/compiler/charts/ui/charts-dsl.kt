@@ -4,31 +4,28 @@ package com.intellij.java.compiler.charts.ui
 import com.intellij.java.compiler.charts.CompilationChartsBundle
 import com.intellij.java.compiler.charts.CompilationChartsViewModel
 import com.intellij.java.compiler.charts.CompilationChartsViewModel.Modules.EventKey
+import com.intellij.java.compiler.charts.CompilationChartsViewModel.StatisticData
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.UIUtil.FontSize
 import java.awt.Color
-import java.awt.Graphics2D
 import java.awt.Point
-import java.awt.RenderingHints
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.event.MouseMotionListener
 import java.awt.geom.Rectangle2D
-import java.awt.image.BufferedImage
-import java.awt.image.ImageObserver
 import javax.swing.JLabel
 import javax.swing.JPopupMenu
-import javax.swing.JViewport
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-fun charts(vm: CompilationChartsViewModel, zoom: Zoom, viewport: JViewport, init: Charts.() -> Unit): Charts {
-  return Charts(vm, zoom, viewport).apply(init)
+fun charts(vm: CompilationChartsViewModel, zoom: Zoom, cleanCache: () -> Unit, init: Charts.() -> Unit): Charts {
+  return Charts(vm, zoom, cleanCache).apply(init)
 }
 
-class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom, private val viewport: JViewport) {
+class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom, cleanCache: () -> Unit) {
   private val model: DataModel = DataModel(this)
-  internal var area: Area = Area(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
-  internal val progress: ChartProgress = ChartProgress(zoom, model.chart)
+  internal val progress: ChartProgress = ChartProgress(zoom, model.chart, cleanCache)
   internal lateinit var usage: ChartUsage
   internal lateinit var axis: ChartAxis
   internal var settings: ChartSettings = ChartSettings()
@@ -49,33 +46,14 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
     axis = ChartAxis(zoom).apply(init)
   }
 
-  fun draw(g2d: Graphics2D, component: ImageObserver, init: Charts.() -> BufferedImage): BufferedImage {
-    return withImage(init(), g2d, component) { g ->
-      val components = listOf(progress, usage, axis)
-      components.forEach { it.background(g, settings) }
-      components.forEach { it.component(g, settings) }
-    }
+  fun draw(g2d: ChartGraphics, init: Charts.(Double, Double) -> Unit) {
+    init(max(zoom.toPixels(MaxSize(progress, settings).width), width().toDouble()),
+         axis.bracket.run { y + height })
+
+    val components = listOf(progress, usage, axis)
+    components.forEach { it.background(g2d, settings) }
+    components.forEach { it.component(g2d, settings) }
   }
-
-  private fun withImage(image: BufferedImage, g2d: Graphics2D, component: ImageObserver, draw: (Graphics2D) -> Unit): BufferedImage {
-    image.createGraphics().run {
-      setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY)
-
-      draw(this)
-
-      dispose()
-    }
-
-    g2d.run {
-      setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
-      drawImage(image, component)
-    }
-    return image
-  }
-
-  fun width(): Double = axis.clip.width
-  fun height(): Double = axis.clip.run { y + height }
 
   fun update(init: Charts.() -> Unit) {
     init()
@@ -83,32 +61,37 @@ class Charts(private val vm: CompilationChartsViewModel, private val zoom: Zoom,
 
   fun model(function: DataModel.() -> Unit): Charts {
     model.function()
-
-    area = Area(viewport.x.toDouble(), viewport.y.toDouble(), viewport.width.toDouble(), viewport.height.toDouble())
     settings.duration.from = min(model.chart.start, model.usage.start)
     settings.duration.to = max(model.chart.end, model.usage.end)
-
-    val size = MaxSize(progress, settings)
-
-    progress.clip = Rectangle2D.Double(0.0,
-                                       0.0,
-                                       max(zoom.toPixels(size.width), area.width),
-                                       size.height)
-    usage.clip = Rectangle2D.Double(0.0,
-                                    size.height,
-                                    progress.clip.width,
-                                    max(progress.height * 3, area.height - progress.clip.height - axis.height))
-    axis.clip = Rectangle2D.Double(0.0,
-                                   progress.clip.height + usage.clip.height,
-                                   progress.clip.width,
-                                   axis.height)
     return this
+  }
+
+  fun width(): Int {
+    return listOf(progress, usage, axis).minOfOrNull { it.width(settings) } ?: 0
+  }
+
+  fun height(): Double = listOf(progress, usage, axis).sumOf { it.height() }
+
+  fun clips(area: Rectangle2D.Double) {
+    val size = MaxSize(progress, settings)
+    progress.bracket = Rectangle2D.Double(area.x,
+                                       0.0,
+                                       area.width,
+                                       size.height)
+    usage.bracket = Rectangle2D.Double(area.x,
+                                    size.height,
+                                    progress.bracket.width,
+                                    max(progress.height * 3, area.height - progress.bracket.height - axis.height))
+    axis.bracket = Rectangle2D.Double(area.x,
+                                   progress.bracket.height + usage.bracket.height,
+                                   progress.bracket.width,
+                                   axis.height)
   }
 }
 
 class ChartSettings {
   internal lateinit var font: ChartFont
-  internal lateinit var mouse: CompilationChartsMouseAdapter
+  internal lateinit var mouse: CompilationChartsModuleInfo
   var background: Color = JBColor.WHITE
   internal val duration: ChartDuration = ChartDuration()
 
@@ -138,30 +121,29 @@ class ChartSettings {
   }
 }
 
-internal data class Area(val x: Double, val y: Double, val width: Double, val height: Double)
 internal data class MaxSize(val width: Double, val height: Double) {
   constructor(width: Long, height: Double) : this(width.toDouble(), height)
-  constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.state.threads + 1) * progress.height)
+  constructor(progress: ChartProgress, settings: ChartSettings) : this(with(settings.duration) { to - from }, (progress.rows()) * progress.height)
 }
 
-class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
-  private val components: MutableList<Index> = mutableListOf()
+class CompilationChartsModuleInfo(private val vm: CompilationChartsViewModel, private val component: CompilationChartsDiagramsComponent) : MouseAdapter() {
+  private val components: MutableSet<Index> = HashSet()
   private var currentPopup: JPopupMenu? = null
 
   override fun mouseClicked(e: MouseEvent) {
     component.setFocus()
-    val info = search(e.point)?.info ?: return
-    val popupMenu = JPopupMenu().apply {
-      add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"]))) // TODO
-      show(this@CompilationChartsMouseAdapter.component, e.point.x, e.point.y)
+    search(e.point)?.info?.let { info ->
+      currentPopup = JPopupMenu(info["name"]).apply {
+        add(JLabel(CompilationChartsBundle.message("charts.module.info", info["name"], info["duration"])))
+        show(this@CompilationChartsModuleInfo.component, e.point.x, e.point.y)
+      }
     }
-    currentPopup = popupMenu
   }
 
   override fun mouseExited(e: MouseEvent) {
     val popup = currentPopup ?: return
     if (popup.isShowing && !popup.contains(e.point)) {
-      popup.isVisible = false // todo animation
+      popup.isVisible = false
     }
   }
 
@@ -180,12 +162,78 @@ class CompilationChartsMouseAdapter(private val vm: CompilationChartsViewModel, 
     return null
   }
 
-  private data class Index(val x0: Double, val x1: Double,
-                           val y0: Double, val y1: Double,
-                           val key: EventKey,
-                           val info: Map<String, String>) {
+  private data class Index(
+    val x0: Double, val x1: Double,
+    val y0: Double, val y1: Double,
+    val key: EventKey,
+    val info: Map<String, String>,
+  ) {
     constructor(rect: Rectangle2D, key: EventKey, info: Map<String, String>) : this(rect.x, rect.x + rect.width,
                                                                                     rect.y, rect.y + rect.height,
                                                                                     key, info)
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (other !is Index) return false
+      if (x0 != other.x0) return false
+      if (x1 != other.x1) return false
+      if (y0 != other.y0) return false
+      if (y1 != other.y1) return false
+      return true
+    }
+
+    override fun hashCode(): Int {
+      var result = x0.hashCode()
+      result = 31 * result + x1.hashCode()
+      result = 31 * result + y0.hashCode()
+      result = 31 * result + y1.hashCode()
+      return result
+    }
+  }
+
+  class CompilationChartsUsageInfo(val component: CompilationChartsDiagramsComponent, val charts: Charts, val zoom: Zoom) : MouseMotionListener {
+    var statistic: StatisticData? = null
+    override fun mouseDragged(e: MouseEvent) {
+    }
+
+    override fun mouseMoved(e: MouseEvent) {
+      val point = e.point
+      if (point.y >= charts.usage.bracket.y &&
+          point.y <= charts.usage.bracket.y + charts.usage.bracket.height) {
+        statistic = search(point)
+        if (statistic != null) {
+          component.smartDraw(false, false)
+        }
+      } else {
+        if (statistic != null) {
+          statistic = null
+          component.smartDraw(false, false)
+        }
+      }
+    }
+
+    fun draw(g2d: ChartGraphics) {
+      statistic?.let { stat ->
+        charts.usage.drawPoint(g2d, stat, charts.settings)
+      }
+    }
+
+    private fun search(point: Point): StatisticData? {
+      if (charts.usage.model.isEmpty()) return null
+      var statistic = charts.usage.model.first()
+      var currentDistance = abs(zoom.toPixels(statistic.time - charts.settings.duration.from) - point.x)
+      var lastDistance = currentDistance
+      charts.usage.model.forEach { stat ->
+        val x = zoom.toPixels(stat.time - charts.settings.duration.from)
+        if (abs(point.x - x) < currentDistance) {
+          statistic = stat
+          lastDistance = currentDistance
+          currentDistance = abs(point.x - x)
+        } else if (lastDistance < currentDistance) {
+          return statistic
+        }
+      }
+      return statistic
+    }
   }
 }

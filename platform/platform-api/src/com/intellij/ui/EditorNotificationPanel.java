@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -31,6 +32,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -486,13 +488,17 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       public void handlePanelActionClick(@NotNull EditorNotificationPanel panel,
                                          @NotNull HyperlinkEvent e) {
         logNotificationActionInvocation(action);
-        action.run();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
+        }
       }
 
       @Override
       public void handleQuickFixClick(@NotNull Editor editor, @NotNull PsiFile file) {
         logNotificationActionInvocation(action);
-        action.run();
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
+        }
       }
     };
   }

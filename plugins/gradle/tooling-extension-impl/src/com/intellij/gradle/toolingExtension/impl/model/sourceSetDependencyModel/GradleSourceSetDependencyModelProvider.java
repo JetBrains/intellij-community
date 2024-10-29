@@ -30,6 +30,6 @@ public class GradleSourceSetDependencyModelProvider implements ProjectImportMode
   ) {
     GradleModelProviderUtil.buildModelsRecursively(controller, buildModels, GradleDependencyDownloadPolicy.class, GradleModelConsumer.NOOP);
     GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetArtifactBuildRequest.class, GradleModelConsumer.NOOP);
-    GradleModelProviderUtil.buildModelsInParallel(controller, buildModels, GradleSourceSetDependencyModel.class, modelConsumer);
+    GradleModelProviderUtil.buildModels(controller, buildModels, GradleSourceSetDependencyModel.class, modelConsumer);
   }
 }

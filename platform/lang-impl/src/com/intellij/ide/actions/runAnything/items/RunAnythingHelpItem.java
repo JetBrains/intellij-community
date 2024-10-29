@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.items;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -14,8 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 
 public final class RunAnythingHelpItem extends RunAnythingItemBase {
-  @NotNull @Nls private final String myPlaceholder;
-  @Nullable private final @NlsContexts.DetailedDescription String myDescription;
+  private final @NotNull @Nls String myPlaceholder;
+  private final @Nullable @NlsContexts.DetailedDescription String myDescription;
 
   public RunAnythingHelpItem(@NotNull @Nls String placeholder, @NotNull String command, @Nullable @NlsContexts.DetailedDescription String description, @Nullable Icon icon) {
     super(command, icon);
@@ -23,9 +23,8 @@ public final class RunAnythingHelpItem extends RunAnythingItemBase {
     myDescription = description;
   }
 
-  @NotNull
   @Override
-  public Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
+  public @NotNull Component createComponent(@Nullable String pattern, boolean isSelected, boolean hasFocus) {
     JPanel component = (JPanel)super.createComponent(pattern, isSelected, hasFocus);
 
     SimpleColoredComponent simpleColoredComponent = new SimpleColoredComponent();

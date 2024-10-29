@@ -24,22 +24,6 @@ public final class VFileCreateEvent extends VFileEvent {
   private final int myChildNameId;
   private VirtualFile myCreatedFile;
 
-  /** @deprecated use {@link VFileCreateEvent#VFileCreateEvent(Object, VirtualFile, String, boolean, FileAttributes, String, ChildInfo[])} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval
-  @SuppressWarnings("unused")
-  public VFileCreateEvent(Object requestor, @NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory,
-                          @Nullable FileAttributes attributes, @Nullable String symlinkTarget, boolean isFromRefresh,
-                          ChildInfo @Nullable [] children) {
-    super(requestor);
-    myParent = parent;
-    myDirectory = isDirectory;
-    myAttributes = attributes;
-    mySymlinkTarget = symlinkTarget;
-    myChildren = children;
-    myChildNameId = VirtualFileManager.getInstance().storeName(childName);
-  }
-
   @ApiStatus.Internal
   public VFileCreateEvent(
     Object requestor,
@@ -107,6 +91,7 @@ public final class VFileCreateEvent extends VFileEvent {
    *
    * @return children of the created file if it's a directory
    */
+  @ApiStatus.Internal
   public ChildInfo @Nullable [] getChildren() {
     return myChildren;
   }

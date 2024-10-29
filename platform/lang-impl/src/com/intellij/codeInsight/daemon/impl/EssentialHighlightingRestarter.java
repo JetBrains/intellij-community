@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.impl.PsiManagerEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -20,6 +21,7 @@ import java.util.Objects;
  * Tells {@link DaemonCodeAnalyzerImpl} to run full set of passes after "Save all" to show all diagnostics
  * if the current selected file configured as "Highlight: Essential only"
  */
+@ApiStatus.Internal
 public final class EssentialHighlightingRestarter implements SaveAndSyncHandlerListener {
   private final Project myProject;
 

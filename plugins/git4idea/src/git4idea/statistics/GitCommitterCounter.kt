@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
 import git4idea.commands.Git
 import git4idea.commands.GitCommand
+import git4idea.commands.GitHandlerInputProcessorUtil
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -36,6 +37,7 @@ class GitCommitterCounter(periods: List<Period>,
       setSilent(true)
       addParameters("-s", "--since", since)
       addParameters(additionalGitParameters)
+      setInputProcessor(GitHandlerInputProcessorUtil.empty()) // 'git shortlog' expects stdin if called on a fresh repository
     }
     val result = Git.getInstance().runCommand(handler)
     result.throwOnError()

@@ -35,6 +35,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Infers classes of elements for inspection visitors to skip some of the PSI elements during inspection pass.
@@ -80,6 +81,14 @@ public final class InspectionVisitorOptimizer {
     return acceptingPsiTypes;
   }
 
+  private static final Function<Class<?>, Collection<Class<?>>> TARGET_PSI_CLASSES_INIT = aSuper -> {
+    List<Class<?>> c = new ArrayList<>(10);
+    if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in the tree cannot be abstract
+      c.add(aSuper);
+    }
+    return c;
+  };
+
   private static @NotNull Map<Class<?>, Collection<Class<?>>> getTargetPsiClasses(@NotNull List<? extends PsiElement> elements) {
     if (!useOptimizedVisitors) return Collections.emptyMap();
 
@@ -92,13 +101,7 @@ public final class InspectionVisitorOptimizer {
       // this check guarantees that items are unique in value collections, so we can use simple lists inside
       if (uniqueElementClasses.add(elementClass)) {
         for (Class<?> aSuper : SELF_AND_SUPERS.get(elementClass)) {
-          Collection<Class<?>> classes = targetPsiClasses.computeIfAbsent(aSuper, aClass -> {
-            List<Class<?>> c = new ArrayList<>(10);
-            if (!aSuper.isInterface() && !Modifier.isAbstract(aSuper.getModifiers())) { // PSI elements in the tree cannot be abstract
-              c.add(aSuper);
-            }
-            return c;
-          });
+          Collection<Class<?>> classes = targetPsiClasses.computeIfAbsent(aSuper, TARGET_PSI_CLASSES_INIT);
           classes.add(elementClass);
         }
       }

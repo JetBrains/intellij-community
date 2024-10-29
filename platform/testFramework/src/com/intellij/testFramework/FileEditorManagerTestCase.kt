@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.ExpandMacroToPathMap
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.EditorSplitterState
@@ -20,6 +21,8 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.coroutines.childScope
 import com.intellij.testFramework.common.runAll
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertNotNull
+import com.intellij.testFramework.fixtures.BasePlatformTestCase.assertSize
 import com.intellij.ui.docking.DockContainer
 import com.intellij.ui.docking.DockManager
 import com.intellij.util.io.write
@@ -29,7 +32,7 @@ import java.nio.file.Path
 private val CUSTOM_PROJECT_DESCRIPTOR = object : LightProjectDescriptor() {
   override fun getOpenProjectOptions(): OpenProjectTask {
     return OpenProjectTask {
-      beforeInit = { it.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true) }
+      beforeInit = { it.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true) }
     }
   }
 }
@@ -42,7 +45,7 @@ abstract class FileEditorManagerTestCase : BasePlatformTestCase() {
     super.setUp()
 
     val project = project
-    project.putUserData(FileEditorManagerImpl.ALLOW_IN_LIGHT_PROJECT, true)
+    project.putUserData(FileEditorManagerKeys.ALLOW_IN_LIGHT_PROJECT, true)
     manager = FileEditorManagerImpl(project, (project as ComponentManagerEx).getCoroutineScope().childScope())
     project.replaceService(FileEditorManager::class.java, manager!!, testRootDisposable)
     (FileEditorProviderManager.getInstance() as FileEditorProviderManagerImpl).clearSelectedProviders()

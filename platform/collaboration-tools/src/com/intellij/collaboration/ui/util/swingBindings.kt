@@ -174,6 +174,7 @@ fun JEditorPane.bindTextIn(scope: CoroutineScope, textFlow: Flow<@Nls String>) {
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       text = it
+      // JDK bug JBR-2256 - need to force height recalculation
       setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
   }
@@ -183,7 +184,6 @@ fun JEditorPane.bindTextHtmlIn(scope: CoroutineScope, textFlow: Flow<@Nls String
   scope.launch(start = CoroutineStart.UNDISPATCHED) {
     textFlow.collect {
       setHtmlBody(it)
-      setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
   }
 }

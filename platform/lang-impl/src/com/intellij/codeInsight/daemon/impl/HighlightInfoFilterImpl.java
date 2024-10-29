@@ -7,8 +7,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class HighlightInfoFilterImpl implements HighlightInfoFilter {
   private static final class Holder {
     private static final boolean ourTestMode = ApplicationManager.getApplication().isUnitTestMode();

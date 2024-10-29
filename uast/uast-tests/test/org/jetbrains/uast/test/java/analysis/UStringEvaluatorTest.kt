@@ -9,7 +9,7 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.util.asSafely
 import junit.framework.TestCase
 import org.jetbrains.uast.UCallExpression
@@ -481,7 +481,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     myFixture.doHighlighting()
 
     val expected = "'a'${"{'a'|'b'}".repeat(updateTimes + 1)}"
-    PerformanceTestUtil.newPerformanceTest("calculate value of many assignments") {
+    Benchmark.newBenchmark("calculate value of many assignments") {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")

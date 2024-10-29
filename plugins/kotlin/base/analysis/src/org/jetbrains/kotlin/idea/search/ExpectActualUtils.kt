@@ -2,13 +2,19 @@
 package org.jetbrains.kotlin.idea.search
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.kotlin.idea.base.psi.isExpectDeclaration
+import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectFunctionFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelExpectPropertyFqNameIndex
 import org.jetbrains.kotlin.psi.KtCallableDeclaration
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 
 object ExpectActualUtils {
     fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? =
@@ -42,4 +48,14 @@ object ExpectActualUtils {
     } else {
         null
     } ?: unwrappedElement
+
+    fun collectTopLevelExpectDeclarations(project: Project, modules: List<KaModule>): List<KtNamedDeclaration> {
+        val searchScope = GlobalSearchScope.union(modules.map { it.contentScope })
+
+        return sequenceOf(
+            KotlinTopLevelExpectFunctionFqNameIndex,
+            KotlinTopLevelExpectPropertyFqNameIndex,
+        ).flatMap { it.getAllElements<KtNamedDeclaration>(project, searchScope) }
+            .toList()
+    }
 }

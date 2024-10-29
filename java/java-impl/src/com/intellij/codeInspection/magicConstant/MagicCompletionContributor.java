@@ -126,7 +126,7 @@ public final class MagicCompletionContributor extends CompletionContributor impl
           if (resolved != null) {
             result.add(Pair.create(resolved, operand.getType()));
             // if something interesting assigned to this variable, e.g. magic method, suggest its magic too
-            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), expression -> {
+            MagicConstantInspection.processValuesFlownTo(operand, pos.getContainingFile(), pos.getManager(), true, expression -> {
               PsiModifierListOwner assigned = resolveExpression(expression);
               if (assigned != null) {
                 result.add(Pair.create(assigned, operand.getType()));

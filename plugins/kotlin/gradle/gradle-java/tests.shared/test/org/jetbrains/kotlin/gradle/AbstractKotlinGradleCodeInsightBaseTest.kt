@@ -2,13 +2,8 @@
 package org.jetbrains.kotlin.gradle
 
 import com.intellij.testFramework.common.runAll
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.job
-import kotlinx.coroutines.joinAll
-import kotlinx.coroutines.runBlocking
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.gradleJava.scripting.ProjectGradleSettingsListener
 import org.jetbrains.plugins.gradle.testFramework.GradleCodeInsightBaseTestCase
 import org.jetbrains.plugins.gradle.testFramework.GradleTestFixtureBuilder
 import org.jetbrains.plugins.gradle.testFramework.util.assumeThatKotlinIsSupported
@@ -17,16 +12,9 @@ import org.jetbrains.plugins.gradle.testFramework.util.withSettingsFile
 
 abstract class AbstractKotlinGradleCodeInsightBaseTest: GradleCodeInsightBaseTestCase() {
 
-    private suspend fun joinAllChildJobs(coroutineScope: CoroutineScope) {
-        coroutineScope.coroutineContext.job.children.toList().joinAll()
-    }
-
     override fun setUp() {
         assumeThatKotlinIsSupported(gradleVersion)
         super.setUp()
-        runBlocking {
-            joinAllChildJobs(ProjectGradleSettingsListener.CoroutineScopeService.getCoroutineScope(project))
-        }
     }
 
     override fun tearDown() {

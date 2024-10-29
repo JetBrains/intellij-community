@@ -44,10 +44,10 @@ public class RenameToIgnoredFix extends PsiUpdateModCommandAction<PsiVariable> {
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiVariable variable, @NotNull ModPsiUpdater updater) {
     List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable);
-    variable.setName(myName);
-    for (PsiReferenceExpression reference : references) {
-      reference.bindToElement(variable);
+    if (!references.isEmpty()) {
+      updater.cancel(JavaBundle.message("tooltip.variable.used", variable.getName()));
     }
+    variable.setName(myName);
   }
 
   @Override

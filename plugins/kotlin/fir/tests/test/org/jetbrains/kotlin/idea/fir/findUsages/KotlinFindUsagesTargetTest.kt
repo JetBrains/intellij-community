@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.fir.findUsages
 
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.usages.PsiElementUsageTarget
 import com.intellij.usages.UsageTargetUtil
@@ -25,9 +26,13 @@ class KotlinFindUsagesTargetTest: KotlinLightCodeInsightFixtureTestCase() {
 
     fun testPrimaryConstructorParam() {
         myFixture.configureByText("Foo.kt", "class Foo(<caret>x: Int)")
-        val targets = UsageTargetUtil.findUsageTargets((myFixture.editor as EditorEx).getDataContext()::getData)
+        val dataContext = (myFixture.editor as EditorEx).getDataContext()
+        val editor = CommonDataKeys.EDITOR.getData(dataContext)
+        val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
+        val psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
+        val targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement)
         assertNotNull(targets)
-        assertEquals(1, targets.size)
+        assertEquals(1, targets!!.size)
         assertInstanceOf(targets[0], PsiElementUsageTarget::class.java)
         val element = (targets[0] as PsiElementUsageTarget).element
         assertTrue(element is KtParameter)
@@ -36,9 +41,13 @@ class KotlinFindUsagesTargetTest: KotlinLightCodeInsightFixtureTestCase() {
 
     private fun doTestPosition(fileText: String) {
         myFixture.configureByText("Foo.kt", fileText)
-        val targets = UsageTargetUtil.findUsageTargets((myFixture.editor as EditorEx).getDataContext()::getData)
+        val dataContext = (myFixture.editor as EditorEx).getDataContext()
+        val editor = CommonDataKeys.EDITOR.getData(dataContext)
+        val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
+        val psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext)
+        val targets = UsageTargetUtil.findUsageTargets(editor, psiFile, psiElement)
         assertNotNull(targets)
-        assertEquals(1, targets.size)
+        assertEquals(1, targets!!.size)
         assertInstanceOf(targets[0], PsiElementUsageTarget::class.java)
         val element = (targets[0] as PsiElementUsageTarget).element
         assertTrue(element is KtPrimaryConstructor)

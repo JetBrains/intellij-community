@@ -20,7 +20,7 @@ import static java.util.stream.Collectors.toSet;
  * to infer PSI element classes that it would like to visit.
  * This makes it possible to skip irrelevant elements in a tree when inspections run.
  *
- * @see com.intellij.codeInspection.InspectionVisitorsOptimizer
+ * @see com.intellij.codeInsight.daemon.impl.InspectionVisitorOptimizer
  */
 @ApiStatus.Experimental
 public final class BasicInspectionVisitorBean {

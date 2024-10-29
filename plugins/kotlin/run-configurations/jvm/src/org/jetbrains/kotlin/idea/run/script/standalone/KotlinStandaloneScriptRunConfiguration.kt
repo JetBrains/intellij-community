@@ -31,7 +31,7 @@ import org.jetbrains.kotlin.idea.base.plugin.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
 import org.jetbrains.kotlin.idea.base.projectStructure.matches
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinPluginLayout
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
+import org.jetbrains.kotlin.idea.core.script.ScriptDependencyAware
 import org.jetbrains.kotlin.idea.run.KotlinRunConfiguration
 import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRunConfigurationProducer.Companion.pathFromPsiElement
 import org.jetbrains.kotlin.psi.KtFile
@@ -43,6 +43,10 @@ class KotlinStandaloneScriptRunConfiguration(
     name: String?
 ) : KotlinRunConfiguration(name, JavaRunConfigurationModule(project, true), factory), CommonJavaRunConfigurationParameters,
     RefactoringListenerProvider {
+
+    init {
+        beforeRunTasks = emptyList()
+    }
 
     /**
      * A path to the script file. Please use with caution!
@@ -159,11 +163,11 @@ private class ScriptCommandLineState(
             ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.specified"))
 
         val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
-                ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
+            ?: throw CantRunException(KotlinRunConfigurationsBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.kotlinCompiler)
 
-        val scriptClasspath = ScriptConfigurationManager.getInstance(environment.project).getScriptClasspath(scriptVFile)
+        val scriptClasspath = ScriptDependencyAware.getInstance(environment.project).getScriptDependenciesClassFiles(scriptVFile)
         scriptClasspath.forEach {
             params.classPath.add(it.presentableUrl)
         }

@@ -31,7 +31,6 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
 
   /**
    * Specify the subcommands of the current command.
-   * Must be called only once. The second call will override the result.
    *
    * @param [content] is suspending function that will be executed at the moment of requesting the subcommands.
    * Inside [content] you can access the values of [ShellRuntimeContext] and generate the list of subcommands depending on
@@ -41,7 +40,6 @@ sealed interface ShellCommandContext : ShellSuggestionContext {
 
   /**
    * Allows specifying options that depend on the shell state. For example, on the command version.
-   * Must be called only once. The second call will override the result.
    *
    * Use ordinary [option] if you need to define the option that doesn't depend on the shell state.
    *

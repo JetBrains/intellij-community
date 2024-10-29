@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -35,7 +35,6 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +54,7 @@ public class ContentEntryTreeEditor {
   private final List<ModuleSourceRootEditHandler<?>> myEditHandlers;
   protected final Tree myTree;
   private FileSystemTreeImpl myFileSystemTree;
-  private final JPanel myTreePanel;
+  private final JComponent myComponent;
   protected final DefaultActionGroup myEditingActionsGroup;
   private ContentEntryEditor myContentEntryEditor;
   private final MyContentEntryEditorListener myContentEntryEditorListener = new MyContentEntryEditorListener();
@@ -100,12 +99,14 @@ public class ContentEntryTreeEditor {
       new JBLabel(XmlStringUtil.wrapInHtml(ProjectBundle.message("label.content.entry.separate.name.patterns")));
     excludePatternsLegendLabel.setForeground(JBColor.GRAY);
     excludePatternsPanel.add(excludePatternsLegendLabel, gridBag.nextLine().next().next().fillCellHorizontally());
-    myTreePanel = new MyPanel(new BorderLayout());
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree, true);
-    myTreePanel.add(scrollPane, BorderLayout.CENTER);
-    myTreePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
-
-    myTreePanel.setVisible(false);
+    JPanel treePanel = new JPanel(new BorderLayout());
+    treePanel.add(ScrollPaneFactory.createScrollPane(myTree, true), BorderLayout.CENTER);
+    treePanel.add(excludePatternsPanel, BorderLayout.SOUTH);
+    myComponent = UiDataProvider.wrapComponent(treePanel, sink -> {
+      sink.set(FileSystemTree.DATA_KEY, myFileSystemTree);
+      sink.set(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles());
+    });
+    myComponent.setVisible(false);
     myDescriptor = FileChooserDescriptorFactory.createMultipleFoldersDescriptor();
     myDescriptor.setShowFileSystemRoots(false);
   }
@@ -147,13 +148,13 @@ public class ContentEntryTreeEditor {
       myContentEntryEditor = null;
     }
     if (contentEntryEditor == null) {
-      myTreePanel.setVisible(false);
+      myComponent.setVisible(false);
       if (myFileSystemTree != null) {
         Disposer.dispose(myFileSystemTree);
       }
       return;
     }
-    myTreePanel.setVisible(true);
+    myComponent.setVisible(true);
     myContentEntryEditor = contentEntryEditor;
     myContentEntryEditor.addContentEntryEditorListener(myContentEntryEditorListener);
 
@@ -190,14 +191,13 @@ public class ContentEntryTreeEditor {
     return myContentEntryEditor;
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
   public JComponent createComponent() {
     createEditingActions();
-    return myTreePanel;
+    return myComponent;
   }
 
   public void select(VirtualFile file) {
@@ -254,28 +254,9 @@ public class ContentEntryTreeEditor {
             AllIcons.Actions.NewFolder);
     }
 
-    @NotNull
     @Override
-    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+    public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
       return IconWithTextAction.createCustomComponentImpl(this, presentation, place);
-    }
-  }
-
-  private final class MyPanel extends JPanel implements DataProvider {
-    private MyPanel(final LayoutManager layout) {
-      super(layout);
-    }
-
-    @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls final String dataId) {
-      if (FileSystemTree.DATA_KEY.is(dataId)) {
-        return myFileSystemTree;
-      }
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        return myFileSystemTree == null ? null : myFileSystemTree.getSelectedFiles();
-      }
-      return null;
     }
   }
 

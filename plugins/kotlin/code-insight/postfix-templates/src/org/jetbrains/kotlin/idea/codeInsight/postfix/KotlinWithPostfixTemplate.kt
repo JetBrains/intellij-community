@@ -40,5 +40,5 @@ private object WhenTargetFilter : (KtExpression) -> Boolean {
 
 context(KaSession)
 private fun isWithTargetType(type: KaType): Boolean {
-    return !type.isUnit && !type.isMarkedNullable && !type.isPrimitive
+    return !type.isUnitType && !type.isMarkedNullable && !type.isPrimitive
 }

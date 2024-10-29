@@ -3,20 +3,17 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
 import org.jetbrains.kotlin.psi.KtPsiFactory
 
-class ChangeToFunctionInvocationFix(
-    element: KtExpression,
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtExpression, Unit>(element, Unit) {
+class ChangeToFunctionInvocationFix(element: KtExpression) : PsiUpdateModCommandAction<KtExpression>(element) {
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater,
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)

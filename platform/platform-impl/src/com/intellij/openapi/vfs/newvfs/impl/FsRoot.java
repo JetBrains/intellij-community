@@ -8,11 +8,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class FsRoot extends VirtualDirectoryImpl {
   private final String myPathWithOneSlash;
 
+  @ApiStatus.Internal
   public FsRoot(int id,
                 @NotNull VfsData vfsData,
                 @NotNull NewVirtualFileSystem fs,

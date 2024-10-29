@@ -85,6 +85,11 @@ public class K2ExpressionTypeTestGenerated extends AbstractK2ExpressionTypeTest 
         runTest("../../idea/tests/testData/codeInsight/expressionType/IfAsExpressionInsideBlock.kt");
     }
 
+    @TestMetadata("IfAsStatement.kt")
+    public void testIfAsStatement() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/expressionType/IfAsStatement.kt");
+    }
+
     @TestMetadata("ImplicitInvoke_fromCompanionObject.kt")
     public void testImplicitInvoke_fromCompanionObject() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/expressionType/ImplicitInvoke_fromCompanionObject.kt");

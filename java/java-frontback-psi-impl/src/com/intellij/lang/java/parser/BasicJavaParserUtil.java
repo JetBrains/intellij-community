@@ -74,7 +74,7 @@ public final class BasicJavaParserUtil {
 
   @Nullable
   public static IElementType exprType(@Nullable final PsiBuilder.Marker marker) {
-    return marker != null ? ((LighterASTNode)marker).getTokenType() : null;
+    return marker != null ? marker.getTokenType() : null;
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages

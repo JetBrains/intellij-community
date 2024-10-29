@@ -7,7 +7,9 @@ import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class LineNode(project: Project, bookmark: LineBookmark) : BookmarkNode<LineBookmark>(project, bookmark) {
 
   override fun getVirtualFile(): VirtualFile = value.file

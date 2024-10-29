@@ -6,6 +6,7 @@ import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.Tab;
 import com.intellij.execution.ui.layout.View;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.ApiStatus;
 
 public final class ViewImpl implements View {
 
@@ -22,6 +23,7 @@ public final class ViewImpl implements View {
 
   private boolean myMinimizedInGrid;
 
+  @ApiStatus.Internal
   public ViewImpl(String id, TabImpl tab, final PlaceInGrid placeInGrid, boolean minimizedInGrid, int window) {
     myID = id;
     myTab = tab;

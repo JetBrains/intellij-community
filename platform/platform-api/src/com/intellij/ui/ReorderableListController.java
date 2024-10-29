@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -152,7 +152,7 @@ public abstract class ReorderableListController <T> {
       private final ActionBehaviour<? extends V> myBehaviour;
       private final CustomActionDescription<? super V> myCustomActionDescription;
 
-      public BaseAction(final CustomActionDescription<? super V> customActionDescription,
+      BaseAction(final CustomActionDescription<? super V> customActionDescription,
                         final @NlsActions.ActionText String text, final @NlsActions.ActionDescription String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
         super(text, description, icon);
         myBehaviour = behaviour;

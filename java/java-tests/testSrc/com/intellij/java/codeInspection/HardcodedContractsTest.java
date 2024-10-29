@@ -33,52 +33,9 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }
 
-
   private void checkHighlighting() {
     myFixture.enableInspections(new DataFlowInspection(), new ConstantValueInspection());
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
-  }
-
-  public void testAssertThat() {
-    myFixture.addClass("""
-                         package org.hamcrest; public class CoreMatchers { public static <T> Matcher<T> notNullValue() {}
-                         public static <T> Matcher<T> nullValue() {}
-                         public static <T> Matcher<T> not(Matcher<T> matcher) {}
-                         public static <T> Matcher<T> is(Matcher<T> matcher) {}
-                         public static <T> Matcher<T> is(T operand) {}
-                         public static <T> Matcher<T> equalTo(T operand) {}
-                         public static <E> Matcher<E[]> arrayWithSize(int size) {}\s
-                         }""");
-    myFixture.addClass("package org.hamcrest; public interface Matcher<T> {}");
-    myFixture.addClass("""
-                         package org.junit; public class Assert { public static <T> void assertThat(T actual, org.hamcrest.Matcher<? super T> matcher) {}
-                         public static <T> void assertThat(String msg, T actual, org.hamcrest.Matcher<? super T> matcher) {}
-                         }""");
-
-    myFixture.addClass("""
-                         package org.assertj.core.api; public class Assertions { public static <T> AbstractAssert<?, T> assertThat(Object actual) {}
-                         public static <T> AbstractAssert<?, T> assertThat(java.util.concurrent.atomic.AtomicBoolean actual) {}
-                         public static <T> AbstractAssert<?, T> assertThat(boolean actual) {}
-                         }""");
-    myFixture.addClass("package org.assertj.core.api; public class AbstractAssert<S extends AbstractAssert<S, A>, A> {" +
-                       "public S isNotNull() {}" +
-                       "public S describedAs(String s) {}" +
-                       "public S isTrue() {}" +
-                       "public S isNotEmpty() {}" +
-                       "public S isEmpty() {}" +
-                       "public S isPresent() {}" +
-                       "public S isNotBlank() {}" +
-                       "public S isEqualTo(Object expected) {}" +
-                       "public S map(java.util.function.Function<String, Object> mapper) {}" +
-                       "public S hasSize(int size) {}" +
-                       "public S hasSizeBetween(int min, int max) {}" +
-                       "public S hasSizeGreaterThan(int size) {}" +
-                       "public S hasSizeGreaterThanOrEqualTo(int size) {}" +
-                       "public S hasSizeLessThan(int size) {}" +
-                       "public S hasSizeLessThanOrEqualTo(int size) {}" +
-                       "}");
-
-    checkHighlighting();
   }
 
   public void testAssumeThat() {
@@ -166,11 +123,12 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
                          }""");
     checkHighlighting();
   }
-  
+
   public void testAssertJAssert() {
+    addJSpecifyNullMarked(myFixture);
     checkHighlighting();
   }
-  
+
   public void testHardcodedContractNotNullOverride() {
     checkHighlighting();
   }
@@ -188,7 +146,7 @@ public class HardcodedContractsTest extends DataFlowInspectionTestCase {
   public void testDateTimeComparing()  {
     checkHighlighting();
   }
-  
+
   public void testAssertInstanceOf() {
     myFixture.addClass("""
                          package org.junit.jupiter.api;

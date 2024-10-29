@@ -272,12 +272,6 @@ public class MockApplication extends MockComponentManager implements Application
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
   }
 
-  @Deprecated
-  @Override
-  public @NotNull ModalityInvokator getInvokator() {
-    throw new UnsupportedOperationException();
-  }
-
   @Override
   public void invokeAndWait(@NotNull Runnable runnable, @NotNull ModalityState modalityState) {
     if (isDispatchThread()) {
@@ -358,11 +352,6 @@ public class MockApplication extends MockComponentManager implements Application
   public boolean tryRunReadAction(@NotNull Runnable runnable) {
     runReadAction(runnable);
     return true;
-  }
-
-  @Override
-  public <T> @Nullable T getServiceByClassName(@NotNull String serviceClassName) {
-    throw new UnsupportedOperationException();
   }
 
   @Override

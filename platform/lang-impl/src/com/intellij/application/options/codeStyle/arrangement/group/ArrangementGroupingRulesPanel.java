@@ -1,15 +1,15 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiDataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +17,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public final class ArrangementGroupingRulesPanel extends JPanel implements DataProvider {
+public final class ArrangementGroupingRulesPanel extends JPanel implements UiDataProvider {
 
-  @NotNull private final ArrangementGroupingRulesControl myControl;
+  private final @NotNull ArrangementGroupingRulesControl myControl;
 
   public ArrangementGroupingRulesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
                                        @NotNull ArrangementColorsProvider colorsProvider)
@@ -43,17 +43,12 @@ public final class ArrangementGroupingRulesPanel extends JPanel implements DataP
     myControl.setRules(rules);
   }
   
-  @NotNull
-  public List<ArrangementGroupingRule> getRules() {
+  public @NotNull List<ArrangementGroupingRule> getRules() {
     return myControl.getRules();
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (ArrangementGroupingRulesControl.KEY.is(dataId)) {
-      return myControl;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(ArrangementGroupingRulesControl.KEY, myControl);
   }
 }

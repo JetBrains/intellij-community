@@ -6,9 +6,11 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vcs.changes.Change;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class DirectoryChange extends Change {
   private final @NotNull IdeaGateway myGateway;
   private final @NotNull Difference myDifference;

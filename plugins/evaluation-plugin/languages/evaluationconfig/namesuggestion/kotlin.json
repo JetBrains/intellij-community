@@ -1,0 +1,30 @@
+{
+  "language": "Kotlin",
+  "projectPath": "../../eval-projects/intellij",
+  "outputDir": "ml-eval-name-suggestion-kotlin-output",
+  "strategy": {
+    "placeholderName": "DUMMY",
+    "suggestionsProvider": "LLM-Rename",
+    "collectContextOnly": false
+  },
+  "actions": {
+    "evaluationRoots": [
+      "."
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

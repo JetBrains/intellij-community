@@ -13,7 +13,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.LocalTimeCounter;
 
 public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
@@ -1131,7 +1131,7 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
 
   public void testPerformance() {
     configureByFile("/codeInsight/enterAction/Performance.java");
-    PerformanceTestUtil.newPerformanceTest("enter in " + getFile(), () -> {
+    Benchmark.newBenchmark("enter in " + getFile(), () -> {
       performAction();
       deleteLine();
       caretUp();
@@ -1145,6 +1145,6 @@ public class JavaEnterActionTest extends AbstractBasicJavaEnterActionTest {
                                      "    u." +
                                      StringUtil.repeat("\n      a('b').c(new Some()).", 500)) + "<caret>\n" +
                                     "      x(); } }");
-    PerformanceTestUtil.newPerformanceTest("enter", this::performAction).start();
+    Benchmark.newBenchmark("enter", this::performAction).start();
   }
 }

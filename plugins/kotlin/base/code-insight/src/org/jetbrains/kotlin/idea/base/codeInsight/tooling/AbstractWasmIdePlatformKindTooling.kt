@@ -12,29 +12,25 @@ import javax.swing.Icon
 
 abstract class AbstractWasmIdePlatformKindTooling : IdePlatformKindTooling() {
 
-    override val mavenLibraryIds = emptyList<String>()
-    override val gradlePluginId = ""
-    override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.WASM)
+    override val mavenLibraryIds: List<String> get() = emptyList<String>()
+    override val gradlePluginId: String get() = ""
+    override val gradlePlatformIds: List<KotlinPlatform> = listOf(KotlinPlatform.WASM)
 
-    override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
-        return false
-    }
+    override fun acceptsAsEntryPoint(function: KtFunction): Boolean = false
 
-    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? {
-        return null
-    }
+    override fun getTestIcon(declaration: KtNamedDeclaration, allowSlowOperations: Boolean): Icon? = null
 }
 
 abstract class AbstractWasmJsIdePlatformKindTooling : AbstractWasmIdePlatformKindTooling() {
 
-    override val kind = WasmJsIdePlatformKind
+    override val kind: WasmJsIdePlatformKind get() = WasmJsIdePlatformKind
 
-    override val libraryKind = KotlinWasmJsLibraryKind
+    override val libraryKind: KotlinWasmJsLibraryKind get() = KotlinWasmJsLibraryKind
 }
 
 abstract class AbstractWasmWasiIdePlatformKindTooling : AbstractWasmIdePlatformKindTooling() {
 
-    override val kind = WasmWasiIdePlatformKind
+    override val kind: WasmWasiIdePlatformKind get() = WasmWasiIdePlatformKind
 
-    override val libraryKind = KotlinWasmWasiLibraryKind
+    override val libraryKind: KotlinWasmWasiLibraryKind get() = KotlinWasmWasiLibraryKind
 }

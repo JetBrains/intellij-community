@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.SelectInContext;
@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
   protected final Project myProject;
 
-  protected SelectInTargetPsiWrapper(@NotNull final Project project) {
+  protected SelectInTargetPsiWrapper(final @NotNull Project project) {
     myProject = project;
   }
 
@@ -60,8 +60,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
     return valid;
   }
 
-  @Nullable
-  protected PsiFileSystemItem getContextPsiFile(@NotNull SelectInContext context) {
+  protected @Nullable PsiFileSystemItem getContextPsiFile(@NotNull SelectInContext context) {
     VirtualFile virtualFile = context.getVirtualFile();
     PsiFileSystemItem psiFile = PsiManager.getInstance(myProject).findFile(virtualFile);
     if (psiFile != null) {
@@ -139,8 +138,7 @@ public abstract class SelectInTargetPsiWrapper implements SelectInTarget {
 
   protected abstract void select(PsiElement element, boolean requestFocus);
 
-  @Nullable
-  protected static PsiElement findElementToSelect(PsiElement element, PsiElement candidate) {
+  protected static @Nullable PsiElement findElementToSelect(PsiElement element, PsiElement candidate) {
     PsiElement toSelect = candidate;
 
     if (toSelect == null) {

@@ -3,10 +3,10 @@ UFile (package = ) [public final class UnresolvedKt {...]
         UMethod (name = foo) [public static final fun foo(@null x: Unresolved) : void {...}]
             UParameter (name = x) [@null var x: Unresolved]
                 UAnnotation (fqName = null) [@null]
-            UBlockExpression [{...}] : <ErrorType>
-                UQualifiedReferenceExpression [x?.prop] : <ErrorType>
-                    USimpleNameReferenceExpression (identifier = x) [x] : <ErrorType>
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : <ErrorType>
+            UBlockExpression [{...}]
+                UQualifiedReferenceExpression [x?.prop]
+                    USimpleNameReferenceExpression (identifier = x) [x]
+                    USimpleNameReferenceExpression (identifier = prop) [prop]
     UClass (name = A) [public final class A : <ErrorType> {...}]
         UField (name = prop) [@null private final var prop: Unresolved]
             UAnnotation (fqName = null) [@null]
@@ -17,6 +17,6 @@ UFile (package = ) [public final class UnresolvedKt {...]
             UParameter (name = prop) [@null var prop: Unresolved]
                 UAnnotation (fqName = null) [@null]
             UBlockExpression [{...}]
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [UIdentifier (Identifier (UnresolvedBase))(prop)]
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1)) [UIdentifier (Identifier (UnresolvedBase))(prop)]
                     UIdentifier (Identifier (UnresolvedBase)) [UIdentifier (Identifier (UnresolvedBase))]
-                    USimpleNameReferenceExpression (identifier = prop) [prop] : <ErrorType>
+                    USimpleNameReferenceExpression (identifier = prop) [prop]

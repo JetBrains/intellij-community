@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.application.options.CodeCompletionConfigurable;
@@ -9,7 +9,6 @@ import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupPositionStrategy;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
@@ -39,7 +38,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.concurrency.EdtScheduler;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.AsyncProcessIcon;
@@ -53,32 +52,33 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.concurrent.TimeUnit;
 
 final class LookupUi {
   private static final Logger LOG = Logger.getInstance(LookupUi.class);
 
-  private final @NotNull LookupImpl myLookup;
+  private final @NotNull LookupImpl lookup;
   private final Advertiser myAdvertiser;
   private final JBList<?> myList;
-  private final ModalityState myModalityState;
-  private final Alarm myHintAlarm = new Alarm();
+  private final ModalityState modalityState;
+  private final Alarm hintAlarm;
   private final JScrollPane myScrollPane;
-  private final AsyncProcessIcon myProcessIcon = new AsyncProcessIcon("Completion progress");
+  private final AsyncProcessIcon processIcon = new AsyncProcessIcon("Completion progress");
   private final ActionButton myMenuButton;
-  private final ActionButton myHintButton;
+  private final ActionButton hintButton;
   private final @Nullable JComponent myBottomPanel;
 
   private int myMaximumHeight = Integer.MAX_VALUE;
   private Boolean myPositionedAbove = null;
 
   LookupUi(@NotNull LookupImpl lookup, Advertiser advertiser, JBList<?> list, boolean showBottomPanel) {
-    myLookup = lookup;
+    hintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, lookup);
+
+    this.lookup = lookup;
     myAdvertiser = advertiser;
     myList = list;
 
-    myProcessIcon.setVisible(false);
-    myLookup.resort(false);
+    processIcon.setVisible(false);
+    this.lookup.resort(false);
 
     MenuAction menuAction = new MenuAction();
     menuAction.add(new ChangeSortingAction());
@@ -98,29 +98,24 @@ final class LookupUi {
     menuAction.add(new ShowCompletionSettingsAction());
 
     myMenuButton = new ActionButton(menuAction, null, ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    DataManager.registerDataProvider(myMenuButton, dataId -> {
-      if (CommonDataKeys.PROJECT.is(dataId)) {
-        return myLookup.getProject();
-      }
-      if (CommonDataKeys.EDITOR.is(dataId)) {
-        return myLookup.getEditor();
-      }
-      return null;
+    JComponent menuButtonWrapper = UiDataProvider.wrapComponent(myMenuButton, sink -> {
+      sink.set(CommonDataKeys.PROJECT, this.lookup.getProject());
+      sink.set(CommonDataKeys.EDITOR, this.lookup.getEditor());
     });
 
     AnAction hintAction = new HintAction();
-    myHintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
-                                    ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
-    myHintButton.setVisible(false);
+    hintButton = new ActionButton(hintAction, hintAction.getTemplatePresentation().clone(),
+                                  ActionPlaces.EDITOR_POPUP, ActionToolbar.NAVBAR_MINIMUM_BUTTON_SIZE);
+    hintButton.setVisible(false);
 
     LookupLayeredPane layeredPane = new LookupLayeredPane();
 
     if (showBottomPanel) {
       myBottomPanel = new JPanel(new LookupBottomLayout());
       myBottomPanel.add(myAdvertiser.getAdComponent());
-      myBottomPanel.add(myProcessIcon);
-      myBottomPanel.add(myHintButton);
-      myBottomPanel.add(myMenuButton);
+      myBottomPanel.add(processIcon);
+      myBottomPanel.add(hintButton);
+      myBottomPanel.add(menuButtonWrapper);
       if (ExperimentalUI.isNewUI()) {
         myBottomPanel.setBackground(JBUI.CurrentTheme.CompletionPopup.Advertiser.background());
         myBottomPanel.setBorder(JBUI.CurrentTheme.CompletionPopup.Advertiser.border());
@@ -147,55 +142,54 @@ final class LookupUi {
 
     layeredPane.mainPanel.add(myScrollPane, BorderLayout.CENTER);
 
-    myModalityState = ModalityState.stateForComponent(lookup.getTopLevelEditor().getComponent());
+    modalityState = ModalityState.stateForComponent(lookup.getTopLevelEditor().getComponent());
 
     addListeners();
 
     Disposer.register(lookup, new Disposable() {
       @Override
       public void dispose() {
-        myProcessIcon.dispose();
+        processIcon.dispose();
       }
     });
-    Disposer.register(lookup, myHintAlarm);
   }
 
   private void addListeners() {
     myList.addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        if (myLookup.isLookupDisposed()) return;
-
-        myHintAlarm.cancelAllRequests();
-        updateHint();
+        if (!lookup.isLookupDisposed()) {
+          hintAlarm.cancelAllRequests();
+          updateHint();
+        }
       }
     });
 
     myScrollPane.getVerticalScrollBar().addAdjustmentListener(e -> {
-      if (myLookup.myUpdating || myLookup.isLookupDisposed()) return;
-      myLookup.myCellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
+      if (lookup.myUpdating || lookup.isLookupDisposed()) return;
+      lookup.cellRenderer.scheduleUpdateLookupWidthFromVisibleItems();
     });
   }
 
   private void updateHint() {
-    myLookup.checkValid();
-    if (myHintButton.isVisible()) {
-      myHintButton.setVisible(false);
+    lookup.checkValid();
+    if (hintButton.isVisible()) {
+      hintButton.setVisible(false);
     }
 
-    LookupElement item = myLookup.getCurrentItem();
+    LookupElement item = lookup.getCurrentItem();
     if (item != null && item.isValid()) {
-      ReadAction.nonBlocking(() -> myLookup.getActionsFor(item))
-        .expireWhen(() -> !item.isValid() || myHintAlarm.isDisposed())
-        .finishOnUiThread(myModalityState, actions -> {
+      ReadAction.nonBlocking(() -> lookup.getActionsFor(item))
+        .expireWhen(() -> !item.isValid() || hintAlarm.isDisposed())
+        .finishOnUiThread(modalityState, actions -> {
           if (!actions.isEmpty()) {
-            myHintAlarm.addRequest(() -> {
+            hintAlarm.addRequest(() -> {
               if (ShowHideIntentionIconLookupAction.shouldShowLookupHint() &&
                   !((CompletionExtender)myList.getExpandableItemsHandler()).isShowing() &&
-                  !myProcessIcon.isVisible()) {
-                myHintButton.setVisible(true);
+                  !processIcon.isVisible()) {
+                hintButton.setVisible(true);
               }
-            }, 500, myModalityState);
+            }, 500, modalityState);
           }
         })
         .submit(AppExecutorUtil.getAppExecutorService());
@@ -204,49 +198,49 @@ final class LookupUi {
 
   void setCalculating(boolean calculating) {
     if (calculating) {
-      myProcessIcon.resume();
+      processIcon.resume();
     }
     else {
-      myProcessIcon.suspend();
+      processIcon.suspend();
     }
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (myLookup.isLookupDisposed()) {
+    EdtScheduler.getInstance().schedule(100, modalityState, () -> {
+      if (lookup.isLookupDisposed()) {
         return;
       }
-      if (calculating && myHintButton.isVisible()) {
-        myHintButton.setVisible(false);
+      if (calculating && hintButton.isVisible()) {
+        hintButton.setVisible(false);
       }
-      myProcessIcon.setVisible(calculating);
+      processIcon.setVisible(calculating);
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (!calculating && !myLookup.isLookupDisposed()) {
+        if (!calculating && !lookup.isLookupDisposed()) {
           updateHint();
         }
-      }, myModalityState);
-    }, myModalityState, 100, TimeUnit.MILLISECONDS);
+      }, modalityState);
+    });
   }
 
   void refreshUi(boolean selectionVisible, boolean itemsChanged, boolean reused, boolean onExplicitAction) {
-    Editor editor = myLookup.getTopLevelEditor();
+    Editor editor = lookup.getTopLevelEditor();
     if (editor.getComponent().getRootPane() == null || editor instanceof EditorWindow && !((EditorWindow)editor).isValid()) {
       return;
     }
 
-    if (myLookup.myResizePending || itemsChanged) {
+    if (lookup.myResizePending || itemsChanged) {
       myMaximumHeight = Integer.MAX_VALUE;
     }
     Rectangle rectangle = calculatePosition();
     myMaximumHeight = rectangle.height;
 
-    if (myLookup.myResizePending || itemsChanged) {
-      myLookup.myResizePending = false;
-      myLookup.pack();
+    if (lookup.myResizePending || itemsChanged) {
+      lookup.myResizePending = false;
+      lookup.pack();
       rectangle = calculatePosition();
     }
-    HintManagerImpl.updateLocation(myLookup, editor, rectangle.getLocation());
+    HintManagerImpl.updateLocation(lookup, editor, rectangle.getLocation());
 
     if (reused || selectionVisible || onExplicitAction) {
-      myLookup.ensureSelectionVisible(false);
+      lookup.ensureSelectionVisible(false);
     }
   }
 
@@ -256,13 +250,13 @@ final class LookupUi {
 
   // in layered pane coordinate system.
   Rectangle calculatePosition() {
-    final JComponent lookupComponent = myLookup.getComponent();
+    final JComponent lookupComponent = lookup.getComponent();
     Dimension dim = lookupComponent.getPreferredSize();
-    int lookupStart = myLookup.getLookupStart();
-    Editor editor = myLookup.getTopLevelEditor();
+    int lookupStart = lookup.getLookupStart();
+    Editor editor = lookup.getTopLevelEditor();
     if (lookupStart < 0 || lookupStart > editor.getDocument().getTextLength()) {
       LOG.error(lookupStart + "; offset=" + editor.getCaretModel().getOffset() + "; element=" +
-                myLookup.getPsiElement());
+                lookup.getPsiElement());
     }
 
     LogicalPosition pos = editor.offsetToLogicalPosition(lookupStart);
@@ -275,7 +269,7 @@ final class LookupUi {
     }
     int lineHeight = editor.getLineHeight();
     location.y += lineHeight;
-    int textIndent = myLookup.myCellRenderer.getTextIndent();
+    int textIndent = lookup.cellRenderer.getTextIndent();
     location.x -= textIndent;
     if (LOG.isDebugEnabled()) {
       LOG.debug("Location after shifting by line height (" + lineHeight + ") and text indent (" + textIndent + "): " + location);
@@ -307,9 +301,9 @@ final class LookupUi {
       int yScreenBottom = screenRectangle.y + screenRectangle.height;
       int yPopupBottom = location.y + dim.height;
       if (yPopupBottom > yScreenBottom && yLocationAboveCaret >= screenRectangle.y
-          || myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE) {
+          || lookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE) {
         if (LOG.isDebugEnabled()) {
-          String reason = myLookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE
+          String reason = lookup.getPresentation().getPositionStrategy() == LookupPositionStrategy.ONLY_ABOVE
                           ? "LookupPositionStrategy.ONLY_ABOVE is specified"
                           : "the popup won't fit below, but will fit above";
           LOG.debug("Positioning above the line because " + reason);
@@ -368,7 +362,7 @@ final class LookupUi {
       LOG.error("editor.disposed=" +
                 editor.isDisposed() +
                 "; lookup.disposed=" +
-                myLookup.isLookupDisposed() +
+                lookup.isLookupDisposed() +
                 "; editorShowing=" +
                 editorComponent.isShowing());
     }
@@ -402,7 +396,7 @@ final class LookupUi {
       setLayout(new AbstractLayoutManager() {
         @Override
         public Dimension preferredLayoutSize(@Nullable Container parent) {
-          int maxCellWidth = myLookup.myCellRenderer.getLookupTextWidth() + myLookup.myCellRenderer.getTextIndent();
+          int maxCellWidth = lookup.cellRenderer.getLookupTextWidth() + lookup.cellRenderer.getTextIndent();
           int scrollBarWidth = myScrollPane.getVerticalScrollBar().getWidth();
           int listWidth = Math.min(scrollBarWidth + maxCellWidth, UISettings.getInstance().getMaxLookupWidth());
 
@@ -432,7 +426,7 @@ final class LookupUi {
             if (listHeight != myList.getModel().getSize() &&
                 listHeight != myList.getVisibleRowCount() &&
                 preferredSize.height != size.height) {
-              myLookup.getPresentation().setMaxVisibleItemsCount(listHeight);
+              lookup.getPresentation().setMaxVisibleItemsCount(listHeight);
             }
           }
 
@@ -455,7 +449,7 @@ final class LookupUi {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      myLookup.showElementActions(e.getInputEvent());
+      lookup.showElementActions(e.getInputEvent());
     }
   }
 
@@ -476,7 +470,7 @@ final class LookupUi {
     public void actionPerformed(@NotNull AnActionEvent e) {
       UISettings settings = UISettings.getInstance();
       settings.setSortLookupElementsLexicographically(!settings.getSortLookupElementsLexicographically());
-      myLookup.resort(false);
+      lookup.resort(false);
     }
 
     @Override
@@ -516,7 +510,7 @@ final class LookupUi {
     public Dimension preferredLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getPreferredSize();
-      Dimension hintButtonSize = myHintButton.getPreferredSize();
+      Dimension hintButtonSize = hintButton.getPreferredSize();
       Dimension menuButtonSize = myMenuButton.getPreferredSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
@@ -527,7 +521,7 @@ final class LookupUi {
     public Dimension minimumLayoutSize(Container parent) {
       Insets insets = parent.getInsets();
       Dimension adSize = myAdvertiser.getAdComponent().getMinimumSize();
-      Dimension hintButtonSize = myHintButton.getMinimumSize();
+      Dimension hintButtonSize = hintButton.getMinimumSize();
       Dimension menuButtonSize = myMenuButton.getMinimumSize();
 
       return new Dimension(adSize.width + hintButtonSize.width + menuButtonSize.width + insets.left + insets.right,
@@ -546,19 +540,19 @@ final class LookupUi {
 
       myMenuButton.setBounds(x, y + insets.top, menuButtonSize.width, menuButtonSize.height);
 
-      Dimension myHintButtonSize = myHintButton.getPreferredSize();
-      if (myHintButton.isVisible() && !myProcessIcon.isVisible()) {
+      Dimension myHintButtonSize = hintButton.getPreferredSize();
+      if (hintButton.isVisible() && !processIcon.isVisible()) {
         x -= myHintButtonSize.width;
         y = (innerHeight - myHintButtonSize.height) / 2;
-        myHintButton.setBounds(x, y + insets.top, myHintButtonSize.width, myHintButtonSize.height);
+        hintButton.setBounds(x, y + insets.top, myHintButtonSize.width, myHintButtonSize.height);
       }
-      else if (!myHintButton.isVisible() && myProcessIcon.isVisible()) {
-        Dimension myProcessIconSize = myProcessIcon.getPreferredSize();
+      else if (!hintButton.isVisible() && processIcon.isVisible()) {
+        Dimension myProcessIconSize = processIcon.getPreferredSize();
         x -= myProcessIconSize.width;
         y = (innerHeight - myProcessIconSize.height) / 2;
-        myProcessIcon.setBounds(x, y + insets.top, myProcessIconSize.width, myProcessIconSize.height);
+        processIcon.setBounds(x, y + insets.top, myProcessIconSize.width, myProcessIconSize.height);
       }
-      else if (!myHintButton.isVisible() && !myProcessIcon.isVisible()) {
+      else if (!hintButton.isVisible() && !processIcon.isVisible()) {
         x -= myHintButtonSize.width;
       }
       else {

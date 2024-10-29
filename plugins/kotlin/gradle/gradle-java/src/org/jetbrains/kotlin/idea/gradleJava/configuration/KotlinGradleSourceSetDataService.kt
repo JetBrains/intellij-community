@@ -117,7 +117,8 @@ class KotlinGradleSourceSetDataService : AbstractProjectDataService<GradleSource
             KotlinJpsPluginSettings.importKotlinJpsVersionFromExternalBuildSystem(
                 project,
                 maxCompilerVersion.rawVersion,
-                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath)
+                isDelegatedToExtBuild = GradleProjectSettings.isDelegatedBuildEnabled(project, projectData?.linkedExternalProjectPath),
+                externalSystemId = GradleConstants.GRADLE_NAME
             )
         }
     }

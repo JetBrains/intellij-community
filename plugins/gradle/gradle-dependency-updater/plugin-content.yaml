@@ -1,0 +1,3 @@
+- name: lib/gradle-dependencyUpdater.jar
+  modules:
+  - name: intellij.gradle.dependencyUpdater

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration.actions;
 
@@ -164,16 +164,16 @@ public class ModuleDeleteProvider implements DeleteProvider, TitledHandler {
                                                        : ProjectBundle.message("action.text.remove.module");
   }
 
-  private static void doRemoveModule(@NotNull final Module moduleToRemove,
-                                @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
-                                @NotNull final ModifiableModuleModel moduleModel) {
+  private static void doRemoveModule(final @NotNull Module moduleToRemove,
+                                     @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
+                                     final @NotNull ModifiableModuleModel moduleModel) {
     removeDependenciesOnModules(Collections.singleton(moduleToRemove.getName()), otherModuleRootModels);
     moduleModel.disposeModule(moduleToRemove);
   }
 
-  public static void removeModule(@NotNull final Module moduleToRemove,
+  public static void removeModule(final @NotNull Module moduleToRemove,
                                   @NotNull Collection<? extends ModifiableRootModel> otherModuleRootModels,
-                                  @NotNull final ModifiableModuleModel moduleModel) {
+                                  final @NotNull ModifiableModuleModel moduleModel) {
     doRemoveModule(moduleToRemove, otherModuleRootModels, moduleModel);
   }
 

@@ -8,9 +8,11 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.jetbrains.rd.util.lifetime.Lifetime
+import org.jetbrains.annotations.ApiStatus
 
-class CodeVisionListData(
+class CodeVisionListData @ApiStatus.Internal constructor(
   val lifetime: Lifetime,
+  @get:ApiStatus.Internal
   val projectModel: ProjectCodeVisionModel,
   val rangeCodeVisionModel: RangeCodeVisionModel,
   val inlay: Inlay<*>,

@@ -6,10 +6,12 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 public class CommittedListsSequencesZipper {
 
   @NotNull private final VcsCommittedListsZipper myVcsPartner;

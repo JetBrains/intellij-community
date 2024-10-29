@@ -1,98 +1,91 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.compiler.charts.ui
 
+import com.intellij.java.compiler.charts.CompilationChartsProjectActivity.Companion.COMPILATION_CHARTS_MAGNIFICATION_KEY
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBViewport
-import com.intellij.ui.components.Magnificator
 import com.intellij.ui.components.ZoomingDelegate
-import com.intellij.util.ui.ImageUtil
-import com.intellij.util.ui.UIUtil
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.Point
-import java.awt.Rectangle
-import java.awt.image.BufferedImage
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JComponent
 
+class CompilationChartsViewport(private val scrollType: AutoScrollingType) : JBViewport() {
+  override fun createZooming(): ZoomingDelegate = if (Registry.`is`(COMPILATION_CHARTS_MAGNIFICATION_KEY))
+    CompilationChartsZoomingDelegate(view as JComponent, this, scrollType)
+  else
+    CompilationChartsNonZoomingDelegate(view as JComponent, this)
 
-class CompilationChartsViewport(private val zoom: Zoom) : JBViewport(), Magnificator {
-  override fun getMagnificator(): Magnificator = this
-
-  override fun createZooming(): ZoomingDelegate = CompilationChartsZoomingDelegate(view as JComponent, this, zoom)
-
-  override fun magnify(magnification: Double, at: Point): Point {
-    zoom.adjustUser(this, at.x, scale(magnification))
-    revalidate()
-    repaint()
-    return at
-  }
-
-  private class CompilationChartsZoomingDelegate(private val component: JComponent,
-                                                 private val viewport: JBViewport,
-                                                 private val zoom: Zoom) : ZoomingDelegate(component, viewport) {
-
-    private var cachedImage: BufferedImage? = null
+  private class CompilationChartsZoomingDelegate(private val component: JComponent, private val viewport: JBViewport, private val scrollType: AutoScrollingType) : ZoomingDelegate(component, viewport) {
     private var magnificationPoint: Point? = null
-    private var magnification = 0.0
-
+    private var localX: Int = 0
+    private val magnification: MagnificationCounter = MagnificationCounter(0.0)
     override fun paint(g: Graphics) {
       if (g !is Graphics2D) return
-      val image = cachedImage ?: return
-      val point = magnificationPoint ?: return
-
-      val scale = scale(magnification)
-      val xOffset = (point.x - point.x * scale).toInt()
-      val yOffset = 0
-
-      val clip: Rectangle = g.clipBounds
-      g.color = component.getBackground()
-      g.fillRect(clip.x, clip.y, clip.width, clip.height)
-
-      val translated = g.create() as Graphics2D
-      translated.translate(xOffset, yOffset)
-      translated.scale(scale, 1.0)
-      UIUtil.drawImage(translated, image, 0, 0, null)
-      translated.dispose()
+      if (component is CompilationChartsDiagramsComponent) component.offset = -(magnificationPoint?.x ?: 0)
+      component.paint(g)
     }
 
     override fun magnificationStarted(at: Point) {
-      magnificationPoint = at
-      cacheImage()
+      scrollType.disable()
+      magnificationPoint = viewport.viewPosition
+      if (component is CompilationChartsDiagramsComponent) component.offset = -viewport.viewPosition.x
+      localX = at.x
     }
 
     override fun magnificationFinished(magnification: Double) {
-      magnificationPoint?.run {
-        zoom.adjustUser(viewport, x, scale(magnification))
-      }
-      clearCache()
+      scrollType.enable()
+      if (component is CompilationChartsDiagramsComponent) component.offset = 0
+      magnificationPoint = null
+      localX = 0
+      this.magnification.reset()
     }
 
     override fun magnify(magnification: Double) {
-      this.magnification = magnification
-      viewport.repaint()
+      if (component !is CompilationChartsDiagramsComponent) return
+      this.magnification.set(magnification)
+
+      val scale = this.magnification.get()
+      if (scale == 0.0) return
+
+      magnificationPoint = viewport.magnificator?.magnify(magnificationToScale(scale), Point((magnificationPoint?.x ?: 0) + localX, 0))
+      component.smartDraw(true, false)
     }
 
-    private fun cacheImage() {
-      val bounds: Rectangle = viewport.bounds
-      if (bounds.width <= 0 || bounds.height <= 0) return
+    override fun isActive(): Boolean = magnificationPoint != null
 
-      val image: BufferedImage = ImageUtil.createImage(viewport.graphics, bounds.width, bounds.height, BufferedImage.TYPE_INT_RGB)
-      val graphics = image.graphics
-      graphics.setClip(0, 0, bounds.width, bounds.height)
-      viewport.paint(graphics)
-      cachedImage = image
+    private data class MagnificationCounter(var magnification: Double) {
+      private var count = AtomicBoolean(false)
+      private var scale: Double = 0.0
+      fun get(): Double = if (count.getAndSet(true)) 0.0 else scale
+      fun set(data: Double) {
+        scale = data - magnification
+        magnification = data
+        count.set(false)
+      }
+
+      fun reset() {
+        count.set(false)
+        magnification = 0.0
+        scale = 0.0
+      }
     }
-
-    private fun clearCache() {
-      cachedImage = null
-      magnificationPoint = null
-      magnification = 0.0
-    }
-
-    override fun isActive(): Boolean = cachedImage != null
   }
 
-  companion object {
-    fun scale(magnification: Double): Double = if (magnification < 0) 1f / (1 - magnification) else (1 + magnification)
-    // exp(scale * -0.05)
+  private class CompilationChartsNonZoomingDelegate(component: JComponent, viewport: JBViewport) : ZoomingDelegate(component, viewport) {
+    override fun paint(g: Graphics) {
+    }
+
+    override fun magnificationStarted(at: Point) {
+    }
+
+    override fun magnificationFinished(magnification: Double) {
+    }
+
+    override fun magnify(magnification: Double) {
+    }
+
+    override fun isActive(): Boolean = false
   }
 }

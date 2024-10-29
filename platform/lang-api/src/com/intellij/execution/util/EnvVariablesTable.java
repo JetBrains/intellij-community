@@ -48,8 +48,8 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
   }
 
   @Override
-  protected ListTableModel createListModel() {
-    return new ListTableModel(new NameColumnInfo(), new ValueColumnInfo());
+  protected ListTableModel<EnvironmentVariable> createListModel() {
+    return new ListTableModel<>(new NameColumnInfo(), new ValueColumnInfo());
   }
 
   public void editVariableName(final EnvironmentVariable environmentVariable) {
@@ -170,7 +170,7 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     }
   }
 
-  private final class CopyPasteProviderPanel extends JPanel implements DataProvider, CopyProvider, PasteProvider {
+  private final class CopyPasteProviderPanel extends JPanel implements UiDataProvider, CopyProvider, PasteProvider {
     CopyPasteProviderPanel(JComponent component) {
       super(new GridLayout(1, 1));
       add(component);
@@ -182,11 +182,9 @@ public class EnvVariablesTable extends ListTableWithButtons<EnvironmentVariable>
     }
 
     @Override
-    public @Nullable Object getData(@NotNull String dataId) {
-      if (PlatformDataKeys.COPY_PROVIDER.is(dataId) || PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
-        return this;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(PlatformDataKeys.COPY_PROVIDER, this);
+      sink.set(PlatformDataKeys.PASTE_PROVIDER, this);
     }
 
     @Override

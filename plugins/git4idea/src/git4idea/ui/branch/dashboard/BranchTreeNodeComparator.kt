@@ -6,22 +6,13 @@ import com.intellij.openapi.util.text.NaturalComparator
 internal val BranchTreeNodeComparator = compareBy<BranchNodeDescriptor> {
   getOrderWeight(it)
 } then compareBy(NaturalComparator.INSTANCE) {
-  it.getDisplayText()
-} then compareBy {
-  it.type
+  it.displayName
 }
 
-private fun getOrderWeight(descriptor: BranchNodeDescriptor): Int {
-  val branchInfo = descriptor.branchInfo
-
-  val isCurrent = branchInfo != null && branchInfo.isCurrent
-  if (isCurrent) return 0
-
-  val isFavorite = branchInfo != null && branchInfo.isFavorite
-  if (isFavorite) return 1
-
-  val isGroupNode = descriptor.type == NodeType.GROUP_NODE
-  if (isGroupNode) return 2
-
-  return 3
+private fun getOrderWeight(descriptor: BranchNodeDescriptor): Int = when {
+  descriptor is BranchNodeDescriptor.Ref && descriptor.refInfo.isCurrent -> 0
+  descriptor is BranchNodeDescriptor.Ref && descriptor.refInfo.isFavorite -> 1
+  descriptor is BranchNodeDescriptor.Group && descriptor.hasFavorites -> 2
+  descriptor is BranchNodeDescriptor.Group -> 3
+  else -> 4
 }

@@ -110,7 +110,11 @@ public abstract class DataManager {
    */
   @ApiStatus.Obsolete
   public static void registerDataProvider(@NotNull JComponent component, @NotNull DataProvider provider) {
-    if (component instanceof DataProvider) {
+    if (component instanceof UiDataProvider) {
+      LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing UiDataProvider. " +
+                             "The key will be ignored. Component: %s", component), new Throwable());
+    }
+    else if (component instanceof DataProvider) {
       LOG.warn(String.format("Registering CLIENT_PROPERTY_DATA_PROVIDER on component implementing DataProvider. " +
                              "The key will be ignored. Component: %s", component), new Throwable());
     }
@@ -122,6 +126,8 @@ public abstract class DataManager {
     component.putClientProperty(CLIENT_PROPERTY_DATA_PROVIDER, provider);
   }
 
+  /** Most components now implement {@link UiDataProvider} */
+  @ApiStatus.Obsolete
   public static @Nullable DataProvider getDataProvider(@NotNull JComponent component) {
     return (DataProvider)component.getClientProperty(CLIENT_PROPERTY_DATA_PROVIDER);
   }

@@ -224,4 +224,88 @@ class JavaLoggingPlaceholderAnnotatorTest : LoggingPlaceholderAnnotatorTestBase(
         }
     }
   """.trimIndent())
+
+  fun `test lazy init`() = doTest("""
+      import org.apache.logging.log4j.LogBuilder;
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+
+      class LazyInitializer {
+      
+          static class StaticInitializer {
+              private static final Logger log;
+      
+              static {
+                  log = LogManager.getLogger();
+              }
+      
+              public StaticInitializer() {
+                log.info("<placeholder>{}</placeholder>", 1);
+              }
+          }
+      
+          static class StaticInitializerBuilder {
+              private static final LogBuilder log;
+      
+              static {
+                  log = LogManager.getLogger().atDebug();
+              }
+      
+              public StaticInitializerBuilder() {
+                log.log("<placeholder>{}</placeholder>", "arg");
+              }
+          }
+      
+          static class StaticInitializerBuilder2 {
+              private static final LogBuilder log;
+      
+              static {
+                  if (1 == 1) {
+                      log = LogManager.getLogger().atDebug();
+                  } else {
+                      log = LogManager.getFormatterLogger().atDebug();
+                  }
+              }
+      
+              public StaticInitializerBuilder2() {
+                  log.log("{}", 1);
+              }
+          }
+      
+          static class ConstructorInitializer {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer() {
+                  log = LogManager.getLogger();
+              }
+      
+              public ConstructorInitializer(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                log.info("<placeholder>{}</placeholder> <placeholder>{}</placeholder>", 2, 1);
+              }
+          }
+      
+          static class ConstructorInitializer2 {
+              private final Logger log;
+      
+      
+              public ConstructorInitializer2() {
+                  log = LogManager.getFormatterLogger();
+              }
+      
+              public ConstructorInitializer2(int i) {
+                  log = LogManager.getLogger();
+              }
+      
+              public void test() {
+                  log.info("{}", 1);
+              }
+          }
+      }
+  """.trimIndent())
+
 }

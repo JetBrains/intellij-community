@@ -229,7 +229,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
     assertMavenizedModule("m1")
     assertNotMavenizedModule("userModule")
 
-    createProjectPom("""
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>project</artifactId>
                        <packaging>pom</packaging>
@@ -938,8 +938,8 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
 
   @Test
   fun testProjectWithMavenConfigCustomUserSettingsXml() = runBlocking {
-    createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
-    createProjectSubFile(".mvn/custom-settings.xml",
+    val configFile = createProjectSubFile(".mvn/maven.config", "-s .mvn/custom-settings.xml")
+    val settingsFile = createProjectSubFile(".mvn/custom-settings.xml",
                          """
                            <settings>
                                <profiles>
@@ -959,6 +959,7 @@ class StructureImportingTest : MavenMultiVersionImportingTestCase() {
                        <artifactId>${'$'}{projectName}</artifactId>
                        <version>1</version>
                        """.trimIndent())
+    refreshFiles(listOf(configFile, settingsFile))
 
     val settings = mavenGeneralSettings
     settings.setUserSettingsFile("")

@@ -17,7 +17,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.ExperimentalUI
 import git4idea.GitUtil
-import git4idea.actions.branch.GitBranchActionsUtil
+import git4idea.actions.branch.GitBranchActionsDataKeys
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
@@ -44,7 +44,7 @@ internal class GitBranchesTreePopupResizeAction :
 
   override fun update(e: AnActionEvent) {
     val project = e.project
-    val popup = e.getData(GitBranchesTreePopup.POPUP_KEY)
+    val popup = e.getData(GitBranchesTreePopupBase.POPUP_KEY)
 
     val enabledAndVisible = project != null && popup != null
     e.presentation.isEnabledAndVisible = enabledAndVisible
@@ -52,7 +52,7 @@ internal class GitBranchesTreePopupResizeAction :
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val popup = e.getData(GitBranchesTreePopup.POPUP_KEY) ?: return
+    val popup = e.getData(GitBranchesTreePopupBase.POPUP_KEY) ?: return
 
     popup.restoreDefaultSize()
   }
@@ -68,7 +68,7 @@ internal class GitBranchesTreePopupTrackReposSynchronouslyAction : TrackReposSyn
       super.update(e)
     }
 
-    val repositories = e.getData(GitBranchActionsUtil.REPOSITORIES_KEY)
+    val repositories = e.getData(GitBranchActionsDataKeys.AFFECTED_REPOSITORIES)
 
     e.presentation.isEnabledAndVisible = projectExist && repositories.orEmpty().size > 1
   }
@@ -90,7 +90,7 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
   override fun update(e: AnActionEvent) {
     super.update(e)
     e.presentation.isEnabledAndVisible = e.project != null
-                                         && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+                                         && e.getData(GitBranchesTreePopupBase.POPUP_KEY) != null
   }
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
@@ -102,34 +102,10 @@ internal class GitBranchesTreePopupShowRecentBranchesAction :
     val project = e.project ?: return
 
     GitVcsSettings.getInstance(project).setShowRecentBranches(state)
-    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+    e.getRequiredData(GitBranchesTreePopupBase.POPUP_KEY).refresh()
   }
 }
 
-internal class GitBranchesTreePopupShowTagsAction :
-  ToggleAction(GitBundle.messagePointer("git.branches.popup.show.tags.name")), DumbAware {
-
-  override fun update(e: AnActionEvent) {
-    super.update(e)
-    e.presentation.isEnabledAndVisible = e.project != null
-                                         && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
-  }
-
-  override fun getActionUpdateThread() = ActionUpdateThread.EDT
-
-  override fun isSelected(e: AnActionEvent): Boolean =
-    e.project?.let(GitVcsSettings::getInstance)?.showTags() ?: true
-
-  override fun setSelected(e: AnActionEvent, state: Boolean) {
-    val project = e.project ?: return
-    GitVcsSettings.getInstance(project).setShowTags(state)
-
-    for (repository in GitRepositoryManager.getInstance(project).repositories) {
-      repository.tagHolder.updateEnabled()
-    }
-    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
-  }
-}
 
 internal class GitBranchesTreePopupFilterSeparatorWithText : DefaultActionGroup(), DumbAware {
 
@@ -164,7 +140,7 @@ internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
     val project = e.project ?: return
 
     GitVcsSettings.getInstance(project).setFilterByActionInPopup(state)
-    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+    e.getRequiredData(GitBranchesTreePopupBase.POPUP_KEY).refresh()
   }
 
   companion object {
@@ -174,7 +150,7 @@ internal class GitBranchesTreePopupFilterByAction : DumbAwareToggleAction() {
 
     fun isEnabledAndVisible(e: AnActionEvent): Boolean {
       return e.project != null
-             && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+             && e.getData(GitBranchesTreePopupBase.POPUP_KEY) != null
     }
   }
 }
@@ -195,7 +171,7 @@ internal class GitBranchesTreePopupFilterByRepository : DumbAwareToggleAction() 
     val project = e.project ?: return
 
     GitVcsSettings.getInstance(project).setFilterByRepositoryInPopup(state)
-    e.getRequiredData(GitBranchesTreePopup.POPUP_KEY).refresh()
+    e.getRequiredData(GitBranchesTreePopupBase.POPUP_KEY).refresh()
   }
 
   companion object {
@@ -207,7 +183,7 @@ internal class GitBranchesTreePopupFilterByRepository : DumbAwareToggleAction() 
     fun isEnabledAndVisible(e: AnActionEvent): Boolean {
       val project = e.project
       return project != null
-             && e.getData(GitBranchesTreePopup.POPUP_KEY) != null
+             && e.getData(GitBranchesTreePopupBase.POPUP_KEY) != null
              && project.isMultiRoot()
     }
   }

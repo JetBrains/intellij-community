@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import git4idea.commands.GitImplBase;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -15,12 +16,15 @@ public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
 
   private final @NotNull Project myProject;
 
+  private GitRebaseEditingResult myResult = null;
+
   public GitSimpleEditorHandler(@NotNull Project project) {
     myProject = project;
   }
 
   @Override
   public int editCommits(@NotNull File file) {
+    GitRebaseEditingResult result;
     try {
       boolean cancelled = !GitImplBase.loadFileAndShowInSimpleEditor(
         myProject,
@@ -29,21 +33,19 @@ public class GitSimpleEditorHandler implements GitRebaseEditorHandler {
         GitBundle.message("rebase.simple.editor.dialog.title"),
         CommonBundle.getOkButtonText()
       );
-      return cancelled ? ERROR_EXIT_CODE : 0;
+      result = cancelled ? GitRebaseEditingResult.UnstructuredEditorCancelled.INSTANCE : GitRebaseEditingResult.WasEdited.INSTANCE;
     }
     catch (Exception e) {
       LOG.error("Failed to edit git rebase file: " + file, e);
-      return ERROR_EXIT_CODE;
+      result = new GitRebaseEditingResult.Failed(e);
     }
+
+    myResult = result;
+    return result.getExitCode();
   }
 
   @Override
-  public boolean wasCommitListEditorCancelled() {
-    return false;
-  }
-
-  @Override
-  public boolean wasUnstructuredEditorCancelled() {
-    return false;
+  public @Nullable GitRebaseEditingResult getEditingResult() {
+    return myResult;
   }
 }

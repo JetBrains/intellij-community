@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl
 
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Graphics
 import javax.swing.JComponent
@@ -10,6 +11,7 @@ import javax.swing.JComponent
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 class StripeButtonSeparator: JComponent() {
   var dndState: Boolean = false
 

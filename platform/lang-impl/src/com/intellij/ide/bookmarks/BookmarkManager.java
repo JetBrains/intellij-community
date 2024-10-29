@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.ide.bookmark.BookmarkType;
@@ -55,7 +55,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   private record DeletedDocumentBookmarkKey(VirtualFile file, int line, String text) {
   }
 
-  private final static Logger LOG = Logger.getInstance(BookmarkManager.class);
+  private static final Logger LOG = Logger.getInstance(BookmarkManager.class);
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private final MultiMap<VirtualFile, Bookmark> myBookmarks = MultiMap.createConcurrentSet();
   private final Map<DeletedDocumentBookmarkKey, Bookmark> myDeletedDocumentBookmarks = new HashMap<>();
@@ -90,8 +90,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     });
   }
 
-  @NotNull
-  public Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
+  public @NotNull Bookmark addTextBookmark(@NotNull VirtualFile file, int lineIndex, @NotNull @NlsSafe String description) {
     ThreadingAssertions.assertEventDispatchThread();
 
     Bookmark b = new Bookmark(myProject, file, lineIndex, description);
@@ -102,8 +101,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return b;
   }
 
-  @NotNull
-  private BookmarksListener getPublisher() {
+  private @NotNull BookmarksListener getPublisher() {
     return myProject.getMessageBus().syncPublisher(BookmarksListener.TOPIC);
   }
 
@@ -115,8 +113,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     addTextBookmark(file, -1, description);
   }
 
-  @NotNull
-  private static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
+  private static @NotNull String getAutoDescription(final @NotNull Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
     if (autoDescription == null) {
       Document document = editor.getDocument();
@@ -130,9 +127,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   }
 
 
-  @NotNull
-  @Unmodifiable
-  public List<Bookmark> getValidBookmarks() {
+  public @NotNull @Unmodifiable List<Bookmark> getValidBookmarks() {
     List<Bookmark> answer = ContainerUtil.filter(myBookmarks.values(), b -> b.isValid());
     if (UISettings.getInstance().getSortBookmarks()) {
       return ContainerUtil.sorted(answer);
@@ -142,18 +137,15 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  @NotNull
-  public Collection<Bookmark> getAllBookmarks() {
+  public @NotNull Collection<Bookmark> getAllBookmarks() {
     return myBookmarks.values();
   }
 
-  @NotNull
-  public Collection<Bookmark> getFileBookmarks(@Nullable VirtualFile file) {
+  public @NotNull Collection<Bookmark> getFileBookmarks(@Nullable VirtualFile file) {
     return myBookmarks.get(file);
   }
 
-  @Nullable
-  public Bookmark findEditorBookmark(@NotNull Document document, int line) {
+  public @Nullable Bookmark findEditorBookmark(@NotNull Document document, int line) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return null;
     return findBookmark(file, line);
@@ -164,13 +156,11 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     return ContainerUtil.find(myBookmarks.get(file), bookmark -> bookmark.getLine() == line);
   }
 
-  @Nullable
-  public Bookmark findFileBookmark(@NotNull VirtualFile file) {
+  public @Nullable Bookmark findFileBookmark(@NotNull VirtualFile file) {
     return findBookmark(file, -1);
   }
 
-  @Nullable
-  public Bookmark findBookmarkForMnemonic(char m) {
+  public @Nullable Bookmark findBookmarkForMnemonic(char m) {
     final char mm = Character.toUpperCase(m);
     return ContainerUtil.find(myBookmarks.values(), bookmark -> bookmark.getMnemonic() == mm);
   }
@@ -191,8 +181,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  @Nullable
-  public Bookmark findElementBookmark(@NotNull PsiElement element) {
+  public @Nullable Bookmark findElementBookmark(@NotNull PsiElement element) {
     if (!(element instanceof PsiNameIdentifierOwner) || !element.isValid()) return null;
     if (element instanceof PsiCompiledElement) return null;
 
@@ -285,8 +274,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  @NotNull
-  private static List<Bookmark> readExternal(@NotNull Element element) {
+  private static @NotNull List<Bookmark> readExternal(@NotNull Element element) {
     List<Bookmark> result = new ArrayList<>();
     for (Element bookmarkElement : element.getChildren("bookmark")) {
       String url = bookmarkElement.getAttributeValue("url");
@@ -381,8 +369,7 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
     }
   }
 
-  @Nullable
-  public Bookmark findLineBookmark(@NotNull Editor editor, boolean isWrapped, boolean next) {
+  public @Nullable Bookmark findLineBookmark(@NotNull Editor editor, boolean isWrapped, boolean next) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
     if (file == null) return null;
     List<Bookmark> bookmarksForDocument = new ArrayList<>(myBookmarks.get(file));

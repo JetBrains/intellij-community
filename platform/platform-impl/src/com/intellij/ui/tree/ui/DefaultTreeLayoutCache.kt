@@ -1,11 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tree.ui
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.treeStructure.CachingTreePath
-import com.intellij.util.SlowOperations
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.Rectangle
 import java.util.*
@@ -16,12 +16,12 @@ import javax.swing.tree.TreePath
 import kotlin.collections.ArrayDeque
 import kotlin.math.max
 
+@ApiStatus.Internal
 @VisibleForTesting
 class DefaultTreeLayoutCache(
   private val defaultRowHeight: Int,
   private val autoExpandHandler: (TreePath) -> Unit,
 ) : AbstractLayoutCache() {
-
   constructor(autoExpandHandler: (TreePath) -> Unit) : this(JBUI.CurrentTheme.Tree.rowHeight(), autoExpandHandler)
 
   private var root: Node? = null
@@ -32,10 +32,13 @@ class DefaultTreeLayoutCache(
   private val boundsBuffer = Rectangle()
   private var variableHeight: VariableHeightSupport? = VariableHeightSupport()
 
-  internal var isCachedSizeValid = false
+  @JvmField
+  internal var isCachedSizeValid: Boolean = false
 
   override fun setModel(newModel: TreeModel?) {
+    @Suppress("UsePropertyAccessSyntax")
     super.setModel(newModel)
+
     rebuild()
   }
 
@@ -43,6 +46,7 @@ class DefaultTreeLayoutCache(
     if (isRootVisible == rootVisible) {
       return
     }
+    @Suppress("UsePropertyAccessSyntax")
     super.setRootVisible(rootVisible)
     val root = this.root ?: return
     val debugLocation = Location("setRootVisible(%s)", rootVisible)
@@ -111,14 +115,14 @@ class DefaultTreeLayoutCache(
     }
   }
 
-  // The following two methods appear to be almost identical, and their javadocs are very confusing:
+  // The following two methods appear to be almost identical, and their Javadocs are very confusing:
   // according to them, the former checks whether the node is visible and expanded,
   // and the latter just checks whether a node is expanded.
   // However, this is not what they actually do. In fact, both check that the node is visible,
-  // but in a rather weird way: the root is always considered visible, regardless of the isRootVisible value.
+  // but in a rather weird way: the root is always considered visible, regardless of the `isRootVisible` value.
   // In practice, though, isExpanded() is used for checking whether the children are visible or not,
   // while getExpandedState() is used to paint the node itself (the expanded/collapsed indicators, etc.),
-  // so we preserve this contract instead of trying to make sense of the javadocs.
+  // so we preserve this contract instead of trying to make sense of the Javadocs.
 
   override fun getExpandedState(path: TreePath?): Boolean = getNode(path)?.run{ isVisible && isExpanded } == true
 
@@ -727,7 +731,7 @@ class DefaultTreeLayoutCache(
 
     inline fun updateImpl(location: Location?, update: () -> Unit) {
       val reentry = minimumAffectedRow != -1
-      if (reentry) { // Indirect recursion, will update later up the stack.
+      if (reentry) { // Indirect recursion will update later up the stack.
         update()
         return
       }
@@ -879,9 +883,7 @@ class DefaultTreeLayoutCache(
     if (!Registry.`is`("ide.tree.experimental.layout.cache.debug", false)) {
       return
     }
-    SlowOperations.startSection(SlowOperations.GENERIC).use { // Only for debugging, so slow ops are fine here.
-      InvariantChecker(location).checkInvariants()
-    }
+    InvariantChecker(location).checkInvariants()
   }
 
   private class Location(private val location: String, private vararg val args: Any?) {

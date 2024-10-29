@@ -316,7 +316,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
     List<Runnable> queued = new ArrayList<>(myTaskQueue.size());
     myTaskQueue.drainTo(queued);
     for (Runnable fromQueue : queued) {
-      Runnable task = fromQueue instanceof ContextRunnable ? ((ContextRunnable)fromQueue).getDelegate() : fromQueue;
+      Runnable task = Propagation.unwrapContextRunnable(fromQueue);
       if (task instanceof FutureTask && !(task instanceof LastTask)) {
         ((FutureTask<?>)task).cancel(false);
       }

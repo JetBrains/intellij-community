@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.DiffContext;
@@ -54,6 +54,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Objects;
 
-public class AnnotateDiffViewerAction {
+@ApiStatus.Internal
+public final class AnnotateDiffViewerAction {
   private static final Logger LOG = Logger.getInstance(AnnotateDiffViewerAction.class);
   private static class Holder {
     private static final Key<boolean[]> ANNOTATIONS_SHOWN_KEY = Key.create("Diff.AnnotateAction.AnnotationShown");
@@ -288,7 +290,8 @@ public class AnnotateDiffViewerAction {
     };
   }
 
-  public static class MyDiffExtension extends DiffExtension {
+  @ApiStatus.Internal
+  public static final class MyDiffExtension extends DiffExtension {
     @Override
     public void onViewerCreated(@NotNull DiffViewer diffViewer, @NotNull DiffContext context, @NotNull DiffRequest request) {
       if (diffViewer instanceof DiffViewerBase viewer) {
@@ -798,7 +801,8 @@ public class AnnotateDiffViewerAction {
     }
   }
 
-  public static class Provider implements AnnotateToggleAction.Provider {
+  @ApiStatus.Internal
+  public static final class Provider implements AnnotateToggleAction.Provider {
     @Override
     public boolean isEnabled(AnActionEvent e) {
       return AnnotateDiffViewerAction.isEnabled(e);

@@ -36,7 +36,6 @@ const val TEXT_AREA_ROW_SIZE = 5
 internal const val TEXT_FIELD_EMAIL_COLUMN_SIZE = 25
 internal const val COMBOBOX_COLUMN_SIZE = 25
 
-internal val EMAIL_REGEX = Regex("^[a-zA-Z0-9\\\\._%+!$&*=^|~#{}-]+@([a-zA-Z0-9\\\\-]+\\.)+([a-zA-Z]{2,22})$")
 internal fun Row.feedbackAgreement(project: Project?, @NlsContexts.DetailedDescription agreementText: String, systemInfo: () -> Unit) {
   comment(agreementText, maxLineLength = MAX_LINE_LENGTH_WORD_WRAP) {
     when (it.description) {

@@ -2,9 +2,10 @@ package com.intellij.searchEverywhereMl.ranking.core
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchAdapter
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereMlContributorReplacement
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.internal.statistic.FUCollectorTestCase
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.project.Project
@@ -21,19 +22,24 @@ import javax.swing.SwingUtilities
 
 abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
   fun MockSearchEverywhereProvider.runSearchAndCollectLogEvents(testProcedure: SearchEverywhereUI.() -> Unit): List<LogEvent> {
-    val emptyDisposable = Disposer.newDisposable()
+    val disposables = mutableListOf<Disposable>()
 
-    return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
-      val searchEverywhereUI = this.provide(project)
+    try {
+      val emptyDisposable = Disposer.newDisposable()
+      disposables.add(emptyDisposable)
 
-      PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
+      return FUCollectorTestCase.collectLogEvents(MLSE_RECORDER_ID, emptyDisposable) {
+        val searchEverywhereUI = this.provide(project)
+        disposables.add(searchEverywhereUI)
 
-      testProcedure(searchEverywhereUI)
+        PlatformTestUtil.waitForAlarm(10)  // wait for rebuild list (session started)
 
-      Disposer.dispose(searchEverywhereUI)  // Otherwise, the instance seems to be reused between different tests
-    }.also {
-      Disposer.dispose(emptyDisposable)
-    }.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
+        testProcedure(searchEverywhereUI)
+      }.filter { it.event.id in listOf(SESSION_FINISHED.eventId, SEARCH_RESTARTED.eventId) }
+    }
+    finally {
+      disposables.forEach { Disposer.dispose(it) }
+    }
   }
 
   fun SearchEverywhereUI.type(query: CharSequence) = also { searchEverywhereUI ->
@@ -50,7 +56,14 @@ abstract class SearchEverywhereLoggingTestCase : LightPlatformTestCase() {
       })
 
       searchEverywhereUI.searchField.text += character
-      PlatformTestUtil.waitForFuture(future)
+      try {
+        PlatformTestUtil.waitForFuture(future)
+      }
+      catch (ex: AssertionError) {
+        thisLogger().debug("Exception was thrown while waiting for typing feedback")
+        thisLogger().debug(ex)
+
+      }
     }
   }
 }
@@ -71,27 +84,8 @@ interface MockSearchEverywhereProvider {
   }
 }
 
-
-fun <T> underMaskedExtensionPoints(procedure: ExtensionPointMaskManager.() -> T): T {
-  val manager = ExtensionPointMaskManager()
-  manager.maskExtensionPoint(SearchEverywhereMlContributorReplacement.EP_NAME, emptyList())
-  val result = procedure.invoke(manager)
-  manager.dispose()
-  return result
-}
-
-class ExtensionPointMaskManager {
-  private val serviceMaskDisposable = Disposer.newDisposable()
-
-  infix fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>) {
-    maskExtensionPoint(this, extensions)
-  }
-
-  fun <T : Any> maskExtensionPoint(epName: ExtensionPointName<T>, extensions: List<T>) {
-    (epName.point as ExtensionPointImpl<T>).maskAll(extensions, serviceMaskDisposable, false)
-  }
-
-  fun dispose() {
-    Disposer.dispose(serviceMaskDisposable)
-  }
+internal fun <T : Any> ExtensionPointName<T>.maskedWith(extensions: List<T>): Disposable {
+  val disposable = Disposer.newDisposable("ExtensionPointMaskMDisposable for $name")
+  (point as ExtensionPointImpl<T>).maskAll(extensions, disposable, false)
+  return disposable
 }

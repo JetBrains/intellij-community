@@ -1,10 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.branch
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsStatusWidget
-import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener
+import com.intellij.ide.navigationToolbar.rider.RiderMainToolbarStateListener
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
@@ -12,6 +12,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
@@ -25,6 +26,7 @@ import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.branch.GitBranchIncomingOutgoingManager.GitIncomingOutgoingListener
 import git4idea.branch.GitBranchUtil
+import git4idea.branch.calcTooltip
 import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
@@ -77,7 +79,20 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
       GitBundle.message("git.status.bar.widget.tooltip.detached")
     }
     else {
-      super.getToolTip(repository)
+      repository ?: return null
+      val toolTip = super.getToolTip(repository) ?: return null
+      val htmlBuilder = HtmlBuilder().append(toolTip)
+
+      val currentBranch = repository.currentBranch ?: return htmlBuilder.toString()
+      val incomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(project)
+      val incomingOutgoingState = incomingOutgoingManager.getIncomingOutgoingState(repository, currentBranch)
+      val incomingOutgoingTooltip = incomingOutgoingState.calcTooltip()
+      if (incomingOutgoingTooltip != null) {
+        htmlBuilder.br()
+        htmlBuilder.appendRaw(incomingOutgoingTooltip)
+      }
+
+      htmlBuilder.toString()
     }
   }
 
@@ -124,7 +139,7 @@ open class GitBranchWidget(project: Project) : DvcsStatusWidget<GitRepository>(p
     }
   }
 
-  internal class MyExperimentalToolbarStateListener(private val project: Project) : ExperimentalToolbarStateListener {
+  internal class MyRiderMainToolbarStateListener(private val project: Project) : RiderMainToolbarStateListener {
     override fun refreshVisibility() {
       project.getService(StatusBarWidgetsManager::class.java).updateWidget(Factory::class.java)
     }

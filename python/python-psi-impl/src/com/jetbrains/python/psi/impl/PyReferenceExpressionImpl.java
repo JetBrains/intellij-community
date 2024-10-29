@@ -18,7 +18,6 @@ import com.jetbrains.python.codeInsight.controlflow.PyTypeAssertionEvaluator;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyQualifiedReference;
@@ -368,20 +367,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           }
           final var substitutions = PyTypeChecker.unifyGenericCall(qualifier, Collections.emptyMap(), context);
           if (substitutions != null) {
-            var substitutionsWithDefaults = PyTypeChecker.getSubstitutionsWithDefaults(substitutions);
-            final PyType substituted = PyTypeChecker.substitute(type, substitutionsWithDefaults, context);
+            final PyType substituted = PyTypeChecker.substitute(type, substitutions, context);
             if (substituted != null) {
               return substituted;
             }
           }
         }
-      }
-    }
-
-    if (type instanceof PyClassType classType && !(type instanceof PyCollectionType)) {
-      PyType parameterizedType = PyTypingTypeProvider.tryParameterizeClassWithDefaults(classType, anchor, false, context);
-      if (parameterizedType instanceof PyCollectionType collectionType) {
-        return collectionType;
       }
     }
 

@@ -25,7 +25,7 @@ class AssertFindUsagesEntryCommand(text: String, line: Int) : PlaybackCommandCor
     }
 
     val options = AssertFindUsagesEntryArguments()
-    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit= 2) }.toTypedArray())
+    Args.parse(options, extractCommandArgument(PREFIX).split("|").flatMap { it.split(" ", limit = 2) }.toTypedArray(), false)
 
     if (options.text == null && options.filePath == null) {
       throw IllegalStateException("Provide expected test or position of the find usages option.")

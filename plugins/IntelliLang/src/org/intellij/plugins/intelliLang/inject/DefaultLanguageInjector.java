@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.intellij.plugins.intelliLang.inject;
 
@@ -10,7 +10,7 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jetbrains.annotations.NotNull;
 
-public final class DefaultLanguageInjector implements LanguageInjectionContributor {
+final class DefaultLanguageInjector implements LanguageInjectionContributor {
 
   @Override
   public Injection getInjection(@NotNull PsiElement context) {

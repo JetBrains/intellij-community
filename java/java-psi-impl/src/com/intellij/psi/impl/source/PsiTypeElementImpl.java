@@ -193,6 +193,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     else {
       for (PsiElement e = this; e != null; e = e.getNextSibling()) {
         if (e instanceof PsiExpression) {
+          if (!PsiTreeUtil.processElements(
+            e, PsiReferenceExpression.class, ref -> !ref.isReferenceTo(parent))) {
+            return null;
+          }
           if (!(e instanceof PsiArrayInitializerExpression)) {
             PsiExpression expression = (PsiExpression)e;
             RecursionGuard.StackStamp stamp = RecursionManager.markStack();
@@ -400,6 +404,28 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     if (isInferredType()) return false;
     PsiType type = getType();
     return !PsiTypes.voidType().equals(type) && !PsiTypes.nullType().equals(type);
+  }
+
+  @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiVariable) {
+      PsiElement originalVariable = parent.getOriginalElement();
+      if (originalVariable != parent && originalVariable instanceof PsiVariable) {
+        return ((PsiVariable)originalVariable).getTypeElement();
+      }
+    }
+    if (parent instanceof PsiMethod) {
+      PsiElement originalMethod = parent.getOriginalElement();
+      if (originalMethod != parent && originalMethod instanceof PsiMethod) {
+        return ((PsiMethod)originalMethod).getReturnTypeElement();
+      }
+    }
+    if (parent instanceof PsiTypeElement || parent instanceof PsiJavaCodeReferenceElement ||
+        parent instanceof PsiReferenceParameterList) {
+      return PsiImplUtil.getCorrespondingOriginalElementOfType(this, PsiTypeElement.class);
+    }
+    return this;
   }
 
   @Override

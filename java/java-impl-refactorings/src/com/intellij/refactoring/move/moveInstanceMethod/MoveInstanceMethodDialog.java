@@ -103,7 +103,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   private JPanel createParametersPanel () {
     myThisClassesMap = MoveInstanceMembersUtil.getThisClassesToMembers(myMethod);
     myOldClassParameterNameFields = new HashMap<>();
-    if (myThisClassesMap.size() == 0) return null;
+    if (myThisClassesMap.isEmpty()) return null;
     JPanel panel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true));
     for (PsiClass aClass : myThisClassesMap.keySet()) {
       final String text = JavaRefactoringBundle.message("move.method.this.parameter.label", ObjectUtils.notNull(aClass.getName(), ""));
@@ -147,7 +147,7 @@ public class MoveInstanceMethodDialog extends MoveInstanceMethodDialogBase {
   }
 
   @Override
-  protected void updateOnChanged(JList list) {
+  protected void updateOnChanged(JList<?> list) {
     super.updateOnChanged(list);
     final PsiVariable selectedValue = (PsiVariable)list.getSelectedValue();
     if (selectedValue != null) {

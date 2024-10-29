@@ -1,5 +1,3 @@
-// IGNORE_K2
-
 import java.util.*;
 
 enum E {
@@ -26,6 +24,7 @@ class A {
         float f = new Double(10.1).floatValue();
         long l = new Double(10.1).longValue();
         short s = new Double(10.1).shortValue();
+        byte b2 = new Float(10.1).byteValue();
 
         try {
             String removed = list.remove(10);

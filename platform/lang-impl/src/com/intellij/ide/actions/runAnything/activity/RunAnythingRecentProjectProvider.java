@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.IdeBundle;
@@ -21,15 +21,13 @@ import java.util.Collection;
 import java.util.List;
 
 public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionProvider<AnAction> {
-  @NotNull
   @Override
-  public Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
+  public @NotNull Collection<AnAction> getValues(@NotNull DataContext dataContext, @NotNull String pattern) {
     return RecentProjectListActionProvider.getInstance().getActions(false);
   }
 
-  @NotNull
   @Override
-  public RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull AnAction value) {
+  public @NotNull RunAnythingItem getMainListItem(@NotNull DataContext dataContext, @NotNull AnAction value) {
     if (value instanceof ReopenProjectAction o) {
       return new RecentProjectElement(o, getCommand(value), value.getTemplatePresentation().getIcon());
     }
@@ -37,54 +35,47 @@ public final class RunAnythingRecentProjectProvider extends RunAnythingAnActionP
   }
 
   @Override
-  @NotNull
-  public String getCompletionGroupTitle() {
+  public @NotNull String getCompletionGroupTitle() {
     return IdeBundle.message("run.anything.recent.project.completion.group.title");
   }
 
-  @NotNull
   @Override
-  public String getHelpCommandPlaceholder() {
+  public @NotNull String getHelpCommandPlaceholder() {
     return IdeBundle.message("run.anything.recent.project.command.placeholder");
   }
 
-  @NotNull
   @Override
-  public String getHelpCommand() {
+  public @NotNull String getHelpCommand() {
     return "open";
   }
 
-  @Nullable
   @Override
-  public String getHelpGroupTitle() {
+  public @Nullable String getHelpGroupTitle() {
     return IdeBundle.message("run.anything.recent.project.help.group.title");
   }
 
-  @NotNull
   @Override
-  public String getCommand(@NotNull AnAction value) {
+  public @NotNull String getCommand(@NotNull AnAction value) {
     String projectName = value instanceof ReopenProjectAction o ? o.getProjectNameToDisplay() : value.getTemplatePresentation().getText();
     return getHelpCommand() + " " + ObjectUtils.notNull(projectName, IdeBundle.message("run.anything.actions.undefined"));
   }
 
   static final class RecentProjectElement extends RunAnythingItemBase {
-    @NotNull private final ReopenProjectAction myValue;
+    private final @NotNull ReopenProjectAction myValue;
 
     RecentProjectElement(@NotNull ReopenProjectAction value, @NotNull @Nls String command, @Nullable Icon icon) {
       super(command, icon);
       myValue = value;
     }
 
-    @NotNull
     @Override
-    public String getDescription() {
+    public @NotNull String getDescription() {
       return FileUtil.toSystemDependentName(myValue.getProjectPath());
     }
   }
 
-  @NotNull
   @Override
-  public List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
+  public @NotNull List<RunAnythingContext> getExecutionContexts(@NotNull DataContext dataContext) {
     return ContainerUtil.emptyList();
   }
 }

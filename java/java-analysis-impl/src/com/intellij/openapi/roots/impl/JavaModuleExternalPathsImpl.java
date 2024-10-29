@@ -10,6 +10,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
@@ -19,7 +20,7 @@ import java.util.*;
 public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   private static final String ROOT_ELEMENT = JpsJavaModelSerializerExtension.ROOT_TAG;
 
-  private final Map<OrderRootType, VirtualFilePointerContainer> myOrderRootPointerContainers = new HashMap<>();
+  private volatile Map<? extends OrderRootType, ? extends VirtualFilePointerContainer> myOrderRootPointerContainers = Map.of();
   private final JavaModuleExternalPathsImpl mySource;
 
   public JavaModuleExternalPathsImpl() {
@@ -84,7 +85,9 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
       }
 
       container = VirtualFilePointerManager.getInstance().createContainer(this, null);
-      myOrderRootPointerContainers.put(orderRootType, container);
+      Map<OrderRootType, VirtualFilePointerContainer> newMap = new HashMap<>(myOrderRootPointerContainers);
+      newMap.put(orderRootType, container);
+      myOrderRootPointerContainers = Map.copyOf(newMap);
     }
     else {
       container.clear();
@@ -97,17 +100,19 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
 
   @Override
   public void readExternal(@NotNull Element element) throws InvalidDataException {
+    Map<OrderRootType, VirtualFilePointerContainer> newMap = new HashMap<>();
     for (PersistentOrderRootType orderRootType : OrderRootType.getAllPersistentTypes()) {
       String paths = orderRootType.getModulePathsName();
       if (paths != null) {
         final Element pathsElement = element.getChild(paths);
         if (pathsElement != null && !pathsElement.getChildren(ROOT_ELEMENT).isEmpty()) {
           VirtualFilePointerContainer container = VirtualFilePointerManager.getInstance().createContainer(this, null);
-          myOrderRootPointerContainers.put(orderRootType, container);
+          newMap.put(orderRootType, container);
           container.readExternal(pathsElement, ROOT_ELEMENT, false);
         }
       }
     }
+    myOrderRootPointerContainers = Map.copyOf(newMap);
   }
 
   @Override
@@ -133,13 +138,9 @@ public final class JavaModuleExternalPathsImpl extends JavaModuleExternalPaths {
   }
 
   private void copyContainersFrom(@NotNull JavaModuleExternalPathsImpl source) {
-    myOrderRootPointerContainers.clear();
-    for (OrderRootType orderRootType : source.myOrderRootPointerContainers.keySet()) {
-      final VirtualFilePointerContainer otherContainer = source.myOrderRootPointerContainers.get(orderRootType);
-      if (otherContainer != null) {
-        myOrderRootPointerContainers.put(orderRootType, otherContainer.clone(this, null));
-      }
-    }
+    List<Map.Entry<OrderRootType, VirtualFilePointerContainer>> newEntries =
+      ContainerUtil.map(source.myOrderRootPointerContainers.entrySet(), e -> Map.entry(e.getKey(), e.getValue().clone(this, null)));
+    myOrderRootPointerContainers = Map.ofEntries(newEntries.toArray(new Map.Entry[0]));
   }
 
   @Override

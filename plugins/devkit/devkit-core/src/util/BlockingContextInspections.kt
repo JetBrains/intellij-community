@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.util
 
 import com.intellij.codeInsight.intention.FileModifier
@@ -23,7 +23,7 @@ val REQUIRES_BLOCKING_CONTEXT_ANNOTATION: String = RequiresBlockingContext::clas
 @Internal
 @IntellijInternalApi
 fun isInspectionForBlockingContextAvailable(holder: ProblemsHolder): Boolean =
-  DevKitInspectionUtil.isAllowed(holder.file) &&
+  DevKitInspectionUtil.isAllowedIncludingTestSources(holder.file) &&
   DevKitInspectionUtil.isClassAvailable(holder, REQUIRES_BLOCKING_CONTEXT_ANNOTATION)
 
 @Internal

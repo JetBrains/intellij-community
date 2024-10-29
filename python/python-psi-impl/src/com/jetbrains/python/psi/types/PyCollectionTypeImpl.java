@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi.types;
 
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,7 @@ import java.util.List;
 
 public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectionType {
   @NotNull protected final List<PyType> myElementTypes;
+  protected final Ref<Integer> hashCode = new Ref<>();
 
   public PyCollectionTypeImpl(@NotNull PyClass source, boolean isDefinition, @NotNull List<? extends PyType> elementTypes) {
     super(source, isDefinition);
@@ -98,12 +100,16 @@ public class PyCollectionTypeImpl extends PyClassTypeImpl implements PyCollectio
 
   @Override
   public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result;
-    for (PyType type : myElementTypes) {
-      result += type != null ? type.hashCode() : 0;
+    if (hashCode.isNull()) {
+      int result = super.hashCode();
+      result = 31 * result;
+      for (PyType type : myElementTypes) {
+        result += type != null ? type.hashCode() : 0;
+      }
+      hashCode.set(result);
     }
-    return result;
+
+    return hashCode.get();
   }
 
   @Nullable

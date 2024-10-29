@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.find.impl;
 
@@ -15,11 +15,13 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.UsageView;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class ShowRecentFindUsagesAction extends AnAction implements ActionRemoteBehaviorSpecification.Frontend {
 
   @Override
@@ -28,7 +30,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     Project project = e.getProject();
     e.getPresentation().setEnabled(e.getData(UsageView.USAGE_VIEW_KEY) != null &&
                                    project != null &&
@@ -61,8 +63,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
         }
 
         @Override
-        @NotNull
-        public String getTextFor(final ConfigurableUsageTarget data) {
+        public @NotNull String getTextFor(final ConfigurableUsageTarget data) {
           if (data == null) {
             return FindBundle.message("recent.find.usages.action.nothing");
           }
@@ -70,7 +71,7 @@ public final class ShowRecentFindUsagesAction extends AnAction implements Action
         }
 
         @Override
-        public PopupStep onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
+        public PopupStep<?> onChosen(final ConfigurableUsageTarget selectedValue, final boolean finalChoice) {
           return doFinalStep(() -> {
             if (selectedValue != null) {
               findUsagesManager.rerunAndRecallFromHistory(selectedValue);

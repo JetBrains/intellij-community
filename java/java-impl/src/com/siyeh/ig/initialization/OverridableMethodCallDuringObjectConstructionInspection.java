@@ -26,7 +26,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
 import com.siyeh.ig.fixes.MakeMethodFinalFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +37,7 @@ public final class OverridableMethodCallDuringObjectConstructionInspection exten
   @Override
   protected LocalQuickFix @NotNull [] buildFixes(Object... infos) {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)infos[0];
-    final PsiClass callClass = ClassUtils.getContainingClass(methodCallExpression);
+    final PsiClass callClass = PsiUtil.getContainingClass(methodCallExpression);
     final PsiMethod method = methodCallExpression.resolveMethod();
     if (method == null || callClass == null || MethodUtils.isOverriddenInHierarchy(method, callClass)) {
       return InspectionGadgetsFix.EMPTY_ARRAY;

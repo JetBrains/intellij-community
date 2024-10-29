@@ -3,9 +3,12 @@ package com.intellij.codeInsight.hints.declarative.impl
 
 import com.intellij.codeInsight.hints.declarative.InlayActionData
 import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.SymbolPointerInlayActionPayload
 import com.intellij.codeInsight.hints.declarative.impl.util.TinyTree
 import com.intellij.diagnostic.PluginException
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerClass: Class<*>) {
   private val entries = ArrayList<InlayPresentationEntry>()
   private var currentClickArea: InlayMouseArea? = null
@@ -89,6 +92,10 @@ class PresentationEntryBuilder(val state: TinyTree<Any?>, private val providerCl
   private fun mouseAreaIfNotZombie(actionData: InlayActionData): InlayMouseArea? {
     val inlayActionPayload = actionData.payload
     if (inlayActionPayload is PsiPointerInlayActionPayload && inlayActionPayload.pointer is ZombieSmartPointer) {
+      // zombie pointer is not hoverable/clickable
+      return null
+    }
+    if ((inlayActionPayload as? SymbolPointerInlayActionPayload)?.pointer is ZombieSymbolPointer) {
       // zombie pointer is not hoverable/clickable
       return null
     }

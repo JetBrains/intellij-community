@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -49,6 +49,7 @@ import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.console.VcsConsoleTabService;
 import com.intellij.vcsUtil.VcsImplUtil;
 import kotlin.Pair;
+import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -77,13 +78,10 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   private final Set<ActionKey> myBackgroundRunningTasks = ConcurrentCollectionFactory.createConcurrentSet();
 
-  private final FileIndexFacade myExcludedIndex;
-
-  public ProjectLevelVcsManagerImpl(@NotNull Project project) {
+  public ProjectLevelVcsManagerImpl(@NotNull Project project, @NotNull CoroutineScope coroutineScope) {
     myProject = project;
-    myExcludedIndex = FileIndexFacade.getInstance(project);
 
-    myMappings = new NewMappings(myProject, this);
+    myMappings = new NewMappings(myProject, this, coroutineScope);
   }
 
   @Override
@@ -691,11 +689,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
       return false;
     }
     return ReadAction.compute(() -> {
+      if (!vf.isValid()) return false;
+      FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
       boolean isUnderProject = isFileInBaseDir(vf) ||
                                isInDirectoryBasedRoot(vf) ||
                                hasExplicitMapping(vf) ||
-                               myExcludedIndex.isInContent(vf) ||
-                               (!Registry.is("ide.hide.excluded.files") && myExcludedIndex.isExcludedFile(vf));
+                               fileIndex.isInContent(vf) ||
+                               (!Registry.is("ide.hide.excluded.files") && fileIndex.isExcludedFile(vf));
       return isUnderProject && !isIgnored(vf);
     });
   }
@@ -704,12 +704,13 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   public boolean isIgnored(@NotNull VirtualFile vf) {
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || myProject.isDefault()) return false;
+      if (!vf.isValid()) return false;
 
       if (Registry.is("ide.hide.excluded.files")) {
-        return myExcludedIndex.isExcludedFile(vf);
+        return FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
       }
       else {
-        return myExcludedIndex.isUnderIgnored(vf);
+        return FileIndexFacade.getInstance(myProject).isUnderIgnored(vf);
       }
     });
   }
@@ -721,7 +722,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
       if (Registry.is("ide.hide.excluded.files")) {
         VirtualFile vf = VcsImplUtil.findValidParentAccurately(filePath);
-        return vf != null && myExcludedIndex.isExcludedFile(vf);
+        return vf != null && FileIndexFacade.getInstance(myProject).isExcludedFile(vf);
       }
       else {
         // WARN: might differ from 'myExcludedIndex.isUnderIgnored' if whole content root is under folder with 'ignored' name.

@@ -12,11 +12,7 @@ public final class Messages {
 
   public final static @NotNull String SCALA_PROJECT_MODEL_GROUP = "gradle.scalaProjectModel.group";
 
-  public final static @NotNull String TASK_INDEX_GROUP = "gradle.taskIndex.group";
-  public final static @NotNull String TASK_INDEX_COLLECTING_GROUP = "gradle.taskIndex.collecting.group";
-  public final static @NotNull String TASK_INDEX_CACHE_GET_GROUP = "gradle.taskIndex.cacheGet.group";
-  public final static @NotNull String TASK_INDEX_CACHE_SET_GROUP = "gradle.taskIndex.cacheSet.group";
-
+  public final static @NotNull String TASK_WARM_UP_GROUP = "gradle.taskWarmUp.group";
   public final static @NotNull String TASK_MODEL_GROUP = "gradle.taskModel.group";
 
   public final static @NotNull String SOURCE_SET_MODEL_GROUP = "gradle.sourceSetModel.group";

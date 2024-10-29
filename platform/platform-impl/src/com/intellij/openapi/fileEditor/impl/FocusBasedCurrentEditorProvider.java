@@ -6,11 +6,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 public final class FocusBasedCurrentEditorProvider implements CurrentEditorProvider {
   @Override
   public FileEditor getCurrentEditor(@Nullable Project project) {
+    return getCurrentEditorEx();
+  }
+
+  @ApiStatus.Internal
+  public static FileEditor getCurrentEditorEx() {
     DataManager dataManager = DataManager.getInstanceIfCreated();
     if (dataManager == null) return null;
     @SuppressWarnings("deprecation") DataContext context = dataManager.getDataContext();

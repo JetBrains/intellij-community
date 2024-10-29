@@ -49,6 +49,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.*;
@@ -195,9 +196,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return true;
   }
 
-  @NotNull
   @Override
-  protected AnAction createRestorePopupAction() {
+  protected @NotNull AnAction createRestorePopupAction() {
     myRestorePopupAction = super.createRestorePopupAction();
     return myRestorePopupAction;
   }
@@ -897,13 +897,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return Pair.create(element, originalElement);
   }
 
-  @Nullable
-  public PsiElement findTargetElement(@NotNull Editor editor, @Nullable PsiFile file, PsiElement contextElement) {
+  public @Nullable PsiElement findTargetElement(@NotNull Editor editor, @Nullable PsiFile file, PsiElement contextElement) {
     return findTargetElement(editor, editor.getCaretModel().getOffset(), file, contextElement);
   }
 
-  @Nullable
-  public PsiElement findTargetElement(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
+  public @Nullable PsiElement findTargetElement(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     try {
       return findTargetElementUnsafe(editor, offset, file, contextElement);
     }
@@ -916,8 +914,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   /**
    * in case index is not ready will throw IndexNotReadyException
    */
-  @Nullable
-  private PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
+  private @Nullable PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
       return assertSameProject(getElementFromLookup(editor, file));
     }
@@ -1002,8 +999,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     element.putUserData(IS_FROM_LOOKUP, value ? true : null);
   }
 
-  @Nullable
-  public PsiElement getElementFromLookup(Editor editor, @Nullable PsiFile file) {
+  public @Nullable PsiElement getElementFromLookup(Editor editor, @Nullable PsiFile file) {
     Lookup activeLookup = LookupManager.getInstance(myProject).getActiveLookup();
 
     if (activeLookup != null) {
@@ -1046,8 +1042,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return new MyCollector(myProject, element, originalElement, null, onHover, false).getDocumentation();
   }
 
-  @Nullable
-  public JBPopup getDocInfoHint() {
+  public @Nullable JBPopup getDocInfoHint() {
     if (myDocInfoHintRef == null) return null;
     JBPopup hint = myDocInfoHintRef.get();
     if (hint == null || !hint.isVisible() && !ApplicationManager.getApplication().isUnitTestMode()) {
@@ -1197,13 +1192,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return callback;
   }
 
-  @NotNull
-  public static DocumentationProvider getProviderFromElement(PsiElement element) {
+  public static @NotNull DocumentationProvider getProviderFromElement(PsiElement element) {
     return getProviderFromElement(element, null);
   }
 
-  @NotNull
-  public static DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
+  public static @NotNull DocumentationProvider getProviderFromElement(@Nullable PsiElement element, @Nullable PsiElement originalElement) {
     if (element != null && !element.isValid()) {
       element = null;
     }
@@ -1250,8 +1243,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return CompositeDocumentationProvider.wrapProviders(result);
   }
 
-  @Nullable
-  public static PsiElement getOriginalElement(PsiElement element) {
+  public static @Nullable PsiElement getOriginalElement(PsiElement element) {
     SmartPsiElementPointer<?> originalElementPointer = element != null ? element.getUserData(ORIGINAL_ELEMENT_KEY) : null;
     return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
@@ -1460,7 +1452,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
-    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink, false);
+    DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
   }
 
   @Override
@@ -1552,8 +1544,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return myEditor;
   }
 
-  @NotNull
-  private ActionCallback createActionCallback() {
+  private @NotNull ActionCallback createActionCallback() {
     ActionCallback callback = new ActionCallback();
     myLastAction = callback;
     return callback;
@@ -1609,8 +1600,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       this.onAutoUpdate = onAutoUpdate;
     }
 
-    @Nullable
-    public PsiElement getElement(boolean wait) {
+    public @Nullable PsiElement getElement(boolean wait) {
       try {
         return wait ? myElementFuture.get() : myElementFuture.getNow(null);
       }
@@ -1620,8 +1610,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       }
     }
 
-    @Nullable
-    abstract @Nls String getDocumentation() throws Exception;
+    abstract @Nullable @Nls String getDocumentation() throws Exception;
   }
 
   private static final class MyCollector extends DocumentationCollector {
@@ -1662,8 +1651,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     @Override
-    @Nullable
-    public @Nls String getDocumentation() {
+    public @Nullable @Nls String getDocumentation() {
       PsiElement element = getElement(true);
       if (element == null) {
         return null;
@@ -1697,15 +1685,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       return ReadAction.nonBlocking(() -> doGetDocumentation(element)).executeSynchronously();
     }
 
-    @Nullable
-    private @Nls String doGetDocumentation(@NotNull PsiElement element) {
+    private @Nullable @Nls String doGetDocumentation(@NotNull PsiElement element) {
       if (!element.isValid()) return null;
       SmartPsiElementPointer<?> originalPointer = element.getUserData(ORIGINAL_ELEMENT_KEY);
       PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
       @Nls String doc = onHover ? provider.generateHoverDoc(element, originalPsi)
                                 : provider.generateDoc(element, originalPsi);
-      if (element instanceof PsiFile) {
-        @Nls String fileDoc = generateFileDoc((PsiFile)element, doc == null);
+      if (element instanceof PsiFileSystemItem) {
+        @Nls String fileDoc = generateFileDoc((PsiFileSystemItem)element, doc == null);
         if (fileDoc != null) {
           return doc == null ? fileDoc : doc + fileDoc;
         }
@@ -1715,8 +1702,22 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Internal
-  public static @Nls @Nullable String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
-    VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
+  public static @Nls @Nullable String generateFileDoc(@NotNull PsiFileSystemItem psiFile, boolean withUrl) {
+    VirtualFile fileOrArchiveRoot = PsiUtilCore.getVirtualFile(psiFile);
+    VirtualFile file;
+    if (psiFile instanceof PsiDirectory) {
+      if (fileOrArchiveRoot != null && fileOrArchiveRoot.getFileSystem() instanceof ArchiveFileSystem fileSystem
+          && fileOrArchiveRoot.equals(fileSystem.getRootByEntry(fileOrArchiveRoot))) {
+        file = fileSystem.getLocalByEntry(fileOrArchiveRoot);
+      }
+      else {
+        //we don't show meaningful information for real directories
+        return null;
+      }
+    }
+    else {
+      file = fileOrArchiveRoot;
+    }
     File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
     BasicFileAttributes attr = null;
     try {
@@ -1730,7 +1731,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     @Nls String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
     var content = List.of(
       getVcsStatus(psiFile.getProject(), file),
-      getScope(psiFile.getProject(), file),
+      getScope(psiFile.getProject(), fileOrArchiveRoot),
       HtmlChunk.p().children(
         GRAYED_ELEMENT.addText(CodeInsightBundle.message("documentation.file.size.label")),
         HtmlChunk.nbsp(),

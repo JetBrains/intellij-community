@@ -7,11 +7,14 @@ import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.Presentation;
 import com.intellij.modcommand.PsiUpdateModCommandAction;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.util.LombokLibraryUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +34,11 @@ public class AddSneakyThrowsAnnotationCommandAction extends PsiUpdateModCommandA
 
   @Override
   protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (!LombokLibraryUtil.hasLombokClasses(module)) {
+      return null;
+    }
+
     PsiElement importantParent = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiLambdaExpression.class,
                                                              PsiMethodReferenceExpression.class, PsiClassInitializer.class);
 

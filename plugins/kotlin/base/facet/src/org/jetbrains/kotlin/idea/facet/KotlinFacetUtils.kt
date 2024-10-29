@@ -212,8 +212,6 @@ fun applyCompilerArgumentsToFacetSettings(
                 K2JVMCompilerArguments::allowNoSourceFiles.name,
                 K2JVMCompilerArguments::jvmDefault.name,
                 K2JVMCompilerArguments::reportPerf.name,
-                K2JVMCompilerArguments::noKotlinNothingValueException.name,
-                K2JVMCompilerArguments::noOptimizedCallableReferences,
 
                 K2NativeCompilerArguments::enableAssertions.name,
                 K2NativeCompilerArguments::debug.name,

@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.Contract;
@@ -48,6 +49,9 @@ public abstract class DiffRequestFactory {
   // Titles
   //
 
+  /**
+   * See also the prettier {@link com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer}
+   */
   @NlsContexts.Label
   @Nullable
   @Contract("null->null; !null->!null")
@@ -55,11 +59,49 @@ public abstract class DiffRequestFactory {
 
   @NlsContexts.DialogTitle
   @NotNull
-  public abstract String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2);
+  public abstract String getTitle(@NotNull VirtualFile file);
+
+  /**
+   * @deprecated Prefer using {@link #getTitleForComparison} or {@link #getTitleForModification} explicitly.
+   */
+  @NlsContexts.DialogTitle
+  @NotNull
+  @Deprecated
+  public String getTitle(@Nullable VirtualFile file1, @Nullable VirtualFile file2) {
+    return getTitleForComparison(file1, file2);
+  }
+
+  /**
+   * Title for 'file1 vs file2' diffs. Ex: "compare two selected files".
+   */
+  @NlsContexts.DialogTitle
+  @NotNull
+  public abstract String getTitleForComparison(@Nullable VirtualFile file1, @Nullable VirtualFile file2);
+
+  /**
+   * Title for 'file1 was changed into file2' diffs. Ex: "show file change in a commit".
+   */
+  @NlsContexts.DialogTitle
+  @NotNull
+  public abstract String getTitleForModification(@Nullable VirtualFile file1, @Nullable VirtualFile file2);
 
   @NlsContexts.DialogTitle
   @NotNull
-  public abstract String getTitle(@NotNull VirtualFile file);
+  public abstract String getTitle(@NotNull FilePath path);
+
+  /**
+   * Title for 'path1 vs path2' diffs. Ex: "compare two selected files".
+   */
+  @NlsContexts.DialogTitle
+  @NotNull
+  public abstract String getTitleForComparison(@Nullable FilePath path1, @Nullable FilePath path2);
+
+  /**
+   * Title for 'path1 was changed into path2' diffs. Ex: "show file history for commit".
+   */
+  @NlsContexts.DialogTitle
+  @NotNull
+  public abstract String getTitleForModification(@Nullable FilePath path1, @Nullable FilePath path2);
 
   //
   // Merge

@@ -6,7 +6,7 @@ import com.intellij.workspaceModel.codegen.deft.meta.CompiledObjModule
 import org.jetbrains.kotlin.descriptors.SourceElement
 
 interface WorkspaceMetaModelProvider {
-  fun getObjModule(packageName: String, module: Module): CompiledObjModule
+  fun getObjModule(packageName: String, module: Module, isTestSourceFolder: Boolean): CompiledObjModule
 }
 
 class IncorrectObjInterfaceException(errorMessage: String): RuntimeException(errorMessage)

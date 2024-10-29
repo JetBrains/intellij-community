@@ -35,6 +35,26 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test");
     }
 
+    @TestMetadata("moveDeclarationActualToCommon/moveDeclarationActual.test")
+    public void testMoveDeclarationActualToCommon_MoveDeclarationActual() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationActualToCommon/moveDeclarationActual.test");
+    }
+
+    @TestMetadata("moveDeclarationActual/moveDeclarationActual.test")
+    public void testMoveDeclarationActual_MoveDeclarationActual() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationActual/moveDeclarationActual.test");
+    }
+
+    @TestMetadata("moveDeclarationExpectedToPlatform/moveDeclarationActual.test")
+    public void testMoveDeclarationExpectedToPlatform_MoveDeclarationActual() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationExpectedToPlatform/moveDeclarationActual.test");
+    }
+
+    @TestMetadata("moveDeclarationExpected/moveDeclarationExpected.test")
+    public void testMoveDeclarationExpected_MoveDeclarationExpected() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDeclarationExpected/moveDeclarationExpected.test");
+    }
+
     @TestMetadata("moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test")
     public void testMoveDirectoryKeepPackageDirective_MoveDirectoryKeepPackageDirective() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test");
@@ -43,6 +63,11 @@ public class K2MultiModuleMoveTestGenerated extends AbstractK2MultiModuleMoveTes
     @TestMetadata("moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test")
     public void testMoveDirectoryToUnrelatedModuleConflict_MoveDirectoryToUnrelatedModuleConflict() throws Exception {
         runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test");
+    }
+
+    @TestMetadata("moveEnumVariableReference/moveEnumVariableReference.test")
+    public void testMoveEnumVariableReference_MoveEnumVariableReference() throws Exception {
+        runTest("../../idea/tests/testData/refactoring/moveMultiModule/moveEnumVariableReference/moveEnumVariableReference.test");
     }
 
     @TestMetadata("moveFileToNonSrc/moveFileToNonSrc.test")

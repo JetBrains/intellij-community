@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
@@ -73,7 +73,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private List<String> screenShots;
   private String externalPluginIdForScreenShots;
   private String mySuggestedCommercialIde = null;
-  private Collection<String> mySuggestedFeatures;
+  private @NotNull Collection<String> suggestedFeatures = Collections.emptyList();
   private boolean myConverted;
   private Collection<String> dependencyNames;
 
@@ -130,7 +130,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   /**
-   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}
+   * @deprecated Use {@link #setDefaultTrialPeriod(Integer)}}
    */
   @Deprecated
   public void setTrialPeriod(@Nullable Integer trialPeriod) {
@@ -645,10 +645,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return externalPluginId == null || externalUpdateId == null || description != null;
   }
 
+  @ApiStatus.Internal
   public @Nullable PageContainer<PluginReviewComment> getReviewComments() {
     return reviewComments;
   }
 
+  @ApiStatus.Internal
   public void setReviewComments(@NotNull PageContainer<PluginReviewComment> reviewComments) {
     this.reviewComments = reviewComments;
   }
@@ -677,12 +679,12 @@ public final class PluginNode implements IdeaPluginDescriptor {
     mySuggestedCommercialIde = commercialIdeCode;
   }
 
-  public Collection<String> getSuggestedFeatures() {
-    return mySuggestedFeatures;
+  public @NotNull Collection<String> getSuggestedFeatures() {
+    return suggestedFeatures;
   }
 
   public void setSuggestedFeatures(@NotNull Collection<String> features) {
-    mySuggestedFeatures = features;
+    suggestedFeatures = features;
   }
 
   public @Nullable Collection<String> getDependencyNames() {

@@ -31,13 +31,16 @@ object BlankDiffWindowUtil {
 
   @JvmStatic
   fun createBlankDiffRequestChain(project: Project?): MutableDiffRequestChain =
-    createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project))
+    createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project), project = project)
 
   @JvmStatic
-  fun createBlankDiffRequestChain(content1: DocumentContent,
-                                  content2: DocumentContent,
-                                  baseContent: DocumentContent? = null): MutableDiffRequestChain {
-    val chain = MutableDiffRequestChain(content1, baseContent, content2)
+  fun createBlankDiffRequestChain(
+    content1: DocumentContent,
+    content2: DocumentContent,
+    baseContent: DocumentContent? = null,
+    project: Project? = null,
+  ): MutableDiffRequestChain {
+    val chain = MutableDiffRequestChain(content1, baseContent, content2, project)
     chain.putUserData(BLANK_KEY, true)
     return chain
   }

@@ -114,7 +114,7 @@ public class SelectionCalculatorTest extends LocalHistoryTestCase {
     for (int i = 1; i < contents.length; i++) {
       vcs.addChangeInTests(changeContent(rootEntry, PATH, contents[i], i));
     }
-    return collectRevisionIds(vcs, PATH, null, null);
+    return collectRevisionIds(vcs, PATH, null);
   }
 
   private void assertBlock(int from, int to, String content, Block b) {

@@ -54,6 +54,27 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(1, "* B doc");
   }
 
+  public void test_inherit_doc_interface() {
+    myFixture.configureByText("a.java", """
+      interface A {
+        /** A doc */
+        void foo() {};
+      }
+      
+      interface B extends A {
+        /** B doc */
+        @Override void foo() {};
+      }
+      
+      interface C extends B {
+        /** {@inherit<caret>Doc A} */
+        @Override void foo() {};
+      }
+      """);
+
+    navigateAndCheckLine(0, "/** A doc */");
+  }
+
   public void test_inherit_doc_explicit_super() {
     myFixture.configureByText("a.java", """
       class A {
@@ -106,8 +127,6 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(0, "* @return return doc");
   }
 
-
-
   public void test_inherit_doc_stack_overflow() {
     myFixture.configureByText("a.java", """
     class Loop {
@@ -129,12 +148,11 @@ public class JavaInheritDocNavigationTest extends LightJavaCodeInsightFixtureTes
     navigateAndCheckLine(0, "* {@inheritDoc}");
   }
 
-
   private void navigateAndCheckLine(int lineOffset, String expectedLine) {
     myFixture.performEditorAction("GotoDeclaration");
     final var selectionModel = myFixture.getEditor().getSelectionModel();
     myFixture.getEditor().getCaretModel().moveCaretRelatively(0, lineOffset, false, false, false);
     selectionModel.selectLineAtCaret();
-    assertEquals(selectionModel.getSelectedText().trim(), expectedLine);
+    assertEquals(expectedLine, selectionModel.getSelectedText().trim());
   }
 }

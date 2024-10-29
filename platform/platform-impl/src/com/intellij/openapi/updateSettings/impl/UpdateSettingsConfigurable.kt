@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.icons.AllIcons
@@ -6,10 +6,12 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.WhatsNewUtil
 import com.intellij.ide.nls.NlsMessages
+import com.intellij.ide.plugins.PluginManagementPolicy
 import com.intellij.ide.plugins.newui.reloadPluginIcon
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.components.service
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.Messages
@@ -20,12 +22,14 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGapsY
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JEditorPane
 
 private const val TOOLBOX_URL =
   "https://www.jetbrains.com/toolbox-app/?utm_source=product&utm_medium=link&utm_campaign=toolbox_app_in_IDE_updatewindow&utm_content=we_recommend"
 
+@ApiStatus.Internal
 class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNowEnabled: Boolean = true) :
   BoundConfigurable(IdeBundle.message("updates.settings.title"), "preferences.updates") {
 
@@ -75,6 +79,22 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
           checkBox(IdeBundle.message("updates.plugins.autoupdate.settings.checkbox"))
             .bindSelected(settings.state::isPluginsAutoUpdateEnabled)
             .comment(IdeBundle.message("updates.plugins.autoupdate.settings.comment"))
+            .onApply {
+              service<PluginAutoUpdateService>().onSettingsChanged()
+            }
+            .also {
+              if (!PluginManagementPolicy.getInstance().isPluginAutoUpdateAllowed()) {
+                if (settings.isPluginsAutoUpdateEnabled) {
+                  settings.isPluginsAutoUpdateEnabled = false
+                  service<PluginAutoUpdateService>().onSettingsChanged()
+                }
+                enabled(false)
+                icon(AllIcons.General.Warning).applyToComponent {
+                  toolTipText = IdeBundle.message("updates.plugins.autoupdate.settings.prohibited.by.policy.comment")
+                  isEnabled = true
+                }
+              }
+            }
         }
       }
 
@@ -120,6 +140,10 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }
       }
 
+      UpdateSettingsUIProvider.EP_NAME.forEachExtensionSafe {
+        it.init(this)
+      }
+
       if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         group(indent = false) {
           customizeSpacingConfiguration(EmptySpacingConfiguration()) {
@@ -143,18 +167,11 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
 
       var wasEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
 
-      UpdateSettingsUIProvider.EP_NAME.forEachExtensionSafe {
-        it.init(this)
-      }
-
       onApply {
         val isEnabled = settings.isCheckNeeded || settings.isPluginsCheckNeeded
         if (isEnabled != wasEnabled) {
-          if (isEnabled) {
-            UpdateCheckerService.getInstance().queueNextCheck()
-          }
-          else {
-            UpdateCheckerService.getInstance().cancelChecks()
+          UpdateCheckerService.getInstance().apply {
+            if (isEnabled) queueNextCheck() else cancelChecks()
           }
           wasEnabled = isEnabled
         }

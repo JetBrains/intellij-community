@@ -9,7 +9,7 @@ UFile (package = )
             UParameter (name = b)
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull)
             UBlockExpression
-                UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))
+                UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 3))
                     UIdentifier (Identifier (this))
                     USimpleNameReferenceExpression (identifier = a)
                     USimpleNameReferenceExpression (identifier = a)

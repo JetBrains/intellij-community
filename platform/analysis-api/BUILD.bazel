@@ -1,0 +1,32 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "analysis",
+  module_name = "intellij.platform.analysis",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/util",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/extensions",
+    "@community//platform/core-api:core",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/core-ui",
+    "@community//platform/util-ex",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@libraries//:kotlin-stdlib",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

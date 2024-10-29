@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.execution.ui.TagButton;
@@ -18,7 +18,7 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.EditorTextComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +66,7 @@ public class ComponentValidator {
   private HyperlinkListener hyperlinkListener;
 
   private ValidationInfo validationInfo;
-  private final Alarm popupAlarm = new Alarm();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
   private boolean isOverPopup;
 
   private ComponentPopupBuilder popupBuilder;
@@ -154,7 +154,7 @@ public class ComponentValidator {
   }
 
   /**
-   * Convenient wrapper for mostly used scenario.
+   * Convenient wrapper for a mostly used scenario.
    */
   public ComponentValidator andRegisterOnDocumentListener(@NotNull JTextComponent textComponent) {
     DocumentAdapter listener = new DocumentAdapter() {
@@ -253,7 +253,7 @@ public class ComponentValidator {
         }
 
         if (!StringUtil.isEmptyOrSpaces(info.message)) {
-          // create popup if there is something to show to user
+          // create a popup if there is something to show to user
           popupBuilder = createPopupBuilder(validationInfo, editorPane -> {
             tipComponent = editorPane;
             editorPane.addHyperlinkListener(hyperlinkListener);
@@ -309,7 +309,7 @@ public class ComponentValidator {
   }
 
   /**
-   * @return true if message is multiline.
+   * @return true if a message is multiline.
    */
   private static @NlsSafe boolean convertMessage(@Nls String message, @NotNull JEditorPane component) {
     View v = BasicHTML.createHTMLView(component, String.format("<html>%s</html>", message));
@@ -373,12 +373,13 @@ public class ComponentValidator {
       if (now || hyperlinkListener == null) {
         popup.cancel();
         popup = null;
-      } else {
-        popupAlarm.addRequest(() -> {
+      }
+      else {
+        popupAlarm.request(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
           if (!isOverPopup || hyperlinkListener == null) {
             hidePopup(true);
           }
-        }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+        });
       }
     }
   }

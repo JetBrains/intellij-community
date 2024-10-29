@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.dsl.gridLayout.builders.RowBuilder;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +41,12 @@ import java.io.File;
 import java.util.List;
 
 @SuppressWarnings("WeakerAccess")
+@ApiStatus.Internal
 public final class FindPopupDirectoryChooser extends JPanel {
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final FindPopupPanel myFindPopupPanel;
-  @NotNull private final ComboBox<String> myDirectoryComboBox;
+  private final @NotNull FindUIHelper myHelper;
+  private final @NotNull Project myProject;
+  private final @NotNull FindPopupPanel myFindPopupPanel;
+  private final @NotNull ComboBox<String> myDirectoryComboBox;
 
   @SuppressWarnings("WeakerAccess")
   public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
@@ -130,18 +132,15 @@ public final class FindPopupDirectoryChooser extends JPanel {
     }
   }
 
-  @NotNull
-  public ComboBox getComboBox() {
+  public @NotNull ComboBox getComboBox() {
     return myDirectoryComboBox;
   }
 
-  @NotNull
-  public String getDirectory() {
+  public @NotNull String getDirectory() {
     return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
-  @Nullable
-  public ValidationInfo validate(@NotNull FindModel model) {
+  public @Nullable ValidationInfo validate(@NotNull FindModel model) {
     VirtualFile directory = FindInProjectUtil.getDirectory(model);
     if (directory == null) {
       return new ValidationInfo(FindBundle.message("find.directory.not.found.error"), myDirectoryComboBox);

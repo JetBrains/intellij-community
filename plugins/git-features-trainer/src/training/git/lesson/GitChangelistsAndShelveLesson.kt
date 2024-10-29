@@ -4,8 +4,6 @@ package training.git.lesson
 import com.intellij.CommonBundle
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
@@ -81,7 +79,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     task {
       highlightLineMarkerTaskId = taskId
       triggerAndBorderHighlight().componentPart l@{ ui: EditorGutterComponentEx ->
-        if (CommonDataKeys.EDITOR.getData(ui as DataProvider) != editor) return@l null
+        if (ui.editor != editor) return@l null
         ui.getLineMarkerRect(commentText)
       }
     }
@@ -96,7 +94,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
       test {
         ideFrame {
           val gutter = findComponentWithTimeout(defaultTimeout) { ui: EditorGutterComponentEx ->
-            CommonDataKeys.EDITOR.getData(ui as DataProvider) == editor
+            ui.editor == editor
           }
           val rect = gutter.getLineMarkerRect(commentText) ?: error("Failed to find '$commentText' in the editor")
           robot.click(gutter, Point(rect.centerX.toInt(), rect.centerY.toInt()))
@@ -327,7 +325,6 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   }
 
   private fun EditorGutterComponentEx.getLineMarkerRect(partOfLine: String): Rectangle? {
-    val editor = CommonDataKeys.EDITOR.getData(this as DataProvider) ?: error("Not found editor for gutter component")
     val offset = editor.document.charsSequence.indexOf(partOfLine)
     if (offset == -1) {
       thisLogger().warn("Failed to find '${partOfLine}' in the editor text:\n${editor.document.charsSequence}")

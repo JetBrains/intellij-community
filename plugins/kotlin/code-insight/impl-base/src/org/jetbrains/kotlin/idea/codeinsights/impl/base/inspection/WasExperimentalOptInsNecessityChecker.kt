@@ -51,7 +51,7 @@ internal object WasExperimentalOptInsNecessityChecker {
     }
 
     private fun KaAnnotationList.findAnnotation(classId: ClassId): KaAnnotation? =
-        annotationsByClassId(classId).firstOrNull()
+        get(classId).firstOrNull()
 
     private fun KaAnnotation.argumentByName(name: Name): KaAnnotationValue? =
         arguments.firstOrNull { it.name == name }?.expression

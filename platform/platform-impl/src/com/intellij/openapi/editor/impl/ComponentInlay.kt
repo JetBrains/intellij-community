@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl
 import com.intellij.idea.AppMode
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.editor.*
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
@@ -209,8 +210,8 @@ private class ComponentInlaysContainer private constructor(val editor: EditorEx)
     }
 
     // Step 1.2: Update all inlays in a single batch for performance reasons
-    // Do it as read action, because inlay callbacks may access document model
-    ReadAction.run<Throwable> {
+    // Do it as a write intent read action, because inlay callbacks may access the document model and acquire write intent read locks
+    WriteIntentReadAction.run<Throwable> {
       editor.inlayModel.execute(true) {
         for (inlay in inlays) {
           inlay.renderer.let {

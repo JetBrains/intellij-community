@@ -3,10 +3,12 @@ package com.intellij.largeFilesEditor.search.searchTask;
 
 import com.intellij.find.FindModel;
 import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 
 import java.lang.reflect.Field;
 
+@ApiStatus.Internal
 public final class SearchTaskOptions implements Cloneable {
 
   public static final int DEFAULT_CRITICAL_AMOUNT_OF_SEARCH_RESULTS = 1000;

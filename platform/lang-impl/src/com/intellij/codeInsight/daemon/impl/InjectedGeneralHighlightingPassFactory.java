@@ -27,12 +27,12 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
       ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
     int[] runAfterCompletionOf = serialized ? new int[]{Pass.UPDATE_ALL} : null;
     int[] runAfterStartingOf = serialized ? null : new int[]{Pass.UPDATE_ALL};
-    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL_HIGHLIGHTINGS);
+    registrar.registerTextEditorHighlightingPass(this, runAfterCompletionOf, runAfterStartingOf, false, Pass.INJECTED_GENERAL);
   }
 
   @Override
   public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
+    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.INJECTED_GENERAL);
     if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
     List<TextRange> adjustedRanges = computeReducedRanges(file, editor);
     TextRange restrictRange = computeRestrictRange(adjustedRanges, fileRange);

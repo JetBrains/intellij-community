@@ -1,11 +1,18 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.changeSignature
 
+import com.intellij.openapi.command.WriteCommandAction.runWriteCommandAction
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.impl.source.PsiMethodImpl
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.util.CommonRefactoringUtil.RefactoringErrorHintException
+import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
+import org.jetbrains.kotlin.analysis.api.analyze
+import org.jetbrains.kotlin.analysis.api.components.KaDiagnosticCheckerFilter
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.descriptors.Visibility
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
@@ -118,6 +125,51 @@ class KotlinFirChangeSignatureTest :
 
     fun testInterface() {
         doTestConflict("interface <caret>A {}", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
+    fun testLocalVariable() {
+        doTestConflict("fun main() { val <caret>x = 42 }", "Cannot perform refactoring.\nThe caret should be positioned at the name of the function or constructor to be refactored.")
+    }
+
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    fun testExpressionFragmentErrors() {
+        val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
+        val fragment = KtPsiFactory(project).createTypeCodeFragment("CustomList<out String>", psiFile)
+        assertTrue(
+            allowAnalysisOnEdt {
+                analyze(fragment) {
+                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isNotEmpty()
+                }
+            }
+        )
+    }
+
+    @OptIn(KaExperimentalApi::class, KaAllowAnalysisOnEdt::class)
+    fun testTypeFragmentErrors() {
+        val psiFile = myFixture.addFileToProject("CommonList.kt", "class CustomList<in T>")
+        val fragment = KtPsiFactory(project).createTypeCodeFragment("", psiFile)
+        val diagnostics = allowAnalysisOnEdt {
+            analyze(fragment) {
+                fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS)
+                    .map { it.defaultMessage}
+            }
+        }
+        assertNotEmpty(diagnostics)
+        assertEquals("Unexpected diagnostics number", 1, diagnostics.size)
+        assertEquals("Syntax error: Incomplete code.", diagnostics.first())
+
+        runWriteCommandAction(project) {
+            fragment.containingFile.fileDocument.setText("CustomList<String>")
+            PsiDocumentManager.getInstance(project).commitDocument(fragment.containingFile.fileDocument)
+        }
+
+        assertTrue(
+            allowAnalysisOnEdt {
+                analyze(fragment) {
+                    fragment.collectDiagnostics(KaDiagnosticCheckerFilter.ONLY_COMMON_CHECKERS).isEmpty()
+                }
+            }
+        )
     }
 
     override fun testRemoveDataClassParameter() {

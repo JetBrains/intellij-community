@@ -6,14 +6,11 @@ import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
-import com.intellij.openapi.actionSystem.impl.ActionMenu
-import com.intellij.openapi.actionSystem.impl.ActionPresentationDecorator
-import com.intellij.openapi.actionSystem.impl.EMPTY_MENU_ACTION_ICON
-import com.intellij.openapi.actionSystem.impl.PoppedIcon
+import com.intellij.openapi.actionSystem.impl.*
 import com.intellij.openapi.actionSystem.impl.actionholder.createActionRef
-import com.intellij.openapi.actionSystem.impl.isEnterKeyStroke
 import com.intellij.openapi.application.TransactionGuard
 import com.intellij.openapi.application.TransactionGuardImpl
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.IdeFocusManager
@@ -48,7 +45,10 @@ internal class MacNativeActionMenuItem(action: AnAction,
       EventQueue.invokeLater {
         if (presentation.isEnabledInModalContext || context.getData(PlatformCoreDataKeys.IS_MODAL_CONTEXT) != true) {
           (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            performAction(actionRef.getAction(), place, presentation.clone(), context)
+            //todo fix all clients and remove global lock here
+            WriteIntentReadAction.run {
+              performAction(actionRef.getAction(), place, presentation.clone(), context)
+            }
           }
         }
       }
@@ -127,9 +127,8 @@ private fun performAction(action: AnAction, place: String, presentation: Present
   }
   IdeFocusManager.findInstanceByContext(context).runOnOwnContext(context, Runnable {
     val currentEvent = IdeEventQueue.getInstance().trueCurrentEvent
-    val event = AnActionEvent.createFromInputEvent(
-      if (currentEvent is InputEvent) currentEvent else null,
-      place, presentation, context, true, false)
+    val event = AnActionEvent.createEvent(
+      context, presentation, place, ActionUiKind.MAIN_MENU, currentEvent as? InputEvent)
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, event)
     }

@@ -16,7 +16,6 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.projectStructureMapping.*
-import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import java.io.IOException
 import java.nio.file.Path
@@ -29,15 +28,14 @@ import kotlin.io.path.pathString
  * (along with information from plugin.xml files and other files describing custom layouts of plugins if necessary) to determine which
  * resources should be included in the distribution, instead of taking this information from the project model.
  */
-internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry>, context: BuildContext) {
-  val compiledModulesDescriptors = context.originalModuleRepository.rawRepositoryData
+internal suspend fun generateRuntimeModuleRepository(entries: Sequence<DistributionFileEntry>, context: BuildContext) {
+  val compiledModulesDescriptors = context.getOriginalModuleRepository().rawRepositoryData
 
   val repositoryEntries = ArrayList<RuntimeModuleRepositoryEntry>()
   val osSpecificDistPaths = listOf(null to context.paths.distAllDir) +
                             SUPPORTED_DISTRIBUTIONS.map { it to getOsAndArchSpecificDistDirectory(it.os, it.arch, context) }
   for (entry in entries) {
-    val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) }
-                                   ?: continue
+    val (distribution, rootPath) = osSpecificDistPaths.find { entry.path.startsWith(it.second) } ?: continue
 
     val pathInDist = rootPath.relativize(entry.path).pathString
     repositoryEntries.add(RuntimeModuleRepositoryEntry(distribution, pathInDist, entry))
@@ -66,14 +64,14 @@ internal fun generateRuntimeModuleRepository(entries: List<DistributionFileEntry
  * and distribution files are generated under [targetDirectory].
  */
 @ApiStatus.Internal
-fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
-  val compiledModulesDescriptors = context.originalModuleRepository.rawRepositoryData
+suspend fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFileEntry>, targetDirectory: Path, context: BuildContext) {
+  val compiledModulesDescriptors = context.getOriginalModuleRepository().rawRepositoryData
   val actualEntries = entries.mapNotNull { entry ->
     if (entry.path.startsWith(targetDirectory)) {
       RuntimeModuleRepositoryEntry(
         distribution = null,
         relativePath = targetDirectory.relativize(entry.path).pathString,
-        origin = entry
+        origin = entry,
       )
     }
     else {
@@ -85,7 +83,7 @@ fun generateRuntimeModuleRepositoryForDevBuild(entries: Sequence<DistributionFil
     targetDirectory = targetDirectory,
     entries = actualEntries.toList(),
     compiledModulesDescriptorsData = compiledModulesDescriptors,
-    context = context
+    context = context,
   )
 }
 
@@ -126,7 +124,7 @@ internal fun generateCrossPlatformRepository(distAllPath: Path, osSpecificDistPa
 
 private data class RuntimeModuleRepositoryEntry(val distribution: SupportedDistribution?, val relativePath: String, val origin: DistributionFileEntry)
 
-private fun generateRepositoryForDistribution(
+private suspend fun generateRepositoryForDistribution(
   targetDirectory: Path,
   entries: List<RuntimeModuleRepositoryEntry>,
   compiledModulesDescriptorsData: RawRuntimeModuleRepositoryData,
@@ -135,7 +133,7 @@ private fun generateRepositoryForDistribution(
   val mainPathsForResources = computeMainPathsForResourcesCopiedToMultiplePlaces(entries, context)
   val resourcePathMapping = MultiMap.createOrderedSet<RuntimeModuleId, String>()
   for (entry in entries) {
-    val moduleId = entry.origin.runtimeModuleId
+    val moduleId = entry.origin.getRuntimeModuleId() ?: continue
     val mainPath = mainPathsForResources[moduleId]
     if (mainPath == null || mainPath == entry.relativePath) {
       resourcePathMapping.putValue(moduleId, entry.relativePath)
@@ -215,18 +213,22 @@ private fun saveModuleRepository(distDescriptors: List<RawRuntimeModuleDescripto
  * 
  * This heuristic is verified by RuntimeModuleRepositoryChecker.checkIntegrityOfEmbeddedProduct.  
  */
-private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<RuntimeModuleRepositoryEntry>,
-                                                               context: BuildContext): Map<RuntimeModuleId, String> {
+private suspend fun computeMainPathsForResourcesCopiedToMultiplePlaces(
+  entries: List<RuntimeModuleRepositoryEntry>,
+  context: BuildContext,
+): Map<RuntimeModuleId, String> {
   val singleFileProjectLibraries = context.project.libraryCollection.libraries.asSequence()
     .filter { it.getFiles(JpsOrderRootType.COMPILED).size == 1 }
     .mapTo(HashSet()) { it.name }
   
-  fun ProjectLibraryEntry.isPackedIntoSingleJar() = data.libraryName in singleFileProjectLibraries 
-                                                    || data.packMode == LibraryPackMode.MERGED 
-                                                    || data.packMode == LibraryPackMode.STANDALONE_MERGED
+  fun isPackedIntoSingleJar(projectLibraryEntry: ProjectLibraryEntry): Boolean {
+    return (projectLibraryEntry.data.libraryName in singleFileProjectLibraries
+            || projectLibraryEntry.data.packMode == LibraryPackMode.MERGED
+            || projectLibraryEntry.data.packMode == LibraryPackMode.STANDALONE_MERGED)
+  }
   
   fun ModuleLibraryFileEntry.isPackedIntoSingleJar(): Boolean {
-    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { LibraryLicensesListGenerator.getLibraryName(it) == libraryName }
+    val library = context.findRequiredModule(moduleName).libraryCollection.libraries.find { getLibraryFilename(it) == libraryName }
     require(library != null) { "Cannot find module-level library '$libraryName' in '$moduleName'" }
     return library.getFiles(JpsOrderRootType.COMPILED).size == 1 
   }
@@ -236,18 +238,19 @@ private fun computeMainPathsForResourcesCopiedToMultiplePlaces(entries: List<Run
   //exclude libraries which may be packed in multiple JARs from consideration, because multiple entries may not indicate that a library is copied to multiple places in such cases,
   //and all resource roots should be kept
   val moduleIdsToPaths = entries.asSequence()
-    .filter { entry -> entry.origin is ProjectLibraryEntry && entry.origin.isPackedIntoSingleJar()
-                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()                   
+    .filter { entry -> entry.origin is ProjectLibraryEntry && isPackedIntoSingleJar(entry.origin)
+                       || entry.origin is ModuleLibraryFileEntry && entry.origin.isPackedIntoSingleJar()
                        || entry.origin is ModuleOutputEntry }
-    .groupBy({ it.origin.runtimeModuleId }, { it.relativePath })
+    .groupBy({ it.origin.getRuntimeModuleId()!! }, { it.relativePath })
 
-  fun DistributionFileEntry.isIncludedInJetBrainsClient() = 
-    this is ModuleOutputEntry && context.jetBrainsClientModuleFilter.isModuleIncluded(moduleName) 
+  suspend fun isIncludedInJetBrainsClient(entry: DistributionFileEntry): Boolean {
+    return entry is ModuleOutputEntry && context.getJetBrainsClientModuleFilter().isModuleIncluded(entry.moduleName)
+  }
   
-  fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
+  suspend fun chooseMainLocation(moduleId: RuntimeModuleId, paths: List<String>): String {
     val mainLocation = paths.singleOrNull { it.substringBeforeLast("/") == "lib" && moduleId !in MODULES_SCRAMBLED_WITH_FRONTEND } ?:
                        paths.singleOrNull { pathToEntries[it]?.size == 1 } ?:
-                       paths.singleOrNull { pathToEntries[it]?.any { entry -> entry.origin.isIncludedInJetBrainsClient() } == true } ?:
+                       paths.singleOrNull { pathToEntries[it]?.any { entry -> isIncludedInJetBrainsClient(entry.origin) } == true } ?:
                        paths.singleOrNull { it.substringBeforeLast("/").substringAfterLast("/") in setOf("client", "frontend") }
     if (mainLocation != null) {
       return mainLocation
@@ -309,13 +312,15 @@ private fun collectTransitiveDependencies(moduleIds: Collection<RuntimeModuleId>
   }
 }
 
-private val DistributionFileEntry.runtimeModuleId: RuntimeModuleId
-  get() = when (this) {
+private fun DistributionFileEntry.getRuntimeModuleId(): RuntimeModuleId? {
+  return when (this) {
     is ModuleOutputEntry -> RuntimeModuleId.module(moduleName)
     is ModuleTestOutputEntry -> RuntimeModuleId.moduleTests(moduleName)
     is ModuleLibraryFileEntry -> RuntimeModuleId.moduleLibrary(moduleName, libraryName)
     is ProjectLibraryEntry -> RuntimeModuleId.projectLibrary(data.libraryName)
+    is CustomAssetEntry -> null
   }
+}
 
 private const val MODULES_DIR_NAME = "modules"
 @VisibleForTesting

@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.library.metadata.KlibMetadataVersion
 import org.jetbrains.kotlin.library.metadata.isCInteropLibrary
 import org.jetbrains.kotlin.library.metadata.isCommonizedCInteropLibrary
 import org.jetbrains.kotlin.library.metadata.metadataVersion
+import org.jetbrains.kotlin.library.resolveSingleFileKlib
+import org.jetbrains.kotlin.library.uniqueName
 import org.jetbrains.kotlin.platform.TargetPlatform
 
 /**
@@ -33,7 +35,7 @@ abstract class AbstractKlibLibraryInfo internal constructor(project: Project, li
 
     val compatibilityInfo: KlibCompatibilityInfo by lazy { resolvedKotlinLibrary.compatibilityInfo }
 
-    final override fun getLibraryRoots() = listOf(libraryRoot)
+    final override fun getLibraryRoots(): List<String> = listOf(libraryRoot)
 
     abstract override val platform: TargetPlatform // must override
 
@@ -42,7 +44,7 @@ abstract class AbstractKlibLibraryInfo internal constructor(project: Project, li
     val isInterop: Boolean by lazy { resolvedKotlinLibrary.isCInteropLibrary() || resolvedKotlinLibrary.isCommonizedCInteropLibrary() }
 
     companion object {
-        private val LOG = Logger.getInstance(AbstractKlibLibraryInfo::class.java).asKotlinLogger()
+        private val LOG: org.jetbrains.kotlin.util.Logger = Logger.getInstance(AbstractKlibLibraryInfo::class.java).asKotlinLogger()
     }
 }
 

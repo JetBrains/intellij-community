@@ -1,0 +1,17 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "jps-model-impl",
+  module_name = "intellij.platform.jps.model.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = "//:k11",
+  deps = [
+    "@community//platform/util",
+    "@community//jps/model-api:jps-model",
+    "@libraries//:intellij-deps-fastutil",
+  ]
+)
+### auto-generated section `build` end

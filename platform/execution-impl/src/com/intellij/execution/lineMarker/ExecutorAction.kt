@@ -3,6 +3,7 @@ package com.intellij.execution.lineMarker
 
 import com.intellij.execution.Executor
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionGroup.EMPTY_ARRAY
 import com.intellij.openapi.diagnostic.logger
 import org.jetbrains.annotations.ApiStatus
 

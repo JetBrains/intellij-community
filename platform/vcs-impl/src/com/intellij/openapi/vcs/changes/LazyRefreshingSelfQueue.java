@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,6 +18,7 @@ import java.util.function.LongSupplier;
  *
  */
 // TODO: Used only in RemoteRevisionsNumberCache
+@ApiStatus.Internal
 public final class LazyRefreshingSelfQueue<T> {
   private static final Logger LOG = Logger.getInstance(LazyRefreshingSelfQueue.class);
 

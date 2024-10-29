@@ -175,6 +175,9 @@ public final class JavaModuleGraphUtil {
     JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
     List<VirtualFile> sourceRoots = rootManager.getSourceRoots(rootType);
+    Set<VirtualFile> excludeRoots = ContainerUtil.newHashSet(ModuleRootManager.getInstance(module).getExcludeRoots());
+    if (!excludeRoots.isEmpty()) sourceRoots.removeIf(root -> excludeRoots.contains(root));
+
     List<VirtualFile> files = ContainerUtil.mapNotNull(sourceRoots, root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE));
     if (files.isEmpty()) {
       JavaResourceRootType resourceRootType = inTests ? JavaResourceRootType.TEST_RESOURCE : JavaResourceRootType.RESOURCE;

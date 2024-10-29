@@ -101,6 +101,14 @@ public final class IntroduceVariableUtil {
   public static PsiExpression getSelectedExpression(final Project project, PsiFile file, int startOffset, int endOffset) {
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(project);
     PsiElement elementAtStart = file.findElementAt(startOffset);
+    if (elementAtStart != null && isStringLiteral(elementAtStart) && elementAtStart.getTextRange().getEndOffset() - 1 == startOffset) {
+      PsiLiteralExpression expressionAtStart = PsiTreeUtil.getParentOfType(elementAtStart, PsiLiteralExpression.class);
+      PsiExpression nextExpression = PsiTreeUtil.getNextSiblingOfType(expressionAtStart, PsiExpression.class);
+      if (nextExpression != null) {
+        elementAtStart = nextExpression;
+        startOffset = nextExpression.getTextRange().getStartOffset();
+      }
+    }
     if (elementAtStart == null || elementAtStart instanceof PsiWhiteSpace || elementAtStart instanceof PsiComment) {
       final PsiElement element = PsiTreeUtil.skipWhitespacesAndCommentsForward(elementAtStart);
       if (element != null) {
@@ -117,6 +125,14 @@ public final class IntroduceVariableUtil {
       startOffset = elementAtStart.getTextOffset();
     }
     PsiElement elementAtEnd = file.findElementAt(endOffset - 1);
+    if (elementAtEnd != null && isStringLiteral(elementAtEnd) && elementAtEnd.getTextRange().getStartOffset() + 1 == endOffset) {
+      PsiLiteralExpression expressionAtEnd = PsiTreeUtil.getParentOfType(elementAtEnd, PsiLiteralExpression.class);
+      PsiExpression prevExpression = PsiTreeUtil.getPrevSiblingOfType(expressionAtEnd, PsiExpression.class);
+      if (prevExpression != null) {
+        elementAtEnd = prevExpression;
+        endOffset = prevExpression.getTextRange().getEndOffset();
+      }
+    }
     if (elementAtEnd == null || elementAtEnd instanceof PsiWhiteSpace || elementAtEnd instanceof PsiComment) {
       elementAtEnd = PsiTreeUtil.skipWhitespacesAndCommentsBackward(elementAtEnd);
       if (elementAtEnd == null) return null;
@@ -256,6 +272,10 @@ public final class IntroduceVariableUtil {
     }
 
     return tempExpr;
+  }
+
+  private static boolean isStringLiteral(PsiElement elementAtEnd) {
+    return elementAtEnd.getNode().getElementType().equals(JavaTokenType.STRING_LITERAL);
   }
 
   private static boolean isIncompleteMethod(@Nullable PsiMethod incompleteMethod) {

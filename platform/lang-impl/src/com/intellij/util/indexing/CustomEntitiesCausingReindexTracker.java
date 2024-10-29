@@ -21,8 +21,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 final class CustomEntitiesCausingReindexTracker {
-  @NotNull
-  private Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
+  private @NotNull Set<Class<? extends WorkspaceEntity>> customEntitiesToRescan;
 
   CustomEntitiesCausingReindexTracker() {
     ExtensionPointListener<?> listener =
@@ -96,6 +95,17 @@ final class CustomEntitiesCausingReindexTracker {
     if (newEntity instanceof ContentRootEntity newContentRootEntity && oldEntity instanceof ContentRootEntity oldContentRootEntity) {
       return !newContentRootEntity.getUrl().equals(oldContentRootEntity.getUrl()) ||
              !newContentRootEntity.getExcludedPatterns().equals(oldContentRootEntity.getExcludedPatterns());
+    }
+
+    // The rootsChanged is not thrown if the order of root groups has changed. Root group - group of roots collected by type.
+    //   rootsChanged is still thrown if the order of roots inside one group changes.
+    if (newEntity instanceof LibraryEntity newLibraryEntity && oldEntity instanceof LibraryEntity oldLibraryEntity) {
+      if (newLibraryEntity.getTableId().equals(oldLibraryEntity.getTableId()) &&
+          newLibraryEntity.getRoots().size() == oldLibraryEntity.getRoots().size() &&
+          newLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType()))
+            .equals(oldLibraryEntity.getRoots().stream().collect(Collectors.groupingBy(o -> o.getType())))) {
+        return false;
+      }
     }
 
     WorkspaceEntity entity = newEntity != null ? newEntity : oldEntity;

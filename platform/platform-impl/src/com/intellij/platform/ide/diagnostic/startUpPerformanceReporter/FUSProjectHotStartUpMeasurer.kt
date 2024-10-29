@@ -1,10 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.ide.diagnostic.startUpPerformanceReporter
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.impl.ProjectUtilCore
-import com.intellij.idea.IdeStarter
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.eventLog.events.EventFields.createDurationField
@@ -15,6 +15,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.impl.DocumentMarkupModel
+import com.intellij.openapi.editor.impl.zombie.SpawnRecipe
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.TextEditor
@@ -22,9 +23,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.MarkupType
+import com.intellij.platform.ide.diagnostic.startUpPerformanceReporter.FUSProjectHotStartUpMeasurer.getStartUpContextElementIntoIdeStarter
 import com.intellij.util.containers.ComparatorUtil
 import com.intellij.util.containers.ContainerUtil
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -60,6 +64,20 @@ object FUSProjectHotStartUpMeasurer {
     HasOpenedProject,
   }
 
+  enum class MarkupType {
+    HIGHLIGHTING,
+    CODE_FOLDING,
+    CODE_VISION,
+    DECLARATIVE_HINTS,
+    PARAMETER_HINTS,
+    // this works for internal action ToggleFocusViewModeAction and is not worth testing or reporting FOCUS_MODE,
+    DOC_RENDER,
+    ;
+
+    @Internal
+    fun getFieldName(): String = getField(this).name
+  }
+
   private suspend fun isProperContext(): Boolean {
     return currentCoroutineContext().isProperContext()
   }
@@ -70,7 +88,7 @@ object FUSProjectHotStartUpMeasurer {
 
   private sealed interface Event {
     /**
-     * It's an event corresponding to a FUS event, which is not a terminal one.
+     * It's an event that corresponds to a FUS event and does not stop handling of events.
      * See their list at https://youtrack.jetbrains.com/issue/IJPL-269
      */
     sealed interface FUSReportableEvent : Event
@@ -97,7 +115,8 @@ object FUSProjectHotStartUpMeasurer {
       val time: Long = System.nanoTime()
     }
 
-    class MarkupRestoredEvent(val fileId: Int) : Event
+    class MarkupRestoredEvent(val fileId: Int, val markupType: MarkupType) : Event
+
     class FirstEditorEvent(
       val sourceOfSelectedEditor: SourceOfSelectedEditor,
       val file: VirtualFile,
@@ -117,9 +136,8 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.SplashBecameVisibleEvent())
   }
 
-  fun getStartUpContextElementIntoIdeStarter(ideStarter: IdeStarter): CoroutineContext.Element? {
-    if (ideStarter.isHeadless ||
-        ideStarter.javaClass !in listOf(IdeStarter::class.java, IdeStarter.StandaloneLightEditStarter::class.java)) {
+  fun getStartUpContextElementIntoIdeStarter(close: Boolean): CoroutineContext.Element? {
+    if (close) {
       channel.close()
       return null
     }
@@ -203,8 +221,8 @@ object FUSProjectHotStartUpMeasurer {
     channel.trySend(Event.FrameBecameInteractiveEvent())
   }
 
-  fun markupRestored(file: VirtualFileWithId) {
-    channel.trySend(Event.MarkupRestoredEvent(file.id))
+  fun markupRestored(recipe: SpawnRecipe, type: MarkupType) {
+    channel.trySend(Event.MarkupRestoredEvent(recipe.fileId, type))
   }
 
   fun firstOpenedEditor(file: VirtualFile) {
@@ -220,8 +238,8 @@ object FUSProjectHotStartUpMeasurer {
   }
 
   /**
-   * Unfortunately, current architecture doesn't allow to check that there is basic highlighting (syntax + maybe folding) in editor.
-   * Here are some heuristics that may save us from bugs, but do not guarantee that.
+   * Unfortunately, the current architecture doesn't allow checking that there is basic highlighting (syntax + maybe folding) in an editor.
+   * Here are some heuristics that may save us from bugs, but that is not guaranteed.
    */
   private fun checkEditorHasBasicHighlight(file: VirtualFile, project: Project, fileEditorManager: FileEditorManager) {
     val textEditor: TextEditor = fileEditorManager.getEditors(file)[0] as TextEditor
@@ -232,7 +250,7 @@ object FUSProjectHotStartUpMeasurer {
     // LexerEditorHighlighter.createIterator, TextEditorImplKt.setHighlighterToEditor
     textEditor.editor.highlighter
     // See usages of TextEditorImpl.asyncLoader in PsiAwareTextEditorImpl, especially in span "HighlighterTextEditorInitializer".
-    // It's reasonable to expect loaded editor to provide minimal highlighting the statistic is interested in.
+    // It's reasonable to expect the loaded editor to provide minimal highlighting the statistic is interested in.
     if (!textEditor.isEditorLoaded) {
       thisLogger().error("The editor is not loaded yet")
     }
@@ -343,7 +361,7 @@ object FUSProjectHotStartUpMeasurer {
   private suspend fun applyEditorEventIfPossible(
     firstEditorEvent: Event.FirstEditorEvent?,
     noEditorEvent: Event.NoMoreEditorsEvent?,
-    markupResurrectedFileIds: IntOpenHashSet,
+    markupResurrectedFileIds: MarkupResurrectedFileIds,
     projectPathReportEvent: Event.ProjectPathReportEvent?,
     lastHandledEvent: LastHandledEvent,
   ) {
@@ -360,15 +378,15 @@ object FUSProjectHotStartUpMeasurer {
 
     if (firstEditorEvent != null && (noEditorEvent == null || firstEditorEvent.time <= noEditorEvent.time)) {
       val file = firstEditorEvent.file
-      val hasLoadedMarkup = file is VirtualFileWithId && markupResurrectedFileIds.contains(file.id)
       val fileType = readAction { file.fileType }
       ContainerUtil.addAll(data,
                            DURATION.with(getDurationFromStart(firstEditorEvent.time, lastHandledEvent)),
                            EventFields.FileType.with(fileType),
-                           LOADED_CACHED_MARKUP_FIELD.with(hasLoadedMarkup),
                            NO_EDITORS_TO_OPEN_FIELD.with(false),
                            SOURCE_OF_SELECTED_EDITOR_FIELD.with(firstEditorEvent.sourceOfSelectedEditor))
-
+      for (type in MarkupType.entries) {
+        data.add(getField(type).with(markupResurrectedFileIds.contains(file, type)))
+      }
     }
     else if (noEditorEvent != null) {
       ContainerUtil.addAll(data,
@@ -395,8 +413,18 @@ object FUSProjectHotStartUpMeasurer {
     return statsIsWritten
   }
 
+  private class MarkupResurrectedFileIds {
+    private val ids: Map<MarkupType, IntSet> = MarkupType.entries.associate { it to IntOpenHashSet() }
+
+    fun addId(fileId: Int, markupType: MarkupType) {
+      ids[markupType]!!.add(fileId)
+    }
+
+    fun contains(file: VirtualFile, markupType: MarkupType): Boolean = file is VirtualFileWithId && ids[markupType]!!.contains(file.id)
+  }
+
   private suspend fun handleStatisticEvents() {
-    val markupResurrectedFileIds = IntOpenHashSet()
+    val markupResurrectedFileIds = MarkupResurrectedFileIds()
     var lastHandledEvent: LastHandledEvent? = null
     var ideStarterStartedEvent: Event.IdeStarterStartedEvent? = null
     var splashBecameVisibleEvent: Event.SplashBecameVisibleEvent? = null
@@ -430,7 +458,7 @@ object FUSProjectHotStartUpMeasurer {
         is Event.FrameBecameInteractiveEvent -> {
           frameBecameInteractiveEvent = event
         }
-        is Event.MarkupRestoredEvent -> markupResurrectedFileIds.add(event.fileId)
+        is Event.MarkupRestoredEvent -> markupResurrectedFileIds.addId(event.fileId, event.markupType)
         is Event.ProjectPathReportEvent -> if (projectPathReportEvent == null) projectPathReportEvent = event
         Event.ResetProjectPathEvent -> projectPathReportEvent = null
         is Event.ProjectTypeReportEvent -> if (projectTypeReportEvent == null) projectTypeReportEvent = event
@@ -463,7 +491,9 @@ object FUSProjectHotStartUpMeasurer {
     }
   }
 
-  private object MyMarker : CoroutineContext.Key<MyMarker>, CoroutineContext.Element {
+  private object MyMarker : CoroutineContext.Key<MyMarker>, CoroutineContext.Element, IntelliJContextElement {
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
     override val key: CoroutineContext.Key<*>
       get() = this
   }
@@ -486,11 +516,11 @@ private val WELCOME_SCREEN_EVENT = WELCOME_SCREEN_GROUP.registerVarargEvent("wel
                                                                             DURATION, SPLASH_SCREEN_WAS_SHOWN,
                                                                             SPLASH_SCREEN_VISIBLE_DURATION)
 
-class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
+internal class WelcomeScreenPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = WELCOME_SCREEN_GROUP
 }
 
-private val GROUP = EventLogGroup("reopen.project.startup.performance", 1)
+private val GROUP = EventLogGroup("reopen.project.startup.performance", 2)
 
 private enum class UIResponseType {
   Splash,
@@ -516,16 +546,36 @@ private enum class SourceOfSelectedEditor {
   FoundReadmeFile,
 }
 
-private val LOADED_CACHED_MARKUP_FIELD = EventFields.Boolean("loaded_cached_markup")
+private val LOADED_CACHED_HIGHLIGHTING_MARKUP_FIELD = EventFields.Boolean("loaded_cached_markup")
+private val LOADED_CACHED_CODE_FOLDING_MARKUP_FIELD = EventFields.Boolean("loaded_cached_code_folding_markup")
+private val LOADED_CACHED_CODE_VISION_MARKUP_FIELD = EventFields.Boolean("loaded_cached_code_vision_markup")
+private val LOADED_CACHED_DECLARATIVE_HINTS_MARKUP_FIELD = EventFields.Boolean("loaded_cached_declarative_hints_markup")
+private val LOADED_CACHED_PARAMETER_HINTS_MARKUP_FIELD = EventFields.Boolean("loaded_cached_parameter_hints_markup")
+private val LOADED_CACHED_DOC_RENDER_MARKUP_FIELD = EventFields.Boolean("loaded_cached_doc_render_markup")
 private val SOURCE_OF_SELECTED_EDITOR_FIELD: EnumEventField<SourceOfSelectedEditor> =
   EventFields.Enum("source_of_selected_editor", SourceOfSelectedEditor::class.java)
 private val NO_EDITORS_TO_OPEN_FIELD = EventFields.Boolean("no_editors_to_open")
-private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor",
-                                                                                DURATION,
-                                                                                EventFields.FileType,
-                                                                                HAS_SETTINGS,
-                                                                                LOADED_CACHED_MARKUP_FIELD,
-                                                                                NO_EDITORS_TO_OPEN_FIELD, SOURCE_OF_SELECTED_EDITOR_FIELD)
+private val CODE_LOADED_AND_VISIBLE_IN_EDITOR_EVENT = GROUP.registerVarargEvent("code.loaded.and.visible.in.editor", *createCodeLoadedEventFields())
+
+private fun getField(type: MarkupType): EventField<Boolean> {
+  return when (type) {
+    MarkupType.HIGHLIGHTING -> LOADED_CACHED_HIGHLIGHTING_MARKUP_FIELD
+    MarkupType.CODE_FOLDING -> LOADED_CACHED_CODE_FOLDING_MARKUP_FIELD
+    MarkupType.CODE_VISION -> LOADED_CACHED_CODE_VISION_MARKUP_FIELD
+    MarkupType.DECLARATIVE_HINTS -> LOADED_CACHED_DECLARATIVE_HINTS_MARKUP_FIELD
+    MarkupType.PARAMETER_HINTS -> LOADED_CACHED_PARAMETER_HINTS_MARKUP_FIELD
+    MarkupType.DOC_RENDER -> LOADED_CACHED_DOC_RENDER_MARKUP_FIELD
+  }
+}
+
+private fun createCodeLoadedEventFields(): Array<EventField<*>> {
+  val fields = mutableListOf<EventField<*>>(DURATION, EventFields.FileType, HAS_SETTINGS, NO_EDITORS_TO_OPEN_FIELD, SOURCE_OF_SELECTED_EDITOR_FIELD)
+  for (type in MarkupType.entries) {
+    fields.add(getField(type))
+  }
+  return fields.toTypedArray()
+}
+
 
 internal class HotProjectReopenStartUpPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup {
@@ -533,7 +583,6 @@ internal class HotProjectReopenStartUpPerformanceCollector : CounterUsagesCollec
   }
 }
 
-@Suppress("unused")
 @TestOnly
 @Service(Service.Level.APP)
 class FUSProjectHotStartUpMeasurerService {

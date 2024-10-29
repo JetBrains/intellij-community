@@ -1,3 +1,4 @@
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup.async
 
 import com.intellij.openapi.Disposable
@@ -6,14 +7,14 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.EdtScheduler
 import com.intellij.util.ui.UIUtil
-import java.util.concurrent.TimeUnit
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.JLabel
 
+@ApiStatus.Internal
 class AsyncPopupWaiter(step: AsyncPopupStep<*>, point: RelativePoint, onReady: (PopupStep<*>) -> Unit) : Disposable {
-
   private val myGlassPane = UIUtil.getRootPane(point.component)?.glassPane as? JComponent
   private val myIcon: JComponent?
   private var myDisposed = false
@@ -43,12 +44,11 @@ class AsyncPopupWaiter(step: AsyncPopupStep<*>, point: RelativePoint, onReady: (
     location.y -= size.height / 2
     icon.location = location
 
-    val delay = Registry.intValue("actionSystem.popup.progress.icon.delay", 500).toLong()
-    EdtScheduledExecutorService.getInstance().schedule({
-                                                         if (icon.isVisible && !myDisposed) {
-                                                           myGlassPane.add(icon)
-                                                         }
-                                                       }, delay, TimeUnit.MILLISECONDS)
+    EdtScheduler.getInstance().schedule(Registry.intValue("actionSystem.popup.progress.icon.delay", 500)) {
+      if (icon.isVisible && !myDisposed) {
+        myGlassPane.add(icon)
+      }
+    }
     return icon
   }
 

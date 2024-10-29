@@ -28,6 +28,7 @@ import com.intellij.openapi.components.SettingsCategory;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -74,11 +75,15 @@ import java.util.*;
  */
 public class Configuration extends SimpleModificationTracker implements PersistentStateComponent<Element>, ModificationTracker {
   static final Logger LOG = Logger.getInstance(Configuration.class.getName());
+
+  private static final ExtensionPointName<LanguageInjectionConfigBean>
+    CONFIG_EP_NAME = ExtensionPointName.create("org.intellij.intelliLang.injectionConfig");
+
   private static final Condition<BaseInjection> LANGUAGE_INJECTION_CONDITION =
     o -> Language.findLanguageByID(o.getInjectedLanguageId()) != null;
 
   {
-    LanguageInjectionSupport.CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
+    CONFIG_EP_NAME.addChangeListener(this::reloadInjections, null);
     LanguageInjectionSupport.EP_NAME.addChangeListener(this::reloadInjections, null);
   }
 
@@ -331,7 +336,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   private static List<BaseInjection> loadDefaultInjections() {
     final List<Configuration> cfgList = new ArrayList<>();
     final Set<Object> visited = new HashSet<>();
-    LanguageInjectionSupport.CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
+    CONFIG_EP_NAME.processWithPluginDescriptor((configBean, pluginDescriptor) -> {
       final ClassLoader loader = pluginDescriptor.getClassLoader();
       try {
         final Enumeration<URL> enumeration = loader.getResources(configBean.getConfigUrl());

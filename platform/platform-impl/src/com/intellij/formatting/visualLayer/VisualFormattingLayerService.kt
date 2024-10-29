@@ -1,4 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.formatting.visualLayer
 
 import com.intellij.openapi.application.ApplicationManager
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.application
+import org.jetbrains.annotations.ApiStatus
 
 val visualFormattingElementKey: Key<Boolean> = Key.create("visual.formatting.element")
 
@@ -34,6 +37,7 @@ interface VirtualFormattingIndentGuideInfo {
   fun getVisualFormattingInlineInlays(editor: Editor, startOffset: Int, endOffset: Int): List<Inlay<*>>
 }
 
+@ApiStatus.Internal
 class PlatformVirtualFormattingIndentGuideInfo : VirtualFormattingIndentGuideInfo {
   override fun isVirtualFormattingEnabled(editor: Editor): Boolean {
     return VisualFormattingLayerService.isEnabledForEditor(editor)
@@ -89,6 +93,7 @@ abstract class VisualFormattingLayerService {
 
 }
 
+@ApiStatus.Internal
 sealed class VisualFormattingLayerElement {
 
   abstract fun applyToEditor(editor: Editor)
@@ -130,6 +135,7 @@ sealed class VisualFormattingLayerElement {
   }
 }
 
+@ApiStatus.Internal
 data class InlayPresentation(val editor: Editor,
                              val fillerLength: Int,
                              val vertical: Boolean = false) : EditorCustomElementRenderer {

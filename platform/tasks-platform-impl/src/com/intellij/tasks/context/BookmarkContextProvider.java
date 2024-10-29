@@ -8,11 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public class BookmarkContextProvider extends WorkingContextProvider {
   @NotNull
   @Override

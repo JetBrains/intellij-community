@@ -10,15 +10,18 @@ import com.intellij.codeInsight.hints.declarative.impl.*
 import com.intellij.lang.Language
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
+import java.io.File
 
 abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
   fun doTestProvider(fileName: String,
                      expectedText: String,
                      provider: InlayHintsProvider,
                      enabledOptions: Map<String, Boolean> = emptyMap(),
+                     expectedFile: File? = null,
                      verifyHintsPresence: Boolean = false) {
     if (verifyHintsPresence) {
       InlayHintsProviderTestCase.verifyHintsPresence(expectedText)
@@ -32,7 +35,7 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
       DeclarativeInlayHintsPass(file, editor, listOf(providerInfo), isPreview = false)
     }
 
-    applyPassAndCheckResult(pass, sourceText, expectedText)
+    applyPassAndCheckResult(pass, expectedFile, sourceText, expectedText)
   }
 
   fun doTestPreview(@org.intellij.lang.annotations.Language("JAVA") expectedText: String, providerId: String, provider: InlayHintsProvider, language: Language) {
@@ -43,12 +46,15 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
     val pass = ActionUtil.underModalProgress(project, "") {
       DeclarativeInlayHintsPassFactory.createPassForPreview(myFixture.file, myFixture.editor, provider, providerId, emptyMap(), false)
     }
-    applyPassAndCheckResult(pass, previewText, expectedText)
+    applyPassAndCheckResult(pass, null, previewText, expectedText)
   }
 
-  private fun applyPassAndCheckResult(pass: DeclarativeInlayHintsPass,
-                        previewText: String,
-                        expectedText: String) {
+  private fun applyPassAndCheckResult(
+    pass: DeclarativeInlayHintsPass,
+    expectedFile: File?,
+    previewText: String,
+    expectedText: String,
+  ) {
     ActionUtil.underModalProgress(project, "") {
       pass.doCollectInformation(EmptyProgressIndicator())
     }
@@ -67,7 +73,16 @@ abstract class DeclarativeInlayHintsProviderTestCase : BasePlatformTestCase() {
         }
       }
     }, file = myFixture.file!!, editor = myFixture.editor, document = myFixture.getDocument(myFixture.file!!))
-    assertEquals(expectedText.trim(), dump.trim())
+    val expectedTrim = expectedText.trim()
+    val dumpTrim = dump.trim()
+    if (expectedFile != null) {
+      if (expectedTrim != dumpTrim) {
+        throw FileComparisonFailedError("Text mismatch in the file ${expectedFile.absolutePath}", expectedTrim, dumpTrim, expectedFile.absolutePath)
+      }
+    }
+    else {
+      assertEquals(expectedTrim, dumpTrim)
+    }
   }
 
   var customToStringProvider: ((PsiElement) -> String)? = null

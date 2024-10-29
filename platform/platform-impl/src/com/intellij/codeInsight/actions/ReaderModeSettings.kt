@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.blockingContext
@@ -25,6 +26,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 
 /**
@@ -39,6 +41,9 @@ interface ReaderModeDefaultsOverride {
   }
 
   val showWarningsDefault: Boolean
+
+  @ApiStatus.Internal // ugly, but cannot mark a getter-only property as internal api
+  fun getEnableVirtualFormattingDefault(): Boolean
 }
 
 interface ReaderModeSettings : Disposable {
@@ -86,7 +91,7 @@ interface ReaderModeSettings : Disposable {
 
             if (matchMode || forceUpdate) {
               withContext(Dispatchers.EDT) {
-                blockingContext {
+                writeIntentReadAction {
                   applyModeChanged(project = project, editor = editor, matchMode = matchMode, fileIsOpenAlready = fileIsOpenAlready)
                 }
               }

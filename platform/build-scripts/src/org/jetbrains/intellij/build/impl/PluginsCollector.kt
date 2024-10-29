@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "UsePropertyAccessSyntax")
 
 package org.jetbrains.intellij.build.impl
 
@@ -13,7 +13,7 @@ import org.jetbrains.intellij.build.BuiltinModulesFileData
 import org.jetbrains.intellij.build.PluginBundlingRestrictions
 import java.nio.file.Path
 
-fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, result: MutableSet<PluginLayout>, context: BuildContext) {
+suspend fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData, result: MutableSet<PluginLayout>, context: BuildContext) {
   val availableModulesAndPlugins = HashSet<String>(builtinModuleData.layout.size)
   builtinModuleData.layout.mapTo(availableModulesAndPlugins) { it.name }
 
@@ -22,7 +22,7 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
     skipImplementationDetailPlugins = true,
     skipBundledPlugins = false,
     honorCompatiblePluginsToIgnore = true,
-    context = context
+    context = context,
   )
 
   // While collecting PluginDescriptor maps above, we may have chosen incorrect PluginLayout.
@@ -34,9 +34,9 @@ fun collectCompatiblePluginsToPublish(builtinModuleData: BuiltinModulesFileData,
     val substitutor = layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.MARKETPLACE }
                       ?: layouts.firstOrNull { it.bundlingRestrictions == PluginBundlingRestrictions.NONE }
                       ?: continue
-    layouts.forEach {
-      if (it != substitutor) {
-        moreThanOneLayoutSubstitutors.put(it, substitutor)
+    for (layout in layouts) {
+      if (layout != substitutor) {
+        moreThanOneLayoutSubstitutors.put(layout, substitutor)
       }
     }
   }
@@ -95,7 +95,7 @@ private fun isPluginCompatible(plugin: PluginDescriptor, availableModulesAndPlug
   return true
 }
 
-fun collectPluginDescriptors(
+suspend fun collectPluginDescriptors(
   skipImplementationDetailPlugins: Boolean,
   skipBundledPlugins: Boolean,
   honorCompatiblePluginsToIgnore: Boolean,
@@ -109,7 +109,7 @@ fun collectPluginDescriptors(
     nonTrivialPlugins.putIfAbsent(pluginLayout.mainModule, pluginLayout)
   }
 
-  val allBundledPlugins = HashSet(context.bundledPluginModules)
+  val allBundledPlugins = java.util.Set.copyOf(context.getBundledPluginModules())
   for (jpsModule in context.project.modules) {
     val moduleName = jpsModule.name
     if ((skipBundledPlugins && allBundledPlugins.contains(moduleName)) ||
@@ -117,12 +117,17 @@ fun collectPluginDescriptors(
       continue
     }
 
-    // not a plugin
-    if ((context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins."))) {
+    // when we will migrate to Bazel, we wil use a test marker to avoid checking module name for "test" pattern
+    if (moduleName.contains(".tests.") && !allBundledPlugins.contains(moduleName)) {
       continue
     }
 
-    val pluginXml = context.findFileInModuleSources(moduleName, "META-INF/plugin.xml") ?: continue
+    // not a plugin
+    if (context.productProperties.platformPrefix != "FleetBackend" && moduleName.startsWith("fleet.plugins.")) {
+      continue
+    }
+
+    val pluginXml = findFileInModuleSources(module = context.findRequiredModule(moduleName), relativePath = "META-INF/plugin.xml", onlyProductionSources = true) ?: continue
 
     val xml = JDOMUtil.load(pluginXml)
     check(!xml.isEmpty) {
@@ -131,11 +136,12 @@ fun collectPluginDescriptors(
 
     if (skipImplementationDetailPlugins && xml.getAttributeValue("implementation-detail") == "true") {
       Span.current().addEvent(
-        "skip module", Attributes.of(
-        AttributeKey.stringKey("name"), moduleName,
-        AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
-        AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
-      )
+        "skip module",
+        Attributes.of(
+          AttributeKey.stringKey("name"), moduleName,
+          AttributeKey.stringKey("reason"), "'implementation-detail' == 'true'",
+          AttributeKey.stringKey("pluginXml"), pluginXml.toString(),
+        )
       )
       continue
     }
@@ -256,7 +262,7 @@ private class SourcesBasedXIncludeResolver(
   override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path {
     var result: Path? = null
     for (moduleName in pluginLayout.includedModules.asSequence().map { it.moduleName }.distinct()) {
-      result = (context.findFileInModuleSources(moduleName, relativePath) ?: continue)
+      result = context.findFileInModuleSources(moduleName, relativePath) ?: continue
     }
     return result ?: (if (base == null) Path.of(relativePath) else base.resolveSibling(relativePath))
   }

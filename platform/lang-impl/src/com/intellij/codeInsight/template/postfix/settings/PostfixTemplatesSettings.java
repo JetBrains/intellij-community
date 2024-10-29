@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.template.impl.TemplateSettings;
@@ -16,6 +16,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+@ApiStatus.Internal
 @State(name = "PostfixTemplatesSettings", storages = @Storage("postfixTemplates.xml"), category = SettingsCategory.CODE)
 public final class PostfixTemplatesSettings implements PersistentStateComponent<Element> {
   private Map<String, Set<String>> myProviderToDisabledTemplates = new HashMap<>();
@@ -71,9 +73,8 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
    * @deprecated use getProviderToDisabledTemplates
    */
   @Deprecated(forRemoval = true)
-  @NotNull
   @MapAnnotation(entryTagName = "disabled-postfix-templates", keyAttributeName = "lang", surroundWithTag = false)
-  public Map<String, Set<String>> getLangDisabledTemplates() {
+  public @NotNull Map<String, Set<String>> getLangDisabledTemplates() {
     return myLangToDisabledTemplates;
   }
 
@@ -85,9 +86,8 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
     myLangToDisabledTemplates = templatesState;
   }
 
-  @NotNull
   @MapAnnotation(entryTagName = "disabled-templates", keyAttributeName = "provider", surroundWithTag = false)
-  public Map<String, Set<String>> getProviderToDisabledTemplates() {
+  public @NotNull Map<String, Set<String>> getProviderToDisabledTemplates() {
     return myProviderToDisabledTemplates;
   }
 
@@ -103,14 +103,12 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
     myShortcut = shortcut;
   }
 
-  @NotNull
-  public static PostfixTemplatesSettings getInstance() {
+  public static @NotNull PostfixTemplatesSettings getInstance() {
     return ApplicationManager.getApplication().getService(PostfixTemplatesSettings.class);
   }
 
-  @Nullable
   @Override
-  public Element getState() {
+  public @Nullable Element getState() {
     Element result = new Element("state");
     XmlSerializer.serializeObjectInto(this, result);
     return result;
@@ -141,8 +139,7 @@ public final class PostfixTemplatesSettings implements PersistentStateComponent<
     }
   }
 
-  @NotNull
-  private static MultiMap<String, Language> getLanguagesToImport() {
+  private static @NotNull MultiMap<String, Language> getLanguagesToImport() {
     MultiMap<String, Language> importedLanguages = MultiMap.create();
     for (LanguageExtensionPoint extension : LanguagePostfixTemplate.EP_NAME.getExtensionList()) {
       Language language = Language.findLanguageByID(extension.getKey());

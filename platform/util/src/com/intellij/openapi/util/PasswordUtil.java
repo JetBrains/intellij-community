@@ -1,19 +1,17 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @deprecated Credentials MUST BE stored in ({@link com.intellij.ide.passwordSafe.PasswordSafe})
- */
+/** @deprecated Credentials MUST BE stored in ({@link com.intellij.ide.passwordSafe.PasswordSafe}). */
 @Deprecated
+@ApiStatus.ScheduledForRemoval
+@SuppressWarnings("unused")
 public final class PasswordUtil {
   private PasswordUtil() { }
 
-  // weak encryption just to avoid plain text passwords in text files
   public static String encodePassword(@Nullable String password) {
     if (password == null) {
       return "";
@@ -27,24 +25,16 @@ public final class PasswordUtil {
   }
 
   public static @NotNull String encodePassword(char @Nullable [] password) {
-    if (password == null) {
-      return "";
-    }
-
-    StringBuilder result = new StringBuilder();
-    for (char c : password) {
-      result.append(Integer.toHexString(c ^ 0xdfaa));
-    }
-    return result.toString();
+    return password == null || password.length == 0 ? "" : encodePassword(new String(password));
   }
 
   public static String decodePassword(@Nullable String password) throws NumberFormatException {
-    return password == null ? "" : new String(decodePasswordAsCharArray(password));
+    return password == null || password.isEmpty() ? "" : new String(decodePasswordAsCharArray(password));
   }
 
   public static char @NotNull [] decodePasswordAsCharArray(@Nullable String password) throws NumberFormatException {
-    if (StringUtil.isEmpty(password)) {
-      return ArrayUtilRt.EMPTY_CHAR_ARRAY;
+    if (password == null || password.isEmpty()) {
+      return new char[]{};
     }
 
     char[] result = new char[password.length() / 4];

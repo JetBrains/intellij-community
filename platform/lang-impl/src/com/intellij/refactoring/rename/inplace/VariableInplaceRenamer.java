@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,8 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ActionContext;
 import com.intellij.modcommand.ModCommandExecutor;
 import com.intellij.modcommand.ModUpdateFileText;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -54,6 +56,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -274,8 +277,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     return selectAll != null && selectAll.booleanValue();
   }
 
-  @NotNull
-  protected VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
+  protected @NotNull VariableInplaceRenamer createInplaceRenamerToRestart(PsiNamedElement variable, Editor editor, String initialName) {
     return new VariableInplaceRenamer(variable, editor, myProject, initialName, myOldName);
   }
 
@@ -433,7 +435,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         if (elementToRename != null && isRenamerFactoryApplicable(renamerFactory, elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<>();
           final AutomaticRenamer renamer =
-            renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>());
+            ActionUtil.underModalProgress(myProject, RefactoringBundle.message("progress.title.prepare.additional.searcher"), 
+                                          () -> renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>()));
           if (renamer.hasAnythingToRename()) {
             if (!ApplicationManager.getApplication().isUnitTestMode()) {
               final AutomaticRenamingDialog renamingDialog = new AutomaticRenamingDialog(myProject, renamer);
@@ -461,11 +464,8 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
                 }
               }
             };
-            if (ApplicationManager.getApplication().isUnitTestMode()) {
-              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename);
-            } else {
-              ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
-            }
+            ApplicationManager.getApplication().invokeLater(
+              () -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
           }
         }
       }
@@ -528,7 +528,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             if (mySnapshot != null) {
               WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> mySnapshot.apply(myInsertedName));
             }
-            performRefactoringRename(myInsertedName, myMarkAction);
+            try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162114
+              performRefactoringRename(myInsertedName, myMarkAction);
+            }
           }
           else {
             problem.showUI();

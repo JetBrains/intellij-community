@@ -4,6 +4,7 @@ package com.intellij.util.indexing.impl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.SingletonIterator;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.containers.ChangeBufferingList;
 import com.intellij.util.indexing.containers.IntIdsIterator;
@@ -20,6 +21,7 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.*;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.function.IntPredicate;
 
 import static com.intellij.util.SystemProperties.getBooleanProperty;
@@ -247,6 +249,7 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
     }
   }
 
+  //TODO RC: replace with NotNullizer
   static @NotNull <Value> Value wrapValue(Value value) {
     //noinspection unchecked
     return value == null ? (Value)ObjectUtils.NULL : value;
@@ -263,12 +266,21 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       return (InvertedIndexValueIterator<Value>)EmptyValueIterator.INSTANCE;
     }
 
-    Map<Value, Object> value = asMapping();
-    Map<Value, Object> mapping = value == null ? Collections.singletonMap(wrapValue(asValue()), myInputIdMappingValue) : value;
+    Map<Value, Object> mapping = asMapping();
+    Iterator<Map.Entry<Value, Object>> iterator;
+    if (mapping == null) {
+      Map.Entry<Value, Object> entry = new SimpleImmutableEntry<>(
+        wrapValue(asValue()),
+        myInputIdMappingValue
+      );
+      iterator = new SingletonIterator<>(entry);
+    }
+    else {
+      iterator = mapping.entrySet().iterator();
+    }
     return new InvertedIndexValueIterator<Value>() {
-      private Value current;
-      private Object currentValue;
-      private final Iterator<Map.Entry<Value, Object>> iterator = mapping.entrySet().iterator();
+      private Value currentValue;
+      private Object currentFileSet;
 
       @Override
       public boolean hasNext() {
@@ -278,9 +290,9 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
       @Override
       public Value next() {
         Map.Entry<Value, Object> entry = iterator.next();
-        current = entry.getKey();
-        Value next = current;
-        currentValue = entry.getValue();
+        currentValue = entry.getKey();
+        Value next = currentValue;
+        currentFileSet = entry.getValue();
         return unwrap(next);
       }
 
@@ -296,8 +308,8 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
 
       @Override
       public Object getFileSetObject() {
-        if (current == null) throw new IllegalStateException();
-        return currentValue;
+        if (currentValue == null) throw new IllegalStateException();
+        return currentFileSet;
       }
     };
   }
@@ -359,15 +371,22 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   private Object getFileSetObject(Value value) {
     if (myInputIdMapping == null) return null;
 
-    value = wrapValue(value);
+    if (value == null) {
+      if (myInputIdMapping == ObjectUtils.NULL) {
+        return myInputIdMappingValue;
+      }
 
-    if (myInputIdMapping == value || // myNullValue is Object
-        myInputIdMapping.equals(value)) {
-      return myInputIdMappingValue;
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(ObjectUtils.NULL);
     }
+    else {
+      if (myInputIdMapping == value || myInputIdMapping.equals(value)) {
+        return myInputIdMappingValue;
+      }
 
-    Map<Value, Object> mapping = asMapping();
-    return mapping == null ? null : mapping.get(value);
+      Map<Value, Object> mapping = asMapping();
+      return mapping == null ? null : mapping.get(value);
+    }
   }
 
   @Override
@@ -475,7 +494,21 @@ public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> im
   @Override
   public void saveTo(@NotNull DataOutput out,
                      @NotNull DataExternalizer<? super Value> externalizer) throws IOException {
-    DataInputOutputUtil.writeINT(out, size());
+    int size = size();
+    DataInputOutputUtil.writeINT(out, size);
+
+    if (size == 0) {
+      return;
+    }
+
+
+    if (asMapping() == null) {
+      //single entry: skip creating iterator for a most frequent case
+      Value value = unwrap(asValue());
+      externalizer.save(out, value);
+      storeFileSet(out, myInputIdMappingValue);
+      return;
+    }
 
     for (final InvertedIndexValueIterator<Value> valueIterator = getValueIterator(); valueIterator.hasNext(); ) {
       final Value value = valueIterator.next();

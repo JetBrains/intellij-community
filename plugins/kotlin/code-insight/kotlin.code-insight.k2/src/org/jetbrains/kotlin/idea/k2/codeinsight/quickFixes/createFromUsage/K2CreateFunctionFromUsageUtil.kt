@@ -20,15 +20,14 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
-import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaDefinitelyNotNullTypeRenderer
 import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaFlexibleTypeRenderer
+import org.jetbrains.kotlin.analysis.api.renderer.types.renderers.KaTypeProjectionRenderer
 import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
 import org.jetbrains.kotlin.analysis.api.resolution.calls
 import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
@@ -67,7 +66,7 @@ object K2CreateFunctionFromUsageUtil {
     internal fun KaType.canRefactor(): Boolean = expandedSymbol?.psi?.canRefactorElement() == true
 
     context (KaSession)
-    internal fun KtExpression.resolveExpression(): KaSymbol? {
+    fun KtExpression.resolveExpression(): KaSymbol? {
         mainReference?.resolveToSymbol()?.let { return it }
         val call = resolveToCall()?.calls?.singleOrNull() ?: return null
         return if (call is KaCallableMemberCall<*, *>) call.symbol else null
@@ -90,7 +89,7 @@ object K2CreateFunctionFromUsageUtil {
                     val ktType = variable.returnType
                     val symbol = variable.symbol as? KaCallableSymbol
                     val parameterType = symbol?.receiverType ?: (variable.symbol
-                        .containingDeclaration as? KaNamedClassOrObjectSymbol)?.defaultType ?: builtinTypes.nullableAny
+                        .containingDeclaration as? KaNamedClassSymbol)?.defaultType ?: builtinTypes.nullableAny
                     buildClassType(ClassId.fromString("kotlin/properties/$delegateClassName")) {
                         argument(parameterType)
                         argument(ktType)
@@ -125,7 +124,7 @@ object K2CreateFunctionFromUsageUtil {
             e = parent
         }
         if (e is KtStringTemplateEntry) {
-            return withValidityAssertion { analysisSession.builtinTypes.string }
+            return withValidityAssertion { useSiteSession.builtinTypes.string }
         }
         return null
     }
@@ -139,14 +138,14 @@ object K2CreateFunctionFromUsageUtil {
             e=e.parent
         }
         if (e is KtFunction && e.bodyBlockExpression == null && e.bodyExpression?.isAncestor(expression) == true) {
-            return e.expectedType ?: withValidityAssertion { analysisSession.builtinTypes.any }
+            return e.expectedType ?: withValidityAssertion { useSiteSession.builtinTypes.any }
         }
         return null
     }
 
     context (KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
+    fun KaType.convertToJvmType(useSitePosition: PsiElement): JvmType? = asPsiType(useSitePosition, allowErrorTypes = false)
 
     context (KaSession)
     private fun KtExpression.getClassOfExpressionType(): PsiElement? = when (val symbol = resolveExpression()) {
@@ -342,5 +341,10 @@ object K2CreateFunctionFromUsageUtil {
         }
     }
 
-
+    context(KaSession)
+    fun computeExpectedParams(call: KtCallElement): List<ExpectedParameter> {
+        return call.valueArguments.mapIndexed { index, valueArgument ->
+            valueArgument.getExpectedParameterInfo { "p$index" }
+        }
+    }
 }

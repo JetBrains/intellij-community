@@ -1,8 +1,0 @@
-com/intellij/execution/process/AnsiTerminalEmulator
-com/intellij/openapi/client/ClientProjectSession
-com/intellij/openapi/ui/DialogBuilder$MyDialogWrapper
-com/intellij/openapi/wm/RegisterToolWindowTask
-com/intellij/ui/ReorderableListController$ActionBehaviour
-com/intellij/ui/components/JBScrollPane$ViewportBorder
-com/intellij/ui/messager/CalloutComponent$Pointer
-com/intellij/util/animation/JBAnimator$Statistic

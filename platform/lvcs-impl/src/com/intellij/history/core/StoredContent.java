@@ -6,12 +6,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.io.DataInputOutputUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+@ApiStatus.Internal
 public class StoredContent extends Content {
   private static final int UNAVAILABLE = 0;
 

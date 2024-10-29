@@ -1364,6 +1364,21 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON313);
   }
 
+  // PY-74231
+  public void testTypeAliasStatementInClassBody() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-74231
+  public void testTypeAliasStatementInFunctionBody() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
+  // PY-74321
+  public void testTypeAliasStatementInsideStatementListContainers() {
+    doTest(LanguageLevel.PYTHON312);
+  }
+
   public void testTypeKeywordAsIdentifier() {
     doTest(LanguageLevel.PYTHON312);
   }

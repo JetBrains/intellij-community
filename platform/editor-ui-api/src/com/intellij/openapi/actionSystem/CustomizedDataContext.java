@@ -98,12 +98,14 @@ public class CustomizedDataContext implements DataContext, UserDataHolder, AnAct
     return new CustomizedDataContext(myParent, myDataHolder, AnActionEvent.getInjectedDataContext(myCustomized));
   }
 
-  /** @deprecated Use {@link #withProvider} */
+  /** @deprecated Use {@link #withSnapshot} */
   @Deprecated(forRemoval = true)
   public static @NotNull CustomizedDataContext create(@NotNull DataContext parent, @NotNull DataProvider provider) {
     return new CustomizedDataContext(parent, provider, true);
   }
 
+  /** @deprecated Use {@link #withSnapshot} */
+  @Deprecated(forRemoval = true)
   public static @NotNull DataContext withProvider(@NotNull DataContext parent, @NotNull DataProvider provider) {
     DataContext customized = DataManager.getInstance().customizeDataContext(parent, provider);
     UserDataHolder holder = parent instanceof UserDataHolder o ? o :

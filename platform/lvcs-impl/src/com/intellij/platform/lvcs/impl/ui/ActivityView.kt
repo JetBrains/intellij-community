@@ -1,9 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.lvcs.impl.ui
 
+import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.impl.DiffEditorViewer
 import com.intellij.diff.impl.DiffRequestProcessor
 import com.intellij.diff.impl.DiffRequestProcessorListener
+import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.find.EditorSearchSession
 import com.intellij.find.SearchTextArea
 import com.intellij.find.editorHeaderActions.Utils
@@ -22,8 +24,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreview
-import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
-import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.platform.lvcs.impl.*
@@ -55,7 +55,7 @@ import javax.swing.text.JTextComponent
 @ApiStatus.Internal
 class ActivityView(private val project: Project, gateway: IdeaGateway, val activityScope: ActivityScope,
                    private val isFrameDiffPreview: Boolean = false) :
-  JBPanel<ActivityView>(BorderLayout()), DataProvider, Disposable {
+  JBPanel<ActivityView>(BorderLayout()), UiDataProvider, Disposable {
 
   private val coroutineScope = project.service<ActivityService>().coroutineScope.childScope("ActivityView")
   private val settings = service<ActivityViewApplicationSettings>()
@@ -168,12 +168,11 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
     }
   }
 
-  override fun getData(dataId: String): Any? {
-    if (ActivityViewDataKeys.SELECTION.`is`(dataId)) return activityList.selection
-    if (ActivityViewDataKeys.SCOPE.`is`(dataId)) return activityScope
-    if (EditorTabDiffPreviewManager.EDITOR_TAB_DIFF_PREVIEW.`is`(dataId)) return editorDiffPreview
-    if (ActivityViewDataKeys.DIRECTORY_DIFF_MODE.`is`(dataId)) return model.diffMode
-    return null
+  override fun uiDataSnapshot(sink: DataSink) {
+    sink[ActivityViewDataKeys.SELECTION] = activityList.selection
+    sink[ActivityViewDataKeys.SCOPE] = activityScope
+    sink[DiffDataKeys.EDITOR_TAB_DIFF_PREVIEW] = editorDiffPreview
+    sink[ActivityViewDataKeys.DIRECTORY_DIFF_MODE] = model.diffMode
   }
 
   val preferredFocusedComponent: JComponent get() = activityList
@@ -181,7 +180,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
   private fun createChangesBrowser(): ActivityChangesBrowser? {
     if (model.isSingleDiffSupported) return null
 
-    val changesBrowser = ActivityChangesBrowser(project, isSwitchingDiffModeAllowed)
+    val changesBrowser = ActivityChangesBrowser(project, isSwitchingDiffModeAllowed, searchField.textComponent)
     model.addListener(object : ActivityModelListener {
       override fun onDiffDataLoadingStarted() {
         changesBrowser.loadingStarted()
@@ -323,7 +322,7 @@ class ActivityView(private val project: Project, gateway: IdeaGateway, val activ
       }
 
       val activityView = ActivityView(project, gateway, activityScope)
-      if (Registry.`is`("lvcs.open.diff.automatically") && !VcsEditorTabFilesManager.getInstance().shouldOpenInNewWindow) {
+      if (Registry.`is`("lvcs.open.diff.automatically") && DiffEditorTabFilesManager.isDiffInEditor) {
         activityView.openDiffWhenLoaded()
       }
 

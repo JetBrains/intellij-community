@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.base.test
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.junit.Assert
 import org.slf4j.LoggerFactory
@@ -284,6 +285,8 @@ object IgnoreTests {
         const val IGNORE_FE10_BINDING_BY_FIR: String = "// IGNORE_FE10_BINDING_BY_FIR"
 
         const val IGNORE_K1: String = "// IGNORE_K1"
+
+        fun of(mode: KotlinPluginMode): String = if (mode == KotlinPluginMode.K2) IGNORE_K2 else IGNORE_K1
     }
 
     enum class FileExtension {

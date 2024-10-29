@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
+import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -21,12 +22,14 @@ import com.intellij.psi.PsiFile;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
 import static com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelKt.getConfigureHighlightingLevelPopup;
 
+@ApiStatus.Internal
 public final class DaemonEditorPopup extends PopupHandler {
   private final Project myProject;
   private final Editor myEditor;
@@ -60,6 +63,13 @@ public final class DaemonEditorPopup extends PopupHandler {
         @Override
         public boolean isSelected(@NotNull AnActionEvent e) {
           return UISettings.getInstance().getShowEditorToolTip();
+        }
+
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          super.update(e);
+          e.getPresentation().setVisible(e.getPresentation().isVisible() &&
+                                         !Boolean.TRUE.equals(myEditor.getUserData(EditorMarkupModelImpl.DISABLE_CODE_LENS)));
         }
 
         @Override

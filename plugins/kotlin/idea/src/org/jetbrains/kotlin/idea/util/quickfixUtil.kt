@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.util
 
@@ -12,8 +12,6 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickF
 import org.jetbrains.kotlin.idea.quickfix.KotlinSingleIntentionActionFactory
 import org.jetbrains.kotlin.idea.resolve.dataFlowValueFactory
 import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtPrimaryConstructor
-import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.getDataFlowInfoAfter
@@ -29,17 +27,6 @@ fun createIntentionFactory(
     factory: (Diagnostic) -> IntentionAction?
 ) = object : KotlinSingleIntentionActionFactory() {
     override fun createAction(diagnostic: Diagnostic) = factory(diagnostic)
-}
-
-fun KtPrimaryConstructor.addConstructorKeyword(): PsiElement? {
-    val modifierList = this.modifierList ?:  return null
-    val psiFactory = KtPsiFactory(project)
-    val constructor = if (valueParameterList == null) {
-        psiFactory.createPrimaryConstructor("constructor()")
-    } else {
-        psiFactory.createConstructorKeyword()
-    }
-    return addAfter(constructor, modifierList)
 }
 
 fun getDataFlowAwareTypes(

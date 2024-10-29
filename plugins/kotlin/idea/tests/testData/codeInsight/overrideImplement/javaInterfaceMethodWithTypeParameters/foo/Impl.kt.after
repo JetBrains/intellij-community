@@ -5,3 +5,6 @@ class Impl : TestJavaInterface<String> {
         TODO("Not yet implemented")
     }
 }
+
+// MEMBER_K2: "<T : String?> onTypingEvent(): T?"
+// MEMBER_F10: "onTypingEvent(): T!"

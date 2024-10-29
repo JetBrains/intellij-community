@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.WriteIntentReadAction
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -149,7 +150,7 @@ internal class TerminalDocumentationManager(private val project: Project, privat
       popupScope.coroutineContext.job.cancelChildren()
       // hide the lookup if it is specified, and it is explicit user action (for example, escape shortcut)
       if (shouldHideLookup && hideLookupOnCancel) {
-        lookup.hideLookup(true)
+        WriteIntentReadAction.run { lookup.hideLookup(true) }
       }
     }
 

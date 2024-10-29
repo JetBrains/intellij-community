@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +61,7 @@ public class PlatformVirtualFileManager extends VirtualFileManagerImpl {
       int recordId = queue.poll();
       if (result.add(recordId)) {
         ProgressManager.checkCanceled();
-        for (int childId : FSRecords.listIds(recordId)) {
+        for (int childId : FSRecords.getInstance().listIds(recordId)) {
           queue.add(childId);
         }
       }

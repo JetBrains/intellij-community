@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
@@ -16,10 +16,10 @@ import javax.swing.event.DocumentListener;
 
 public final class ArrangementTextFieldUiComponent extends AbstractArrangementUiComponent {
 
-  @NotNull private final JBTextField myTextField = new JBTextField(20);
-  @NotNull private final Alarm       myAlarm     = new Alarm();
+  private final @NotNull JBTextField myTextField = new JBTextField(20);
+  private final @NotNull Alarm       myAlarm     = new Alarm();
 
-  @NotNull private final ArrangementSettingsToken myToken;
+  private final @NotNull ArrangementSettingsToken myToken;
 
   public ArrangementTextFieldUiComponent(@NotNull ArrangementSettingsToken token) {
     super(token);
@@ -47,9 +47,8 @@ public final class ArrangementTextFieldUiComponent extends AbstractArrangementUi
     myAlarm.addRequest(() -> fireStateChanged(), ArrangementConstants.TEXT_UPDATE_DELAY_MILLIS);
   }
 
-  @NotNull
   @Override
-  public ArrangementSettingsToken getToken() {
+  public @NotNull ArrangementSettingsToken getToken() {
     return myToken;
   }
 
@@ -58,9 +57,8 @@ public final class ArrangementTextFieldUiComponent extends AbstractArrangementUi
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
   @Override
-  public ArrangementMatchCondition getMatchCondition() {
+  public @NotNull ArrangementMatchCondition getMatchCondition() {
     String text = myTextField.getText();
     return new ArrangementAtomMatchCondition(myToken, StringUtil.isEmpty(text) ? "" : text.trim());
   }

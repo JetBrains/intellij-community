@@ -46,15 +46,6 @@ class KotlinExpressionTypeProviderDescriptorsImpl : KotlinExpressionTypeProvider
         }
     }
 
-    override fun KtExpression.shouldShowStatementType(): Boolean {
-        if (parent !is KtBlockExpression) return true
-        if (parent.children.lastOrNull() == this) {
-            return isUsedAsExpression(analyze(BodyResolveMode.PARTIAL_WITH_CFA))
-        }
-        return false
-    }
-
-
     override fun getInformationHint(element: KtExpression): String {
         val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
 

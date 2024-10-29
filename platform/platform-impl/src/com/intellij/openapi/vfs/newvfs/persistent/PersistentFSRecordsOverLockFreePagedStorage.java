@@ -152,8 +152,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <R, E extends Throwable> R readRecord(final int recordId,
-                                               final @NotNull RecordReader<R, E> reader) throws E, IOException {
+  public <R> R readRecord(final int recordId,
+                          final @NotNull RecordReader<R> reader) throws IOException {
     final long recordOffsetInFile = recordOffsetInFile(recordId);
     final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
     try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */false)) {
@@ -169,8 +169,8 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <E extends Throwable> int updateRecord(final int recordId,
-                                                final @NotNull RecordUpdater<E> updater) throws E, IOException {
+  public int updateRecord(final int recordId,
+                          final @NotNull RecordUpdater updater) throws IOException {
     final int trueRecordId = (recordId <= NULL_ID) ?
                              allocateRecord() :
                              recordId;
@@ -195,7 +195,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <R, E extends Throwable> R readHeader(final @NotNull HeaderReader<R, E> reader) throws E, IOException {
+  public <R> R readHeader(final @NotNull HeaderReader<R> reader) throws IOException {
     try (final Page page = storage.pageByOffset(0, /*forWrite: */false)) {
       page.lockPageForRead();
       try {
@@ -208,7 +208,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public <E extends Throwable> void updateHeader(final @NotNull HeaderUpdater<E> updater) throws E, IOException {
+  public void updateHeader(final @NotNull HeaderUpdater updater) throws IOException {
     try (final Page page = storage.pageByOffset(0, /*forWrite: */true)) {
       page.lockPageForWrite();
       try {
@@ -387,20 +387,10 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   public int allocateRecord() {
     int recordId = allocatedRecordsCount.incrementAndGet();
     try {
-      //Ensure storage file is extended to fit new record.
-      // We calculate allocated records via file size on load, so file size must extend to include new record,
+      //Not only assigns new record modCount, but also ensures storage file is actually _extended_ to fit a new record.
+      // We calculate allocated records via file size on load, so must extend the file size to include a new record,
       // otherwise newly allocated record can be lost
-      long recordOffsetInFile = recordOffsetInFile(recordId);
-      int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-      try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-        page.lockPageForWrite();
-        try {
-          page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
-        }
-        finally {
-          page.unlockPageForWrite();
-        }
-      }
+      markRecordAsModified(recordId);
     }
     catch (IOException e) {
       throw new UncheckedIOException("Can't ensure room for recordId=" + recordId, e);
@@ -587,39 +577,6 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   }
 
   @Override
-  public void fillRecord(final int recordId,
-                         final long timestamp,
-                         final long length,
-                         final int flags,
-                         final int nameId,
-                         final int parentId,
-                         final boolean overwriteAttrRef) throws IOException {
-    final long recordOffsetInFile = recordOffsetInFile(recordId);
-    final int recordOffsetOnPage = storage.toOffsetInPage(recordOffsetInFile);
-    try (final PageUnsafe page = (PageUnsafe)storage.pageByOffset(recordOffsetInFile, /*forWrite: */ true)) {
-      page.lockPageForWrite();
-      try {
-        final ByteBuffer pageBuffer = page.rawPageBuffer();
-        pageBuffer.putInt(recordOffsetOnPage + PARENT_REF_OFFSET, parentId);
-        pageBuffer.putInt(recordOffsetOnPage + NAME_REF_OFFSET, nameId);
-        pageBuffer.putInt(recordOffsetOnPage + FLAGS_OFFSET, flags);
-        if (overwriteAttrRef) {
-          pageBuffer.putInt(recordOffsetOnPage + ATTR_REF_OFFSET, 0);
-        }
-        pageBuffer.putLong(recordOffsetOnPage + TIMESTAMP_OFFSET, timestamp);
-        pageBuffer.putLong(recordOffsetOnPage + LENGTH_OFFSET, length);
-
-        incrementRecordVersion(pageBuffer, recordOffsetOnPage);
-
-        page.regionModified(recordOffsetOnPage, RECORD_SIZE_IN_BYTES);
-      }
-      finally {
-        page.unlockPageForWrite();
-      }
-    }
-  }
-
-  @Override
   public void cleanRecord(final int recordId) throws IOException {
     checkRecordIdIsValid(recordId);
 
@@ -727,7 +684,7 @@ public final class PersistentFSRecordsOverLockFreePagedStorage implements Persis
   public void close() throws IOException {
     if (!storage.isClosed()) {
       setIntHeaderField(HEADER_CONNECTION_STATUS_OFFSET, SAFELY_CLOSED_STAMP);
-      
+
       force();
       storage.close();
     }

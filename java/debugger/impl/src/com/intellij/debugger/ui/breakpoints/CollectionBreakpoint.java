@@ -25,7 +25,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -97,9 +96,9 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       if (psiClass != null) {
         getProperties().myClassName = psiClass.getQualifiedName();
       }
-      myIsPrivate = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.PRIVATE));
-      myIsFinal = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.FINAL));
-      myIsStatic = SlowOperations.allowSlowOperations(() -> field.hasModifierProperty(PsiModifier.STATIC));
+      myIsPrivate = field.hasModifierProperty(PsiModifier.PRIVATE);
+      myIsFinal = field.hasModifierProperty(PsiModifier.FINAL);
+      myIsStatic = field.hasModifierProperty(PsiModifier.STATIC);
     }
     myClsPrepared = false;
     myAllMethodsEntryRequestIsEnabled = false;
@@ -235,8 +234,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
   }
 
   private List<ReferenceType> getTrackedClassesInJVM(SuspendContextImpl context) {
-    DebugProcessImpl debugProcess = context.getDebugProcess();
-    VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+    VirtualMachineProxyImpl virtualMachineProxy = context.getVirtualMachineProxy();
 
     return myClassesNames
       .stream()
@@ -293,7 +291,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       }
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {
@@ -331,7 +329,7 @@ public final class CollectionBreakpoint extends BreakpointWithHighlighter<JavaCo
       captureInstanceField(instance, field, context.getDebugProcess(), context);
     }
 
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getVirtualMachineProxy();
 
     for (ThreadReferenceProxyImpl thread : vm.allThreads()) {
       try {

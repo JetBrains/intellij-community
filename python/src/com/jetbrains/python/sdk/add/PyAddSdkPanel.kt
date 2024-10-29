@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.sdk.add
 
 import com.intellij.CommonBundle
@@ -27,19 +13,20 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.PySdkBundle
-import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.newProject.steps.PyAddNewEnvironmentPanel
+import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
 import com.jetbrains.python.pathValidation.PlatformAndRoot
 import com.jetbrains.python.pathValidation.ValidationRequest
 import com.jetbrains.python.pathValidation.validateEmptyDir
 import com.jetbrains.python.psi.icons.PythonPsiApiIcons
-import com.jetbrains.python.sdk.*
-import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
+import com.jetbrains.python.sdk.PyDetectedSdk
+import com.jetbrains.python.sdk.PySdkToInstall
 import com.jetbrains.python.sdk.configuration.findPreferredVirtualEnvBaseSdk
+import com.jetbrains.python.sdk.findBaseSdks
 import com.jetbrains.python.sdk.flavors.MacPythonSdkFlavor
+import com.jetbrains.python.sdk.getSdksToInstall
 import com.jetbrains.python.ui.pyModalBlocking
 import java.awt.Component
 import javax.swing.Icon
@@ -48,7 +35,7 @@ import javax.swing.JPanel
 
 abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
-    get() = mapOf(OK.enabled())
+    get() = mapOf(PyAddSdkDialogFlowAction.OK.enabled())
 
   override val component: Component
     get() = this
@@ -84,7 +71,6 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
   companion object {
     @JvmStatic
     @RequiresEdt
-    @RequiresBlockingContext
     fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton, platformAndRoot: PlatformAndRoot): ValidationInfo? {
       val path = field.text
       return pyModalBlocking {
@@ -109,7 +95,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
     @JvmStatic
     fun validateSdkComboBox(field: PySdkPathChoosingComboBox, @NlsContexts.Button defaultButtonName: String): ValidationInfo? {
-      return when (val sdk = field.selectedSdk) {
+      return when (val sdk = field.selectedSdkIfExists) {
         null -> ValidationInfo(PySdkBundle.message("python.sdk.field.is.empty"), field)
         is PySdkToInstall -> {
           val message = sdk.getInstallationWarning(defaultButtonName)
@@ -181,7 +167,7 @@ private fun PySdkPathChoosingComboBox.removeAllItems() {
 
 /**
  * Obtains a list of sdk to be used as a base for a virtual environment on a pool,
- * then fills the [sdkComboBox] on the EDT and chooses [PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
+ * then fills the [sdkComboBox] on the EDT and chooses [com.jetbrains.python.sdk.PySdkSettings.preferredVirtualEnvBaseSdk] or prepends it.
  */
 fun addBaseInterpretersAsync(sdkComboBox: PySdkPathChoosingComboBox,
                              existingSdks: List<Sdk>,

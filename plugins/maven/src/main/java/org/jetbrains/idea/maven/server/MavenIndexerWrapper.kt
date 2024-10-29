@@ -7,7 +7,6 @@ import org.jetbrains.idea.maven.indices.MavenIndices
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenIndexId
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
-import org.jetbrains.idea.maven.server.RemoteObjectWrapper.RetriableCancelable
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -16,10 +15,12 @@ import java.rmi.RemoteException
 import java.rmi.server.UnicastRemoteObject
 
 abstract class MavenIndexerWrapper : MavenRemoteObjectWrapper<MavenServerIndexer>() {
+  @ApiStatus.Internal
   @Deprecated("use suspend", ReplaceWith("create"))
   @Throws(RemoteException::class)
   protected abstract fun createBlocking(): MavenServerIndexer
 
+  @ApiStatus.Internal
   @Deprecated("use suspend", ReplaceWith("create"))
   @Throws(RemoteException::class)
   @Synchronized

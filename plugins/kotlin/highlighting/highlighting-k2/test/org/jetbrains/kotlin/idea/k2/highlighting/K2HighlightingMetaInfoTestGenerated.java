@@ -165,9 +165,24 @@ public abstract class K2HighlightingMetaInfoTestGenerated extends AbstractK2High
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
         }
 
+        @TestMetadata("KotlinInfixFunctionInjection.kt")
+        public void testKotlinInfixFunctionInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInfixFunctionInjection.kt");
+        }
+
         @TestMetadata("KotlinInjection.kt")
         public void testKotlinInjection() throws Exception {
             runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+        }
+
+        @TestMetadata("KotlinSimpleInjection.kt")
+        public void testKotlinSimpleInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
+        }
+
+        @TestMetadata("KotlinVarargsParametersInjection.kt")
+        public void testKotlinVarargsParametersInjection() throws Exception {
+            runTest("../../idea/tests/testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
         }
 
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")

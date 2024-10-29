@@ -18,12 +18,14 @@ package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
  * @author 2003
  */
+@ApiStatus.Internal
 public class ContentEntryEditorListenerAdapter implements ContentEntryEditor.ContentEntryEditorListener{
   @Override
   public void editingStarted(@NotNull ContentEntryEditor editor) {

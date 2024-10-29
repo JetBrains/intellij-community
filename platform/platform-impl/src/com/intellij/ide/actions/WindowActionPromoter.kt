@@ -9,9 +9,11 @@ import com.intellij.openapi.editor.actionSystem.EditorAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.ExpandableActions
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 import javax.swing.JFrame
 
+@ApiStatus.Internal
 class WindowActionPromoter: ActionPromoter {
   override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
     val window = ComponentUtil.getWindow(context.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT))

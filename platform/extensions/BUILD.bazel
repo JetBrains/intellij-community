@@ -1,0 +1,24 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "extensions",
+  module_name = "intellij.platform.extensions",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j8",
+  kotlinc_opts = "//:k8",
+  deps = [
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/xmlDom:util-xmlDom",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/diagnostic",
+    "@libraries//:kotlinx-collections-immutable-jvm",
+    "@libraries//:annotations",
+  ],
+  exports = ["@libraries//:kotlinx-coroutines-core-jvm"]
+)
+### auto-generated section `build` end

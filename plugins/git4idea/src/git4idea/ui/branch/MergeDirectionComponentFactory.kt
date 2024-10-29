@@ -6,11 +6,7 @@ import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ComboboxSpeedSearch
-import com.intellij.ui.MutableCollectionComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.AlignX
@@ -122,7 +118,7 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         val branches = repoMapping.gitRepository.branches.remoteBranches.filter {
           it.remote == remote
         }
-        replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
+        replaceAll(branches.sorted())
         selectedItem = currentRemoteBranch.takeIf { it != null && branches.contains(it) }
       }
       return branchModel
@@ -168,9 +164,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
                                     GitBundle.message("branch.direction.panel.head.repo.label"),
                                     ComboBox(repoModel).apply {
                                       renderer = SimpleListCellRenderer.create("") { it.repositoryPath }
-                                    }.also {
-                                      ComboboxSpeedSearch.installSpeedSearch(it, GitRepositoryMappingData::repositoryPath)
-                                    }) {
+                                      isSwingPopup = false
+                                    }
+      ) {
         applySelection(repoModel.selected, branchModel.selected)
       }
 
@@ -190,13 +186,10 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         it.remote == remote
       }
 
-      val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
+      val branches = repo.branches.localBranches.sorted() + remoteBranches.sorted()
       branchModel.replaceAll(branches)
       branchModel.selectedItem = repo.currentBranch
     }
-
-    private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
-
 
     private fun <T : GitBranch> createBranchPopup(branchModel: ComboBoxModel<T>,
                                                   @Nls repoRowMessage: String,
@@ -213,10 +206,9 @@ class MergeDirectionComponentFactory<RepoMapping : GitRepositoryMappingData>(
         row(GitBundle.message("branch.direction.panel.branch.label")) {
           branchComponent = comboBox(branchModel, SimpleListCellRenderer.create("", GitBranch::getName))
             .align(AlignX.FILL)
-            .also {
-              ComboboxSpeedSearch.installSpeedSearch(it.component, GitBranch::getName)
+            .component.apply {
+              isSwingPopup = false
             }
-            .component
         }
         row {
           button(GitBundle.message("branch.direction.panel.save.button")) {

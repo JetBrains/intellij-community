@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
@@ -19,7 +19,7 @@ final class MixedSearchListModel extends SearchListModel {
 
   private final Map<SearchEverywhereContributor<?>, Boolean> hasMoreContributors = new HashMap<>();
 
-  final private AtomicReference<SearchEverywhereFoundElementInfo> myNotificationElement = new AtomicReference<>();
+  private final AtomicReference<SearchEverywhereFoundElementInfo> myNotificationElement = new AtomicReference<>();
 
   private final SearchEverywhereReorderingService myReorderingService = SearchEverywhereReorderingService.getInstance();
 

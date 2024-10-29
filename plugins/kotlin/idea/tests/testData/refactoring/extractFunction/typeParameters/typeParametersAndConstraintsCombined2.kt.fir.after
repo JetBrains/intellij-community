@@ -10,7 +10,7 @@ class A<T: Data>(val t: T) where T: DataEx {
     // SIBLING:
     inner class B<U: Data>(val u: U) where U: DataExEx {
         fun <V: Data> foo(v: V): Int where V: DataEx {
-            return i<U, V>(v)
+            return i(v)
         }
     }
 

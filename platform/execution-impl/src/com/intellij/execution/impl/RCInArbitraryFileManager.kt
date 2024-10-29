@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
@@ -160,6 +160,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
         rootElementForLoadedDigest.addContent(runConfig.writeScheme())
       }
       catch (e: Throwable /* classloading problems are expected too */) {
+        if (e is ControlFlowException) throw e
         LOG.warn("Failed to read run configuration in $filePath", e)
       }
     }

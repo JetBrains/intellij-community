@@ -26,6 +26,7 @@ import com.intellij.util.PathUtil
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.quickfix.utils.findInspectionFile
 import org.jetbrains.kotlin.idea.test.*
@@ -271,7 +272,7 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
     private fun findAfterFile(fullPath: String): File {
         val path = fullPath.replace(".before.Main.", ".before.")
-        val afterTokens = (if (isFirPlugin) arrayOf(".after.fir.") else arrayOf()) + ".after."
+        val afterTokens = (if (pluginMode == KotlinPluginMode.K2) arrayOf(".after.k2.") else arrayOf()) + ".after."
         for (afterToken in afterTokens) {
             val file = File(path.replace(".before.", afterToken))
             if (file.exists()) return file
@@ -330,7 +331,9 @@ abstract class AbstractQuickFixMultiFileTest : KotlinLightCodeInsightFixtureTest
 
             if (action == null) {
                 if (actionShouldBeAvailable) {
-                    val texts = getActionsTexts(availableActions.filter { it.isAvailable(file.project, editor, file) })
+                    val texts = getActionsTexts(availableActions.filter {
+                        ShowIntentionActionsHandler.availableFor(file, editor, editor.caretModel.offset, it)
+                    })
                     val infos = doHighlighting()
                     TestCase.fail(
                         "Action with text '" + text + "' is not available in test " + testFilePath + "\n" +

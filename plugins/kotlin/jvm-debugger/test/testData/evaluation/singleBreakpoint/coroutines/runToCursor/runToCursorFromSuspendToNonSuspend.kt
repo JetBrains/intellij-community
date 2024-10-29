@@ -54,6 +54,3 @@ fun ddd(i: Int) {
     val dStr = "hello $i"
     println("ddd: end $i, $dStr")
 }
-
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-// REGISTRY: debugger.always.suspend.thread.before.switch=true

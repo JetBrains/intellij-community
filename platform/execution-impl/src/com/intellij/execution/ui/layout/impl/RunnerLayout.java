@@ -12,6 +12,7 @@ import com.intellij.ui.content.Content;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,6 +59,7 @@ public final class RunnerLayout  {
     return viewDefault != null && viewDefault.isMinimizedInGrid();
   }
 
+  @ApiStatus.Internal
   public @NotNull TabImpl getOrCreateTab(final int index) {
     if (index < 0) {
       return createNewTab();
@@ -89,6 +91,7 @@ public final class RunnerLayout  {
     return tab;
   }
 
+  @ApiStatus.Internal
   public @NotNull TabImpl createNewTab() {
     final int index = myTabs.stream().mapToInt(x -> x.getIndex()).max().orElse(-1) + 1;
     return createNewTab(index);
@@ -216,13 +219,14 @@ public final class RunnerLayout  {
     return setDefault(id, Integer.MAX_VALUE, PlaceInGrid.bottom, false);
   }
 
-
+  @ApiStatus.Internal
   public @NotNull TabImpl.Default setDefault(int tabID, String displayName, Icon icon) {
     final TabImpl.Default tab = new TabImpl.Default(tabID, displayName, icon);
     myDefaultTabs.put(tabID, tab);
     return tab;
   }
 
+  @ApiStatus.Internal
   public @NotNull ViewImpl.Default setDefault(@NotNull String id, int tabIndex, @NotNull PlaceInGrid placeInGrid, boolean isMinimized) {
     final ViewImpl.Default view = new ViewImpl.Default(id, tabIndex, placeInGrid, isMinimized);
     myDefaultViews.put(id, view);

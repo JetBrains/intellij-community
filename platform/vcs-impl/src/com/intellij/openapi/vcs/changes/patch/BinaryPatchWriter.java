@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.BinaryEncoder;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +20,7 @@ import static com.intellij.openapi.vcs.changes.patch.BlobIndexUtil.NOT_COMMITTED
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.getIndexHeader;
 import static com.intellij.openapi.vcs.changes.patch.GitPatchWriter.writeGitHeader;
 
+@ApiStatus.Internal
 public final class BinaryPatchWriter {
   private final static Logger LOG = Logger.getInstance(BinaryFilePatch.class);
 

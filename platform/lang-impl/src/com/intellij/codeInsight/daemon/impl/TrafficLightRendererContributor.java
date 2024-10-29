@@ -2,17 +2,14 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Allows to replace the rendering of the traffic light icon in the top right corner of the editor.
+ * Allows replacing the rendering of the traffic light icon in the top right corner of the editor.
  */
 public interface TrafficLightRendererContributor {
-  ExtensionPointName<TrafficLightRendererContributor> EP_NAME = ExtensionPointName.create("com.intellij.trafficLightRendererContributor");
-
   @Nullable
   TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file);
 }

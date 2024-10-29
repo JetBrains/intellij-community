@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -124,18 +124,17 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public int showPromptDialog(@NotNull final FindModel model, String title) {
+  public int showPromptDialog(final @NotNull FindModel model, String title) {
     return showPromptDialogImpl(model, title, null);
   }
 
   @PromptResultValue
-  private int showPromptDialogImpl(@NotNull final FindModel model,
+  private int showPromptDialogImpl(final @NotNull FindModel model,
                                    @NlsContexts.DialogTitle String title,
-                                   @Nullable final MalformedReplacementStringException exception) {
+                                   final @Nullable MalformedReplacementStringException exception) {
     ReplacePromptDialog replacePromptDialog = new ReplacePromptDialog(model.isMultipleFiles(), title, myProject, exception) {
       @Override
-      @Nullable
-      public Point getInitialLocation() {
+      public @Nullable Point getInitialLocation() {
         if (model.isMultipleFiles() && myReplaceInProjectPromptPos.x >= 0 && myReplaceInProjectPromptPos.y >= 0) {
           return myReplaceInProjectPromptPos;
         }
@@ -195,14 +194,12 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  @NotNull
-  public FindModel getFindInFileModel() {
+  public @NotNull FindModel getFindInFileModel() {
     return myFindInFileModel;
   }
 
   @Override
-  @NotNull
-  public FindModel getFindInProjectModel() {
+  public @NotNull FindModel getFindInProjectModel() {
     myFindInProjectModel.setFromCursor(false);
     myFindInProjectModel.setForward(true);
     myFindInProjectModel.setGlobal(true);
@@ -238,7 +235,7 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  public FindModel getFindNextModel(@NotNull final Editor editor) {
+  public FindModel getFindNextModel(final @NotNull Editor editor) {
     if (myFindNextModel == null) return null;
 
     EditorSearchSession search = EditorSearchSession.get(editor);
@@ -262,14 +259,12 @@ public final class FindManagerImpl extends FindManager {
   }
 
   @Override
-  @NotNull
-  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model) {
+  public @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model) {
     return findString(text, offset, model, null);
   }
 
-  @NotNull
   @Override
-  public FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model, @Nullable VirtualFile file) {
+  public @NotNull FindResult findString(@NotNull CharSequence text, int offset, @NotNull FindModel model, @Nullable VirtualFile file) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("offset="+offset);
       LOG.debug("textlength="+text.length());
@@ -436,12 +431,11 @@ public final class FindManagerImpl extends FindManager {
     return isWordStart && isWordEnd;
   }
 
-  @NotNull
-  private FindResult doFindString(@NotNull CharSequence text,
-                                  char @Nullable [] textArray,
-                                  int offset,
-                                  @NotNull FindModel model,
-                                  @Nullable VirtualFile file) {
+  private @NotNull FindResult doFindString(@NotNull CharSequence text,
+                                           char @Nullable [] textArray,
+                                           int offset,
+                                           @NotNull FindModel model,
+                                           @Nullable VirtualFile file) {
     String toFind = model.getStringToFind();
     if (toFind.isEmpty()) {
       return NOT_FOUND_RESULT;
@@ -472,8 +466,7 @@ public final class FindManagerImpl extends FindManager {
     return new FindResultImpl(index, index + toFind.length());
   }
 
-  @NotNull
-  private static StringSearcher createStringSearcher(@NotNull FindModel model) {
+  private static @NotNull StringSearcher createStringSearcher(@NotNull FindModel model) {
     return new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), model.isForward());
   }
 
@@ -508,12 +501,11 @@ public final class FindManagerImpl extends FindManager {
     }
   }
 
-  @NotNull
-  private FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
-                                               char[] textArray,
-                                               int offset,
-                                               @NotNull FindModel model,
-                                               @NotNull final VirtualFile file) {
+  private @NotNull FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+                                                        char[] textArray,
+                                                        int offset,
+                                                        @NotNull FindModel model,
+                                                        final @NotNull VirtualFile file) {
     ThreadLocal<SoftReference<CommentsLiteralsSearchData>> data;
     synchronized (model) {
       data = model.getUserData(ourCommentsLiteralsSearchDataKey);
@@ -769,12 +761,12 @@ public final class FindManagerImpl extends FindManager {
     return replacement;
   }
 
-  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
+  private static String getStringToReplaceByRegexp(final @NotNull FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
     Matcher matcher = compileRegexAndFindFirst(model, text, startOffset);
     return getStringToReplaceByRegexp(model, matcher);
   }
 
-  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, Matcher matcher) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp(final @NotNull FindModel model, Matcher matcher) throws MalformedReplacementStringException{
     if (matcher == null) return null;
     try {
       String toReplace = model.getStringToReplace();
@@ -1014,8 +1006,7 @@ public final class FindManagerImpl extends FindManager {
     });
   }
 
-  @NotNull
-  public FindUsagesManager getFindUsagesManager() {
+  public @NotNull FindUsagesManager getFindUsagesManager() {
     return myFindUsagesManager;
   }
 }

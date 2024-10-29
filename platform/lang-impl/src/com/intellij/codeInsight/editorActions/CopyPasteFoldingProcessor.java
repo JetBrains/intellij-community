@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.datatransfer.DataFlavor;
@@ -24,12 +25,12 @@ import java.util.Collections;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTransferableData> {
   private static final Logger LOG = Logger.getInstance(CopyPasteFoldingProcessor.class);
 
-  @NotNull
   @Override
-  public List<FoldingTransferableData> collectTransferableData(final @NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
+  public @NotNull List<FoldingTransferableData> collectTransferableData(final @NotNull PsiFile file, final @NotNull Editor editor, final int @NotNull [] startOffsets, final int @NotNull [] endOffsets) {
     // might be slow
     //CodeFoldingManager.getInstance(file.getManager().getProject()).updateFoldRegions(editor);
 
@@ -58,9 +59,8 @@ public final class CopyPasteFoldingProcessor extends CopyPastePostProcessor<Fold
     return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[0])));
   }
 
-  @NotNull
   @Override
-  public List<FoldingTransferableData> extractTransferableData(final @NotNull Transferable content) {
+  public @NotNull List<FoldingTransferableData> extractTransferableData(final @NotNull Transferable content) {
     DataFlavor flavor = FoldingData.getDataFlavor();
     if (flavor == null) {
       return Collections.emptyList();

@@ -4,7 +4,6 @@ package com.intellij.python.featuresTrainer.ift
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.diagnostic.getOrLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -95,8 +94,8 @@ abstract class PythonBasedLangSupport : AbstractLangSupport() {
                            existingSdks: List<Sdk>,
                            module: Module?): Sdk? {
     val venvRoot = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(project.basePath))
-    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project).getOrLogException(LOGGER)
-    return venvSdk?.also {
+    val venvSdk = createVirtualEnvSynchronously(preferredSdk, existingSdks, venvRoot, project.basePath, project, module, project)
+    return venvSdk.also {
       SdkConfigurationUtil.addSdk(it)
     }
   }

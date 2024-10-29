@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.safeDelete;
 
 import com.intellij.ide.projectView.impl.NestingTreeStructureProvider;
@@ -12,6 +12,7 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.RefactoringSettings;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ import java.util.List;
  * suggests to delete child files as well. Example: when deleting foo.ts file user is suggested to delete generated foo.js and foo.js.map
  * files as well.
  */
+@ApiStatus.Internal
 public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDeleteProcessorDelegate {
   @Override
   public boolean handlesElement(final PsiElement element) {
@@ -36,7 +38,7 @@ public final class RelatedFilesSafeDeleteProcessorDelegate implements SafeDelete
   }
 
   @Override
-  public Collection<PsiElement> getAdditionalElementsToDelete(@NotNull final PsiElement element,
+  public Collection<PsiElement> getAdditionalElementsToDelete(final @NotNull PsiElement element,
                                                               final @NotNull Collection<? extends PsiElement> allElementsToDelete,
                                                               final boolean askUser) {
     if (!askUser || !(element instanceof PsiFile)) return Collections.emptyList();

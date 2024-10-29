@@ -12,7 +12,6 @@ import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.ImageGeneratingProvider
 import org.intellij.markdown.html.ReferenceLinksGeneratingProvider
-import org.intellij.markdown.html.makeXssSafe
 import org.intellij.markdown.parser.LinkMap
 import org.intellij.markdown.parser.MarkerProcessor
 import org.intellij.markdown.parser.MarkerProcessorFactory

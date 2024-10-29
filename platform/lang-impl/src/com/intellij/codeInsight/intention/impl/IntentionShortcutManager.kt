@@ -31,8 +31,10 @@ import com.intellij.openapi.wm.WindowManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 /** Wraps intentions in [IntentionActionAsAction] to make it possible to assign shortcuts to them */
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class IntentionShortcutManager(private val coroutineScope: CoroutineScope) {
   private var registeredKeymap: Keymap? = null

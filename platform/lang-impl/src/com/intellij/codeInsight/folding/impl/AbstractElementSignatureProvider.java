@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,8 +25,7 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
   private static final List<String> ESCAPE_TO = Arrays.asList(ESCAPE_CHAR + ESCAPE_CHAR, ESCAPE_CHAR + "s", ESCAPE_CHAR + "h");
 
   @Override
-  @Nullable
-  public PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature, @Nullable StringBuilder processingInfoStorage) {
+  public @Nullable PsiElement restoreBySignature(@NotNull PsiFile file, @NotNull String signature, @Nullable StringBuilder processingInfoStorage) {
     int semicolonIndex = signature.indexOf(ELEMENTS_SEPARATOR);
     PsiElement parent;
 
@@ -59,12 +58,11 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     return restoreBySignatureTokens(file, parent, type, tokenizer, processingInfoStorage);
   }
 
-  @Nullable
-  protected abstract PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
-                                                         @NotNull PsiElement parent,
-                                                         @NotNull String type,
-                                                         @NotNull StringTokenizer tokenizer,
-                                                         @Nullable StringBuilder processingInfoStorage);
+  protected abstract @Nullable PsiElement restoreBySignatureTokens(@NotNull PsiFile file,
+                                                                   @NotNull PsiElement parent,
+                                                                   @NotNull String type,
+                                                                   @NotNull StringTokenizer tokenizer,
+                                                                   @Nullable StringBuilder processingInfoStorage);
 
   /**
    * @return -1, if {@code parent} has too many children and calculating child index would be too slow
@@ -99,11 +97,10 @@ public abstract class AbstractElementSignatureProvider implements ElementSignatu
     return index;
   }
 
-  @Nullable
-  protected static <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
-                                                              String name,
-                                                              int index,
-                                                              @NotNull Class<T> hisClass)
+  protected static @Nullable <T extends PsiNamedElement> T restoreElementInternal(@NotNull PsiElement parent,
+                                                                                  String name,
+                                                                                  int index,
+                                                                                  @NotNull Class<T> hisClass)
   {
     PsiElement[] children = parent.getChildren();
 

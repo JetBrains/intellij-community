@@ -9,8 +9,6 @@ org.jetbrains.kotlin.idea.codeinsight.api.classic.inspections.IntentionBasedInsp
 org.jetbrains.kotlin.idea.codeInsight.inspections.shared.KotlinOptimizeImportsQuickFix
 org.jetbrains.kotlin.idea.inspections.migration.ObsoleteCoroutinesDelegateQuickFix
 org.jetbrains.kotlin.idea.inspections.SafeDeleteFix
-org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$ChangeTypeToMutableFix
-org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection$JoinWithInitializerFix
 org.jetbrains.kotlin.idea.inspections.UnusedReceiverParameterInspection$RemoveReceiverFix
 org.jetbrains.kotlin.idea.intentions.AddPropertyAccessorsIntention
 org.jetbrains.kotlin.idea.intentions.AddPropertyGetterIntention
@@ -20,7 +18,6 @@ org.jetbrains.kotlin.idea.intentions.CreateKotlinSubClassIntention
 org.jetbrains.kotlin.idea.intentions.IntroduceImportAliasIntention
 org.jetbrains.kotlin.idea.intentions.MoveMemberToCompanionObjectIntention
 org.jetbrains.kotlin.idea.intentions.MovePropertyToConstructorIntention
-org.jetbrains.kotlin.idea.intentions.ReplaceWithOrdinaryAssignmentIntention
 org.jetbrains.kotlin.idea.intentions.SpecifyTypeExplicitlyIntention
 org.jetbrains.kotlin.idea.quickfix.AddAnnotationTargetFix
 org.jetbrains.kotlin.idea.quickfix.AddFunctionParametersFix
@@ -38,7 +35,6 @@ org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralSignatureFix
 org.jetbrains.kotlin.idea.quickfix.ChangeFunctionLiteralReturnTypeFix
 org.jetbrains.kotlin.idea.quickfix.ChangeFunctionSignatureFix$Companion$RemoveParameterFix
 org.jetbrains.kotlin.idea.quickfix.ChangeParameterTypeFix
-org.jetbrains.kotlin.idea.quickfix.ChangeToMutableCollectionFix
 org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix
 org.jetbrains.kotlin.idea.quickfix.ChangeVariableTypeFix$ForOverridden
 org.jetbrains.kotlin.idea.quickfix.ChangeVisibilityFix$ChangeToInternalFix

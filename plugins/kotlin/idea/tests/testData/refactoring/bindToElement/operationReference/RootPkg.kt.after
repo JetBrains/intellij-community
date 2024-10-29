@@ -1,3 +1,5 @@
+import barFoo
+
 // BIND_TO barFoo
 fun foo() {
     0 <caret>barFoo 1

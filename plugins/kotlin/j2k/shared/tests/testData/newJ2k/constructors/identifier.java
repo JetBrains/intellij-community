@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Identifier {
   private final String myName;
   private boolean myHasDollar;

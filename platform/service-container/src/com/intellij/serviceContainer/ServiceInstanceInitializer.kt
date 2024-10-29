@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.serviceContainer
 
-import com.intellij.concurrency.installTemporaryThreadContext
 import com.intellij.diagnostic.PluginException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -14,9 +13,9 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.instanceContainer.instantiation.InstantiationException
 import com.intellij.platform.instanceContainer.instantiation.instantiate
+import com.intellij.platform.instanceContainer.instantiation.withStoredTemporaryContext
 import com.intellij.platform.instanceContainer.internal.InstanceInitializer
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.currentCoroutineContext
 import java.util.concurrent.CancellationException
 
 internal abstract class ServiceInstanceInitializer(
@@ -66,7 +65,7 @@ internal abstract class ServiceInstanceInitializer(
     // which happens only on project/application shutdown, or on plugin unload.
     Cancellation.withNonCancelableSection().use {
       // loadState may invokeLater => don't capture the context
-      installTemporaryThreadContext(currentCoroutineContext()).use {
+      withStoredTemporaryContext(parentScope) {
         componentManager.initializeService(instance, serviceDescriptor, pluginId)
       }
     }

@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.openapi.util.registry.Registry;
@@ -10,6 +11,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
 import com.intellij.ui.SizedIcon;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -28,7 +30,10 @@ public final class DefaultLookupItemRenderer extends LookupElementRenderer<Looku
   }
 
   public static @Nullable Icon getRawIcon(final LookupElement item) {
-    Icon icon = _getRawIcon(item);
+    Icon icon;
+    try (AccessToken ignore = SlowOperations.knownIssue("IDEA-344670, 32126317")) {
+      icon = _getRawIcon(item);
+    }
     if (icon instanceof ScalableIcon) {
       icon = ((ScalableIcon)icon).scale(1f);
     }

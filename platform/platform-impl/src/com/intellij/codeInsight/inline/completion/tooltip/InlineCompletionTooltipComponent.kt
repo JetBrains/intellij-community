@@ -7,9 +7,11 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import java.awt.FlowLayout
 import javax.swing.BoxLayout
 
+@ApiStatus.Internal
 class InlineCompletionTooltipComponent {
   @Suppress("DialogTitleCapitalization")
   fun create(session: InlineCompletionSession): DialogPanel {

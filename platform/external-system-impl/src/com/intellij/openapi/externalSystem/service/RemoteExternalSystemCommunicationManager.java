@@ -46,6 +46,7 @@ import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import kotlin.reflect.full.NoSuchPropertyException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +61,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.openapi.application.PathManager.getJarPathForClass;
 
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 public final class RemoteExternalSystemCommunicationManager implements ExternalSystemCommunicationManager, Disposable {
   private static final Logger LOG = Logger.getInstance(RemoteExternalSystemCommunicationManager.class);

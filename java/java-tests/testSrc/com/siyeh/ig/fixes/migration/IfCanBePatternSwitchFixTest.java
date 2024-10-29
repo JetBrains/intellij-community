@@ -20,7 +20,7 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
     myFixture.enableInspections(inspection);
     myRelativePath = "migration/if_can_be_switch";
     myDefaultHint = CommonQuickFixBundle.message("fix.replace.x.with.y", PsiKeyword.IF, PsiKeyword.SWITCH);
-    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotations);
+    ModuleRootModificationUtil.updateModel(getModule(), DefaultLightProjectDescriptor::addJetBrainsAnnotationsWithTypeUse);
   }
 
   @Override
@@ -53,4 +53,5 @@ public class IfCanBePatternSwitchFixTest extends IGQuickFixesTestCase {
   public void testSeveralIfStatements() { doTest(); }
   public void testSeveralIfStatementsWithComments() { doTest(); }
   public void testIfOnClass() { assertQuickfixNotAvailable(); }
+  public void testWithEnums() { doTest(); }
 }

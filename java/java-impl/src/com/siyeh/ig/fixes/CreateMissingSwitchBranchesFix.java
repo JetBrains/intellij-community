@@ -21,7 +21,7 @@ public abstract class CreateMissingSwitchBranchesFix extends BaseSwitchFix {
 
   @Override
   protected String getText(@NotNull PsiSwitchBlock switchBlock) {
-    return CreateSwitchBranchesUtil.getActionName(myNames.stream().sorted().toList());
+    return CreateSwitchBranchesUtil.getActionName(myNames);
   }
 
   @Override

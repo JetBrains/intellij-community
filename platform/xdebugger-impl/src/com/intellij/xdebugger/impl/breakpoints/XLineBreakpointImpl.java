@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,6 +24,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
@@ -44,10 +46,15 @@ import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
 
+@ApiStatus.Internal
 public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreakpointBase<XLineBreakpoint<P>, P, LineBreakpointState<P>>
   implements XLineBreakpoint<P> {
   private static final Logger LOG = Logger.getInstance(XLineBreakpointImpl.class);
+
+  private static final ExecutorService redrawInlaysExecutor =
+    AppExecutorUtil.createBoundedApplicationPoolExecutor("XLineBreakpointImpl Inlay Redraw", 1);
 
   @Nullable private RangeMarker myHighlighter;
   private final XLineBreakpointType<P> myType;
@@ -129,7 +136,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
         RangeHighlighter highlighter = (RangeHighlighter)myHighlighter;
         if (highlighter != null &&
             (!highlighter.isValid()
-             || !highlighter.getTextRange().equals(range) //breakpoint range marker is out-of-sync with actual breakpoint text range
+             || range != null && !highlighter.getTextRange().equals(range) //breakpoint range marker is out-of-sync with actual breakpoint text range
              || !DocumentUtil.isValidOffset(highlighter.getStartOffset(), finalDocument)
              || !Comparing.equal(highlighter.getTextAttributes(null), attributes)
              // it seems that this check is not needed - we always update line number from the highlighter
@@ -151,7 +158,7 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
           MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(finalDocument, getProject(), true);
           if (range != null && !range.isEmpty()) {
             TextRange lineRange = DocumentUtil.getLineTextRange(finalDocument, line);
-            if (range.intersects(lineRange)) {
+            if (range.intersectsStrict(lineRange)) {
               highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                             DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
                                                             HighlighterTargetArea.EXACT_RANGE);
@@ -211,17 +218,24 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
   @Override
   public String getPresentableFilePath() {
     String url = getFileUrl();
-    if (url != null && LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
-      return FileUtil.toSystemDependentName(VfsUtilCore.urlToPath(url));
+    if (LocalFileSystem.PROTOCOL.equals(VirtualFileManager.extractProtocol(url))) {
+      String path = VfsUtilCore.urlToPath(url);
+
+      // Try to get the path relative to the project directory to make the result easier to read.
+      VirtualFile project = ProjectUtil.guessProjectDir(getProject());
+      String relativePath = project != null
+                            ? FileUtil.getRelativePath(project.getPath(), path, '/')
+                            : null;
+
+      String presentablePath = relativePath != null ? relativePath : path;
+      return FileUtil.toSystemDependentName(presentablePath);
     }
-    return url != null ? url : "";
+    return url;
   }
 
   @Override
   public String getShortFilePath() {
-    final String path = getPresentableFilePath();
-    if (path.isEmpty()) return "";
-    return new File(path).getName();
+    return new File(VfsUtilCore.urlToPath(getFileUrl())).getName();
   }
 
   @Nullable
@@ -270,17 +284,24 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
 
   private void redrawInlineInlays(@Nullable VirtualFile file, int line) {
     if (file == null) return;
-
     if (!XDebuggerUtil.areInlineBreakpointsEnabled(file)) return;
 
-    var document = FileDocumentManager.getInstance().getDocument(file);
-    if (document == null) return;
+    ReadAction.nonBlocking(() -> {
+        var document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null) return null;
 
-    if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
-      document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
-    }
+        if (myType instanceof XBreakpointTypeWithDocumentDelegation) {
+          document = ((XBreakpointTypeWithDocumentDelegation)myType).getDocumentForHighlighting(document);
+        }
 
-    InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
+        return document;
+      })
+      .expireWith(getProject())
+      .submit(redrawInlaysExecutor)
+      .onSuccess(document -> {
+        if (document == null) return;
+        InlineBreakpointInlayManager.getInstance(getProject()).redrawLine(document, line);
+      });
   }
 
   @Override

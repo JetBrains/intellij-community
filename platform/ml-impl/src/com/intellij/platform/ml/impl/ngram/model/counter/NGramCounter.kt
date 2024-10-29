@@ -2,12 +2,14 @@
 package com.intellij.platform.ml.impl.ngram.model.counter
 
 import com.intellij.platform.ml.impl.ngram.model.NGram
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * An interface representing a counter for n-grams.
  *
  * @param T the type of elements in the n-grams
  */
+@ApiStatus.Internal
 interface NGramCounter<T> {
   /**
    * Returns the frequency of the specified n-gram.

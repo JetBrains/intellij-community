@@ -83,6 +83,7 @@ internal class InlineWatchState @JvmOverloads  constructor(expression: XExpressi
   }
 }
 
+@ApiStatus.Internal
 @Tag("watch")
 class WatchState : XExpressionState {
   constructor() : super()
@@ -90,6 +91,7 @@ class WatchState : XExpressionState {
   constructor(expression: XExpression) : super(expression)
 }
 
+@ApiStatus.Internal
 @Tag("pin-to-top-manager")
 class PinToTopManagerState : BaseState() {
     @get:XCollection(propertyElementName = "pinned-members")

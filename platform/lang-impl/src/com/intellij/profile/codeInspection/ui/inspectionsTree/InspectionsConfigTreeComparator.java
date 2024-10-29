@@ -4,9 +4,11 @@ package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.openapi.util.text.NaturalComparator;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Comparator;
 
+@ApiStatus.Internal
 public final class InspectionsConfigTreeComparator {
   public static final Comparator<InspectionConfigTreeNode> INSTANCE =
     Comparator.<InspectionConfigTreeNode>comparingInt(n -> n instanceof InspectionConfigTreeNode.Group ? 0 : 1)

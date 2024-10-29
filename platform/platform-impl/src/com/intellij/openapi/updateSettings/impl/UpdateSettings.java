@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
+import com.intellij.ide.plugins.PluginManagementPolicy;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,8 +54,14 @@ public class UpdateSettings implements PersistentStateComponentWithModificationT
     myState.setCheckNeeded(value);
   }
 
+  /**
+   * Usages must also honor {@link PluginManagementPolicy#isPluginAutoUpdateAllowed()}
+   */
   public boolean isPluginsAutoUpdateEnabled() { return myState.isPluginsAutoUpdateEnabled(); }
 
+  /**
+   * Usages must also honor {@link PluginManagementPolicy#isPluginAutoUpdateAllowed()}
+   */
   public void setPluginsAutoUpdateEnabled(boolean value) { myState.setPluginsAutoUpdateEnabled(value); }
 
   public boolean isPluginsCheckNeeded() {
@@ -94,22 +101,24 @@ public class UpdateSettings implements PersistentStateComponentWithModificationT
   }
 
   public @NotNull List<ChannelStatus> getActiveChannels() {
-    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
+    var tweaker = UpdateStrategyCustomization.getInstance();
     return Stream.of(ChannelStatus.values())
       .filter(ch -> ch == ChannelStatus.EAP || ch == ChannelStatus.RELEASE || tweaker.isChannelActive(ch))
       .collect(Collectors.toList());
   }
 
   public @NotNull ChannelStatus getSelectedActiveChannel() {
-    UpdateStrategyCustomization tweaker = UpdateStrategyCustomization.getInstance();
-    ChannelStatus current = getSelectedChannelStatus();
+    var tweaker = UpdateStrategyCustomization.getInstance();
+    var current = getSelectedChannelStatus();
     return tweaker.isChannelActive(current)
            ? current
            : getActiveChannels().stream().filter(ch -> ch.compareTo(current) > 0).findFirst().orElse(ChannelStatus.RELEASE);
   }
 
+  /** @deprecated same as {@link #getStoredPluginHosts()} */
+  @Deprecated(forRemoval = true)
   public @NotNull List<String> getPluginHosts() {
-    return myState.getPluginHosts();
+    return getStoredPluginHosts();
   }
 
   public void forceCheckForUpdateAfterRestart() {

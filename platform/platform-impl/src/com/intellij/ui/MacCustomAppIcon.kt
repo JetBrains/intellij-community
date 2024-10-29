@@ -15,6 +15,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.mac.foundation.NSWorkspace
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.function.Function
@@ -111,6 +112,7 @@ class MacCustomAppIcon {
   }
 }
 
+@ApiStatus.Internal
 class MacCustomAppIconStartupService : AppLifecycleListener {
   override fun appStarted() {
     if (MacCustomAppIcon.available() && PropertiesComponent.getInstance().getBoolean(CUSTOM_ICON, CUSTOM_ICON_ENABLED_BY_DEFAULT) && !MacCustomAppIcon.isCustom()) {

@@ -66,19 +66,19 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public void update(@NotNull AnActionEvent e) {
+  public final void update(@NotNull AnActionEvent e) {
     super.update(e);
     NewWelcomeScreen.updateNewProjectIconIfWelcomeScreen(e);
     updateActions();
   }
 
-  protected void updateActions() {
+  protected final void updateActions() {
     removeAll();
     AbstractCallback<T> callback = myCustomization.createCallback();
     ProjectSpecificAction projectSpecificAction = myCustomization.createProjectSpecificAction(callback);
     addProjectSpecificAction(projectSpecificAction);
 
-    List<DirectoryProjectGenerator<?>> generators = myCustomization.getProjectGenerators();
+    List<DirectoryProjectGenerator<?>> generators = EP_NAME.getExtensionList();
     addAll(myCustomization.getActions(generators, callback));
     if (!myCustomization.showUserDefinedProjects()) {
       return;
@@ -112,16 +112,14 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return new ProjectSpecificAction(emptyProjectGenerator, createProjectSpecificSettingsStep(emptyProjectGenerator, callback));
     }
 
-    protected abstract @NotNull AbstractCallback<T> createCallback();
+    protected @NotNull AbstractCallback<T> createCallback() {
+      return new AbstractCallback<>();
+    }
 
     protected abstract @NotNull DirectoryProjectGenerator<T> createEmptyProjectGenerator();
 
     protected abstract @NotNull ProjectSettingsStepBase<T> createProjectSpecificSettingsStep(@NotNull DirectoryProjectGenerator<T> projectGenerator,
                                                                                              @NotNull AbstractCallback<T> callback);
-
-    protected @NotNull List<DirectoryProjectGenerator<?>> getProjectGenerators() {
-      return EP_NAME.getExtensionList();
-    }
 
     public AnAction[] getActions(@NotNull List<? extends DirectoryProjectGenerator<?>> generators, @NotNull AbstractCallback<T> callback) {
       List<AnAction> actions = new ArrayList<>();
@@ -156,7 +154,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return projectSpecificAction.getChildren(ActionManager.getInstance());
     }
 
-    protected boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
+    protected static boolean shouldIgnore(@NotNull DirectoryProjectGenerator<?> generator) {
       return generator instanceof HideableProjectGenerator && ((HideableProjectGenerator)generator).isHidden();
     }
 
@@ -164,7 +162,7 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
       return false;
     }
 
-    void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+    final void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
       myProjectStep = projectStep;
     }
   }
@@ -267,15 +265,16 @@ public abstract class AbstractNewProjectStep<T> extends DefaultActionGroup imple
   }
 
   @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
+  public final @NotNull ActionUpdateThread getActionUpdateThread() {
     return ActionUpdateThread.BGT;
   }
 
-  void setWizardContext(@NotNull WizardContext wizardContext) {
+  final void setWizardContext(@NotNull WizardContext wizardContext) {
     myWizardContext = wizardContext;
   }
 
-  @Nullable WizardContext getWizardContext() {
+  @Nullable
+  final WizardContext getWizardContext() {
     return myWizardContext;
   }
 }

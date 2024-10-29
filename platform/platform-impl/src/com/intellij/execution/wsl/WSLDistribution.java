@@ -28,6 +28,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Functions;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -184,6 +185,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @param timeout                timeout in ms
    * @param processHandlerConsumer consumes process handler just before execution, may be used for cancellation
    */
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(@NotNull List<String> command,
                                              @NotNull WSLCommandLineOptions options,
                                              int timeout,
@@ -202,6 +204,7 @@ public class WSLDistribution implements AbstractWslDistribution {
     return output;
   }
 
+  @RequiresBackgroundThread(generateAssertion = false)
   public @NotNull ProcessOutput executeOnWsl(int timeout, @NonNls String @NotNull ... command) throws ExecutionException {
     return executeOnWsl(Arrays.asList(command), new WSLCommandLineOptions(), timeout, null);
   }
@@ -209,6 +212,7 @@ public class WSLDistribution implements AbstractWslDistribution {
   /**
    * @deprecated use {@link #patchCommandLine(GeneralCommandLine, Project, WSLCommandLineOptions)} instead
    */
+  @ApiStatus.Internal
   @Deprecated
   public @NotNull <T extends GeneralCommandLine> T patchCommandLine(@NotNull T commandLine,
                                                                     @Nullable Project project,
@@ -283,7 +287,7 @@ public class WSLDistribution implements AbstractWslDistribution {
             project,
             IdeBundle.message("wsl.enter.root.password.dialog.title"),
             IdeBundle.message("wsl.sudo.password.for.root.label", getPresentableName()),
-            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            new CredentialAttributes("WSL", "root"),
             true
           );
           if (password != null) {
@@ -683,7 +687,7 @@ public class WSLDistribution implements AbstractWslDistribution {
    * @throws ExecutionException if IP can't be obtained (see logs for more info)
    * @deprecated use {@link com.intellij.execution.wsl.WslProxy} because Windows IP address is almost always closed by firewall and this method also uses `eth0` address which also might be broken
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public final @NotNull InetAddress getHostIpAddress() throws ExecutionException {
     final var hostIpOrException = getValueWithLogging(myLazyHostIp, "host IP");
     if (hostIpOrException == null) {

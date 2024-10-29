@@ -10,7 +10,9 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.DocumentUtil
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
 import org.jetbrains.plugins.terminal.TerminalIcons
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellDataGeneratorsExecutorImpl
 import org.jetbrains.plugins.terminal.block.completion.spec.impl.ShellRuntimeContextProviderImpl
@@ -24,18 +26,20 @@ import kotlin.math.min
 
 internal class PowerShellCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY)
-    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY)
-    val promptModel = parameters.editor.terminalPromptModel
-    if (session == null ||
-        session.model.isCommandRunning ||
-        runtimeContextProvider == null ||
-        generatorsExecutor == null ||
-        promptModel == null ||
-        parameters.completionType != CompletionType.BASIC) {
+    val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
+    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
+    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
+    val promptModel = parameters.editor.terminalPromptModel ?: return
+
+    if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
       return
     }
+
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
+      return
+    }
+
     // stop even if we can't suggest something to not execute contributors from the ShellScript plugin
     result.stopHere()
     if (session.shellIntegration.shellType != ShellType.POWERSHELL) {
@@ -46,12 +50,15 @@ internal class PowerShellCompletionContributor : CompletionContributor(), DumbAw
     val caretPosition = parameters.editor.caretModel.offset - promptModel.commandStartOffset  // relative to command start
     // PowerShell's completion generator receives typed prefix directly, so we can create dummy context
     val runtimeContext = runtimeContextProvider.getContext("")
+
     val completionResult: CompletionResult = runBlockingCancellable {
       generatorsExecutor.execute(runtimeContext, powerShellCompletionGenerator(command, caretPosition))
     }
+
     if (completionResult.matches.isEmpty()) {
       return
     }
+
     val replacementIndex = completionResult.replacementIndex
     val replacementLength = completionResult.replacementLength
     if (replacementIndex < 0 || replacementLength < 0 || replacementIndex + replacementLength > command.length) {

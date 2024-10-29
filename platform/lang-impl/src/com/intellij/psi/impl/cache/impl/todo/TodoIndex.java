@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.psi.impl.cache.impl.todo;
 
@@ -128,9 +128,8 @@ public final class TodoIndex extends SingleEntryFileBasedIndexExtension<Map<Todo
         return TodoIndexers.needsTodoIndex(file);
       }
 
-      @NotNull
       @Override
-      public ThreeState acceptFileType(@NotNull FileType fileType) {
+      public @NotNull ThreeState acceptFileType(@NotNull FileType fileType) {
         DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding.getTodoIndexer(fileType);
         if (indexer == null) return ThreeState.NO;
         else return ThreeState.UNSURE;

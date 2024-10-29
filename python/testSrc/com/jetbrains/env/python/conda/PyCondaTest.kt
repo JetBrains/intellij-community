@@ -12,8 +12,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ProjectRule
 import com.jetbrains.getPythonVersion
 import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.add.target.conda.loadLocalPythonCondaPath
-import com.jetbrains.python.sdk.add.target.conda.saveLocalPythonCondaPath
+import com.jetbrains.python.sdk.add.v1.loadLocalPythonCondaPath
+import com.jetbrains.python.sdk.add.v1.saveLocalPythonCondaPath
 import com.jetbrains.python.sdk.flavors.conda.*
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.EmptyNamedEnv
 import com.jetbrains.python.sdk.flavors.conda.NewCondaEnvRequest.LocalEnvByLocalEnvironmentFile

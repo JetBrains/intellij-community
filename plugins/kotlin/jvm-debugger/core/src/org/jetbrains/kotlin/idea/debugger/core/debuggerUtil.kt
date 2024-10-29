@@ -12,26 +12,22 @@ import com.intellij.debugger.impl.DebuggerContextImpl
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.MethodBytecodeUtil
 import com.intellij.debugger.jdi.StackFrameProxyImpl
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
-import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.codegen.coroutines.INVOKE_SUSPEND_METHOD_NAME
-import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.codegen.inline.dropInlineScopeInfo
-import org.jetbrains.kotlin.codegen.inline.isFakeLocalVariableForInline
-import org.jetbrains.kotlin.codegen.topLevelClassAsmType
 import org.jetbrains.kotlin.idea.base.psi.getLineEndOffset
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
 import org.jetbrains.kotlin.idea.base.psi.getTopmostElementAtOffset
 import org.jetbrains.kotlin.idea.base.util.KOTLIN_FILE_EXTENSIONS
 import org.jetbrains.kotlin.idea.codeinsight.utils.getFunctionSymbol
 import org.jetbrains.kotlin.idea.debugger.base.util.*
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.INVOKE_SUSPEND_METHOD_NAME
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.getBorders
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -77,7 +73,7 @@ fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STR
 fun ReferenceType.containsKotlinStrataAsync(): CompletableFuture<Boolean> =
     DebuggerUtilsAsync.availableStrata(this).thenApply { it.contains(KOTLIN_STRATA_NAME) }
 
-fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
+internal suspend fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, debugProcess: DebugProcessImpl): Boolean =
     isInlinedArgument(location.visibleVariables(debugProcess), inlineArgument)
 
 /**
@@ -86,19 +82,21 @@ fun isInsideInlineArgument(inlineArgument: KtExpression, location: Location, deb
  *
  * For crossinline lambdas inlining depends on whether the lambda is passed further to a non-inline context.
  */
-fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
+internal suspend fun isInlinedArgument(inlineArgument: KtExpression, location: Location): Boolean =
     isInlinedArgument(location.method().safeVariables() ?: emptyList(), inlineArgument)
 
-private fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
+private suspend fun isInlinedArgument(localVariables: List<LocalVariable>, inlineArgument: KtExpression): Boolean {
     if (inlineArgument !is KtFunction && inlineArgument !is KtCallableReferenceExpression) return false
-    val markerLocalVariables = localVariables.filter { it.name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
+    val markerLocalVariables = localVariables
+        .map { it.name() }
+        .filter { it.startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT) }
 
-    return runReadAction {
+    return readAction {
         val lambdaOrdinal = (inlineArgument as? KtFunction)?.let { lambdaOrdinalByArgument(it) }
         val functionName = functionNameByArgument(inlineArgument) ?: "unknown"
 
         markerLocalVariables
-            .map { it.name().drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
+            .map { it.drop(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_ARGUMENT.length) }
             .any { variableName ->
                 if (variableName.startsWith("-")) {
                     val lambdaClassName = ClassNameCalculator.getClassName(inlineArgument)?.substringAfterLast('.') ?: return@any false
@@ -131,9 +129,9 @@ private fun lambdaOrdinalByArgument(elementAt: KtFunction): Int {
 }
 
 private fun functionNameByArgument(argument: KtExpression): String? =
-    analyze(argument) {
-        val function = getFunctionSymbol(argument) as? KaNamedFunctionSymbol ?: return null
-        return function.name.asString()
+    runDumbAnalyze(argument, fallback = null) f@{
+        val function = getFunctionSymbol(argument) as? KaNamedFunctionSymbol ?: return@f null
+        function.name.asString()
     }
 
 private fun Location.visibleVariables(debugProcess: DebugProcessImpl): List<LocalVariable> {
@@ -213,16 +211,12 @@ fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
 fun isInSuspendMethod(location: Location): Boolean {
     val method = location.method()
     val signature = method.signature()
-    val continuationAsmType = continuationAsmType()
-    return signature.contains(continuationAsmType.toString()) || isInvokeSuspendMethod(method)
+    return signature.contains(CONTINUATION_TYPE.toString()) || isInvokeSuspendMethod(method)
 }
 
 fun isInvokeSuspendMethod(method: Method): Boolean {
     return method.name() == INVOKE_SUSPEND_METHOD_NAME && method.signature() == INVOKE_SUSPEND_SIGNATURE
 }
-
-private fun continuationAsmType() =
-    StandardNames.COROUTINES_PACKAGE_FQ_NAME.child(Name.identifier("Continuation")).topLevelClassAsmType()
 
 private fun getFirstMethodLocation(location: Location): Location? {
     val firstLocation = location.safeMethod()?.location() ?: return null
@@ -447,31 +441,28 @@ private class CoroutineStateMachineVisitor(method: Method, private val resumeLoc
 
     private fun isSuspendFunction(name: String?, descriptor: String?): Boolean {
         if (name == null || descriptor == null) return false
-        val continuationAsmType = continuationAsmType()
-        return descriptor.contains(continuationAsmType.toString()) && name != "<init>"
+        return descriptor.contains(CONTINUATION_TYPE.toString()) && name != "<init>"
     }
 }
 
-fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Int {
-    val resumedMethod = resumedLocation?.safeMethod() ?: return -1
+fun getLocationOfCoroutineSuspendReturn(resumedLocation: Location?): Location? {
+    val resumedMethod = resumedLocation?.safeMethod() ?: return null;
     if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
-        return -1
+        return null
     }
-
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumedLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
-    return visitor.firstReturnAfterSuspensionOffset
+    return resumedMethod.locationOfCodeIndex(visitor.firstReturnAfterSuspensionOffset.toLong())
 }
 
-fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Int {
-    val resumedMethod = resumeLocation?.safeMethod() ?: return -1
+fun getLocationOfNextInstructionAfterResume(resumeLocation: Location?): Location? {
+    val resumedMethod = resumeLocation?.safeMethod() ?: return null
     if (DexDebugFacility.isDex(resumedMethod.virtualMachine())) {
-        return -1
+        return null
     }
-
     val visitor = CoroutineStateMachineVisitor(resumedMethod, resumeLocation)
     MethodBytecodeUtil.visit(resumedMethod, visitor, true)
-    return visitor.nextCallOffset
+    return resumedMethod.locationOfCodeIndex(visitor.nextCallOffset.toLong())
 }
 
 fun isOneLineMethod(location: Location): Boolean {
@@ -551,7 +542,7 @@ fun Method.getInlineFunctionOrArgumentVariables(): Sequence<LocalVariable> {
     val localVariables = safeVariables() ?: return emptySequence()
     return localVariables
         .asSequence()
-        .filter { isFakeLocalVariableForInline(it.name()) }
+        .filter { JvmAbi.isFakeLocalVariableForInline(it.name()) }
 }
 
 val DebugProcessImpl.canRunEvaluation: Boolean

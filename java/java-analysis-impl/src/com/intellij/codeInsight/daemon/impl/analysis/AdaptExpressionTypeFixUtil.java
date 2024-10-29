@@ -234,7 +234,7 @@ final class AdaptExpressionTypeFixUtil {
       info.registerFix(action2, null, null, null, null);
       var action1 = new WrapExpressionFix(expectedType, expression, role);
       info.registerFix(action1, null, null, null, null);
-      PsiType castToType = suggestCastTo(expectedType, actualType);
+      PsiType castToType = suggestCastTo(expression, expectedType, actualType);
       if (castToType != null) {
         ModCommandAction action = new AddTypeCastFix(castToType, expression, role);
         info.registerFix(action, null, null, null, null);
@@ -413,10 +413,13 @@ final class AdaptExpressionTypeFixUtil {
     return tryCast(((PsiClassType)parameter).resolve(), PsiTypeParameter.class);
   }
 
-  static @Nullable PsiType suggestCastTo(@Nullable PsiType expectedTypeByParent, @Nullable PsiType actualType) {
+  static @Nullable PsiType suggestCastTo(@NotNull PsiExpression expression,
+                                         @Nullable PsiType expectedTypeByParent, @Nullable PsiType actualType) {
     if (expectedTypeByParent == null || actualType == null) return null;
     if (TypeConversionUtil.isAssignable(expectedTypeByParent, actualType)) return null;
-    if (TypeConversionUtil.areTypesConvertible(actualType, expectedTypeByParent)) return expectedTypeByParent;
+    boolean convertible = expression instanceof PsiNewExpression ? expectedTypeByParent.isAssignableFrom(actualType) : 
+                          TypeConversionUtil.areTypesConvertible(actualType, expectedTypeByParent);
+    if (convertible) return expectedTypeByParent;
     if (actualType instanceof PsiPrimitiveType) {
       PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(expectedTypeByParent);
       if (unboxedType != null && TypeConversionUtil.areTypesConvertible(actualType, unboxedType)) {

@@ -23,7 +23,6 @@ import com.jetbrains.python.debugger.*
 import com.jetbrains.python.debugger.array.AbstractDataViewTable
 import com.jetbrains.python.debugger.array.AsyncArrayTableModel
 import com.jetbrains.python.debugger.array.JBTableWithRowHeaders
-import com.jetbrains.python.debugger.statistics.PyDataViewerCollector
 import java.awt.BorderLayout
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
@@ -35,13 +34,13 @@ import javax.swing.JPanel
 open class PyDataViewerPanel(@JvmField protected val project: Project, val frameAccessor: PyFrameAccessor) :
   JPanel(BorderLayout()), Disposable {
 
-  val sliceTextField: EditorTextField = createEditorField()
+  val sliceTextField: EditorTextField = createEditorField(TextFieldCommandSource.SLICING)
 
   protected val tablePanel = JPanel(BorderLayout())
 
   protected var table: AbstractDataViewTable? = null
 
-  private var formatTextField: EditorTextField = createEditorField()
+  private var formatTextField: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
 
   private var colored: Boolean = PyDataView.isColoringEnabled(project)
 
@@ -160,7 +159,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     return mainTable
   }
 
-  private fun createEditorField(): EditorTextField {
+  private fun createEditorField(commandSource: TextFieldCommandSource): EditorTextField {
     return object : EditorTextField(EditorFactory.getInstance().createDocument(""), project, PythonFileType.INSTANCE, false, true) {
       override fun createEditor(): EditorEx {
         val editor = super.createEditor()
@@ -168,7 +167,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
         editor.getContentComponent().addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.keyCode == KeyEvent.VK_ENTER) {
-              apply(sliceTextField.getText(), false)
+              apply(sliceTextField.getText(), false, commandSource)
             }
           }
         })
@@ -177,18 +176,14 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     }
   }
 
-  fun apply(name: String?, modifier: Boolean) {
+  fun apply(name: String?, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
     ApplicationManager.getApplication().executeOnPooledThread {
       val debugValue = getDebugValue(name, true, modifier)
-      ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier) } }
-    }
-
-    if (!modifier) {
-      PyDataViewerCollector.SLICING_APPLIED_EVENT.log()
+      ApplicationManager.getApplication().invokeLater { debugValue?.let { apply(it, modifier, commandSource) } }
     }
   }
 
-  open fun apply(debugValue: PyDebugValue, modifier: Boolean) {
+  open fun apply(debugValue: PyDebugValue, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
     errorLabel.visible(false)
     val type = debugValue.type
     val strategy = DataViewStrategy.getStrategy(type)

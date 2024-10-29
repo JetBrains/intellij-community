@@ -69,6 +69,7 @@ interface GradleBuildScriptBuilder<BSB : GradleBuildScriptBuilder<BSB>> : Gradle
   fun withKotlinJsPlugin(): BSB
   fun withKotlinMultiplatformPlugin(): BSB
   fun withKotlinJvmToolchain(jvmTarget: Int): BSB
+  fun withKotlinDsl(): BSB
   fun withGroovyPlugin(): BSB
   fun withGroovyPlugin(version: String): BSB
   fun withApplicationPlugin(

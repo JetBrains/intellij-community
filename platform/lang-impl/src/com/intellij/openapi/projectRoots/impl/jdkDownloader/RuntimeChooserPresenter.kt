@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -7,8 +7,7 @@ import com.intellij.ui.GroupedComboBoxRenderer
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
 
-abstract class RuntimeChooserPresenter: GroupedComboBoxRenderer<RuntimeChooserItem?>() {
-
+internal abstract class RuntimeChooserPresenter: GroupedComboBoxRenderer<RuntimeChooserItem?>() {
   override fun customize(item: SimpleColoredComponent, value: RuntimeChooserItem?, index: Int, isSelected: Boolean, cellHasFocus: Boolean) {
     when (value) {
       is RuntimeChooserDownloadableItem -> item.presentJbrItem(value)
@@ -16,6 +15,7 @@ abstract class RuntimeChooserPresenter: GroupedComboBoxRenderer<RuntimeChooserIt
       is RuntimeChooserSelectRuntimeItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.select.runtime"), SimpleTextAttributes.GRAYED_ATTRIBUTES)
       is RuntimeChooserAddCustomItem -> item.append(LangBundle.message("dialog.item.choose.ide.runtime.add.custom", SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES))
       is RuntimeChooserItemWithFixedLocation -> item.presetRuntime(value)
+      else -> {}
     }
   }
 

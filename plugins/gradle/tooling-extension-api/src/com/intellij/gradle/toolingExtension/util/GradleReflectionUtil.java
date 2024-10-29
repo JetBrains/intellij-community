@@ -18,18 +18,6 @@ public final class GradleReflectionUtil {
     }
   }
 
-  public static <T> T reflectiveGetProperty(@NotNull Object target, @NotNull String propertyName, @NotNull Class<T> aClass) {
-    try {
-      Method getProperty = target.getClass().getMethod(propertyName);
-      Object property = getProperty.invoke(target);
-      Method get = property.getClass().getMethod("get");
-      Object value = get.invoke(property);
-      return aClass.cast(value);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   public static <T> T reflectiveCall(@NotNull Object target, @NotNull String methodName, @NotNull Class<T> aClass) {
     try {
       Method method = target.getClass().getMethod(methodName);

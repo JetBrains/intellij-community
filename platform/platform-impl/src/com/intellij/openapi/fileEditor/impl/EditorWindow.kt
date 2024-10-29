@@ -14,12 +14,10 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.notebook.editor.BackedVirtualFile
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DataKey
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.markup.TextAttributes
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -62,8 +60,6 @@ import java.awt.geom.RoundRectangle2D
 import java.time.Instant
 import java.util.function.Function
 import javax.swing.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.math.roundToInt
 
 private val LOG = logger<EditorWindow>()
@@ -77,7 +73,8 @@ class EditorWindow internal constructor(
     val DATA_KEY: DataKey<EditorWindow> = DataKey.create("editorWindow")
 
     @JvmField
-    val HIDE_TABS: Key<Boolean> = Key.create("HIDE_TABS")
+    @Deprecated("Use SINGLETON_EDITOR_IN_WINDOW instead")
+    val HIDE_TABS: Key<Boolean> = FileEditorManagerKeys.SINGLETON_EDITOR_IN_WINDOW
 
     // Metadata to support editor tab drag&drop process: initial index
     internal val DRAG_START_INDEX_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor index", -1)
@@ -86,6 +83,7 @@ class EditorWindow internal constructor(
     internal val DRAG_START_LOCATION_HASH_KEY: Key<Int> = KeyWithDefaultValue.create("drag start editor location hash", 0)
 
     // Metadata to support editor tab drag&drop process: initial 'pinned' state
+    @JvmField
     internal val DRAG_START_PINNED_KEY: Key<Boolean> = Key.create("drag start editor pinned state")
 
     @JvmStatic
@@ -142,6 +140,7 @@ class EditorWindow internal constructor(
     LOG.assertTrue(isValid, "EditorWindow not in collection")
   }
 
+  @get:JvmName("isValid")
   internal val isValid: Boolean
     get() = owner.containsWindow(this)
 
@@ -591,6 +590,7 @@ class EditorWindow internal constructor(
   @Deprecated("Use getSiblings()", ReplaceWith("getSiblings()"))
   fun findSiblings(): Array<EditorWindow> = siblings().toList().toTypedArray()
 
+  @JvmName("getSiblings")
   internal fun getSiblings(): List<EditorWindow> = siblings().toList()
 
   @RequiresEdt
@@ -609,7 +609,7 @@ class EditorWindow internal constructor(
   }
 
   internal fun updateTabsVisibility(uiSettings: UISettings = UISettings.getInstance()) {
-    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && (owner.isSingletonEditorInWindow || shouldHideTabs(selectedComposite))) ||
+    tabbedPane.editorTabs.isHideTabs = (owner.isFloating && tabCount == 1 && owner.isSingletonEditorInWindow) ||
                                        uiSettings.editorTabPlacement == UISettings.TABS_NONE ||
                                        (uiSettings.presentationMode && !Registry.`is`("ide.editor.tabs.visible.in.presentation.mode"))
   }
@@ -658,8 +658,10 @@ class EditorWindow internal constructor(
     runBulkTabChange(owner) {
       val fileEditorManager = manager
       try {
-        fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
-          .beforeFileClosed(fileEditorManager, file)
+        WriteIntentReadAction.run {
+          fileEditorManager.project.messageBus.syncPublisher(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER)
+            .beforeFileClosed(fileEditorManager, file)
+        }
         val componentIndex = findComponentIndex(composite)
         val editorTabs = tabbedPane.editorTabs
         // composite could close itself on decomposition
@@ -879,6 +881,7 @@ class EditorWindow internal constructor(
     }
   }
 
+  @JvmName("unsplit")
   internal fun unsplit(setCurrent: Boolean) {
     checkConsistency()
     val splitter = component.parent as? Splitter ?: return
@@ -1177,10 +1180,6 @@ private fun swapComponents(parent: JPanel, toAdd: JComponent, toRemove: JCompone
     parent.remove(toRemove)
     parent.add(toAdd, BorderLayout.CENTER)
   }
-}
-
-private fun shouldHideTabs(composite: EditorComposite?): Boolean {
-  return composite != null && composite.allEditors.any { EditorWindow.HIDE_TABS.get(it, false) }
 }
 
 private class MySplitPainter(

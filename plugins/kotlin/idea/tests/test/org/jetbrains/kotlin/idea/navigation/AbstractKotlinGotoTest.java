@@ -4,10 +4,14 @@ package org.jetbrains.kotlin.idea.navigation;
 
 import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 
-import static org.jetbrains.kotlin.idea.navigation.GotoCheck.checkGotoDirectives;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static org.jetbrains.kotlin.idea.navigation.GotoCheck.checkGotoResult;
 
 public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtureTestCase {
     protected void doSymbolTest(String path) {
@@ -16,7 +20,14 @@ public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtu
         if (directive != null && InTextDirectivesUtils.isDirectiveDefined(myFixture.getEditor().getDocument().getText(), directive)) {
             return;
         }
-        checkGotoDirectives(new GotoSymbolModel2(getProject(), myFixture.getTestRootDisposable()), myFixture.getEditor());
+        checkGotoResult(
+                new GotoSymbolModel2(getProject(), myFixture.getTestRootDisposable()), myFixture.getEditor(),
+                getExpectedFile(Paths.get(path))
+        );
+    }
+
+    private static @NotNull Path getExpectedFile(Path nioPath) {
+        return nioPath.getParent().resolve(nioPath.getFileName().toString().replace(".kt", ".result.txt"));
     }
 
     protected String getIgnoreDirective() {
@@ -25,6 +36,6 @@ public abstract class AbstractKotlinGotoTest extends KotlinLightCodeInsightFixtu
 
     protected void doClassTest(String path) {
         myFixture.configureByFile(path);
-        checkGotoDirectives(new GotoClassModel2(getProject()), myFixture.getEditor());
+        checkGotoResult(new GotoClassModel2(getProject()), myFixture.getEditor(), getExpectedFile(Paths.get(path)));
     }
 }

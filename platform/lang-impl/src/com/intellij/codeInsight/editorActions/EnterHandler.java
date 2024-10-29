@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -45,7 +45,7 @@ public class EnterHandler extends BaseEnterHandler {
   private static final Logger LOG = Logger.getInstance(EnterHandler.class);
 
   private final EditorActionHandler myOriginalHandler;
-  private final static Key<Language> CONTEXT_LANGUAGE = Key.create("EnterHandler.Language");
+  private static final Key<Language> CONTEXT_LANGUAGE = Key.create("EnterHandler.Language");
 
   public EnterHandler(EditorActionHandler originalHandler) {
     super(true);
@@ -172,10 +172,9 @@ public class EnterHandler extends BaseEnterHandler {
     }
   }
 
-  @NotNull
-  private static DataContext getExtendedContext(@NotNull DataContext originalContext,
-                                                @NotNull Project project,
-                                                @NotNull Caret caret) {
+  private static @NotNull DataContext getExtendedContext(@NotNull DataContext originalContext,
+                                                         @NotNull Project project,
+                                                         @NotNull Caret caret) {
     DataContext context = originalContext instanceof UserDataHolder ? originalContext : new DataContextWrapper(originalContext);
     ((UserDataHolder)context).putUserData(CONTEXT_LANGUAGE, PsiUtilBase.getLanguageInEditor(caret, project));
     return context;
@@ -550,8 +549,7 @@ public class EnterHandler extends BaseEnterHandler {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }
 
-    @Nullable
-    private PsiComment createComment(final CharSequence buffer, final CodeInsightSettings settings)
+    private @Nullable PsiComment createComment(final CharSequence buffer, final CodeInsightSettings settings)
       throws IncorrectOperationException {
       myDocument.insertString(myOffset, buffer);
 
@@ -596,15 +594,14 @@ public class EnterHandler extends BaseEnterHandler {
       commentMarker.dispose();
     }
 
-    @Nullable
-    private PsiComment createJavaDocStub(final CodeInsightSettings settings,
-                                            final PsiComment comment,
-                                            final Project project) {
+    private @Nullable PsiComment createJavaDocStub(final CodeInsightSettings settings,
+                                                   final PsiComment comment,
+                                                   final Project project) {
       if (settings.JAVADOC_STUB_ON_ENTER) {
         final DocumentationProvider langDocumentationProvider =
           LanguageDocumentation.INSTANCE.forLanguage(comment.getParent().getLanguage());
 
-        @Nullable final CodeDocumentationProvider docProvider;
+        final @Nullable CodeDocumentationProvider docProvider;
         if (langDocumentationProvider instanceof CompositeDocumentationProvider) {
           docProvider = ((CompositeDocumentationProvider)langDocumentationProvider).getFirstCodeDocumentationProvider();
         } else {
@@ -701,8 +698,7 @@ public class EnterHandler extends BaseEnterHandler {
   }
 
 
-  @Nullable
-  public static Language getLanguage(@NotNull DataContext dataContext) {
+  public static @Nullable Language getLanguage(@NotNull DataContext dataContext) {
     if (dataContext instanceof UserDataHolder) {
       return CONTEXT_LANGUAGE.get((UserDataHolder)dataContext);
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.paths;
 
@@ -7,6 +7,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +19,15 @@ import java.util.Map;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class PathReferenceManagerImpl extends PathReferenceManager {
   private final StaticPathReferenceProvider myStaticProvider = new StaticPathReferenceProvider(null);
   private final PathReferenceProvider myGlobalPathsProvider = new GlobalPathReferenceProvider();
 
   @Override
-  @Nullable
-  public PathReference getPathReference(@NotNull String path,
-                                        @NotNull PsiElement element,
-                                        PathReferenceProvider... additionalProviders) {
+  public @Nullable PathReference getPathReference(@NotNull String path,
+                                                  @NotNull PsiElement element,
+                                                  PathReferenceProvider... additionalProviders) {
     PathReference pathReference;
     for (PathReferenceProvider provider : getProviders()) {
       pathReference = provider.getPathReference(path, element);
@@ -48,11 +49,10 @@ public final class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  @Nullable
-  public PathReference getCustomPathReference(@NotNull String path,
-                                              @NotNull Module module,
-                                              @NotNull PsiElement element,
-                                              PathReferenceProvider... providers) {
+  public @Nullable PathReference getCustomPathReference(@NotNull String path,
+                                                        @NotNull Module module,
+                                                        @NotNull PsiElement element,
+                                                        PathReferenceProvider... providers) {
     for (PathReferenceProvider provider : providers) {
       PathReference reference = provider.getPathReference(path, element);
       if (reference != null) {
@@ -63,21 +63,19 @@ public final class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  @NotNull
-  public PathReferenceProvider getGlobalWebPathReferenceProvider() {
+  public @NotNull PathReferenceProvider getGlobalWebPathReferenceProvider() {
     return myGlobalPathsProvider;
   }
 
   @Override
-  @NotNull
-  public PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed) {
+  public @NotNull PathReferenceProvider createStaticPathReferenceProvider(final boolean relativePathsAllowed) {
     final StaticPathReferenceProvider provider = new StaticPathReferenceProvider(null);
     provider.setRelativePathsAllowed(relativePathsAllowed);
     return provider;
   }
 
   @Override
-  public PsiReference @NotNull [] createReferences(@NotNull final PsiElement psiElement,
+  public PsiReference @NotNull [] createReferences(final @NotNull PsiElement psiElement,
                                                    final boolean soft,
                                                    boolean endingSlashNotAllowed,
                                                    final boolean relativePathsAllowed, PathReferenceProvider... additionalProviders) {
@@ -85,7 +83,7 @@ public final class PathReferenceManagerImpl extends PathReferenceManager {
   }
 
   @Override
-  public PsiReference @NotNull [] createReferences(@NotNull final PsiElement psiElement,
+  public PsiReference @NotNull [] createReferences(final @NotNull PsiElement psiElement,
                                                    final boolean soft,
                                                    boolean endingSlashNotAllowed,
                                                    final boolean relativePathsAllowed,
@@ -150,10 +148,9 @@ public final class PathReferenceManagerImpl extends PathReferenceManager {
     return createReferences(psiElement, soft, false, true, null, additionalProviders);
   }
 
-  @NotNull
-  private static PsiDynaReference<PsiElement> createDynaReference(@NotNull PsiElement element,
-                                                                  @NotNull TextRange textRange,
-                                                                  PsiReference... psiReference) {
+  private static @NotNull PsiDynaReference<PsiElement> createDynaReference(@NotNull PsiElement element,
+                                                                           @NotNull TextRange textRange,
+                                                                           PsiReference... psiReference) {
     final PsiDynaReference<PsiElement> dynaReference = new PsiDynaReference<>(element);
     dynaReference.setRangeInElement(textRange);
     for (PsiReference reference : psiReference) {

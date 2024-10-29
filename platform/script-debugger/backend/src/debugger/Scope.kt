@@ -30,6 +30,8 @@ enum class ScopeType {
   INSTANCE,
   BLOCK,
   SCRIPT,
+  STACK,
+  MODULE,
   UNKNOWN
 }
 

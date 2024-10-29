@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
@@ -107,7 +107,7 @@ class VcsLogFullDetailsIndex<T, D> implements Disposable {
 
   public void update(int commitId, @NotNull D details) {
     checkDisposed();
-    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).compute();
+    myMapReduceIndex.mapInputAndPrepareUpdate(commitId, details).update();
   }
 
   public void clearCaches() {

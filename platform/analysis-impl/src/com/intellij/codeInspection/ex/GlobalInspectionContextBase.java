@@ -466,6 +466,28 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
   /**
+   * Runs code cleanup on the specified scope with the specified profile
+   *
+   * @param project  project from which to use the inspection profile
+   * @param runnable  will be run after completion of the cleanup
+   * @param shouldApplyFix  predicate to filter out fixes
+   * @param profile inspection profile to use
+   * @param scope  the elements to clean up
+   */
+  public static void cleanupElements(@NotNull Project project,
+                                     @Nullable Runnable runnable,
+                                     Predicate<? super ProblemDescriptor> shouldApplyFix,
+                                     @NotNull InspectionProfile profile,
+                                     PsiElement @NotNull ... scope) {
+    List<PsiElement> psiElements = Stream.of(scope).filter(e -> e != null && e.isPhysical()).toList();
+    if (psiElements.isEmpty()) return;
+    GlobalInspectionContextBase globalContext =
+      (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
+    AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
+    globalContext.codeCleanup(analysisScope, profile, null, runnable, false, shouldApplyFix);
+  }
+
+  /**
    * Runs code cleanup on the specified scope
    *
    * @param project  project from which to use the inspection profile
@@ -477,13 +499,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
                                      @Nullable Runnable runnable,
                                      Predicate<? super ProblemDescriptor> shouldApplyFix,
                                      PsiElement @NotNull ... scope) {
-    List<PsiElement> psiElements = Stream.of(scope).filter(e -> e != null && e.isPhysical()).toList();
-    if (psiElements.isEmpty()) return;
-    GlobalInspectionContextBase globalContext =
-      (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-    AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
-    globalContext.codeCleanup(analysisScope, profile, null, runnable, false, shouldApplyFix);
+    cleanupElements(project, runnable, shouldApplyFix, InspectionProjectProfileManager.getInstance(project).getCurrentProfile(), scope);
   }
 
   public void close(boolean noSuspiciousCodeFound) {

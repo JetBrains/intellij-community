@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.nextLeafs
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
 import org.jetbrains.kotlin.idea.completion.lookups.factories.insertAndShortenReferencesInStringUsingTemporarySuffix
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -20,12 +20,12 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 internal object FirSuperEntriesProvider {
     context(KaSession)
-    fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassOrObjectSymbol> {
+    fun getSuperClassesAvailableForSuperCall(context: PsiElement): List<KaNamedClassSymbol> {
         val containingClass = context.getStrictParentOfType<KtClassOrObject>() ?: return emptyList()
-        val containingClassSymbol = containingClass.getClassOrObjectSymbol() ?: return emptyList()
+        val containingClassSymbol = containingClass.classSymbol ?: return emptyList()
         return containingClassSymbol.superTypes.mapNotNull { superType ->
             val classType = superType as? KaClassType ?: return@mapNotNull null
-            classType.symbol as? KaNamedClassOrObjectSymbol
+            classType.symbol as? KaNamedClassSymbol
         }
     }
 }

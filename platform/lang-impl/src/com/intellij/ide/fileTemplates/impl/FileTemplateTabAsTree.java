@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -144,8 +144,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
   }
 
   @Override
-  @Nullable
-  public FileTemplate getSelectedTemplate() {
+  public @Nullable FileTemplate getSelectedTemplate() {
     final TreePath selectionPath = myTree.getSelectionPath();
     if (selectionPath == null) {
       return null;
@@ -154,8 +153,7 @@ abstract class FileTemplateTabAsTree extends FileTemplateTab {
     return getTemplate(node);
   }
 
-  @Nullable
-  private FileTemplate getTemplate(final FileTemplateNode node) {
+  private @Nullable FileTemplate getTemplate(final FileTemplateNode node) {
     final String templateName = node.getTemplateName();
     if (templateName == null || templates.isEmpty()) {
       return null;

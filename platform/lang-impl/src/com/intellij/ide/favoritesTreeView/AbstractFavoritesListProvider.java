@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -32,9 +32,8 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
     myProject = project;
     myListName = listName;
     myNode = new FavoritesListNode(project, listName, description) {
-      @NotNull
       @Override
-      public Collection<? extends AbstractTreeNode<?>> getChildren() {
+      public @NotNull Collection<? extends AbstractTreeNode<?>> getChildren() {
         return myChildren;
       }
 
@@ -51,8 +50,7 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
   }
 
   @Override
-  @Nullable
-  public FavoritesListNode createFavoriteListNode(Project project) {
+  public @Nullable FavoritesListNode createFavoriteListNode(Project project) {
     return myNode;
   }
 
@@ -61,9 +59,8 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
     return o1.getIndex() - o2.getIndex();
   }
 
-  @Nullable
   @Override
-  public String getCustomName(@NotNull CommonActionsPanel.Buttons type) {
+  public @Nullable String getCustomName(@NotNull CommonActionsPanel.Buttons type) {
     return null;
   }
 

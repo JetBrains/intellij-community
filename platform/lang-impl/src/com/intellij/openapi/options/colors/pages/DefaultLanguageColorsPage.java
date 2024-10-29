@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.highlighting.CustomFoldRegionRendererWrapper;
@@ -31,7 +31,7 @@ import java.util.Map;
  * Allows to set default colors for multiple languages.
  */
 public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage, DisplayPrioritySortable, ColorSettingsPage.PreviewCustomizer {
-  private final static TextAttributesKey FAKE_BAD_CHAR =
+  private static final TextAttributesKey FAKE_BAD_CHAR =
     TextAttributesKey.createTextAttributesKey("FAKE_BAD_CHAR", HighlighterColors.BAD_CHARACTER);
 
   private static final Map<String, TextAttributesKey> TAG_HIGHLIGHTING_MAP = RainbowHighlighter.createRainbowHLM();
@@ -89,7 +89,7 @@ public final class DefaultLanguageColorsPage implements RainbowColorSettingsPage
     INLINE_ELEMENTS.put("inlay_text_without_background", DefaultLanguageHighlighterColors.INLAY_DEFAULT);
   }
 
-  private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
+  private static final AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
     new AttributesDescriptor(
       OptionsBundle.messagePointer("options.java.attribute.descriptor.bad.character"), HighlighterColors.BAD_CHARACTER),
     new AttributesDescriptor(

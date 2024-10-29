@@ -4,12 +4,14 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.vcs.log.impl.VcsLogIcons;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableModel;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class TableWithProgress extends JBTable {
   public TableWithProgress(@NotNull TableModel model) {
     super(model);

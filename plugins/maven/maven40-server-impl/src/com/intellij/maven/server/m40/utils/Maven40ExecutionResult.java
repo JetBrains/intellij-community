@@ -12,41 +12,12 @@ import java.util.Collections;
 import java.util.List;
 
 public class Maven40ExecutionResult {
-  private File myPomFile;
   private final MavenProject myMavenProject;
   private final List<Exception> myExceptions;
-  private final List<ModelProblem> myModelProblems;
-  private final DependencyResolutionResult myDependencyResolutionResult;
-  private String dependencyHash;
-  private boolean dependencyResolutionSkipped;
 
-  public Maven40ExecutionResult(@Nullable MavenProject mavenProject, List<Exception> exceptions) {
-    this(mavenProject, null, exceptions, Collections.emptyList());
-  }
-
-  public Maven40ExecutionResult(List<Exception> exceptions) {
-    this(null, null, exceptions, Collections.emptyList());
-  }
-
-  public Maven40ExecutionResult(@Nullable File pomFile, @NotNull List<ModelProblem> modelProblems) {
-    this(null, null, Collections.emptyList(), modelProblems);
-    myPomFile = pomFile;
-  }
-
-  public Maven40ExecutionResult(@Nullable MavenProject mavenProject,
-                                @Nullable DependencyResolutionResult dependencyResolutionResult,
-                                @NotNull List<Exception> exceptions,
-                                @NotNull List<ModelProblem> modelProblems) {
+  public Maven40ExecutionResult(@Nullable MavenProject mavenProject, @NotNull List<Exception> exceptions) {
     myMavenProject = mavenProject;
-    myModelProblems = modelProblems;
-    if (mavenProject != null) {
-      myPomFile = mavenProject.getFile();
-    }
     myExceptions = exceptions;
-    myDependencyResolutionResult = dependencyResolutionResult;
-    if(myDependencyResolutionResult != null && myDependencyResolutionResult.getCollectionErrors() != null) {
-      myExceptions.addAll(myDependencyResolutionResult.getCollectionErrors());
-    }
   }
 
   @Nullable
@@ -54,38 +25,8 @@ public class Maven40ExecutionResult {
     return myMavenProject;
   }
 
-  @Nullable
-  public DependencyResolutionResult getDependencyResolutionResult() {
-    return myDependencyResolutionResult;
-  }
-
   @NotNull
   public List<Exception> getExceptions() {
     return myExceptions;
-  }
-
-  public List<ModelProblem> getModelProblems() {
-    return myModelProblems;
-  }
-
-  @Nullable
-  public File getPomFile() {
-    return myMavenProject != null ? myMavenProject.getFile() : myPomFile;
-  }
-
-  public String getDependencyHash() {
-    return dependencyHash;
-  }
-
-  public void setDependencyHash(String dependencyHash) {
-    this.dependencyHash = dependencyHash;
-  }
-
-  public boolean isDependencyResolutionSkipped() {
-    return dependencyResolutionSkipped;
-  }
-
-  public void setDependencyResolutionSkipped(boolean dependencyResolutionSkipped) {
-    this.dependencyResolutionSkipped = dependencyResolutionSkipped;
   }
 }

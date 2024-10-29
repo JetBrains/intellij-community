@@ -1,4 +1,3 @@
-// IGNORE_K2
 import kotlin.system.measureTimeMillis
 import kotlin.test.Asserter
 

@@ -3,7 +3,9 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.openapi.actionSystem.AnActionEvent
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RunToolbarMainRunConfigurationsAction : RunToolbarRunConfigurationsAction() {
 
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {

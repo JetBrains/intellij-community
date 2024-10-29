@@ -1,0 +1,44 @@
+{
+  "inspections": [
+    {
+      "id": "PyPep8NamingInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyPep8Inspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PoetryPackageVersionsInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyStubPackagesCompatibilityInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnsatisfiedRequirementInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CommandLineInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyStubPackagesAdvertiser",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyRelativeImportInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "PyShadowingBuiltinsInspection",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RestRoleInspection",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

@@ -32,6 +32,11 @@ public abstract class FirGotoTestGenerated extends AbstractFirGotoTest {
             KotlinTestUtils.runTest(this::doClassTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationClass.kt")
+        public void testAnnotationClass() throws Exception {
+            runTest("../../idea/tests/testData/navigation/gotoClass/annotationClass.kt");
+        }
+
         @TestMetadata("builtInAny.kt")
         public void testBuiltInAny() throws Exception {
             runTest("../../idea/tests/testData/navigation/gotoClass/builtInAny.kt");
@@ -40,6 +45,11 @@ public abstract class FirGotoTestGenerated extends AbstractFirGotoTest {
         @TestMetadata("builtInInt.kt")
         public void testBuiltInInt() throws Exception {
             runTest("../../idea/tests/testData/navigation/gotoClass/builtInInt.kt");
+        }
+
+        @TestMetadata("enumClass.kt")
+        public void testEnumClass() throws Exception {
+            runTest("../../idea/tests/testData/navigation/gotoClass/enumClass.kt");
         }
 
         @TestMetadata("enumEntries.kt")
@@ -70,6 +80,11 @@ public abstract class FirGotoTestGenerated extends AbstractFirGotoTest {
         @TestMetadata("noImplementationInterface.kt")
         public void testNoImplementationInterface() throws Exception {
             runTest("../../idea/tests/testData/navigation/gotoClass/noImplementationInterface.kt");
+        }
+
+        @TestMetadata("object.kt")
+        public void testObject() throws Exception {
+            runTest("../../idea/tests/testData/navigation/gotoClass/object.kt");
         }
 
         @TestMetadata("simpleClass.kt")

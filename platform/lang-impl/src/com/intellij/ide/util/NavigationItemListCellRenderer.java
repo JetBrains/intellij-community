@@ -99,45 +99,47 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         append(LangBundle.message("label.invalid"), SimpleTextAttributes.ERROR_ATTRIBUTES);
       }
       else if (value instanceof NavigationItem item) {
-        ItemPresentation presentation = item.getPresentation();
-        assert presentation != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
-          item + ", class " + item.getClass().getName();
-        String name = presentation.getPresentableText();
-        assert name != null: "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
-                             item + ", class " + item.getClass().getName();
         Color color = list.getForeground();
-        boolean isProblemFile;
-        if (item instanceof PsiElement) {
-          Project project = ((PsiElement)item).getProject();
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile((PsiElement)item);
-          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
-        }
-        else {
-          isProblemFile = false;
-        }
 
-        PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
+        String name;
+        Icon icon;
+        ItemPresentation presentation;
+        TextAttributes textAttributes;
+        boolean isProblemFile = false;
+        try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162822")) {
+          presentation = item.getPresentation();
+          assert presentation != null :
+            "PSI elements displayed in choose by name lists must return a non-null value from getPresentation(): element " +
+            item +
+            ", class " +
+            item.getClass().getName();
+          name = presentation.getPresentableText();
+          assert name != null :
+            "PSI elements displayed in choose by name lists must return a non-null value from getPresentation().getPresentableName: element " +
+            item +
+            ", class " +
+            item.getClass().getName();
 
-        if (psiElement != null && psiElement.isValid()) {
-          Project project = psiElement.getProject();
+          PsiElement psiElement = PSIRenderingUtils.getPsiElement(item);
+          if (psiElement != null && psiElement.isValid()) {
+            Project project = psiElement.getProject();
+            VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+            isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
 
-          VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-          isProblemFile = virtualFile != null && WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
-
-          try (AccessToken ignore = SlowOperations.knownIssue("IDEA-333526, EA-659478")) {
             Color fileColor = virtualFile == null ? null : getFileBackgroundColor(project, virtualFile);
             if (fileColor != null) {
               bgColor = fileColor;
             }
           }
+          FileStatus status = NavigationItemFileStatus.get(item);
+          if (status != FileStatus.NOT_CHANGED) {
+            color = status.getColor();
+          }
+
+          textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
+          icon = presentation.getIcon(false);
         }
 
-        FileStatus status = NavigationItemFileStatus.get(item);
-        if (status != FileStatus.NOT_CHANGED) {
-          color = status.getColor();
-        }
-
-        final TextAttributes textAttributes = NodeRenderer.getSimpleTextAttributes(presentation).toTextAttributes();
         if (isProblemFile) {
           textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
           textAttributes.setEffectColor(JBColor.red);
@@ -145,7 +147,7 @@ public class NavigationItemListCellRenderer extends JPanel implements ListCellRe
         textAttributes.setForegroundColor(color);
         SimpleTextAttributes nameAttributes = SimpleTextAttributes.fromTextAttributes(textAttributes);
         SpeedSearchUtil.appendColoredFragmentForMatcher(name,  this, nameAttributes, myMatcher, bgColor, selected);
-        setIcon(presentation.getIcon(false));
+        setIcon(icon);
 
         if (myRenderLocation) {
           String containerText = presentation.getLocationString();

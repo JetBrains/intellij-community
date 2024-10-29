@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
@@ -28,6 +28,7 @@ import org.jetbrains.jps.incremental.ModuleLevelBuilder.ExitCode;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
+import org.jetbrains.jps.incremental.storage.SourceToOutputMappingCursor;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
@@ -434,17 +435,15 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       context.getProjectDescriptor().getProject());
     for (T target : getTargets(chunk)) {
       String moduleOutputPath = finalOutputs.get(target);
-      final SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
-      for (String src : srcToOut.getSources()) {
+      SourceToOutputMapping srcToOut = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
+      for (SourceToOutputMappingCursor cursor = srcToOut.cursor(); cursor.hasNext(); ) {
+        String src = cursor.next();
         if (!toCompilePaths.contains(src) && GroovyBuilder.isGroovyFile(src) &&
             !configuration.getCompilerExcludes().isExcluded(new File(src))) {
-          final Collection<String> outs = srcToOut.getOutputs(src);
-          if (outs != null) {
-            for (String out : outs) {
-              if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
-                final String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.');
-                class2Src.put(className, src);
-              }
+          for (String out : cursor.getOutputPaths()) {
+            if (out.endsWith(".class") && out.startsWith(moduleOutputPath)) {
+              final String className = out.substring(moduleOutputPath.length(), out.length() - ".class".length()).replace('/', '.');
+              class2Src.put(className, src);
             }
           }
         }

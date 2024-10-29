@@ -5,15 +5,12 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import, division
 
 import ctypes
 import ctypes.util
 import os
-import socket
 import stat as statmod
 
-from ..pycompat import getattr
 from .. import (
     encoding,
     pycompat,
@@ -72,102 +69,6 @@ def listdir(path, stat=False, skip=None):
 if not pycompat.iswindows:
     posixfile = open
 
-    _SCM_RIGHTS = 0x01
-    _socklen_t = ctypes.c_uint
-
-    if pycompat.sysplatform.startswith(b'linux'):
-        # socket.h says "the type should be socklen_t but the definition of
-        # the kernel is incompatible with this."
-        _cmsg_len_t = ctypes.c_size_t
-        _msg_controllen_t = ctypes.c_size_t
-        _msg_iovlen_t = ctypes.c_size_t
-    else:
-        _cmsg_len_t = _socklen_t
-        _msg_controllen_t = _socklen_t
-        _msg_iovlen_t = ctypes.c_int
-
-    class _iovec(ctypes.Structure):
-        _fields_ = [
-            (u'iov_base', ctypes.c_void_p),
-            (u'iov_len', ctypes.c_size_t),
-        ]
-
-    class _msghdr(ctypes.Structure):
-        _fields_ = [
-            (u'msg_name', ctypes.c_void_p),
-            (u'msg_namelen', _socklen_t),
-            (u'msg_iov', ctypes.POINTER(_iovec)),
-            (u'msg_iovlen', _msg_iovlen_t),
-            (u'msg_control', ctypes.c_void_p),
-            (u'msg_controllen', _msg_controllen_t),
-            (u'msg_flags', ctypes.c_int),
-        ]
-
-    class _cmsghdr(ctypes.Structure):
-        _fields_ = [
-            (u'cmsg_len', _cmsg_len_t),
-            (u'cmsg_level', ctypes.c_int),
-            (u'cmsg_type', ctypes.c_int),
-            (u'cmsg_data', ctypes.c_ubyte * 0),
-        ]
-
-    _libc = ctypes.CDLL(ctypes.util.find_library(u'c'), use_errno=True)
-    _recvmsg = getattr(_libc, 'recvmsg', None)
-    if _recvmsg:
-        _recvmsg.restype = getattr(ctypes, 'c_ssize_t', ctypes.c_long)
-        _recvmsg.argtypes = (
-            ctypes.c_int,
-            ctypes.POINTER(_msghdr),
-            ctypes.c_int,
-        )
-    else:
-        # recvmsg isn't always provided by libc; such systems are unsupported
-        def _recvmsg(sockfd, msg, flags):
-            raise NotImplementedError(b'unsupported platform')
-
-    def _CMSG_FIRSTHDR(msgh):
-        if msgh.msg_controllen < ctypes.sizeof(_cmsghdr):
-            return
-        cmsgptr = ctypes.cast(msgh.msg_control, ctypes.POINTER(_cmsghdr))
-        return cmsgptr.contents
-
-    # The pure version is less portable than the native version because the
-    # handling of socket ancillary data heavily depends on C preprocessor.
-    # Also, some length fields are wrongly typed in Linux kernel.
-    def recvfds(sockfd):
-        """receive list of file descriptors via socket"""
-        dummy = (ctypes.c_ubyte * 1)()
-        iov = _iovec(ctypes.cast(dummy, ctypes.c_void_p), ctypes.sizeof(dummy))
-        cbuf = ctypes.create_string_buffer(256)
-        msgh = _msghdr(
-            None,
-            0,
-            ctypes.pointer(iov),
-            1,
-            ctypes.cast(cbuf, ctypes.c_void_p),
-            ctypes.sizeof(cbuf),
-            0,
-        )
-        r = _recvmsg(sockfd, ctypes.byref(msgh), 0)
-        if r < 0:
-            e = ctypes.get_errno()
-            raise OSError(e, os.strerror(e))
-        # assumes that the first cmsg has fds because it isn't easy to write
-        # portable CMSG_NXTHDR() with ctypes.
-        cmsg = _CMSG_FIRSTHDR(msgh)
-        if not cmsg:
-            return []
-        if (
-            cmsg.cmsg_level != socket.SOL_SOCKET
-            or cmsg.cmsg_type != _SCM_RIGHTS
-        ):
-            return []
-        rfds = ctypes.cast(cmsg.cmsg_data, ctypes.POINTER(ctypes.c_int))
-        rfdscount = (
-            cmsg.cmsg_len - _cmsghdr.cmsg_data.offset
-        ) // ctypes.sizeof(ctypes.c_int)
-        return [rfds[i] for i in pycompat.xrange(rfdscount)]
-
 
 else:
     import msvcrt
@@ -221,7 +122,7 @@ else:
             err.errno, '%s: %s' % (encoding.strfromlocal(name), err.strerror)
         )
 
-    class posixfile(object):
+    class posixfile:
         """a file object aiming for POSIX-like semantics
 
         CPython's open() returns a file that was opened *without* setting the

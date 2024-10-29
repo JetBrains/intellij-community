@@ -41,14 +41,21 @@ interface ElementsAddingPolicy {
   fun onDeactivate(result: CompletionResultSet)
 
   interface Default : ElementsAddingPolicy {
+
     override fun onActivate(result: CompletionResultSet) {}
+
+    override fun onDeactivate(result: CompletionResultSet) {}
 
     override fun onResultStop(result: CompletionResultSet) {}
 
-    override fun addElement(result: CompletionResultSet, element: LookupElement) = addAllElements(result, listOf(element))
+    override fun addElement(
+      result: CompletionResultSet,
+      element: LookupElement,
+    ): Unit = result.addElement(element)
 
-    override fun addAllElements(result: CompletionResultSet, elements: Iterable<LookupElement>) = result.addAllElements(elements)
-
-    override fun onDeactivate(result: CompletionResultSet) {}
+    override fun addAllElements(
+      result: CompletionResultSet,
+      elements: Iterable<LookupElement>,
+    ): Unit = result.addAllElements(elements)
   }
 }

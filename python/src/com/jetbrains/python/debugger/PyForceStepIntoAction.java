@@ -21,11 +21,11 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
   public PyForceStepIntoAction() {
     myPyForceStepIntoHandler = new XDebuggerSuspendedActionHandler() {
       @Override
-      protected void perform(final @NotNull XDebugSession session, final DataContext dataContext) {
+      protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         session.forceStepInto();
       }
 
-      private static boolean isPythonConfig(final DataContext dataContext) {
+      private static boolean isPythonConfig(DataContext dataContext) {
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
         if (project == null) return false;
         RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
@@ -36,7 +36,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
       }
 
       @Override
-      public boolean isEnabled(@NotNull XDebugSession session, final DataContext dataContext) {
+      public boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
         if (isPythonConfig(dataContext)) {
           return false;
         }
@@ -44,7 +44,7 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
       }
 
       @Override
-      public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+      public boolean isHidden(@NotNull Project project, @NotNull AnActionEvent event) {
         if (isPythonConfig(event.getDataContext())) {
           return true;
         }

@@ -23,6 +23,7 @@ import com.intellij.execution.multilaunch.state.toSnapshot
 import com.intellij.execution.options.LifetimedSettingsEditor
 import com.jetbrains.rd.util.lifetime.Lifetime
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.ItemEvent
 import javax.swing.JComponent
@@ -30,6 +31,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.JTable
 
+@ApiStatus.Internal
 class MultiLaunchConfigurationEditor(private val project: Project, private val configuration: MultiLaunchConfiguration) : LifetimedSettingsEditor<MultiLaunchConfiguration>() {
   private val runManagerListenerConnection: MessageBusConnection
   private var viewModel = MultiLaunchConfigurationViewModel(project, configuration)

@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +31,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       e.getPresentation().setEnabledAndVisible(project != null && isPatchFile(vFile));
     }
@@ -54,8 +54,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     VirtualFile vFile = null;
-    final String place = e.getPlace();
-    if (ActionPlaces.isPopupPlace(e.getPlace()) || ActionPlaces.MAIN_MENU.equals(place)) {
+    if (e.isFromContextMenu() || e.isFromMainMenu()) {
       vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (isPatchFile(vFile)) {
@@ -94,6 +93,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
   /**
    * @deprecated Use {@link ApplyPatchUtil#applyContent(Project, ApplyFilePatchBase, ApplyPatchContext, VirtualFile, CommitContext, boolean, String, String)} instead.
    */
+  @ApiStatus.Internal
   @Deprecated
   public static @NotNull ApplyPatchStatus applyContent(@NotNull Project project,
                                                        @NotNull ApplyFilePatchBase<?> patch,

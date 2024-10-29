@@ -27,6 +27,7 @@ import com.intellij.ui.LicensingFacade;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.updateSettings.impl.UpdateCheckerService.SELF_UPDATE_STARTED_FOR_BUILD_PROPERTY;
 import static com.intellij.openapi.util.Pair.pair;
 
+@ApiStatus.Internal
 public final class UpdateInfoDialog extends AbstractUpdateDialog {
   private final @Nullable Project myProject;
   private final @NotNull PlatformUpdates.Loaded myLoadedResult;

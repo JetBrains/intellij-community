@@ -11,21 +11,22 @@ import com.intellij.xdebugger.impl.frame.XDebugView
 import com.intellij.xdebugger.impl.frame.XFramesView
 import com.intellij.xdebugger.impl.frame.XThreadsFramesView
 import com.intellij.xdebugger.impl.frame.XThreadsView
+import org.jetbrains.annotations.ApiStatus.Internal
 
-object ThreadsViewConstants {
+internal object ThreadsViewConstants {
   const val DEFAULT_THREADS_VIEW_KEY = "Default"
   const val THREADS_TREE_VIEW_KEY = "Threads"
   const val SIDE_BY_SIDE_THREADS_VIEW_KEY = "SideBySide"
   const val FRAMES_ONLY_THREADS_VIEW_KEY = "FramesOnly"
-
 }
 
+@Internal
 abstract class FramesAndThreadsLayoutOptionBase(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : PersistentContentCustomLayoutOption(
   options) {
   abstract fun createView(): XDebugView
 }
 
-class DefaultLayoutOption(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(
+internal class DefaultLayoutOption(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(
   options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.default.layout.option")
 
@@ -34,7 +35,7 @@ class DefaultLayoutOption(private val options: XDebugTabLayoutSettings.XDebugFra
   override fun getOptionKey(): String = ThreadsViewConstants.DEFAULT_THREADS_VIEW_KEY
 }
 
-class ThreadsTreeLayoutOption(
+internal class ThreadsTreeLayoutOption(
   private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : FramesAndThreadsLayoutOptionBase(options) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.threads.tree.layout.option")
 
@@ -43,6 +44,7 @@ class ThreadsTreeLayoutOption(
   override fun getOptionKey(): String = ThreadsViewConstants.THREADS_TREE_VIEW_KEY
 }
 
+@Internal
 abstract class SideBySideLayoutOptionBase(private val options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions,
                                           private val areThreadsVisible: Boolean) : FramesAndThreadsLayoutOptionBase(options) {
 
@@ -51,6 +53,7 @@ abstract class SideBySideLayoutOptionBase(private val options: XDebugTabLayoutSe
   }
 }
 
+@Internal
 class SideBySideLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : SideBySideLayoutOptionBase(options,
                                                                                                                                 true) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.side.by.side.layout.option")
@@ -58,6 +61,7 @@ class SideBySideLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThr
   override fun getOptionKey(): String = ThreadsViewConstants.SIDE_BY_SIDE_THREADS_VIEW_KEY
 }
 
+@Internal
 class FramesOnlyLayoutOption(options: XDebugTabLayoutSettings.XDebugFramesAndThreadsLayoutOptions) : SideBySideLayoutOptionBase(options,
                                                                                                                                 false) {
   override fun getDisplayName(): String = XDebuggerBundle.message("debug.threads.and.frames.frames.only.layout.option")

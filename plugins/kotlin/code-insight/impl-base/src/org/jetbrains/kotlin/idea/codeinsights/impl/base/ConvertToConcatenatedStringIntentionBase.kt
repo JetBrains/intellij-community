@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.codeinsight.api.classic.intentions.SelfTargetin
 import org.jetbrains.kotlin.idea.util.application.runWriteActionIfPhysical
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 
 abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetIndependentIntention<KtStringTemplateExpression>(
     KtStringTemplateExpression::class.java,
@@ -18,6 +19,7 @@ abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetInd
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression): Boolean {
         if (element.lastChild.node.elementType != KtTokens.CLOSING_QUOTE) return false // not available for unclosed literal
+        if (element.interpolationPrefix?.textLength?.let { it > 1 } == true) return false // not supported for multi-dollar strings
         return element.entries.any { it is KtStringTemplateEntryWithExpression }
     }
 
@@ -26,7 +28,8 @@ abstract class ConvertToConcatenatedStringIntentionBase : SelfTargetingOffsetInd
     override fun getElementToMakeWritable(currentFile: PsiFile) = currentFile
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
-        val tripleQuoted = isTripleQuoted(element.text ?: error("Failed to get template expression's text"))
+        checkNotNull(element.text) { "Failed to get template expression's text" }
+        val tripleQuoted = !element.isSingleQuoted()
         val quote = if (tripleQuoted) "\"\"\"" else "\""
         val entries = element.entries.filterNot { it is KtStringTemplateEntryWithExpression && it.expression == null }
 

@@ -18,6 +18,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
@@ -69,6 +70,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Query;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.NotNullList;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NonNls;
@@ -83,8 +85,8 @@ import java.util.*;
 
 public abstract class InplaceRefactoring {
   protected static final Logger LOG = Logger.getInstance(VariableInplaceRenamer.class);
-  @NonNls protected static final String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
-  @NonNls protected static final String OTHER_VARIABLE_NAME = "OtherVariable";
+  protected static final @NonNls String PRIMARY_VARIABLE_NAME = "PrimaryVariable";
+  protected static final @NonNls String OTHER_VARIABLE_NAME = "OtherVariable";
   public static final Key<Boolean> INPLACE_RENAME_ALLOWED = Key.create("EditorInplaceRenameAllowed");
   public static final Key<InplaceRefactoring> INPLACE_RENAMER = Key.create("EditorInplaceRenamer");
   public static final Key<Boolean> INTRODUCE_RESTART = Key.create("INTRODUCE_RESTART");
@@ -217,7 +219,7 @@ public abstract class InplaceRefactoring {
 
     List<Pair<PsiElement, TextRange>> stringUsages = new NotNullList<>();
     collectAdditionalElementsToRename(stringUsages);
-    try {
+    try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162116
       return buildTemplateAndStart(references, stringUsages, scope, containingFile);
     }
     catch (Throwable e) {
@@ -246,8 +248,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  @Nullable
-  protected PsiElement checkLocalScope() {
+  protected @Nullable PsiElement checkLocalScope() {
     SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
       PsiElement[] elements = getElements((LocalSearchScope)searchScope);
@@ -460,8 +461,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  @NotNull
-  private static Map<TextRange, TextAttributesKey> variableHighlights(@NotNull Template template, @NotNull TemplateState templateState) {
+  private static @NotNull Map<TextRange, TextAttributesKey> variableHighlights(@NotNull Template template, @NotNull TemplateState templateState) {
     Map<TextRange, TextAttributesKey> rangesToHighlight = new HashMap<>();
     for (int i = 0; i < templateState.getSegmentsCount(); i++) {
       TextRange segmentOffset = templateState.getSegmentRange(i);
@@ -562,8 +562,7 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  @Nullable
-  protected PsiElement getNameIdentifier() {
+  protected @Nullable PsiElement getNameIdentifier() {
     return myElementToRename instanceof PsiNameIdentifierOwner ? ((PsiNameIdentifierOwner)myElementToRename).getNameIdentifier() : null;
   }
 
@@ -593,8 +592,7 @@ public abstract class InplaceRefactoring {
     return previewEditor;
   }
 
-  @Nullable
-  protected StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
+  protected @Nullable StartMarkAction startRename() throws StartMarkAction.AlreadyStartedException {
     return startMarkAction(myProject, myEditor, getCommandName());
   }
 
@@ -617,8 +615,7 @@ public abstract class InplaceRefactoring {
     return markAction[0];
   }
 
-  @Nullable
-  protected PsiNamedElement getVariable() {
+  protected @Nullable PsiNamedElement getVariable() {
     // todo we can use more specific class, shouldn't we?
     //Class clazz = myElementToRename != null? myElementToRename.getClass() : PsiNameIdentifierOwner.class;
     if (myElementToRename != null && myElementToRename.isValid()) {
@@ -804,13 +801,11 @@ public abstract class InplaceRefactoring {
     }
   }
 
-  @NotNull
-  protected TextRange getRangeToRename(@NotNull PsiElement element) {
+  protected @NotNull TextRange getRangeToRename(@NotNull PsiElement element) {
     return new TextRange(0, element.getTextLength());
   }
 
-  @NotNull
-  protected TextRange getRangeToRename(@NotNull PsiReference reference) {
+  protected @NotNull TextRange getRangeToRename(@NotNull PsiReference reference) {
     return reference.getRangeInElement();
   }
 
@@ -822,8 +817,7 @@ public abstract class InplaceRefactoring {
     return LanguageNamesValidation.isIdentifier(language, newName, myProject);
   }
 
-  @NotNull
-  protected static VirtualFile getTopLevelVirtualFile(@NotNull FileViewProvider fileViewProvider) {
+  protected static @NotNull VirtualFile getTopLevelVirtualFile(@NotNull FileViewProvider fileViewProvider) {
     VirtualFile file = fileViewProvider.getVirtualFile();
     if (file instanceof VirtualFileWindow) file = ((VirtualFileWindow)file).getDelegate();
     return file;
@@ -897,8 +891,7 @@ public abstract class InplaceRefactoring {
   protected void releaseResources() {
   }
 
-  @Nullable
-  protected JComponent getComponent() {
+  protected @Nullable JComponent getComponent() {
     return null;
   }
 

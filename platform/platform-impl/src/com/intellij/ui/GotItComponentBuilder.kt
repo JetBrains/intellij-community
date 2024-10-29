@@ -22,10 +22,6 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.GotItComponentBuilder.Companion.EXTENDED_MAX_WIDTH
 import com.intellij.ui.GotItComponentBuilder.Companion.MAX_LINES_COUNT
-import com.intellij.ui.InlineCodeExtension.Companion.getStyles
-import com.intellij.ui.InlineCodeExtension.Companion.patchCodeTags
-import com.intellij.ui.ShortcutExtension.Companion.getStyles
-import com.intellij.ui.ShortcutExtension.Companion.patchShortcutTags
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.LinkLabel
@@ -586,6 +582,7 @@ class GotItComponentBuilder(textSupplier: GotItTextBuilder.() -> @Nls String) {
     panel.background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
     panel.border = EmptyBorder(JBUI.CurrentTheme.GotItTooltip.insets())
 
+    RemoteTransferUIManager.forceDirectTransfer(panel)
     return panel
   }
 
@@ -758,6 +755,7 @@ private class LimitedWidthEditorPane(htmlBuilder: HtmlBuilder,
  *
  * To install this extension you need to add styles returned from [getStyles] to your [StyleSheet].
  */
+@ApiStatus.Internal
 @Deprecated(message = "Use JBHtmlPane and <shortcut> element instead")
 class ShortcutExtension : ExtendableHTMLViewFactory.Extension {
   override fun invoke(elem: Element, defaultView: View): View? {

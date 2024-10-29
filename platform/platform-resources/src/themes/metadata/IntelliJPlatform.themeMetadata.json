@@ -109,6 +109,16 @@
       "description": "Minimum size of buttons"
     },
     {
+      "key": "Button.loadingForeground",
+      "description": "The color of button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
+      "key": "Button.default.loadingForeground",
+      "description": "The color of default button text when in the 'loading' state",
+      "since": "2024.2"
+    },
+    {
       "key": "Button.Split.default.separatorColor",
       "description": "Separator color for default split button"
     },
@@ -341,11 +351,6 @@
     {
       "key": "DisclosureButton.pressedOverlay",
       "description": "Pressed overlay color, which is painted over background for hover state",
-      "since": "2024.2"
-    },
-    {
-      "key": "DisclosureButton.successBackground",
-      "description": "Success or visited background of disclosure button",
       "since": "2024.2"
     },
     {
@@ -2512,6 +2517,10 @@
       "since": "2024.2"
     },
     {
+      "key": "LicenseDialog.waitingLabelForeground",
+      "since": "2024.2"
+    },
+    {
       "key": "LicenseDialog.separatorColor",
       "since": "2024.2"
     },
@@ -2520,7 +2529,15 @@
       "since": "2024.2"
     },
     {
+      "key": "LicenseDialog.LicenseList.licenseIdForeground",
+      "since": "2024.2"
+    },
+    {
       "key": "LicenseDialog.LicenseList.separatorColor",
+      "since": "2024.2"
+    },
+    {
+      "key": "LicenseDialog.LicenseServer.separatorColor",
       "since": "2024.2"
     }
   ]

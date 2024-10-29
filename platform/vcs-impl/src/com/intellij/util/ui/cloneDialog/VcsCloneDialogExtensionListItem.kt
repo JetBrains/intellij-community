@@ -8,6 +8,7 @@ import com.intellij.util.IconUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.GridBagLayout
@@ -17,6 +18,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.SwingConstants
 
+@ApiStatus.Internal
 open class VcsCloneDialogExtensionListItem : JPanel(GridBagLayout()) {
   private val iconLabel: JLabel = JLabel()
   private val titleLabel: JLabel = JLabel()

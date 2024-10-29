@@ -9,7 +9,6 @@ import com.intellij.facet.ui.FacetConfigurationQuickFix;
 import com.intellij.facet.ui.FacetEditorValidator;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
@@ -19,6 +18,7 @@ import com.intellij.openapi.project.DefaultProjectFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.DialogPanel;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -30,6 +30,7 @@ import com.intellij.ui.components.JBTextField;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
@@ -77,6 +78,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myTestsPanel;
   private TextFieldWithBrowseButton myPipEnvPathField;
   private JPanel myPipEnvPanel;
+  @NotNull
+  private final Collection<@NotNull DialogPanel> myCustomizePanels = PyIntegratedToolsTestPanelCustomizer.Companion.createPanels();
 
 
   public PyIntegratedToolsConfigurable() {
@@ -96,19 +99,18 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
                                                                      myDocumentationSettings.getFormat()));
     myDocstringFormatComboBox.setRenderer(SimpleListCellRenderer.create("", DocStringFormat::getName));
 
-    final FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myWorkDir.addBrowseFolderListener(PyBundle.message("configurable.choose.working.directory"), null, myProject, fileChooserDescriptor);
+    myWorkDir.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(PyBundle.message("configurable.choose.working.directory")));
     ReSTService service = ReSTService.getInstance(myModule);
     myWorkDir.setText(service.getWorkdir());
     txtIsRst.setSelected(service.txtIsRst());
     analyzeDoctest.setSelected(myDocumentationSettings.isAnalyzeDoctest());
     renderExternal.setSelected(myDocumentationSettings.isRenderExternalDocumentation());
-    myRequirementsPathField.addBrowseFolderListener(PyBundle.message("configurable.choose.path.to.the.package.requirements.file"), null,
-                                                    myProject,
-                                                    FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
+    myRequirementsPathField.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+      .withTitle(PyBundle.message("configurable.choose.path.to.the.package.requirements.file")));
     myRequirementsPathField.setText(getRequirementsPath());
 
-    myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myPipEnvPathField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFileDescriptor());
 
     myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.docstrings")));
     myRestPanel.setBorder(IdeBorderFactory.createTitledBorder(PyBundle.message("integrated.tools.configurable.restructuredtext")));
@@ -184,6 +186,9 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   public JComponent createComponent() {
     myModel = PyTestRunConfigurationsModel.Companion.create(myModule);
     myTestRunnerComboBox.setRenderer(new PyTestRunConfigurationRenderer(PythonSdkUtil.findPythonSdk(myModule)));
+    for (@NotNull DialogPanel panel : myCustomizePanels) {
+      myTestsPanel.add(BorderLayout.AFTER_LAST_LINE, panel);
+    }
 
     updateConfigurations();
     initErrorValidation();
@@ -224,7 +229,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     if (!myPipEnvPathField.getText().equals(StringUtil.notNullize(PipenvKt.getPipEnvPath(PropertiesComponent.getInstance())))) {
       return true;
     }
-    return false;
+    return ContainerUtil.exists(myCustomizePanels, panel -> panel.isModified());
   }
 
   @Override
@@ -256,6 +261,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
     DaemonCodeAnalyzer.getInstance(myProject).restart();
     PipenvKt.setPipEnvPath(PropertiesComponent.getInstance(), StringUtil.nullize(myPipEnvPathField.getText()));
+
+    for (@NotNull DialogPanel panel : myCustomizePanels) {
+      panel.apply();
+    }
   }
 
   public void reparseFiles(final List<String> extensions) {
@@ -298,6 +307,10 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
         }
       }
     }
+
+    for (@NotNull DialogPanel panel : myCustomizePanels) {
+      panel.reset();
+    }
   }
 
   @Override
@@ -305,4 +318,3 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     return "PyIntegratedToolsConfigurable";
   }
 }
-

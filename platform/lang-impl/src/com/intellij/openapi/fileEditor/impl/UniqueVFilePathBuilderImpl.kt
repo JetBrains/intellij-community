@@ -123,7 +123,7 @@ private fun getUniqueVirtualFileNameBuilder(
 
 private fun getFilenameIndexModificationTracker(project: Project): ModificationTracker {
   if (FileBasedIndexExtension.USE_VFS_FOR_FILENAME_INDEX) {
-    return ModificationTracker { FSRecords.getNamesIndexModCount() }
+    return ModificationTracker { FSRecords.getInstance().invertedNameIndexModCount }
   }
   return ModificationTracker {
     disableIndexUpToDateCheckInEdt<Long, RuntimeException> {

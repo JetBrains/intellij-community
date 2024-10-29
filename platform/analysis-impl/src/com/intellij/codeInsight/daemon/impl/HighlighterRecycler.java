@@ -32,7 +32,7 @@ final class HighlighterRecycler {
 
   // return true if RH is successfully recycled, false if race condition intervened
   synchronized void recycleHighlighter(@NotNull HighlightInfo info) {
-    RangeHighlighterEx highlighter = info.highlighter;
+    RangeHighlighterEx highlighter = info.getHighlighter();
     assert !(info.isFromHighlightVisitor() || info.isFromAnnotator() || info.isFromInspection() || info.isInjectionRelated()) : info;
     assert highlighter != null;
     if (UpdateHighlightersUtil.LOG.isDebugEnabled()) {
@@ -44,13 +44,13 @@ final class HighlighterRecycler {
 
   // null means no highlighter found in the cache
   @Nullable
-  synchronized public RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
+  synchronized RangeHighlighter pickupHighlighterFromGarbageBin(int startOffset, int endOffset, int layer) {
     long range = TextRangeScalarUtil.toScalarRange(startOffset, endOffset);
     List<HighlightInfo> collection = incinerator.get(range);
     if (collection != null) {
       for (int i = 0; i < collection.size(); i++) {
         HighlightInfo info = collection.get(i);
-        RangeHighlighterEx highlighter = info.highlighter;
+        RangeHighlighterEx highlighter = info.getHighlighter();
         if (highlighter.isValid() && highlighter.getLayer() == layer) {
           collection.remove(info);
           if (collection.isEmpty()) {
@@ -67,11 +67,12 @@ final class HighlighterRecycler {
   }
   //
   @NotNull
-  synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
+  private synchronized Collection<? extends HighlightInfo> forAllInGarbageBin() {
     return ContainerUtil.flatten(incinerator.values());
   }
 
-  public @Nullable RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
+  @Nullable
+  RangeHighlighter pickupFileLevelRangeHighlighter(int fileTextLength) {
     return pickupHighlighterFromGarbageBin(0, fileTextLength, DaemonCodeAnalyzerEx.ANY_GROUP);
   }
 
@@ -84,8 +85,7 @@ final class HighlighterRecycler {
     HighlighterRecycler recycler = new HighlighterRecycler();
     consumer.accept(recycler);
     for (HighlightInfo info : recycler.forAllInGarbageBin()) {
-      RangeHighlighterEx highlighter = info.highlighter;
-      UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(highlighter, info, session);
+      UpdateHighlightersUtil.disposeWithFileLevelIgnoreErrors(info, session);
     }
   }
   synchronized boolean isEmpty() {

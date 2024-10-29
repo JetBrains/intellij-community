@@ -1,0 +1,2 @@
+*:com.intellij.diff.FrameDiffTool$DiffInfo
+- a:getComponent():javax.swing.JComponent

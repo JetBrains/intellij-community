@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.application.options.CodeStyle;
@@ -320,14 +320,12 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
         }
 
         @Override
-        @Nullable
-        public String getBlockCommentPrefix() {
+        public @Nullable String getBlockCommentPrefix() {
           return mySyntaxTable.getStartComment();
         }
 
         @Override
-        @Nullable
-        public String getBlockCommentSuffix() {
+        public @Nullable String getBlockCommentSuffix() {
           return mySyntaxTable.getEndComment();
         }
 
@@ -389,8 +387,7 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return commented;
   }
 
-  @Nullable
-  private static Commenter findCommenter(@NotNull Editor editor, @NotNull PsiFile file, final int line) {
+  private static @Nullable Commenter findCommenter(@NotNull Editor editor, @NotNull PsiFile file, final int line) {
     final FileType fileType = file.getFileType();
     if (fileType instanceof AbstractFileType) {
       return ((AbstractFileType)fileType).getCommenter();
@@ -400,16 +397,14 @@ public final class CommentByLineCommentHandler extends MultiCaretCodeInsightActi
     return CommentByBlockCommentHandler.getCommenter(file, editor, lineStartLanguage, lineEndLanguage);
   }
 
-  @NotNull
-  private static Language getLineStartLanguage(@NotNull Editor editor, @NotNull PsiFile file, int line) {
+  private static @NotNull Language getLineStartLanguage(@NotNull Editor editor, @NotNull PsiFile file, int line) {
     Document document = editor.getDocument();
     int lineStartOffset = document.getLineStartOffset(line);
     lineStartOffset = Math.max(0, CharArrayUtil.shiftForward(document.getCharsSequence(), lineStartOffset, " \t"));
     return PsiUtilCore.getLanguageAtOffset(file, lineStartOffset);
   }
 
-  @NotNull
-  private static Language getLineEndLanguage(@NotNull PsiFile file, @NotNull Editor editor, int line) {
+  private static @NotNull Language getLineEndLanguage(@NotNull PsiFile file, @NotNull Editor editor, int line) {
     Document document = editor.getDocument();
     int lineEndOffset = document.getLineEndOffset(line) - 1;
     lineEndOffset = Math.max(0, CharArrayUtil.shiftBackward(document.getCharsSequence(), Math.max(lineEndOffset, 0), " \t"));

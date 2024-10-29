@@ -106,6 +106,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
    */
   @ApiStatus.Internal
   abstract void removeFileLevelHighlight(@NotNull PsiFile psiFile, @NotNull HighlightInfo info);
+
   public void markDocumentDirty(@NotNull Document document, @NotNull Object reason) {
     getFileStatusMap().markWholeFileScopeDirty(document, reason);
   }
@@ -116,6 +117,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
   }
 
   abstract boolean cutOperationJustHappened();
+
   abstract boolean isEscapeJustPressed();
 
   abstract protected void progressIsAdvanced(@NotNull HighlightingSession session, Editor editor, double progress);

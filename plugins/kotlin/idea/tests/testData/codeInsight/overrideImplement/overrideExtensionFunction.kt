@@ -8,3 +8,9 @@ open class A {
 class B: A() {
     <caret>
 }
+
+// MEMBER_K2: "Int.foo(): Int"
+// MEMBER_K1: "foo(): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

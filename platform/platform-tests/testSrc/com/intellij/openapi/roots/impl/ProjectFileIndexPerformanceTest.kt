@@ -12,7 +12,7 @@ import com.intellij.platform.backend.workspace.toVirtualFileUrl
 import com.intellij.platform.workspace.jps.entities.*
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.VfsTestUtil
 import com.intellij.testFramework.junit5.TestApplication
@@ -135,7 +135,7 @@ class ProjectFileIndexPerformanceTest {
     }
     val filesWithoutId = arrayOf(noId1, noId2, noId3)
     val fsRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///")!!
-    PerformanceTestUtil.newPerformanceTest("Checking status of source files in ProjectFileIndex") {
+    Benchmark.newBenchmark("Checking status of source files in ProjectFileIndex") {
       runReadAction {
         repeat(100) {
           assertFalse(fileIndex.isInContent(fsRoot))
@@ -157,7 +157,7 @@ class ProjectFileIndexPerformanceTest {
 
   @Test
   fun `access to excluded files`() {
-    PerformanceTestUtil.newPerformanceTest("Checking status of excluded files in ProjectFileIndex") {
+    Benchmark.newBenchmark("Checking status of excluded files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourExcludedFilesToTest) {
@@ -172,7 +172,7 @@ class ProjectFileIndexPerformanceTest {
   
   @Test
   fun `access to library files`() {
-    PerformanceTestUtil.newPerformanceTest("Checking status of library files in ProjectFileIndex") {
+    Benchmark.newBenchmark("Checking status of library files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibraryFilesToTest) {
@@ -193,7 +193,7 @@ class ProjectFileIndexPerformanceTest {
   
   @Test
   fun `access to library source files`() {
-    PerformanceTestUtil.newPerformanceTest("Checking status of library source files in ProjectFileIndex") {
+    Benchmark.newBenchmark("Checking status of library source files in ProjectFileIndex") {
       runReadAction {
         repeat(10) {
           for (file in ourLibrarySourceFilesToTest) {
@@ -216,7 +216,7 @@ class ProjectFileIndexPerformanceTest {
   fun `access to index after change`() {
     val newRoot = runWriteActionAndWait { ourProjectRoot.subdir("newContentRoot") }
     val module = ourProjectModel.moduleManager.findModuleByName("big")!!
-    PerformanceTestUtil.newPerformanceTest("Checking status of file after adding and removing content root") {
+    Benchmark.newBenchmark("Checking status of file after adding and removing content root") {
       runReadAction {
         repeat(50) {
           assertFalse(fileIndex.isInContent(newRoot))

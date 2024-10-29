@@ -3,7 +3,6 @@ package com.intellij.ui;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.User32Ex;
 import com.intellij.util.ui.EDT;
 import com.sun.jna.Function;
 import com.sun.jna.Memory;

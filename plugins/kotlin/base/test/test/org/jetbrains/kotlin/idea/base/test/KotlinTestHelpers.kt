@@ -1,8 +1,11 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.test
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.platform.testFramework.core.FileComparisonFailedError
+import com.intellij.ui.ChooserInterceptor
+import com.intellij.ui.UiInterceptors
 import junit.framework.TestCase
 import org.jetbrains.kotlin.test.util.trimTrailingWhitespacesAndAddNewlineAtEOF
 import java.nio.file.Path
@@ -61,5 +64,18 @@ object KotlinTestHelpers {
                 expectedPath.absolutePathString()
             )
         }
+    }
+
+    fun registerChooserInterceptor(
+        parent: Disposable,
+        chooseOption: (options: List<String>) -> String = { it.first() },
+    ) {
+        val chooserInterceptor = ChooserInterceptor(
+            /* expectedOptions = */ null,
+            /* pattern = */ "(\n|.)*",
+            /* chooseOption = */ chooseOption,
+        )
+
+        UiInterceptors.registerPossible(parent, chooserInterceptor)
     }
 }

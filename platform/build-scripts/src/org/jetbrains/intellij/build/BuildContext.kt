@@ -1,18 +1,23 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.SpanBuilder
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.Serializable
+import org.jetbrains.intellij.build.dependencies.TeamCityHelper
+import org.jetbrains.intellij.build.io.DEFAULT_TIMEOUT
 import org.jetbrains.intellij.build.productRunner.IntellijProductRunner
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.module.JpsModule
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.concurrent.CancellationException
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.time.Duration
 
 interface BuildContext : CompilationContext {
   val productProperties: ProductProperties
@@ -87,7 +92,7 @@ interface BuildContext : CompilationContext {
    * Returns main modules' names of plugins bundled with the product.
    * In IDEs, which use path-based loader, this list is specified manually in [ProductModulesLayout.bundledPluginModules] property.
    */
-  val bundledPluginModules: List<String>
+  suspend fun getBundledPluginModules(): List<String>
 
   /**
    * see BuildTasksImpl.buildProvidedModuleList
@@ -97,7 +102,7 @@ interface BuildContext : CompilationContext {
   val appInfoXml: String
 
   /**
-   * Add file to be copied into application.
+   * Add the file to be copied into an application.
    */
   fun addDistFile(file: DistFile)
 
@@ -106,7 +111,7 @@ interface BuildContext : CompilationContext {
    */
   fun getDistFiles(os: OsFamily?, arch: JvmArchitecture?): Collection<DistFile>
 
-  fun includeBreakGenLibraries(): Boolean
+  suspend fun includeBreakGenLibraries(): Boolean
 
   fun patchInspectScript(path: Path)
 
@@ -114,10 +119,12 @@ interface BuildContext : CompilationContext {
    * Unlike VM options produced by [org.jetbrains.intellij.build.impl.VmOptionsGenerator],
    * these are hard-coded into launchers and aren't supposed to be changed by a user.
    */
-  fun getAdditionalJvmArguments(os: OsFamily,
-                                arch: JvmArchitecture,
-                                isScript: Boolean = false,
-                                isPortableDist: Boolean = false): List<String>
+  fun getAdditionalJvmArguments(
+    os: OsFamily,
+    arch: JvmArchitecture,
+    isScript: Boolean = false,
+    isPortableDist: Boolean = false,
+  ): List<String>
 
   fun findApplicationInfoModule(): JpsModule
 
@@ -125,7 +132,7 @@ interface BuildContext : CompilationContext {
     proprietaryBuildTools.signTool.signFiles(files = files, context = this, options = options)
   }
 
-  val jetBrainsClientModuleFilter: JetBrainsClientModuleFilter
+  suspend fun getJetBrainsClientModuleFilter(): JetBrainsClientModuleFilter
 
   val isEmbeddedJetBrainsClientEnabled: Boolean
 
@@ -133,28 +140,63 @@ interface BuildContext : CompilationContext {
 
   fun shouldBuildDistributionForOS(os: OsFamily, arch: JvmArchitecture): Boolean
 
-  fun createCopyForProduct(productProperties: ProductProperties,
-                           projectHomeForCustomizers: Path,
-                           prepareForBuild: Boolean = true): BuildContext
+  suspend fun createCopyForProduct(
+    productProperties: ProductProperties,
+    projectHomeForCustomizers: Path,
+    prepareForBuild: Boolean = true,
+  ): BuildContext
 
   suspend fun buildJar(targetFile: Path, sources: List<Source>, compress: Boolean = false)
 
-  fun checkDistributionBuildNumber()
+  fun reportDistributionBuildNumber()
 
   suspend fun cleanupJarCache()
 
   suspend fun createProductRunner(additionalPluginModules: List<String> = emptyList()): IntellijProductRunner
+
+  suspend fun runProcess(
+    args: List<String>,
+    workingDir: Path? = null,
+    timeout: Duration = DEFAULT_TIMEOUT,
+    additionalEnvVariables: Map<String, String> = emptyMap(),
+    attachStdOutToException: Boolean = false,
+  )
 }
 
-suspend inline fun <T> BuildContext.executeStep(spanBuilder: SpanBuilder,
-                                                stepId: String,
-                                                crossinline step: suspend CoroutineScope.(Span) -> T): T? {
-  if (isStepSkipped(stepId)) {
-    spanBuilder.startSpan().addEvent("skip '$stepId' step").end()
-    return null
-  }
-  else {
-    return spanBuilder.useWithScope(Dispatchers.IO, step)
+suspend inline fun <T> BuildContext.executeStep(
+  spanBuilder: SpanBuilder,
+  stepId: String,
+  coroutineContext: CoroutineContext = EmptyCoroutineContext,
+  crossinline step: suspend CoroutineScope.(Span) -> T,
+): T? {
+  return spanBuilder.use(coroutineContext) { span ->
+    try {
+      options.buildStepListener.onStart(stepId, messages)
+      if (isStepSkipped(stepId)) {
+        span.addEvent("skip '$stepId' step")
+        options.buildStepListener.onSkipping(stepId, messages)
+        null
+      }
+      else {
+        step(span)
+      }
+    }
+    catch (e: CancellationException) {
+      throw e
+    }
+    catch (e: Throwable) {
+      if (TeamCityHelper.isUnderTeamCity) {
+        span.recordException(e)
+        options.buildStepListener.onFailure(stepId = stepId, failure = e, messages = messages)
+        null
+      }
+      else {
+        throw e
+      }
+    }
+    finally {
+      options.buildStepListener.onCompletion(stepId, messages)
+    }
   }
 }
 
@@ -183,7 +225,7 @@ sealed interface DistFileContent {
 }
 
 data class LocalDistFileContent(@JvmField val file: Path, val isExecutable: Boolean = false) : DistFileContent {
-  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).toString(Charsets.UTF_8)
+  override fun readAsStringForDebug() = Files.newInputStream(file).readNBytes(1024).decodeToString()
 
   override fun toString(): String = "LocalDistFileContent(file=$file, isExecutable=$isExecutable)"
 }

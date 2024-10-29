@@ -1,0 +1,3 @@
+first = """first"""
+second = "this is a single-line string"
+third = """third"""

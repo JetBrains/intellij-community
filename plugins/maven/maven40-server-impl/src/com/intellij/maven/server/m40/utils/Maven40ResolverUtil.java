@@ -1,6 +1,8 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.maven.server.m40.utils;
 
+import org.apache.maven.api.services.ModelBuilderException;
+import org.apache.maven.model.building.DefaultModelProblem;
 import org.apache.maven.model.building.ModelBuildingException;
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.project.DependencyResolutionResult;
@@ -9,6 +11,7 @@ import org.apache.maven.project.ProjectBuildingException;
 import org.apache.maven.project.ProjectBuildingResult;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 public final class Maven40ResolverUtil {
@@ -19,11 +22,18 @@ public final class Maven40ResolverUtil {
     }
     else {
       Throwable cause = e.getCause();
-      List<ModelProblem> problems = null;
       if (cause instanceof ModelBuildingException) {
-        problems = ((ModelBuildingException)cause).getProblems();
+        buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, ((ModelBuildingException)cause).getProblems(), null));
       }
-      buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, problems, null));
+      else if (cause instanceof ModelBuilderException) {
+        buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, MavenApiConverterUtil.convertFromApiProblems(
+          ((ModelBuilderException)cause).getProblems()), null));
+      }
+      else {
+        buildingResults.add(new MyProjectBuildingResult(null, e.getPomFile(), null, Collections.singletonList(
+          new DefaultModelProblem(cause.getMessage(), ModelProblem.Severity.FATAL, ModelProblem.Version.BASE, "", 0, 0, null, e)
+        ), null));
+      }
     }
   }
 
@@ -72,5 +82,4 @@ public final class Maven40ResolverUtil {
       return myDependencyResolutionResult;
     }
   }
-
 }

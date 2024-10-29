@@ -8,10 +8,12 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.ui.ScreenUtil
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.*
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.Point
 import java.awt.Rectangle
 
+@ApiStatus.Internal
 class DockingLayouter(lifetime: Lifetime,
                       private val anchor: AnchoringRect,
                       dispositions: List<Anchoring2D>,

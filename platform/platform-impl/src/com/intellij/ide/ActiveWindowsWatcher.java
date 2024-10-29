@@ -7,12 +7,14 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 
+@ApiStatus.Internal
 public final class ActiveWindowsWatcher {
   private static final LinkedHashSet<Window> activatedWindows = new LinkedHashSet<>();
 

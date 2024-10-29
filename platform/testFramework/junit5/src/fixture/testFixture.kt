@@ -28,7 +28,7 @@ fun <T> testFixture(debugString: String = "", initializer: TestFixtureInitialize
   return TestFixtureImpl(debugString, initializer)
 }
 
-sealed interface TestFixture<T> {
+sealed interface TestFixture<out T> {
 
   /**
    * Gets value from an initialized fixture.

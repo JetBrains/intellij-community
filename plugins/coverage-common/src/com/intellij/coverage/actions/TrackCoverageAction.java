@@ -12,6 +12,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.execution.testframework.ToggleModelAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Disposer;
@@ -42,6 +43,11 @@ class TrackCoverageAction extends ToggleModelAction {
           AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
+  }
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.BGT;
   }
 
   @Override

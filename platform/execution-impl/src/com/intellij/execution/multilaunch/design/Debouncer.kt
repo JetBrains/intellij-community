@@ -7,7 +7,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @OptIn(ExperimentalCoroutinesApi::class)
 class Debouncer(
   private val launchDelayMs: Long,

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ide.startup.ServiceNotReadyException;
@@ -19,11 +19,8 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.testFramework.*;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -170,25 +167,27 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertThrows(IllegalArgumentException.class, shouldBeUnique, () -> { ra.coalesceBy(""); });
   }
 
-  public void testReportConflictForSameCoalesceFromDifferentPlaces() {
+  public void testReportConflictForSameCoalesceFromDifferentPlaces() throws Exception {
     //RC: current implementation treat lambdas from the same class as 'same place' -- i.e. they are OK to use
     // with same .coalesceBy key. Hence the need to create the Inner class here -- to clearly show 'those 2 lambdas
     // are of different origins':
 
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    Object same = new Object();
-    class Inner {
-      void run() {
-        ReadAction.nonBlocking(() -> {}).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      Object same = new Object();
+      class Inner {
+        void run() {
+          ReadAction.nonBlocking(() -> { }).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
+        }
       }
-    }
 
-    Promise<?> p = WriteAction.compute(() -> {
-      Promise<?> p1 = ReadAction.nonBlocking(() -> {}).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
-      assertThrows(Throwable.class, "Same coalesceBy arguments", () -> new Inner().run());
-      return p1;
+      Promise<?> p = WriteAction.compute(() -> {
+        Promise<?> p1 = ReadAction.nonBlocking(() -> { }).coalesceBy(same).submit(AppExecutorUtil.getAppExecutorService());
+        assertThrows(Throwable.class, "Same coalesceBy arguments", () -> new Inner().run());
+        return p1;
+      });
+      waitForPromise(p);
     });
-    waitForPromise(p);
   }
 
   public void testDoNotBlockExecutorThreadDuringWriteAction() throws Exception {
@@ -402,7 +401,7 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
   }
 
   public void testCancellationPerformance() {
-    PerformanceTestUtil.newPerformanceTest("NBRA cancellation", () -> {
+    Benchmark.newBenchmark("NBRA cancellation", () -> {
       WriteAction.run(() -> {
         for (int i = 0; i < 100_000; i++) {
           ReadAction.nonBlocking(() -> {}).coalesceBy(this).submit(AppExecutorUtil.getAppExecutorService()).cancel();
@@ -503,13 +502,15 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
     assertEquals(10, count.get());
   }
 
-  public void testReportTooManyUnboundedCalls() {
+  public void testReportTooManyUnboundedCalls() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
-    assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
-      WriteAction.run(() -> {
-        for (int i = 0; i < 1000; i++) {
-          ReadAction.nonBlocking(() -> {}).submit(AppExecutorUtil.getAppExecutorService());
-        }
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      assertThrows(Throwable.class, SubmissionTracker.ARE_CURRENTLY_ACTIVE, () -> {
+        WriteAction.run(() -> {
+          for (int i = 0; i < 1000; i++) {
+            ReadAction.nonBlocking(() -> { }).submit(AppExecutorUtil.getAppExecutorService());
+          }
+        });
       });
     });
   }

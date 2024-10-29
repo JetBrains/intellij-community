@@ -7,6 +7,9 @@ import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.HashingUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.cancelOnDispose
 import com.intellij.util.containers.HashingStrategy
@@ -320,14 +323,6 @@ private fun <T, R> Flow<Iterable<T>>.associateCaching(hashingStrategy: HashingSt
   return associateCachingBy({ it }, hashingStrategy, { mapper(it) }, { }, update)
 }
 
-@ApiStatus.Internal
-@ApiStatus.Obsolete
-fun <ID : Any, T, R> Flow<Iterable<T>>.mapCaching(sourceIdentifier: (T) -> ID,
-                                                  mapper: CoroutineScope.(T) -> R,
-                                                  destroy: suspend R.() -> Unit,
-                                                  update: (suspend R.(T) -> Unit)? = null): Flow<List<R>> =
-  associateCachingBy(sourceIdentifier, HashingStrategy.canonical(), mapper, destroy, update).map { it.values.toList() }
-
 /**
  * Creates a list of model objects from DTOs
  */
@@ -552,3 +547,17 @@ suspend fun <T> Deferred<T>.awaitCancelling(): T {
     throw ce
   }
 }
+
+fun <T : Any> ExtensionPointName<T>.extensionListFlow(): Flow<List<T>> =
+  channelFlow<List<T>> {
+    addExtensionPointListener(this, object : ExtensionPointListener<T> {
+      override fun extensionAdded(extension: T, pluginDescriptor: PluginDescriptor) {
+        launch { send(extensionList) }
+      }
+
+      override fun extensionRemoved(extension: T, pluginDescriptor: PluginDescriptor) {
+        launch { send(extensionList) }
+      }
+    })
+    send(extensionList)
+  }

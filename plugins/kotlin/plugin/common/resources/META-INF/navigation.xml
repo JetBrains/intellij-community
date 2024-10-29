@@ -18,13 +18,20 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.psi.KtFileClassProvider"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KtFileClassProviderImpl"/>
+
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
+    <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFacadeClassContributor"/>
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasContributor"/>
+
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFunctionSymbolContributor"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPropertySymbolContributor"/>
-    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassSymbolContributor"/>
-    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasSymbolContributor"/>
+
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoFacadeClassContributor"/>
+
+    <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoTypeAliasContributor"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoJvmNameSymbolContributor"/>
-    <gotoPrimeSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoPrimeSymbolContributor"/>
+
+    <gotoByName.defaultProvider.ignoreLanguage language="kotlin"/>
   </extensions>
 </idea-plugin>

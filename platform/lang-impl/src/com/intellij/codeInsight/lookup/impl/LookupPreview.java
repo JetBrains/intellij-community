@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.lookup.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -81,8 +81,7 @@ final class LookupPreview {
     }
   }
 
-  @NotNull
-  private static EditorCustomElementRenderer createGrayRenderer(final String suffix) {
+  private static @NotNull EditorCustomElementRenderer createGrayRenderer(final String suffix) {
     return new EditorCustomElementRenderer() {
       @Override
       public int calcWidthInPixels(@NotNull Inlay inlay) {

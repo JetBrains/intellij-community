@@ -71,6 +71,9 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         }
       },
       () -> {
+        IndexingTestUtil.waitUntilIndexesAreReady(project);
+      },
+      () -> {
         if (project != null) {
           TestApplicationManager.waitForProjectLeakingThreads(project);
         }

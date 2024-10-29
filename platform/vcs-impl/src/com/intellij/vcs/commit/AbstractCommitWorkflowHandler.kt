@@ -2,7 +2,9 @@
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.blockingContext
@@ -14,6 +16,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction
 import com.intellij.openapi.vcs.changes.ui.SessionDialog
 import com.intellij.openapi.vcs.checkin.CheckinHandler
+import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitInfo
 import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.openapi.vcs.ui.CommitOptionsDialogExtension
@@ -76,14 +79,11 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private val commitHandlers get() = workflow.commitHandlers
   protected val commitOptions get() = workflow.commitOptions
 
-  protected open fun createDataProvider() = DataProvider { dataId ->
-    when {
-      VcsDataKeys.COMMIT_WORKFLOW_HANDLER.`is`(dataId) -> this
-      VcsDataKeys.COMMIT_WORKFLOW_UI.`is`(dataId) -> this.ui
-      VcsDataKeys.COMMIT_MESSAGE_CONTROL.`is`(dataId) -> this.ui.commitMessageUi
-      Refreshable.PANEL_KEY.`is`(dataId) -> commitPanel
-      else -> null
-    }
+  protected open fun uiDataSnapshot(sink: DataSink) {
+    sink[VcsDataKeys.COMMIT_WORKFLOW_HANDLER] = this
+    sink[VcsDataKeys.COMMIT_WORKFLOW_UI] = this.ui
+    sink[VcsDataKeys.COMMIT_MESSAGE_CONTROL] = this.ui.commitMessageUi as? CommitMessageI
+    sink[Refreshable.PANEL_KEY] = commitPanel
   }
 
   protected fun initCommitHandlers() {
@@ -97,13 +97,23 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     workflow.initCommitHandlers(checkinHandlers)
   }
 
-  protected fun createCommitOptions(): CommitOptions = CommitOptionsImpl(
-    if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
-    getBeforeOptions(workflow.commitHandlers),
-    // TODO Potential leak here for non-modal
-    getAfterOptions(workflow.commitHandlers, this),
-    CommitOptionsDialogExtension.EP_NAME.extensionList.flatMap { it.getOptions(project) }
-  )
+  protected fun createCommitOptions(): CommitOptions {
+    val beforeCommitChecksOptions = mutableListOf<RefreshableOnComponent>()
+    val postCommitChecksOptions = mutableListOf<RefreshableOnComponent>()
+    workflow.commitHandlers.forEachLoggingErrors(LOG) { handler ->
+      val panel = handler.beforeCheckinConfigurationPanel ?: return@forEachLoggingErrors
+      val listToUpdate = if (handler.isPostCommit()) postCommitChecksOptions else beforeCommitChecksOptions
+      listToUpdate += panel
+    }
+    return CommitOptionsImpl(
+      vcsOptions = if (workflow.isDefaultCommitEnabled) getVcsOptions(commitPanel, workflow.vcses, commitContext) else emptyMap(),
+      beforeCommitChecksOptions = beforeCommitChecksOptions,
+      postCommitChecksOptions = postCommitChecksOptions,
+      // TODO Potential leak here for non-modal
+      afterOptions = getAfterOptions(workflow.commitHandlers, this),
+      extensionOptions = CommitOptionsDialogExtension.EP_NAME.extensionList.flatMap { it.getOptions(project) }
+    )
+  }
 
   abstract fun updateDefaultCommitActionName()
 
@@ -133,7 +143,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   private suspend fun executeSession(sessionInfo: CommitSessionInfo): Boolean {
     val proceed = coroutineToIndicator {
       checkCommit(sessionInfo) &&
-      saveCommitOptionsOnCommit()
+      WriteIntentReadAction.compute<Boolean> { saveCommitOptionsOnCommit() }
     }
     if (!proceed) return false
 
@@ -142,7 +152,9 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
 
     if (!updateWorkflow(sessionInfo)) return false
 
-    FileDocumentManager.getInstance().saveAllDocuments()
+    writeIntentReadAction {
+      FileDocumentManager.getInstance().saveAllDocuments()
+    }
 
     val commitInfo = DynamicCommitInfoImpl(commitContext, sessionInfo, ui, workflow)
     return doExecuteSession(sessionInfo, commitInfo)
@@ -164,6 +176,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
     return workflow.canExecute(sessionInfo, getIncludedChanges())
   }
 
+  @ApiStatus.Internal
   protected open suspend fun doExecuteSession(sessionInfo: CommitSessionInfo, commitInfo: DynamicCommitInfo): Boolean {
     return workflow.executeSession(sessionInfo, commitInfo)
   }
@@ -184,9 +197,6 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
         Pair(vcs, optionsPanel)
       }
       .toMap()
-
-  private fun getBeforeOptions(handlers: Collection<CheckinHandler>): List<RefreshableOnComponent> =
-    handlers.mapNotNullLoggingErrors(LOG) { it.beforeCheckinConfigurationPanel }
 
   private fun getAfterOptions(handlers: Collection<CheckinHandler>, parent: Disposable): List<RefreshableOnComponent> =
     handlers.mapNotNullLoggingErrors(LOG) { it.getAfterCheckinConfigurationPanel(parent) }
@@ -272,6 +282,7 @@ abstract class AbstractCommitWorkflowHandler<W : AbstractCommitWorkflow, U : Com
   }
 }
 
+@ApiStatus.Internal
 class StaticCommitInfo(
   override val commitContext: CommitContext,
   override val isVcsCommit: Boolean,
@@ -282,6 +293,7 @@ class StaticCommitInfo(
   override val commitMessage: String,
 ) : CommitInfo
 
+@ApiStatus.Internal
 class DynamicCommitInfoImpl(
   override val commitContext: CommitContext,
   private val sessionInfo: CommitSessionInfo,
@@ -315,6 +327,10 @@ class DynamicCommitInfoImpl(
   }
 }
 
+@ApiStatus.Internal
 interface DynamicCommitInfo : CommitInfo {
   fun asStaticInfo(): StaticCommitInfo
 }
+
+internal fun CheckinHandler.isPostCommit() =
+  (this as? CommitCheck)?.getExecutionOrder() == CommitCheck.ExecutionOrder.POST_COMMIT

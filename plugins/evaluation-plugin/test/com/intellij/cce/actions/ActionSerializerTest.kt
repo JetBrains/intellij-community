@@ -59,12 +59,18 @@ class ActionSerializerTest {
   }
 
   private fun doTest(before: FileActions): FileActions {
-    val after = ActionSerializer.deserialize(ActionSerializer.serialize(before))
+    val after = ActionSerializer.deserializeFileActions(ActionSerializer.serializeFileActions(before))
     assertEquals(before.path, after.path)
     assertEquals(before.sessionsCount, after.sessionsCount)
     assertEquals(before.checksum, after.checksum)
     assertActionsEquals(before.actions, after.actions)
+    doTestActionsOnly(before.actions)
     return after
+  }
+
+  private fun doTestActionsOnly(before: List<Action>) {
+    val after = ActionSerializer.deserialize(ActionSerializer.serialize(before))
+    assertActionsEquals(before, after)
   }
 
   private fun assertActionsEquals(before: List<Action>, after: List<Action>) {

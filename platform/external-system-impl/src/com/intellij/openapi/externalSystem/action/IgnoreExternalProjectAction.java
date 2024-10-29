@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class IgnoreExternalProjectAction extends ExternalSystemToggleAction {
 
   private static final Logger LOG = Logger.getInstance(IgnoreExternalProjectAction.class);

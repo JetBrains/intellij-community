@@ -24,7 +24,6 @@ class MockSearchEverywhereContributor(val name: String? = null,
     }
   }
 
-  override fun getDataForItem(element: Any, dataId: String) = null
   override fun processSelectedItem(selected: Any, modifiers: Int, searchText: String) = closeOnItemSelection
   override fun fetchElements(pattern: String, progressIndicator: ProgressIndicator, consumer: Processor<in Any>) {
     // We have to use runProcess here until the SE is not moved to coroutines API completely

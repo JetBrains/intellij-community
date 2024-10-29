@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.classMembers;
 
@@ -10,12 +10,14 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extends PsiElement, M extends MemberInfoBase<T>> implements MemberDependencyGraph<T, M> {
   private static final Logger LOG = Logger.getInstance(UsesMemberDependencyGraph.class);
   private final HashSet<T> mySelectedNormal;
@@ -79,7 +81,7 @@ public final class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C 
   }
 
   private void buildDepsRecursively(final T sourceElement,
-                                    @Nullable final Set<? extends T> members,
+                                    final @Nullable Set<? extends T> members,
                                     HashSet<T> dependencies,
                                     HashMap<T, HashSet<T>> dependenciesToDependentMap) {
     if (members != null) {

@@ -7,6 +7,8 @@ struct FuncStat {
   4: required i32 calls_count,	  // number of times the executed function is called.
   5: required double total_time,	  // total time spent in the executed function. See Clock Types to interpret this value correctly.
   6: required double own_time,     // total time spent in the executed function, excluding subcalls. See Clock Types to interpret this value correctly.
+  7: optional string threadName, // Name of thread
+  8: optional string threadId, // ID of thread
 }
 
 struct Function {
@@ -16,7 +18,8 @@ struct Function {
 
 
 struct Stats {
-  1: required list<Function> func_stats
+  1: required list<Function> func_stats,
+  2: required string profiler // profiler type (currently yappi/cProfile)
 }
 
 struct CallTreeStat {

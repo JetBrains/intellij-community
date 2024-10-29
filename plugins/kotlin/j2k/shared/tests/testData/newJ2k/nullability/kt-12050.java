@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class NullableArray {
     public String[] createArrayFailure(int size) {
         return new String[size];

@@ -34,13 +34,13 @@ abstract class AbstractJsIdePlatformKindTooling : IdePlatformKindTooling() {
         private const val MAVEN_OLD_JS_STDLIB_ID = "kotlin-js-library"
     }
 
-    override val kind = JsIdePlatformKind
+    override val kind: JsIdePlatformKind get() = JsIdePlatformKind
 
-    override val mavenLibraryIds = listOf(PathUtil.JS_LIB_NAME, MAVEN_OLD_JS_STDLIB_ID)
-    override val gradlePluginId = "kotlin-platform-js"
+    override val mavenLibraryIds: List<String> = listOf(PathUtil.JS_LIB_NAME, MAVEN_OLD_JS_STDLIB_ID)
+    override val gradlePluginId: String get() = "kotlin-platform-js"
     override val gradlePlatformIds: List<KotlinPlatform> get() = listOf(KotlinPlatform.JS)
 
-    override val libraryKind = KotlinJavaScriptLibraryKind
+    override val libraryKind: KotlinJavaScriptLibraryKind get() = KotlinJavaScriptLibraryKind
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {
         val contexts by lazy { computeConfigurationContexts(function) }

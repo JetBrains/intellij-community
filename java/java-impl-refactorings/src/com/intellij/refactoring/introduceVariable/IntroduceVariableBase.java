@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.codeInsight.CodeInsightUtil;
@@ -53,7 +53,6 @@ import com.intellij.refactoring.util.occurrences.NotInConstructorCallFilter;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
@@ -341,9 +340,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
 
     try {
-      PsiType type = DumbService.getInstance(project)
-        .computeWithAlternativeResolveEnabled(() -> GenericsUtil.getVariableTypeByExpressionType(originalType));
-      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(type.getCanonicalText(), expr);
+      String typeText = DumbService.getInstance(project)
+        .computeWithAlternativeResolveEnabled(() -> GenericsUtil.getVariableTypeByExpressionType(originalType).getCanonicalText());
+      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(typeText, expr);
     }
     catch (IncorrectOperationException ignore) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
@@ -369,7 +368,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final PsiFile file = anchorStatement.getContainingFile();
     IntroduceVariableUtil.LOG.assertTrue(file != null, "expr.getContainingFile() == null");
     final PsiElement nameSuggestionContext = editor == null ? null : file.findElementAt(editor.getCaretModel().getOffset());
-    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forContext(expr);
+    final RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forContext(expr);
     final boolean isInplaceAvailableOnDataContext =
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
@@ -404,9 +403,8 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           dialogIntroduce.accept(null);
         }
         else {
-          SlowOperations.allowSlowOperations(
-            () -> dumbService.runWithAlternativeResolveEnabled(
-              () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce)));
+          dumbService.runWithAlternativeResolveEnabled(
+            () -> inplaceIntroduce(project, editor, choice, targetContainer, occurrenceManager, originalType, dialogIntroduce));
         }
       }
 

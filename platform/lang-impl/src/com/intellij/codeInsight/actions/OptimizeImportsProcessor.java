@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.actions;
 
@@ -72,8 +72,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   }
 
   @Override
-  @NotNull
-  protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     if (DumbService.isDumb(file.getProject())) {
       return emptyTask();
@@ -108,8 +107,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   /**
    * walk PSI and for each unresolved reference ask {@link ReferenceImporter} how to import it
    */
-  @NotNull
-  private static List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
+  private static @NotNull List<BooleanSupplier> collectAutoImports(@NotNull PsiFile file) {
     if (file instanceof PsiCompiledElement) return List.of();
     Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
     if (document == null) return List.of();
@@ -168,8 +166,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     return runnables;
   }
 
-  @NotNull
-  private static NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
+  private static @NotNull NotificationInfo getNotificationInfo(@NotNull Runnable runnable) {
     if (runnable instanceof ImportOptimizer.CollectingInfoRunnable) {
       String optimizerMessage = ((ImportOptimizer.CollectingInfoRunnable)runnable).getUserNotificationInfo();
       return optimizerMessage == null ? NOTHING_CHANGED_NOTIFICATION : new NotificationInfo(optimizerMessage);
@@ -204,8 +201,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 
     private final boolean mySomethingChanged;
-    @HintText
-    private final String myMessage;
+    private final @HintText String myMessage;
 
     NotificationInfo(@NotNull @HintText String message) {
       this(true, message);

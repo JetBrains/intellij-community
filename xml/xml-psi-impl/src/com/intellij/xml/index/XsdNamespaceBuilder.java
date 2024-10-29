@@ -1,5 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.index;
 
 import com.intellij.openapi.util.Comparing;
@@ -17,11 +16,8 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
-/**
- * @author Dmitry Avdeev
- */
-public class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
-  public static String computeNamespace(final InputStream is) {
+public final class XsdNamespaceBuilder implements Comparable<XsdNamespaceBuilder> {
+  public static String computeNamespace(@NotNull InputStream is) {
     return computeNamespace(new InputStreamReader(is, StandardCharsets.UTF_8)).getNamespace();
   }
 

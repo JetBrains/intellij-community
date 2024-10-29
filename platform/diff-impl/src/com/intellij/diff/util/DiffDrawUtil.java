@@ -413,6 +413,7 @@ public final class DiffDrawUtil {
     return createLineSeparatorHighlighter(editor, offset1, offset2, new SimpleSeparatorPresentation(visibilityCondition));
   }
 
+  @ApiStatus.Internal
   @NotNull
   public static List<RangeHighlighter> createLineSeparatorHighlighter(@NotNull Editor editor,
                                                                       int offset1,

@@ -88,7 +88,7 @@ private class MyDiffRequestProducer(private val project: Project?, private val f
       DiffRequestFactory.getInstance().getTitle(base)
     }
     else {
-      DiffRequestFactory.getInstance().getTitle(files[0], files[1])
+      DiffRequestFactory.getInstance().getTitleForComparison(files[0], files[1])
     }
   }
 

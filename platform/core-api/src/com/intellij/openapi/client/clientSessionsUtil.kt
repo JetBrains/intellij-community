@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ClientSessionsUtil")
 @file:Suppress("UNCHECKED_CAST", "unused", "UnusedReceiverParameter")
 
@@ -11,7 +11,6 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.project.Project
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -21,10 +20,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
  * **Note:** This method should not be called within a suspend context.
  * It is recommended to use [Application.forEachSessionSuspending] instead.
  */
-@RequiresBlockingContext
-inline fun Application.forEachSession(kind: ClientKind, action: (ClientAppSession) -> Unit) {
+fun Application.forEachSession(kind: ClientKind, action: (ClientAppSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind)) {
-    ClientId.withClientId(session.clientId) {
+    ClientId.withExplicitClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session as ClientAppSession)
       }
@@ -51,10 +49,9 @@ suspend fun Application.forEachSessionSuspending(kind: ClientKind, action: suspe
  * **Note:** This method should not be called within a suspend context.
  * It is recommended to use [Project.forEachSessionSuspending] instead.
  */
-@RequiresBlockingContext
-inline fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
+fun Project.forEachSession(kind: ClientKind, action: (ClientProjectSession) -> Unit) {
   for (session in this.service<ClientSessionsManager<*>>().getSessions(kind) as List<ClientProjectSession>) {
-    ClientId.withClientId(session.clientId) {
+    ClientId.withExplicitClientId(session.clientId) {
       logger<ClientSessionsManager<*>>().runAndLogException {
         action(session)
       }
@@ -77,11 +74,13 @@ suspend fun Project.forEachSessionSuspending(kind: ClientKind, action: suspend (
 
 @get:Internal
 val Application.currentSession: ClientAppSession
-  get() = ClientSessionsManager.getAppSession() ?: error("Application-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getAppSession() ?:
+  error("Application-level session is not set. ${ClientId.current}")
 
 @get:Internal
 val Project.currentSession: ClientProjectSession
-  get() = ClientSessionsManager.getProjectSession(this) ?: error("Project-level session is not set. ${ClientId.current}")
+  get() = ClientSessionsManager.getProjectSession(this) ?:
+  error("Project-level session is not set. ${ClientId.current}")
 
 @Internal
 fun Application.sessions(kind: ClientKind): List<ClientAppSession> {
@@ -95,10 +94,12 @@ fun Project.sessions(kind: ClientKind): List<ClientProjectSession> {
 
 @Internal
 fun Application.session(clientId: ClientId): ClientAppSession {
-  return ClientSessionsManager.getAppSession(clientId) ?: error("Application-level session is not found. $clientId")
+  return ClientSessionsManager.getAppSession(clientId) ?:
+  error("Application-level session is not found. $clientId")
 }
 
 @Internal
 fun Project.session(clientId: ClientId): ClientProjectSession {
-  return ClientSessionsManager.getProjectSession(this, clientId) ?: error("Project-level session is not found. $clientId")
+  return ClientSessionsManager.getProjectSession(this, clientId) ?:
+  error("Project-level session is not found. $clientId")
 }

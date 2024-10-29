@@ -42,4 +42,10 @@ public class JavaQuoteTest extends AbstractBasicJavaQuoteTest {
     doFileTest("/**\n* {@snippet <caret> :}\n*/\nclass A {\n}",
                "/**\n* {@snippet '<caret>' :}\n*/\nclass A {\n}", '\'');
   }
+
+  public void testJavadocMarkdownQuotes(){
+    doFileTest("/// <caret>", "/// [<caret>]", '[');
+    doFileTest("/// <caret>", "/// (<caret>)", '(');
+    doFileTest("/// <caret>", "/// `<caret>`", '`');
+  }
 }

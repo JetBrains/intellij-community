@@ -2,6 +2,7 @@
 package com.intellij.formatting.commandLine
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import java.io.File
@@ -58,13 +59,13 @@ class CodeStyleProcessorBuilder(private val messageOutput: MessageOutput) {
     }
   }
 
-  private fun buildFormatter() =
-    FileSetFormatter(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle).configure()
+  private fun buildFormatter(project: Project) =
+    FileSetFormatter(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle, project).configure()
 
-  private fun buildFormatValidator() =
-    FileSetFormatValidator(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle).configure()
+  private fun buildFormatValidator(project: Project) =
+    FileSetFormatValidator(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle, project).configure()
 
-  fun build(): FileSetCodeStyleProcessor =
-    if (isDryRun) buildFormatValidator() else buildFormatter()
+  fun build(project: Project): FileSetCodeStyleProcessor =
+    if (isDryRun) buildFormatValidator(project) else buildFormatter(project)
 
 }

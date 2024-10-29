@@ -52,6 +52,7 @@ public abstract class HistoryDialogModel {
     return FileUtil.toSystemDependentName(myFile.getPath());
   }
 
+  @ApiStatus.Internal
   protected @NotNull RevisionData getRevisionData() {
     if (myRevisionData == null) {
       myRevisionData = collectRevisionData();
@@ -67,6 +68,7 @@ public abstract class HistoryDialogModel {
     return getRevisionData().getCurrentRevision();
   }
 
+  @ApiStatus.Internal
   protected @NotNull RevisionData collectRevisionData() {
     return RevisionDataKt.collectRevisionData(myProject, myGateway, myVcs, createRootEntry(), myFile, myFilter, myBefore);
   }

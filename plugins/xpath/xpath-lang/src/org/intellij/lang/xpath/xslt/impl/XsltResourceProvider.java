@@ -21,15 +21,11 @@ import com.intellij.javaee.StandardResourceProvider;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.context.XsltFunctionContext;
 
-/**
- * @author Dmitry Avdeev
- */
-public class XsltResourceProvider implements StandardResourceProvider {
-
+final class XsltResourceProvider implements StandardResourceProvider {
   @Override
   public void registerResources(ResourceRegistrar registrar) {
-     registrar.addStdResource(XsltSupport.XSLT_NS, "/org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass());
-     registrar.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
+    registrar.addStdResource(XsltSupport.XSLT_NS, "org/intellij/lang/xpath/xslt/resources/xslt-schema.xsd", getClass().getClassLoader());
+    registrar.addIgnoredResource(XsltSupport.PLUGIN_EXTENSIONS_NS);
 
     registrar.addIgnoredResource(XsltFunctionContext.EXSLT_COMMON);
     registrar.addIgnoredResource(XsltFunctionContext.EXSLT_DATE_TIME);

@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
-import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
@@ -91,7 +90,7 @@ public final class GradleProjectResolverUtil {
       ideProjectPath == null
       ? mainModuleConfigPath
       : ideProjectPath + '/' + (relativePath == null || relativePath.equals(".") ? "" : relativePath);
-    if (ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+    if (GradleProjectResolver.DEBUG_ORPHAN_MODULES_PROCESSING) {
       LOG.info(String.format(
         "Creating module data ('%s') with the external config path: '%s'", gradleProject.getPath(), mainModuleConfigPath
       ));
@@ -697,7 +696,6 @@ public final class GradleProjectResolverUtil {
         ModuleMappingInfo mapping = artifactMap.getModuleMapping(ExternalSystemApiUtil.toCanonicalPath(file.getPath()));
         if (mapping != null) {
           for (String moduleId : mapping.getModuleIds()) {
-            if (moduleId == null) continue;
             projectPair = sourceSetMap.get(moduleId);
 
             if (projectPair == null) continue;

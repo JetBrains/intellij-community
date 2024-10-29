@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui
 
+import com.intellij.idea.AppMode
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.ReportValue
 import com.intellij.openapi.util.SystemInfo
@@ -41,7 +42,7 @@ class UISettingsState : BaseState() {
 
   @get:ReportValue
   @get:OptionTag("EDITOR_TAB_LIMIT")
-  var editorTabLimit: Int by property(10)
+  var editorTabLimit: Int by property(30)
 
   @get:OptionTag("REUSE_NOT_MODIFIED_TABS")
   var reuseNotModifiedTabs: Boolean by property(false)
@@ -195,7 +196,7 @@ class UISettingsState : BaseState() {
   var mergeMainMenuWithWindowTitle: Boolean by property(
     (SystemInfo.isWin10OrNewer || (SystemInfo.isUnix && !SystemInfo.isMac)) && SystemInfo.isJetBrainsJvm)
 
-  var animatedScrolling: Boolean by property(!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm)
+  var animatedScrolling: Boolean by property(!AppMode.isRemoteDevHost() && (!SystemInfoRt.isMac || !SystemInfo.isJetBrainsJvm))
   var animatedScrollingDuration: Int by property(getDefaultAnimatedScrollingDuration())
 
   var animatedScrollingCurvePoints: Int by property(

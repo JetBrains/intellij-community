@@ -18,6 +18,7 @@ import git4idea.repo.GitRepositoryManager
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.SoftAssertions
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_DIRECTORY_FILES
 import org.jetbrains.plugins.terminal.block.util.ShellCompletionTestFixture
 import org.mockito.Mockito.*
 
@@ -177,7 +178,7 @@ class GitShellCommandOverrideSpecTest : BasePlatformTestCase() {
     remotes: List<GitRemote> = ALL_REMOTES
   ): ShellCompletionTestFixture = ShellCompletionTestFixture.builder(project)
     .mockShellCommandResults { command ->
-      if (command.startsWith("__jetbrains_intellij_get_directory_files")) {
+      if (command.startsWith(GET_DIRECTORY_FILES.functionName)) {
         return@mockShellCommandResults ShellCommandResult.create("file1\nfile2", exitCode = 0)
       }
       if (!command.startsWith("git")) error("Unknown command: $command")

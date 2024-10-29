@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net
 
+import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.proxy.CommonProxyCompatibility
@@ -36,15 +37,15 @@ sealed interface JdkProxyProvider {
   }
 }
 
-private class OverrideDefaultJdkProxy {
-  // TODO: maybe change this from service preloading to ApplicationLoadListener,
-  //  but after the application is registered and we can access services
-  init {
+private class OverrideDefaultJdkProxy : ApplicationInitializedListener {
+  override suspend fun execute() {
+    val jdkProxyProvider = JdkProxyProvider.getInstance()
+    val jdkProxyCustomizer = JdkProxyCustomizer.getInstance()
     CommonProxyCompatibility.register(
-      JdkProxyProvider.getInstance().proxySelector,
-      JdkProxyProvider.getInstance().authenticator,
-      JdkProxyCustomizer.getInstance()::customizeProxySelector,
-      JdkProxyCustomizer.getInstance()::customizeAuthenticator
+      proxySelector = jdkProxyProvider.proxySelector,
+      authenticator = jdkProxyProvider.authenticator,
+      registerCustomProxySelector = jdkProxyCustomizer::customizeProxySelector,
+      registerCustomAuthenticator = jdkProxyCustomizer::customizeAuthenticator
     )
     JdkProxyProvider.ensureDefault()
   }

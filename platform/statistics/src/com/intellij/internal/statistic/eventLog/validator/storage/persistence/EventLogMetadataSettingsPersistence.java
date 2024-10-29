@@ -8,11 +8,13 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @State(name = "EventLogWhitelist", storages = @Storage(StoragePathMacros.CACHE_FILE))
 public final class EventLogMetadataSettingsPersistence implements PersistentStateComponent<Element> {
   private static final String MODIFY = "update";
@@ -25,14 +27,25 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   private static final String OPTION = "option";
   private static final String OPTION_NAME = "name";
   private static final String OPTION_VALUE = "value";
+  private static final String INTERNAL = "internal";
+
   private final Object optionsLock = new Object();
 
+  private boolean internal = false;
   private final Map<String, Long> lastModifications = new HashMap<>();
   private final Map<String, EventsSchemePathSettings> recorderToPathSettings = new HashMap<>();
   private final Map<String, EventLogExternalOptions> options = new HashMap<>();
 
   public static EventLogMetadataSettingsPersistence getInstance() {
     return ApplicationManager.getApplication().getService(EventLogMetadataSettingsPersistence.class);
+  }
+
+  public boolean isInternal() {
+    return internal;
+  }
+
+  public void setInternal(boolean internal) {
+    this.internal = internal;
   }
 
   public @NotNull Map<String, String> getOptions(@NotNull String recorderId) {
@@ -86,6 +99,9 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
 
   @Override
   public void loadState(final @NotNull Element element) {
+    Element internalElement = element.getChild(INTERNAL);
+    internal = internalElement != null && Boolean.parseBoolean(internalElement.getValue());
+
     lastModifications.clear();
     for (Element update : element.getChildren(MODIFY)) {
       final String recorder = update.getAttributeValue(RECORDER_ID);
@@ -138,6 +154,13 @@ public final class EventLogMetadataSettingsPersistence implements PersistentStat
   @Override
   public Element getState() {
     final Element element = new Element("state");
+
+    // store only 'true' values
+    if (internal) {
+      Element internalElement = new Element(INTERNAL);
+      internalElement.setText(Boolean.toString(internal));
+      element.addContent(internalElement);
+    }
 
     for (Map.Entry<String, Long> entry : lastModifications.entrySet()) {
       final Element update = new Element(MODIFY);

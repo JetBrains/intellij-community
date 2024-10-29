@@ -51,7 +51,9 @@ enum class GroupCategory {
     GRADLE,
     SCRIPTS,
     DEBUGGER,
-    J2K
+    J2K,
+    ANALYSIS_API,
+    INJECTION,
 }
 
 fun MutableTWorkspace.testGroup(

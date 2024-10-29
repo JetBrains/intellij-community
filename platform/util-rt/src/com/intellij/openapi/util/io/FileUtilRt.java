@@ -28,7 +28,19 @@ public final class FileUtilRt {
   private static final int DEFAULT_INTELLISENSE_LIMIT = 2500 * KILOBYTE;
 
   public static final int MEGABYTE = KILOBYTE * KILOBYTE;
+
+  /**
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getContentLoadLimit}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, Math.max(getUserFileSizeLimit(), getUserContentLoadLimit()));
+
+  /**
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#getPreviewLimit}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static final int LARGE_FILE_PREVIEW_SIZE = Math.min(getLargeFilePreviewSize(), LARGE_FOR_CONTENT_LOADING);
 
   private static final int MAX_FILE_IO_ATTEMPTS = 10;
@@ -706,6 +718,11 @@ public final class FileUtilRt {
     return buffer.toByteArray();
   }
 
+  /**
+   * @deprecated Prefer using @link {@link com.intellij.openapi.vfs.limits.FileSizeLimit#isTooLarge}
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   public static boolean isTooLarge(long len) {
     return len > LARGE_FOR_CONTENT_LOADING;
   }

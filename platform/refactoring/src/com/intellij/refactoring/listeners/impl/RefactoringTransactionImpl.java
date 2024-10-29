@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.listeners.impl;
 
@@ -11,6 +11,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 import com.intellij.refactoring.listeners.UndoRefactoringElementListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -18,7 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class RefactoringTransactionImpl implements RefactoringTransaction {
+@ApiStatus.Internal
+public final class RefactoringTransactionImpl implements RefactoringTransaction {
   private static final Logger LOG = Logger.getInstance(RefactoringTransactionImpl.class);
 
   /**

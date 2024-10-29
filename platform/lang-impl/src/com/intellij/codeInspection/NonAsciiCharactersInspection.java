@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection;
 
@@ -22,10 +22,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.usages.ChunkExtractor;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
 import java.util.function.Consumer;
@@ -34,6 +31,7 @@ import java.util.stream.IntStream;
 
 import static com.intellij.codeInspection.options.OptPane.*;
 
+@ApiStatus.Internal
 public final class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_NOT_ASCII_IDENTIFIER_NAME = true;
   public boolean CHECK_FOR_NOT_ASCII_STRING_LITERAL;
@@ -47,22 +45,17 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
   public boolean CHECK_FOR_FILES_CONTAINING_BOM;
 
   @Override
-  @Nls
-  @NotNull
-  public String getGroupDisplayName() {
+  public @Nls @NotNull String getGroupDisplayName() {
     return InspectionsBundle.message("group.names.internationalization.issues");
   }
 
   @Override
-  @NonNls
-  @NotNull
-  public String getShortName() {
+  public @NonNls @NotNull String getShortName() {
     return "NonAsciiCharacters";
   }
 
-  @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
+  public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     PsiFile file = session.getFile();
     if (!isFileWorthIt(file)) return PsiElementVisitor.EMPTY_VISITOR;
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(file.getFileType(), file.getProject(), file.getVirtualFile());
@@ -317,8 +310,7 @@ public final class NonAsciiCharactersInspection extends LocalInspectionTool {
   }
 
   enum PsiElementKind { IDENTIFIER, STRING, COMMENT, OTHER}
-  @NotNull
-  private static PsiElementKind getKind(@NotNull PsiElement element, @Nullable SyntaxHighlighter syntaxHighlighter) {
+  private static @NotNull PsiElementKind getKind(@NotNull PsiElement element, @Nullable SyntaxHighlighter syntaxHighlighter) {
     TextAttributesKey[] keys;
     if (element.getParent() instanceof PsiLiteralValue
         || ChunkExtractor.isHighlightedAsString(keys = syntaxHighlighter == null ? TextAttributesKey.EMPTY_ARRAY : syntaxHighlighter.getTokenHighlights(((LeafElement)element).getElementType()))) {

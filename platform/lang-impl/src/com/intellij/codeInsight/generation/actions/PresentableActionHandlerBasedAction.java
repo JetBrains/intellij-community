@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.generation.actions;
 
@@ -61,12 +61,11 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
   }
 
   @Override
-  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull final PsiFile file) {
+  protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, final @NotNull PsiFile file) {
     return getValidHandler(editor, file) != null;
   }
 
-  @Nullable
-  private CodeInsightActionHandler getValidHandler(@NotNull Editor editor, @NotNull PsiFile file) {
+  private @Nullable CodeInsightActionHandler getValidHandler(@NotNull Editor editor, @NotNull PsiFile file) {
     Language language = PsiUtilCore.getLanguageAtOffset(file, editor.getCaretModel().getOffset());
     final CodeInsightActionHandler codeInsightActionHandler = getLanguageExtension().forLanguage(language);
     if (codeInsightActionHandler != null) {
@@ -82,6 +81,5 @@ public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsigh
     return null;
   }
 
-  @NotNull
-  protected abstract LanguageExtension<? extends CodeInsightActionHandler> getLanguageExtension();
+  protected abstract @NotNull LanguageExtension<? extends CodeInsightActionHandler> getLanguageExtension();
 }

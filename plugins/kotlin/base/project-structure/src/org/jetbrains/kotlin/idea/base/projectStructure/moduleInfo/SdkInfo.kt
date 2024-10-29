@@ -11,10 +11,13 @@ import com.intellij.openapi.roots.JdkOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analyzer.SdkInfoBase
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinBaseProjectStructureBundle
 import org.jetbrains.kotlin.idea.base.projectStructure.scope.PoweredLibraryScopeBase
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateEntriesVirtualFileSystems
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.calculateTopPackageNames
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.CommonPlatforms
@@ -26,6 +29,15 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 //TODO: (module refactoring) there should be separate SdkSourceInfo but there are no kotlin source in existing sdks for now :)
 data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo, SdkInfoBase {
+    private val topClassesPackageNames: Set<String>
+    private val entriesVirtualFileSystems: Set<NewVirtualFileSystem>?
+
+    init {
+        val classes = sdk.rootProvider.getFiles(OrderRootType.CLASSES)
+        topClassesPackageNames = classes.calculateTopPackageNames()
+        entriesVirtualFileSystems = classes.calculateEntriesVirtualFileSystems()
+    }
+
     override val moduleOrigin: ModuleOrigin
         get() = ModuleOrigin.LIBRARY
 
@@ -35,7 +47,7 @@ data class SdkInfo(override val project: Project, val sdk: Sdk) : IdeaModuleInfo
         get() = KotlinBaseProjectStructureBundle.message("sdk.0", sdk.name)
 
     override val contentScope: GlobalSearchScope
-        get() = SdkScope(project, sdk)
+        get() = SdkScope(project, topClassesPackageNames, entriesVirtualFileSystems, sdk)
 
     override fun dependencies(): List<IdeaModuleInfo> = listOf(this)
     override fun dependenciesWithoutSelf(): Sequence<IdeaModuleInfo> = emptySequence()
@@ -74,9 +86,17 @@ fun moduleSdks(module: Module): List<Sdk> =
 @Suppress("EqualsOrHashCode") // DelegatingGlobalSearchScope requires to provide 'calcHashCode()'
 private class SdkScope(
     project: Project,
+    topPackageNames: Set<String>,
+    entriesVirtualFileSystems: Set<NewVirtualFileSystem>?,
     val sdk: Sdk
-) : PoweredLibraryScopeBase(project, sdk.rootProvider.getFiles(OrderRootType.CLASSES), VirtualFile.EMPTY_ARRAY) {
-    override fun equals(other: Any?) = other is SdkScope && sdk == other.sdk
+) : PoweredLibraryScopeBase(
+    project,
+    sdk.rootProvider.getFiles(OrderRootType.CLASSES),
+    VirtualFile.EMPTY_ARRAY,
+    topPackageNames,
+    entriesVirtualFileSystems
+) {
+    override fun equals(other: Any?): Boolean = other is SdkScope && sdk == other.sdk
     override fun calcHashCode(): Int = sdk.hashCode()
-    override fun toString() = "SdkScope($sdk)"
+    override fun toString(): String = "SdkScope($sdk)"
 }

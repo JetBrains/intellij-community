@@ -8,8 +8,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.FileHistoryRefresherI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public class RefreshFileHistoryAction extends RefreshAction implements DumbAware {
   public RefreshFileHistoryAction() {
     super(VcsBundle.messagePointer("action.name.refresh"), VcsBundle.messagePointer("action.description.refresh"),

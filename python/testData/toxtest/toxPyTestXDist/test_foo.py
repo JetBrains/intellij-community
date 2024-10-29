@@ -6,4 +6,4 @@ def test_bar():
 
 def test_only_37():
     import sys
-    assert str(sys.version).startswith("3.7")
+    assert str(sys.version).startswith("3.9")

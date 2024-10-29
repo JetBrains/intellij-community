@@ -7,14 +7,11 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import base64
 import socket
-import sys
 
 from .i18n import _
-from .pycompat import getattr
 from . import (
     encoding,
     error,
@@ -52,7 +49,7 @@ def escape(s, quote=None):
     return s
 
 
-class passwordmgr(object):
+class passwordmgr:
     def __init__(self, ui, passwddb):
         self.ui = ui
         self.passwddb = passwddb
@@ -193,21 +190,12 @@ def _gen_sendfile(orgsend):
     return _sendfile
 
 
-has_https = util.safehasattr(urlreq, b'httpshandler')
+has_https = hasattr(urlreq, 'httpshandler')
 
 
 class httpconnection(keepalive.HTTPConnection):
     # must be able to send big bundle as stream.
     send = _gen_sendfile(keepalive.HTTPConnection.send)
-
-    def getresponse(self):
-        proxyres = getattr(self, 'proxyres', None)
-        if proxyres:
-            if proxyres.will_close:
-                self.close()
-            self.proxyres = None
-            return proxyres
-        return keepalive.HTTPConnection.getresponse(self)
 
 
 # Large parts of this function have their origin from before Python 2.6
@@ -234,106 +222,6 @@ def _generic_start_transaction(handler, h, req):
     h.headers = None
 
 
-def _generic_proxytunnel(self):
-    proxyheaders = {
-        pycompat.bytestr(x): pycompat.bytestr(self.headers[x])
-        for x in self.headers
-        if x.lower().startswith('proxy-')
-    }
-    self.send(b'CONNECT %s HTTP/1.0\r\n' % self.realhostport)
-    for header in pycompat.iteritems(proxyheaders):
-        self.send(b'%s: %s\r\n' % header)
-    self.send(b'\r\n')
-
-    # majority of the following code is duplicated from
-    # httplib.HTTPConnection as there are no adequate places to
-    # override functions to provide the needed functionality
-    # strict was removed in Python 3.4.
-    kwargs = {}
-    if not pycompat.ispy3:
-        kwargs[b'strict'] = self.strict
-
-    res = self.response_class(self.sock, method=self._method, **kwargs)
-
-    while True:
-        version, status, reason = res._read_status()
-        if status != httplib.CONTINUE:
-            break
-        # skip lines that are all whitespace
-        list(iter(lambda: res.fp.readline().strip(), b''))
-    res.status = status
-    res.reason = reason.strip()
-
-    if res.status == 200:
-        # skip lines until we find a blank line
-        list(iter(res.fp.readline, b'\r\n'))
-        return True
-
-    if version == b'HTTP/1.0':
-        res.version = 10
-    elif version.startswith(b'HTTP/1.'):
-        res.version = 11
-    elif version == b'HTTP/0.9':
-        res.version = 9
-    else:
-        raise httplib.UnknownProtocol(version)
-
-    if res.version == 9:
-        res.length = None
-        res.chunked = 0
-        res.will_close = 1
-        res.msg = httplib.HTTPMessage(stringio())
-        return False
-
-    res.msg = httplib.HTTPMessage(res.fp)
-    res.msg.fp = None
-
-    # are we using the chunked-style of transfer encoding?
-    trenc = res.msg.getheader(b'transfer-encoding')
-    if trenc and trenc.lower() == b"chunked":
-        res.chunked = 1
-        res.chunk_left = None
-    else:
-        res.chunked = 0
-
-    # will the connection close at the end of the response?
-    res.will_close = res._check_close()
-
-    # do we have a Content-Length?
-    # NOTE: RFC 2616, section 4.4, #3 says we ignore this if
-    # transfer-encoding is "chunked"
-    length = res.msg.getheader(b'content-length')
-    if length and not res.chunked:
-        try:
-            res.length = int(length)
-        except ValueError:
-            res.length = None
-        else:
-            if res.length < 0:  # ignore nonsensical negative lengths
-                res.length = None
-    else:
-        res.length = None
-
-    # does the body have a fixed length? (of zero)
-    if (
-        status == httplib.NO_CONTENT
-        or status == httplib.NOT_MODIFIED
-        or 100 <= status < 200
-        or res._method == b'HEAD'  # 1xx codes
-    ):
-        res.length = 0
-
-    # if the connection remains open, and we aren't using chunked, and
-    # a content-length was not provided, then assume that the connection
-    # WILL close.
-    if not res.will_close and not res.chunked and res.length is None:
-        res.will_close = 1
-
-    self.proxyres = res
-
-    return False
-
-
 class httphandler(keepalive.HTTPHandler):
     def http_open(self, req):
         return self.do_open(httpconnection, req)
@@ -347,16 +235,6 @@ class logginghttpconnection(keepalive.HTTPConnection):
     def __init__(self, createconn, *args, **kwargs):
         keepalive.HTTPConnection.__init__(self, *args, **kwargs)
         self._create_connection = createconn
-
-    if sys.version_info < (2, 7, 7):
-        # copied from 2.7.14, since old implementations directly call
-        # socket.create_connection()
-        def connect(self):
-            self.sock = self._create_connection(
-                (self.host, self.port), self.timeout, self.source_address
-            )
-            if self._tunnel_host:
-                self._tunnel()
 
 
 class logginghttphandler(httphandler):
@@ -387,6 +265,46 @@ class logginghttphandler(httphandler):
 
 if has_https:
 
+    def _generic_proxytunnel(self: "httpsconnection"):
+        headers = self.headers  # pytype: disable=attribute-error
+        proxyheaders = {
+            pycompat.bytestr(x): pycompat.bytestr(headers[x])
+            for x in headers
+            if x.lower().startswith('proxy-')
+        }
+        realhostport = self.realhostport  # pytype: disable=attribute-error
+        self.send(b'CONNECT %s HTTP/1.0\r\n' % realhostport)
+
+        for header in proxyheaders.items():
+            self.send(b'%s: %s\r\n' % header)
+        self.send(b'\r\n')
+
+        # majority of the following code is duplicated from
+        # httplib.HTTPConnection as there are no adequate places to
+        # override functions to provide the needed functionality.
+
+        # pytype: disable=attribute-error
+        res = self.response_class(self.sock, method=self._method)
+        # pytype: enable=attribute-error
+
+        while True:
+            # pytype: disable=attribute-error
+            version, status, reason = res._read_status()
+            # pytype: enable=attribute-error
+            if status != httplib.CONTINUE:
+                break
+            # skip lines that are all whitespace
+            list(iter(lambda: res.fp.readline().strip(), b''))
+
+        if status == 200:
+            # skip lines until we find a blank line
+            list(iter(res.fp.readline, b'\r\n'))
+        else:
+            self.close()
+            raise socket.error(
+                "Tunnel connection failed: %d %s" % (status, reason.strip())
+            )
+
     class httpsconnection(keepalive.HTTPConnection):
         response_class = keepalive.HTTPResponse
         default_port = httplib.HTTPS_PORT
@@ -408,17 +326,20 @@ if has_https:
             self.cert_file = cert_file
 
         def connect(self):
-            self.sock = socket.create_connection((self.host, self.port))
+            self.sock = socket.create_connection(
+                (self.host, self.port), self.timeout
+            )
 
             host = self.host
-            if self.realhostport:  # use CONNECT proxy
+            realhostport = self.realhostport  # pytype: disable=attribute-error
+            if realhostport:  # use CONNECT proxy
                 _generic_proxytunnel(self)
-                host = self.realhostport.rsplit(b':', 1)[0]
+                host = realhostport.rsplit(b':', 1)[0]
             self.sock = sslutil.wrapsocket(
                 self.sock,
                 self.key_file,
                 self.cert_file,
-                ui=self.ui,
+                ui=self.ui,  # pytype: disable=attribute-error
                 serverhostname=host,
             )
             sslutil.validatesocket(self.sock)
@@ -620,7 +541,10 @@ def opener(
     else:
         handlers.append(httphandler(timeout=timeout))
         if has_https:
-            handlers.append(httpshandler(ui, timeout=timeout))
+            # pytype get confused about the conditional existence for httpshandler here.
+            handlers.append(
+                httpshandler(ui, timeout=timeout)  # pytype: disable=name-error
+            )
 
     handlers.append(proxyhandler(ui))
 

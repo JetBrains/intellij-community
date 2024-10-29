@@ -121,7 +121,7 @@ public class SpecializedFileAttributesTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       int valueToWrite = rnd.nextInt();
       accessor.write(fileId, valueToWrite);
-      try (var stream = vfs.readAttributeWithLock(fileId, TEST_INT_ATTRIBUTE)) {
+      try (var stream = vfs.readAttribute(fileId, TEST_INT_ATTRIBUTE)) {
         int readBack = stream.readInt();
         assertEquals(valueToWrite, readBack,
                      "Value written via attributeAccessor must be read back as is via regular readAttribute()");
@@ -165,7 +165,7 @@ public class SpecializedFileAttributesTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       short valueToWrite = (short)rnd.nextInt(Short.MIN_VALUE, Short.MAX_VALUE);
       accessor.write(fileId, valueToWrite);
-      try (var stream = vfs.readAttributeWithLock(fileId, TEST_SHORT_ATTRIBUTE)) {
+      try (var stream = vfs.readAttribute(fileId, TEST_SHORT_ATTRIBUTE)) {
         short readBack = stream.readShort();
         assertEquals(valueToWrite, readBack,
                      "Value written via attributeAccessor must be read back as is via regular readAttribute()");
@@ -211,7 +211,7 @@ public class SpecializedFileAttributesTest {
     for (int i = 0; i < ENOUGH_VALUES; i++) {
       long valueToWrite = rnd.nextLong();
       accessor.write(fileId, valueToWrite);
-      try (var stream = vfs.readAttributeWithLock(fileId, TEST_LONG_ATTRIBUTE)) {
+      try (var stream = vfs.readAttribute(fileId, TEST_LONG_ATTRIBUTE)) {
         long readBack = stream.readLong();
         assertEquals(valueToWrite, readBack,
                      "Value written via attributeAccessor must be read back as is via regular readAttribute()");

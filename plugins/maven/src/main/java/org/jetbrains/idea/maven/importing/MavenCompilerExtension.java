@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.jps.model.java.compiler.CompilerOptions;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
@@ -46,8 +45,7 @@ public interface MavenCompilerExtension {
    */
   default boolean resolveDefaultCompiler(@NotNull Project project,
                                          @NotNull MavenProject mavenProject,
-                                         @NotNull NativeMavenProjectHolder nativeMavenProject,
-                                         @NotNull MavenEmbedderWrapper embedder) throws MavenProcessCanceledException { return false; }
+                                         @NotNull MavenEmbedderWrapper embedder) { return false; }
 
   @Nullable
   default String getDefaultCompilerTargetLevel(@NotNull MavenProject mavenProject, @NotNull Module module) { return null; }

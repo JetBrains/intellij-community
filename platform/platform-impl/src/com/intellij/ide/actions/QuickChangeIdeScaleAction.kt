@@ -19,14 +19,15 @@ import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.ui.hover.HoverListener
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.Alarm
+import com.intellij.util.concurrency.EdtScheduler
+import kotlinx.coroutines.Job
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.event.ListSelectionEvent
 import kotlin.math.roundToInt
 
-class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
-  private val switchAlarm = Alarm()
+private class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehaviorSpecification.Frontend {
+  private var job: Job? = null
   private var popupSession: PopupSession? = null
 
   override fun fillActions(project: Project?, group: DefaultActionGroup, dataContext: DataContext) {
@@ -45,34 +46,32 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehavio
 
   override fun isEnabled(): Boolean = IdeScaleTransformer.Settings.currentScaleOptions.isNotEmpty()
 
-  override fun getAidMethod(): JBPopupFactory.ActionSelectionAid {
-    return JBPopupFactory.ActionSelectionAid.SPEEDSEARCH
-  }
+  override fun getAidMethod(): JBPopupFactory.ActionSelectionAid = JBPopupFactory.ActionSelectionAid.SPEEDSEARCH
 
   override fun showPopup(e: AnActionEvent?, popup: ListPopup) {
     val initialScale = UISettingsUtils.getInstance().currentIdeScale
-    switchAlarm.cancelAllRequests()
+    cancelJob()
 
     popup.addListSelectionListener { event: ListSelectionEvent ->
       val item = (event.source as JList<*>).selectedValue
       if (item is AnActionHolder) {
         val anAction = item.action
         if (anAction is ChangeScaleAction) {
-          switchAlarm.cancelAllRequests()
-          switchAlarm.addRequest(Runnable {
-            applyUserScale(anAction.scale, true)
+          job?.cancel()
+          job = EdtScheduler.getInstance().schedule(SELECTION_THROTTLING_MS, Runnable {
+            applyUserScale(scale = anAction.scale, shouldLog = true)
             if (!popup.isDisposed) {
               popup.pack(true, true)
               popupSession?.updateLocation()
             }
-          }, SELECTION_THROTTLING_MS)
+          })
         }
       }
     }
 
     popup.addListener(object : JBPopupListener {
       override fun onClosed(event: LightweightWindowEvent) {
-        switchAlarm.cancelAllRequests()
+        cancelJob()
         popupSession = null
         if (!event.isOk) {
           applyUserScale(initialScale, false)
@@ -99,6 +98,13 @@ class QuickChangeIdeScaleAction : QuickSwitchSchemeAction(), ActionRemoteBehavio
     popupSession = PopupSession(popup)
 
     super.showPopup(e, popup)
+  }
+
+  private fun cancelJob() {
+    job?.let {
+      it.cancel()
+      job = null
+    }
   }
 
   override fun preselectAction(): Condition<in AnAction?> {

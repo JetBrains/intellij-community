@@ -1,4 +1,3 @@
-// IGNORE_K2
 import java.lang.IllegalArgumentException
 import kotlin.run
 

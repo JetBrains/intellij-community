@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -36,6 +36,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -51,6 +52,7 @@ import java.awt.event.ItemListener;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public final class LiveTemplateSettingsEditor extends JPanel {
   private final TemplateImpl myTemplate;
   private final Runnable myNodeChanged;
@@ -181,8 +183,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     myTemplate.parseSegments();
   }
 
-  @NotNull
-  private JComponent createNorthPanel() {
+  private @NotNull JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
 
     GridBag gb = new GridBag().setDefaultInsets(4, 4, 4, 4).setDefaultWeightY(1).setDefaultFill(GridBagConstraints.BOTH);
@@ -269,8 +270,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
-  @NotNull
-  private List<TemplateContextType> getApplicableContexts() {
+  private @NotNull List<TemplateContextType> getApplicableContexts() {
     List<TemplateContextType> result = new ArrayList<>();
     for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
       if (myContext.isEnabled(type)) {
@@ -358,8 +358,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
       .getPanel();
   }
 
-  @NotNull
-  private static @NlsContexts.Label String presentableName(TemplateContextType type) {
+  private static @NotNull @NlsContexts.Label String presentableName(TemplateContextType type) {
     return UIUtil.removeMnemonic(type.getPresentableName());
   }
 
@@ -430,8 +429,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return Pair.create(panel, checkboxTree);
   }
 
-  @NotNull
-  private static List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
+  private static @NotNull List<TemplateContextType> sortContexts(Collection<? extends TemplateContextType> contextTypes) {
     return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
   }
 
@@ -576,8 +574,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.findInstanceByComponent(myKeyField).requestFocus(myKeyField, true), modalityState), modalityState), modalityState);
   }
 
-  @NotNull
-  private Map<String, Variable> parseVariables() {
+  private @NotNull Map<String, Variable> parseVariables() {
     Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
     map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
     return map;

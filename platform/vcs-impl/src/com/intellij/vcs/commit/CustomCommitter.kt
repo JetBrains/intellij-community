@@ -8,8 +8,10 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitSession
 import com.intellij.util.ui.UIUtil.removeMnemonic
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class CustomCommitter(
   project: Project,
   private val session: CommitSession,

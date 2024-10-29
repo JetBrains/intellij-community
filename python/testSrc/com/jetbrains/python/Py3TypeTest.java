@@ -2521,6 +2521,43 @@ public class Py3TypeTest extends PyTestCase {
              """);
   }
 
+  // PY-34617
+  public void testTopLevelFunctionUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
+      doMultiFileTest("str",
+                      """
+                        from mod import foo
+                        expr = foo()
+                        """);
+    });
+  }
+
+  // PY-34617
+  public void testClassMethodUnderVersionCheck() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
+      doMultiFileTest("float",
+                      """
+                        from mod import Foo
+                        expr = Foo().foo()
+                        """);
+    });
+  }
+
+
+  // PY-73958
+  public void testNoStackOverflow() {
+    doTest("Foo", """
+            class Foo:
+                def foo(self):
+                    pass
+
+            xxx = Foo()
+
+            """ + "xxx.foo()\n".repeat(1000) + """
+            expr = xxx
+            """);
+  }
+
   // PY-26184
   public void testGenericTypeFromDescriptor() {
     doTest("list", """
@@ -2749,26 +2786,14 @@ public class Py3TypeTest extends PyTestCase {
       """);
   }
 
-  // PY-34617
-  public void testTopLevelFunctionUnderVersionCheck() {
-    runWithLanguageLevel(LanguageLevel.PYTHON310, () -> {
-      doMultiFileTest("str",
-                      """
-                        from mod import foo
-                        expr = foo()
-                        """);
-    });
-  }
-
-  // PY-34617
-  public void testClassMethodUnderVersionCheck() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> {
-      doMultiFileTest("float",
-                      """
-                        from mod import Foo
-                        expr = Foo().foo()
-                        """);
-    });
+  // PY-60968
+  public void testCsvDictReaderIteratorType() {
+    doTest("list[dict[str | Any, str | Any]]", """
+          import csv
+          with open("file.csv") as f:
+              reader = csv.DictReader(f)
+              expr = [line for line in reader]
+      """);
   }
 
   private void doTest(final String expectedType, final String text) {

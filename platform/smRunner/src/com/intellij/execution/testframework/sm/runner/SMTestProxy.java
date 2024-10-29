@@ -67,6 +67,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
 
   private volatile AbstractState myState = NotRunState.getInstance();
   private Long myDuration = null; // duration is unknown
+  /**
+   * Represents the start time of node which is used to calculate the duration if the user interrupted the tests execution
+   * @see SMTestProxy#setStarted()
+   * @see SMTestProxy#setTerminated(long)
+   */
+  private Long myStartTime = null;
   private boolean myDurationIsCached = false; // is used for separating unknown and unset duration
   private boolean myHasCriticalErrors = false;
   private boolean myHasPassedTests = false;
@@ -393,6 +399,12 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   public void setStarted() {
+    if (myIsSuite) {
+      myState = new SuiteInProgressState(this);
+    } else {
+      myState = TestInProgressState.TEST;
+      myStartTime = System.currentTimeMillis();
+    }
     myState = !myIsSuite ? TestInProgressState.TEST : new SuiteInProgressState(this);
   }
 
@@ -811,18 +823,38 @@ public class SMTestProxy extends AbstractTestProxy implements Navigatable {
   }
 
   /**
-   * Process was terminated
+   * Inner method to terminate all nodes recursively, if the test execution was interrupted.
+   * Termination means the following:
+   * 1) All tests and test suites go to the terminated state
+   * 2) For all currently running tests, the elapsed time is set
+   * 3) {@link SMTestProxy#fireOnNewPrintable} is invoked
+   * @param endTime time when tests were interrupted
+   * @see SMTestProxy#setTerminated
    */
-  public void setTerminated() {
+  private void setTerminated(long endTime) {
     if (myState.isFinal()) {
       return;
     }
     myState = TerminatedState.INSTANCE;
+    if (!myIsSuite && myStartTime != null) {
+      setDuration(endTime - myStartTime);
+    } else if (!myIsSuite) {
+      setDuration(0);
+    }
     final List<? extends SMTestProxy> children = getChildren();
     for (SMTestProxy child : children) {
-      child.setTerminated();
+      child.setTerminated(endTime);
     }
     fireOnNewPrintable(myState);
+  }
+
+  /**
+   * Sets the test or suite to a terminated state, starting from the current node.
+   * This method is invoked in case of running native test configurations (they don't delegate testing to some external tools like Gradle)
+   * @see SMTestProxy#setTerminated(long)
+   */
+  public void setTerminated() {
+    setTerminated(System.currentTimeMillis());
   }
 
   public boolean wasTerminated() {

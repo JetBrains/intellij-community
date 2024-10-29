@@ -50,7 +50,9 @@ public final class CopyAction extends TextComponentEditorAction implements HintM
     }
 
     public @NotNull DataContext extendDataContext(@NotNull DataContext dataContext) {
-      return CustomizedDataContext.create(dataContext, dataId -> KEY.is(dataId) ? this : null);
+      return CustomizedDataContext.withSnapshot(dataContext, sink -> {
+        sink.set(KEY, this);
+      });
     }
   }
 

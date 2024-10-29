@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.facet
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
@@ -51,7 +52,7 @@ class KotlinFacetSettingsProviderImpl(project: Project) :
     }
 
     override fun <T> settingsChanged(oldSettings: T?, newSettings: T?) {
-        invalidate()
+        ApplicationManager.getApplication().runReadAction { invalidate() }
     }
 
     override fun beforeChanged(event: VersionedStorageChange) {

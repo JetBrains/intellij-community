@@ -30,6 +30,9 @@ public interface DirectoryProjectGenerator<T> {
     return null;
   }
 
+  /**
+   * @deprecated unused
+   */
   // to be removed in 2017.3
   @Deprecated(forRemoval = true)
   default boolean isPrimaryGenerator() {

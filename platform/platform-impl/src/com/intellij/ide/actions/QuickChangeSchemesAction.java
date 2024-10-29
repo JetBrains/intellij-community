@@ -6,8 +6,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class QuickChangeSchemesAction extends QuickSwitchSchemeAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   public QuickChangeSchemesAction() {
     myActionPlace = ActionPlaces.QUICK_SWITCH_SCHEME_POPUP;

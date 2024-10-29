@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.template.Result;
 import com.intellij.codeInsight.template.TextResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.text.NameUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class ConvertToCamelCaseMacro extends MacroBase {
 
   public ConvertToCamelCaseMacro() {
@@ -25,16 +27,14 @@ public class ConvertToCamelCaseMacro extends MacroBase {
     super(name, description);
   }
 
-  @Nullable
   @Override
-  protected Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
+  protected @Nullable Result calculateResult(Expression @NotNull [] params, ExpressionContext context, boolean quick) {
     final String text = getTextResult(params, context, true);
     return text != null ? convertString(text) : null;
   }
 
-  @NotNull
   @VisibleForTesting
-  public Result convertString(@NotNull String text) {
+  public @NotNull Result convertString(@NotNull String text) {
     final String[] strings = splitWords(text);
     if (strings.length > 0) {
       final StringBuilder buf = new StringBuilder();

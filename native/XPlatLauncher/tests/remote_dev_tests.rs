@@ -76,6 +76,18 @@ mod tests {
     }
 
     #[test]
+    fn remote_dev_launch_via_common_launcher_test() {
+        let test = prepare_test_env(LauncherLocation::Standard);
+
+        let remote_dev_command = &["serverMode", "print-cwd"];
+        let launch_result = run_launcher_ext(&test, LauncherRunSpec::standard().with_args(remote_dev_command));
+
+        check_output(&launch_result, |output| output.contains("Started in server mode"));
+        check_output(&launch_result, |output| output.contains("Mode: remote-dev"));
+        check_output(&launch_result, |output| output.contains("CWD="));
+    }
+
+    #[test]
     fn remote_dev_new_ui_test1() {
         let test = prepare_test_env(LauncherLocation::RemoteDev);
         let env = HashMap::from([("REMOTE_DEV_NEW_UI_ENABLED", "1")]);
@@ -92,16 +104,6 @@ mod tests {
         let launch_result = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command));
 
         check_output(&launch_result, |output| !output.contains("Config folder does not exist, considering this the first launch. Will launch with New UI as default"));
-    }
-
-    #[test]
-    fn remote_dev_jcef_enabled_test() {
-        let test = prepare_test_env(LauncherLocation::RemoteDev);
-        let env = HashMap::from([("REMOTE_DEV_SERVER_JCEF_ENABLED", "0"), ("REMOTE_DEV_SERVER_TRACE", "1")]);
-        let remote_dev_command = &["run", &test.project_dir.display().to_string()];
-        let output = run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(remote_dev_command).with_env(&env)).stdout;
-
-        assert!(output.contains("JCEF support is disabled. Set REMOTE_DEV_SERVER_JCEF_ENABLED=true to enable"));
     }
 
     #[cfg(target_os = "linux")]
@@ -147,6 +149,15 @@ mod tests {
 
         let expected_output = format!("{}={}", variable_name, expected_value);
         check_output(&launch_result, |output| output.contains(&expected_output));
+    }
+
+    #[test]
+    fn remote_dev_status_debug_vm_option_test() {
+        let mut test = prepare_test_env(LauncherLocation::RemoteDev);
+        test.create_toolbox_vm_options("-agentlib:jdwp=transport=dt_socket,server=y,suspend=n\n");
+        let args = &["status"];
+        run_launcher_ext(&test, LauncherRunSpec::remote_dev().with_args(args).assert_status());
+        // app will exit with an error if debug option has been passed to it along with 'status' command
     }
 
     fn check_output<Check>(run_result: &LauncherRunResult, check: Check) where Check: FnOnce(&String) -> bool {

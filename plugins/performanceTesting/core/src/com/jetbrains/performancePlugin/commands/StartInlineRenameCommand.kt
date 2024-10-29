@@ -27,8 +27,6 @@ class StartInlineRenameCommand(text: String, line: Int) : AbstractCommand(text, 
   }
 
   override fun _execute(context: PlaybackContext): Promise<Any?> {
-    //disable popup
-    RefactoringSettings.getInstance().RENAME_SHOW_AUTOMATIC_RENAMING_DIALOG = false
     val actionCallback = ActionCallbackProfilerStopper()
     val project = context.project
     ApplicationManager.getApplication().invokeAndWait(Context.current().wrap(Runnable {

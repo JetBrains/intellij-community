@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave.impl
 
 import com.intellij.codeWithMe.ClientId
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.concurrency.currentThreadContext
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.SaveDocumentAction
@@ -217,7 +218,9 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
   private suspend fun runActionsOnSave(projectDocuments: List<Document>) {
     val projectActionsOnSave = EP_NAME.extensionList.filter { it.isEnabledForProject(project) }
 
-    projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
+    writeIntentReadAction {
+      projectActionsOnSave.forEach { it.processDocuments(project, projectDocuments.toTypedArray()) }
+    }
 
     val documentUpdatingActionsOnSave = projectActionsOnSave.filterIsInstance<DocumentUpdatingActionOnSave>()
     if (documentUpdatingActionsOnSave.isNotEmpty()) {
@@ -228,7 +231,7 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
       }
     }
     else {
-      projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument)
+      writeIntentReadAction { projectDocuments.forEach(FileDocumentManager.getInstance()::saveDocument) }
     }
   }
 
@@ -340,7 +343,10 @@ class ActionsOnSaveManager private constructor(private val project: Project, pri
     }
   }
 
-  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key) {
+  private object ActionOnSaveContextElement : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+
+    override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
     object Key : CoroutineContext.Key<ActionOnSaveContextElement>
   }
 

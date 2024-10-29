@@ -1,16 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.refactoring
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
-import com.intellij.psi.PsiComment
-import com.intellij.psi.PsiDirectory
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiErrorElement
-import com.intellij.psi.PsiMember
-import com.intellij.psi.PsiPackage
-import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import com.intellij.refactoring.BaseRefactoringProcessor.ConflictsInTestsException
@@ -45,6 +38,7 @@ fun PsiElement.getContainer(): PsiElement {
         is KtElement -> PsiTreeUtil.getParentOfType(
             this,
             KtPropertyAccessor::class.java,
+            KtParameter::class.java,
             KtProperty::class.java,
             KtNamedFunction::class.java,
             KtConstructor::class.java,

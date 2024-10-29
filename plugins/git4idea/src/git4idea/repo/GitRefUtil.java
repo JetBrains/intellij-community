@@ -2,6 +2,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -11,6 +12,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitReference;
+import git4idea.GitTag;
 import git4idea.validators.GitRefNameValidator;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -29,7 +31,7 @@ import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
 
 public final class GitRefUtil {
   private static final Logger LOG = Logger.getInstance(GitRefUtil.class);
-  private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)");
+  private static final Pattern BRANCH_PATTERN = Pattern.compile(" *(?:ref:)? */?((?:refs/heads/|refs/remotes/)?\\S+)\\s*");
 
   @Contract("null -> null;!null -> !null")
   public static @Nullable String addRefsHeadsPrefixIfNeeded(@Nullable String branchName) {
@@ -40,7 +42,7 @@ public final class GitRefUtil {
   }
 
   /**
-   * @return only branches
+   * @return pairs [branchName, hash], only for local and remote branches
    * @see #parseRefsLine
    */
   @ApiStatus.Internal
@@ -130,6 +132,14 @@ public final class GitRefUtil {
       }
     }
     return null;
+  }
+
+  @Nullable
+  public static GitTag getCurrentTag(GitRepository repository) {
+    if (repository.getState() != Repository.State.DETACHED) return null;
+
+    GitReference currentRef = getCurrentReference(repository);
+    return currentRef instanceof GitTag ? (GitTag)currentRef : null;
   }
 
   public static void readFromRefsFiles(final @NotNull File refsRootDir,

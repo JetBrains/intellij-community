@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.lang.ASTNode;
@@ -7,12 +7,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static final Set<String> NOT_INITIALIZED_SET = Collections.emptySet();
@@ -63,19 +67,22 @@ public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extend
   static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
 
-    List<String> debugStr = new ArrayList<>();
+    Logger logger = Logger.getInstance(IStubElementType.class);
+    List<String> debugStr = logger.isDebugEnabled() ? new ArrayList<>() : null;
+
     StubElementTypeHolderEP.EP_NAME.processWithPluginDescriptor((bean, pluginDescriptor) -> {
       int accessorCount = bean.initializeOptimized(pluginDescriptor, result);
-      debugStr.add(accessorCount + " in " + bean.holderClass);
+      if (debugStr != null) {
+        debugStr.add(accessorCount + " in " + bean.holderClass);
+      }
       return Unit.INSTANCE;
     });
-    Logger.getInstance(IStubElementType.class).debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
 
-    Set<String> lazyIds = new HashSet<>(result.size());
-    for (StubFieldAccessor accessor : result) {
-      lazyIds.add(accessor.externalId);
+    if (debugStr != null) {
+      logger.debug("Lazy stub element types loaded: " + StringUtil.join(debugStr, ", "));
     }
-    lazyExternalIds = Collections.unmodifiableSet(lazyIds);
+
+    lazyExternalIds = ContainerUtil.map2Set(result, accessor -> accessor.externalId);
     return result;
   }
 

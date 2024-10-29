@@ -152,57 +152,58 @@ class ItemsDecoratorInitializer : LookupTracker() {
       super.setIcon(baseIcon, 1)
     }
 
-    override fun getDelegate(): Icon? = baseIcon
+    override val delegate: Icon?
+      get() = baseIcon
     override fun withDelegate(icon: Icon?): LookupCellRenderer.IconDecorator = LeftDecoratedIcon(leftIcon, icon)
 
     override fun replaceBy(replacer: IconReplacer): LeftDecoratedIcon {
       return LeftDecoratedIcon(replacer.replaceIcon(leftIcon), replacer.replaceIcon(baseIcon))
     }
   }
+}
 
-  private class StarOpinionNotification : Notification(
-    MLCompletionBundle.message("ml.completion.notification.groupId"),
-    MLCompletionBundle.message("ml.completion.notification.title"),
-    MLCompletionBundle.message("ml.completion.notification.decorating.opinion.content"),
-    NotificationType.INFORMATION
-  ) {
-    init {
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.like")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.LIKE)
-          notification.expire()
-        }
-      })
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.dislike")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
-          CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled = false
-          notification.expire()
-          StarDisabledNotification().notify(null)
-        }
-      })
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.neutral")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
-          notification.expire()
-        }
-      })
-    }
+private class StarOpinionNotification : Notification(
+  MLCompletionBundle.message("ml.completion.notification.groupId"),
+  MLCompletionBundle.message("ml.completion.notification.title"),
+  MLCompletionBundle.message("ml.completion.notification.decorating.opinion.content"),
+  NotificationType.INFORMATION
+) {
+  init {
+    addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.like")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.LIKE)
+        notification.expire()
+      }
+    })
+    addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.dislike")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.DISLIKE)
+        CompletionMLRankingSettings.getInstance().isDecorateRelevantEnabled = false
+        notification.expire()
+        StarDisabledNotification().notify(null)
+      }
+    })
+    addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.decorating.opinion.neutral")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        MLCompletionSettingsCollector.decorationOpinionProvided(e.project, MLCompletionSettingsCollector.DecorationOpinion.NEUTRAL)
+        notification.expire()
+      }
+    })
   }
+}
 
-  private class StarDisabledNotification : Notification(
-    MLCompletionBundle.message("ml.completion.notification.groupId"),
-    MLCompletionBundle.message("ml.completion.notification.title"),
-    MLCompletionBundle.message("ml.completion.notification.decorating.disabled.content", ShowSettingsUtil.getSettingsMenuName()),
-    NotificationType.INFORMATION
-  ) {
-    init {
-      addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
-        override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-          ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
-          notification.expire()
-        }
-      })
-    }
+private class StarDisabledNotification : Notification(
+  MLCompletionBundle.message("ml.completion.notification.groupId"),
+  MLCompletionBundle.message("ml.completion.notification.title"),
+  MLCompletionBundle.message("ml.completion.notification.decorating.disabled.content", ShowSettingsUtil.getSettingsMenuName()),
+  NotificationType.INFORMATION
+) {
+  init {
+    addAction(object : NotificationAction(MLCompletionBundle.message("ml.completion.notification.configure")) {
+      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+        ShowSettingsUtil.getInstance().showSettingsDialog(null, CodeCompletionConfigurable::class.java)
+        notification.expire()
+      }
+    })
   }
 }

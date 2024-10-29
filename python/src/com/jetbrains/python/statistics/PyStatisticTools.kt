@@ -16,11 +16,12 @@ import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.extensions.getSdk
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
+import com.jetbrains.python.sdk.PySdkUtil
 import com.jetbrains.python.sdk.PythonSdkAdditionalData
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
-import com.jetbrains.python.sdk.flavors.VirtualEnvReader
+import com.jetbrains.python.sdk.VirtualEnvReader
 import com.jetbrains.python.sdk.flavors.conda.CondaEnvSdkFlavor
 import com.jetbrains.python.sdk.pipenv.isPipEnv
 import com.jetbrains.python.sdk.poetry.isPoetry
@@ -145,7 +146,7 @@ val INTERPRETER_CREATION_MODE = EventFields.String("interpreter_creation_mode", 
 
 
 private val Sdk.pythonImplementation: String get() = PythonSdkFlavor.getFlavor(this)?.name ?: "Python"
-val Sdk?.version: LanguageLevel get() = PythonSdkType.getLanguageLevelForSdk(this)
+val Sdk?.version: LanguageLevel get() = PySdkUtil.getLanguageLevelForSdk(this)
 val Sdk.executionType: InterpreterTarget
   get() =
     when (val additionalData = sdkAdditionalData) {

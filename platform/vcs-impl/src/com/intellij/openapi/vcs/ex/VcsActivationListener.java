@@ -3,11 +3,13 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
 
+@ApiStatus.Internal
 public interface VcsActivationListener extends EventListener {
   /**
    * @param activeVcses all active vcses. Can be empty.

@@ -3,11 +3,13 @@ package com.intellij.ui.components;
 
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class SelectionAwareListCellRenderer<T> implements ListCellRenderer<T> {
   private final NotNullFunction<? super T, ? extends JComponent> myFun;
 
@@ -19,7 +21,7 @@ public class SelectionAwareListCellRenderer<T> implements ListCellRenderer<T> {
                                                          int index,
                                                          boolean isSelected,
                                                          boolean cellHasFocus) {
-    @SuppressWarnings({"unchecked"})
+    @SuppressWarnings("unchecked")
     final JComponent comp = myFun.fun((T)value);
     comp.setOpaque(true);
     if (isSelected) {

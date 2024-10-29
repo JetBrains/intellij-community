@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.push.PushSource;
 import com.intellij.openapi.util.NlsSafe;
 import git4idea.GitLocalBranch;
+import git4idea.GitTag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,6 +25,10 @@ public abstract class GitPushSource implements PushSource {
 
   public static @NotNull GitPushSource createDetached(@NotNull String revision) {
     return new DetachedHead(revision);
+  }
+
+  public static @NotNull GitPushSource createTag(@NotNull GitTag tag) {
+    return new Tag(tag);
   }
 
   public abstract @Nullable GitLocalBranch getBranch();
@@ -120,6 +125,39 @@ public abstract class GitPushSource implements PushSource {
     @Override
     public boolean isBranchRef() {
       return false;
+    }
+  }
+
+  static class Tag extends GitPushSource {
+    private final @NotNull GitTag tag;
+
+    Tag(@NotNull GitTag tag) {
+      this.tag = tag;
+    }
+
+    @Override
+    public @NotNull String getPresentation() {
+      return tag.getName();
+    }
+
+    @Override
+    public @Nullable GitLocalBranch getBranch() {
+      return null;
+    }
+
+    @Override
+    public @NotNull String getRevision() {
+      return tag.getFullName();
+    }
+
+    @Override
+    public boolean isBranchRef() {
+      return false;
+    }
+
+    @NotNull
+    GitTag getTag() {
+      return tag;
     }
   }
 }

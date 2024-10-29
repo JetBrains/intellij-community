@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
@@ -99,7 +99,7 @@ public final class ConstantExpressionInspection extends AbstractBaseJavaLocalIns
         if (expression instanceof PsiClassObjectAccessExpression) return null;
         try {
           Object value = ExpressionUtils.computeConstantExpression(expression, true);
-          if (value != null && !(value instanceof Enum<?>)) {
+          if (value != null) {
             return value;
           }
         }

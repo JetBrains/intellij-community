@@ -11,10 +11,12 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@ApiStatus.Internal
 @State(name = "ConsoleFoldingSettings", storages = @Storage("consoleFolding.xml"), category = SettingsCategory.CODE)
 public final class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleFoldingSettings.MyBean> {
   private final List<String> myPositivePatterns = new ArrayList<>();

@@ -12,6 +12,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Producer;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.net.NetUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +103,7 @@ public final class DownloadUtil {
   }
 
 
+  @ApiStatus.Internal
   public static @NotNull <V> Outcome<V> provideDataWithProgressSynchronously(
     @Nullable Project project,
     @NotNull @NlsContexts.ProgressTitle String progressTitle,

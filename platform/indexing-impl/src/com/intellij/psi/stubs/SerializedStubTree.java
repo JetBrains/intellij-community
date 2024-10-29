@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
@@ -98,7 +98,7 @@ public final class SerializedStubTree {
     serializationManager.serialize(rootStub, bytes);
     byte[] treeBytes = bytes.getInternalBuffer();
     int treeByteLength = bytes.size();
-    ObjectStubBase<?> root = (ObjectStubBase)rootStub;
+    ObjectStubBase<?> root = (ObjectStubBase<?>)rootStub;
     Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs = indexTree(root);
     final BufferExposingByteArrayOutputStream indexBytes = new BufferExposingByteArrayOutputStream();
     forwardIndexExternalizer.save(new DataOutputStream(indexBytes), indexedStubs);
@@ -147,7 +147,9 @@ public final class SerializedStubTree {
 
   void restoreIndexedStubs() throws IOException {
     if (myDeserializedIndexedStubs.myState != DeserializedIndexedStubs.RestoreState.RESTORED) {
-      myDeserializedIndexedStubs.setRestoredMap(myStubIndexesExternalizer.read(new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength))));
+      DataInputStream in = new DataInputStream(new ByteArrayInputStream(myIndexedStubBytes, 0, myIndexedStubByteLength));
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> restoredMap = myStubIndexesExternalizer.read(in);
+      myDeserializedIndexedStubs.setRestoredMap(restoredMap);
     }
   }
 
@@ -237,7 +239,7 @@ public final class SerializedStubTree {
 
   static @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexTree(@NotNull Stub root) {
     ObjectStubTree<?> objectStubTree = root instanceof PsiFileStub
-                                       ? new StubTree((PsiFileStub)root, false)
+                                       ? new StubTree((PsiFileStub<?>)root, false)
                                        : new ObjectStubTree<>((ObjectStubBase<?>)root, false);
     Map<StubIndexKey<?, ?>, Map<Object, int[]>> map = objectStubTree.indexStubTree(k -> {
       //noinspection unchecked
@@ -245,7 +247,7 @@ public final class SerializedStubTree {
     });
 
     // xxx:fix refs inplace
-    for (StubIndexKey key : map.keySet()) {
+    for (StubIndexKey<?, ?> key : map.keySet()) {
       Map<Object, int[]> value = map.get(key);
       for (Object k : value.keySet()) {
         int[] ints = value.get(k);

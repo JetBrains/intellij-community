@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.lookup.impl;
 
@@ -177,8 +177,7 @@ public final class LookupTypedHandler extends TypedActionHandlerBase {
     return CharFilter.Result.HIDE_LOOKUP;
   }
 
-  @Nullable
-  private static CharFilter.Result getFilterDecision(char charTyped, LookupImpl lookup) {
+  private static @Nullable CharFilter.Result getFilterDecision(char charTyped, LookupImpl lookup) {
     lookup.checkValid();
     LookupElement item = lookup.getCurrentItem();
     int prefixLength = item == null ? lookup.getAdditionalPrefix().length(): lookup.itemPattern(item).length();

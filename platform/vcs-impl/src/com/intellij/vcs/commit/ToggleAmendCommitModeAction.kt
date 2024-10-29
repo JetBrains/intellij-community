@@ -10,8 +10,10 @@ import com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.actions.commit.getContextCommitWorkflowHandler
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class ToggleAmendCommitModeAction : CheckboxAction(), DumbAware {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.EDT

@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 /**
  * Extension point to provide a custom UI to allow a user to
@@ -35,8 +37,7 @@ public interface SdkDownload {
    * {@link #supportsDownload(SdkTypeId)} test
    * Invoked in the EDT thread
    */
-  @NotNull
-  default Icon getIconForDownloadAction(@NotNull SdkTypeId sdkTypeId) {
+  default @NotNull Icon getIconForDownloadAction(@NotNull SdkTypeId sdkTypeId) {
     return AllIcons.Actions.Download;
   }
 
@@ -62,6 +63,24 @@ public interface SdkDownload {
 
   /**
    * Shows the custom SDK download UI based on the selected SDK in the parent component.
+   *
+   * @param sdkFilter filter to restrict SDKs available to download
+   *
+   * @see #showDownloadUI(SdkTypeId, SdkModel, JComponent, Sdk, Consumer)
+   */
+  default void showDownloadUI(@NotNull SdkTypeId sdkTypeId,
+                              @NotNull SdkModel sdkModel,
+                              @Nullable JComponent parentComponent,
+                              @Nullable Project project,
+                              @Nullable Sdk selectedSdk,
+                              @Nullable Predicate<Object> sdkFilter,
+                              @NotNull Consumer<? super SdkDownloadTask> sdkCreatedCallback) {
+    assert parentComponent != null;
+    showDownloadUI(sdkTypeId, sdkModel, parentComponent, selectedSdk, sdkCreatedCallback);
+  }
+
+  /**
+   * Shows the custom SDK download UI based on the selected SDK in the parent component.
    * Contrary to {@link #showDownloadUI(SdkTypeId, SdkModel, JComponent, Sdk, Consumer)} there should not be
    * side effects related to the SDK selection.
    *
@@ -72,11 +91,10 @@ public interface SdkDownload {
    *
    * @return The selected {@link SdkDownloadTask}
    */
-  @Nullable
-  default SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
-                          @NotNull SdkModel sdkModel,
-                          @NotNull JComponent parentComponent,
-                          @Nullable Sdk selectedSdk) {
+  default @Nullable SdkDownloadTask pickSdk(@NotNull SdkTypeId sdkTypeId,
+                                  @NotNull SdkModel sdkModel,
+                                  @NotNull JComponent parentComponent,
+                                  @Nullable Sdk selectedSdk) {
     AtomicReference<SdkDownloadTask> task = new AtomicReference<>();
     showDownloadUI(sdkTypeId, sdkModel, parentComponent, selectedSdk, t -> { task.set(t); });
     return task.get();

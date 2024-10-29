@@ -18,11 +18,17 @@
 
   <projectListeners>
     <listener class="org.jetbrains.kotlin.idea.debugger.evaluate.DropCodeFragmentCacheOnRefreshListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="org.jetbrains.kotlin.idea.debugger.coroutine.DisableCoroutineViewListener"
+              topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
   </projectListeners>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.debugger.kotlinStackFrameValueContributor"
                     interface="org.jetbrains.kotlin.idea.debugger.core.stackFrame.KotlinStackFrameValueContributor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.debugger.dexBytecodeInspector"
+                    interface="org.jetbrains.kotlin.idea.debugger.core.DexBytecodeInspector" dynamic="true"/>
+    <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.debugger.base.util.classNameCalculator"
+                    interface="org.jetbrains.kotlin.idea.debugger.base.util.ClassNameCalculator" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -43,7 +49,8 @@
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.breakpoints.KotlinLineBreakpointType" order="first"/>
     <xdebugger.breakpointType implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointType"/>
 
-    <debugger.compoundRendererProvider implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
+    <debugger.compoundRendererProvider id="KotlinClassRendererProvider"
+                                       implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinClassRendererProvider"/>
     <debugger.positionManagerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.KotlinPositionManagerFactory"/>
 
 
@@ -57,6 +64,7 @@
     <debugger.javaBreakpointHandlerFactory implementation="org.jetbrains.kotlin.idea.debugger.core.breakpoints.KotlinFunctionBreakpointHandlerFactory"/>
     <debugger.jvmSteppingCommandProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSteppingCommandProvider"/>
     <debugger.simplePropertyGetterProvider implementation="org.jetbrains.kotlin.idea.debugger.core.stepping.KotlinSimpleGetterProvider"/>
+    <debugger.jvmSmartStepIntoHandler implementation="org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.KotlinSmartStepIntoHandler"/>
 
     <debuggerEditorTextProvider
             language="kotlin"

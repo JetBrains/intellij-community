@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.TextRangeScalarUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.EdtExecutorService;
@@ -46,6 +48,7 @@ import java.util.concurrent.RunnableFuture;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class HighlightingSessionImpl implements HighlightingSession {
   private static final Logger LOG = Logger.getInstance(HighlightingSessionImpl.class);
   private final @NotNull PsiFile myPsiFile;
@@ -298,18 +301,27 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     return "HighlightingSessionImpl: " +
            "myVisibleRange:"+myVisibleRange+
            "; myPsiFile: "+myPsiFile+ " (" + myPsiFile.getClass() + ")"+
-           (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"");
+           (myIsEssentialHighlightingOnly ? "; essentialHighlightingOnly":"") +
+           (isCanceled() ? "; canceled" : "") +
+           (myProgressIndicator.isCanceled() ? "indicator: "+ myProgressIndicator : "")
+      ;
   }
 
   // compute additional stuff in background thread
   void additionalSetupFromBackground(@NotNull PsiFile psiFile) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
-    myIsEssentialHighlightingOnly = ReadAction.compute(() -> HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile));
-    VirtualFile virtualFile = ReadAction.compute(() -> psiFile.getVirtualFile());
-    myInContent = ReadAction.compute(() -> virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false));
-    extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : ReadAction.compute(() -> SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile));
+    ReadAction.run(() -> {
+      VirtualFile virtualFile = psiFile.getVirtualFile();
+      if (!psiFile.isValid() || virtualFile != null && !virtualFile.isValid()) {
+        throw new ProcessCanceledException(new RuntimeException(psiFile.getName() + " is invalid"));
+      }
+      myIsEssentialHighlightingOnly = HighlightingLevelManager.getInstance(psiFile.getProject()).runEssentialHighlightingOnly(psiFile);
+      myInContent = virtualFile != null && ModuleUtilCore.projectContainsFile(psiFile.getProject(), virtualFile, false);
+      extensionsAllowToChangeFileSilently = virtualFile == null ? ThreeState.UNSURE : SilentChangeVetoer.extensionsAllowToChangeFileSilently(getProject(), virtualFile);
+    });
   }
 
+  @Override
   public boolean isCanceled() {
     return myDaemonCancelEventCount.intValue() != myDaemonInitialCancelEventCount;
   }
@@ -360,7 +372,7 @@ public final class HighlightingSessionImpl implements HighlightingSession {
     });
     pendingFileLevelHighlightRequests.add((RunnableFuture<?>)future);
   }
-  public void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
+  void addFileLevelHighlight(@NotNull HighlightInfo fileLevelHighlightInfo, @Nullable RangeHighlighterEx toReuse) {
     Project project = getProject();
     DaemonCodeAnalyzerEx codeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(project);
     Future<?> future = EdtExecutorService.getInstance().submit(() -> {

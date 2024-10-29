@@ -6,11 +6,8 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampl
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsChanged
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.Base.logAddSampleOnboardingTipsFinished
 import com.intellij.ide.projectWizard.NewProjectWizardConstants.BuildSystem.GRADLE
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep
-import com.intellij.ide.projectWizard.generators.AssetsJavaNewProjectWizardStep.Companion.proposeToGenerateOnboardingTipsByDefault
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
-import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData
-import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.projectWizard.generators.*
+import com.intellij.ide.projectWizard.generators.AssetsOnboardingTips.proposeToGenerateOnboardingTipsByDefault
 import com.intellij.ide.starters.local.StandardAssetsProvider
 import com.intellij.ide.wizard.NewProjectWizardChainStep.Companion.nextStep
 import com.intellij.ide.wizard.NewProjectWizardStep
@@ -21,6 +18,7 @@ import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
 import com.intellij.ui.dsl.builder.whenStateChangedFromUi
+import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 
 internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
@@ -80,10 +78,13 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkGradleProject(project) {
+      val builder = GradleJavaModuleBuilder()
+      setupBuilder(builder)
+      builder.configureBuildScript(fun GradleBuildScriptBuilder<*>.() {
         withJavaPlugin()
         withJUnit()
-      }
+      })
+      setupProject(project, builder)
     }
 
     init {
@@ -93,22 +94,18 @@ internal class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
 
   private class AssetsStep(
     private val parent: Step
-  ) : AssetsJavaNewProjectWizardStep(parent) {
+  ) : AssetsNewProjectWizardStep(parent) {
 
     override fun setupAssets(project: Project) {
       if (context.isCreatingNewProject) {
         addAssets(StandardAssetsProvider().getGradleIgnoreAssets())
       }
       if (parent.addSampleCode) {
+        if (parent.generateOnboardingTips) {
+          prepareJavaSampleOnboardingTips(project)
+        }
         withJavaSampleCodeAsset("src/main/java", parent.groupId, parent.generateOnboardingTips)
       }
-    }
-
-    override fun setupProject(project: Project) {
-      if (parent.generateOnboardingTips) {
-        prepareOnboardingTips(project)
-      }
-      super.setupProject(project)
     }
   }
 }

@@ -7,15 +7,19 @@ import java.nio.file.Path
 import java.util.*
 
 object ExternalPluginBundler {
-  fun bundle(pluginName: String,
-             dependenciesProjectDir: Path,
-             context: BuildContext,
-             targetDirectory: Path,
-             buildTaskName: String = pluginName) {
-    GradleRunner(gradleProjectDir = dependenciesProjectDir,
-                 options = context.options,
-                 communityRoot = context.paths.communityHomeDirRoot,
-                 additionalParams = emptyList())
+  suspend fun bundle(
+    pluginName: String,
+    dependenciesProjectDir: Path,
+    context: BuildContext,
+    targetDirectory: Path,
+    buildTaskName: String = pluginName,
+  ) {
+    GradleRunner(
+      gradleProjectDir = dependenciesProjectDir,
+      options = context.options,
+      communityRoot = context.paths.communityHomeDirRoot,
+      additionalParams = emptyList(),
+    )
       .run("Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     val properties = Properties()
     Files.newInputStream(dependenciesProjectDir.resolve("gradle.properties")).use {

@@ -17,28 +17,29 @@ internal class ShellCommandContextImpl(
   override var requiresSubcommand: Boolean = false
   override var parserOptions: ShellCommandParserOptions = ShellCommandParserOptions.DEFAULT
 
-  private var subcommandsGenerator: ShellRuntimeDataGenerator<List<ShellCommandSpec>>? = null
-  private var dynamicOptionsSupplier: (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? = null
+  private var subcommandSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellCommandSpec>> = mutableListOf()
+  private var dynamicOptionSuppliers: MutableList<suspend (ShellRuntimeContext) -> List<ShellOptionSpec>> = mutableListOf()
   private var staticOptionSuppliers: MutableList<() -> List<ShellOptionSpec>> = mutableListOf()
   private val argumentSuppliers: MutableList<() -> ShellArgumentSpec> = mutableListOf()
 
   private val parentNamesWithSelf: List<String> = parentNames + names.first()
 
   override fun subcommands(content: suspend ShellChildCommandsContext.(ShellRuntimeContext) -> Unit) {
-    val cacheKey = createCacheKey(parentNamesWithSelf, "subcommands")
-    subcommandsGenerator = ShellRuntimeDataGenerator(cacheKey) { shellContext ->
+    val supplier: suspend (ShellRuntimeContext) -> List<ShellCommandSpec> = { shellContext ->
       val context = ShellChildCommandsContextImpl(parentNamesWithSelf)
       content.invoke(context, shellContext)
       context.build()
     }
+    subcommandSuppliers.add(supplier)
   }
 
   override fun dynamicOptions(content: suspend ShellChildOptionsContext.(ShellRuntimeContext) -> Unit) {
-    dynamicOptionsSupplier = { shellContext ->
+    val supplier: suspend (ShellRuntimeContext) -> List<ShellOptionSpec> = { shellContext ->
       val context = ShellChildOptionsContextImpl(parentNamesWithSelf)
       content.invoke(context, shellContext)
       context.build()
     }
+    dynamicOptionSuppliers.add(supplier)
   }
 
   override fun option(vararg names: String, content: ShellOptionContext.() -> Unit) {
@@ -70,12 +71,29 @@ internal class ShellCommandContextImpl(
         priority = priority,
         requiresSubcommand = requiresSubcommand,
         parserOptions = parserOptions,
-        subcommandsGenerator = subcommandsGenerator ?: emptyListGenerator(),
-        dynamicOptionsSupplier = dynamicOptionsSupplier,
+        subcommandsGenerator = createSubcommandsGenerator(),
+        dynamicOptionsSupplier = createSingleDynamicOptionsSupplier(),
         staticOptionsSupplier = { staticOptionSuppliers.flatMap { it() } },
         argumentsSupplier = { argumentSuppliers.map { it() } },
         parentNames = parentNames
       )
     }
+  }
+
+  private fun createSubcommandsGenerator(): ShellRuntimeDataGenerator<List<ShellCommandSpec>> {
+    return if (subcommandSuppliers.isNotEmpty()) {
+      val cacheKey = createCacheKey(parentNamesWithSelf, "subcommands")
+      ShellRuntimeDataGenerator(cacheKey) { shellContext ->
+        subcommandSuppliers.flatMap { it(shellContext) }
+      }
+    }
+    else emptyListGenerator()
+  }
+
+  private fun createSingleDynamicOptionsSupplier(): (suspend (ShellRuntimeContext) -> List<ShellOptionSpec>)? {
+    return if (dynamicOptionSuppliers.isNotEmpty()) {
+      { shellContext -> dynamicOptionSuppliers.flatMap { it(shellContext) } }
+    }
+    else null
   }
 }

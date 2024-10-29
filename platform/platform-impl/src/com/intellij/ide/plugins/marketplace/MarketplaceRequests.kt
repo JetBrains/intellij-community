@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.marketplace
 
 import com.fasterxml.jackson.core.type.TypeReference
@@ -39,9 +39,7 @@ import org.xml.sax.SAXException
 import java.io.IOException
 import java.io.InputStream
 import java.net.HttpURLConnection
-import java.net.SocketTimeoutException
 import java.net.URLConnection
-import java.net.UnknownHostException
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -268,7 +266,7 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
   }
 
   @Throws(IOException::class)
-  suspend fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
+  internal suspend fun getFeatures(param: Map<String, String>): List<FeatureImpl> {
     if (param.isEmpty()) {
       return emptyList()
     }
@@ -309,7 +307,6 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   @RequiresBackgroundThread
   @JvmOverloads
-  @Throws(IOException::class)
   fun getMarketplacePlugins(indicator: ProgressIndicator? = null): Set<PluginId> {
     try {
       return readOrUpdateFile(
@@ -320,25 +317,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         ::parseXmlIds,
       )
     }
-    catch (e: UnknownHostException) {
+    catch (e: IOException) {
       LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
-      return emptySet()
-    }
-    catch (es: SocketTimeoutException) {
-      LOG.infoOrDebug("Cannot get plugins from Marketplace", es)
       return emptySet()
     }
   }
 
   override fun loadPlugins(indicator: ProgressIndicator?): Future<Set<PluginId>> {
     return ApplicationManager.getApplication().executeOnPooledThread(Callable {
-      try {
-        getMarketplacePlugins(indicator)
-      }
-      catch (e: IOException) {
-        LOG.infoOrDebug("Cannot get plugins from Marketplace", e)
-        emptySet()
-      }
+      getMarketplacePlugins(indicator)
     })
   }
 
@@ -382,14 +369,15 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
         val pluginNode = it.toPluginNode()
 
         if (it.externalUpdateId != null) return@mapNotNull pluginNode
-        if (it.nearestUpdate == null) return@mapNotNull null
-        if (it.nearestUpdate.compatible) return@mapNotNull pluginNode
+        val nearestUpdate = it.nearestUpdate
+        if (nearestUpdate == null) return@mapNotNull null
+        if (nearestUpdate.compatible) return@mapNotNull pluginNode
 
         // filter out plugins which version is not compatible with the current IDE version,
         // but they have versions compatible with Community
         if (includeIncompatible
-            && !it.nearestUpdate.supports(activeProductCode)
-            && it.nearestUpdate.supports(suggestedIdeCode)) {
+            && !nearestUpdate.supports(activeProductCode)
+            && nearestUpdate.supports(suggestedIdeCode)) {
 
           pluginNode.suggestedCommercialIde = suggestedIdeCode
           pluginNode.tags = getTagsForUi(pluginNode).distinct()
@@ -542,14 +530,14 @@ class MarketplaceRequests(private val coroutineScope: CoroutineScope) : PluginIn
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
+  internal fun loadPluginMetadata(pluginNode: PluginNode): IntellijPluginMetadata? {
     val externalPluginId = pluginNode.externalPluginId ?: return null
     return loadPluginMetadata(externalPluginId)
   }
 
   @RequiresBackgroundThread
   @RequiresReadLockAbsence
-  fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
+  internal fun loadPluginMetadata(externalPluginId: String): IntellijPluginMetadata? {
     try {
       return readOrUpdateFile(
         Paths.get(PathManager.getPluginTempPath(), "${externalPluginId}-meta.json"),

@@ -20,7 +20,7 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 
-public final class GlassLayer extends JComponent implements DataProvider, PopupOwner {
+public final class GlassLayer extends JComponent implements UiDataProvider, PopupOwner {
   private static final Logger LOG = Logger.getInstance(GlassLayer.class);
 
   private final GuiEditor myEditor;
@@ -122,19 +122,14 @@ public final class GlassLayer extends JComponent implements DataProvider, PopupO
     return myLastMousePosition;
   }
 
-  /**
-   * Provides {@link PlatformDataKeys#NAVIGATABLE} to navigate to
-   * binding of currently selected component (if any)
-   */
   @Override
-  public Object getData(final @NotNull String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      final ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
-      if (componentTree != null) {
-        return componentTree.getData(dataId);
-      }
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    ComponentTree componentTree = DesignerToolWindowManager.getInstance(myEditor).getComponentTree();
+    RadComponent radComponent = componentTree == null ? null : componentTree.getSelectedComponent();
+    if (radComponent == null) return;
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
+      return componentTree.getPsiFile(radComponent);
+    });
   }
 
   @Override

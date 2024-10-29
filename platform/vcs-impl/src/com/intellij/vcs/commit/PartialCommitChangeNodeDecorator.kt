@@ -13,7 +13,9 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES
 import com.intellij.util.FontUtil.spaceAndThinSpace
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class PartialCommitChangeNodeDecorator @JvmOverloads constructor(
   private val project: Project,
   private val baseDecorator: ChangeNodeDecorator,

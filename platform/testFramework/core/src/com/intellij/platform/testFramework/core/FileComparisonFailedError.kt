@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.testFramework.core
 
 import com.intellij.rt.execution.junit.FileComparisonData
@@ -19,7 +19,6 @@ open class FileComparisonFailedError @JvmOverloads constructor(
   createFileInfo(expected, expectedFilePath),
   createFileInfo(actual, actualFilePath)
 ), FileComparisonData {
-
   init {
     require(expectedFilePath == null || File(expectedFilePath).isFile) {
       "'expectedFilePath' should point to the existing file or be null"
@@ -29,59 +28,44 @@ open class FileComparisonFailedError @JvmOverloads constructor(
     }
   }
 
-  override fun getFilePath(): String? {
-    return getFilePath(expected)
+  override fun getFilePath(): String? = getFilePath(expected)
+
+  override fun getActualFilePath(): String? = getFilePath(actual)
+
+  override fun getActualStringPresentation(): String = getFileText(actual)
+
+  override fun getExpectedStringPresentation(): String = getFileText(expected)
+}
+
+private class PresentableFileInfo(
+  path: String,
+  contents: ByteArray
+) : FileInfo(path, contents) {
+  override fun toString(): String = getContentsAsString(StandardCharsets.UTF_8)
+}
+
+private fun createFileInfo(text: String, path: String?): ValueWrapper {
+  val contents = text.toByteArray()
+  if (path == null) {
+    return ValueWrapper.create(text)
   }
-
-  override fun getActualFilePath(): String? {
-    return getFilePath(actual)
+  else {
+    val fileInfo = PresentableFileInfo(path, contents)
+    return ValueWrapper.create(fileInfo)
   }
+}
 
-  override fun getActualStringPresentation(): String {
-    return getFileText(actual)
+private fun getFileText(valueWrapper: ValueWrapper): String {
+  val value = valueWrapper.value
+  if (value is FileInfo) {
+    return value.getContentsAsString(StandardCharsets.UTF_8)
   }
-
-  override fun getExpectedStringPresentation(): String {
-    return getFileText(expected)
+  else {
+    return value as String
   }
+}
 
-  private class PresentableFileInfo(
-    path: String,
-    contents: ByteArray
-  ) : FileInfo(path, contents) {
-
-    override fun toString(): String {
-      return getContentsAsString(CONTENT_CHARSET)
-    }
-  }
-
-  companion object {
-
-    private val CONTENT_CHARSET = StandardCharsets.UTF_8
-
-    private fun createFileInfo(text: String, path: String?): ValueWrapper {
-      val contents = text.toByteArray(CONTENT_CHARSET)
-      if (path != null) {
-        val fileInfo = PresentableFileInfo(path, contents)
-        return ValueWrapper.create(fileInfo)
-      }
-      return ValueWrapper.create(text)
-    }
-
-    private fun getFileText(valueWrapper: ValueWrapper): String {
-      val value: Any = valueWrapper.value
-      if (value is FileInfo) {
-        return value.getContentsAsString(CONTENT_CHARSET)
-      }
-      return value as String
-    }
-
-    private fun getFilePath(valueWrapper: ValueWrapper): String? {
-      val value: Any = valueWrapper.value
-      if (value is FileInfo) {
-        return value.path
-      }
-      return null
-    }
-  }
+private fun getFilePath(valueWrapper: ValueWrapper): String? {
+  val value = valueWrapper.value
+  return if (value is FileInfo) value.path else null
 }

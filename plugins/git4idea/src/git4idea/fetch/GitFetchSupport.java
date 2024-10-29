@@ -35,6 +35,9 @@ public interface GitFetchSupport {
   @NotNull
   GitFetchResult fetch(@NotNull GitRepository repository, @NotNull GitRemote remote);
 
+  @NotNull
+  GitFetchResult fetchUnshallow(@NotNull GitRepository repository, @NotNull GitRemote remote);
+
   /**
    * Fetches the given remotes.
    */

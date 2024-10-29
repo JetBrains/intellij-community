@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.AbstractCopyrightManager;
@@ -10,9 +10,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -227,12 +225,9 @@ final class CopyrightProfilesPanel extends MasterDetailsComponent implements Sea
                                    PlatformIcons.IMPORT_ICON) {
       @Override
       public void actionPerformed(@NotNull AnActionEvent event) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-          .withFileFilter(file -> {
-            final FileType fileType = file.getFileType();
-            return fileType == ModuleFileType.INSTANCE || fileType == XmlFileType.INSTANCE;
-          })
-          .withTitle(CopyrightBundle.message("dialog.file.chooser.title.choose.file.containing.copyright.notice"));
+        var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
+          .withExtensionFilter(CopyrightBundle.message("copyright.file.chooser.label"), ModuleFileType.INSTANCE, XmlFileType.INSTANCE)
+          .withTitle(CopyrightBundle.message("copyright.file.chooser.title"));
         FileChooser.chooseFile(descriptor, myProject, null, file -> {
           final List<CopyrightProfile> profiles = ExternalOptionHelper.loadOptions(VfsUtilCore.virtualToIoFile(file));
           if (profiles == null) return;

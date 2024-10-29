@@ -11,8 +11,23 @@ import org.jetbrains.kotlin.resolve.ImportPath
 
 @ApiStatus.Internal
 class KotlinImportPathComparator private constructor(private val packageTable: KotlinPackageEntryTable) : Comparator<ImportPath> {
+
+    /**
+     * When `true`, import aliases should be sorted as a separate group of imports.
+     *
+     * When `false`, import aliases should be sorted together with all other imports.
+     *
+     * @see [org.jetbrains.kotlin.idea.formatter.KotlinImportOrderLayoutPanel.cbImportAliasesSeparately]
+     */
+    private val importAliasesSeparately: Boolean
+        get() = ALL_OTHER_ALIAS_IMPORTS_ENTRY in packageTable.getEntries()
+
     override fun compare(import1: ImportPath, import2: ImportPath): Int {
-        val ignoreAlias = import1.hasAlias() && import2.hasAlias()
+        val ignoreAlias = if (importAliasesSeparately) {
+            import1.hasAlias() && import2.hasAlias()
+        } else {
+            true
+        }
 
         return compareValuesBy(
             import1,
@@ -60,10 +75,6 @@ private fun KotlinPackageEntry.isBetterMatchForPackageThan(entry: KotlinPackageE
     return entry.packageName.count { it == '.' } < packageName.count { it == '.' }
 }
 
-/**
- * In current implementation we assume that aliased import can be matched only by
- * [ALL_OTHER_ALIAS_IMPORTS_ENTRY] which is always present.
- */
 private fun KotlinPackageEntry.matchesImportPath(importPath: ImportPath, ignoreAlias: Boolean): Boolean {
     if (!ignoreAlias && importPath.hasAlias()) {
         return this == ALL_OTHER_ALIAS_IMPORTS_ENTRY

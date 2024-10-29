@@ -118,6 +118,11 @@ class A {
         String.valueOf(3.14);
         String.valueOf(new Object());
 
+        int i = 0;
+        String.valueOf(++i);
+        String.valueOf(i++);
+        String.valueOf(1 + 1);
+
         String.format(
                 Locale.FRENCH,
                 "Je ne mange pas %d jours",

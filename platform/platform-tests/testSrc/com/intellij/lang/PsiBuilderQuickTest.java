@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang;
 
 import com.intellij.lang.impl.PsiBuilderImpl;
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.ASTStructure;
 import com.intellij.psi.tree.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.ThreeState;
 import com.intellij.util.diff.DiffTree;
@@ -194,7 +195,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDone() {
+  public void testValidityChecksOnDone() throws Exception {
     doFailTest("a",
                "Another not done marker added after this one. Must be done before this.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -206,7 +207,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore1() {
+  public void testValidityChecksOnDoneBefore1() throws Exception {
     doFailTest("a",
                "Another not done marker added after this one. Must be done before this.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -219,7 +220,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnDoneBefore2() {
+  public void testValidityChecksOnDoneBefore2() throws Exception {
     doFailTest("a",
                "'Before' marker precedes this one.", builder -> {
                  PsiBuilder.Marker first = builder.mark();
@@ -231,14 +232,14 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild1() {
+  public void testValidityChecksOnTreeBuild1() throws Exception {
     doFailTest("aa",
                "Parser produced no markers. Text:\naa", builder -> { while(!builder.eof()) builder.advanceLexer(); }
     );
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild2() {
+  public void testValidityChecksOnTreeBuild2() throws Exception {
     doFailTest("aa",
                "Tokens [LETTER] were not inserted into the tree. \nDetails:\nmissedTokensFragment.txt\naa", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
@@ -249,7 +250,7 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testValidityChecksOnTreeBuild3() {
+  public void testValidityChecksOnTreeBuild3() throws Exception {
     doFailTest("a ",
                "Tokens [WHITE_SPACE] are outside of root element \"LETTER\".\nDetails:\noutsideTokensFragment.txt\na ", builder -> {
                  PsiBuilder.Marker marker = builder.mark();
@@ -573,18 +574,20 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
       root.getText());
   }
 
-  private static void doFailTest(String text, String expected, Consumer<? super PsiBuilder> parser) {
-    PlatformTestUtil.withStdErrSuppressed(() -> {
-      try {
-        PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
-        builder.setDebugMode(true);
-        parser.accept(builder);
-        builder.getLightTree();
-        fail("should fail");
-      }
-      catch (AssertionError e) {
-        assertEquals(expected, e.getMessage());
-      }
+  private static void doFailTest(String text, String expected, Consumer<? super PsiBuilder> parser) throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      PlatformTestUtil.withStdErrSuppressed(() -> {
+        try {
+          PsiBuilder builder = PsiBuilderFactory.getInstance().createBuilder(new PlainTextParserDefinition(), new MyTestLexer(), text);
+          builder.setDebugMode(true);
+          parser.accept(builder);
+          builder.getLightTree();
+          fail("should fail");
+        }
+        catch (AssertionError e) {
+          assertEquals(expected, e.getMessage());
+        }
+      });
     });
   }
 

@@ -88,18 +88,37 @@ public final class JavaPresentationUtil {
     };
   }
 
+  public static @NotNull ItemPresentation getRecordComponentPresentation(final @NotNull PsiRecordComponent component) {
+    return new ColoredItemPresentation() {
+      @Override
+      public String getPresentableText() {
+        return component.getName();
+      }
+
+      @Override
+      public TextAttributesKey getTextAttributesKey() {
+        return null;
+      }
+
+      @Override
+      public String getLocationString() {
+        return getJavaSymbolContainerText(component);
+      }
+
+      @Override
+      public Icon getIcon(boolean open) {
+        return component.getIcon(Iconable.ICON_FLAG_VISIBILITY);
+      }
+    };
+  }
+
   private static @Nullable String getJavaSymbolContainerText(final @NotNull PsiElement element) {
     final String result;
     PsiElement container = PsiTreeUtil.getParentOfType(element, PsiMember.class, PsiFile.class);
 
     if (container instanceof PsiClass) {
       String qName = ((PsiClass)container).getQualifiedName();
-      if (qName != null) {
-        result = qName;
-      }
-      else {
-        result = ((PsiClass)container).getName();
-      }
+      result = (qName != null) ? qName : ((PsiClass)container).getName();
     }
     else if (container instanceof PsiJavaFile) {
       result = ((PsiJavaFile)container).getPackageName();
@@ -107,9 +126,6 @@ public final class JavaPresentationUtil {
     else {//TODO: local classes
       result = null;
     }
-    if (result != null) {
-      return JavaPsiBundle.message("aux.context.display", result);
-    }
-    return null;
+    return result == null ? null : JavaPsiBundle.message("aux.context.display", result);
   }
 }

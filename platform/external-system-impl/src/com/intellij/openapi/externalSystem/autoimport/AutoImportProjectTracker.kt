@@ -41,6 +41,13 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.streams.asStream
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+
+private val MERGING_TIME_SPAN = 300.milliseconds
+private val MERGING_TIME_SPAN_MS = MERGING_TIME_SPAN.inWholeMilliseconds
+
+private val DEFAULT_SMART_PROJECT_RELOAD_DELAY = 3.seconds
 
 @ApiStatus.Internal
 @State(name = "ExternalSystemProjectTracker", storages = [Storage(CACHE_FILE)])
@@ -60,7 +67,7 @@ class AutoImportProjectTracker(
   private val projectChangeOperation = AtomicOperationTrace(name = "Project change operation")
   private val projectReloadOperation = AtomicOperationTrace(name = "Project reload operation")
   private val isProjectLookupActivateProperty = AtomicBooleanProperty(false)
-  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", 300, true, null, serviceDisposable)
+  private val dispatcher = MergingUpdateQueue("AutoImportProjectTracker.dispatcher", MERGING_TIME_SPAN_MS.toInt(), true, null, serviceDisposable)
   private val backgroundExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AutoImportProjectTracker.backgroundExecutor", 1)
 
   private fun createProjectChangesListener() =
@@ -103,17 +110,20 @@ class AutoImportProjectTracker(
     schedule(priority = 1, dispatchIterations = 1) { processChanges() }
   }
 
-  /**
-   * ```
-   * dispatcher.mergingTimeSpan = 300 ms
-   * dispatchIterations = 9
-   * We already dispatched processChanges
-   * So delay is equal to (1 + 9) * 300 ms = 3000 ms = 3 s
-   * ```
-   */
   private fun scheduleDelayedSmartProjectReload() {
     LOG.debug("Schedule delayed project reload")
-    schedule(priority = 2, dispatchIterations = 9) { reloadProject(explicitReload = false) }
+
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDelay = projectDataMap.values.maxOfOrNull {
+      it.projectAware.smartProjectReloadDelay ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    } ?: DEFAULT_SMART_PROJECT_RELOAD_DELAY
+    // We already dispatched processChanges with the MERGING_TIME_SPAN delay
+    // See AutoImportProjectTracker.scheduleChangeProcessing for details
+    val smartProjectReloadDispatcherIterations = ((smartProjectReloadDelay - MERGING_TIME_SPAN) / MERGING_TIME_SPAN).toInt()
+    // smartProjectReloadDispatcherIterations can be negative if smartProjectReloadDelay is less than MERGING_TIME_SPAN
+    val dispatchIterations = maxOf(smartProjectReloadDispatcherIterations, 1)
+
+    schedule(priority = 2, dispatchIterations = dispatchIterations) { reloadProject(explicitReload = false) }
   }
 
   private val currentActivity = AtomicReference<ProjectInitializationDiagnosticService.ActivityTracker?>()
@@ -138,6 +148,8 @@ class AutoImportProjectTracker(
   }
 
   private fun processChanges() {
+    LOG.debug("Process changes")
+
     when (settings.autoReloadType) {
       AutoReloadType.ALL -> when (getModificationType()) {
         INTERNAL -> scheduleDelayedSmartProjectReload()
@@ -309,18 +321,33 @@ class AutoImportProjectTracker(
   init {
     LOG.debug("Project tracker initialization")
 
-    projectReloadOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
-    projectReloadOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
-    projectChangeOperation.whenOperationStarted(serviceDisposable) { notificationAware.notificationExpire() }
-    projectChangeOperation.whenOperationFinished(serviceDisposable) { scheduleChangeProcessing() }
-    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { scheduleChangeProcessing() }
-    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) { scheduleChangeProcessing() }
-    projectReloadOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project reload start event") }
-    projectReloadOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project reload finish event") }
-    projectChangeOperation.whenOperationStarted(serviceDisposable) { LOG.debug("Detected project change start event") }
-    projectChangeOperation.whenOperationFinished(serviceDisposable) { LOG.debug("Detected project change finish event") }
-    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) { LOG.debug("Detected project lookup start event") }
-    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) { LOG.debug("Detected project lookup finish event") }
+    projectReloadOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("Detected project reload start event")
+      notificationAware.notificationExpire()
+    }
+    projectReloadOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("Detected project reload finish event")
+      scheduleChangeProcessing()
+    }
+    projectChangeOperation.whenOperationStarted(serviceDisposable) {
+      LOG.debug("Detected project change start event")
+      notificationAware.notificationExpire()
+    }
+    projectChangeOperation.whenOperationFinished(serviceDisposable) {
+      LOG.debug("Detected project change finish event")
+      scheduleChangeProcessing()
+    }
+    isProjectLookupActivateProperty.whenPropertySet(serviceDisposable) {
+      LOG.debug("Detected project lookup start event")
+    }
+    isProjectLookupActivateProperty.whenPropertyReset(serviceDisposable) {
+      LOG.debug("Detected project lookup finish event")
+      scheduleChangeProcessing()
+    }
+    settings.autoReloadTypeProperty.whenPropertyChanged(serviceDisposable) {
+      LOG.debug("Detected project reload type change event")
+      scheduleChangeProcessing()
+    }
 
     dispatcher.isPassThrough = !asyncChangesProcessingProperty.get()
     asyncChangesProcessingProperty.whenPropertyChanged(serviceDisposable) { dispatcher.isPassThrough = !it }

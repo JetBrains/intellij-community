@@ -4,6 +4,7 @@ package com.intellij.openapi.ui.playback.commands;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -11,6 +12,7 @@ import java.awt.event.KeyEvent;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class KeyStrokeMap {
 
   private static final Logger LOG = Logger.getInstance(KeyStrokeMap.class);

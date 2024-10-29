@@ -4,7 +4,6 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.impl.interactiveComponent
 import org.junit.Test
 import org.junit.jupiter.api.assertThrows
@@ -64,7 +63,7 @@ class LabelTest {
     val panel = JPanel()
     val textField = JTextField()
     panel.add(textField)
-    panel.putClientProperty(DslComponentProperty.LABEL_FOR, textField)
+    panel.putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, textField)
     panel {
       row(label) {
         cell(panel)
@@ -78,8 +77,8 @@ class LabelTest {
   fun testInvalidLabelForProperty() {
     val label = JLabel("Label:")
     val panel = JPanel()
-    panel.putClientProperty(DslComponentProperty.LABEL_FOR, "Invalid")
-    assertThrows<UiDslException> {
+    panel.putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, "Invalid")
+    assertThrows<ClassCastException> {
       panel {
         row(label) {
           cell(panel)

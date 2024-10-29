@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Wrapper for IntentionAction to allow assigning keyboard shortcuts to it
  *
  * The wrapper actions are created and managed by [IntentionShortcutManager].
  */
+@ApiStatus.Internal
 class IntentionActionAsAction(intention: IntentionAction)
   : AnAction({ CodeInsightBundle.message("intention.action.wrapper.name", intention.familyName) }) {
 

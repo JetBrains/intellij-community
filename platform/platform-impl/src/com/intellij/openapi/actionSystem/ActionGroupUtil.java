@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.actionSystem;
 
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory.TransparentWrapper;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.ApiStatus;
@@ -46,10 +47,17 @@ public final class ActionGroupUtil {
 
   @ApiStatus.Experimental
   public static @NotNull ActionGroup forceHideDisabledChildren(@NotNull ActionGroup actionGroup) {
-    final class Compact extends ActionGroupWrapper implements CompactActionGroup, TransparentWrapper {
+    final class Compact extends ActionGroupWrapper implements TransparentWrapper {
 
       Compact(@NotNull ActionGroup action) {
         super(action);
+      }
+
+      @Override
+      @NotNull Presentation createTemplatePresentation() {
+        Presentation presentation = super.createTemplatePresentation();
+        presentation.putClientProperty(ActionUtil.HIDE_DISABLED_CHILDREN, true);
+        return presentation;
       }
     }
     return actionGroup instanceof CompactActionGroup ? actionGroup : new Compact(actionGroup);

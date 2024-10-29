@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.editor.actions.TerminalChangeFontSizeAction.Companion.getTerminalWidget
 import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class TerminalResetFontSizeAction : DumbAwareAction(), LightEditCompatible {
   override fun actionPerformed(e: AnActionEvent) {
     getTerminalWidget(e)?.resetFontSize()

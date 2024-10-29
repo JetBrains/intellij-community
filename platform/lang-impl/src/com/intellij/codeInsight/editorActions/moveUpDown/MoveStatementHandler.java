@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
@@ -21,8 +21,7 @@ final class MoveStatementHandler extends BaseMoveHandler {
   }
 
   @Override
-  @Nullable
-  protected MoverWrapper getSuitableMover(@NotNull final Editor editor, @Nullable final PsiFile file) {
+  protected @Nullable MoverWrapper getSuitableMover(final @NotNull Editor editor, final @Nullable PsiFile file) {
     if (file == null) return null;
     // order is important!
     final StatementUpDownMover.MoveInfo info = new StatementUpDownMover.MoveInfo();
@@ -38,16 +37,14 @@ final class MoveStatementHandler extends BaseMoveHandler {
   }
 
   @Override
-  @Nullable
-  protected PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
+  protected @Nullable PsiFile getPsiFile(@NotNull Project project, @NotNull Editor editor) {
     final Document document = editor.getDocument();
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     documentManager.commitDocument(document);
     return getRoot(documentManager.getPsiFile(document), editor);
   }
 
-  @Nullable
-  private static PsiFile getRoot(final PsiFile file, final Editor editor) {
+  private static @Nullable PsiFile getRoot(final PsiFile file, final Editor editor) {
     if (file == null) return null;
     int offset = editor.getCaretModel().getOffset();
     if (offset == editor.getDocument().getTextLength()) offset--;

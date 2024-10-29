@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferences
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.codeinsight.api.applicable.fixes.AbstractKotlinApplicableQuickFix
 import org.jetbrains.kotlin.idea.codeinsight.utils.ChooseValueExpression
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.CallableReturnTypeUpdaterUtils.TypeInfo.Companion.createByKtTypes
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -153,7 +155,7 @@ object CallableReturnTypeUpdaterUtils {
             // `getAllSuperTypes` does not work because it would BFS traverse each starting point and put the result together, in which
             // case, for example, calling `getAllSuperTypes` would put `Any` at middle if one of the super type in the hierarchy has
             // multiple super types.
-            .bfs { it.getDirectSuperTypes(shouldApproximate = true).iterator() }
+            .bfs { it.directSupertypes(shouldApproximate = true).iterator() }
             .map { it.approximateToSuperPublicDenotableOrSelf(approximateLocalTypes = true) }
             .distinct()
             .let { types ->
@@ -210,7 +212,7 @@ object CallableReturnTypeUpdaterUtils {
             } != null
         ) {
             // Note that `isNothing` returns true for both `Nothing` and `Nothing?`
-            val targetType = allTypes.firstOrNull { !it.isNothing } ?: allTypes.first()
+            val targetType = allTypes.firstOrNull { !it.isNothingType } ?: allTypes.first()
             return createByKtTypes(targetType)
         }
         return null
@@ -234,7 +236,7 @@ object CallableReturnTypeUpdaterUtils {
             context(KaSession)
             @OptIn(KaExperimentalApi::class)
             private fun createTypeByKtType(ktType: KaType): Type = Type(
-                isUnit = ktType.isUnit,
+                isUnit = ktType.isUnitType,
                 isError = ktType is KaErrorType,
                 longTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_QUALIFIED_NAMES, position = Variance.OUT_VARIANCE),
                 shortTypeRepresentation = ktType.render(KaTypeRendererForSource.WITH_SHORT_NAMES, position = Variance.OUT_VARIANCE),
@@ -243,5 +245,21 @@ object CallableReturnTypeUpdaterUtils {
             val UNIT = Type(isUnit = true, isError = false, longTypeRepresentation = "kotlin.Unit", shortTypeRepresentation = "Unit")
             val ANY = Type(isUnit = false, isError = false, longTypeRepresentation = "kotlin.Any", shortTypeRepresentation = "Any")
         }
+    }
+
+    @ApiStatus.Internal
+    class SpecifyExplicitTypeQuickFix(
+        target: KtCallableDeclaration,
+        private val typeInfo: TypeInfo,
+    ) : AbstractKotlinApplicableQuickFix<KtCallableDeclaration>(target) {
+        override fun getFamilyName(): String = KotlinBundle.message("specify.type.explicitly")
+
+        override fun getActionName(element: KtCallableDeclaration): String = when (element) {
+            is KtFunction -> KotlinBundle.message("specify.return.type.explicitly")
+            else -> KotlinBundle.message("specify.type.explicitly")
+        }
+
+        override fun apply(element: KtCallableDeclaration, project: Project, editor: Editor?, file: KtFile) =
+            updateType(element, typeInfo, project, editor)
     }
 }

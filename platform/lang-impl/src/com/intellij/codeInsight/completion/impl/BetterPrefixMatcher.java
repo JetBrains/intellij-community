@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.completion.CompletionResult;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class BetterPrefixMatcher extends PrefixMatcher {
   private final PrefixMatcher myOriginal;
-  @Nullable private final CamelHumpMatcher myHumpMatcher;
+  private final @Nullable CamelHumpMatcher myHumpMatcher;
   private final int myMinMatchingDegree;
 
   public BetterPrefixMatcher(PrefixMatcher original, int minMatchingDegree) {
@@ -22,16 +22,14 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     myMinMatchingDegree = minMatchingDegree;
   }
 
-  @NotNull
-  public BetterPrefixMatcher improve(CompletionResult result) {
+  public @NotNull BetterPrefixMatcher improve(CompletionResult result) {
     int degree = RealPrefixMatchingWeigher.getBestMatchingDegree(result.getLookupElement(), result.getPrefixMatcher());
     if (degree <= myMinMatchingDegree) return this;
 
     return createCopy(myOriginal, degree);
   }
 
-  @NotNull
-  protected BetterPrefixMatcher createCopy(PrefixMatcher original, int degree) {
+  protected @NotNull BetterPrefixMatcher createCopy(PrefixMatcher original, int degree) {
     return new BetterPrefixMatcher(original, degree);
   }
 
@@ -71,9 +69,8 @@ public class BetterPrefixMatcher extends PrefixMatcher {
     return myOriginal.matchingDegree(string);
   }
 
-  @NotNull
   @Override
-  public PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
+  public @NotNull PrefixMatcher cloneWithPrefix(@NotNull String prefix) {
     return createCopy(myOriginal.cloneWithPrefix(prefix), myMinMatchingDegree);
   }
 
@@ -89,9 +86,8 @@ public class BetterPrefixMatcher extends PrefixMatcher {
       myResult = result;
     }
 
-    @NotNull
     @Override
-    protected BetterPrefixMatcher createCopy(PrefixMatcher original, int degree) {
+    protected @NotNull BetterPrefixMatcher createCopy(PrefixMatcher original, int degree) {
       return new AutoRestarting(myResult, original, degree);
     }
 

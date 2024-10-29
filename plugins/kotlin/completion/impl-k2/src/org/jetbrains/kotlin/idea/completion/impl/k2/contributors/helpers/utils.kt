@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.completion.contributors.helpers
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
-import org.jetbrains.kotlin.analysis.api.components.KaScopeContext
 import org.jetbrains.kotlin.analysis.api.scopes.KaScope
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
@@ -15,11 +15,12 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 
 /**
  * Origin of [KaSymbol] used in completion suggestion
@@ -33,6 +34,23 @@ internal sealed class CompletionSymbolOrigin {
         const val SCOPE_OUTSIDE_TOWER_INDEX: Int = -1
     }
 }
+
+context(KaSession)
+internal fun KotlinRawPositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
+    when (this) {
+        is KotlinNameReferencePositionContext -> resolveReceiverToSymbols()
+        else -> sequenceOf(rootPackageSymbol)
+    }
+
+context(KaSession)
+internal fun KotlinNameReferencePositionContext.resolveReceiverToSymbols(): Sequence<KaSymbol> =
+    when (val explicitReceiver = explicitReceiver) {
+        null -> sequenceOf(rootPackageSymbol)
+        else -> explicitReceiver.reference()
+            ?.resolveToSymbols()
+            ?.asSequence()
+            ?: emptySequence()
+    }
 
 internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
     if (typeArgumentsCount > 0) {
@@ -110,7 +128,7 @@ internal fun collectNonExtensionsForType(
             filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
         }
 
-    val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassOrObjectSymbol>().filter { it.isInner }
+    val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassSymbol>().filter { it.isInner }
     val innerClassesConstructors = innerClasses.flatMap { it.declaredMemberScope.constructors }.map { it.asSignature() }
 
     val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
@@ -124,7 +142,7 @@ internal fun collectNonExtensionsForType(
 
 context(KaSession)
 private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSymbol>
-    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnit })
+    get() = listOfNotNull(javaGetterSymbol, javaSetterSymbol?.takeIf { it.returnType.isUnitType })
 
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
@@ -156,7 +174,7 @@ internal fun collectNonExtensionsFromScope(
     scopeNameFilter: (Name) -> Boolean,
     sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
-): Sequence<KaCallableSignature<*>> = scope.getCallableSymbols(scopeNameFilter.getAndSetAware())
+): Sequence<KaCallableSignature<*>> = scope.callables(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
     .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
@@ -180,18 +198,6 @@ private fun ((Name) -> Boolean).getAndSetAware(): (Name) -> Boolean = { name ->
 
 private fun Name.toJavaGetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.getterName(it)) }
 private fun Name.toJavaSetterName(): Name? = identifierOrNullIfSpecial?.let { Name.identifier(JvmAbi.setterName(it)) }
-
-internal fun KtDeclaration.canDefinitelyNotBeSeenFromOtherFile(): Boolean {
-    return when {
-        isPrivate() -> true
-        hasModifier(KtTokens.INTERNAL_KEYWORD) && containingKtFile.isCompiled -> {
-            // internal declarations from library are invisible from source modules
-            true
-        }
-
-        else -> false
-    }
-}
 
 context(KaSession)
 private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {

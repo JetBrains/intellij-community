@@ -15,12 +15,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
 
-
+@ApiStatus.Internal
 public class VcsHandleType extends HandleType {
   private static final Function<LocalChangeList,String> FUNCTION = list -> list.getName();
   private final AbstractVcs myVcs;

@@ -6,7 +6,9 @@ import com.intellij.execution.configurations.RunnerSettings
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.wm.ToolWindowId
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class MultiLaunchDebugRunner : ProgramRunner<RunnerSettings> {
   override fun getRunnerId() = "MultiLaunchDebugRunner"
 

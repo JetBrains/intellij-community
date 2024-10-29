@@ -394,7 +394,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
         ExpressionChecker visitor = new ExpressionChecker(clazz, scope);
         scope.accept(visitor);
         if (!visitor.isResult()) {
-          return visitor.isResult();
+          return false;
         }
       }
       return true;

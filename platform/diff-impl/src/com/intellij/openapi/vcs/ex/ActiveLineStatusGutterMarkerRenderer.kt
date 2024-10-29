@@ -5,9 +5,11 @@ import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Rectangle
 import java.awt.event.MouseEvent
 
+@ApiStatus.Internal
 abstract class ActiveLineStatusGutterMarkerRenderer
   : LineStatusGutterMarkerRenderer(), ActiveGutterRenderer {
 

@@ -11,7 +11,6 @@ import com.intellij.codeInsight.documentation.DocumentationManager.NEW_JAVADOC_L
 import com.intellij.codeInsight.documentation.ToggleShowDocsOnHoverAction
 import com.intellij.codeInsight.hint.HintManagerImpl.ActionToIgnore
 import com.intellij.codeInsight.hint.LineTooltipRenderer
-import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.ide.actions.*
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
@@ -96,16 +95,18 @@ internal class DocumentationPopupUI(
     ui.trackDocumentationBackgroundChange(this) {
       corner.background = it
     }
-    component = DocumentationPopupPane(ui.scrollPane).also { pane ->
-      pane.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
-      pane.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
-      updatePaddings(corner)
-      corner.addComponentListener(object : ComponentAdapter() {
-        override fun componentResized(e: ComponentEvent?) {
-          updatePaddings(corner)
-          popupUpdateFlow.tryEmit(PopupUpdateEvent.ToolbarSizeChanged)
-        }
-      })
+    val pane = DocumentationPopupPane(ui.scrollPane)
+    pane.add(scrollPaneWithCorner(this, ui.scrollPane, corner), BorderLayout.CENTER)
+    pane.add(ui.switcherToolbarComponent, BorderLayout.NORTH)
+    updatePaddings(corner)
+    corner.addComponentListener(object : ComponentAdapter() {
+      override fun componentResized(e: ComponentEvent?) {
+        updatePaddings(corner)
+        popupUpdateFlow.tryEmit(PopupUpdateEvent.ToolbarSizeChanged)
+      }
+    })
+    component = UiDataProvider.wrapComponent(pane) { sink ->
+      sink[DOCUMENTATION_POPUP] = myPopup
     }
 
     openInToolwindowAction.registerCustomShortcutSet(component, this)
@@ -134,18 +135,7 @@ internal class DocumentationPopupUI(
   fun setPopup(popup: AbstractPopup) {
     Disposer.register(popup, this)
     myPopup = popup
-
-    DataManager.registerDataProvider(component) { dataId ->
-      if (DOCUMENTATION_POPUP.`is`(dataId)) {
-        popup
-      }
-      else {
-        null
-      }
-    }
-
-    val editorPane = ui.editorPane
-    editorPane.setHint(popup)
+    ui.editorPane.setHint(popup)
   }
 
   fun updatePopup(updater: suspend (PopupUpdateEvent) -> Unit) {

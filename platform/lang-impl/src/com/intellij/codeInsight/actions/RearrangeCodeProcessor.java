@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -72,9 +72,8 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
   }
 
-  @NotNull
   @Override
-  protected FutureTask<Boolean> prepareTask(@NotNull final PsiFile file, final boolean processChangedTextOnly) {
+  protected @NotNull FutureTask<Boolean> prepareTask(final @NotNull PsiFile file, final boolean processChangedTextOnly) {
     return new FutureTask<>(() -> {
       try {
         Collection<TextRange> ranges = getRangesToFormat(file, processChangedTextOnly);
@@ -101,8 +100,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
     });
   }
 
-  @NotNull
-  private Runnable prepareRearrangeCommand(@NotNull final PsiFile file, @NotNull final Collection<TextRange> ranges) {
+  private @NotNull Runnable prepareRearrangeCommand(final @NotNull PsiFile file, final @NotNull Collection<TextRange> ranges) {
     ArrangementEngine engine = ArrangementEngine.getInstance();
     return () -> {
       engine.arrange(file, ranges);

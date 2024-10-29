@@ -10,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.util.CodeCompletion
 import com.intellij.codeWithMe.ClientId.Companion.current
 import com.intellij.codeWithMe.ClientId.Companion.isCurrentlyUnderLocalId
-import com.intellij.codeWithMe.ClientId.Companion.withClientId
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
@@ -18,7 +17,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.client.ClientAppSession
 import com.intellij.openapi.client.ClientKind
 import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSession
-import com.intellij.openapi.client.ClientSessionsManager.Companion.getAppSessions
+import com.intellij.openapi.client.forEachSession
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectCloseListener
@@ -30,8 +29,8 @@ import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.psi.Weigher
 import com.intellij.util.Consumer
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.application
 import com.intellij.util.concurrency.ThreadingAssertions
-import kotlin.concurrent.Volatile
 
 private val LOG = logger<CompletionServiceImpl>()
 private val DEFAULT_PHASE_HOLDER = CompletionPhaseHolder(NoCompletion, null)
@@ -83,9 +82,8 @@ open class CompletionServiceImpl : BaseCompletionService() {
     val connection = ApplicationManager.getApplication().messageBus.simpleConnect()
     connection.subscribe(ProjectCloseListener.TOPIC, object : ProjectCloseListener {
       override fun projectClosing(project: Project) {
-        val sessions = getAppSessions(ClientKind.ALL)
-        for (session in sessions) {
-          val clientCompletionService = tryGetClientCompletionService(session) ?: continue
+        application.forEachSession(ClientKind.ALL) { session ->
+          val clientCompletionService = tryGetClientCompletionService(session) ?: return@forEachSession
           val indicator = clientCompletionService.currentCompletionProgressIndicator
           if (indicator != null && indicator.project === project) {
             indicator.closeAndFinish(true)
@@ -99,9 +97,8 @@ open class CompletionServiceImpl : BaseCompletionService() {
     })
     connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
       override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        val sessions = getAppSessions(ClientKind.ALL)
-        for (session in sessions) {
-          val clientCompletionService = tryGetClientCompletionService(session) ?: continue
+        application.forEachSession(ClientKind.ALL) { session ->
+          val clientCompletionService = tryGetClientCompletionService(session) ?: return@forEachSession
           clientCompletionService.completionPhase = NoCompletion
         }
       }
@@ -250,25 +247,22 @@ private class ClientCompletionService(private val appSession: ClientAppSession) 
   var completionPhase: CompletionPhase
     get() = completionPhaseHolder.phase
     set(phase) {
-      // wrap explicitly with a client id for the case when some called API depends on ClientId.current
-      withClientId(appSession.clientId).use {
-        ThreadingAssertions.assertEventDispatchThread()
-        val oldPhase = this.completionPhase
-        val oldIndicator = oldPhase.indicator
-        if (oldIndicator != null && phase !is BgCalculation && oldIndicator.isRunning && !oldIndicator.isCanceled) {
-          LOG.error("don't change phase during running completion: oldPhase=$oldPhase")
-        }
-        val wasCompletionRunning = isRunningPhase(oldPhase)
-        val isCompletionRunning = isRunningPhase(phase)
-        if (isCompletionRunning != wasCompletionRunning) {
-          ApplicationManager.getApplication().messageBus.syncPublisher(CompletionPhaseListener.TOPIC)
-            .completionPhaseChanged(isCompletionRunning)
-        }
-
-        LOG.trace("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}")
-        Disposer.dispose(oldPhase)
-        completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
+      ThreadingAssertions.assertEventDispatchThread()
+      val oldPhase = this.completionPhase
+      val oldIndicator = oldPhase.indicator
+      if (oldIndicator != null && phase !is BgCalculation && oldIndicator.isRunning && !oldIndicator.isCanceled) {
+        LOG.error("don't change phase during running completion: oldPhase=$oldPhase")
       }
+      val wasCompletionRunning = isRunningPhase(oldPhase)
+      val isCompletionRunning = isRunningPhase(phase)
+      if (isCompletionRunning != wasCompletionRunning) {
+        ApplicationManager.getApplication().messageBus.syncPublisher(CompletionPhaseListener.TOPIC)
+          .completionPhaseChanged(isCompletionRunning)
+      }
+
+      LOG.trace("Dispose old phase :: oldPhase=$oldPhase, newPhase=$phase, indicator=${if (phase.indicator != null) phase.indicator.hashCode() else -1}")
+      Disposer.dispose(oldPhase)
+      completionPhaseHolder = CompletionPhaseHolder(phase = phase, phaseTrace = Throwable())
     }
 
   val currentCompletionProgressIndicator: CompletionProgressIndicator?

@@ -27,7 +27,7 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
             analyze(call) {
                 val receiverType = receiver.getTypeIfComparable() ?: return
                 val argumentType = argument.getTypeIfComparable() ?: return
-                if (!receiverType.isEqualTo(argumentType)) {
+                if (!receiverType.semanticallyEquals(argumentType)) {
                     holder.registerProblem(callee, KotlinBundle.message("equals.between.objects.of.inconvertible.types"))
                 }
             }
@@ -37,6 +37,6 @@ internal class KotlinEqualsBetweenInconvertibleTypesInspection : AbstractKotlinI
     context(KaSession)
     private fun KtExpression.getTypeIfComparable(): KaType? {
         val type = expressionType?.withNullability(KaTypeNullability.NON_NULLABLE)
-        return type?.takeIf { it.isPrimitive || it.isString || it.isEnum() }
+        return type?.takeIf { it.isPrimitive || it.isStringType || it.isEnum() }
     }
 }

@@ -67,31 +67,42 @@ public final class ResizeableMappedFile implements Forceable, Closeable {
                               int pageSize,
                               boolean valuesAreBufferAligned,
                               boolean nativeBytesOrder) throws IOException {
-    storage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
     this.initialSize = initialSize;
+    storage = new PagedFileStorage(file, lockContext, pageSize, valuesAreBufferAligned, nativeBytesOrder);
+    try {
 
-    Path storageFile = storage.getFile();
-    Path lengthFile = deriveLengthFile();
+      Path storageFile = storage.getFile();
+      Path lengthFile = deriveLengthFile();
 
-    //if parent directory !exist
-    //   => both lengthFile & storageFile are !exist
-    //   => writeLogicalSize() will call ensureParentDirectoryExists() on fail-path
+      //if parent directory !exist
+      //   => both lengthFile & storageFile are !exist
+      //   => writeLogicalSize() will call ensureParentDirectoryExists() on fail-path
 
-    long storageFileSize = storage.length();
-    if (!Files.exists(lengthFile) && storageFileSize == 0) {
-      lastWrittenLogicalSize = logicalSize = 0;
-      writeLogicalSize(0);
-    }
-    else {
-      lastWrittenLogicalSize = logicalSize = readLogicalSize();
-      if (lastWrittenLogicalSize > storageFileSize) {
-        //main storage file was removed/truncated?
-        LOG.warn("[" + storageFile.toAbsolutePath() + "] inconsistency: " +
-                 "realFileSize(=" + storageFileSize + "b) > logicalSize(=" + lastWrittenLogicalSize + "b)" +
-                 " -- storage file was removed/truncated? => resetting logical size to real size");
-        lastWrittenLogicalSize = logicalSize = storageFileSize;
-        writeLogicalSize(storageFileSize);
+      long storageFileSize = storage.length();
+      if (!Files.exists(lengthFile) && storageFileSize == 0) {
+        lastWrittenLogicalSize = logicalSize = 0;
+        writeLogicalSize(0);
       }
+      else {
+        lastWrittenLogicalSize = logicalSize = readLogicalSize();
+        if (lastWrittenLogicalSize > storageFileSize) {
+          //main storage file was removed/truncated?
+          LOG.warn("[" + storageFile.toAbsolutePath() + "] inconsistency: " +
+                   "realFileSize(=" + storageFileSize + "b) > logicalSize(=" + lastWrittenLogicalSize + "b)" +
+                   " -- storage file was removed/truncated? => resetting logical size to real size");
+          lastWrittenLogicalSize = logicalSize = storageFileSize;
+          writeLogicalSize(storageFileSize);
+        }
+      }
+    }
+    catch (Throwable t) {
+      final Exception errorOnClose = ExceptionUtil.runAndCatch(
+        storage::close
+      );
+      if (errorOnClose != null) {
+        t.addSuppressed(errorOnClose);
+      }
+      throw t;
     }
   }
 

@@ -3,7 +3,9 @@ package com.intellij.ide.plugins.marketplace.statistics.features
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.internal.statistic.eventLog.events.*
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 object PluginManagerSearchResultsFeatureProvider {
   private const val RESULTS_REPORT_COUNT = 30
 

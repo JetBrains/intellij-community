@@ -7,31 +7,44 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsModelTestCase;
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * @deprecated use {@link JpsProjectData} instead
+ */
+@Deprecated(forRemoval = true)
 public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   private String myProjectHomePath;
 
   protected void loadProject(final String relativePath) {
     loadProjectByAbsolutePath(getTestDataFileAbsolutePath(relativePath));
   }
+  
+  protected void loadProject(@NotNull String relativePath, @NotNull String externalStorageRelativePath) {
+    loadProjectByAbsolutePath(getTestDataFileAbsolutePath(relativePath), Paths.get(getTestDataFileAbsolutePath(externalStorageRelativePath)));
+  }
 
   protected void loadProjectByAbsolutePath(String path) {
+    loadProjectByAbsolutePath(path, null);
+  }
+
+  protected final void loadProjectByAbsolutePath(String path, Path externalConfigurationDirectory) {
     myProjectHomePath = FileUtilRt.toSystemIndependentName(path);
     if (myProjectHomePath.endsWith(".ipr")) {
       myProjectHomePath = PathUtil.getParentPath(myProjectHomePath);
     }
     try {
-      JpsProjectLoader.loadProject(myProject, getPathVariables(), Paths.get(path));
+      Map<String, String> pathVariables = getPathVariables();
+      Path projectPath = Paths.get(path);
+      JpsProjectLoader.loadProject(myProject, pathVariables, JpsPathMapper.IDENTITY, projectPath, externalConfigurationDirectory,
+                                   Runnable::run, false);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -54,7 +67,7 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
       for (Map.Entry<String, String> entry : pathVariables.entrySet()) {
         configuration.addPathVariable(entry.getKey(), entry.getValue());
       }
-      JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), optionsPath);
+      JpsGlobalSettingsLoading.loadGlobalSettings(myModel.getGlobal(), Paths.get(optionsPath));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -75,10 +88,5 @@ public abstract class JpsSerializationTestCase extends JpsModelTestCase {
   @NotNull
   protected Path getTestDataAbsoluteFile(@NotNull String relativePath) {
     return Paths.get(getTestDataFileAbsolutePath(relativePath));
-  }
-
-  protected static Element loadModuleRootTag(@NotNull Path imlFile) {
-    JpsMacroExpander expander = JpsProjectLoader.createModuleMacroExpander(Collections.emptyMap(), imlFile);
-    return JpsLoaderBase.loadRootElement(imlFile, expander);
   }
 }

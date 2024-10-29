@@ -33,7 +33,7 @@ abstract class AttachToProcessViewWithHosts(
   companion object{
     // used externally
     @Suppress("MemberVisibilityCanBePrivate")
-    val DEFAULT_ATTACH_HOST: DataKey<String?> = DataKey.create("DEFAULT_ATTACH_HOST")
+    val DEFAULT_ATTACH_HOST: DataKey<String> = DataKey.create("DEFAULT_ATTACH_HOST")
     private fun getDefaultAttachHost(state: AttachDialogState) = state.dataContext.getData(DEFAULT_ATTACH_HOST)
   }
 

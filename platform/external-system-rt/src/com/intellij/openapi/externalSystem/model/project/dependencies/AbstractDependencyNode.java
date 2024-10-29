@@ -62,7 +62,6 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
 
   @Override
   public int hashCode() {
-    int result = (int)(id ^ (id >>> 32));
-    return result;
+    return Long.hashCode(id);
   }
 }

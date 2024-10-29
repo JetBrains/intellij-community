@@ -24,7 +24,9 @@ import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.backend.observation.launchTracked
 import com.intellij.platform.backend.observation.trackActivity
+import com.intellij.platform.backend.observation.trackActivityBlocking
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.platform.util.progress.RawProgressReporter
@@ -101,11 +103,11 @@ interface MavenAsyncProjectsManager {
                                           syncProject: Boolean): List<Module>
 
   fun projectFileExists(file: File): Boolean {
-    return Files.exists(file.toPath());
+    return Files.exists(file.toPath())
   }
 }
 
-open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project) {
+open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineScope) : MavenProjectsManager(project, cs) {
   override suspend fun addManagedFilesWithProfiles(files: List<VirtualFile>,
                                                    profiles: MavenExplicitProfiles,
                                                    modelsProvider: IdeModifiableModelsProvider?,
@@ -166,6 +168,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
         }
       }
     }
+
+    for (mavenProject in projectsToImport.keys) {
+      mavenProject.resetCache()
+    }
+
     return importResult.createdModules
   }
 
@@ -203,9 +210,11 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   @Deprecated("Use {@link #scheduleForceUpdateMavenProjects(List)}}")
   override fun doForceUpdateProjects(projects: Collection<MavenProject>): AsyncPromise<Void> {
     val promise = AsyncPromise<Void>()
-    cs.launch {
-      updateMavenProjects(MavenSyncSpec.full("MavenProjectsManagerEx.doForceUpdateProjects"), projects.map { it.file }, emptyList())
-      promise.setResult(null)
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked {
+        updateMavenProjects(MavenSyncSpec.full("MavenProjectsManagerEx.doForceUpdateProjects"), projects.map { it.file }, emptyList())
+        promise.setResult(null)
+      }
     }
     return promise
   }
@@ -213,7 +222,9 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   override fun scheduleUpdateMavenProjects(spec: MavenSyncSpec,
                                            filesToUpdate: List<VirtualFile>,
                                            filesToDelete: List<VirtualFile>) {
-    cs.launch { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked { updateMavenProjects(spec, filesToUpdate, filesToDelete) }
+    }
   }
 
   override suspend fun updateMavenProjects(spec: MavenSyncSpec,
@@ -272,8 +283,8 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   private val importMutex = Mutex()
 
   override fun scheduleUpdateAllMavenProjects(spec: MavenSyncSpec) {
-    cs.launch {
-      project.trackActivity(MavenActivityKey) {
+    project.trackActivityBlocking(MavenActivityKey) {
+      cs.launchTracked {
         updateAllMavenProjects(spec)
       }
     }
@@ -296,7 +307,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
   }
 
   private suspend fun <T> updateMavenProjectsUnderLock(update: suspend () -> List<T>): List<T> {
-    val time = System.currentTimeMillis();
+    val time = System.currentTimeMillis()
     if (MavenLog.LOG.isDebugEnabled) {
       MavenLog.LOG.debug("Update maven requested in $time. Coroutines dump: ${dumpCoroutines()}")
     }
@@ -402,7 +413,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
 
     val projectsToImport = resolutionResult.mavenProjectMap.entries
       .flatMap { it.value }
-      .associateBy({ it.mavenProject }, { MavenProjectChanges.ALL })
+      .associateBy({ it }, { MavenProjectChanges.ALL })
 
     // plugins and artifacts can be resolved in parallel with import
     return coroutineScope {
@@ -417,8 +428,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                   pluginResolver.resolvePlugins(mavenProjects.value,
                                                 embeddersManager,
                                                 reporter,
-                                                syncConsole,
-                                                true)
+                                                syncConsole)
                 }
                 catch (e: Exception) {
                   MavenLog.LOG.warn("Plugin resolution error", e)
@@ -459,7 +469,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
                                      reporter,
                                      syncConsole)
           project.messageBus.syncPublisher<MavenImportListener>(MavenImportListener.TOPIC).projectResolutionFinished(
-            res.mavenProjectMap.entries.flatMap { it.value }.map { it.mavenProject })
+            res.mavenProjectMap.entries.flatMap { it.value })
           res
         }
       }
@@ -671,7 +681,7 @@ open class MavenProjectsManagerEx(project: Project, private val cs: CoroutineSco
       return "updated ${updated}, deleted ${deleted}"
     }
     if (result is MavenProjectResolutionResult) {
-      val mavenProjects = result.mavenProjectMap.flatMap { it.value }.map { it.mavenProject }
+      val mavenProjects = result.mavenProjectMap.flatMap { it.value }
       return "resolved ${mavenProjects}"
     }
     return result.toString()

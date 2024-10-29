@@ -9,8 +9,15 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.util.Query
 import org.jetbrains.kotlin.psi.KtClass
 
+/**
+ * A search for the direct inheritors of a [KtClass].
+ *
+ * The search is performed by the following searchers:
+ *
+ *  - [DirectKotlinClassInheritorsSearcher] searches for Kotlin inheritors.
+ *  - [DirectKotlinClassDelegatedSearcher] searches for non-Kotlin inheritors.
+ */
 object DirectKotlinClassInheritorsSearch {
-
     data class SearchParameters(
         val ktClass: KtClass,
         val searchScope: SearchScope,

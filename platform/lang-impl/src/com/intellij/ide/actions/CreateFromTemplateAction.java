@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
@@ -31,6 +31,10 @@ import java.util.function.Supplier;
 
 public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnAction implements WriteActionAware {
 
+  /**
+   * @deprecated Declare your own LOG where needed.
+   */
+  @Deprecated
   protected static final Logger LOG = Logger.getInstance(CreateFromTemplateAction.class);
 
   protected CreateFromTemplateAction() {
@@ -60,7 +64,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   }
 
   @Override
-  public final void actionPerformed(@NotNull final AnActionEvent e) {
+  public final void actionPerformed(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
     final IdeView view = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -91,8 +95,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                    }
 
                    @Override
-                   @NotNull
-                   public String getActionName(@NotNull String name, @NotNull String templateName) {
+                   public @NotNull String getActionName(@NotNull String name, @NotNull String templateName) {
                      return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
                    }
                  },
@@ -104,7 +107,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      if (offset != -1 && editor != null && !editor.isDisposed()) {
                        editor.getCaretModel().moveToOffset(offset);
                      }
-                     try (var ignored = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+                     try (var ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
                        postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
                      }
                    }
@@ -115,8 +118,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return original;
   }
 
-  @Nullable
-  protected PsiDirectory getDirectory(IdeView view) {
+  protected @Nullable PsiDirectory getDirectory(IdeView view) {
     return view.getOrChooseDirectory();
   }
 
@@ -134,27 +136,22 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
   protected void postProcess(@NotNull T createdElement, String templateName, Map<String, String> customProperties) {
   }
 
-  @Nullable
-  protected abstract T createFile(String name, String templateName, PsiDirectory dir);
+  protected abstract @Nullable T createFile(String name, String templateName, PsiDirectory dir);
 
   protected abstract void buildDialog(@NotNull Project project, @NotNull PsiDirectory directory,
                                       @NotNull CreateFileFromTemplateDialog.Builder builder);
 
-  @NonNls
-  @Nullable
-  protected String getDefaultTemplateName(@NotNull PsiDirectory dir) {
+  protected @NonNls @Nullable String getDefaultTemplateName(@NotNull PsiDirectory dir) {
     String property = getDefaultTemplateProperty();
     return property == null ? null : PropertiesComponent.getInstance(dir.getProject()).getValue(property);
   }
 
-  @NonNls
-  @Nullable
-  protected String getDefaultTemplateProperty() {
+  protected @NonNls @Nullable String getDefaultTemplateProperty() {
     return null;
   }
 
   @Override
-  public void update(@NotNull final AnActionEvent e) {
+  public void update(final @NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
 
@@ -173,12 +170,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     return project != null && view != null && view.getDirectories().length != 0;
   }
 
-  @NlsContexts.Command
-  protected abstract String getActionName(PsiDirectory directory, @NonNls @NotNull String newName, @NonNls String templateName);
+  protected abstract @NlsContexts.Command String getActionName(PsiDirectory directory, @NonNls @NotNull String newName, @NonNls String templateName);
 
-  @Nls(capitalization = Nls.Capitalization.Title)
-  @NotNull
-  protected String getErrorTitle() {
+  protected @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getErrorTitle() {
     return CommonBundle.getErrorTitle();
   }
 

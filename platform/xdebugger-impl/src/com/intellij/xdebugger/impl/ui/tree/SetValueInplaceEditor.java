@@ -10,9 +10,11 @@ import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class SetValueInplaceEditor extends XDebuggerTreeValueNodeInplaceEditor {
   private final XValueModifier myModifier;
 

@@ -46,14 +46,12 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @NotNull
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.Gutter.OverridenMethod;
   }
 
   @Override
-  @Nullable
-  public AnAction getClickAction() {
+  public @Nullable AnAction getClickAction() {
     return new AnAction() {
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
@@ -86,8 +84,7 @@ class OverriddenDefineRenderer extends GutterIconRenderer implements DumbAware {
   }
 
   @Override
-  @Nullable
-  public String getTooltipText() {
+  public @Nullable String getTooltipText() {
     return RelaxngBundle.message("relaxng.gutter.is-overridden");
   }
 

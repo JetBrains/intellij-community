@@ -67,7 +67,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class CoverageView extends BorderLayoutPanel implements DataProvider, Disposable {
+public class CoverageView extends BorderLayoutPanel implements UiDataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls static final String HELP_ID = "reference.toolWindows.Coverage";
   private static final Icon FILTER_ICON = AllIcons.General.Filter;
@@ -487,14 +487,9 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   }
 
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      return getSelectedValue();
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HELP_ID;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.NAVIGATABLE, getSelectedValue());
+    sink.set(PlatformCoreDataKeys.HELP_ID, HELP_ID);
   }
 
   private void resetView(@Nullable Runnable updateSettings) {

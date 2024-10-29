@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.List;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class NewRecentProjectPanel extends RecentProjectPanel {
 
   public NewRecentProjectPanel(@NotNull Disposable parentDisposable) {

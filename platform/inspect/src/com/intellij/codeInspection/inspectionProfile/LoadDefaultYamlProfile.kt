@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.inspectionProfile
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -10,7 +10,7 @@ import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
  * Internal action for debug purposes.
  * Action loads default yaml inspection profile from '.idea/inspectionProfile/profile.yml' file and sets loaded profile as a current one.
  */
-class LoadDefaultYamlProfile : AnAction() {
+internal class LoadDefaultYamlProfile : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     val yamlProfile = YamlInspectionProfileImpl.loadFrom(project)

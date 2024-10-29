@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.debugger
 
-import com.intellij.util.Url
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.PromiseManager
@@ -33,7 +32,3 @@ abstract class ScriptManagerBase<SCRIPT : ScriptBase> : ScriptManager {
     scriptSourceLoader.set(script, source)
   }
 }
-
-@get:ApiStatus.Internal
-val Url.isSpecial: Boolean
-  get() = !isInLocalFileSystem && (scheme == null || scheme == VM_SCHEME || authority == null)

@@ -11,8 +11,8 @@ import javax.swing.*;
  * DO NOT EDIT IT BY HAND, run "Generate icon classes" configuration instead
  */
 public final class PythonParserIcons {
-  private static @NotNull Icon load(@NotNull String path, @NotNull String expUIPath, int cacheKey, int flags) {
+  private static @NotNull Icon load(@NotNull String expUIPath, @NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, expUIPath, PythonParserIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon PythonFile = load("icons/com/jetbrains/python/parser/pythonFile.svg", "icons/com/jetbrains/python/parser/expui/python.svg", -1892316725, 0);
+  /** 16x16 */ public static final @NotNull Icon PythonFile = load("icons/com/jetbrains/python/parser/expui/python.svg", "icons/com/jetbrains/python/parser/pythonFile.svg", -1892316725, 0);
 }

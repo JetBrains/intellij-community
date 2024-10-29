@@ -105,6 +105,11 @@ public class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaA
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/ExtendingReadOnlyInterfaces.kt");
     }
 
+    @TestMetadata("FlexibleTypes.kt")
+    public void testFlexibleTypes() throws Exception {
+        runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/FlexibleTypes.kt");
+    }
+
     @TestMetadata("FunctionInNestedClassInDataFlowInspection.kt")
     public void testFunctionInNestedClassInDataFlowInspection() throws Exception {
         runTest("testData/kotlinAndJavaChecker/javaAgainstKotlin/FunctionInNestedClassInDataFlowInspection.kt");

@@ -25,7 +25,7 @@ class PyTypingNewTypeStubImpl private constructor(val qualifiedName: String, pri
     return QualifiedName.fromComponents(qualifiedName)
   }
 
-  override fun getTypeClass(): Class<out CustomTargetExpressionStubType<out CustomTargetExpressionStub>> {
+  override fun getTypeClass(): Class<PyTypingNewTypeStubType> {
     return PyTypingNewTypeStubType::class.java
   }
 

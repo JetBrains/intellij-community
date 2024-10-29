@@ -13,6 +13,7 @@
     <orderEntry type="module" module-name="intellij.java.frontback.impl" />
     <orderEntry type="module" module-name="kotlin.base.frontend-agnostic" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" />
   </component>
 </module>

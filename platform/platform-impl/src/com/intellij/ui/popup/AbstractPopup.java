@@ -1,7 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.popup;
 
+import com.google.common.base.Predicate;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
@@ -39,6 +41,8 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.ModalityHelper;
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager;
+import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.AnchoredPoint;
 import com.intellij.ui.awt.RelativePoint;
@@ -57,6 +61,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import io.opentelemetry.context.Context;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -72,6 +77,7 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Supplier;
 
+import static com.intellij.platform.diagnostic.telemetry.PlatformScopesKt.UI;
 import static java.awt.event.MouseEvent.*;
 import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
@@ -199,6 +205,13 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
           }
         }
       };
+    }
+
+    @Override
+    public void selectTextRange(int begin, int length) {
+      if (searchFieldShown || mySpeedSearchAlwaysShown) {
+        mySpeedSearchPatternField.getTextEditor().select(begin, begin + length);
+      }
     }
   };
 
@@ -963,15 +976,25 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
   }
 
   boolean anyModalWindowsKeepPopupOpen() {
+    return anyModalWindowsMatching(window -> ClientProperty.isTrue(window, DialogWrapper.KEEP_POPUPS_OPEN));
+  }
+
+  boolean anyModalWindowsAbovePopup() {
+    return anyModalWindowsMatching(window -> true);
+  }
+
+  private boolean anyModalWindowsMatching(Predicate<Window> predicate) {
     var modalEntitiesNow = LaterInvocator.getCurrentModalEntities();
     var i = 0;
-    for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
-      if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
-        break;
+    if(modalEntitiesWhenShown != null) {
+      for (; i < modalEntitiesNow.length && i < modalEntitiesWhenShown.length; ++i) {
+        if (modalEntitiesNow[i] != modalEntitiesWhenShown[i]) {
+          break;
+        }
       }
     }
     for (; i < modalEntitiesNow.length; ++i) {
-      if (modalEntitiesNow[i] instanceof Window modalWindow && ClientProperty.isTrue(modalWindow, DialogWrapper.KEEP_POPUPS_OPEN)) {
+      if (modalEntitiesNow[i] instanceof Window modalWindow && predicate.apply(modalWindow)) {
         return true;
       }
     }
@@ -1258,8 +1281,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       WindowResizeListenerEx resizeListener = new WindowResizeListenerEx(
         glass,
         myComponent,
-        myMovable ? JBUI.insets(4) : JBUI.insets(0, 0, 4, 4),
-        null);
+        myMovable);
       resizeListener.install(this);
       resizeListener.addResizeListeners(() -> {
         myResizeListeners.forEach(Runnable::run);
@@ -1377,7 +1399,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
     }
 
-    final Runnable afterShow = () -> {
+    final Runnable afterShow = Context.current().wrap(() -> {
       if (isDisposed()) {
         LOG.debug("popup is disposed after showing");
         removeActivity();
@@ -1388,14 +1410,19 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
       }
 
       removeActivity();
-
-      afterShow();
-
-    };
+      TraceKt.use(TelemetryManager.getInstance().getTracer(UI).spanBuilder("afterShow#" + getClass().getSimpleName()), __ -> {
+        afterShow();
+        return null;
+      });
+    });
 
     if (myRequestFocus) {
       if (myPreferredFocusedComponent != null) {
-        myPreferredFocusedComponent.requestFocus();
+        // `resetThreadContext` here is needed because `setVisible` runs eventloop
+        // IJPL-161712
+        try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+          myPreferredFocusedComponent.requestFocus();
+        }
       }
       else {
         _requestFocus();
@@ -2615,7 +2642,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer, AlignedPopup 
 
   @Override
   public final boolean dispatchInputMethodEvent(InputMethodEvent event) {
-    if (anyModalWindowsKeepPopupOpen()) {
+    if (anyModalWindowsAbovePopup()) {
       return false;
     }
 

@@ -113,7 +113,7 @@ class JKReturnStatement(
     expression: JKExpression,
     label: JKLabel = JKLabelEmpty()
 ) : JKStatement() {
-    val expression by child(expression)
+    var expression by child(expression)
     var label by child(label)
     override fun accept(visitor: JKVisitor) = visitor.visitReturnStatement(this)
 }

@@ -22,6 +22,7 @@ import org.jetbrains.intellij.build.dependencies.BuildDependenciesLogging.verbos
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesUtil
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJavaExecutable
 import org.jetbrains.intellij.build.dependencies.JdkDownloader.getJdkHome
+import org.jetbrains.intellij.build.dependencies.JdkDownloader.getRuntimeHome
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper.isUnderTeamCity
 import org.jetbrains.jps.model.JpsModel
 import org.jetbrains.jps.model.module.JpsModule
@@ -132,19 +133,31 @@ class JpsBootstrapMain(args: Array<String>?) {
     val jdkHome: Path
     if (underTeamCity) {
       jdkHome = getJdkHome(communityHome)
-      var setParameterServiceMessage = SetParameterServiceMessage(
-        "jps.bootstrap.java.home", jdkHome.toString()
-      )
-      println(setParameterServiceMessage.asString())
-      setParameterServiceMessage = SetParameterServiceMessage(
-        "jps.bootstrap.java.executable", getJavaExecutable(jdkHome).toString())
-      println(setParameterServiceMessage.asString())
+      exportJava(jdkHome)
     }
     else {
       // On local run JDK was already downloaded via jps-bootstrap.{sh,cmd}
       jdkHome = Path.of(System.getProperty("java.home"))
     }
     return jdkHome
+  }
+
+  private fun downloadRuntime(): Path {
+    val runtimeHome: Path = getRuntimeHome(communityHome)
+    if (underTeamCity) {
+      exportJava(runtimeHome)
+    }
+    return runtimeHome
+  }
+
+  private fun exportJava(home: Path) {
+    var setParameterServiceMessage = SetParameterServiceMessage(
+      "jps.bootstrap.java.home", home.toString()
+    )
+    println(setParameterServiceMessage.asString())
+    setParameterServiceMessage = SetParameterServiceMessage(
+      "jps.bootstrap.java.executable", getJavaExecutable(home).toString())
+    println(setParameterServiceMessage.asString())
   }
 
   @Throws(Throwable::class)
@@ -177,6 +190,7 @@ class JpsBootstrapMain(args: Array<String>?) {
     if (!classpathFileTargetString.isNullOrBlank()) {
       writeClasspathFile(moduleRuntimeClasspath, Path.of(classpathFileTargetString))
     }
+    // downloadRuntime() FIXME IJI-2074
   }
 
   private fun removeOpenedPackage(openedPackages: MutableList<String>, openedPackage: String, unknownPackages: MutableList<String>) {

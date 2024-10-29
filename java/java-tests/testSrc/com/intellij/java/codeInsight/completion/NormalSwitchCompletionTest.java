@@ -3,6 +3,7 @@ package com.intellij.java.codeInsight.completion;
 
 import com.intellij.codeInsight.template.impl.LiveTemplateCompletionContributor;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -68,6 +69,16 @@ public class NormalSwitchCompletionTest extends NormalCompletionTestCase {
   public void testCompleteIfInSwitchRule() { doTest("\n"); }
 
   public void testCompleteSwitchObjectSelectorPostfix() { doTestPostfixCompletion(); }
+
+  public void testCompleteSwitchPrimitiveSelectorPostfix() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), JavaFeature.PRIMITIVE_TYPES_IN_PATTERNS.getMinimumLevel(),
+                           () -> doTestPostfixCompletion());
+  }
+
+  public void testCompleteSwitchPrimitiveSelectorPostfixLowerLanguageLevel() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_11,
+                           () -> doTestPostfixCompletion());
+  }
 
   public void testCompleteSwitchSealedSelectorPostfix() { doTestPostfixCompletion(); }
 

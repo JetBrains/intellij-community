@@ -1,11 +1,14 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.config;
 
+import com.dynatrace.hash4j.hashing.HashStream64;
+import com.dynatrace.hash4j.hashing.Hashing;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
@@ -28,6 +31,7 @@ import com.intellij.util.PathMapper;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xmlb.XmlSerializer;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,27 +49,24 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * @author Vladislav.Soroka
- */
-public class GradleResourceCompilerConfigurationGenerator {
-
+@SuppressWarnings("SSBasedInspection")
+@Service(Service.Level.PROJECT)
+public final class GradleResourceCompilerConfigurationGenerator {
   private static final Logger LOG = Logger.getInstance(GradleResourceCompilerConfigurationGenerator.class);
 
   private final @NotNull Project myProject;
-  private final @NotNull Map<String, Integer> myModulesConfigurationHash;
+  private final @NotNull Map<String, Long> modulesConfigurationHash = new ConcurrentHashMap<>();
   private final ExternalProjectDataCache externalProjectDataCache;
 
   public GradleResourceCompilerConfigurationGenerator(final @NotNull Project project) {
     myProject = project;
-    myModulesConfigurationHash = new ConcurrentHashMap<>();
     externalProjectDataCache = ExternalProjectDataCache.getInstance(project);
     assert externalProjectDataCache != null;
 
     project.getMessageBus().connect().subscribe(ModuleListener.TOPIC, new ModuleListener() {
       @Override
       public void moduleRemoved(@NotNull Project project, @NotNull Module module) {
-        myModulesConfigurationHash.remove(module.getName());
+        modulesConfigurationHash.remove(module.getName());
       }
 
       @Override
@@ -79,40 +80,40 @@ public class GradleResourceCompilerConfigurationGenerator {
     });
   }
 
-  public void generateBuildConfiguration(final @NotNull CompileContext context) {
+  public void generateBuildConfiguration(@NotNull CompileContext context) {
+    if (shouldBeBuiltByExternalSystem(myProject) || !hasGradleModules(context)) {
+      return;
+    }
 
-    if (shouldBeBuiltByExternalSystem(myProject)) return;
+    BuildManager buildManager = BuildManager.getInstance();
+    File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
 
-    if (!hasGradleModules(context)) return;
+    File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
 
-    final BuildManager buildManager = BuildManager.getInstance();
-    final File projectSystemDir = buildManager.getProjectSystemDirectory(myProject);
-
-    final File gradleConfigFile = new File(projectSystemDir, GradleProjectConfiguration.CONFIGURATION_FILE_RELATIVE_PATH);
-
-    final Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations =
-      generateAffectedGradleModulesConfiguration(context);
+    Map<String, GradleModuleResourceConfiguration> affectedGradleModuleConfigurations = generateAffectedGradleModulesConfiguration(context);
 
     if (affectedGradleModuleConfigurations.isEmpty()) return;
 
     boolean configurationUpdateRequired = context.isRebuild() || !gradleConfigFile.exists();
 
-    final Map<String, Integer> affectedConfigurationHash = new HashMap<>();
+    Object2LongOpenHashMap<String> affectedConfigurationHash = new Object2LongOpenHashMap<>();
     for (Map.Entry<String, GradleModuleResourceConfiguration> entry : affectedGradleModuleConfigurations.entrySet()) {
-      Integer moduleLastConfigurationHash = myModulesConfigurationHash.get(entry.getKey());
-      int moduleCurrentConfigurationHash = entry.getValue().computeConfigurationHash();
-      if (moduleLastConfigurationHash == null || moduleLastConfigurationHash.intValue() != moduleCurrentConfigurationHash) {
+      Long moduleLastConfigurationHash = modulesConfigurationHash.get(entry.getKey());
+      HashStream64 hash = Hashing.komihash5_0().hashStream();
+      entry.getValue().computeConfigurationHash(hash);
+      long moduleCurrentConfigurationHash = hash.getAsLong();
+      if (moduleLastConfigurationHash == null || moduleLastConfigurationHash.longValue() != moduleCurrentConfigurationHash) {
         configurationUpdateRequired = true;
       }
       affectedConfigurationHash.put(entry.getKey(), moduleCurrentConfigurationHash);
     }
 
-    final GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
+    GradleProjectConfiguration projectConfig = loadLastConfiguration(gradleConfigFile);
     projectConfig.moduleConfigurations.putAll(affectedGradleModuleConfigurations);
 
-    final Element element = new Element("gradle-project-configuration");
+    Element element = new Element("gradle-project-configuration");
     XmlSerializer.serializeInto(projectConfig, element);
-    final boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
+    boolean finalConfigurationUpdateRequired = configurationUpdateRequired;
     buildManager.runCommand(() -> {
       if (finalConfigurationUpdateRequired) {
         buildManager.clearState(myProject);
@@ -120,7 +121,7 @@ public class GradleResourceCompilerConfigurationGenerator {
       FileUtil.createIfDoesntExist(gradleConfigFile);
       try {
         JDOMUtil.write(element, gradleConfigFile.toPath());
-        myModulesConfigurationHash.putAll(affectedConfigurationHash);
+        modulesConfigurationHash.putAll(affectedConfigurationHash);
       }
       catch (IOException e) {
         throw new RuntimeException(e);
@@ -129,13 +130,13 @@ public class GradleResourceCompilerConfigurationGenerator {
   }
 
   private @NotNull GradleProjectConfiguration loadLastConfiguration(@NotNull File gradleConfigFile) {
-    final GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
+    GradleProjectConfiguration projectConfig = new GradleProjectConfiguration();
     if (gradleConfigFile.exists()) {
       try {
         XmlSerializer.deserializeInto(projectConfig, JDOMUtil.load(gradleConfigFile));
 
         // filter orphan modules
-        final Set<String> actualModules = myModulesConfigurationHash.keySet();
+        Set<String> actualModules = modulesConfigurationHash.keySet();
         for (Iterator<Map.Entry<String, GradleModuleResourceConfiguration>> iterator =
              projectConfig.moduleConfigurations.entrySet().iterator(); iterator.hasNext(); ) {
           Map.Entry<String, GradleModuleResourceConfiguration> configurationEntry = iterator.next();

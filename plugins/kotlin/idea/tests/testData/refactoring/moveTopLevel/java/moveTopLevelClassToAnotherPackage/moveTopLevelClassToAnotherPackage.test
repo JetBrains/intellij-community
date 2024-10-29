@@ -3,5 +3,5 @@
   "type": "MOVE_TOP_LEVEL_CLASSES",
   "targetPackage": "b",
   "enabledInK1": "true",
-  "enabledInK2": "false"
+  "enabledInK2": "true"
 }

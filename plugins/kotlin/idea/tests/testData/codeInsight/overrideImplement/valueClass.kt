@@ -8,3 +8,5 @@ interface Runnable {
 value <caret>class B(private val property: Int) : Runnable {
 
 }
+
+// MEMBER: "run(): Unit"

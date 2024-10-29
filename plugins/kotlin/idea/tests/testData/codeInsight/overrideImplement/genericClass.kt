@@ -13,3 +13,7 @@ class <caret>C : I<Int> {
     override fun <U> d(t: Int, u: U) {
     }
 }
+
+// MEMBER_K2: "<U> a(t: Int, u: U): Unit"
+// MEMBER_K1: "a(t: Int, u: U): Unit"
+// MEMBER: "c(t: Int): Unit"

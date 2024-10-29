@@ -6,10 +6,10 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.modcommand.ActionContext;
-import com.intellij.modcommand.ModCommand;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.modcommand.ModCommandAction;
-import com.intellij.modcommand.ModCommandExecutor;
+import com.intellij.modcommand.ModCommandService;
+import com.intellij.modcommand.ModCommandWithContext;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
@@ -20,11 +20,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SequentialModalProgressTask;
@@ -64,15 +64,18 @@ class FixAllHighlightingProblems implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
+    PsiFile topLevelFile = manager.getTopLevelFile(file);
+    Editor topLevelEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
     // IntentionAction, offset
     List<Pair<IntentionAction, SmartPsiFileRange>> actions = new ArrayList<>();
-    Document document = editor.getDocument();
+    Document document = topLevelFile.getFileDocument();
     Processor<HighlightInfo> processor = info -> {
       IntentionAction fix = info.getSameFamilyFix(myAction);
       if (fix != null) {
         TextRange range = TextRange.create(info.getActualStartOffset(), info.getActualEndOffset());
         SmartPsiFileRange pointer = SmartPointerManager.getInstance(project)
-          .createSmartPsiFileRangePointer(file, range);
+          .createSmartPsiFileRangePointer(topLevelFile, range);
         actions.add(Pair.create(fix, pointer));
       }
       return true;
@@ -93,7 +96,7 @@ class FixAllHighlightingProblems implements IntentionAction {
     PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     String actionName = myAction.getFamilyName();
     if (ContainerUtil.all(modCommands, pair -> pair.first != null)) {
-      runModCommands(editor, file, actionName, modCommands);
+      runModCommands(topLevelEditor, topLevelFile, actionName, modCommands);
     }
     else {
       ApplicationManagerEx.getApplicationEx()
@@ -106,7 +109,7 @@ class FixAllHighlightingProblems implements IntentionAction {
             // Some actions rely on the caret position
             Segment range = pair.getSecond().getRange();
             if (range != null) {
-              editor.getCaretModel().moveToOffset(range.getStartOffset());
+              topLevelEditor.getCaretModel().moveToOffset(range.getStartOffset());
               if (action.isAvailable(project, editor, file)) {
                 action.invoke(project, editor, file);
                 psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
@@ -128,7 +131,6 @@ class FixAllHighlightingProblems implements IntentionAction {
     final SequentialModalProgressTask progressTask =
       new SequentialModalProgressTask(project, actionName, true);
     progressTask.setMinIterationTime(200);
-    ActionContext context = ActionContext.from(editor, file);
     SequentialTask task = new SequentialTask() {
       int fixNumber = 0;
 
@@ -148,20 +150,12 @@ class FixAllHighlightingProblems implements IntentionAction {
         Pair<ModCommandAction, SmartPsiFileRange> pair = modCommands.get(fixNumber++);
         Segment range = pair.getSecond().getRange();
         if (range != null) {
-          ActionContext currentContext = context.withOffset(range.getStartOffset());
-          if (pair.first.getPresentation(currentContext) != null) {
-            ThrowableComputable<ModCommand, RuntimeException> computable = () -> {
-              return ReadAction.nonBlocking(() -> pair.first.perform(currentContext))
-                .expireWith(project)
-                .executeSynchronously();
-            };
-            ModCommand command = ProgressManager.getInstance()
-              .runProcessWithProgressSynchronously(computable, actionName, true, project);
-            if (command == null) return true;
-            ModCommandExecutor.getInstance().executeInBatch(currentContext, command);
-            psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
-            psiDocumentManager.commitDocument(document);
-          }
+          ModCommandWithContext contextAndCommand =
+            ModCommandService.getInstance().chooseFileAndPerform(file, editor, pair.first, range.getStartOffset());
+          if (contextAndCommand == null) return true;
+          contextAndCommand.executeInBatch();
+          psiDocumentManager.doPostponedOperationsAndUnblockDocument(document);
+          psiDocumentManager.commitDocument(document);
         }
         return fixNumber == modCommands.size();
       }

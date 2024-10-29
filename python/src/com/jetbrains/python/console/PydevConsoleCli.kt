@@ -118,14 +118,6 @@ fun waitForPythonConsoleServerToBeStarted(process: Process) {
   PydevConsoleRunnerImpl.getRemotePortFromProcess(process)
 }
 
-fun createPythonConsoleScriptInServerMode(serverPort: Int,
-                                          helpersAwareTargetRequest: HelpersAwareTargetEnvironmentRequest): PythonExecution {
-  val pythonScriptExecution = prepareHelperScriptExecution(PythonHelper.CONSOLE, helpersAwareTargetRequest)
-  pythonScriptExecution.addParameter(getOptionString(MODE_OPTION, MODE_OPTION_SERVER_VALUE))
-  pythonScriptExecution.addParameter(getOptionString(PORT_OPTION, serverPort))
-  return pythonScriptExecution
-}
-
 /**
  * @param ideServerPort           the host and port where the IDE being Python
  *                                Console frontend listens for the connection

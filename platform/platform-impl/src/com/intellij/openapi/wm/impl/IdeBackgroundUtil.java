@@ -1,11 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -94,7 +92,7 @@ public final class IdeBackgroundUtil {
       }
     }
     Component glassPane = rootPane == null ? null : rootPane.getGlassPane();
-    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters$intellij_platform_ide_impl(paintersName) : null;
+    PainterHelper helper = glassPane instanceof IdeGlassPaneImpl ? ((IdeGlassPaneImpl)glassPane).getNamedPainters(paintersName) : null;
     if (helper == null || !helper.needsRepaint()) {
       return MyGraphics.unwrap(g);
     }
@@ -102,11 +100,11 @@ public final class IdeBackgroundUtil {
   }
 
   static void initEditorPainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters$intellij_platform_ide_impl(EDITOR_PROP));
+    PainterHelper.initWallpaperPainter(EDITOR_PROP, glassPane.getNamedPainters(EDITOR_PROP));
   }
 
   static void initFramePainters(@NotNull IdeGlassPaneImpl glassPane) {
-    PainterHelper painters = glassPane.getNamedPainters$intellij_platform_ide_impl(FRAME_PROP);
+    PainterHelper painters = glassPane.getNamedPainters(FRAME_PROP);
     PainterHelper.initWallpaperPainter(FRAME_PROP, painters);
 
     painters.addPainter(new AbstractPainter() {
@@ -399,9 +397,8 @@ public final class IdeBackgroundUtil {
 
     private static @Nullable Editor obtainEditor(@Nullable JComponent c) {
       Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-      //noinspection CastConflictsWithInstanceof
-      return view instanceof EditorComponentImpl ? ((EditorComponentImpl)view).getEditor() :
-             view instanceof EditorGutterComponentEx ? CommonDataKeys.EDITOR.getData((DataProvider)view) :
+      return view instanceof EditorComponentImpl o ? o.getEditor() :
+             view instanceof EditorGutterComponentEx o ? o.getEditor() :
              null;
     }
 

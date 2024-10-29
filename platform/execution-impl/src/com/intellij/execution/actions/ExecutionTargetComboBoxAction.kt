@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -25,6 +26,7 @@ const val EXECUTION_TARGETS_COMBO_ADDITIONAL_ACTIONS_GROUP = "ExecutionTargets.A
  *
  * See [com.intellij.execution.actions.RunConfigurationsComboBoxAction] for reference
  */
+@ApiStatus.Internal
 class ExecutionTargetComboBoxAction : ComboBoxAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT

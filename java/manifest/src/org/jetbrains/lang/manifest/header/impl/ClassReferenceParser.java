@@ -36,7 +36,7 @@ public class ClassReferenceParser extends StandardHeaderParser {
     if (module != null) {
       provider = new JavaClassReferenceProvider() {
         @Override
-        public GlobalSearchScope getScope(Project project) {
+        public GlobalSearchScope getScope(@NotNull Project project) {
           return GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
         }
       };

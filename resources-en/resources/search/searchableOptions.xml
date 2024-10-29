@@ -35614,6 +35614,12 @@
     <option name="markdown" hit="Markdown" />
     <option name="uri" hit="URI:" />
   </configurable>
+  <configurable id="Settings.Markdown" configurable_name="Markdown">
+    <option name="" hit="" />
+    <option name="preview" hit="Preview font size:" />
+    <option name="font" hit="Preview font size:" />
+    <option name="size" hit="Preview font size:" />
+  </configurable>
   <configurable id="settings.nodejs" configurable_name="Node.js and NPM">
     <option name="" hit="" />
     <option name="assistance" hit="Coding Assistance" />

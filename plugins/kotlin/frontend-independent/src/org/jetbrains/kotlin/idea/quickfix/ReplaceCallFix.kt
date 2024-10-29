@@ -22,7 +22,7 @@ abstract class ReplaceCallFix(
     private val notNullNeeded: Boolean = false
 ) : KotlinPsiOnlyQuickFixAction<KtQualifiedExpression>(expression) {
 
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
         val element = element ?: return false
@@ -65,9 +65,9 @@ class ReplaceImplicitReceiverCallFix(
     expression: KtExpression,
     private val notNullNeeded: Boolean
 ) : KotlinPsiOnlyQuickFixAction<KtExpression>(expression) {
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
-    override fun getText() = KotlinBundle.message("replace.with.safe.this.call")
+    override fun getText(): String = KotlinBundle.message("replace.with.safe.this.call")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return
@@ -84,21 +84,21 @@ class ReplaceWithSafeCallFix(
     expression: KtDotQualifiedExpression,
     notNullNeeded: Boolean
 ) : ReplaceCallFix(expression, "?.", notNullNeeded) {
-    override fun getText() = KotlinBundle.message("replace.with.safe.call")
+    override fun getText(): String = KotlinBundle.message("replace.with.safe.call")
 }
 
 class ReplaceWithSafeCallForScopeFunctionFix(
     expression: KtDotQualifiedExpression,
     notNullNeeded: Boolean
 ) : ReplaceCallFix(expression, "?.", notNullNeeded) {
-    override fun getText() = KotlinBundle.message("replace.scope.function.with.safe.call")
+    override fun getText(): String = KotlinBundle.message("replace.scope.function.with.safe.call")
 }
 
 class ReplaceWithDotCallFix(
     expression: KtSafeQualifiedExpression,
     private val callChainCount: Int = 0
 ) : ReplaceCallFix(expression, "."), CleanupFix {
-    override fun getText() = KotlinBundle.message("replace.with.dot.call")
+    override fun getText(): String = KotlinBundle.message("replace.with.dot.call")
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val element = element ?: return

@@ -2,7 +2,10 @@
 package com.intellij.openapi.rd
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.ui.EDT
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
@@ -54,11 +57,29 @@ fun Disposable.doIfAlive(action: (Lifetime) -> Unit) {
 fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisposable"): Disposable {
   val d = Disposer.newDisposable(debugName)
 
-  val added = this.onTerminationIfAlive {
-    Disposer.dispose(d)
-  }
+  // All disposables that are disposed on EDT expect WriteIntentLock.
+  // But sometimes lifetimes are terminated on background thread without any guarantees
+  // Need to fix all clients and remove conditional lock here
+  val added =
+    this.onTerminationIfAlive {
+      if (EDT.isCurrentThreadEdt()) {
+        WriteIntentReadAction.run {
+          Disposer.dispose(d)
+        }
+      }
+      else {
+        Disposer.dispose(d)
+      }
+    }
   if (!added) { // false indicates an already-terminated lifetime
-    Disposer.dispose(d)
+    if (EDT.isCurrentThreadEdt()) {
+      WriteIntentReadAction.run {
+        Disposer.dispose(d)
+      }
+    }
+    else {
+      Disposer.dispose(d)
+    }
   }
   return d
 }

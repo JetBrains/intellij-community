@@ -7,9 +7,15 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.checkClassName
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.getFullCallExpression
+import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil.isQualifierExpected
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.TypeInfo
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
+import org.jetbrains.kotlin.psi.psiUtil.isInImportDirective
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getCall
 import org.jetbrains.kotlin.utils.ifEmpty
@@ -21,19 +27,6 @@ object CreateClassFromReferenceExpressionActionFactory : CreateClassFromUsageFac
         if (refExpr.getNonStrictParentOfType<KtTypeReference>() != null) return null
         return refExpr
     }
-
-    private fun getFullCallExpression(element: KtSimpleNameExpression): KtExpression? {
-        return element.parent.let {
-            when {
-                it is KtCallExpression && it.calleeExpression == element -> return null
-                it is KtQualifiedExpression && it.selectorExpression == element -> it
-                else -> element
-            }
-        }
-    }
-
-    private fun isQualifierExpected(element: KtSimpleNameExpression) =
-        element.isDotReceiver() || ((element.parent as? KtDotQualifiedExpression)?.isDotReceiver() ?: false)
 
     override fun getPossibleClassKinds(element: KtSimpleNameExpression, diagnostic: Diagnostic): List<ClassKind> {
         fun isEnum(element: PsiElement): Boolean {

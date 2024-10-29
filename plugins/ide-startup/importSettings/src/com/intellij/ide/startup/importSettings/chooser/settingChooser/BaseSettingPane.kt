@@ -17,6 +17,7 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.accessibility.AccessibleContextUtil
 import java.awt.BorderLayout
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -61,13 +62,14 @@ open class BaseSettingPane(val item: SettingItem, protected val changeHandler: (
           row {
             text(setting.name).customize(UnscaledGaps(0, 0, 2, 0)).resizableColumn()
             if (item.configurable) {
-              checkBox("")
+              val cb = checkBox("")
                 .selected(item.selected)
                 .onChanged { cb ->
                   item.selected = cb.isSelected
                   changeHandler()
                 }
                 .customize(UnscaledGaps(0, 0, 2, 0))
+              AccessibleContextUtil.combineAccessibleStrings(setting.name, ": ", setting.comment)?.let { cb.accessibleName(it) }
             }
           }
 

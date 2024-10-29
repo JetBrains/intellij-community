@@ -1,0 +1,24 @@
+{
+  "inspections": [
+    {
+      "id": "InjectionNotApplicable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PatternNotApplicable",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "UnknownLanguage",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "LanguageMismatch",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PatternOverriddenByNonAnnotatedMethod",
+      "codeQualityCategory": "Code Style"
+    }
+  ]
+}

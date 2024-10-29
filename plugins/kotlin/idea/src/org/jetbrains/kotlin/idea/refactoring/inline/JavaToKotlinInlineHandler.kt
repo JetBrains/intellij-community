@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.refactoring.inline
 
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
@@ -104,7 +105,7 @@ private fun NewJavaToKotlinConverter.convertToKotlinNamedDeclaration(
         phasesCount = phasesCount + postProcessor.phasesCount,
     )
 
-    val (j2kResults, _, j2kContext) = runReadAction {
+    val (j2kResults, _, j2kContext) = ActionUtil.underModalProgress(project, KotlinBundle.message("action.j2k.name")) {
         elementsToKotlin(
             inputElements = listOf(referenced),
             processor = processor,

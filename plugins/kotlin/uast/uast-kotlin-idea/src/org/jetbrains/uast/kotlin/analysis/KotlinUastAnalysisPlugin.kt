@@ -2,8 +2,8 @@
 package org.jetbrains.uast.kotlin.analysis
 
 import com.intellij.lang.Language
-import javaslang.Tuple2
-import javaslang.control.Option
+import io.vavr.Tuple2
+import io.vavr.control.Option
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.caches.resolve.analyze

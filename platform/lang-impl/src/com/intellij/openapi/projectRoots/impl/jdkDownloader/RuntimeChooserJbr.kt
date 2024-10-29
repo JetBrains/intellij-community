@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
@@ -12,11 +12,11 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 
-data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserItem() {
+internal data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserItem() {
   override fun toString(): @NlsSafe String = item.fullPresentationText
 }
 
-fun RuntimeChooserModel.fetchAvailableJbrs() {
+internal fun RuntimeChooserModel.fetchAvailableJbrs() {
   object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.downloading.jetbrains.runtime.list")) {
     override fun run(indicator: ProgressIndicator) {
       val builds = service<RuntimeChooserJbrListDownloader>()

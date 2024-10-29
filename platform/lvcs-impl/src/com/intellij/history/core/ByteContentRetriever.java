@@ -24,6 +24,7 @@ import com.intellij.history.core.changes.ContentChange;
 import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -33,6 +34,7 @@ import java.util.List;
 // correct number of timestamps for each possible revision for comparator.
 // Therefore we have to move along the changelist, revert only content changes
 // and record file and changeset timestamps to call comparator with.
+@ApiStatus.Internal
 public final class ByteContentRetriever {
   private final LocalHistoryFacade myVcs;
   private final FileRevisionTimestampComparator myComparator;

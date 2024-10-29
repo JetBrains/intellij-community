@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.editor.Document;
@@ -23,12 +23,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 
 public final class RegisteredIndexes {
-  @NotNull
-  private final FileDocumentManager myFileDocumentManager;
-  @NotNull
-  private final FileBasedIndexImpl myFileBasedIndex;
-  @NotNull
-  private final Future<FileBasedIndexDataInitializationResult> myStateFuture;
+  private final @NotNull FileDocumentManager myFileDocumentManager;
+  private final @NotNull FileBasedIndexImpl myFileBasedIndex;
+  private final @NotNull Future<FileBasedIndexDataInitializationResult> myStateFuture;
 
   private final List<ID<?, ?>> myIndicesForDirectories = new CopyOnWriteArrayList<>();
 
@@ -87,8 +84,7 @@ public final class RegisteredIndexes {
     return getInitializationResult().myOrphanDirtyFilesQueue;
   }
 
-  @NotNull
-  private FileBasedIndexDataInitializationResult getInitializationResult() {
+  private @NotNull FileBasedIndexDataInitializationResult getInitializationResult() {
     FileBasedIndexDataInitializationResult result = myInitResult; // memory barrier
     if (result == null) {
       try {
@@ -215,8 +211,7 @@ public final class RegisteredIndexes {
   }
 
   @TestOnly
-  @NotNull
-  public Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
+  public @NotNull Pair<List<ID<?, ?>>, List<ID<?, ?>>> getRequiredIndexesForFileType(@NotNull FileType fileType) {
     return myRequiredIndexesEvaluator.getRequiredIndexesForFileType(fileType);
   }
 }

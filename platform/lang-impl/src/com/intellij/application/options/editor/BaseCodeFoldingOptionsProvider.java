@@ -5,8 +5,10 @@ package com.intellij.application.options.editor;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.BeanConfigurable;
+import org.jetbrains.annotations.ApiStatus;
 
 
+@ApiStatus.Internal
 public final class BaseCodeFoldingOptionsProvider extends BeanConfigurable<CodeFoldingSettings> implements CodeFoldingOptionsProvider {
   public BaseCodeFoldingOptionsProvider() {
     super(CodeFoldingSettings.getInstance(), ApplicationBundle.message("title.general"));

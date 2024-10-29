@@ -335,16 +335,4 @@ final class FileDownloaderImpl implements FileDownloader {
       }
     });
   }
-
-  @Override
-  public @NotNull FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath) {
-    myDirectoryForDownloadedFilesPath = directoryForDownloadedFilesPath;
-    return this;
-  }
-
-  @Override
-  public VirtualFile @Nullable [] download() {
-    List<VirtualFile> files = downloadFilesWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
-    return files != null ? VfsUtilCore.toVirtualFileArray(files) : null;
-  }
 }

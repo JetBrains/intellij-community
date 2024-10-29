@@ -99,6 +99,7 @@ public final class ProjectRootsUtil {
     return directoryFile.equals(contentRootForFile);
   }
 
+  @Nullable
   public static String findUnloadedModuleByContentRoot(@NotNull final VirtualFile root, @NotNull Project project) {
     if (project.isDefault()) return null;
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);

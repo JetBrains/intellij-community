@@ -3,7 +3,6 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.UnscaledGaps
-import com.intellij.ui.dsl.gridLayout.toUnscaled
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -74,13 +73,14 @@ interface SpacingConfiguration {
   val dialogGap: Gaps
     @ApiStatus.ScheduledForRemoval
     @Deprecated("Use dialogUnscaledGaps instead",
-                ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"))
+                ReplaceWith("dialogUnscaledGaps", "com.intellij.ui.dsl.gridLayout.UnscaledGaps"),
+                level = DeprecationLevel.HIDDEN)
     get() = Gaps.EMPTY
 
   /**
    * Unscaled gaps between dialog content and its content
    */
-  val dialogUnscaledGaps: UnscaledGaps get() = dialogGap.toUnscaled()
+  val dialogUnscaledGaps: UnscaledGaps get() = UnscaledGaps.EMPTY
 }
 
 open class EmptySpacingConfiguration : SpacingConfiguration {

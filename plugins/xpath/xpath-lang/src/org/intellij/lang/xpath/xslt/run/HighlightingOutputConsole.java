@@ -28,25 +28,22 @@ import com.intellij.openapi.fileTypes.FileTypeEditorHighlighterProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import org.intellij.plugins.xpathView.XPathBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
-public class HighlightingOutputConsole extends AdditionalTabComponent implements DataProvider {
+public class HighlightingOutputConsole extends AdditionalTabComponent implements UiDataProvider {
 
     private final ConsoleView myConsole;
-    private final JComponent myConsoleComponent;
 
     public HighlightingOutputConsole(Project project, @Nullable FileType fileType) {
         super(new BorderLayout());
 
         myConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
 
-        myConsoleComponent = myConsole.getComponent();
-        add(myConsoleComponent, BorderLayout.CENTER);
+        add(myConsole.getComponent(), BorderLayout.CENTER);
 
         final EditorEx editorEx = getEditor();
         assert editorEx != null;
@@ -92,19 +89,15 @@ public class HighlightingOutputConsole extends AdditionalTabComponent implements
       return (EditorEx)((ConsoleViewImpl)myConsole).getEditor();
     }
 
-    @Override
-    public JComponent getPreferredFocusableComponent() {
-        return myConsoleComponent;
-    }
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return myConsole.getComponent();
+  }
 
-    @Override
-    @Nullable
-    public Object getData(@NotNull @NonNls String dataId) {
-        if (LangDataKeys.EDITOR.is(dataId)) {
-            return getEditor();
-        }
-        return null;
-    }
+  @Override
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(CommonDataKeys.EDITOR, getEditor());
+  }
 
     void selectOutputTab() {
         final Container parent = getParent();

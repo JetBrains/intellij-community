@@ -4,8 +4,10 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PasteTargetRule implements GetDataRule {
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -51,7 +51,7 @@ import java.util.function.Function;
 public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCodeStylePanel {
   private static final Logger LOG = Logger.getInstance(OptionTableWithPreviewPanel.class);
 
-  private final static KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
+  private static final KeyStroke ENTER_KEY_STROKE = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0, false);
 
   protected TreeTable myTreeTable;
   private final JPanel myPanel = new JPanel();
@@ -355,61 +355,12 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     myOptions.add(option);
   }
 
-  protected abstract static class Option extends OrderedOption {
-    @NotNull final String title;
-    @Nullable final String groupName;
-    private boolean myEnabled = false;
-
-    protected Option(@NotNull String optionName,
-                     @NotNull String title,
-                     @Nullable String groupName,
-                     @Nullable OptionAnchor anchor,
-                     @Nullable String anchorOptionName) {
-      super(optionName, anchor, anchorOptionName);
-      this.title = title;
-      this.groupName = groupName;
-    }
-
-    public void setEnabled(boolean enabled) {
-      myEnabled = enabled;
-    }
-
-    public boolean isEnabled() {
-      return myEnabled;
-    }
-
-    public abstract Object getValue(CodeStyleSettings settings);
-
-    public abstract void setValue(Object value, CodeStyleSettings settings);
+  protected @Nullable JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
+    return null;
   }
 
-  protected abstract class FieldOption extends Option {
-    @Nullable final Class<? extends CustomCodeStyleSettings> clazz;
-    @NotNull final Field field;
-
-    FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
-                  @NotNull String fieldName,
-                  @NotNull String title,
-                  @Nullable String groupName,
-                  @Nullable OptionAnchor anchor,
-                  @Nullable String anchorFiledName) {
-      super(fieldName, title, groupName, anchor, anchorFiledName);
-      this.clazz = clazz;
-
-      try {
-        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
-        this.field = styleSettingsClass.getField(fieldName);
-      }
-      catch (NoSuchFieldException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    protected Object getSettings(CodeStyleSettings settings) {
-      if (clazz != null) return settings.getCustomSettings(clazz);
-      return settings.getCommonSettings(getDefaultLanguage());
-    }
-
+  protected @Nullable JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
+    return null;
   }
 
   private final class BooleanOption extends FieldOption {
@@ -490,76 +441,8 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private final class IntOption extends FieldOption {
-
-    private final int myMinValue;
-    private final int myMaxValue;
-    private final int myDefaultValue;
-    @Nullable private final Function<? super Integer, @Nls String> myDefaultValueRenderer;
-
-    IntOption(Class<? extends CustomCodeStyleSettings> clazz,
-                     @NotNull String fieldName,
-                     @NotNull String title,
-                     @Nullable String groupName,
-                     @Nullable OptionAnchor anchor,
-                     @Nullable String anchorFiledName,
-                     int minValue,
-                     int maxValue,
-                     int defaultValue,
-                     @Nullable Function<? super Integer, @Nls String> defaultValueRenderer) {
-      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
-      myMinValue = minValue;
-      myMaxValue = maxValue;
-      myDefaultValue = defaultValue;
-      myDefaultValueRenderer = defaultValueRenderer;
-    }
-
-    @Override
-    public Object getValue(CodeStyleSettings settings) {
-      try {
-        return field.getInt(getSettings(settings));
-      }
-      catch (IllegalAccessException e) {
-        return null;
-      }
-    }
-
-    @Override
-    public void setValue(Object value, CodeStyleSettings settings) {
-      //noinspection EmptyCatchBlock
-      try {
-        if (value instanceof Integer) {
-          field.setInt(getSettings(settings), ((Integer)value).intValue());
-        }
-        else {
-          field.setInt(getSettings(settings), myDefaultValue);
-        }
-      }
-      catch (IllegalAccessException e) {
-      }
-    }
-
-    public int getMinValue() {
-      return myMinValue;
-    }
-
-    public int getMaxValue() {
-      return myMaxValue;
-    }
-
-    public int getDefaultValue() {
-      return myDefaultValue;
-    }
-
-    public boolean isDefaultValue(Object value) {
-      return value instanceof Integer && ((Integer)value).intValue() == myDefaultValue;
-    }
-
-    @Nullable
-    @Nls
-    public String getDefaultValueText() {
-      return myDefaultValueRenderer != null ? myDefaultValueRenderer.apply(myDefaultValue) : null;
-    }
+  protected @Nullable Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
+    return null;
   }
 
   public final ColumnInfo TITLE = new ColumnInfo("TITLE") {
@@ -659,128 +542,21 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  private final class MyValueRenderer implements TableCellRenderer {
-    private JTable myTable;
-    private int myRow;
-    private int myColumn;
-    private final OptionsLabel myComboBox = new OptionsLabel();
-    private final JCheckBox myCheckBox = new JBCheckBox();
-    private final JPanel myEmptyLabel = new JPanel();
-    private final JLabel myIntLabel = new JLabel();
-
-    MyValueRenderer() {
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
-      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myIntLabel);
-    }
-
-    @NotNull
-    @Override
-    public Component getTableCellRendererComponent(@NotNull JTable table,
-                                                   Object value,
-                                                   boolean isSelected,
-                                                   boolean hasFocus,
-                                                   int row,
-                                                   int column) {
-      myTable = table;
-      myRow = row;
-      myColumn = column;
-      boolean isEnabled = true;
-      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
-        getPathForRow(row).getLastPathComponent();
-      Option key = null;
-      if (node instanceof MyTreeNode) {
-        isEnabled = ((MyTreeNode)node).isEnabled();
-        key = ((MyTreeNode)node).getKey();
-      }
-      if (!table.isEnabled()) {
-        isEnabled = false;
-      }
-      if (key != null && value != null) {
-        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
-        if (customRenderer != null) {
-          updateColors(customRenderer, table, isSelected);
-          return customRenderer;
-        }
-      }
-      if (value instanceof Boolean) {
-        myCheckBox.setSelected(((Boolean)value).booleanValue());
-        myCheckBox.setEnabled(isEnabled);
-        updateColors(myCheckBox, table, isSelected);
-        return myCheckBox;
-      }
-      else if (value instanceof String) {
-        myComboBox.setText((String)value);
-        myComboBox.setEnabled(isEnabled);
-        updateColors(myComboBox, table, isSelected);
-        return myComboBox;
-      }
-      else if (value instanceof Integer) {
-        if (key instanceof IntOption && ((IntOption)key).isDefaultValue(value)) {
-          myIntLabel.setText(((IntOption)key).getDefaultValueText());
-        }
-        else {
-          @NlsSafe String text = value.toString();
-          myIntLabel.setText(text);
-        }
-        updateColors(myIntLabel, table, isSelected);
-        return myIntLabel;
-      }
-      updateColors(myEmptyLabel, table, isSelected);
-      return myEmptyLabel;
-    }
-
-    protected final class OptionsLabel extends JLabel {
-      @Override
-      public AccessibleContext getAccessibleContext() {
-        if (accessibleContext == null) {
-          accessibleContext = new AccessibleOptionsLabel();
-        }
-        return accessibleContext;
-      }
-
-      protected final class AccessibleOptionsLabel extends AccessibleJLabel implements AccessibleAction {
-        @Override
-        public AccessibleRole getAccessibleRole() {
-          return AccessibleRole.PUSH_BUTTON;
-        }
-
-        @Override
-        public AccessibleAction getAccessibleAction() {
-          return this;
-        }
-
-        @Override
-        public int getAccessibleActionCount() {
-          return 1;
-        }
-
-        @Override
-        public String getAccessibleActionDescription(int i) {
-          if (i == 0) {
-            return UIManager.getString("AbstractButton.clickText");
-          } else {
-            return null;
-          }
-        }
-
-        @Override
-        public boolean doAccessibleAction(int i) {
-          if (i == 0) {
-            myTable.editCellAt(myRow, myColumn);
-            return true;
-          } else {
-            return false;
-          }
-        }
-      }
-    }
+  @Override
+  public @NotNull Set<String> processListOptions() {
+    Set<String> options = new HashSet<>();
+    collectOptions(options, myOptions);
+    collectOptions(options, myCustomOptions);
+    return options;
   }
 
-
-  @Nullable
-  protected JComponent getCustomValueRenderer(@NotNull String optionName, @NotNull Object value) {
-    return null;
+  private static @NotNull String arrayToString(int @NotNull [] array) {
+    int n = array.length;
+    if (n == 0) return "";
+    StringBuilder b = new StringBuilder(array.length * 4);
+    b.append(array[0]);
+    for (int i = 1; i < n; i++) b.append(',').append(' ').append(array[i]);
+    return b.toString();
   }
 
   /**
@@ -881,14 +657,61 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  @Nullable
-  protected JComponent getCustomNodeEditor(@NotNull MyTreeNode node) {
-    return null;
+  protected abstract static class Option extends OrderedOption {
+    final @NotNull String title;
+    final @Nullable String groupName;
+    private boolean myEnabled = false;
+
+    protected Option(@NotNull String optionName,
+                     @NotNull String title,
+                     @Nullable String groupName,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorOptionName) {
+      super(optionName, anchor, anchorOptionName);
+      this.title = title;
+      this.groupName = groupName;
+    }
+
+    public void setEnabled(boolean enabled) {
+      myEnabled = enabled;
+    }
+
+    public boolean isEnabled() {
+      return myEnabled;
+    }
+
+    public abstract Object getValue(CodeStyleSettings settings);
+
+    public abstract void setValue(Object value, CodeStyleSettings settings);
   }
 
-  @Nullable
-  protected Object getCustomNodeEditorValue(@NotNull JComponent customEditor) {
-    return null;
+  protected abstract class FieldOption extends Option {
+    final @Nullable Class<? extends CustomCodeStyleSettings> clazz;
+    final @NotNull Field field;
+
+    FieldOption(@Nullable Class<? extends CustomCodeStyleSettings> clazz,
+                  @NotNull String fieldName,
+                  @NotNull String title,
+                  @Nullable String groupName,
+                  @Nullable OptionAnchor anchor,
+                  @Nullable String anchorFiledName) {
+      super(fieldName, title, groupName, anchor, anchorFiledName);
+      this.clazz = clazz;
+
+      try {
+        Class styleSettingsClass = clazz == null ? CommonCodeStyleSettings.class : clazz;
+        this.field = styleSettingsClass.getField(fieldName);
+      }
+      catch (NoSuchFieldException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    protected Object getSettings(CodeStyleSettings settings) {
+      if (clazz != null) return settings.getCustomSettings(clazz);
+      return settings.getCommonSettings(getDefaultLanguage());
+    }
+
   }
 
   @Override
@@ -929,13 +752,74 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     ((DefaultTreeModel)treeModel).nodeChanged(root);
   }
 
-  @NotNull
-  @Override
-  public Set<String> processListOptions() {
-    Set<String> options = new HashSet<>();
-    collectOptions(options, myOptions);
-    collectOptions(options, myCustomOptions);
-    return options;
+  private final class IntOption extends FieldOption {
+
+    private final int myMinValue;
+    private final int myMaxValue;
+    private final int myDefaultValue;
+    private final @Nullable Function<? super Integer, @Nls String> myDefaultValueRenderer;
+
+    IntOption(Class<? extends CustomCodeStyleSettings> clazz,
+                     @NotNull String fieldName,
+                     @NotNull String title,
+                     @Nullable String groupName,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorFiledName,
+                     int minValue,
+                     int maxValue,
+                     int defaultValue,
+                     @Nullable Function<? super Integer, @Nls String> defaultValueRenderer) {
+      super(clazz, fieldName, title, groupName, anchor, anchorFiledName);
+      myMinValue = minValue;
+      myMaxValue = maxValue;
+      myDefaultValue = defaultValue;
+      myDefaultValueRenderer = defaultValueRenderer;
+    }
+
+    @Override
+    public Object getValue(CodeStyleSettings settings) {
+      try {
+        return field.getInt(getSettings(settings));
+      }
+      catch (IllegalAccessException e) {
+        return null;
+      }
+    }
+
+    @Override
+    public void setValue(Object value, CodeStyleSettings settings) {
+      //noinspection EmptyCatchBlock
+      try {
+        if (value instanceof Integer) {
+          field.setInt(getSettings(settings), ((Integer)value).intValue());
+        }
+        else {
+          field.setInt(getSettings(settings), myDefaultValue);
+        }
+      }
+      catch (IllegalAccessException e) {
+      }
+    }
+
+    public int getMinValue() {
+      return myMinValue;
+    }
+
+    public int getMaxValue() {
+      return myMaxValue;
+    }
+
+    public int getDefaultValue() {
+      return myDefaultValue;
+    }
+
+    public boolean isDefaultValue(Object value) {
+      return value instanceof Integer && ((Integer)value).intValue() == myDefaultValue;
+    }
+
+    public @Nullable @Nls String getDefaultValueText() {
+      return myDefaultValueRenderer != null ? myDefaultValueRenderer.apply(myDefaultValue) : null;
+    }
   }
 
   private static void collectOptions(Set<? super String> optionNames, final List<? extends Option> optionList) {
@@ -996,14 +880,121 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
     }
   }
 
-  @NotNull
-  private static String arrayToString(int @NotNull [] array) {
-    int n = array.length;
-    if (n == 0) return "";
-    StringBuilder b = new StringBuilder(array.length * 4);
-    b.append(array[0]);
-    for (int i = 1; i < n; i++) b.append(',').append(' ').append(array[i]);
-    return b.toString();
+  private final class MyValueRenderer implements TableCellRenderer {
+    private JTable myTable;
+    private int myRow;
+    private int myColumn;
+    private final OptionsLabel myComboBox = new OptionsLabel();
+    private final JCheckBox myCheckBox = new JBCheckBox();
+    private final JPanel myEmptyLabel = new JPanel();
+    private final JLabel myIntLabel = new JLabel();
+
+    MyValueRenderer() {
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myComboBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myCheckBox);
+      UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myIntLabel);
+    }
+
+    @Override
+    public @NotNull Component getTableCellRendererComponent(@NotNull JTable table,
+                                                            Object value,
+                                                            boolean isSelected,
+                                                            boolean hasFocus,
+                                                            int row,
+                                                            int column) {
+      myTable = table;
+      myRow = row;
+      myColumn = column;
+      boolean isEnabled = true;
+      final DefaultMutableTreeNode node = (DefaultMutableTreeNode)((TreeTable)table).getTree().
+        getPathForRow(row).getLastPathComponent();
+      Option key = null;
+      if (node instanceof MyTreeNode) {
+        isEnabled = ((MyTreeNode)node).isEnabled();
+        key = ((MyTreeNode)node).getKey();
+      }
+      if (!table.isEnabled()) {
+        isEnabled = false;
+      }
+      if (key != null && value != null) {
+        JComponent customRenderer = getCustomValueRenderer(key.getOptionName(), value);
+        if (customRenderer != null) {
+          updateColors(customRenderer, table, isSelected);
+          return customRenderer;
+        }
+      }
+      if (value instanceof Boolean) {
+        myCheckBox.setSelected(((Boolean)value).booleanValue());
+        myCheckBox.setEnabled(isEnabled);
+        updateColors(myCheckBox, table, isSelected);
+        return myCheckBox;
+      }
+      else if (value instanceof String) {
+        myComboBox.setText((String)value);
+        myComboBox.setEnabled(isEnabled);
+        updateColors(myComboBox, table, isSelected);
+        return myComboBox;
+      }
+      else if (value instanceof Integer) {
+        if (key instanceof IntOption && ((IntOption)key).isDefaultValue(value)) {
+          myIntLabel.setText(((IntOption)key).getDefaultValueText());
+        }
+        else {
+          @NlsSafe String text = value.toString();
+          myIntLabel.setText(text);
+        }
+        updateColors(myIntLabel, table, isSelected);
+        return myIntLabel;
+      }
+      updateColors(myEmptyLabel, table, isSelected);
+      return myEmptyLabel;
+    }
+
+    protected final class OptionsLabel extends JLabel {
+      @Override
+      public AccessibleContext getAccessibleContext() {
+        if (accessibleContext == null) {
+          accessibleContext = new AccessibleOptionsLabel();
+        }
+        return accessibleContext;
+      }
+
+      protected final class AccessibleOptionsLabel extends AccessibleJLabel implements AccessibleAction {
+        @Override
+        public AccessibleRole getAccessibleRole() {
+          return AccessibleRole.PUSH_BUTTON;
+        }
+
+        @Override
+        public AccessibleAction getAccessibleAction() {
+          return this;
+        }
+
+        @Override
+        public int getAccessibleActionCount() {
+          return 1;
+        }
+
+        @Override
+        public String getAccessibleActionDescription(int i) {
+          if (i == 0) {
+            return UIManager.getString("AbstractButton.clickText");
+          } else {
+            return null;
+          }
+        }
+
+        @Override
+        public boolean doAccessibleAction(int i) {
+          if (i == 0) {
+            myTable.editCellAt(myRow, myColumn);
+            return true;
+          } else {
+            return false;
+          }
+        }
+      }
+    }
   }
 
   protected static final class ColoredLabel extends JLabel {

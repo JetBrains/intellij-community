@@ -49,9 +49,9 @@ internal object KotlinForwardDeclarationsFileGenerator {
 
             generateFile(libraryLocation, pkg, kind, classes)
         }
-        val virtualRootFile = VfsUtil.findFile(root, /* refreshIfNeeded = */ true)
-        virtualRootFile?.let {
-            VfsUtil.markDirty(/* recursive = */ true, /* reloadChildren = */ true, it)
+        // Both the refresh on findFile and the explicit refresh on markDirty are necessary for a correct clean first start
+        VfsUtil.findFile(root, /* refreshIfNeeded = */ true)?.let {
+            VfsUtil.markDirtyAndRefresh(/* async = */ true, /* recursive = */ true, /* reloadChildren = */ true, /* ...files = */ it)
         }
         return libraryLocation
     }

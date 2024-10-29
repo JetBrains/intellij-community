@@ -10,11 +10,13 @@ import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.function.Consumer
 import javax.swing.ListCellRenderer
 import javax.swing.ListModel
 
+@ApiStatus.Internal
 class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

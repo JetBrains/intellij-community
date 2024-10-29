@@ -9,6 +9,8 @@ import io.opentelemetry.sdk.trace.IdGenerator
 import io.opentelemetry.sdk.trace.data.SpanData
 import io.opentelemetry.sdk.trace.data.StatusData
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
@@ -27,14 +29,19 @@ import java.util.concurrent.TimeUnit
 @ApiStatus.Internal
 class JaegerJsonSpanExporter(
   file: Path,
-  serviceName: String,
-  serviceVersion: String? = null,
-  serviceNamespace: String? = null,
+  val serviceName: String,
+  val serviceVersion: String? = null,
+  val serviceNamespace: String? = null,
 ) : AsyncSpanExporter {
   private val fileChannel: FileChannel
-  private val writer: JsonGenerator
+  private var writer: JsonGenerator
 
   private val lock = Mutex()
+
+  private fun initWriter() = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
+    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
+    // Channels.newOutputStream doesn't implement flush, but just to be sure
+    .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
 
   init {
     val parent = file.parent
@@ -44,12 +51,12 @@ class JaegerJsonSpanExporter(
                                                     StandardOpenOption.WRITE,
                                                     StandardOpenOption.TRUNCATE_EXISTING))
 
-    writer = JsonFactory().createGenerator(Channels.newOutputStream(fileChannel))
-      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.AUTO_CLOSE_TARGET, true)
-      // Channels.newOutputStream doesn't implement flush, but just to be sure
-      .configure(com.fasterxml.jackson.core.JsonGenerator.Feature.FLUSH_PASSED_TO_STREAM, false)
+    writer = initWriter()
 
-    beginWriter(w = writer, serviceName = serviceName, serviceVersion = serviceVersion, serviceNamespace = serviceNamespace)
+    beginWriter(w = writer,
+                serviceName = serviceName,
+                serviceVersion = serviceVersion,
+                serviceNamespace = serviceNamespace)
   }
 
   @Suppress("DuplicatedCode")
@@ -61,8 +68,11 @@ class JaegerJsonSpanExporter(
         writer.writeStringField("spanID", span.spanId)
         writer.writeStringField("operationName", span.name)
         writer.writeStringField("processID", "p1")
-        writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos))
-        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos))
+        writer.writeNumberField("startTime", TimeUnit.NANOSECONDS.toMicros(span.startEpochNanos)) // in microseconds (Jaeger format)
+        writer.writeNumberField("duration", TimeUnit.NANOSECONDS.toMicros(span.endEpochNanos - span.startEpochNanos)) // // in microseconds (Jaeger format)
+        writer.writeNumberField("startTimeNano", span.startEpochNanos) // in nanoseconds
+        writer.writeNumberField("durationNano", span.endEpochNanos - span.startEpochNanos) // in nanoseconds
+
         val parentContext = span.parentSpanContext
         val hasError = span.status.statusCode == StatusData.error().statusCode
 
@@ -181,23 +191,50 @@ class JaegerJsonSpanExporter(
 
   override suspend fun flush() {
     lock.withReentrantLock {
-      // if shutdown was already invoked OR nothing has been written to the temp file
+      // if shutdown was already invoked OR nothing has been written to the output file
       if (writer.isClosed) {
         return@withReentrantLock
       }
 
-      writer.flush()
-      fileChannel.write(ByteBuffer.wrap(jsonEnd))
-      fileChannel.force(false)
-      fileChannel.position(fileChannel.position() - jsonEnd.size)
+      runInterruptible {
+        runBlocking(Dispatchers.IO) {
+          writer.flush()
+          fileChannel.write(ByteBuffer.wrap(jsonEnd))
+          fileChannel.force(false)
+          fileChannel.position(fileChannel.position() - jsonEnd.size)
+        }
+      }
+    }
+  }
+
+  override suspend fun reset() {
+    lock.withReentrantLock {
+      // if shutdown was already invoked OR nothing has been written to the output file
+      if (writer.isClosed) {
+        return@withReentrantLock
+      }
+
+      writer = initWriter()
+      runInterruptible {
+        runBlocking(Dispatchers.IO) {
+          fileChannel.truncate(0)
+
+          beginWriter(w = writer,
+                      serviceName = serviceName,
+                      serviceVersion = serviceVersion,
+                      serviceNamespace = serviceNamespace)
+        }
+      }
     }
   }
 }
 
-private fun beginWriter(w: JsonGenerator,
-                        serviceName: String,
-                        serviceVersion: String?,
-                        serviceNamespace: String?) {
+private fun beginWriter(
+  w: JsonGenerator,
+  serviceName: String,
+  serviceVersion: String?,
+  serviceNamespace: String?,
+) {
   w.writeStartObject()
   w.writeArrayFieldStart("data")
   w.writeStartObject()

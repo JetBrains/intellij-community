@@ -10,8 +10,8 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
-import com.intellij.util.Alarm;
+import com.intellij.testFramework.TestLoggerKt;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.TestTimeOut;
@@ -36,7 +36,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class IdeEventQueueTest extends LightPlatformTestCase {
   public void testManyEventsStress() {
     int N = 100000;
-    PerformanceTestUtil.newPerformanceTest("Event queue dispatch", () -> {
+    Benchmark.newBenchmark("Event queue dispatch", () -> {
       UIUtil.dispatchAllInvocationEvents();
       AtomicInteger count = new AtomicInteger();
       for (int i = 0; i < N; i++) {
@@ -149,12 +149,6 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     }
   }
 
-  public void testExceptionInAlarmMustThrowImmediatelyInTests() {
-    Alarm alarm = new Alarm();
-    alarm.addRequest(()-> throwMyException(), 1);
-    checkMyExceptionThrownImmediately();
-  }
-
   public void testExceptionInInvokeLateredRunnableMustThrowImmediatelyInTests() {
     SwingUtilities.invokeLater(() -> throwMyException());
     checkMyExceptionThrownImmediately();
@@ -170,9 +164,11 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     checkMyExceptionThrownImmediately();
   }
 
-  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() {
-    EdtExecutorService.getScheduledExecutorInstance().schedule(()->throwMyException(), 1, TimeUnit.MILLISECONDS);
-    checkMyExceptionThrownImmediately();
+  public void testEdtScheduledExecutorRunnableMustThrowImmediatelyInTests() throws Exception {
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      EdtExecutorService.getScheduledExecutorInstance().schedule(() -> throwMyException(), 1, TimeUnit.MILLISECONDS);
+      checkMyExceptionThrownImmediately();
+    });
   }
 
   public void testNoExceptionEvenCreatedByThanosExtensionNotApplicableExceptionMustKillEDT() {

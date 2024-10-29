@@ -5,13 +5,11 @@ import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 abstract class FrameTitleBuilder {
   abstract fun getProjectTitle(project: Project): String
 
-  @RequiresBlockingContext
   abstract fun getFileTitle(project: Project, file: VirtualFile): String
 
   @Experimental
@@ -22,7 +20,6 @@ abstract class FrameTitleBuilder {
   }
 
   companion object {
-    @RequiresBlockingContext
     @JvmStatic
     fun getInstance(): FrameTitleBuilder = service<FrameTitleBuilder>()
   }

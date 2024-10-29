@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.colors.fileStatus;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+@ApiStatus.Internal
 public final class FileStatusColorsPanel {
 
   private static final int TABLE_SIZE = 250; // Defined by UI spec
@@ -101,14 +103,12 @@ public final class FileStatusColorsPanel {
     myFileStatusColorsTable = new FileStatusColorsTable();
   }
 
-  @NotNull
-  private static EditorColorsScheme getCurrentScheme() {
-    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
+  public @NotNull FileStatusColorsTableModel getModel() {
+    return myModel;
   }
 
-  @NotNull
-  public FileStatusColorsTableModel getModel() {
-    return myModel;
+  private static @NotNull EditorColorsScheme getCurrentScheme() {
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
   private void updateColorPanel(@Nullable FileStatusColorDescriptor descriptor) {

@@ -42,3 +42,4 @@ interface IMutableMapEntry<KElem, VElem> : MutableMap.MutableEntry<KElem, VElem>
 open class CMutableMapEntry<KElem, VElem> : MutableMap.MutableEntry<KElem, VElem> by mutableMapOf<KElem, VElem>().entries.first()
 open class SMutableMapEntry<VElem> : MutableMap.MutableEntry<String, VElem> by mutableMapOf<String, VElem>().entries.first()
 open class ABMutableMapEntry : MutableMap.MutableEntry<A, B> by mutableMapOf<A, B>().entries.first()
+// IGNORE_K2

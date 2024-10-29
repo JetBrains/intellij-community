@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.packageDependencies.ui;
 
@@ -90,13 +90,11 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myHasMarked;
   }
 
-  @Nullable
-  public PsiElement getPsiElement() {
+  public @Nullable PsiElement getPsiElement() {
     return null;
   }
 
-  @Nullable
-  public Color getColor() {
+  public @Nullable Color getColor() {
     return myColor;
   }
 
@@ -177,8 +175,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return myRegisteredFiles;
   }
 
-  @Nullable
-  public @NlsSafe String getComment() {
+  public @Nullable @NlsSafe String getComment() {
     return null;
   }
 
@@ -190,9 +187,8 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return mySorted;
   }
 
-  @NlsSafe
   @Override
-  public String toString() {
+  public @NlsSafe String toString() {
     @NlsSafe String presentableName = super.toString();
     return presentableName;
   }

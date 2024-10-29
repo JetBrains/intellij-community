@@ -28,7 +28,7 @@ public final class JsonCopyPointerAction extends CopyReferenceAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setText(JsonBundle.message("copy.json.pointer"));
+    e.getPresentation().setText(JsonBundle.message("action.JsonCopyPointer.text"));
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     VirtualFile file = editor == null ? null : FileDocumentManager.getInstance().getFile(editor.getDocument());

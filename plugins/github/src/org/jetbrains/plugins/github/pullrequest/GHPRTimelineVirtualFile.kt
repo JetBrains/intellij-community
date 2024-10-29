@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest
 
-import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManagerKeys
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
@@ -20,7 +20,7 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   : GHPRVirtualFile(fileManagerId, project, repository, pullRequest) {
 
   init {
-    putUserData(SplitAction.FORBID_TAB_SPLIT, true)
+    putUserData(FileEditorManagerKeys.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
 

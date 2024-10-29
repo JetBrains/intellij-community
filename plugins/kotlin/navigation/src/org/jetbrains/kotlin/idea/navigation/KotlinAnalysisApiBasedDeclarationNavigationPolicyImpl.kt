@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.navigation
 
-import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
@@ -9,6 +8,7 @@ import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAct
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.platform.projectStructure.KotlinGlobalSearchScopeMerger
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibraryModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaLibrarySourceModule
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
@@ -22,9 +22,11 @@ import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelTypeAliasFqNameIndex
+import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.isExpectDeclaration
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 import org.jetbrains.kotlin.types.Variance
 
@@ -33,14 +35,14 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (!ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
-            is KaLibraryModule -> {
-                val librarySource = module.librarySources ?: return declaration
-                val scope = librarySource.getContentScopeWithCommonDependencies()
-                return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
-            }
+        return when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibraryModule -> getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
+                module.librarySources ?: return declaration,
+                declaration,
+                module
+            )
 
-            else -> return declaration
+            else -> declaration
         }
     }
 
@@ -48,41 +50,56 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
         val ktFile = declaration.containingKtFile
         if (ktFile.isCompiled) return declaration
         val project = ktFile.project
-        when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
-            is KaLibrarySourceModule -> {
-                val libraryBinary = module.binaryLibrary
-                val scope = libraryBinary.getContentScopeWithCommonDependencies()
-                return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, project) ?: declaration
-            }
+        return when (val module = KaModuleProvider.getModule(project, ktFile, useSiteModule = null)) {
+            is KaLibrarySourceModule -> getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
+                module.binaryLibrary,
+                declaration,
+                module
+            )
 
-            else -> return declaration
+            else -> declaration
         }
+    }
+
+    private fun getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
+        library: KaModule,
+        declaration: KtDeclaration,
+        module: KaModule
+    ): KtElement {
+        val scope = library.getContentScopeWithCommonDependencies()
+        return getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(declaration, scope, module) ?: declaration
+    }
+
+    private fun KtDeclaration?.matchesWithPlatform(targetPlatform: TargetPlatform): Boolean {
+        val common = targetPlatform.isCommon()
+        val bool = this?.isExpectDeclaration() == common
+        return bool
     }
 
     private fun getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(
         declaration: KtDeclaration,
         scope: GlobalSearchScope,
-        project: Project
+        module: KaModule
     ): KtElement? {
         return when (declaration) {
             is KtTypeParameter -> {
                 val owner = declaration.getOwningTypeParameterOwner() ?: return null
                 val correspondingOwner =
-                    getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(owner, scope, project) as? KtTypeParameterListOwner
+                    getCorrespondingDeclarationInLibrarySourceOrBinaryCounterpart(owner, scope, module) as? KtTypeParameterListOwner
                         ?: return null
                 correspondingOwner.typeParameters.firstOrNull { it.name == declaration.name }
             }
 
-            is KtEnumEntry -> getCorrespondingEnumEntry(declaration, scope, project)
-            is KtClassLikeDeclaration -> getCorrespondingClassLikeDeclaration(declaration, scope, project)
-            is KtCallableDeclaration -> getCorrespondingCallableDeclaration(declaration, scope, project)
+            is KtEnumEntry -> getCorrespondingEnumEntry(declaration, scope, module)
+            is KtClassLikeDeclaration -> getCorrespondingClassLikeDeclaration(declaration, scope, module)
+            is KtCallableDeclaration -> getCorrespondingCallableDeclaration(declaration, scope, module)
             else -> null
         }
     }
 
-    private fun getCorrespondingEnumEntry(declaration: KtEnumEntry, scope: GlobalSearchScope, project: Project): KtEnumEntry? {
+    private fun getCorrespondingEnumEntry(declaration: KtEnumEntry, scope: GlobalSearchScope, module: KaModule): KtEnumEntry? {
         val enumClass = declaration.containingClassOrObject ?: return null
-        val classLikeDeclaration = getCorrespondingClassLikeDeclaration(enumClass, scope, project) as? KtClass ?: return null
+        val classLikeDeclaration = getCorrespondingClassLikeDeclaration(enumClass, scope, module) as? KtClass ?: return null
         val enumEntryName = declaration.name
         return classLikeDeclaration.declarations.firstOrNull { it is KtEnumEntry && it.name == enumEntryName } as? KtEnumEntry
     }
@@ -90,28 +107,32 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
     private fun getCorrespondingClassLikeDeclaration(
         declaration: KtClassLikeDeclaration,
         scope: GlobalSearchScope,
-        project: Project
+        module: KaModule
     ): KtClassLikeDeclaration? {
         val classId = declaration.getClassId() ?: return null
-        return KotlinFullClassNameIndex[classId.asFqNameString(), project, scope].firstOrNull()
-            ?: KotlinTopLevelTypeAliasFqNameIndex[classId.asFqNameString(), project, scope].firstOrNull()
+        val project = module.project
+        val targetPlatform = module.targetPlatform
+        val declarations =
+            KotlinFullClassNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) } ?:
+            KotlinTopLevelTypeAliasFqNameIndex[classId.asFqNameString(), project, scope].firstOrNull { it.matchesWithPlatform(targetPlatform) }
+        return declarations
     }
 
     private fun getCorrespondingCallableDeclaration(
         declaration: KtCallableDeclaration,
         scope: GlobalSearchScope,
-        project: Project
+        module: KaModule
     ): KtElement? {
         val declarationName = declaration.name ?: return null
         when (declaration) {
             is KtParameter -> {
                 val owner = declaration.getOwningCallable() ?: return null
-                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, project) as? KtCallableDeclaration ?: return null
+                val correspondingOwner = getCorrespondingCallableDeclaration(owner, scope, module) as? KtCallableDeclaration ?: return null
                 return correspondingOwner.valueParameters.firstOrNull { it.name == declarationName }
             }
             is KtPrimaryConstructor -> {
                 val containingClass = declaration.containingClassOrObject ?: return null
-                val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
+                val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, module) as? KtClassOrObject
                     ?: return null
                 return correspondingOwner.primaryConstructor ?: correspondingOwner
             }
@@ -120,6 +141,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     null -> {
                         val packageFqName = declaration.containingKtFile.packageFqName.takeUnless { it.isRoot }?.asString()
                         val callableName = "${packageFqName?.let { "$it." }.orEmpty()}${declarationName}"
+                        val project = module.project
                         when (declaration) {
                             is KtNamedFunction -> KotlinTopLevelFunctionFqnNameIndex[callableName, project, scope]
                             is KtProperty -> KotlinTopLevelPropertyFqnNameIndex[callableName, project, scope]
@@ -128,7 +150,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     }
 
                     else -> {
-                        val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, project) as? KtClassOrObject
+                        val correspondingOwner = getCorrespondingClassLikeDeclaration(containingClass, scope, module) as? KtClassOrObject
                             ?: return null
                         if (declaration is KtProperty && correspondingOwner.isData() && !declaration.isExtensionDeclaration() && declaration.typeParameters.isEmpty()) {
                             correspondingOwner.primaryConstructor?.valueParameters?.firstOrNull { it.name == declarationName }?.let { return it }
@@ -137,7 +159,6 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
                     }
                 }
                 return chooseCallableCandidate(declaration, candidates)
-
             }
         }
     }
@@ -271,7 +292,7 @@ internal class KotlinAnalysisApiBasedDeclarationNavigationPolicyImpl : KotlinDec
             add(contentScope)
             allDirectDependencies().filter { it.targetPlatform.isCommon() }.mapTo(this) { it.contentScope }
         }
-        return GlobalSearchScope.union(scopes)
+        return KotlinGlobalSearchScopeMerger.getInstance(project).union(scopes)
     }
 
     companion object {

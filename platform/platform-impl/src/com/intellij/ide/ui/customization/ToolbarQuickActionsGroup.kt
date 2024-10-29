@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ToolbarQuickActionsGroup: ActionGroup(), ActionRemoteBehaviorSpecification.Frontend {
 
   override fun getChildren(e: AnActionEvent?): Array<AnAction> {

@@ -9,6 +9,7 @@ import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.IntelliJProjectUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.ObjectUtils;
@@ -64,7 +65,7 @@ public final class DescriptorI18nUtil {
     final Module module = actions.getModule();
     if (module == null) return false;
 
-    if (PsiUtil.isIdeaProject(module.getProject()) &&
+    if (IntelliJProjectUtil.isIntelliJPlatformProject(module.getProject()) &&
         (module.getName().startsWith("intellij.platform.") || ApplicationManager.getApplication().isUnitTestMode())) {
       return true;
     }

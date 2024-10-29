@@ -6,8 +6,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.asUnit
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinApplicableModCommandAction
@@ -33,13 +31,13 @@ internal class AddOpenModifierIntention :
     override fun prepareContext(element: KtCallableDeclaration): Unit? {
         // The intention's applicability cannot solely depend on the PSI because compiler plugins may introduce modality different from
         // explicit syntax and language defaults.
-        val elementSymbol = element.symbol as? KaSymbolWithModality ?: return null
+        val elementSymbol = element.symbol
         if (elementSymbol.modality == KaSymbolModality.OPEN || elementSymbol.modality == KaSymbolModality.ABSTRACT) {
             return null
         }
 
         val owner = element.containingClassOrObject ?: return null
-        val ownerSymbol = owner.symbol as? KaSymbolWithModality ?: return null
+        val ownerSymbol = owner.symbol
         val isApplicable = (owner.hasModifier(KtTokens.ENUM_KEYWORD)
                 || ownerSymbol.modality == KaSymbolModality.OPEN
                 || ownerSymbol.modality == KaSymbolModality.ABSTRACT

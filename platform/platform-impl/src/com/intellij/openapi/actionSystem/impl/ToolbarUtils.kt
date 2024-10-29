@@ -4,9 +4,15 @@ package com.intellij.openapi.actionSystem.impl
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
+import com.intellij.openapi.editor.Editor
 import com.intellij.ui.ComponentUtil
+import org.jetbrains.annotations.ApiStatus
+import java.awt.Container
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 object ToolbarUtils {
 
   fun createImmediatelyUpdatedToolbar(
@@ -32,5 +38,23 @@ object ToolbarUtils {
     ComponentUtil.markAsShowing(toolbar, true)
     toolbar.updateActionsImmediately(true)
     return toolbar
+  }
+
+  fun createTargetComponent(editor: Editor, dataProvider: UiDataProvider): JComponent {
+    return MyComponent(editor.contentComponent, dataProvider)
+  }
+
+  fun createTargetComponent(component: JComponent, dataProvider: UiDataProvider): JComponent {
+    return MyComponent(component, dataProvider)
+  }
+
+  private class MyComponent(val base: JComponent,
+                            val provider: UiDataProvider
+  ) : JComponent(), UiDataProvider {
+    override fun getParent(): Container = base
+    override fun isShowing() = true
+    override fun uiDataSnapshot(sink: DataSink) {
+      DataSink.uiDataSnapshot(sink, provider)
+    }
   }
 }

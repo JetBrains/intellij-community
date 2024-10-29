@@ -1,0 +1,28 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "xml-psi",
+  module_name = "intellij.xml.psi",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//xml/xml-frontback",
+    "@community//platform/core-api:core",
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/analysis-api:analysis",
+    "@community//platform/editor-ui-api:editor",
+    "@libraries//:kotlin-stdlib",
+  ],
+  exports = ["@community//xml/xml-frontback"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

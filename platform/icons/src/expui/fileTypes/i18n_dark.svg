@@ -1,0 +1,11 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg width="16" height="16" version="1.1" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
+  <path d="m1.08 3.17 8.75 0.0678" stroke="#CED0D6"/>
+  <path d="m5.25 1.49v1.69" stroke="#CED0D6" stroke-linecap="round"/>
+  <g fill="none" stroke="#CED0D6" stroke-linecap="round">
+    <path d="m1.71 10.7c3-1.5 5.32-3.66 5.99-7.43"/>
+    <path d="m2.84 5.05c-0.00403-0.00413 1.17 3.27 5.22 5.41 0.29 0.153-0.0839-0.0438-0.0231-0.0237"/>
+    <path d="m7.16 13.5 3.3-8.11 3.35 8.16" stroke-linejoin="round" stroke="#548AF7"/>
+    <path d="m8.21 11.3 4.47 0.0244" stroke-linejoin="round" stroke="#548AF7"/>
+  </g>
+</svg>

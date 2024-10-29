@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ide.CommonActionsManager;
@@ -35,7 +35,7 @@ import java.util.Objects;
 import java.util.Set;
 
 
-public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable, DataProvider {
+public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel implements HierarchyBrowser, Disposable {
   protected final Project myProject;
   protected Content myContent;
 
@@ -77,8 +77,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     return myDisposed;
   }
 
-  @NotNull
-  protected ActionToolbar createToolbar(@NotNull String place, @NotNull String helpID) {
+  protected @NotNull ActionToolbar createToolbar(@NotNull String place, @NotNull String helpID) {
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     appendActions(actionGroup, helpID);
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(place, actionGroup, true);
@@ -100,18 +99,15 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
 
   abstract StructureTreeModel getCurrentBuilder();
 
-  @Nullable
-  protected abstract PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
+  protected abstract @Nullable PsiElement getElementFromDescriptor(@NotNull HierarchyNodeDescriptor descriptor);
 
-  @Nullable
-  protected final PsiElement getSelectedElement(@NotNull DataContext dataContext) {
+  protected final @Nullable PsiElement getSelectedElement(@NotNull DataContext dataContext) {
     Object element = ArrayUtil.getFirstElement(dataContext.getData(PlatformCoreDataKeys.SELECTED_ITEMS));
     if (!(element instanceof HierarchyNodeDescriptor)) return null;
     return getElementFromDescriptor((HierarchyNodeDescriptor)element);
   }
 
-  @Nullable
-  protected static HierarchyNodeDescriptor getDescriptor(@NotNull DefaultMutableTreeNode node) {
+  protected static @Nullable HierarchyNodeDescriptor getDescriptor(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
     if (userObject instanceof HierarchyNodeDescriptor) {
       return (HierarchyNodeDescriptor)userObject;

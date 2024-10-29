@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("GroovyProjectWizardUtils")
 package org.jetbrains.plugins.groovy.config.wizard
 
@@ -36,9 +36,7 @@ private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
 fun <S> S.setupGroovySdkUI(builder: Panel) where S : NewProjectWizardStep, S : BuildSystemGroovyNewProjectWizardData {
   val groovyLibraryDescription = GroovyLibraryDescription()
   val comboBox = DistributionComboBox(context.project, object : FileChooserInfo {
-    override val fileChooserTitle = GroovyBundle.message("dialog.title.select.groovy.sdk")
-    override val fileChooserDescription: String? = null
-    override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor()
+    override val fileChooserDescriptor = groovyLibraryDescription.createFileChooserDescriptor().withTitle(GroovyBundle.message("dialog.title.select.groovy.sdk"))
     override val fileChooserMacroFilter = FileChooserInfo.DIRECTORY_PATH
   })
   comboBox.specifyLocationActionName = GroovyBundle.message("dialog.title.specify.groovy.sdk")

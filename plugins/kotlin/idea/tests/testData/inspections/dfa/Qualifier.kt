@@ -3,6 +3,11 @@ class X {
     var p: Int = 0
 
     fun test(x: X) {
+        if (x === this) {
+            // Avoid aliasing processing. 
+            // Without this condition, x.p = 2 will overwrite p = 1, as it's possible that x === this
+            return
+        }
         if (x.p > p) {
             if (<warning descr="Condition 'x.p > p' is always true">x.p > p</warning>) {
             }

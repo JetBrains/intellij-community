@@ -70,6 +70,7 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
@@ -421,7 +422,7 @@ public final class PlatformTestUtil {
     AtomicBoolean pooledRunnableInvoked = new AtomicBoolean();
     AtomicBoolean alarmInvoked1 = new AtomicBoolean();
     AtomicBoolean alarmInvoked2 = new AtomicBoolean();
-    Alarm alarm = new Alarm();
+    Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, tempDisposable);
     Alarm pooledAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, tempDisposable);
     ModalityState initialModality = ModalityState.current();
 
@@ -642,16 +643,16 @@ public final class PlatformTestUtil {
 
   /**
    * Init a performance test.<br/>
-   * E.g: {@code newPerformanceTest("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
+   * E.g: {@code newBenchmark("calculating pi", () -> { CODE_TO_BE_MEASURED_IS_HERE }).start();}
    * If you need to customize published metrics, use
-   * {@code com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil#newPerformanceTest} and
+   * {@code com.intellij.tools.ide.metrics.benchmark.Benchmark#newBenchmark} and
    * method {@code PerformanceTestInfoImpl#withMetricsCollector}.
-   * @see PerformanceTestInfo#start()
+   * @see BenchmarkTestInfo#start()
    */
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo newPerformanceTest(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
-    return newPerformanceTestWithVariableInputSize(launchName, 1, () -> {
+  public static @NotNull BenchmarkTestInfo newBenchmark(@NonNls @NotNull String launchName, @NotNull ThrowableRunnable<?> test) {
+    return newBenchmarkWithVariableInputSize(launchName, 1, () -> {
       test.run();
       return 1;
     });
@@ -664,14 +665,14 @@ public final class PlatformTestUtil {
    * @param expectedInputSize specifies size of the input,
    * @param test returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
    *
-   * @see PerformanceTestInfo#start()
+   * @see BenchmarkTestInfo#start()
    * </p>
    */
   @Contract(pure = true)
-  public static @NotNull PerformanceTestInfo newPerformanceTestWithVariableInputSize(@NonNls @NotNull String launchName,
-                                                                                     int expectedInputSize,
-                                                                                     @NotNull ThrowableComputable<Integer, ?> test) {
-    return PerformanceTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
+  public static @NotNull BenchmarkTestInfo newBenchmarkWithVariableInputSize(@NonNls @NotNull String launchName,
+                                                                             int expectedInputSize,
+                                                                             @NotNull ThrowableComputable<Integer, ?> test) {
+    return BenchmarkTestInfoLoader.Companion.getInstance().initialize(test, expectedInputSize, launchName);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {
@@ -1187,6 +1188,22 @@ public final class PlatformTestUtil {
     waitWithEventsDispatching("Process failed to start in 60 seconds", () -> !refRunContentDescriptor.isNull() || failure[0], 60);
     assertFalse("Process could not start for configuration: " + runConfiguration, failure[0]);
     return Pair.create(executionEnvironment, refRunContentDescriptor.get());
+  }
+
+  /**
+   * Invokes {@code action} on bgt, waiting it to complete for {@code timeoutSeconds seconds} and return a result. Dispatches events while
+   * waiting bgt to finish, so it is safe to invoke edt stuff if necessary. Be careful using from under lock, because it may cause a deadlock.
+   */
+  @RequiresEdt
+  public static @Nullable <T> T callOnBgtSynchronously(@NotNull Callable<T> action, int timeoutSeconds) {
+    var future = ApplicationManager.getApplication().executeOnPooledThread(action);
+    waitWithEventsDispatching("Could not finish the call in " + timeoutSeconds + " seconds", future::isDone, timeoutSeconds);
+    try {
+      return future.get();
+    }
+    catch (InterruptedException | java.util.concurrent.ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void waitWithEventsDispatching(@NotNull String errorMessage, @NotNull BooleanSupplier condition, int timeoutInSeconds) {

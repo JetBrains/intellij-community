@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.cce.report
 
 import com.intellij.cce.workspace.SessionSerializer
@@ -25,22 +25,23 @@ abstract class FileReportGenerator(
 
   val reportReferences: MutableMap<String, ReferenceInfo> = mutableMapOf()
 
-  // For the diff algorithm implementation, see [script.js](../../resources/diff.js)
-  abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, fileName: String, resourcePath: String, text: String): String
+  abstract fun getHtml(fileEvaluations: List<FileEvaluationInfo>, resourcePath: String, text: String): String
+
+  abstract val scripts: List<Resource>
 
   override fun generateFileReport(sessions: List<FileEvaluationInfo>) {
     val fileInfo = sessions.first()
-    val fileName = if (sessions.size > 1) {
-      "${fileInfo.sessionsInfo.projectName} - ${File(fileInfo.sessionsInfo.filePath).name}"
-    } else {
-      File(fileInfo.sessionsInfo.filePath).name
-    }
-    val (resourcePath, reportPath) = dirs.getPaths(fileName)
+    val fileName = File(fileInfo.sessionsInfo.filePath).name
+    val fileNameAlreadyHasProject = fileName.startsWith(fileInfo.sessionsInfo.projectName)
+    val internalFileName =
+      if (sessions.size > 1 && !fileNameAlreadyHasProject) "${fileInfo.sessionsInfo.projectName} - $fileName" else fileName
+    val (resourcePath, reportPath) = dirs.getPaths(internalFileName)
     val sessionsJson = sessionSerializer.serialize(sessions.map { it.sessionsInfo.sessions }.flatten())
     val resourceFile = File(resourcePath.toString())
     resourceFile.writeText("var sessions = {};\nvar features={};\nvar fullLineLog=[];\nsessions = ${parseJsonInJs(sessionsJson)};\n")
     processStorages(sessions, resourceFile)
-    val reportTitle = "Evaluation Report for file $fileName (project: ${fileInfo.sessionsInfo.projectName})"
+    val titleProject = if (fileNameAlreadyHasProject) "" else " (project: ${fileInfo.sessionsInfo.projectName})"
+    val reportTitle = "Evaluation Report for $fileName$titleProject"
     createHTML().html {
       head {
         createHead(this, reportTitle, resourcePath)
@@ -50,15 +51,15 @@ abstract class FileReportGenerator(
         unsafe {
           +getHtml(
             sessions.sortedBy { it.evaluationType },
-            fileName,
             dirs.filesDir.relativize(resourcePath).toString(),
             fileInfo.sessionsInfo.text
           )
         }
       }
     }.also { html -> FileWriter(reportPath.toString()).use { it.write(html) } }
-    val fileReference = "$fileName (${fileInfo.sessionsInfo.filePath})"
-    reportReferences[fileReference] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
+    val fullPathDetails = if (fileInfo.sessionsInfo.filePath != fileName) " (${fileInfo.sessionsInfo.filePath})" else ""
+    val tableReference = "$fileName$fullPathDetails"
+    reportReferences[tableReference] = ReferenceInfo(reportPath, sessions.map { it.metrics }.flatten())
   }
 
   open fun createHead(head: HEAD, reportTitle: String, resourcePath: Path) = with(head) {

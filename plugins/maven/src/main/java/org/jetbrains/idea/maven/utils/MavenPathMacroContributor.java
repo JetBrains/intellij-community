@@ -16,8 +16,8 @@ final class MavenPathMacroContributor implements PathMacroContributor {
 
   @Override
   public void forceRegisterPathMacros(@NotNull Map<String, String> macros) {
-    if (System.getProperty(MavenUtil.PROP_FORCED_M2_HOME) != null) {
-      macros.put(PathMacrosImpl.MAVEN_REPOSITORY, System.getProperty(MavenUtil.PROP_FORCED_M2_HOME));
+    if (System.getProperty(MavenUtil.MAVEN_REPO_LOCAL) != null) {
+      macros.put(PathMacrosImpl.MAVEN_REPOSITORY, System.getProperty(MavenUtil.MAVEN_REPO_LOCAL));
     }
   }
 }

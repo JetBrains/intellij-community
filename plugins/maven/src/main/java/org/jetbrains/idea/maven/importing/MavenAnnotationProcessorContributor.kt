@@ -12,11 +12,10 @@ import org.jetbrains.idea.maven.project.MavenProjectResolutionContributor
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenResolveResultProblemProcessor
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
-import org.jetbrains.idea.maven.server.NativeMavenProjectHolder
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 
 internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContributor {
-  override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, nativeMavenProject: NativeMavenProjectHolder, embedder: MavenEmbedderWrapper) {
+  override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper) {
     val pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
     val config = MavenJDOMUtil.findChildByPath(pluginConfiguration, "annotationProcessorPaths")
     if (config == null) return

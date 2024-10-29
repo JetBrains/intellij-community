@@ -2,13 +2,27 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.jarRepository.RemoteRepositoriesConfiguration
-import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.testFramework.UsefulTestCase
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
+
+
+  @Test
+  fun importSimpleProject() = runBlocking {
+    importProjectAsync("""
+                      <groupId>test</groupId>
+                      <artifactId>project</artifactId>
+                      <packaging>pom</packaging>
+                      <version>1</version>
+                      """.trimIndent())
+    val mavenProject = projectsManager.findProject(projectPom)
+    assertNotNull(mavenProject)
+    UsefulTestCase.assertSameElements(mavenProject!!.remoteRepositories.map { it.url }, "https://repo.maven.apache.org/maven2")
+  }
 
   @Test
   fun testMirrorCentralImport() = runBlocking {
@@ -26,6 +40,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -58,6 +73,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -90,6 +106,7 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
           </mirrors>
         </settings>
         """.trimIndent())
+      refreshFiles(listOf(settingsXml))
       mavenGeneralSettings.setUserSettingsFile(settingsXml.canonicalPath)
 
       importProjectAsync("""
@@ -108,16 +125,14 @@ class RepositoriesImportingTest : MavenMultiVersionImportingTestCase() {
   }
 
   private fun assertDoNotHaveRepositories(vararg repos: String) {
-    val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
 
     assertDoNotContain(actual, *repos)
   }
 
 
   private fun assertHaveRepositories(vararg repos: String) {
-    val actual = ContainerUtil.map(
-      RemoteRepositoriesConfiguration.getInstance(project).repositories) { it: RemoteRepositoryDescription -> it.url }
+    val actual = RemoteRepositoriesConfiguration.getInstance(project).repositories.map { it.url }
 
     assertContain(actual, *repos)
   }

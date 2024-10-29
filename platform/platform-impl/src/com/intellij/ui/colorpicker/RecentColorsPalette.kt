@@ -7,6 +7,7 @@ package com.intellij.ui.colorpicker
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.KeyEvent
@@ -17,6 +18,7 @@ import javax.swing.*
 private const val COLOR_BUTTON_ROW = 2
 private const val COLOR_BUTTON_COLUMN = 10
 
+@ApiStatus.Internal
 class RecentColorsPalette(private val pickerModel: ColorPickerModel,
                           private val recentColors: List<Color>) : JPanel() {
 

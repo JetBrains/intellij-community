@@ -18,7 +18,7 @@
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.util.environment.Environment"
                         serviceImplementation="com.intellij.openapi.externalSystem.util.environment.SystemEnvironment"/>
 
-    <projectConfigurable groupId="build" id="build.tools" groupWeight="1000"
+    <projectConfigurable groupId="build" id="build.tools"
                          instance="com.intellij.openapi.externalSystem.service.settings.ExternalSystemGroupConfigurable"
                          key="settings.build.tools.display.name" bundle="messages.ExternalSystemBundle"/>
     <search.optionContributor
@@ -77,6 +77,9 @@
     <registryKey key="external.system.incomplete.dependencies.state.during.sync" defaultValue="true"
                  description="Indicates project state as incomplete during sync with external build system"/>
 
+    <registryKey key="external.system.substitute.library.dependencies" defaultValue="false"
+                 description="Replace library dependencies with module dependencies imported from external build systems like Maven/Gradle"/>
+
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>
@@ -117,7 +120,7 @@
                    serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ExternalProjectSystemRegistry"
-                        serviceImplementation="com.intellij.openapi.externalSystem.ExternalProjectSystemRegistryImpl" overrides="true"/>
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalProjectSystemRegistryImpl" overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemJdkProvider"/>
@@ -153,7 +156,7 @@
     <listener class="com.intellij.openapi.externalSystem.service.project.trusted.ExternalSystemTrustedListener"
               topic="com.intellij.ide.trustedProjects.TrustedProjectsListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
-    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$BulkFileListenerImpl"
+    <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImplBulkFileListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"
               activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManagerImpl$ModuleListenerImpl"

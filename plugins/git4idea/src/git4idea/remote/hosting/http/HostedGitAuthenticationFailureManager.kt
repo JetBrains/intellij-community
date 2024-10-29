@@ -6,7 +6,6 @@ import com.intellij.collaboration.auth.Account
 import com.intellij.collaboration.auth.AccountManager
 import com.intellij.collaboration.auth.AccountUrlAuthenticationFailuresHolder
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.util.Disposer
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,6 +18,7 @@ abstract class HostedGitAuthenticationFailureManager<A : Account> : Disposable {
     holder = AccountUrlAuthenticationFailuresHolder(cs, accountManager)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("A service coroutine scope should be provided")
   constructor(accountManager: () -> AccountManager<A, *>) {
     holder = AccountUrlAuthenticationFailuresHolder(disposingScope(), accountManager)

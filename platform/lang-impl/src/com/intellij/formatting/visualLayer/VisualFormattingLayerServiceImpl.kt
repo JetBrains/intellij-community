@@ -13,8 +13,10 @@ import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper
 import com.intellij.openapi.editor.impl.LineSet
 import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.min
 
+@ApiStatus.Internal
 @Service
 class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
 
@@ -191,7 +193,11 @@ class VisualFormattingLayerServiceImpl : VisualFormattingLayerService() {
 
     val columnsDelta = replacementColumns - originalColumns
     when {
-      columnsDelta > 0 -> yield(InlineInlay(originalEndOffset, columnsDelta))
+      columnsDelta > 0 -> {
+        // If we place the inlay at the right boundary, the inlay will stay even if the whitespace is folded. (as in IJPL-29910)
+        // In the presence of tabs, however, things get too complicated
+        yield(InlineInlay(if (originalContainsTabs) originalEndOffset else originalStartOffset, columnsDelta))
+      }
       columnsDelta < 0 -> {
         val originalLength = originalEndOffset - originalStartOffset
         if (originalContainsTabs) {

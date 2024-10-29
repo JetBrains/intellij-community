@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class AbstractUrl {
-  @NotNull
-  protected final String url;
+  protected final @NotNull String url;
   protected final String moduleName;
   private final String myType;
 
@@ -36,8 +35,7 @@ public abstract class AbstractUrl {
 
   public abstract Object @Nullable [] createPath(Project project);
 
-  @Nullable("return null if cannot recognize the element")
-  public AbstractUrl createUrl(String type, String moduleName, String url){
+  public @Nullable("return null if cannot recognize the element") AbstractUrl createUrl(String type, String moduleName, String url){
     if (type.equals(myType)) {
       return createUrl(moduleName, url);
     }

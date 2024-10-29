@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.gist;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -22,6 +22,7 @@ import com.intellij.util.gist.storage.GistStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +34,7 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 public final class GistManagerImpl extends GistManager {
   private static final Logger LOG = Logger.getInstance(GistManagerImpl.class);
 
@@ -43,13 +45,11 @@ public final class GistManagerImpl extends GistManager {
 
   private static final Map<String, VirtualFileGist<?>> ourGists = CollectionFactory.createConcurrentWeakValueMap();
 
-
   private final AtomicInteger myReindexCount = new AtomicInteger(
     PropertiesComponent.getInstance().getInt(GIST_REINDEX_COUNT_PROPERTY_NAME, 0)
   );
 
-  private final MergingUpdateQueue myDropCachesQueue = new MergingUpdateQueue("gist-manager-drop-caches", 500, true, null)
-    .setRestartTimerOnAdd(true);
+  private final MergingUpdateQueue myDropCachesQueue;
   private final AtomicInteger myMergingDropCachesRequestors = new AtomicInteger();
 
   private final GistStorage gistStorage;
@@ -58,7 +58,7 @@ public final class GistManagerImpl extends GistManager {
     @Override
     public void after(@NotNull List<? extends @NotNull VFileEvent> events) {
       if (ContainerUtil.exists(events, MyBulkFileListener::shouldDropCache)) {
-        GistManagerImpl gistManager = (GistManagerImpl)GistManager.getInstance();
+        GistManagerImpl gistManager = (GistManagerImpl)getInstance();
         if (events.size() < 100) {
           List<VirtualFile> files = events.stream()
             .filter(MyBulkFileListener::shouldDropCache)
@@ -90,16 +90,17 @@ public final class GistManagerImpl extends GistManager {
     }
   }
 
-  public GistManagerImpl() {
+  public GistManagerImpl(@NotNull CoroutineScope coroutineScope) {
     gistStorage = GistStorage.getInstance();
+    myDropCachesQueue = MergingUpdateQueue.Companion.edtMergingUpdateQueue("gist-manager-drop-caches", 500, coroutineScope)
+      .setRestartTimerOnAdd(true);
   }
 
-  @NotNull
   @Override
-  public <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull String id,
-                                                         int version,
-                                                         @NotNull DataExternalizer<Data> externalizer,
-                                                         @NotNull VirtualFileGist.GistCalculator<Data> calcData) {
+  public @NotNull <Data> VirtualFileGist<Data> newVirtualFileGist(@NotNull String id,
+                                                                  int version,
+                                                                  @NotNull DataExternalizer<Data> externalizer,
+                                                                  @NotNull VirtualFileGist.GistCalculator<Data> calcData) {
     if (ourGists.get(id) != null) {
       throw new IllegalArgumentException("Gist '" + id + "' is already registered");
     }
@@ -111,12 +112,11 @@ public final class GistManagerImpl extends GistManager {
     );
   }
 
-  @NotNull
   @Override
-  public <Data> PsiFileGist<Data> newPsiFileGist(@NotNull String id,
-                                                 int version,
-                                                 @NotNull DataExternalizer<Data> externalizer,
-                                                 @NotNull NullableFunction<? super PsiFile, ? extends Data> calculator) {
+  public @NotNull <Data> PsiFileGist<Data> newPsiFileGist(@NotNull String id,
+                                                          int version,
+                                                          @NotNull DataExternalizer<Data> externalizer,
+                                                          @NotNull NullableFunction<? super PsiFile, ? extends Data> calculator) {
     return new PsiFileGistImpl<>(id, version, externalizer, calculator);
   }
 

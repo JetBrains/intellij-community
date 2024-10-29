@@ -15,10 +15,12 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.LightweightHint
+import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.enumMapOf
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.withTranslated
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.awt.Graphics2D
 import java.awt.Point
@@ -27,6 +29,7 @@ import java.awt.geom.Rectangle2D
 /**
  * @see PresentationTreeBuilderImpl
  */
+@ApiStatus.Internal
 class InlayPresentationList(
   private var state: TinyTree<Any?>,
   @TestOnly var hintFormat: HintFormat,
@@ -75,7 +78,9 @@ class InlayPresentationList(
 
   fun handleClick(e: EditorMouseEvent, pointInsideInlay: Point, fontMetricsStorage: InlayTextMetricsStorage, controlDown: Boolean) {
     val entry = findEntryByPoint(fontMetricsStorage, pointInsideInlay) ?: return
-    entry.handleClick(e.editor, this, controlDown)
+    SlowOperations.startSection(SlowOperations.ACTION_PERFORM).use {
+      entry.handleClick(e, this, controlDown)
+    }
   }
 
   private fun findEntryByPoint(fontMetricsStorage: InlayTextMetricsStorage, pointInsideInlay: Point): InlayPresentationEntry? {

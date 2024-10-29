@@ -12,14 +12,17 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import com.intellij.project.stateStore
-import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.*
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.charset.Charset
 import java.nio.file.Path
 import java.nio.file.Paths
-import javax.swing.*
+import javax.swing.DefaultComboBoxModel
+import javax.swing.JCheckBox
+import javax.swing.JRadioButton
 
+@ApiStatus.Internal
 class CreatePatchConfigurationPanel(val project: Project) {
   private val panel: DialogPanel
 
@@ -29,7 +32,6 @@ class CreatePatchConfigurationPanel(val project: Project) {
   private lateinit var toClipboardRadioButton: JRadioButton
   private lateinit var reverseCheckBox: JCheckBox
   private lateinit var encodingComboBox: ComboBox<Charset>
-  private lateinit var warningLabel: JLabel
 
   private var commonParentDir: File? = null
 
@@ -69,6 +71,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
             .columns(COLUMNS_LARGE)
             .align(AlignX.FILL)
             .enabledIf(toFileButton.selected)
+            .validationOnInput { validateFileName() }
         }.layout(RowLayout.LABEL_ALIGNED)
         row {
           toClipboardRadioButton = radioButton(message("create.patch.to.clipboard"))
@@ -80,6 +83,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
         cell(basePathField)
           .columns(COLUMNS_LARGE)
           .align(AlignX.FILL)
+          .validationOnInput { validateBaseDirPath() }
       }.topGap(TopGap.SMALL)
       row {
         reverseCheckBox = checkBox(message("create.patch.reverse.checkbox")).component
@@ -87,13 +91,6 @@ class CreatePatchConfigurationPanel(val project: Project) {
       row(message("create.patch.encoding")) {
         encodingComboBox = comboBox(DefaultComboBoxModel(CharsetToolkit.getAvailableCharsets())).component
         encodingComboBox.selectedItem = EncodingProjectManager.getInstance(project).defaultCharset
-      }
-      row {
-        warningLabel = label("")
-          .applyToComponent {
-            foreground = JBColor.RED
-            isVisible = false
-          }.component
       }
     }
   }
@@ -115,7 +112,7 @@ class CreatePatchConfigurationPanel(val project: Project) {
     }
   }
 
-  fun getPanel(): JComponent {
+  fun getPanel(): DialogPanel {
     return panel
   }
 
@@ -153,25 +150,19 @@ class CreatePatchConfigurationPanel(val project: Project) {
   }
 
   fun isOkToExecute(): Boolean {
-    return validateFields() == null
-  }
-
-  fun validateFields(): ValidationInfo? {
-    warnIfFileExists()
-
-    return validateFileName() ?: validateBaseDirPath()
-  }
-
-  private fun warnIfFileExists() {
-    val fileName = getFileName()
-    warningLabel.text = if (File(fileName).exists()) IdeBundle.message("error.file.with.name.already.exists", fileName) else ""
-    warningLabel.isVisible = warningLabel.text.isNotBlank()
+    return panel.validateAll().none { !it.warning }
   }
 
   private fun validateFileName(): ValidationInfo? {
-    val validateNameError = PatchNameChecker.validateName(getFileName())
+    val fileName = getFileName()
+
+    val validateNameError = PatchNameChecker.validateName(fileName)
     if (validateNameError != null) {
       return ValidationInfo(validateNameError, fileNameField)
+    }
+
+    if (File(fileName).exists()) {
+      return ValidationInfo(IdeBundle.message("error.file.with.name.already.exists", fileName)).asWarning().withOKEnabled()
     }
 
     return null

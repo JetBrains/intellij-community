@@ -11,8 +11,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.MutableProperty
 import com.intellij.ui.dsl.builder.panel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class WslTargetConfigurable(val config: WslTargetEnvironmentConfiguration,
                             private val project: Project) :
   BoundConfigurable(config.displayName, config.getTargetType().helpTopic) {

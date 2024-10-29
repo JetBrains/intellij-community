@@ -47,14 +47,12 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
   }
 
   @Override
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return RncFileType.getInstance();
   }
 
   @Override
-  @NotNull
-  public XmlDocument getDocument() {
+  public @NotNull XmlDocument getDocument() {
     // this needs to be a seperate child element because of com.intellij.util.xml.impl.ExternalChangeProcessor.visitDocumentChanged()
     final XmlDocument document = findChildByClass(XmlDocument.class);
     assert document != null;
@@ -98,9 +96,8 @@ public class RncFileImpl extends PsiFileBase implements RncFile, XmlFile {
     return false;
   }
 
-  @NotNull
   @Override
-  public GlobalSearchScope getFileResolveScope() {
+  public @NotNull GlobalSearchScope getFileResolveScope() {
     return ProjectScope.getAllScope(getProject());
   }
 

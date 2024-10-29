@@ -9,6 +9,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -18,7 +19,7 @@ import com.intellij.spellchecker.DictionaryLayer;
 import com.intellij.spellchecker.DictionaryLayersProvider;
 import com.intellij.spellchecker.inspections.PlainTextSplitter;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.spellchecker.quickfixes.*;
+import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFixFactory;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.util.KeyedLazyInstance;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,10 @@ import java.util.Set;
  * <p>
  * Register via extension point {@code com.intellij.spellchecker.support}
  * and override {@link #getTokenizer(PsiElement)} to skip/handle specific elements.
+ * <p>
+ * Mark your strategy as {@link com.intellij.openapi.project.DumbAware} if it does not need indexes to perform
  */
-public class SpellcheckingStrategy {
+public class SpellcheckingStrategy implements PossiblyDumbAware {
   protected final Tokenizer<PsiComment> myCommentTokenizer = new CommentTokenizer();
 
   public static final ExtensionPointName<KeyedLazyInstance<SpellcheckingStrategy>> EP_NAME =

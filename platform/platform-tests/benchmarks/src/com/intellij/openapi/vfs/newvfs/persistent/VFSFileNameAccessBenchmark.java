@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.persistent.namecache.MRUFileNameCache;
@@ -51,8 +51,8 @@ public class VFSFileNameAccessBenchmark {
     @Setup
     public void setup(FSRecordsContext vfsContext) throws Exception {
       FSRecordsImpl vfs = vfsContext.vfs();
-      PersistentFSRecordsStorage records = vfs.connection().getRecords();
-      mruFileNameCache = new MRUFileNameCache(vfs.connection().getNames());
+      PersistentFSRecordsStorage records = vfs.connection().records();
+      mruFileNameCache = new MRUFileNameCache(vfs.connection().names());
 
       for (int i = 0; i < FILE_RECORDS_COUNT; i++) {
         int fileId = records.allocateRecord();
@@ -125,7 +125,7 @@ public class VFSFileNameAccessBenchmark {
                                                                      FSRecordsContext vfsContext) throws IOException {
     ThreadLocalRandom rnd = ThreadLocalRandom.current();
     FSRecordsImpl vfs = vfsContext.vfs();
-    ScannableDataEnumeratorEx<String> names = vfs.connection().getNames();
+    ScannableDataEnumeratorEx<String> names = vfs.connection().names();
 
     int fileId = mainContext.generateFileId(rnd, mainContext.FILES_TO_ACCESS);
     int nameId = vfs.getNameIdByFileId(fileId);

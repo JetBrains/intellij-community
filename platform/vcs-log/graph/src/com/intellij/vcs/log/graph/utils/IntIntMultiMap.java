@@ -3,11 +3,13 @@ package com.intellij.vcs.log.graph.utils;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.AbstractList;
 import java.util.Collection;
 
+@ApiStatus.Internal
 public final class IntIntMultiMap {
   private final static int[] EMPTY = new int[0];
   private final Int2ObjectMap<int[]> myKeyToArrayMap = new Int2ObjectOpenHashMap<>();

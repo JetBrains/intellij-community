@@ -71,6 +71,8 @@ class AddAnnotationTargetFix(annotationEntry: KtAnnotationEntry) : KotlinQuickFi
             return annotationClass to annotationTypeDescriptor
         }
 
+        // TODO K2 migration: see
+        // org.jetbrains.kotlin.j2k.k2.postProcessings.PropertiesDataFilter#getPropertyWithAccessors.accessorsAreAnnotatedWithFunctionOnlyAnnotations.getExistingAnnotationTargets
         fun getExistingAnnotationTargets(annotationClassDescriptor: ClassDescriptor): Set<String> =
             annotationClassDescriptor.annotations
                 .firstOrNull { it.fqName == StandardNames.FqNames.target }

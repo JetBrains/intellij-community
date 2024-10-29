@@ -5,7 +5,6 @@ import com.intellij.collaboration.async.*
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.ui.codereview.diff.DiscussionsViewOption
 import com.intellij.collaboration.ui.codereview.diff.model.*
-import com.intellij.collaboration.ui.codereview.diff.viewer.buildChangeContext
 import com.intellij.collaboration.util.ChangesSelection
 import com.intellij.collaboration.util.ComputedResult
 import com.intellij.collaboration.util.RefComparisonChange
@@ -73,8 +72,7 @@ internal class GHPRDiffViewModelImpl(
     .map { RefComparisonChangesSorter.Grouping(project, it) }
   private val helper =
     CodeReviewDiffViewModelComputer(changesFetchFlow, changesSorter) { changesBundle, change ->
-      val changeContext: Map<Key<*>, Any> = change.buildChangeContext()
-      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project), changeContext)
+      val changeDiffProducer = ChangeDiffRequestProducer.create(project, change.createVcsChange(project))
                                ?: error("Could not create diff producer from $change")
       CodeReviewDiffRequestProducer(project, change, changeDiffProducer, changesBundle.patchesByChange[change]?.getDiffComputer())
     }

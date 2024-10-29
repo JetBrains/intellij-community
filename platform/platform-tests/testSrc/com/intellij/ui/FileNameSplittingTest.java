@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ui.FilePathSplittingPolicy;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
@@ -118,7 +118,7 @@ public class FileNameSplittingTest extends TestCase {
   public void testPerformance() {
     myPolicy = FilePathSplittingPolicy.SPLIT_BY_SEPARATOR;
 
-    PerformanceTestUtil.newPerformanceTest("FileNameSplitting", () -> {
+    Benchmark.newBenchmark("FileNameSplitting", () -> {
       for (int i = 0; i < 100; i++) {
         for (int j = 0; j < FILE.getPath().length(); j++)
           myPolicy.getPresentableName(FILE, j);

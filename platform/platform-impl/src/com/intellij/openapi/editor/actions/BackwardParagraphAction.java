@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.DocumentUtil.isLineEmpty;
@@ -14,6 +15,7 @@ import static com.intellij.util.DocumentUtil.isLineEmpty;
 /**
  * Emulates Emacs 'backward-paragraph' action
  */
+@ApiStatus.Internal
 public final class BackwardParagraphAction extends EditorAction {
   public BackwardParagraphAction() {
     super(new Handler(false));

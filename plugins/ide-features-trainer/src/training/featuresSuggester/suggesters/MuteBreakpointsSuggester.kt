@@ -23,6 +23,8 @@ class MuteBreakpointsSuggester : AbstractFeatureSuggester() {
 
   private val countOfRemovedBreakpointsToGetSuggestion = 3
 
+  override val forceCheckForStatistics = true
+
   private object State {
     var lastBreakpointPosition: XSourcePosition? = null
     var lastPauseTimeMillis: Long = 0L

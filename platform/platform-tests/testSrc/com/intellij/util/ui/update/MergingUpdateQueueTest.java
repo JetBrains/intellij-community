@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.Alarm;
@@ -18,6 +19,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
 public class MergingUpdateQueueTest extends LightPlatformTestCase {
   public void testOnShowNotify() {
@@ -41,7 +44,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testPriority() {
-    final boolean[] attemps = new boolean[3];
+    final boolean[] attempts = new boolean[3];
 
     final MyQueue queue = new MyQueue();
 
@@ -49,9 +52,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        attemps[0] = true;
-        assertTrue(attemps[1]);
-        assertTrue(attemps[2]);
+        attempts[0] = true;
+        assertTrue(attempts[1]);
+        assertTrue(attempts[2]);
       }
     };
 
@@ -59,9 +62,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        assertFalse(attemps[0]);
-        attemps[1] = true;
-        assertFalse(attemps[2]);
+        assertFalse(attempts[0]);
+        attempts[1] = true;
+        assertFalse(attempts[2]);
       }
     };
 
@@ -69,9 +72,9 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
       @Override
       public void run() {
         super.run();
-        assertFalse(attemps[0]);
-        assertTrue(attemps[1]);
-        attemps[2] = true;
+        assertFalse(attempts[0]);
+        assertTrue(attempts[1]);
+        attempts[2] = true;
       }
     };
 
@@ -287,7 +290,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   private static final class MyQueue extends MergingUpdateQueue {
-    private boolean myExecuted;
+    private boolean isExecuted;
 
     private MyQueue() {
       this(400);
@@ -298,22 +301,22 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     }
 
     @Override
-    public void run() {
-
+    protected @NotNull Runnable getFlushTask() {
+      return EmptyRunnable.getInstance();
     }
 
     private void onTimer() {
-      super.run();
+      super.getFlushTask().run();
     }
 
     @Override
-    protected void execute(final Update @NotNull [] update) {
-      super.execute(update);
-      myExecuted = true;
+    protected void execute(@NotNull List<? extends Update> updates) {
+      super.execute(updates);
+      isExecuted = true;
     }
 
     boolean wasExecuted() {
-      return myExecuted;
+      return isExecuted;
     }
 
     @Override
@@ -322,7 +325,7 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
     }
   }
 
-  private static void waitForExecution(final MyQueue queue) {
+  private static void waitForExecution(@NotNull MyQueue queue) {
     queue.onTimer();
     new WaitFor(5000) {
       @Override
@@ -333,9 +336,8 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testReallyMergeEqualIdentityEqualPriority() {
-    final MyQueue queue = new MyQueue();
-
-    final AtomicInteger count = new AtomicInteger();
+    MyQueue queue = new MyQueue();
+    AtomicInteger count = new AtomicInteger();
     for (int i = 0; i < 100; i++) {
       for (int j = 0; j < 100; j++) {
         queue.queue(new Update("foo" + j) {
@@ -451,15 +453,15 @@ public class MergingUpdateQueueTest extends LightPlatformTestCase {
   }
 
   public void testMustRejectOnDispose() {
-    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
+    MergingUpdateQueue queue = new MergingUpdateQueue(getTestName(false), 1_000_000, true, null, getTestRootDisposable(), null, Alarm.ThreadToUse.POOLED_THREAD);
     Update update = new Update(this) {
       @Override
       public void run() {
       }
     };
     queue.queue(update);
-    assertFalse(update.isRejected());
+    assertThat(update.isRejected()).isFalse();
     Disposer.dispose(queue);
-    assertTrue(update.isRejected());
+    assertThat(update.isRejected()).isTrue();
   }
 }

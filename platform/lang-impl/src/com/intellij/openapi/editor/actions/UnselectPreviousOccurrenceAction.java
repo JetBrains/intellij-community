@@ -7,9 +7,11 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class UnselectPreviousOccurrenceAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private UnselectPreviousOccurrenceAction() {
     super(new Handler());

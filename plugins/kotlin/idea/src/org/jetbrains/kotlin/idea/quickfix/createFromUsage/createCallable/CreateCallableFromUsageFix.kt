@@ -278,6 +278,7 @@ abstract class CreateCallableFromUsageFixBase<E : KtElement>(
         val callableBuilder =
             CallableBuilderConfiguration(callableInfos, element as KtElement, fileForBuilder, editorForBuilder, isExtension).createBuilder()
 
+        callableBuilder.elementToReplace = (callableInfo as? FunctionInfo)?.elementToReplace
         callableBuilder.isStartTemplate = isStartTemplate()
 
         fun runBuilder(placement: () -> CallablePlacement) {

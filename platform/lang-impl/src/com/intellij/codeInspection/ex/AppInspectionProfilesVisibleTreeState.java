@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.InspectionProfile;
@@ -7,8 +7,10 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @State(
   name = "AppInspectionProfilesVisibleTreeState",
   storages = @Storage(value = "other.xml", roamingType = RoamingType.DISABLED)
@@ -26,12 +28,11 @@ public final class AppInspectionProfilesVisibleTreeState implements PersistentSt
   }
 
   @Override
-  public void loadState(@NotNull final VisibleTreeStateComponent state) {
+  public void loadState(final @NotNull VisibleTreeStateComponent state) {
     myComponent.copyFrom(state);
   }
 
-  @NotNull
-  public VisibleTreeState getVisibleTreeState(@NotNull InspectionProfile profile) {
+  public @NotNull VisibleTreeState getVisibleTreeState(@NotNull InspectionProfile profile) {
     return myComponent.getVisibleTreeState(profile);
   }
 }

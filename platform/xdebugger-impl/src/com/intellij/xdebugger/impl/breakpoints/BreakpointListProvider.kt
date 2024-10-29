@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.icons.AllIcons
@@ -101,8 +101,11 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       presentation.presentableText = message(value)
     }
 
-    private val breakpointsUpdater = SingleAlarm.pooledThreadSingleAlarm(50, project) {
-      if (project.isDisposed) return@pooledThreadSingleAlarm
+    private val breakpointsUpdater = SingleAlarm.pooledThreadSingleAlarm(delay = 50, parentDisposable = project) {
+      if (project.isDisposed) {
+        return@pooledThreadSingleAlarm
+      }
+
       val breakpoints = mutableMapOf<Any, Any>()
       ReadAction.run<Exception> {
         val items = mutableListOf<BreakpointItem>()
@@ -111,7 +114,6 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
         val manager = XDebuggerManager.getInstance(project).breakpointManager as? XBreakpointManagerImpl
         val selectedRules = manager?.breakpointsDialogSettings?.selectedGroupingRules
         val enabledRules = mutableListOf<XBreakpointGroupingRule<Any, XBreakpointGroup>>()
-          .apply { providers.forEach { it.createBreakpointsGroupingRules(this) } }
           .apply { addAll(XBreakpointGroupingRule.EP.extensionList) }
           .filter { it.isAlwaysEnabled || true == selectedRules?.contains(it.id) }
           .toSortedSet(XBreakpointGroupingRule.PRIORITY_COMPARATOR)

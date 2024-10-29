@@ -4,11 +4,13 @@ package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 
+@ApiStatus.Internal
 public final class InspectionSeverityGroupNode extends InspectionTreeNode{
   private final HighlightDisplayLevel myLevel;
   private final SeverityRegistrar mySeverityRegistrar;

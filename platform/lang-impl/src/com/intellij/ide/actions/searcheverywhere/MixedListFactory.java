@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -15,20 +16,14 @@ final class MixedListFactory extends SEResultsListFactory {
 
   private final List<String> prioritizedContributors = new ArrayList<>();
 
-  MixedListFactory(boolean forceDisableRecentFilesPrioritization) {
+  MixedListFactory() {
     prioritizedContributors.add(CalculatorSEContributor.class.getName());
     prioritizedContributors.add("AutocompletionContributor");
     prioritizedContributors.add("CommandsContributor");
     prioritizedContributors.add(TopHitSEContributor.class.getSimpleName());
-    if (!forceDisableRecentFilesPrioritization) {
-      if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {
-        prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
-      }
+    if (AdvancedSettings.getBoolean("search.everywhere.recent.at.top")) {
+      prioritizedContributors.add(RecentFilesSEContributor.class.getSimpleName());
     }
-  }
-
-  MixedListFactory(){
-    this(false);
   }
 
   @Override
@@ -38,8 +33,10 @@ final class MixedListFactory extends SEResultsListFactory {
 
     Map<String, Integer> priorities = getContributorsPriorities();
     Comparator<SearchEverywhereFoundElementInfo> prioritizedContributorsComparator = (element1, element2) -> {
-      int firstElementPriority = priorities.getOrDefault(element1.getContributor().getSearchProviderId(), 0);
-      int secondElementPriority = priorities.getOrDefault(element2.getContributor().getSearchProviderId(), 0);
+      @Nullable SearchEverywhereContributor<?> contributor1 = element1.getContributor();
+      @Nullable SearchEverywhereContributor<?> contributor2 = element2.getContributor();
+      int firstElementPriority = contributor1 == null ? 0 : priorities.getOrDefault(contributor1.getSearchProviderId(), 0);
+      int secondElementPriority = contributor2 == null ? 0 : priorities.getOrDefault(contributor2.getSearchProviderId(), 0);
       return Integer.compare(firstElementPriority, secondElementPriority);
     };
 
@@ -51,8 +48,7 @@ final class MixedListFactory extends SEResultsListFactory {
     return mixedModel;
   }
 
-  @NotNull
-  public Map<String, Integer> getContributorsPriorities() {
+  public @NotNull Map<String, Integer> getContributorsPriorities() {
     Map<String, Integer> priorities = new HashMap<>();
     for (int i = 0; i < prioritizedContributors.size(); i++) {
       priorities.put(prioritizedContributors.get(i), prioritizedContributors.size() - i);

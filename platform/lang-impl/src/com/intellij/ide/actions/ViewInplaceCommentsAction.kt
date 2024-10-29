@@ -10,12 +10,14 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Window
 import javax.swing.JTree
 
 /**
  * @author gregsh
  */
+@ApiStatus.Internal
 class ViewInplaceCommentsAction : DumbAwareToggleAction() {
   init {
     isEnabledInModalContext = true

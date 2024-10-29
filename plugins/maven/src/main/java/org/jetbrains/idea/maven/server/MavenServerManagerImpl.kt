@@ -175,33 +175,40 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return connector
   }
 
-  private fun doGetOrCreateConnector(project: Project,
-                                     multimoduleDirectory: String,
-                                     jdk: Sdk): MavenServerConnector {
+  private fun doGetOrCreateConnector(
+    project: Project,
+    multimoduleDirectory: String,
+    jdk: Sdk,
+  ): MavenServerConnector {
     if (isShutdown.get()) {
       throw IllegalStateException("We are closed, sorry. No connectors anymore")
     }
-    var connector: MavenServerConnector?
+
     synchronized(myMultimoduleDirToConnectorMap) {
+      var connector: MavenServerConnector?
       connector = myMultimoduleDirToConnectorMap[multimoduleDirectory]
-      if (connector != null) return connector!!
+      if (connector != null) return connector
       connector = findCompatibleConnector(project, jdk, multimoduleDirectory)
       if (connector != null) {
         MavenLog.LOG.debug("[connector] use existing connector for $connector")
-        connector!!.addMultimoduleDir(multimoduleDirectory)
+        connector.addMultimoduleDir(multimoduleDirectory)
       }
       else {
         connector = registerNewConnector(project, jdk, multimoduleDirectory)
       }
-      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector!!)
+      myMultimoduleDirToConnectorMap.put(multimoduleDirectory, connector)
+
+      return connector
     }
 
-    return connector!!
+
   }
 
-  private fun findCompatibleConnector(project: Project,
-                                      jdk: Sdk,
-                                      multimoduleDirectory: String): MavenServerConnector? {
+  private fun findCompatibleConnector(
+    project: Project,
+    jdk: Sdk,
+    multimoduleDirectory: String,
+  ): MavenServerConnector? {
     val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory)
     val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
     for ((_, value) in myMultimoduleDirToConnectorMap) {
@@ -215,9 +222,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return null
   }
 
-  private fun registerNewConnector(project: Project,
-                                   jdk: Sdk,
-                                   multimoduleDirectory: String): MavenServerConnector {
+  private fun registerNewConnector(
+    project: Project,
+    jdk: Sdk,
+    multimoduleDirectory: String,
+  ): MavenServerConnector {
     val distribution = MavenDistributionsCache.getInstance(project).getMavenDistribution(multimoduleDirectory)
     val vmOptions = MavenDistributionsCache.getInstance(project).getVmOptions(multimoduleDirectory)
     val debugPort = freeDebugPort
@@ -244,7 +253,7 @@ internal class MavenServerManagerImpl : MavenServerManager {
   }
 
   override fun dispose() {
-    closeAllConnectorsAndWait()
+    shutdownNow()
   }
 
   override fun shutdownConnector(connector: MavenServerConnector, wait: Boolean): Boolean {
@@ -327,13 +336,16 @@ internal class MavenServerManagerImpl : MavenServerManager {
     return eventListenerJar
   }
 
-  override fun createEmbedder(project: Project,
-                              alwaysOnline: Boolean,
-                              multiModuleProjectDirectory: String): MavenEmbedderWrapper {
+  override fun createEmbedder(
+    project: Project,
+    alwaysOnline: Boolean,
+    multiModuleProjectDirectory: String,
+  ): MavenEmbedderWrapper {
     return object : MavenEmbedderWrapper(project) {
       private var myConnector: MavenServerConnector? = null
 
       val createMutex = Mutex()
+
       @Throws(RemoteException::class)
       override suspend fun create(): MavenServerEmbedder {
         return createMutex.withLock { doCreate() }
@@ -561,10 +573,12 @@ internal class MavenServerManagerImpl : MavenServerManager {
       }
     }
 
-    private fun compatibleParameters(project: Project,
-                                     connector: MavenServerConnector,
-                                     jdk: Sdk,
-                                     multimoduleDirectory: String): Boolean {
+    private fun compatibleParameters(
+      project: Project,
+      connector: MavenServerConnector,
+      jdk: Sdk,
+      multimoduleDirectory: String,
+    ): Boolean {
       if (Registry.`is`("maven.server.per.idea.project")) return true
       val cache = MavenDistributionsCache.getInstance(project)
       val distribution = cache.getMavenDistribution(multimoduleDirectory)
@@ -578,9 +592,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
         return File(root.parent, "intellij.maven.server.eventListener")
       }
 
-    private fun convertSettings(project: Project,
-                                settings: MavenGeneralSettings?,
-                                multiModuleProjectDirectory: String): MavenServerSettings {
+    private fun convertSettings(
+      project: Project,
+      settings: MavenGeneralSettings?,
+      multiModuleProjectDirectory: String,
+    ): MavenServerSettings {
       var settings = settings
       if (settings == null) {
         settings = MavenWorkspaceSettingsComponent.getInstance(project).settings.generalSettings
@@ -612,9 +628,11 @@ internal class MavenServerManagerImpl : MavenServerManager {
       return result
     }
 
-    private fun getGlobalConfigFromMavenConfig(project: Project,
-                                               settings: MavenGeneralSettings,
-                                               transformer: RemotePathTransformerFactory.Transformer): File? {
+    private fun getGlobalConfigFromMavenConfig(
+      project: Project,
+      settings: MavenGeneralSettings,
+      transformer: RemotePathTransformerFactory.Transformer,
+    ): File? {
       val mavenConfig = settings.mavenConfig
       if (mavenConfig == null) return null
       val filePath = mavenConfig.getFilePath(MavenConfigSettings.ALTERNATE_GLOBAL_SETTINGS)

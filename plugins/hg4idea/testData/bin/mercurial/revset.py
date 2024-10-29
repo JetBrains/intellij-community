@@ -5,12 +5,13 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
+import binascii
+import functools
+import random
 import re
 
 from .i18n import _
-from .pycompat import getattr
 from .node import (
     bin,
     nullrev,
@@ -146,6 +147,22 @@ def rawsmartset(repo, subset, x, order):
         return subset & x
     else:
         return x & subset
+
+
+def raw_node_set(repo, subset, x, order):
+    """argument is a list of nodeid, resolve and use them"""
+    nodes = _ordered_node_set(repo, x)
+    if order == followorder:
+        return subset & nodes
+    else:
+        return nodes & subset
+
+
+def _ordered_node_set(repo, nodes):
+    if not nodes:
+        return baseset()
+    to_rev = repo.changelog.index.rev
+    return baseset([to_rev(r) for r in nodes])
 
 
 def rangeset(repo, subset, x, y, order):
@@ -595,7 +612,7 @@ def bookmark(repo, subset, x):
             bms.add(repo[bmrev].rev())
         else:
             matchrevs = set()
-            for name, bmrev in pycompat.iteritems(repo._bookmarks):
+            for name, bmrev in repo._bookmarks.items():
                 if matcher(name):
                     matchrevs.add(bmrev)
             for bmrev in matchrevs:
@@ -1338,10 +1355,12 @@ def followlines(repo, subset, x):
 
 @predicate(b'nodefromfile(path)')
 def nodefromfile(repo, subset, x):
-    """
-    An alias for ``::.`` (ancestors of the working directory's first parent).
-    If file pattern is specified, the histories of files matching given
-    pattern in the revision given by startrev are followed, including copies.
+    """Read a list of nodes from the file at `path`.
+
+    This applies `id(LINE)` to each line of the file.
+
+    This is useful when the amount of nodes you need to specify gets too large
+    for the command line.
     """
     path = getstring(x, _(b"nodefromfile require a file path"))
     listed_rev = set()
@@ -1707,7 +1726,7 @@ def named(repo, subset, x):
             )
         namespaces.add(repo.names[pattern])
     else:
-        for name, ns in pycompat.iteritems(repo.names):
+        for name, ns in repo.names.items():
             if matcher(name):
                 namespaces.add(ns)
 
@@ -1729,7 +1748,7 @@ def _node(repo, n):
             rn = repo.changelog.rev(bin(n))
         except error.WdirUnsupported:
             rn = wdirrev
-        except (LookupError, TypeError):
+        except (binascii.Error, LookupError):
             rn = None
     else:
         try:
@@ -1864,13 +1883,12 @@ def outgoing(repo, subset, x):
         dests = []
     missing = set()
     for path in urlutil.get_push_paths(repo, repo.ui, dests):
-        dest = path.pushloc or path.loc
         branches = path.branch, []
 
         revs, checkout = hg.addbranchrevs(repo, repo, branches, [])
         if revs:
             revs = [repo.lookup(rev) for rev in revs]
-        other = hg.peer(repo, {}, dest)
+        other = hg.peer(repo, {}, path)
         try:
             with repo.ui.silent():
                 outgoing = discovery.findcommonoutgoing(
@@ -1962,6 +1980,12 @@ def parents(repo, subset, x):
 def _phase(repo, subset, *targets):
     """helper to select all rev in <targets> phases"""
     return repo._phasecache.getrevset(repo, targets, subset)
+
+
+@predicate(b'_internal()', safe=True)
+def _internal(repo, subset, x):
+    getargs(x, 0, 0, _(b"_internal takes no arguments"))
+    return _phase(repo, subset, *phases.all_internal_phases)
 
 
 @predicate(b'_phase(idx)', safe=True)
@@ -2058,7 +2082,7 @@ def present(repo, subset, x, order):
 @predicate(b'_notpublic', safe=True)
 def _notpublic(repo, subset, x):
     getargs(x, 0, 0, b"_notpublic takes no arguments")
-    return _phase(repo, subset, phases.draft, phases.secret)
+    return _phase(repo, subset, *phases.not_public_phases)
 
 
 # for internal use
@@ -2126,11 +2150,9 @@ def remote(repo, subset, x):
         dest = getstring(l[1], _(b"remote requires a repository path"))
     if not dest:
         dest = b'default'
-    dest, branches = urlutil.get_unique_pull_path(
-        b'remote', repo, repo.ui, dest
-    )
+    path = urlutil.get_unique_pull_path_obj(b'remote', repo.ui, dest)
 
-    other = hg.peer(repo, {}, dest)
+    other = hg.peer(repo, {}, path)
     n = other.lookup(q)
     if n in repo:
         r = repo[n].rev()
@@ -2337,12 +2359,26 @@ def roots(repo, subset, x):
     parents = repo.changelog.parentrevs
 
     def filter(r):
-        for p in parents(r):
-            if 0 <= p and p in s:
-                return False
+        try:
+            for p in parents(r):
+                if 0 <= p and p in s:
+                    return False
+        except error.WdirUnsupported:
+            for p in repo[None].parents():
+                if p.rev() in s:
+                    return False
         return True
 
     return subset & s.filter(filter, condrepr=b'<roots>')
+
+
+MAXINT = (1 << 31) - 1
+MININT = -MAXINT - 1
+
+
+def pick_random(c, gen=random):
+    # exists as its own function to make it possible to overwrite the seed
+    return gen.randint(MININT, MAXINT)
 
 
 _sortkeyfuncs = {
@@ -2353,12 +2389,17 @@ _sortkeyfuncs = {
     b'author': lambda c: c.user(),
     b'date': lambda c: c.date()[0],
     b'node': scmutil.binnode,
+    b'random': pick_random,
 }
 
 
 def _getsortargs(x):
     """Parse sort options into (set, [(key, reverse)], opts)"""
-    args = getargsdict(x, b'sort', b'set keys topo.firstbranch')
+    args = getargsdict(
+        x,
+        b'sort',
+        b'set keys topo.firstbranch random.seed',
+    )
     if b'set' not in args:
         # i18n: "sort" is a keyword
         raise error.ParseError(_(b'sort requires one or two arguments'))
@@ -2398,6 +2439,20 @@ def _getsortargs(x):
                 )
             )
 
+    if b'random.seed' in args:
+        if any(k == b'random' for k, reverse in keyflags):
+            s = args[b'random.seed']
+            seed = getstring(s, _(b"random.seed must be a string"))
+            opts[b'random.seed'] = seed
+        else:
+            # i18n: "random" and "random.seed" are keywords
+            raise error.ParseError(
+                _(
+                    b'random.seed can only be used '
+                    b'when using the random sort key'
+                )
+            )
+
     return args[b'set'], keyflags, opts
 
 
@@ -2417,11 +2472,14 @@ def sort(repo, subset, x, order):
     - ``date`` for the commit date
     - ``topo`` for a reverse topographical sort
     - ``node`` the nodeid of the revision
+    - ``random`` randomly shuffle revisions
 
     The ``topo`` sort order cannot be combined with other sort keys. This sort
     takes one optional argument, ``topo.firstbranch``, which takes a revset that
     specifies what topographical branches to prioritize in the sort.
 
+    The ``random`` sort takes one optional ``random.seed`` argument to control
+    the pseudo-randomness of the result.
     """
     s, keyflags, opts = _getsortargs(x)
     revs = getset(repo, subset, s, order)
@@ -2433,10 +2491,20 @@ def sort(repo, subset, x, order):
         return revs
     elif keyflags[0][0] == b"topo":
         firstbranch = ()
+        parentrevs = repo.changelog.parentrevs
+        parentsfunc = parentrevs
+        if wdirrev in revs:
+
+            def parentsfunc(r):
+                try:
+                    return parentrevs(r)
+                except error.WdirUnsupported:
+                    return [p.rev() for p in repo[None].parents()]
+
         if b'topo.firstbranch' in opts:
             firstbranch = getset(repo, subset, opts[b'topo.firstbranch'])
         revs = baseset(
-            dagop.toposort(revs, repo.changelog.parentrevs, firstbranch),
+            dagop.toposort(revs, parentsfunc, firstbranch),
             istopo=True,
         )
         if keyflags[0][1]:
@@ -2446,7 +2514,12 @@ def sort(repo, subset, x, order):
     # sort() is guaranteed to be stable
     ctxs = [repo[r] for r in revs]
     for k, reverse in reversed(keyflags):
-        ctxs.sort(key=_sortkeyfuncs[k], reverse=reverse)
+        func = _sortkeyfuncs[k]
+        if k == b'random' and b'random.seed' in opts:
+            seed = opts[b'random.seed']
+            r = random.Random(seed)
+            func = functools.partial(func, gen=r)
+        ctxs.sort(key=func, reverse=reverse)
     return baseset([c.rev() for c in ctxs])
 
 
@@ -2715,6 +2788,7 @@ methods = {
     b"parent": parentspec,
     b"parentpost": parentpost,
     b"smartset": rawsmartset,
+    b"nodeset": raw_node_set,
 }
 
 relations = {
@@ -2804,7 +2878,7 @@ def makematcher(tree):
 
 def loadpredicate(ui, extname, registrarobj):
     """Load revset predicates from specified registrarobj"""
-    for name, func in pycompat.iteritems(registrarobj._table):
+    for name, func in registrarobj._table.items():
         symbols[name] = func
         if func._safe:
             safesymbols.add(name)

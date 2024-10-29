@@ -32,6 +32,19 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
   }
 
   @Throws(Exception::class)
+  protected suspend fun rebuildProject() {
+    val tester = CompilerTester(project, listOf(), null)
+    try {
+      blockingContextScope {
+        tester.rebuild()
+      }
+    }
+    finally {
+      tester.tearDown()
+    }
+  }
+
+  @Throws(Exception::class)
   protected suspend fun compileFile(moduleName: String, file: VirtualFile) {
     val tester = CompilerTester(project, listOf(getModule(moduleName)), null)
     try {
@@ -99,6 +112,14 @@ abstract class MavenCompilingTestCase : MavenMultiVersionImportingTestCase() {
 
   protected fun assertCopied(path: String) {
     assertTrue(File(projectPom.parent.path, path).exists())
+  }
+
+  protected fun assertExists(path: String) {
+    assertCopied(path)
+  }
+
+  protected fun assertDoesNotExist(path: String) {
+    assertNotCopied(path)
   }
 
   @Throws(IOException::class)

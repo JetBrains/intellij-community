@@ -10,16 +10,8 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.replaceWithExpressionBodyPres
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionGeneratorConfiguration
 import org.jetbrains.kotlin.idea.k2.refactoring.extractFunction.ExtractionResult
 import org.jetbrains.kotlin.idea.k2.refactoring.util.areTypeArgumentsRedundant
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.ExtractFunctionGenerator
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionData
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionGeneratorConfiguration
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.IExtractionNameSuggester
-import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.TypeDescriptor
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtProperty
-import org.jetbrains.kotlin.psi.KtTypeArgumentList
+import org.jetbrains.kotlin.idea.refactoring.introduce.extractionEngine.*
+import org.jetbrains.kotlin.psi.*
 
 internal object Generator : ExtractFunctionGenerator<KaType, ExtractionResult>() {
     override val nameGenerator: IExtractionNameSuggester<KaType> = KotlinNameSuggester
@@ -44,7 +36,7 @@ internal object Generator : ExtractFunctionGenerator<KaType, ExtractionResult>()
 
     override fun checkTypeArgumentsAreRedundant(args: KtTypeArgumentList): Boolean {
         return args.arguments.none { it.typeReference?.isAnnotatedDeep() == true } &&
-                analyze(args) { areTypeArgumentsRedundant(args) }
+                analyze(args) { areTypeArgumentsRedundant(args, approximateFlexible = false) }
     }
 
     override fun IExtractionGeneratorConfiguration<KaType>.createExtractionResult(

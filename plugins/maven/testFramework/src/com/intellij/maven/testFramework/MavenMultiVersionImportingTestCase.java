@@ -31,7 +31,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   @Override
   public boolean runInDispatchThread() { return false; }
 
-  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-beta-3"};
+  public static final String[] MAVEN_VERSIONS = new String[]{"bundled", "4.0.0-beta-4"};
   @Parameterized.Parameter(0)
   public String myMavenVersion;
   @Nullable
@@ -43,9 +43,29 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   }
 
 
+  protected void forMaven3(Runnable r) {
+    String version = getActualVersion(myMavenVersion);
+    if(version.startsWith("3.")) r.run();
+  }
+
+  protected void forMaven4(Runnable r) {
+    String version = getActualVersion(myMavenVersion);
+    if(version.startsWith("4.")) r.run();
+  }
+
+  protected void needFixForMaven4() {
+    String version = getActualVersion(myMavenVersion);
+    Assume.assumeTrue(version.startsWith("3."));
+  }
+
   protected void assumeMaven3() {
     String version = getActualVersion(myMavenVersion);
     Assume.assumeTrue(version.startsWith("3."));
+  }
+
+  protected void assumeMaven4() {
+    String version = getActualVersion(myMavenVersion);
+    Assume.assumeTrue(version.startsWith("4."));
   }
 
   protected void assumeVersionAtLeast(String version) {
@@ -72,6 +92,7 @@ public abstract class MavenMultiVersionImportingTestCase extends MavenImportingT
   protected void setUp() throws Exception {
     super.setUp();
     if ("bundled".equals(myMavenVersion)) {
+      MavenDistributionsCache.resolveEmbeddedMavenHome();
       return;
     }
     myWrapperTestFixture = new MavenWrapperTestFixture(getProject(), myMavenVersion);

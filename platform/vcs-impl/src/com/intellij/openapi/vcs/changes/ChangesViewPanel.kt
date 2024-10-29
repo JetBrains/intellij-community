@@ -13,10 +13,12 @@ import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 import javax.swing.SwingConstants
 import kotlin.properties.Delegates.observable
 
+@ApiStatus.Internal
 class ChangesViewPanel(val changesView: ChangesListView) : BorderLayoutPanel() {
   val toolbarActionGroup = DefaultActionGroup()
 

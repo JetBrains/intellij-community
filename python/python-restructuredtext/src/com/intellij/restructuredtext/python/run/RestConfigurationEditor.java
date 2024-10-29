@@ -21,9 +21,6 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-/**
- * Users : catherine
- */
 public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration> implements PanelWithAnchor {
   private JPanel myMainPanel;
   private JPanel myCommonOptionsPlaceholder;
@@ -38,9 +35,7 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
   private final Project myProject;
   private JComponent anchor;
 
-  public RestConfigurationEditor(final Project project,
-                                 AbstractPythonRunConfiguration configuration,
-                                 CollectionComboBoxModel model) {
+  public RestConfigurationEditor(Project project, AbstractPythonRunConfiguration configuration, CollectionComboBoxModel model) {
     myCommonOptionsForm = PyCommonOptionsFormFactory.getInstance().createForm(configuration.getCommonOptionsFormData());
     myCommonOptionsPlaceholder.add(myCommonOptionsForm.getMainPanel());
     myProject = project;
@@ -95,8 +90,7 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
   }
 
   @Override
-  @NotNull
-  protected JComponent createEditor() {
+  protected @NotNull JComponent createEditor() {
     return myMainPanel;
   }
 
@@ -105,13 +99,11 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
   }
 
   public void setInputDescriptor(FileChooserDescriptor descriptor) {
-    String title = RestBundle.message("runcfg.dlg.select.script.path");
-    myInputFileField.addBrowseFolderListener(title, null, myProject, descriptor);
+    myInputFileField.addBrowseFolderListener(myProject, descriptor.withTitle(RestBundle.message("runcfg.dlg.select.script.path")));
   }
 
   public void setOutputDescriptor(FileChooserDescriptor descriptor) {
-    String title = RestBundle.message("runcfg.dlg.select.script.path");
-    myOutputFileField.addBrowseFolderListener(title, null, myProject, descriptor);
+    myOutputFileField.addBrowseFolderListener(myProject, descriptor.withTitle(RestBundle.message("runcfg.dlg.select.script.path")));
   }
 
   @Override

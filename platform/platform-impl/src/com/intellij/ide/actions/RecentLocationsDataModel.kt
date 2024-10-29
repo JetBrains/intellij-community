@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector
@@ -15,20 +15,16 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.DocumentUtil
 import com.intellij.util.concurrency.SynchronizedClearableLazy
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import java.util.*
-import java.util.function.Consumer
 import java.util.function.Function
-import java.util.stream.Collectors
 import kotlin.math.max
 import kotlin.math.min
 
-@ApiStatus.Internal
-internal class RecentLocationsDataModel(val project: Project,
-                                        private val placesSupplier: Function<in Boolean, out List<IdeDocumentHistoryImpl.PlaceInfo>>?,
-                                        private val placesRemover: Consumer<in List<IdeDocumentHistoryImpl.PlaceInfo>>?) {
-
+internal class RecentLocationsDataModel(
+  private val project: Project,
+  private val placesSupplier: Function<Boolean, List<IdeDocumentHistoryImpl.PlaceInfo>>?,
+  private val placesRemover: ((List<IdeDocumentHistoryImpl.PlaceInfo>) -> Unit)?,
+) {
   private val navigationPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, false)
 
   private val changedPlaces: SynchronizedClearableLazy<List<RecentLocationItem>> = calculateItems(project, true)
@@ -50,9 +46,10 @@ internal class RecentLocationsDataModel(val project: Project,
   }
 
   private fun collectBreadcrumbs(project: Project, items: List<RecentLocationItem>): Map<IdeDocumentHistoryImpl.PlaceInfo, @Nls String> {
-    return items.stream()
+    return items
+      .asSequence()
       .map(RecentLocationItem::info)
-      .collect(Collectors.toMap({ it }, { getBreadcrumbs(project, it) }))
+      .associateBy(keySelector = { it }, valueTransform = { getBreadcrumbs(project, it) })
   }
 
   @Nls
@@ -95,10 +92,12 @@ internal class RecentLocationsDataModel(val project: Project,
       val places = ContainerUtil.reverse(if (changed) IdeDocumentHistory.getInstance(project).changePlaces
                                          else IdeDocumentHistory.getInstance(project).backPlaces)
       for (place in places) {
-        if (result.stream().noneMatch { IdeDocumentHistory.getInstance(project).isSame(place, it.info) }) {
+        if (result.none { IdeDocumentHistory.getInstance(project).isSame(place, it.info) }) {
           result.add(newLocationItem(place) ?: continue)
         }
-        if (result.size >= maxPlaces) break
+        if (result.size >= maxPlaces) {
+          break
+        }
       }
     }
     return result
@@ -109,6 +108,7 @@ internal class RecentLocationsDataModel(val project: Project,
     if (positionOffset == null || !positionOffset.isValid) {
       return null
     }
+
     assert(positionOffset.startOffset == positionOffset.endOffset)
 
     val fileDocument = positionOffset.document
@@ -122,18 +122,32 @@ internal class RecentLocationsDataModel(val project: Project,
   }
 
   fun removeItems(project: Project, isChanged: Boolean, items: List<RecentLocationItem>) {
-    if (isChanged) changedPlaces.drop() else navigationPlaces.drop()
-    if (placesRemover != null) {
-      placesRemover.accept(ContainerUtil.map(items) { it.info })
+    if (isChanged) {
+      changedPlaces.drop()
+    }
+    else {
+      navigationPlaces.drop()
+    }
+
+    placesRemover?.let {
+      it(items.map { it.info })
       return
     }
+
     val ideDocumentHistory = IdeDocumentHistory.getInstance(project)
     for (item in items) {
-      ContainerUtil.filter(if (isChanged) ideDocumentHistory.changePlaces else ideDocumentHistory.backPlaces) {
-        IdeDocumentHistory.getInstance(project).isSame(it, item.info)
-      }.forEach {
-        if (isChanged) ideDocumentHistory.removeChangePlace(it)
-        else ideDocumentHistory.removeBackPlace(it)
+      for (it in if (isChanged) {
+        ideDocumentHistory.changePlaces
+      }
+      else {
+        ideDocumentHistory.backPlaces.filter { IdeDocumentHistory.getInstance(project).isSame(it, item.info) }
+      }) {
+        if (isChanged) {
+          ideDocumentHistory.removeChangePlace(it)
+        }
+        else {
+          ideDocumentHistory.removeBackPlace(it)
+        }
       }
     }
   }
@@ -143,9 +157,9 @@ internal class RecentLocationsDataModel(val project: Project,
     val text = document.getText(TextRange.create(range.startOffset, range.endOffset))
 
     val newLinesBefore = StringUtil.countNewLines(
-      Objects.requireNonNull<String>(StringUtil.substringBefore(text, StringUtil.trimLeading(text))))
+      StringUtil.substringBefore(text, StringUtil.trimLeading(text))!!)
     val newLinesAfter = StringUtil.countNewLines(
-      Objects.requireNonNull<String>(StringUtil.substringAfter(text, StringUtil.trimTrailing(text))))
+      StringUtil.substringAfter(text, StringUtil.trimTrailing(text))!!)
 
     val firstLine = document.getLineNumber(range.startOffset)
     val firstLineAdjusted = firstLine + newLinesBefore
@@ -181,10 +195,12 @@ internal class RecentLocationsDataModel(val project: Project,
     val startOffset = document.getLineStartOffset(startLine)
     val endOffset = document.getLineEndOffset(endLine)
 
-    return if (startOffset <= endOffset)
+    return if (startOffset <= endOffset) {
       TextRange.create(startOffset, endOffset)
-    else
+    }
+    else {
       DocumentUtil.getLineTextRange(document, line)
+    }
   }
 }
 
@@ -194,12 +210,15 @@ internal data class RecentLocationItem(
   @JvmField val linesShift: Int,
   @JvmField val ranges: Array<TextRange>
 ) {
-  override fun equals(other: Any?): Boolean = if (other !is RecentLocationItem) false
-  else {
-    info.file == other.info.file &&
-    linesShift == other.linesShift &&
-    text.length == other.text.length &&
-    ranges.size == other.ranges.size
+  override fun equals(other: Any?): Boolean {
+    if (other !is RecentLocationItem) {
+      return false
+    }
+
+    return info.file == other.info.file &&
+           linesShift == other.linesShift &&
+           text.length == other.text.length &&
+           ranges.size == other.ranges.size
   }
 
   override fun hashCode(): Int {

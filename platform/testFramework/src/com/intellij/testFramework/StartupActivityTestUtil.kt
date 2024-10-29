@@ -1,11 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework
 
+import com.intellij.diagnostic.dumpCoroutines
 import com.intellij.ide.startup.impl.StartupManagerImpl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupManager
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.withTimeout
@@ -26,14 +28,19 @@ object StartupActivityTestUtil {
     val runningActivities = (StartupManager.getInstance(project) as StartupManagerImpl).getRunningProjectActivities()
 
     if (ApplicationManager.getApplication().isDispatchThread) {
-      runningActivities.values.forEach {
-        PlatformTestUtil.waitForFuture(it.asCompletableFuture())
+      for (job in runningActivities.values) {
+        PlatformTestUtil.waitForFuture(job.asCompletableFuture())
       }
     }
     else {
       runBlockingMaybeCancellable {
-        withTimeout(2.minutes) {
-          runningActivities.values.joinAll()
+        try {
+          withTimeout(2.minutes) {
+            runningActivities.values.joinAll()
+          }
+        }
+        catch (e: TimeoutCancellationException) {
+          throw RuntimeException("Cannot wait for project activities to complete\n${dumpCoroutines()}", e)
         }
       }
     }

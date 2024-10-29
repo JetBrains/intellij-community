@@ -13,9 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class VisibleHighlightingPassFactory {
 
-  @ApiStatus.Internal
   public static void setVisibleRangeForHeadlessMode(@NotNull Editor editor, @NotNull ProperTextRange range) {
     assert ApplicationManager.getApplication().isHeadlessEnvironment() : "Must be called in headless mode only";
     if (range.getEndOffset() > editor.getDocument().getTextLength()) {

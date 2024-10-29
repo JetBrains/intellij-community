@@ -5,11 +5,11 @@ Connected to the target VM
 defaultLambdaParameter.kt:7
 Highlight whole line
 defaultLambdaParameter.kt:3
-Highlight lambda range: '{ println() }'
+Highlight lambda range: 'println()'
 defaultLambdaParameter.kt:14
 Highlight whole line
 defaultLambdaParameter.kt:10
-Highlight lambda range: '{ println() }'
+Highlight lambda range: 'println()'
 Disconnected from the target VM
 
 Process finished with exit code 0

@@ -8,6 +8,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -15,6 +16,7 @@ import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Map;
 
+@ApiStatus.Internal
 public final class DeleteUtil {
   private DeleteUtil() { }
 

@@ -4,6 +4,16 @@ jdk.internal.util.random.RandomSupport.AbstractArbitrarilyJumpableGenerator
 jdk.internal.util.random.RandomSupport.AbstractSplittableGenerator
 jdk.internal.util.random.RandomSupport.AbstractSplittableWithBrineGenerator
 jdk.internal.util.random.RandomSupport
+jdk.internal.random.L32X64MixRandom
+jdk.internal.random.L64X128MixRandom
+jdk.internal.random.L64X256MixRandom
+jdk.internal.random.L128X128MixRandom
+jdk.internal.random.L128X256MixRandom
+jdk.internal.random.L64X1024MixRandom
+jdk.internal.random.L128X1024MixRandom
+jdk.internal.random.Xoshiro256PlusPlus
+jdk.internal.random.Xoroshiro128PlusPlus
+jdk.internal.random.L64X128StarStarRandom
 sun.nio.ch.DatagramSocketAdaptor#joinGroup(java.net.SocketAddress;java.net.NetworkInterface;)
 sun.nio.ch.DatagramSocketAdaptor#leaveGroup(java.net.SocketAddress;java.net.NetworkInterface;)
 java.io.Console#charset()
@@ -17,6 +27,11 @@ java.net.DatagramSocket#joinGroup(java.net.SocketAddress;java.net.NetworkInterfa
 java.net.DatagramSocket#leaveGroup(java.net.SocketAddress;java.net.NetworkInterface;)
 java.net.NetMulticastSocket#joinGroup(java.net.SocketAddress;java.net.NetworkInterface;)
 java.net.NetMulticastSocket#leaveGroup(java.net.SocketAddress;java.net.NetworkInterface;)
+java.nio.MappedByteBuffer#slice()
+java.nio.MappedByteBuffer#slice(int;int;)
+java.nio.MappedByteBuffer#duplicate()
+java.nio.MappedByteBuffer#compact()
+java.lang.invoke.MethodHandles#tableSwitch(java.lang.invoke.MethodHandle;java.lang.invoke.MethodHandle[];)
 java.lang.runtime.SwitchBootstraps
 java.lang.Class#getPermittedSubclasses()
 java.lang.Class#isSealed()
@@ -31,6 +46,8 @@ java.util.random.RandomGenerator
 java.util.random.RandomGeneratorFactory
 java.util.Map.Entry#copyOf(java.util.Map.Entry<? extends K,? extends V>;)
 java.util.concurrent.ForkJoinTask#adaptInterruptible(java.util.concurrent.Callable<? extends T>;)
+java.util.concurrent.ThreadLocalRandom#nextFloat(float;)
+java.util.concurrent.ThreadLocalRandom#nextFloat(float;float;)
 java.util.HexFormat
 java.util.SplittableRandom#split(java.util.random.RandomGenerator.SplittableGenerator;)
 java.util.SplittableRandom#splits()

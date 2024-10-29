@@ -66,12 +66,14 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     public final int lineNumber;
     public final VirtualFile virtualFile;
     public final @Nullable SmartPsiFileRange navigationRange;
+    public final long modificationStamp;
 
-    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange) {
+    private ComputedData(int offset, int lineNumber, VirtualFile virtualFile, @Nullable SmartPsiFileRange navigationRange, long stamp) {
       this.offset = offset;
       this.lineNumber = lineNumber;
       this.virtualFile = virtualFile;
       this.navigationRange = navigationRange;
+      this.modificationStamp = stamp;
     }
   }
 
@@ -120,14 +122,16 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
           lineNumber = getLineNumber(document, range.getStartOffset());
         }
       }
-      return new ComputedData(offset, lineNumber, virtualFile, possiblySmart(psiFile, navigationRange));
+
+      var modificationStamp = psiFile == null ? -1 : psiFile.getViewProvider().getModificationStamp();
+      return new ComputedData(offset, lineNumber, virtualFile, possiblySmart(psiFile, navigationRange), modificationStamp);
     });
     myOffset = data.offset;
     myLineNumber = data.lineNumber;
     myVirtualFile = data.virtualFile;
     myNavigationRange = data.navigationRange;
     myMergedNavigationRange = data.navigationRange;
-    myModificationStamp = getCurrentModificationStamp();
+    myModificationStamp = data.modificationStamp;
   }
 
   @Override
@@ -409,7 +413,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
       for (AdditionalLibraryRootsProvider e : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
         for (SyntheticLibrary library : e.getAdditionalProjectLibraries(project)) {
           if (library.getSourceRoots().contains(sourcesRoot)) {
-            Condition<VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
+            Condition<? super VirtualFile> excludeFileCondition = library.getUnitedExcludeCondition();
             if (excludeFileCondition == null || !excludeFileCondition.value(virtualFile)) {
               list.add(library);
             }
@@ -586,7 +590,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     // Presentation is expected to be always externally updated by calling updateCachedPresentation
     // Here we just return cached result because it must be always available for painting or speed search
     UsageNodePresentation cachedPresentation = getCachedPresentation();
-    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.EMPTY;
+    return cachedPresentation != null ? cachedPresentation : UsageNodePresentation.empty();
   }
 
   @NotNull

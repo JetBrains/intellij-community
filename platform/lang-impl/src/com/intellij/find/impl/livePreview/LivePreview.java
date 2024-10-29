@@ -148,7 +148,7 @@ public final class LivePreview implements SearchResults.SearchResultsListener, S
     }
 
     for (RangeHighlighter highlighter : highlighters) {
-      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes(editor.getColorsScheme()));
+      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes(editor.getColorsScheme()).getEffectType());
     }
     dumpStream.println("------------");
   }

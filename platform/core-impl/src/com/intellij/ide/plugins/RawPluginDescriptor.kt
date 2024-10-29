@@ -85,6 +85,7 @@ class RawPluginDescriptor {
   ) : ActionDescriptor(name = ActionDescriptorName.group, element = element, resourceBundle = resourceBundle)
 }
 
+@ApiStatus.Internal
 @Suppress("EnumEntryName")
 enum class ActionDescriptorName {
   action, group, separator, reference, unregister, prohibit,

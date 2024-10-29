@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.quickfix.IntentionActionPriority
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind
-import org.jetbrains.kotlin.idea.quickfix.createFromUsage.ClassKind.*
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateClassUtil
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.CreateFromUsageFixBase
 import org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder.*
@@ -29,10 +28,10 @@ import org.jetbrains.kotlin.types.typeUtil.isUnit
 import java.util.*
 
 val ClassKind.actionPriority: IntentionActionPriority
-    get() = if (this == ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
+    get() = if (this == ClassKind.ANNOTATION_CLASS) IntentionActionPriority.LOW else IntentionActionPriority.NORMAL
 
 data class ClassInfo(
-    val kind: ClassKind = DEFAULT,
+    val kind: ClassKind = ClassKind.DEFAULT,
     val name: String,
     private val targetParents: List<PsiElement>,
     val expectedTypeInfo: TypeInfo,
@@ -44,7 +43,7 @@ data class ClassInfo(
 ) {
     val applicableParents: List<PsiElement> by lazy {
         targetParents.filter {
-            if (kind == OBJECT && it is KtClass && (it.isInner() || it.isLocal)) return@filter false
+            if (kind == ClassKind.OBJECT && it is KtClass && (it.isInner() || it.isLocal)) return@filter false
             true
         }
     }
@@ -57,16 +56,14 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
     override fun getText(): String = KotlinBundle.message("create.0.1", classInfo.kind.description, classInfo.name)
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
-        with(classInfo) {
-            if (kind == DEFAULT) return false
-            if (applicableParents.isEmpty()) return false
-            applicableParents.forEach {
-                if (it is PsiClass) {
-                    if (kind == OBJECT || kind == ENUM_ENTRY) return false
-                    if (it.isInterface && inner) return false
-                }
+        if (classInfo.kind == ClassKind.DEFAULT ||
+            classInfo.applicableParents.isEmpty()) return false
+        classInfo.applicableParents.forEach {
+            if (it is PsiClass) {
+                if (classInfo.kind == ClassKind.OBJECT ||
+                    classInfo.kind == ClassKind.ENUM_ENTRY ||
+                    it.isInterface && classInfo.inner) return false
             }
-
         }
         return true
     }
@@ -101,7 +98,7 @@ open class CreateClassFromUsageFix<E : KtElement> protected constructor(
             file,
             editor,
             false,
-            classInfo.kind == PLAIN_CLASS || classInfo.kind == INTERFACE
+            classInfo.kind == ClassKind.PLAIN_CLASS || classInfo.kind == ClassKind.INTERFACE
         ).createBuilder()
         builder.placement = CallablePlacement.NoReceiver(targetParent)
 

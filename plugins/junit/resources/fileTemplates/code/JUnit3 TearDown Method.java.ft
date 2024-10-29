@@ -1,3 +1,4 @@
 public void tearDown() throws Exception {
+  super.tearDown();
   ${BODY}
 }

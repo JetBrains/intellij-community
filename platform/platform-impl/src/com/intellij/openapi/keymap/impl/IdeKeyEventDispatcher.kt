@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
 
 package com.intellij.openapi.keymap.impl
@@ -24,6 +24,7 @@ import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.keymap.KeyMapBundle
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
@@ -92,7 +93,9 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
   private val keyGestureProcessor = KeyboardGestureProcessor(this)
 
   var state: KeyState
+    @ApiStatus.Internal 
     get() = keyState
+    @ApiStatus.Internal
     set(state) {
       keyState = state
       queue?.maybeReady()
@@ -515,6 +518,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
                          shortcut = context.shortcut)
   }
 
+  @JvmName("processAction")
   internal fun processAction(e: InputEvent,
                              place: String,
                              context: DataContext,
@@ -525,7 +529,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
     if (actions.isEmpty()) {
       return false
     }
-
+    LOG.trace { "processAction(shortcut=$shortcut, actions=$actions)" }
     val contextComponent = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context)
     val wrappedContext = Utils.createAsyncDataContext(context)
     val project = CommonDataKeys.PROJECT.getData(wrappedContext)
@@ -563,6 +567,7 @@ class IdeKeyEventDispatcher(private val queue: IdeEventQueue?) {
       }
       Pair(chosen, false)
     } ?: Pair(null, false)
+    LOG.trace { "updateResult: chosen=$chosen, doPerform=$doPerform" }
     val hasSecondStroke = chosen != null && this.context.secondStrokeActions.contains(chosen.action)
     if (e.id == KeyEvent.KEY_PRESSED && !hasSecondStroke && (chosen != null || !wouldBeEnabledIfNotDumb.isEmpty())) {
       ignoreNextKeyTypedEvent = true

@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.dsl.listCellRenderer.KotlinUIDslRendererComponent;
+import com.intellij.ui.dsl.listCellRenderer.LcrRow;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
@@ -190,7 +192,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       //noinspection unchecked
       Component component = myContext.getRenderer().getListCellRendererComponent(list, (T)value, index, isSelected, cellHasFocus);
       if (component instanceof JComponent jComponent && !(component instanceof JSeparator || component instanceof TitledSeparator)) {
-        if (!(component instanceof GroupedElementsRenderer.MyComponent)) {
+        if (!(component instanceof GroupedElementsRenderer.MyComponent) && !(component instanceof KotlinUIDslRendererComponent)) {
           jComponent.setBorder(COMBO_ITEM_BORDER);
         }
         myContext.customizeListRendererComponent(jComponent);
@@ -215,8 +217,7 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
     }
 
     @Override
-    @SuppressWarnings("rawtypes")
-    public @Nullable PopupStep onChosen(T selectedValue, boolean finalChoice) {
+    public @Nullable PopupStep<?> onChosen(T selectedValue, boolean finalChoice) {
       ListModel<T> model = myGetComboboxModel.get();
       if (model instanceof ComboBoxPopupState) {
         //noinspection unchecked
@@ -272,12 +273,33 @@ public class ComboBoxPopup<T> extends ListPopupImpl {
       if (cellRenderer instanceof GroupedComboBoxRenderer<? super T> renderer) {
         return renderer.separatorFor(value);
       }
-      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer
-          && renderer.delegate instanceof GroupedComboBoxRenderer<? super T> delegate) {
-        return delegate.separatorFor(value);
+      if (cellRenderer instanceof ComboBoxWithWidePopup<? super T>.AdjustingListCellRenderer renderer) {
+        ListCellRenderer<? super T> delegate = renderer.delegate;
+        if (delegate instanceof GroupedComboBoxRenderer<? super T> groupedComboBoxRenderer) {
+          return groupedComboBoxRenderer.separatorFor(value);
+        }
       }
+      ListCellRenderer unwrappedRenderer = unwrap(cellRenderer);
+      if (unwrappedRenderer instanceof LcrRow<?>) {
+        //noinspection unchecked
+        KotlinUIDslRendererComponent component =
+          (KotlinUIDslRendererComponent)unwrappedRenderer.getListCellRendererComponent(myProxyList, value, -1, false, false);
+        return component.getListSeparator();
+      }
+
       return null;
     }
+  }
+
+  private static ListCellRenderer unwrap(ListCellRenderer renderer) {
+    while (renderer != null) {
+      if (renderer instanceof ComboBoxWithWidePopup.AdjustingListCellRenderer wrapper) {
+        renderer = wrapper.delegate;
+      } else {
+        return renderer;
+      }
+    }
+    return null;
   }
 
   private static @NotNull <T> List<T> copyItemsFromModel(@NotNull ListModel<T> model) {

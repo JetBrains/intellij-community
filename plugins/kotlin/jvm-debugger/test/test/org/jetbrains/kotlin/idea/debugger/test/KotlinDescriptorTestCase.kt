@@ -60,7 +60,6 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtTreeVisitorVoid
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.test.TargetBackend
 import org.junit.ComparisonFailure
 import java.io.File
 
@@ -126,30 +125,6 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
     protected open fun getK2IgnoreDirective(): String = IgnoreTests.DIRECTIVES.IGNORE_K2
 
-    var originalUseIrBackendForEvaluation = true
-    private var originalDisableFallbackToOldEvaluator = false
-
-    private fun registerEvaluatorBackend() {
-        val useIrBackendForEvaluation = Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
-        originalUseIrBackendForEvaluation = useIrBackendForEvaluation.asBoolean()
-
-        val isJvmIrBackend = fragmentCompilerBackend() == FragmentCompilerBackend.JVM_IR
-        useIrBackendForEvaluation.setValue(isJvmIrBackend)
-
-        if (isJvmIrBackend) {
-            val disableFallbackToOldEvaluator = Registry.get("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
-            originalDisableFallbackToOldEvaluator = disableFallbackToOldEvaluator.asBoolean()
-            disableFallbackToOldEvaluator.setValue(true)
-        }
-    }
-
-    private fun restoreEvaluatorBackend() {
-        Registry.get("debugger.kotlin.evaluator.use.new.jvm.ir.backend")
-            .setValue(originalUseIrBackendForEvaluation)
-        Registry.get("debugger.kotlin.evaluator.disable.fallback.to.old.backend")
-            .setValue(originalDisableFallbackToOldEvaluator)
-    }
-
     protected open val compileWithK2: Boolean get() = false
 
     protected open val useInlineScopes: Boolean get() = false
@@ -157,11 +132,8 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     override fun setUp() {
         setUpWithKotlinPlugin { super.setUp() }
 
-        registerEvaluatorBackend()
-
         KotlinEvaluator.LOG_COMPILATIONS = true
         logPropagator = LogPropagator(::systemLogger).apply { attach() }
-        atDebuggerTearDown { restoreEvaluatorBackend() }
         atDebuggerTearDown { logPropagator = null }
         atDebuggerTearDown { logPropagator?.detach() }
         atDebuggerTearDown { detachLibraries() }
@@ -182,20 +154,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
 
     fun getTestDataPath(): String = getTestsRoot(this::class.java)
 
-    enum class FragmentCompilerBackend {
-        JVM,
-        JVM_IR
-    }
-
-    open fun fragmentCompilerBackend() = FragmentCompilerBackend.JVM_IR
-
     open fun lambdasGenerationScheme() = JvmClosureGenerationScheme.CLASS
-
-    protected open fun targetBackend(): TargetBackend =
-        when (fragmentCompilerBackend()) {
-            FragmentCompilerBackend.JVM -> TargetBackend.JVM_IR_WITH_OLD_EVALUATOR
-            FragmentCompilerBackend.JVM_IR -> TargetBackend.JVM_IR_WITH_IR_EVALUATOR
-        }
 
     protected open fun configureProjectByTestFiles(testFiles: List<TestFileWithModule>, testAppDirectory: File) {
     }
@@ -403,13 +362,7 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase(),
     abstract fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences)
 
     override fun initOutputChecker(): OutputChecker {
-        return KotlinOutputChecker(
-            getTestDataPath(),
-            testAppPath,
-            appOutputPath,
-            targetBackend(),
-            getExpectedOutputFile()
-        )
+        return KotlinOutputChecker(getTestDataPath(), testAppPath, appOutputPath, getExpectedOutputFile())
     }
 
     override fun setUpModule() {

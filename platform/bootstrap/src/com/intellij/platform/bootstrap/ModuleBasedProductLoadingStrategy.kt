@@ -7,7 +7,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.platform.runtime.product.IncludedRuntimeModule
-import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.PluginModuleGroup
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.product.impl.IncludedRuntimeModuleImpl
@@ -32,7 +32,7 @@ import kotlin.io.path.extension
 
 internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: RuntimeModuleRepository) : ProductLoadingStrategy() {
   private val currentMode by lazy {
-    val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.LOCAL_IDE.id)
+    val currentModeId = System.getProperty(PLATFORM_PRODUCT_MODE_PROPERTY, ProductMode.MONOLITH.id)
     val currentMode = ProductMode.entries.find { it.id == currentModeId }
     if (currentMode == null) {
       error("Unknown mode '$currentModeId' specified in '$PLATFORM_PRODUCT_MODE_PROPERTY' system property")
@@ -251,19 +251,30 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
       }
     }
     val allResourceRootsList = allResourceRoots.toList()
-    
+
     val descriptor = if (Files.isDirectory(mainResourceRoot)) {
       loadDescriptorFromDir(
         dir = mainResourceRoot,
         pluginDir = pluginDir,
         context = context,
         isBundled = isBundled,
+        pool = zipFilePool,
         pathResolver = ModuleBasedPluginXmlPathResolver(
           includedModules = includedModules,
           pluginModuleGroup.optionalModuleIds,
           fallbackResolver = PluginXmlPathResolver(allResourceRootsList.filter { it.extension == "jar" }, zipFilePool),
         )
-      )
+      ).also { descriptor ->
+        descriptor?.content?.modules?.forEach { module ->
+          val requireDescriptor = module.requireDescriptor()
+          if (requireDescriptor.packagePrefix == null) {
+            val moduleName = requireDescriptor.moduleName
+            if (moduleName != null) {
+              requireDescriptor.jarFiles = moduleRepository.getModule(RuntimeModuleId.module(moduleName)).resourceRootPaths
+            }
+          }
+        }
+      }
     }
     else {
       val defaultResolver = PluginXmlPathResolver(allResourceRootsList, zipFilePool)
@@ -287,7 +298,8 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
         pool = zipFilePool,
       )
     }
-    descriptor?.jarFiles = allResourceRootsList
+    val modulesWithJarFiles = descriptor?.content?.modules?.flatMap { it.requireDescriptor().jarFiles ?: emptyList() }
+    descriptor?.jarFiles = allResourceRootsList.filter { modulesWithJarFiles == null || it !in modulesWithJarFiles }
     return descriptor
   }
 
@@ -323,7 +335,7 @@ internal class ModuleBasedProductLoadingStrategy(internal val moduleRepository: 
 
 private class CustomPluginModuleGroup(moduleDescriptors: List<RuntimeModuleDescriptor>,
                                       override val mainModule: RuntimeModuleDescriptor) : PluginModuleGroup {
-  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, ModuleImportance.FUNCTIONAL) } 
+  private val includedModules = moduleDescriptors.map { IncludedRuntimeModuleImpl(it, RuntimeModuleLoadingRule.REQUIRED) } 
   override fun getIncludedModules(): List<IncludedRuntimeModule> = includedModules 
   override fun getOptionalModuleIds(): Set<RuntimeModuleId> = emptySet()
 }

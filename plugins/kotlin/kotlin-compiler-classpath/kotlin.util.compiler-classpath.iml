@@ -11,7 +11,7 @@
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="Java Compatibility" level="project" />
     <orderEntry type="library" name="javax-inject" level="project" />
-    <orderEntry type="library" name="javaslang" level="project" />
+    <orderEntry type="library" name="vavr" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />

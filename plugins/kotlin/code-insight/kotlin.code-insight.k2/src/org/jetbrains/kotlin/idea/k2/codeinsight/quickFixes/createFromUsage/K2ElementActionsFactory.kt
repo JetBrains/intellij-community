@@ -3,15 +3,16 @@ package org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.lang.jvm.JvmClass
-import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.JvmModifiersOwner
-import com.intellij.lang.jvm.actions.ChangeModifierRequest
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.JvmElementActionsFactory
+import com.intellij.lang.jvm.*
+import com.intellij.lang.jvm.actions.*
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiMethod
 import com.intellij.psi.createSmartPointer
+import com.intellij.psi.util.PropertyUtil
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.k2.codeinsight.quickFixes.createFromUsage.K2CreateFunctionFromUsageUtil.toKtClassOrFile
 import org.jetbrains.kotlin.idea.quickfix.AddModifierFix
@@ -72,6 +73,46 @@ class K2ElementActionsFactory : JvmElementActionsFactory() {
                 )
             }
         }
+    }
+
+    override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+        val declaration = ((target as? KtLightElement<*, *>)?.kotlinOrigin as? KtModifierListOwner)?.takeIf {
+            it.language == KotlinLanguage.INSTANCE
+        } ?: return emptyList()
+
+        val annotationUseSiteTarget = when (target) {
+            is JvmField -> AnnotationUseSiteTarget.FIELD
+            is JvmMethod -> when {
+                PropertyUtil.isSimplePropertySetter(target as? PsiMethod) -> AnnotationUseSiteTarget.PROPERTY_SETTER
+                PropertyUtil.isSimplePropertyGetter(target as? PsiMethod) -> AnnotationUseSiteTarget.PROPERTY_GETTER
+                else -> null
+            }
+
+            else -> null
+        }
+        return listOfNotNull(K2CreatePropertyFromUsageBuilder.generateAnnotationAction(declaration, annotationUseSiteTarget, request))
+    }
+
+    override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
+        val targetContainer = targetClass.toKtClassOrFile() ?: return emptyList()
+
+        val writable = JvmModifier.FINAL !in request.modifiers && !request.isConstant
+
+        val action = K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+            targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = false
+        )
+
+        val actions = if (writable) {
+            listOfNotNull(
+                action,
+                K2CreatePropertyFromUsageBuilder.generatePropertyAction(
+                    targetContainer = targetContainer, classOrFileName = targetClass.name, request = request, lateinit = true
+                )
+            )
+        } else {
+            listOfNotNull(action)
+        }
+        return actions
     }
 }
 

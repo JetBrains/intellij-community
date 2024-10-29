@@ -43,8 +43,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.starter" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.resources" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.platform.resources.en" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.properties" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.resources" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.ide.customization" exported="" scope="RUNTIME" />
@@ -70,7 +68,7 @@
     <orderEntry type="module" module-name="intellij.copyright" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.dev.plugin" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.dev.plugin.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.devkit.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
@@ -175,9 +173,6 @@
     <orderEntry type="module" module-name="intellij.searchEverywhereMl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.ranking.core" scope="TEST" />
     <orderEntry type="module" module-name="intellij.searchEverywhereMl.typos" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.java" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.kotlin" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.searchEverywhereMl.semantics.python" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.marketplaceMl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.toml" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.tracing.ide" scope="RUNTIME" />
@@ -210,6 +205,7 @@
     <orderEntry type="module" module-name="intellij.lombok" scope="TEST" />
     <orderEntry type="module" module-name="intellij.xml.xmlbeans" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jsonpath" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.jps.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUiOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.ide.newUsersOnboarding" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.onboarding-promoter" scope="RUNTIME" />
@@ -217,9 +213,14 @@
     <orderEntry type="module" module-name="intellij.vcs.github.community" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.util.coroutines.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.progress.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5Jimfs" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testFramework.junit5.jimfs" scope="TEST" />
     <orderEntry type="module" module-name="intellij.yaml.editing" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.whatsNew" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.compiler.charts" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.platform.compose" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.json.split" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal.tests" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.terminal" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.remoteDev.util" scope="TEST" />
   </component>
 </module>

@@ -462,6 +462,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/classImport.before.Main.kt");
             }
 
+            @TestMetadata("constructorCallToObject.test")
+            public void testConstructorCallToObject() throws Exception {
+                runTest("testData/quickfix/autoImports/constructorCallToObject.test");
+            }
+
             @TestMetadata("constructorParameterAnnotation.test")
             public void testConstructorParameterAnnotation() throws Exception {
                 runTest("testData/quickfix/autoImports/constructorParameterAnnotation.test");
@@ -510,6 +515,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("dslMarkersOnReceiver.before.Main.kt")
             public void testDslMarkersOnReceiver() throws Exception {
                 runTest("testData/quickfix/autoImports/dslMarkersOnReceiver.before.Main.kt");
+            }
+
+            @TestMetadata("extensionErroneousReceiver.test")
+            public void testExtensionErroneousReceiver() throws Exception {
+                runTest("testData/quickfix/autoImports/extensionErroneousReceiver.test");
             }
 
             @TestMetadata("extensionFunctionImport.before.Main.kt")
@@ -1027,6 +1037,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
                 runTest("testData/quickfix/autoImports/postfixOperator.before.Main.kt");
             }
 
+            @TestMetadata("privateConstructor.test")
+            public void testPrivateConstructor() throws Exception {
+                runTest("testData/quickfix/autoImports/privateConstructor.test");
+            }
+
             @TestMetadata("propertyImport.before.Main.kt")
             public void testPropertyImport() throws Exception {
                 runTest("testData/quickfix/autoImports/propertyImport.before.Main.kt");
@@ -1095,6 +1110,11 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             @TestMetadata("withSmartCastQualifier.before.Main.kt")
             public void testWithSmartCastQualifier() throws Exception {
                 runTest("testData/quickfix/autoImports/withSmartCastQualifier.before.Main.kt");
+            }
+
+            @TestMetadata("wrongReceiverType.test")
+            public void testWrongReceiverType() throws Exception {
+                runTest("testData/quickfix/autoImports/wrongReceiverType.test");
             }
         }
     }

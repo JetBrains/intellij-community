@@ -310,7 +310,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testSaturation() throws Exception {
     CountDownLatch latch = new CountDownLatch(1);
-    List<Job<?>> jobs = new ArrayList<>();
+    List<Job> jobs = new ArrayList<>();
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       jobs.add(JobLauncher.getInstance().submitToJobThread(() -> {
         try {
@@ -333,11 +333,11 @@ public class JobUtilTest extends LightPlatformTestCase {
     }
   }
 
-  private static void cancelAndWait(List<? extends Job<?>> jobs) throws Exception {
-    for (Job<?> job : jobs) {
+  private static void cancelAndWait(List<? extends Job> jobs) throws Exception {
+    for (Job job : jobs) {
       job.cancel();
     }
-    for (Job<?> job : jobs) {
+    for (Job job : jobs) {
       try {
         job.waitForCompletion(100_000);
       }
@@ -488,7 +488,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
@@ -528,7 +528,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     for (int i = 0; i<100 && checkTestTimeout(i); i++) {
       AtomicBoolean finished = new AtomicBoolean();
       AtomicBoolean started = new AtomicBoolean();
-      Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+      Job job = JobLauncher.getInstance().submitToJobThread(() -> {
         started.set(true);
         TimeoutUtil.sleep(100);
         finished.set(true);
@@ -553,7 +553,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     int N_JOBS = 10_000 * JobSchedulerImpl.getJobPoolParallelism();
     ProgressIndicator indicator = new DaemonProgressIndicator();
 
-    Job<Void> job = JobLauncher.getInstance().submitToJobThread(
+    Job job = JobLauncher.getInstance().submitToJobThread(
       () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, __ -> {
         jobsStarted.incrementAndGet();
         TimeoutUtil.sleep(10);
@@ -592,7 +592,7 @@ public class JobUtilTest extends LightPlatformTestCase {
     // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
     // and cancel the indicator in the meantime
     // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-    Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
+    Job job = JobLauncher.getInstance().submitToJobThread(() -> ProgressManager.getInstance().runProcess(()->
         assertFalse(JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N, null), indicator, __->{
           TimeoutUtil.sleep(1);
           counter.incrementAndGet();
@@ -607,7 +607,7 @@ public class JobUtilTest extends LightPlatformTestCase {
 
   public void testExecuteAllMustBeResponsiveToTheIndicatorCancelWhenWaitsEvenForExtraCoarseGranularTasksStress() throws Throwable {
     int COARSENESS = 100_000;
-    List<Job<?>> jobs = new ArrayList<>();
+    List<Job> jobs = new ArrayList<>();
     // try to repeat until got into the right thread; but not for too long
     try {
       for (int i=0; i<1000; i++) {
@@ -620,7 +620,7 @@ public class JobUtilTest extends LightPlatformTestCase {
           // in which call invokeConcurrentlyUnderProgress() which normally takes 100s
           // and cancel the indicator in the meantime
           // check that invokeConcurrentlyUnderProgress() gets canceled immediately
-          Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
+          Job job = JobLauncher.getInstance().submitToJobThread(() -> {
             // to ensure lengthy task executes in thread other that the one which called invokeConcurrentlyUnderProgress()
             // otherwise (when the thread doing sleep(COARSENESS) is the same which did invokeConcurrentlyUnderProgress) it means that FJP stole the task, started executing it in the waiting thread, and we can't do anything
             mainThread.set(Thread.currentThread());

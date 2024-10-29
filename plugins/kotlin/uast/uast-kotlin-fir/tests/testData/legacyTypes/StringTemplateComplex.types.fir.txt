@@ -67,7 +67,7 @@ UFile (package = ) [public final class StringTemplateComplexKt {...]
                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [println(baz)] : @org.jetbrains.annotations.NotNull() kotlin.Unit
                     UIdentifier (Identifier (println)) [UIdentifier (Identifier (println))]
                     UPolyadicExpression (operator = +) [baz] : java.lang.String
-                        USimpleNameReferenceExpression (identifier = baz) [baz] : <ErrorType>
+                        USimpleNameReferenceExpression (identifier = baz) [baz]
                 UDeclarationsExpression [var template1: java.lang.String = simpleForTemplate()]
                     ULocalVariable (name = template1) [var template1: java.lang.String = simpleForTemplate()]
                         UPolyadicExpression (operator = +) [simpleForTemplate()] : java.lang.String

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.history.VcsFileRevision
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.CollectConsumer
@@ -30,6 +31,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     val message = "Before \u001B[30;47mescaped\u001B[0m after"
     commit(message)
 
+    markEverythingDirtyAndSync()
     val history = GitFileHistory.collectHistory(project, VcsUtil.getFilePath(projectRoot, "a.txt"), "-1")
     assertEquals("Commit message is incorrect", message, history[0].commitMessage)
   }
@@ -79,8 +81,10 @@ class GitFileHistoryTest : GitSingleRepoTest() {
 
     commits.reverse()
 
-    val history = collectFileHistory(commits.first().file)
-    assertSameHistory(commits, history)
+    val file = commits.first().file
+
+    val history = collectFileHistory(file)
+    assertSameHistory(commits, history, file)
   }
 
   @Throws(VcsException::class, IOException::class)
@@ -99,6 +103,7 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     commits.reverse()
 
     val history = ArrayList<GitFileRevision>()
+    markEverythingDirtyAndSync()
     GitFileHistory.loadHistory(myProject, VcsUtil.getFilePath(commits.first().file, false), null, CollectConsumer(history),
                                { exception: VcsException ->
                                  TestCase.fail("No exception expected " + ExceptionUtil.getThrowableText(exception))
@@ -315,9 +320,9 @@ class GitFileHistoryTest : GitSingleRepoTest() {
     val monorepoMergeFile2 = TestCommit(monorepoMerge, monorepoMergeMessage, repo.root, repo2MovedFile)
 
     assertSameHistory((commits + monorepoMergeFile1).sortedBy { it.hash },
-                      collectFileHistory(repo1MovedFile, full = true).sortedBy { it.revisionNumber.asString() })
+                      collectFileHistory(repo1MovedFile, full = true).sortedBy { it.revisionNumber.asString() }, repo1MovedFile)
     assertSameHistory((commits + monorepoMergeFile2).sortedBy { it.hash },
-                      collectFileHistory(repo2MovedFile, full = true).sortedBy { it.revisionNumber.asString() })
+                      collectFileHistory(repo2MovedFile, full = true).sortedBy { it.revisionNumber.asString() }, repo2MovedFile)
   }
 
   @Throws(VcsException::class, IOException::class)
@@ -380,16 +385,24 @@ class GitFileHistoryTest : GitSingleRepoTest() {
   }
 
   private fun collectFileHistory(file: File, startingRevisions: List<String>, full: Boolean): List<VcsFileRevision> {
-    ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
+    markEverythingDirtyAndSync()
 
     val path = VcsUtil.getFilePath(file, false)
+    val gitFileHistory = GitFileHistory(myProject, repo.root, path, startingRevisions, full)
+    TestCase.assertEquals("Last commit path differs from the requested one", path, gitFileHistory.getFilePath())
     return buildList {
-      GitFileHistory(myProject, repo.root, path, startingRevisions, full).load(::add)
+      gitFileHistory.load(::add)
     }
   }
 
-  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>) {
-    TestCase.assertEquals("History is different.", expected, actual.map { it.toTestCommit() })
+  private fun markEverythingDirtyAndSync() {
+    VcsDirtyScopeManager.getInstance(project).markEverythingDirty()
+    ChangeListManagerImpl.getInstanceImpl(project).waitEverythingDoneInTestMode()
+  }
+
+  private fun assertSameHistory(expected: List<TestCommit>, actual: List<VcsFileRevision>, file: File? = null) {
+    val description = if (file == null) "History is different." else "History for ${file.relativePath()} is different."
+    TestCase.assertEquals(description, expected, actual.map { it.toTestCommit() })
   }
 
   private data class TestCommit(val hash: String, val commitMessage: String, val root: VirtualFile, val file: File) {

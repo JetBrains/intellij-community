@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.ex.start
 import com.intellij.ui.ColorUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Graphics2D
@@ -30,6 +31,7 @@ import java.util.*
 import javax.swing.JComponent
 import kotlin.math.max
 
+@ApiStatus.Internal
 class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): AlignedDiffModelBase(viewer.request, viewer.context,
                                                                                  viewer.component,
                                                                                  viewer.editor1, viewer.editor2,
@@ -45,6 +47,7 @@ class SimpleAlignedDiffModel(val viewer: SimpleDiffViewer): AlignedDiffModelBase
   override fun getDiffChanges(): List<AlignableChange> = viewer.diffChanges
 }
 
+@ApiStatus.Internal
 interface AlignedDiffModel : Disposable {
   fun getDiffChanges(): List<AlignableChange>
   fun needAlignChanges(): Boolean
@@ -52,6 +55,7 @@ interface AlignedDiffModel : Disposable {
   fun clear()
 }
 
+@ApiStatus.Internal
 interface AlignableChange {
   val diffType: TextDiffType
   fun getStartLine(side: Side): Int
@@ -81,6 +85,7 @@ interface AlignableChange {
  *   several inlays with the same priority added to the same offset
  * * Mirror inlays positioning works not so good
  */
+@ApiStatus.Internal
 abstract class AlignedDiffModelBase(
   private val diffRequest: DiffRequest,
   private val diffContext: DiffContext,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.util;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.TestLoggerKt;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.IdempotenceChecker;
 import com.intellij.util.TimeoutUtil;
@@ -22,30 +23,31 @@ import java.util.function.Supplier;
 public class CachedValuesTest extends BasePlatformTestCase {
   private final UserDataHolderBase holder = new UserDataHolderBase();
 
-  public void testCachedValueCapturingInvalidStuff() {
+  public void testCachedValueCapturingInvalidStuff() throws Exception {
     DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    TestLoggerKt.rethrowLoggedErrorsIn(() -> {
+      SimpleModificationTracker dependency = new SimpleModificationTracker();
+      Function<String, String> getCached = arg ->
+        CachedValuesManager.getManager(getProject()).getCachedValue(holder, () ->
+          CachedValueProvider.Result.create("result " + arg, dependency));
 
-    SimpleModificationTracker dependency = new SimpleModificationTracker();
-    Function<String, String> getCached = arg ->
-      CachedValuesManager.getManager(getProject()).getCachedValue(holder, () ->
-        CachedValueProvider.Result.create("result " + arg, dependency));
+      assertEquals("result foo", getCached.apply("foo"));
 
-    assertEquals("result foo", getCached.apply("foo"));
+      dependency.incModificationCount();
+      assertEquals("result foo", getCached.apply("foo"));
 
-    dependency.incModificationCount();
-    assertEquals("result foo", getCached.apply("foo"));
-
-    dependency.incModificationCount();
-    try {
-      getCached.apply("bar");
-      TestCase.fail();
-    }
-    catch (AssertionError e) {
-      String message = e.getMessage();
-      assertTrue(message, message.contains("Incorrect CachedValue use"));
-      assertTrue(message, message.contains("foo"));
-      assertTrue(message, message.contains("bar"));
-    }
+      dependency.incModificationCount();
+      try {
+        getCached.apply("bar");
+        TestCase.fail();
+      }
+      catch (AssertionError e) {
+        String message = e.getMessage();
+        assertTrue(message, message.contains("Incorrect CachedValue use"));
+        assertTrue(message, message.contains("foo"));
+        assertTrue(message, message.contains("bar"));
+      }
+    });
   }
 
   public void testCalculateValueAtMostOncePerThread() throws ExecutionException, InterruptedException {

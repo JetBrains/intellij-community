@@ -7,6 +7,7 @@ import com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.platform.ml.impl.turboComplete.addingPolicy.CollectionFillingPolicy
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Generates completion suggestions for a certain type of completion kind and stores
@@ -24,6 +25,7 @@ import com.intellij.platform.ml.impl.turboComplete.addingPolicy.CollectionFillin
  *   (it's A's order now to generate variants)
  * 3. A will only collect put cached lookup elements to the result set
  */
+@ApiStatus.Internal
 abstract class SuggestionGeneratorWithArtifact<T>(override val kind: CompletionKind,
                                                   override val result: CompletionResultSet,
                                                   private val resultPolicyController: PolicyController,

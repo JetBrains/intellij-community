@@ -120,7 +120,11 @@ class DisabledPluginsState internal constructor() : PluginEnabler.Headless {
     @JvmName("setEnabledState")
     internal fun setEnabledState(descriptors: Collection<IdeaPluginDescriptor>, enabled: Boolean): Boolean {
       val pluginIds = descriptors.toPluginIdSet()
+      return setEnabledState(pluginIds, enabled)
+    }
 
+    @JvmName("setEnabledStateForIds")
+    internal fun setEnabledState(pluginIds: Set<PluginId>, enabled: Boolean): Boolean {
       val disabled = getDisabledIds().toMutableSet()
       val changed = if (enabled) disabled.removeAll(pluginIds) else disabled.addAll(pluginIds)
       if (changed) {

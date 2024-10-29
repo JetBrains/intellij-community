@@ -89,6 +89,10 @@ internal fun TerminalOutputModel.getByOffset(offset: Int): CommandBlock? {
 internal fun TerminalOutputModel.getBlockBounds(block: CommandBlock): Rectangle {
   val topY = editor.offsetToXY(block.startOffset).y - TerminalUi.blockTopInset
   val bottomY = editor.offsetToXY(block.endOffset).y + editor.lineHeight + TerminalUi.blockBottomInset
-  val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockInset
+  val width = editor.scrollingModel.visibleArea.width - TerminalUi.cornerToBlockOffset
   return Rectangle(0, topY, width, bottomY - topY)
+}
+
+internal fun TerminalOutputModel.isErrorBlock(block: CommandBlock): Boolean {
+  return getBlockInfo(block).let { it != null && it.exitCode != 0 }
 }

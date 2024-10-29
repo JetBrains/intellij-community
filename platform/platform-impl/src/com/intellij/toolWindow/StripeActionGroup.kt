@@ -17,10 +17,11 @@ import com.intellij.openapi.actionSystem.IdeActions.GROUP_MAIN_TOOLBAR_NEW_UI
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionButton
-import com.intellij.openapi.actionSystem.impl.ActionMenu
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.components.*
 import com.intellij.openapi.keymap.impl.ui.Group
 import com.intellij.openapi.project.DumbAware
@@ -34,16 +35,21 @@ import com.intellij.openapi.wm.impl.*
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.NewUI
 import com.intellij.util.PlatformUtils
-import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.containers.ContainerUtil
+import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.debounce
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
 private const val STRIPE_ACTION_GROUP_ID = "TopStripeActionGroup"
 
+@ApiStatus.Internal
 class StripeActionGroup: ActionGroup(), DumbAware {
   private val myFactory: Map<ActivateToolWindowAction, AnAction> = ConcurrentFactoryMap.create(::createAction) {
     CollectionFactory.createConcurrentWeakKeyWeakValueMap()
@@ -97,7 +103,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
 
     override fun update(e: AnActionEvent) {
       super.update(e)
-      e.presentation.isVisible = buttonState.isPinned(toolWindowId)
+      e.presentation.isVisible = e.presentation.isEnabled && buttonState.isPinned(toolWindowId)
       Toggleable.setSelected(e.presentation, isSelected(e))
     }
 
@@ -171,6 +177,7 @@ class StripeActionGroup: ActionGroup(), DumbAware {
           override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
           override fun update(e: AnActionEvent) {
             super.update(e)
+            e.presentation.isVisible = e.presentation.isVisible && e.presentation.isEnabled
             e.presentation.putClientProperty(ActionUtil.INLINE_ACTIONS, listOf(TogglePinAction(ac.toolWindowId)))
           }
         }
@@ -196,39 +203,48 @@ class StripeActionGroup: ActionGroup(), DumbAware {
       }
     }
   }
+}
 
-  @Service(Service.Level.PROJECT)
-  private class ButtonsRepaintService(project: Project): Disposable {
-    private val buttons = ContainerUtil.createWeakSet<ActionButton>()
-    private val alarm = SingleAlarm(this::repaintButtons, 0, this, modalityState = ModalityState.any())
-    init {
-      project.messageBus.connect(this).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-        override fun stateChanged(toolWindowManager: ToolWindowManager) {
-          alarm.cancelAndRequest()
+@OptIn(FlowPreview::class)
+@Service(Service.Level.PROJECT)
+private class ButtonsRepaintService(project: Project, coroutineScope: CoroutineScope): Disposable {
+  private val repaintButtonsRequests = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+  private val buttons = ContainerUtil.createWeakSet<ActionButton>()
+
+  init {
+    project.messageBus.connect(coroutineScope).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
+      override fun stateChanged(toolWindowManager: ToolWindowManager) {
+        check(repaintButtonsRequests.tryEmit(Unit))
+      }
+    })
+
+    coroutineScope.launch {
+      val context = Dispatchers.EDT + ModalityState.any().asContextElement()
+      repaintButtonsRequests
+        .debounce(100)
+        .collect {
+          withContext(context) {
+            val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
+            for (toolbar in toolbars) {
+              toolbar.updateActionsAsync()
+            }
+          }
         }
-      })
-    }
-
-    @RequiresEdt
-    fun trackButton(btn: ActionButton) {
-      buttons.add(btn)
-    }
-
-    @RequiresEdt
-    fun unTrackButton(btn: ActionButton) {
-      buttons.remove(btn)
-    }
-
-    @RequiresEdt
-    fun repaintButtons() {
-      val toolbars = buttons.mapNotNullTo(LinkedHashSet()) { ActionToolbar.findToolbarBy(it) }
-      toolbars.forEach { it.updateActionsAsync() }
-    }
-
-    override fun dispose() {
     }
   }
 
+  @RequiresEdt
+  fun trackButton(btn: ActionButton) {
+    buttons.add(btn)
+  }
+
+  @RequiresEdt
+  fun unTrackButton(btn: ActionButton) {
+    buttons.remove(btn)
+  }
+
+  override fun dispose() {
+  }
 }
 
 private open class TogglePinActionBase(val toolWindowId: String)
@@ -259,7 +275,7 @@ private class TogglePinAction(toolWindowId: String): TogglePinActionBase(toolWin
     val pinned = Toggleable.isSelected(e.presentation)
     e.presentation.icon = if (!pinned) AllIcons.General.Pin else AllIcons.General.PinSelected
     e.presentation.selectedIcon = if (!pinned) AllIcons.General.PinHovered else AllIcons.General.PinSelectedHovered
-    e.presentation.putClientProperty(ActionMenu.ALWAYS_VISIBLE, pinned)
+    e.presentation.putClientProperty(ActionUtil.ALWAYS_VISIBLE_INLINE_ACTION, pinned)
   }
 }
 

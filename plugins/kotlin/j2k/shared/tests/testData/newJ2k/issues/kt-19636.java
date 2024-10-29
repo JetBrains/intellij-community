@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class TestInitializeInTry {
     Object x;
     private Object y;

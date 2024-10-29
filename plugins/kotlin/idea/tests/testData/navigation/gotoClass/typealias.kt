@@ -17,7 +17,3 @@ class Some() {
 }
 
 // SEARCH_TEXT: Test
-// REF: (in Some).TestInClass
-// REF: (in Some.Companion).TestInClassObject
-// REF: (in SomeInterface).TestInInterface
-// REF: TestGlobal

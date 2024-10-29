@@ -339,6 +339,15 @@ internal class JDOMUtilTest {
     JDOMUtil.load(testRoot)
   }
 
+  @Test(expected = JDOMException::class)
+  fun `handling of IllegalNameException for unsupported symbol`() {
+    JDOMUtil.load("<settings xmlns=\"\n" +
+                  "http://maven.apache.org/SETTINGS/1.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
+                  "      xsi:schemaLocation=\"http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd\">\n" +
+                  "    <localRepository/>\n" +
+                  "</settings>")
+  }
+
   private fun assertElementText(actual: Element, expected: String) {
     assertThat(JDOMUtil.writeElement(actual)).isEqualTo(expected)
   }

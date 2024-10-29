@@ -25,6 +25,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.getModuleLevelLibraries
 import com.intellij.xml.util.XmlStringUtil
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * If some modules were unloaded and new modules appears after loading project configuration, automatically unloads those which
@@ -178,6 +179,7 @@ internal class AutomaticModuleUnloaderImpl(private val project: Project) : Simpl
   }
 }
 
+@ApiStatus.Internal
 class LoadedModulesListStorage : BaseState() {
   @get:XCollection(elementName = "module", valueAttributeName = "name", propertyElementName = "loaded-modules")
   val modules: MutableList<String> by list()

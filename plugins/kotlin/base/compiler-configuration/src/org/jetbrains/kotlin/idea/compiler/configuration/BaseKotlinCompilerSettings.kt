@@ -94,6 +94,13 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
 
     override fun getState() = XmlSerializer.serialize(_settings, DefaultValuesFilter)
 
+    /**
+     * Can be used to modify the [state] after deserializing it.
+     */
+    protected open fun onStateDeserialized(state: T) {
+
+    }
+
     override fun loadState(state: Element) {
         _settings = ReflectionUtil.newInstance(_settings.javaClass).apply {
             if (this is CommonCompilerArguments) {
@@ -101,6 +108,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
                 internalArguments = mutableListOf()
             }
             XmlSerializer.deserializeInto(this, state)
+            onStateDeserialized(this)
         }
 
         runReadAction {

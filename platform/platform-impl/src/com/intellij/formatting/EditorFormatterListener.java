@@ -11,8 +11,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.util.PsiEditorUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class EditorFormatterListener implements CodeStyleManager.Listener {
   static final Key<EditorStateKeeper> EDITOR_STATE_KEY = Key.create("formatter.caret.position.keeper");
 

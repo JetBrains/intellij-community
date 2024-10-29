@@ -4,7 +4,9 @@ import com.intellij.injected.editor.DocumentWindow
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class HoverDocPopupLocationProviderImpl : HoverDocPopupLocationProvider {
   override fun getPopupPosition(targetOffset: Int, element: PsiElement?, editor: Editor): VisualPosition {
     val targetPosition = editor.offsetToVisualPosition(targetOffset)

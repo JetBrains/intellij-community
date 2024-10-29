@@ -3,6 +3,7 @@ package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
  * <p/>
  * Thread-safe.
  */
+@ApiStatus.Internal
 public final class GenericElementSignatureProvider implements ElementSignatureProvider {
 
   private static final ElementSignatureProvider[] PROVIDERS = {

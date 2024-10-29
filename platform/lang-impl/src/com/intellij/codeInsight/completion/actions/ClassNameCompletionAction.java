@@ -4,8 +4,10 @@ package com.intellij.codeInsight.completion.actions;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class ClassNameCompletionAction extends BaseCodeCompletionAction{
 
   @Override

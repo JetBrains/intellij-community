@@ -3,25 +3,43 @@ package org.jetbrains.plugins.terminal.block.session
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
+import com.jediterm.terminal.model.TerminalTextBuffer
 import org.jetbrains.plugins.terminal.TerminalUtil
+import org.jetbrains.plugins.terminal.block.session.TerminalModel.Companion.withLock
+import org.jetbrains.plugins.terminal.block.session.scraper.CommandEndMarkerListeningStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleStringCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.SimpleTerminalLinesCollector
+import org.jetbrains.plugins.terminal.block.session.scraper.StringCollector
 import java.util.concurrent.atomic.AtomicBoolean
 
-internal class ShellCommandEndMarkerListener(private val session: BlockTerminalSession, private val onFound: () -> Unit) {
+internal class ShellCommandEndMarkerListener(
+  private val terminalTextBuffer: TerminalTextBuffer,
+  private val commandEndMarker: String?,
+  parentDisposable: Disposable,
+  private val onFound: () -> Unit,
+) {
 
-  private val disposable: Disposable = Disposer.newDisposable(session, ShellCommandEndMarkerListener::class.java.simpleName)
+  private val disposable: Disposable = Disposer.newDisposable(parentDisposable, ShellCommandEndMarkerListener::class.java.simpleName)
   private val found: AtomicBoolean = AtomicBoolean(false)
 
   init {
     if (!findCommandEndMarker()) {
-      TerminalUtil.addModelListener(session.model.textBuffer, disposable) {
+      TerminalUtil.addModelListener(terminalTextBuffer, disposable) {
         findCommandEndMarker()
       }
     }
   }
 
   private fun findCommandEndMarker(): Boolean {
-    val output = session.model.withContentLock { ShellCommandOutputScraper.scrapeOutput(session) }
-    if (output.commandEndMarkerFound && found.compareAndSet(false, true)) {
+    var commandEndMarkerFound = false
+    terminalTextBuffer.withLock {
+      val stringCollector: StringCollector = CommandEndMarkerListeningStringCollector(SimpleStringCollector(), commandEndMarker) {
+        commandEndMarkerFound = true
+      }
+      // TODO no real need to collect all lines. Last lines of the screen must be enough.
+      terminalTextBuffer.collectLines(SimpleTerminalLinesCollector(stringCollector))
+    }
+    if (commandEndMarkerFound && found.compareAndSet(false, true)) {
       Disposer.dispose(disposable)
       onFound()
       return true

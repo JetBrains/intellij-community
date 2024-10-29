@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.push;
 
+import com.intellij.CommonBundle;
 import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.project.Project;
@@ -15,7 +16,9 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitSharedSettings;
 import git4idea.config.GitVcsSettings;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,7 +117,7 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
 
     GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, localBranch);
     if (trackInfo != null) {
-      return new GitPushTarget(trackInfo.getRemoteBranch(), false);
+      return new GitPushTarget(trackInfo.getRemoteBranch(), false, GitPushTargetType.TRACKING_BRANCH);
     }
     return null;
   }
@@ -124,9 +127,9 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
                                                                @NotNull String branchName) {
     GitRemoteBranch existingRemoteBranch = findRemoteBranch(repository, remote, branchName);
     if (existingRemoteBranch != null) {
-      return new GitPushTarget(existingRemoteBranch, false);
+      return new GitPushTarget(existingRemoteBranch, false, GitPushTargetType.TRACKING_BRANCH);
     }
-    return new GitPushTarget(new GitStandardRemoteBranch(remote, branchName), true);
+    return new GitPushTarget(new GitStandardRemoteBranch(remote, branchName), true, GitPushTargetType.TRACKING_BRANCH);
   }
 
   @Override
@@ -156,6 +159,11 @@ public final class GitPushSupport extends PushSupport<GitRepository, GitPushSour
   public boolean isForcePushAllowed(@NotNull GitRepository repo, @NotNull GitPushTarget target) {
     final String targetBranch = target.getBranch().getNameForRemoteOperations();
     return !mySharedSettings.isBranchProtected(targetBranch);
+  }
+
+  @Override
+  public @NotNull @Nls String getForcePushConfigurablePath() {
+    return GitBundle.message("push.dialog.prohibited.branch.configurable.path", CommonBundle.settingsTitle());
   }
 
   @Override

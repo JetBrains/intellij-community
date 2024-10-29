@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
@@ -21,9 +20,6 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoint> {
-  @Override
-  public void createBreakpointsGroupingRules(Collection<XBreakpointGroupingRule> rules) {
-  }
 
   @Override
   public void addListener(final BreakpointsListener listener, Project project, Disposable disposable) {

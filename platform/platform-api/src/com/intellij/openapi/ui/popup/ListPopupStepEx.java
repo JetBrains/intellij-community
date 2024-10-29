@@ -28,9 +28,5 @@ public interface ListPopupStepEx<T> extends ListPopupStep<T> {
 
   void setEmptyText(@NotNull StatusText emptyText);
 
-  default @Nls @Nullable String getSecondaryTextFor(T t) { return getValueFor(t); }
-
-  /** @deprecated Use {@link #getSecondaryTextFor(T)} instead */
-  @Deprecated(forRemoval = true)
-  default @Nls @Nullable String getValueFor(T t) { return null; }
+  default @Nls @Nullable String getSecondaryTextFor(T t) { return null; }
 }

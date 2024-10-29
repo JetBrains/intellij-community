@@ -7,12 +7,14 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class IdeFocusManagerHeadless extends IdeFocusManager { // FIXME-ank: reverted final
   public static final IdeFocusManagerHeadless INSTANCE = new IdeFocusManagerHeadless();
 

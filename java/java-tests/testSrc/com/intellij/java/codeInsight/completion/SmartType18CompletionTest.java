@@ -353,7 +353,8 @@ public class SmartType18CompletionTest extends LightFixtureCompletionTestCase {
 
   public void testFilterInaccessibleConstructors() { doAntiTest(); }
 
-  public void testCastInToArrayCallWithUnresolvedType() { doAntiTest(); }
+  @NeedsIndex.ForStandardLibrary(reason = "java.util.List")
+  public void testCastInToArrayCallWithUnresolvedType() { doTest(false); }
 
   @NeedsIndex.ForStandardLibrary
   public void testNoDuplicateEmptyList() {

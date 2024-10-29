@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.repo;
 
 import com.intellij.dvcs.ignore.IgnoredToExcludedSynchronizer;
@@ -26,17 +26,14 @@ import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRefreshUsageCollector;
+import git4idea.ignore.GitRepositoryIgnoredFilesHolder;
 import git4idea.index.GitIndexStatusUtilKt;
 import git4idea.index.LightFileStatus.StatusRecord;
 import git4idea.status.GitRefreshListener;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
@@ -47,8 +44,6 @@ public class GitUntrackedFilesHolder implements Disposable {
   private final VirtualFile myRoot;
   private final GitRepository myRepository;
 
-  private final Set<FilePath> myUntrackedFiles = new HashSet<>();
-  private final RecursiveFilePathSet myIgnoredFiles;
   private final Set<FilePath> myDirtyFiles = new HashSet<>();
   private boolean myEverythingDirty = true;
 
@@ -56,12 +51,16 @@ public class GitUntrackedFilesHolder implements Disposable {
   private final Object LOCK = new Object();
   private boolean myInUpdate = false;
 
+  private final CopyOnWriteFilePathSet myUntrackedFiles;
+  private final MyGitRepositoryIgnoredFilesHolder myIgnoredFilesHolder;
+
   GitUntrackedFilesHolder(@NotNull GitRepository repository) {
     myRepository = repository;
     myProject = repository.getProject();
     myRoot = repository.getRoot();
 
-    myIgnoredFiles = new RecursiveFilePathSet(myRoot.isCaseSensitive());
+    myUntrackedFiles = new CopyOnWriteFilePathSet(myRoot.isCaseSensitive());
+    myIgnoredFilesHolder = new MyGitRepositoryIgnoredFilesHolder();
     myQueue = VcsIgnoreManagerImpl.getInstanceImpl(myProject).getIgnoreRefreshQueue();
 
     scheduleUpdate();
@@ -71,7 +70,7 @@ public class GitUntrackedFilesHolder implements Disposable {
   public void dispose() {
     synchronized (LOCK) {
       myUntrackedFiles.clear();
-      myIgnoredFiles.clear();
+      myIgnoredFilesHolder.clear();
       myDirtyFiles.clear();
     }
   }
@@ -88,7 +87,7 @@ public class GitUntrackedFilesHolder implements Disposable {
    */
   public void addUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      myUntrackedFiles.addAll(files);
+      myUntrackedFiles.add(files);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
     }
     ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
@@ -100,25 +99,8 @@ public class GitUntrackedFilesHolder implements Disposable {
    */
   public void removeUntracked(@NotNull Collection<? extends FilePath> files) {
     synchronized (LOCK) {
-      files.forEach(myUntrackedFiles::remove);
+      myUntrackedFiles.remove(files);
       if (!myEverythingDirty) myDirtyFiles.addAll(files);
-    }
-    ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-    scheduleUpdate();
-  }
-
-  public void removeIgnored(@NotNull Collection<? extends FilePath> files) {
-    synchronized (LOCK) {
-      files.forEach(myIgnoredFiles::remove);
-      if (!myEverythingDirty) {
-        // break parent ignored directory into separate ignored files
-        if (ContainerUtil.exists(files, myIgnoredFiles::hasAncestor)) {
-          myEverythingDirty = true;
-        }
-        else {
-          myDirtyFiles.addAll(files);
-        }
-      }
     }
     ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
     scheduleUpdate();
@@ -133,8 +115,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     synchronized (LOCK) {
       if (myEverythingDirty) return;
       for (FilePath filePath : files) {
-        if (myIgnoredFiles.containsExplicitly(filePath) ||
-            !myIgnoredFiles.hasAncestor(filePath)) {
+        if (myIgnoredFilesHolder.ignoredFiles.containsExplicitly(filePath) || !myIgnoredFilesHolder.ignoredFiles.hasAncestor(filePath)) {
           myDirtyFiles.add(filePath);
         }
       }
@@ -169,28 +150,12 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  public @NotNull Collection<FilePath> getUntrackedFilePaths() {
-    synchronized (LOCK) {
-      return new ArrayList<>(myUntrackedFiles);
-    }
-  }
-
-  public @NotNull Collection<FilePath> getIgnoredFilePaths() {
-    synchronized (LOCK) {
-      return new ArrayList<>(myIgnoredFiles.filePaths());
-    }
+  public @NotNull Set<FilePath> getUntrackedFilePaths() {
+    return myUntrackedFiles.toSet();
   }
 
   public boolean containsUntrackedFile(@NotNull FilePath filePath) {
-    synchronized (LOCK) {
-      return myUntrackedFiles.contains(filePath);
-    }
-  }
-
-  public boolean containsIgnoredFile(@NotNull FilePath filePath) {
-    synchronized (LOCK) {
-      return myIgnoredFiles.hasAncestor(filePath);
-    }
+    return myUntrackedFiles.hasAncestor(filePath);
   }
 
   public @NotNull Collection<FilePath> retrieveUntrackedFilePaths() throws VcsException {
@@ -198,9 +163,13 @@ public class GitUntrackedFilesHolder implements Disposable {
     return getUntrackedFilePaths();
   }
 
-  public @NotNull Collection<FilePath> retrieveIgnoredFilePaths() {
-    VcsIgnoreManagerImpl.getInstanceImpl(myProject).awaitRefreshQueue();
-    return getIgnoredFilePaths();
+  @NotNull GitRepositoryIgnoredFilesHolder getIgnoredFilesHolder() {
+    return myIgnoredFilesHolder;
+  }
+
+  @ApiStatus.Internal
+  public boolean isInitialized() {
+    return myUntrackedFiles.getInitialized();
   }
 
   private boolean isDirty() {
@@ -254,11 +223,11 @@ public class GitUntrackedFilesHolder implements Disposable {
       }
 
       Set<FilePath> oldIgnored;
-      List<FilePath> newIgnored;
+      Set<FilePath> newIgnored;
       synchronized (LOCK) {
-        oldIgnored = new HashSet<>(myIgnoredFiles.filePaths());
+        oldIgnored = myIgnoredFilesHolder.getIgnoredFilePaths();
         applyRefreshResult(result, dirtyScope, oldIgnored);
-        newIgnored = new ArrayList<>(myIgnoredFiles.filePaths());
+        newIgnored = myIgnoredFilesHolder.getIgnoredFilePaths();
 
         myInUpdate = isDirty();
       }
@@ -266,7 +235,8 @@ public class GitUntrackedFilesHolder implements Disposable {
       BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).repositoryUpdated(myRepository);
       BackgroundTaskUtil.syncPublisher(myProject, VcsManagedFilesHolder.TOPIC).updatingModeChanged();
       ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
-      notifyExcludedSynchronizer(oldIgnored, newIgnored);
+
+      myProject.getService(IgnoredToExcludedSynchronizer.class).onIgnoredFilesUpdate(newIgnored, oldIgnored);
     }
     finally {
       BackgroundTaskUtil.syncPublisher(myProject, GitRefreshListener.TOPIC).progressStopped();
@@ -276,41 +246,33 @@ public class GitUntrackedFilesHolder implements Disposable {
   private void applyRefreshResult(@NotNull RefreshResult result,
                                   @Nullable RecursiveFilePathSet dirtyScope,
                                   @NotNull Set<FilePath> oldIgnored) {
-    if (dirtyScope != null) {
-      myUntrackedFiles.removeIf(filePath -> dirtyScope.hasAncestor(filePath));
-      myUntrackedFiles.addAll(result.untracked);
+    RecursiveFilePathSet newIgnored = new RecursiveFilePathSet(myRoot.isCaseSensitive());
+    RecursiveFilePathSet newUntracked = new RecursiveFilePathSet(myRoot.isCaseSensitive());
 
-      myIgnoredFiles.clear();
+    if (dirtyScope != null) {
+      var untrackedSet = myUntrackedFiles.toSet();
+      untrackedSet.removeIf(filePath -> dirtyScope.hasAncestor(filePath));
+      untrackedSet.addAll(result.untracked);
+      newUntracked.addAll(untrackedSet);
 
       for (FilePath filePath : oldIgnored) {
         if (!dirtyScope.hasAncestor(filePath)) {
-          myIgnoredFiles.add(filePath);
+          newIgnored.add(filePath);
         }
       }
       for (FilePath filePath : result.ignored) {
-        if (!myIgnoredFiles.hasAncestor(filePath)) { // prevent storing both parent and child directories
-          myIgnoredFiles.add(filePath);
+        if (!newIgnored.hasAncestor(filePath)) { // prevent storing both parent and child directories
+          newIgnored.add(filePath);
         }
       }
     }
     else {
-      myUntrackedFiles.clear();
-      myUntrackedFiles.addAll(result.untracked);
-      myIgnoredFiles.clear();
-      myIgnoredFiles.addAll(result.ignored);
+      newUntracked.addAll(result.untracked);
+      newIgnored.addAll(result.ignored);
     }
-  }
 
-  private void notifyExcludedSynchronizer(@NotNull Set<FilePath> oldIgnored, @NotNull List<FilePath> newIgnored) {
-    List<FilePath> addedIgnored = new ArrayList<>();
-    for (FilePath filePath : newIgnored) {
-      if (!oldIgnored.contains(filePath)) {
-        addedIgnored.add(filePath);
-      }
-    }
-    if (!addedIgnored.isEmpty()) {
-      myProject.getService(IgnoredToExcludedSynchronizer.class).ignoredUpdateFinished(addedIgnored);
-    }
+    myIgnoredFilesHolder.ignoredFiles.set(newIgnored);
+    myUntrackedFiles.set(newUntracked);
   }
 
   /**
@@ -365,6 +327,52 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
+  private class MyGitRepositoryIgnoredFilesHolder implements GitRepositoryIgnoredFilesHolder {
+    private final @NotNull CopyOnWriteFilePathSet ignoredFiles = new CopyOnWriteFilePathSet(myRoot.isCaseSensitive());
+
+    @Override
+    public boolean getInitialized() {
+      return ignoredFiles.getInitialized();
+    }
+
+    @Override
+    public @NotNull Set<FilePath> getIgnoredFilePaths() {
+      return ignoredFiles.toSet();
+    }
+
+    @Override
+    public boolean isInUpdateMode() {
+      return GitUntrackedFilesHolder.this.isInUpdateMode();
+    }
+
+    @Override
+    public boolean containsFile(@NotNull FilePath file) {
+      return ignoredFiles.hasAncestor(file);
+    }
+
+    @Override
+    public void removeIgnoredFiles(@NotNull Collection<? extends FilePath> filePaths) {
+      synchronized (LOCK) {
+        ignoredFiles.remove(filePaths);
+
+        if (!myEverythingDirty) {
+          // break parent ignored directory into separate ignored files
+          if (ContainerUtil.exists(filePaths, ignoredFiles::hasAncestor)) {
+            myEverythingDirty = true;
+          }
+          else {
+            myDirtyFiles.addAll(filePaths);
+          }
+        }
+      }
+      ChangeListManagerImpl.getInstanceImpl(myProject).notifyUnchangedFileStatusChanged();
+    }
+
+    private void clear() {
+      ignoredFiles.clear();
+    }
+  }
+
   private static @NotNull FilePath getFilePath(@NotNull VirtualFile root, @NotNull StatusRecord status) {
     String path = status.getPath();
     return GitContentRevision.createPath(root, path, path.endsWith("/"));
@@ -397,7 +405,7 @@ public class GitUntrackedFilesHolder implements Disposable {
       try {
         myQueue.waitForAllExecuted(10, TimeUnit.SECONDS);
       }
-      catch (ExecutionException | InterruptedException | TimeoutException e) {
+      catch (TimeoutException e) {
         throw new RuntimeException(e);
       }
     }

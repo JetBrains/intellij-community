@@ -1,3 +1,5 @@
+import B
+
 // BIND_TO B
 object A {
     val foo: String = ""

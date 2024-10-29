@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.find.FindBundle;
@@ -80,7 +80,7 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
     comboBox.setMaximumRowCount(8);
 
-    myDirectoryComboBox.addBrowseFolderListener(null, null, project, descriptor, new TextComponentAccessor<>() {
+    myDirectoryComboBox.addBrowseFolderListener(project, descriptor, new TextComponentAccessor<>() {
       @Override
       public String getText(ComboBox comboBox) {
         return comboBox.getEditor().getItem().toString();
@@ -176,4 +176,3 @@ public class DirectoryComboBoxWithButtons extends JPanel {
     }
   }
 }
-

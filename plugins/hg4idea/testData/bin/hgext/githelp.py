@@ -15,7 +15,6 @@ If an unknown command or parameter combination is detected, an error is
 produced.
 """
 
-from __future__ import absolute_import
 
 import getopt
 import re
@@ -112,18 +111,18 @@ def parseoptions(ui, cmdoptions, args):
 
             ui.warn(_(b"ignoring unknown option %s\n") % flag)
 
-    args = list([convert(x) for x in args])
+    args = [convert(x) for x in args]
     opts = dict(
         [
             (k, convert(v)) if isinstance(v, bytes) else (k, v)
-            for k, v in pycompat.iteritems(opts)
+            for k, v in opts.items()
         ]
     )
 
     return args, opts
 
 
-class Command(object):
+class Command:
     def __init__(self, name):
         self.name = name
         self.args = []
@@ -132,7 +131,7 @@ class Command(object):
     def __bytes__(self):
         cmd = b"hg " + self.name
         if self.opts:
-            for k, values in sorted(pycompat.iteritems(self.opts)):
+            for k, values in sorted(self.opts.items()):
                 for v in values:
                     if v:
                         if isinstance(v, int):
@@ -164,7 +163,7 @@ class Command(object):
         return AndCommand(self, other)
 
 
-class AndCommand(object):
+class AndCommand:
     def __init__(self, left, right):
         self.left = left
         self.right = right

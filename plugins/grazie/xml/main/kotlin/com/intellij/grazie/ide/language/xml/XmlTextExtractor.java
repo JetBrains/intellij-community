@@ -29,7 +29,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
@@ -49,35 +48,34 @@ public class XmlTextExtractor extends TextExtractor {
   }
 
   @Override
-  protected @Nullable TextContent buildTextContent(@NotNull PsiElement element,
-                                                   @NotNull Set<TextContent.TextDomain> allowedDomains) {
+  protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (isText(element) && hasSuitableDialect(element)) {
       var classifier = tagClassifier(element);
       PsiElement container = SyntaxTraverser.psiApi().parents(element)
         .find(e -> e instanceof XmlDocument || e instanceof XmlTag && classifier.apply((XmlTag)e) != TagKind.Inline);
       if (container != null) {
-        Map<PsiElement, TextContent> contentsInside = CachedValuesManager.getCachedValue(container, () ->
+        Map<PsiElement, List<TextContent>> contentsInside = CachedValuesManager.getCachedValue(container, () ->
           CachedValueProvider.Result.create(calcContents(container), container));
-        return contentsInside.get(element);
+        return contentsInside.getOrDefault(element, List.of());
       }
     }
 
     IElementType type = PsiUtilCore.getElementType(element);
     if (type == XmlTokenType.XML_COMMENT_CHARACTERS && allowedDomains.contains(COMMENTS) && hasSuitableDialect(element)) {
-      return builder.build(element, COMMENTS);
+      return ContainerUtil.createMaybeSingletonList(builder.build(element, COMMENTS));
     }
 
     if (type == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN && allowedDomains.contains(LITERALS) && hasSuitableDialect(element)) {
       TextContent content = builder.build(element, LITERALS);
       if (content != null && seemsNatural(content)) {
-        return content;
+        return List.of(content);
       }
     }
 
-    return null;
+    return List.of();
   }
 
-  private @NotNull Map<PsiElement, TextContent> calcContents(PsiElement container) {
+  private @NotNull Map<PsiElement, List<TextContent>> calcContents(PsiElement container) {
     if (container instanceof XmlTag && isNonText((XmlTag)container)) {
       return Collections.emptyMap();
     }
@@ -88,9 +86,10 @@ public class XmlTextExtractor extends TextExtractor {
     var fullContent = NotNullLazyValue.lazy(() -> TextContent.psiFragment(PLAIN_TEXT, container));
 
     var visitor = new PsiRecursiveElementWalkingVisitor() {
-      final Map<PsiElement, TextContent> result = new HashMap<>();
+      final Map<PsiElement, List<TextContent>> result = new HashMap<>();
       final List<PsiElement> group = new ArrayList<>();
       final Set<Integer> markupIndices = new HashSet<>();
+      final Set<Integer> unknownIndices = new HashSet<>();
       final Set<XmlTag> inlineTags = new HashSet<>();
       boolean unknownBefore = unknownContainer;
 
@@ -114,9 +113,31 @@ public class XmlTextExtractor extends TextExtractor {
         }
 
         if (isText(each)) {
-          group.add(each);
+          if (isCdata(each.getParent())) {
+            List<TextContent> contents = HtmlUtilsKt.excludeHtml(
+              extractRange(each.getTextRange().shiftLeft(container.getTextRange().getStartOffset())));
+            if (!contents.isEmpty()) { // isolate CDATA into its own TextContent set for now; maybe glue to the surrounding texts later
+              flushGroup(false);
+              result.put(each, contents);
+              unknownBefore = false;
+            }
+          } else {
+            group.add(each);
+          }
+        }
+        else if (PsiUtilCore.getElementType(each) == XmlTokenType.XML_CHAR_ENTITY_REF) {
+          if (HtmlUtilsKt.isSpaceEntity(each.getText())) {
+            group.add(each);
+          } else {
+            unknownIndices.add(group.size());
+          }
         }
         super.visitElement(each);
+      }
+
+      private TextContent extractRange(TextRange range) {
+        TextContent full = fullContent.getValue();
+        return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
       }
 
       @Override
@@ -132,27 +153,33 @@ public class XmlTextExtractor extends TextExtractor {
         List<TextContent> components = new ArrayList<>(group.size());
         for (int i = 0; i < group.size(); i++) {
           PsiElement e = group.get(i);
-          TextContent component = extractRange(fullContent.getValue(), e.getTextRange().shiftLeft(containerStart));
-          if (markupIndices.contains(i)) {
-            component = component.excludeRanges(List.of(new Exclusion(0, 0, ExclusionKind.markup)));
-          }
-          if (markupIndices.contains(i + 1)) {
-            component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), ExclusionKind.markup)));
-          }
+          TextContent component = extractRange(e.getTextRange().shiftLeft(containerStart));
+          component = applyExclusions(i, component, markupIndices, ExclusionKind.markup);
+          component = applyExclusions(i, component, unknownIndices, ExclusionKind.unknown);
           components.add(component);
         }
         TextContent content = TextContent.join(components);
         if (content != null) {
           if (unknownBefore) content = content.markUnknown(TextRange.from(0, 0));
           if (unknownAfter) content = content.markUnknown(TextRange.from(content.length(), 0));
-          content = HtmlUtilsKt.nbspToSpace(content.removeIndents(Set.of(' ', '\t')));
+          content = HtmlUtilsKt.inlineSpaceEntities(content.removeIndents(Set.of(' ', '\t')));
           if (content != null) {
             for (PsiElement e : group) {
-              result.put(e, content);
+              result.put(e, List.of(content));
             }
           }
         }
         group.clear();
+      }
+
+      private static TextContent applyExclusions(int index, TextContent component, Set<Integer> indices, ExclusionKind kind) {
+        if (indices.contains(index)) {
+          component = component.excludeRanges(List.of(new Exclusion(0, 0, kind)));
+        }
+        if (indices.contains(index + 1)) {
+          component = component.excludeRanges(List.of(new Exclusion(component.length(), component.length(), kind)));
+        }
+        return component;
       }
     };
     container.acceptChildren(visitor);
@@ -164,21 +191,19 @@ public class XmlTextExtractor extends TextExtractor {
     return content.toString().contains(" ");
   }
 
-  private static TextContent extractRange(TextContent full, TextRange range) {
-    return full.excludeRange(new TextRange(range.getEndOffset(), full.length())).excludeRange(new TextRange(0, range.getStartOffset()));
-  }
-
   private static boolean isText(PsiElement leaf) {
     PsiElement parent = leaf.getParent();
-    if (!(parent instanceof XmlText) &&
-        !(PsiUtilCore.getElementType(parent) == XmlElementType.XML_CDATA && parent.getParent() instanceof XmlText) &&
-        !(parent instanceof XmlDocument)) {
+    if (!(parent instanceof XmlText) && !isCdata(parent) && !(parent instanceof XmlDocument)) {
       return false;
     }
 
     IElementType type = PsiUtilCore.getElementType(leaf);
     return type == XmlTokenType.XML_WHITE_SPACE || type == TokenType.WHITE_SPACE ||
-           type == XmlTokenType.XML_CHAR_ENTITY_REF || type == XmlTokenType.XML_DATA_CHARACTERS;
+           type == XmlTokenType.XML_DATA_CHARACTERS;
+  }
+
+  private static boolean isCdata(PsiElement element) {
+    return PsiUtilCore.getElementType(element) == XmlElementType.XML_CDATA;
   }
 
   private boolean hasSuitableDialect(@NotNull PsiElement element) {
@@ -202,8 +227,18 @@ public class XmlTextExtractor extends TextExtractor {
       super(HTMLLanguage.class);
     }
 
-    private static final Set<String> DEFINITELY_BLOCK_TAGS =
-      Set.of("body", "p", "br", "td", "li", "title", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "table");
+    @Override
+    protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
+                                                           @NotNull Set<TextContent.TextDomain> allowedDomains) {
+      if (PsiUtilCore.getElementType(element) == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN &&
+          element.getParent() instanceof XmlAttributeValue value &&
+          value.getParent() instanceof XmlAttribute attr &&
+          "class".equalsIgnoreCase(attr.getName())) {
+        return List.of();
+      }
+
+      return super.buildTextContents(element, allowedDomains);
+    }
 
     @Override
     protected Function<XmlTag, TagKind> tagClassifier(@NotNull PsiElement context) {
@@ -216,7 +251,7 @@ public class XmlTextExtractor extends TextExtractor {
       return tag -> {
         String name = tag.getName();
         if (NON_TEXT_TAGS.contains(name)) return TagKind.Unknown;
-        if (DEFINITELY_BLOCK_TAGS.contains(name)) return TagKind.Block;
+        if (HtmlUtilsKt.commonBlockElements.contains(name)) return TagKind.Block;
         if (inlineTags.contains(name)) return TagKind.Inline;
         return TagKind.Unknown;
       };

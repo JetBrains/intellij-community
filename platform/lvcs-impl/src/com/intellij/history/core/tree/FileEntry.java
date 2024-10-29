@@ -18,6 +18,7 @@ package com.intellij.history.core.tree;
 
 import com.intellij.history.core.Content;
 import com.intellij.history.core.StoredContent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -26,6 +27,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+@ApiStatus.Internal
 public final class FileEntry extends Entry {
   private long myTimestamp;
   private boolean isReadOnly;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.console;
 
 import com.intellij.ide.ui.UISettings;
@@ -7,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,9 +19,10 @@ import java.util.Map;
 /**
  * @author Gregory.Shrago
  */
+@ApiStatus.Internal
 public final class DefaultConsoleHistoryModel extends SimpleModificationTracker implements ConsoleHistoryModel {
 
-  private final static Map<String, DefaultConsoleHistoryModel> ourModels =
+  private static final Map<String, DefaultConsoleHistoryModel> ourModels =
     ConcurrentFactoryMap.create(key -> new DefaultConsoleHistoryModel(null),
                                 () -> CollectionFactory.createConcurrentWeakValueMap());
 
@@ -93,9 +95,8 @@ public final class DefaultConsoleHistoryModel extends SimpleModificationTracker 
     }
   }
 
-  @NotNull
   @Override
-  public List<String> getEntries() {
+  public @NotNull List<String> getEntries() {
     synchronized (myLock) {
       return new ArrayList<>(myEntries);
     }
@@ -116,8 +117,7 @@ public final class DefaultConsoleHistoryModel extends SimpleModificationTracker 
   }
 
   @Override
-  @Nullable
-  public Entry getHistoryNext() {
+  public @Nullable Entry getHistoryNext() {
     synchronized (myLock) {
       if (myIndex >= 0) --myIndex;
       return new Entry(getCurrentEntry(), -1);
@@ -125,8 +125,7 @@ public final class DefaultConsoleHistoryModel extends SimpleModificationTracker 
   }
 
   @Override
-  @Nullable
-  public Entry getHistoryPrev() {
+  public @Nullable Entry getHistoryPrev() {
     synchronized (myLock) {
       if (myIndex <= myEntries.size() - 1) ++myIndex;
       return new Entry(getCurrentEntry(), -1);

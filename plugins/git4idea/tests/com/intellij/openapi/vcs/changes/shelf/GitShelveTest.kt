@@ -6,7 +6,6 @@ import com.intellij.openapi.util.registry.Registry
 import git4idea.stash.GitShelveChangesSaver
 import git4idea.test.*
 import org.assertj.core.api.Assertions.assertThat
-import java.util.*
 
 class GitStandardShelveTest : GitShelveTest() {
   override fun setUp() {
@@ -110,6 +109,95 @@ abstract class GitShelveTest : GitSingleRepoTest() {
     assertChanges(list) {
       added("a.txt", initialContent)
     }
+  }
+
+  fun `test hidden stage-only changes 1`() {
+    val initialContent = "initial\n"
+
+    val aFile = file("a.txt")
+    aFile.create(initialContent).addCommit("initial")
+
+    val bfile = file("b.txt")
+    bfile.create(initialContent).addCommit("initial")
+
+    aFile.write("more changes\n").add()
+    aFile.write(initialContent)
+
+    bfile.write("more changes from b\n").add()
+    val bNewContent = bfile.read()
+
+    refresh()
+    updateChangeListManager()
+
+    saver.saveLocalChanges(listOf(repo.root))
+    refresh()
+    updateChangeListManager()
+
+    changeListManager.assertNoChanges()
+    assertEquals("Current file content is incorrect", initialContent, aFile.read())
+    assertEquals("Current file content is incorrect", initialContent, bfile.read())
+
+    val list = `assert single shelvelist`()
+    assertChanges(list) {
+      modified("b.txt", initialContent, bNewContent)
+    }
+
+    saver.load()
+    refresh()
+    updateChangeListManager()
+
+    assertChanges {
+      modified("b.txt", initialContent, bNewContent)
+    }
+  }
+
+  fun `test hidden stage-only changes 2`() {
+    val aFile = file("a.txt")
+    val initialContent = "initial\n"
+    aFile.create(initialContent).addCommit("initial")
+    aFile.write("more changes\n")
+    aFile.add()
+    aFile.write(initialContent)
+
+    refresh()
+    updateChangeListManager()
+
+    saver.saveLocalChanges(listOf(repo.root))
+    refresh()
+    updateChangeListManager()
+
+    assertEmpty(repo.stagingAreaHolder.allRecords)
+    assertEmpty(shelveChangesManager.shelvedChangeLists)
+
+    saver.load()
+    refresh()
+    updateChangeListManager()
+
+    assertEmpty(repo.stagingAreaHolder.allRecords)
+    assertEmpty(shelveChangesManager.shelvedChangeLists)
+  }
+
+  fun `test hidden stage-only changes 3`() {
+    val afile = file("b.txt")
+    afile.create("initial content").add()
+    afile.delete()
+
+    refresh()
+    updateChangeListManager()
+
+    saver.saveLocalChanges(listOf(repo.root))
+    refresh()
+    updateChangeListManager()
+
+    assertEmpty(repo.stagingAreaHolder.allRecords)
+    assertEmpty(shelveChangesManager.shelvedChangeLists)
+
+    saver.load()
+    refresh()
+    updateChangeListManager()
+
+    assertEmpty(repo.stagingAreaHolder.allRecords)
+    assertEmpty(shelveChangesManager.shelvedChangeLists)
   }
 
   fun `test shelf and load files added in multiple roots`() {

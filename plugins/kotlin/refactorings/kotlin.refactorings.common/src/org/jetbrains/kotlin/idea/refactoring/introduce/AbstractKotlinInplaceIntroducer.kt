@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.psi.psiUtil.isIdentifier
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
 import java.awt.BorderLayout
 
-const val TYPE_REFERENCE_VARIABLE_NAME: String = "TypeReferenceVariable";
+const val TYPE_REFERENCE_VARIABLE_NAME: String = "TypeReferenceVariable"
 
 abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
     localVariable: D?,
@@ -53,6 +53,7 @@ abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
     }
 
     protected fun updateVariableName() {
+        if (localVariable == null) return
         val currentName = inputName.quoteIfNeeded()
         if (currentName.isIdentifier()) {
             localVariable.setName(currentName)
@@ -75,7 +76,7 @@ abstract class AbstractKotlinInplaceIntroducer<D : KtNamedDeclaration>(
             return it.replaced(KtPsiFactory(myProject).createDeclaration(exprText))
         }
 
-        val occurrenceExprText = (myExpr as? KtProperty)?.name ?: exprText
+        val occurrenceExprText = (myExpr as? KtProperty)?.name?.quoteIfNeeded() ?: exprText
         return leaf
             .getNonStrictParentOfType<KtSimpleNameExpression>()
             ?.replaced(KtPsiFactory(myProject).createExpression(occurrenceExprText))

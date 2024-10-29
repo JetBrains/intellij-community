@@ -7,8 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.ProximityLocation;
 import com.intellij.psi.util.PsiUtilCore;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class InResolveScopeWeigher extends ProximityWeigher {
   private static final NotNullLazyKey<GlobalSearchScope, ProximityLocation> PLACE_SCOPE = NotNullLazyKey.createLazyKey("placeScope", location -> {
     PsiElement position = location.getPosition();

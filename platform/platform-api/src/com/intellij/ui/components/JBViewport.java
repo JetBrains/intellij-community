@@ -105,7 +105,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
 
   @Override
   public void setViewPosition(Point p) {
-    if (ScrollSettings.isDebugEnabled() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
+    if (ScrollSettings.isDebugEnabled.invoke() && !p.equals(getViewPosition()) && !isInsideLogToolWindow()) {
       checkScrollingCapabilities();
     }
     super.setViewPosition(p);
@@ -202,7 +202,7 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   @Override
   public Color getBackground() {
     Color color = super.getBackground();
-    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView()) {
+    if (!myBackgroundRequested && EventQueue.isDispatchThread() && ScrollSettings.isBackgroundFromView.invoke()) {
       if (!isBackgroundSet() || color instanceof UIResource) {
         Component child = getView();
         if (child != null) {
@@ -322,8 +322,8 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   }
 
   private static boolean isAlignmentNeeded(JComponent view, boolean horizontal) {
-    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac()) &&
-           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent()));
+    return (!SystemInfo.isMac || horizontal && ScrollSettings.isHorizontalGapNeededOnMac.invoke()) &&
+           (view instanceof JList || view instanceof JTree || (!SystemInfo.isMac && ScrollSettings.isGapNeededForAnyComponent.invoke()));
   }
 
   private static Insets getInnerInsets(JComponent view) {

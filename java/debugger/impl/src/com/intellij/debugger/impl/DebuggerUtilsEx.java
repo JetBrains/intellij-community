@@ -45,7 +45,7 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor;
 import com.intellij.unscramble.ThreadDumpPanel;
-import com.intellij.unscramble.ThreadState;
+import com.intellij.threadDumpParser.ThreadState;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.jetbrains.jdi.ArrayReferenceImpl;
+import com.jetbrains.jdi.JNITypeParser;
 import com.jetbrains.jdi.LocationImpl;
 import com.jetbrains.jdi.ObjectReferenceImpl;
 import com.sun.jdi.*;
@@ -80,6 +81,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsEx.class);
@@ -345,7 +347,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     content.putUserData(RunnerContentUi.LIGHTWEIGHT_CONTENT_MARKER, Boolean.TRUE);
     content.setCloseable(true);
     content.setDescription(JavaDebuggerBundle.message("thread.dump"));
-    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
+    content.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
     ui.addContent(content);
     ui.selectAndFocus(content, true, true);
     myThreadDumpsCount++;
@@ -399,6 +401,20 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType,
+                                             @NotNull List<? extends Value> values,
+                                             @NotNull EvaluationContext context)
+    throws EvaluateException {
+    ArrayReference res = context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, values.size()));
+    try {
+      setArrayValues(res, values, false);
+    }
+    catch (Exception e) {
+      throw new EvaluateException(e.getMessage(), e);
+    }
+    return res;
+  }
+
   public static ArrayReference mirrorOfByteArray(byte[] bytes, EvaluationContext context)
     throws EvaluateException, InvalidTypeException, ClassNotLoadedException {
     context = ((EvaluationContextImpl)context).withAutoLoadClasses(true);
@@ -409,52 +425,40 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     for (byte b : bytes) {
       mirrors.add(virtualMachine.mirrorOf(b));
     }
-
-    if (isAndroidVM(virtualMachine)) {
-      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
-      setChuckByChunk(reference, mirrors);
-    }
-    else {
-      try {
-        setValuesNoCheck(reference, mirrors);
-      }
-      catch (VMMismatchException e) {
-        LOG.error("Class vm: " + arrayClass.virtualMachine() +
-                  " loaded by " + arrayClass.virtualMachine().getClass().getClassLoader() +
-                  "\nReference vm: " + reference.virtualMachine() +
-                  " loaded by " + reference.virtualMachine().getClass().getClassLoader() +
-                  "\nMirrors vms: " + StreamEx.of(mirrors).map(Mirror::virtualMachine).distinct()
-                    .map(vm -> {
-                      return vm +
-                             " loaded by " + vm.getClass().getClassLoader() +
-                             " same as ref vm = " + (vm == reference.virtualMachine());
-                    })
-                    .joining(", ")
-          , e);
-      }
-    }
-
+    setArrayValues(reference, mirrors, false);
     return reference;
   }
 
   private static final int BATCH_SIZE = 4096;
 
-  private static void setChuckByChunk(ArrayReference reference, List<? extends Value> values)
+  private static void setChuckByChunk(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
     throws ClassNotLoadedException, InvalidTypeException {
     int loaded = 0;
     while (loaded < values.size()) {
       int chunkSize = Math.min(BATCH_SIZE, values.size() - loaded);
-      reference.setValues(loaded, values, loaded, chunkSize);
+      if (array instanceof ArrayReferenceImpl) {
+        ((ArrayReferenceImpl)array).setValues(loaded, values, loaded, chunkSize, checkAssignable);
+      }
+      else {
+        array.setValues(loaded, values, loaded, chunkSize);
+      }
       loaded += chunkSize;
     }
   }
 
-  public static void setValuesNoCheck(ArrayReference array, List<Value> values) throws ClassNotLoadedException, InvalidTypeException {
-    if (array instanceof ArrayReferenceImpl) {
-      ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, false);
+  public static void setArrayValues(@NotNull ArrayReference array, @NotNull List<? extends Value> values, boolean checkAssignable)
+    throws ClassNotLoadedException, InvalidTypeException {
+    if (isAndroidVM(array.virtualMachine())) {
+      // Android VM has a limited buffer size to receive JDWP data (see https://issuetracker.google.com/issues/73584940)
+      setChuckByChunk(array, values, checkAssignable);
     }
     else {
-      array.setValues(values);
+      if (array instanceof ArrayReferenceImpl) {
+        ((ArrayReferenceImpl)array).setValues(0, values, 0, -1, checkAssignable);
+      }
+      else {
+        array.setValues(values);
+      }
     }
   }
 
@@ -506,95 +510,6 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     return ThreeState.UNSURE;
   }
 
-  private static class SigReader {
-    final String buffer;
-    int pos = 0;
-
-    SigReader(String s) {
-      buffer = s;
-    }
-
-    int get() {
-      return buffer.charAt(pos++);
-    }
-
-    int peek() {
-      return buffer.charAt(pos);
-    }
-
-    boolean eof() {
-      return buffer.length() <= pos;
-    }
-
-    @NonNls
-    String getSignature() {
-      if (eof()) return "";
-
-      switch (get()) {
-        case 'Z' -> {
-          return "boolean";
-        }
-        case 'B' -> {
-          return "byte";
-        }
-        case 'C' -> {
-          return "char";
-        }
-        case 'S' -> {
-          return "short";
-        }
-        case 'I' -> {
-          return "int";
-        }
-        case 'J' -> {
-          return "long";
-        }
-        case 'F' -> {
-          return "float";
-        }
-        case 'D' -> {
-          return "double";
-        }
-        case 'V' -> {
-          return "void";
-        }
-        case 'L' -> {
-          int start = pos;
-          pos = buffer.indexOf(';', start) + 1;
-          LOG.assertTrue(pos > 0);
-          return buffer.substring(start, pos - 1).replace('/', '.');
-        }
-        case '[' -> {
-          return getSignature() + "[]";
-        }
-        case '(' -> {
-          StringBuilder result = new StringBuilder("(");
-          String separator = "";
-          while (peek() != ')') {
-            result.append(separator);
-            result.append(getSignature());
-            separator = ", ";
-          }
-          get();
-          result.append(")");
-          return getSignature() + " " + getClassName() + "." + getMethodName() + " " + result;
-        }
-        default -> {
-          //          LOG.assertTrue(false, "unknown signature " + buffer);
-          return null;
-        }
-      }
-    }
-
-    String getMethodName() {
-      return "";
-    }
-
-    String getClassName() {
-      return "";
-    }
-  }
-
   public static String methodKey(Method m) {
     return m.declaringType().name() + '.' + m.name() + m.signature();
   }
@@ -612,29 +527,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static String methodName(final String className, final String methodName, final String signature) {
-    try {
-      return new SigReader(signature) {
-        @Override
-        String getMethodName() {
-          return methodName;
-        }
-
-        @Override
-        String getClassName() {
-          return className;
-        }
-      }.getSignature();
-    }
-    catch (Exception ignored) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Internal error : unknown signature" + signature);
-      }
-      return className + "." + methodName;
-    }
+    var type = org.jetbrains.org.objectweb.asm.Type.getMethodType(signature);
+    var params = Arrays.stream(type.getArgumentTypes())
+      .map(org.jetbrains.org.objectweb.asm.Type::getClassName)
+      .collect(Collectors.joining(", "));
+    return className + "." + methodName + "(" + params + ")";
   }
 
   public static String signatureToName(String s) {
-    return new SigReader(s).getSignature();
+    return org.jetbrains.org.objectweb.asm.Type.getType(s).getClassName();
+  }
+
+  public static String typeNameToSignature(String name) {
+    return JNITypeParser.typeNameToSignature(name);
   }
 
   public static List<Method> declaredMethodsByName(@NotNull ReferenceType type, @NotNull String name) {
@@ -654,7 +559,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   @Nullable
   public static List<Location> allLineLocations(ReferenceType cls) {
     try {
-      return cls.allLineLocations();
+      return DebuggerUtilsAsync.allLineLocationsSync(cls);
     }
     catch (AbsentInformationException ignored) {
       return null;
@@ -1169,13 +1074,13 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
   public static boolean methodMatches(@NotNull PsiMethod psiMethod,
                                       String className,
-                                      String name,
+                                      @Nullable String name,
                                       String signature,
                                       DebugProcessImpl process) {
     PsiClass containingClass = psiMethod.getContainingClass();
     try {
       if (containingClass != null &&
-          JVMNameUtil.getJVMMethodName(psiMethod).equals(name) &&
+          (name == null || JVMNameUtil.getJVMMethodName(psiMethod).equals(name)) &&
           JVMNameUtil.getJVMSignature(psiMethod).getName(process).equals(signature)) {
         String methodClassName = JVMNameUtil.getClassVMName(containingClass);
         if (Objects.equals(methodClassName, className)) {

@@ -54,6 +54,7 @@ import com.intellij.xdebugger.stepping.XSmartStepIntoHandler;
 import com.intellij.xdebugger.stepping.XSmartStepIntoVariant;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -68,18 +69,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+@ApiStatus.Internal
 public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandler {
   private static final Ref<Boolean> SHOW_AD = new Ref<>(true);
   private static final Logger LOG = Logger.getInstance(XDebuggerSmartStepIntoHandler.class);
   private static final String COUNTER_PROPERTY = "debugger.smart.chooser.counter";
 
   @Override
-  protected boolean isEnabled(@NotNull XDebugSession session, DataContext dataContext) {
+  protected boolean isEnabled(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     return super.isEnabled(session, dataContext) && session.getDebugProcess().getSmartStepIntoHandler() != null;
   }
 
   @Override
-  protected void perform(@NotNull XDebugSession session, DataContext dataContext) {
+  protected void perform(@NotNull XDebugSession session, @NotNull DataContext dataContext) {
     XSmartStepIntoHandler<?> handler = session.getDebugProcess().getSmartStepIntoHandler();
     XSourcePosition position = session.getTopFramePosition();
     if (position != null && handler != null) {
@@ -169,7 +171,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
       }
 
       @Override
-      public PopupStep onChosen(V selectedValue, boolean finalChoice) {
+      public PopupStep<?> onChosen(V selectedValue, boolean finalChoice) {
         session.smartStepInto(handler, selectedValue);
         highlighter.dropHighlight();
         return FINAL_CHOICE;
@@ -216,7 +218,7 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     SmartStepData<V> data = new SmartStepData<>(handler, variants, session, editor);
 
     EditorHyperlinkSupport hyperlinkSupport = EditorHyperlinkSupport.get(editor);
-    for (SmartStepData.VariantInfo info : data.myVariants) {
+    for (SmartStepData<V>.VariantInfo info : data.myVariants) {
       TextRange range = info.myVariant.getHighlightRange();
       if (range != null) {
         List<RangeHighlighter> highlighters = new SmartList<>();

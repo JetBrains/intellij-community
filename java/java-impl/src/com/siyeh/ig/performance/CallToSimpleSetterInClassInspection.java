@@ -27,7 +27,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.InlineGetterSetterCallFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -79,7 +78,7 @@ public final class CallToSimpleSetterInClassInspection extends BaseInspection im
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      final PsiClass containingClass = ClassUtils.getContainingClass(call);
+      final PsiClass containingClass = PsiUtil.getContainingClass(call);
       if (containingClass == null) {
         return;
       }

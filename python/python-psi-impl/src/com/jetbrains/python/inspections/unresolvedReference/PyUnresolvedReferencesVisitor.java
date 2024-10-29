@@ -70,7 +70,8 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   private final ImmutableSet<String> myIgnoredIdentifiers;
   private final PyInspection myInspection;
   private volatile Boolean myIsEnabled = null;
-  protected final Set<String> myUnresolvedNames = Collections.synchronizedSet(new HashSet<>());
+  protected final List<PyPackageInstallAllProblemInfo> myUnresolvedRefs = Collections.synchronizedList(new ArrayList<>());
+
   protected PyUnresolvedReferencesVisitor(@Nullable ProblemsHolder holder,
                                           List<String> ignoredIdentifiers,
                                           @NotNull PyInspection inspection,
@@ -388,10 +389,13 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     ContainerUtil.addAll(fixes, getImportStatementQuickFixes(element));
     ContainerUtil.addAll(fixes, getAddIgnoredIdentifierQuickFixes(qualifiedNames));
     var installPackageQuickFixes = getInstallPackageQuickFixes(node, reference, refName);
+    var isAddedToInstallAllFix = false;
     if (Iterables.size(installPackageQuickFixes) > 0) {
-      ContainerUtil.addAll(fixes, getInstallPackageQuickFixes(node, reference, refName));
-      myUnresolvedNames.add(refName);
-      ContainerUtil.addAll(fixes, getInstallAllPackagesQuickFixes());
+      ContainerUtil.addAll(fixes, installPackageQuickFixes);
+      PyPackageInstallAllProblemInfo problemInfo =
+        new PyPackageInstallAllProblemInfo(node, description, hl_type, refName, fixes);
+      myUnresolvedRefs.add(problemInfo);
+      isAddedToInstallAllFix = true;
     }
 
     if (reference instanceof PySubstitutionChunkReference) {
@@ -399,7 +403,9 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     }
 
     getPluginQuickFixes(fixes, reference);
-    registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    if (!isAddedToInstallAllFix) {
+      registerProblem(node, description, hl_type, null, rangeInElement, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
   }
 
   private boolean isDeclaredInSlots(@NotNull PyType type, @NotNull String attrName) {
@@ -528,6 +534,21 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       .filter(Objects::nonNull)
       .findFirst()
       .orElse(null);
+  }
+
+  public void addInstallAllImports() {
+    List<String> refNames = myUnresolvedRefs.stream().map(it -> it.getRefName()).distinct().toList();
+
+    for (PyPackageInstallAllProblemInfo unresolved : myUnresolvedRefs) {
+      var quickFixes = unresolved.getFixes();
+
+      if (refNames.size() > 1) {
+        var installAllPackageQuickFixes = getInstallAllPackagesQuickFixes();
+        ContainerUtil.addAll(quickFixes, installAllPackageQuickFixes);
+      }
+      registerProblem(unresolved.getPsiElement(), unresolved.getDescriptionTemplate(), unresolved.getHighlightType(), null,
+                      quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    }
   }
 
   public void highlightUnusedImports() {

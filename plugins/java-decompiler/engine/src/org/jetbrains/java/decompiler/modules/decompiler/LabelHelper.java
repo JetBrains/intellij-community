@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge.EdgeDirection;
@@ -23,7 +23,7 @@ public final class LabelHelper {
 
     liftClosures(root);
 
-    lowContinueLabels(root, new HashSet<>());
+    lowContinueLabels(root, new LinkedHashSet<>());
 
     lowClosures(root);
   }
@@ -120,7 +120,7 @@ public final class LabelHelper {
         lowContinueLabels(st, edges);
       }
       else {
-        lowContinueLabels(st, new HashSet<>());
+        lowContinueLabels(st, new LinkedHashSet<>());
       }
     }
   }

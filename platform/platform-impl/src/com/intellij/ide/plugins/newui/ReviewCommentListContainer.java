@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.marketplace.PluginReviewComment;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.hover.HoverStateListener;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -14,6 +15,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
+@ApiStatus.Internal
 public final class ReviewCommentListContainer extends JBPanelWithEmptyText {
   private final HoverStateListener myListener;
 

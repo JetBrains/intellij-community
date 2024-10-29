@@ -5,12 +5,14 @@ import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.openapi.options.SettingsEditor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public final class ExecutionUiServiceImpl extends ExecutionUiService {
   @Override
   public @Nullable RunContentDescriptor showRunContent(@NotNull ExecutionResult executionResult,

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -6,6 +6,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,6 +16,7 @@ import java.awt.*;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class InspectionViewNavigationPanel extends JPanel implements InspectionTreeLoadingProgressAware {
   private final InspectionTreeNode myNode;
   private final InspectionTree myTree;
@@ -45,9 +47,7 @@ public final class InspectionViewNavigationPanel extends JPanel implements Inspe
     resetChildrenAndRepaint();
   }
 
-  @NotNull
-  @Nls
-  public static String getTitleText(boolean addColon) {
+  public static @NotNull @Nls String getTitleText(boolean addColon) {
     if (addColon) {
       return InspectionsBundle.message("inspections.view.select.inspection.label");
     }

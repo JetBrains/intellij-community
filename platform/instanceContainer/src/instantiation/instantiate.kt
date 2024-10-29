@@ -7,6 +7,7 @@ import com.intellij.platform.util.coroutines.childScope
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import java.lang.invoke.MethodHandle
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
@@ -305,13 +306,26 @@ private suspend fun <T> instantiate(
   // In general, we want initialization to be cancellable, and it must be canceled only on parent scope cancellation,
   // which happens only on project/application shutdown, or on plugin unload.
   Cancellation.withNonCancelableSection().use {
-    // A separate thread-local is required to track cyclic service initialization, because
-    // we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
-    // Only the context of the owner coroutine should be captured.
-    // TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
-    installTemporaryThreadContext(currentCoroutineContext()).use {
-      return instantiate(args)
+    return withStoredTemporaryContext(parentScope) {
+      instantiate(args)
     }
+  }
+}
+
+
+// A separate thread-local is required to track cyclic service initialization, because
+// we don't want it to be captured by lambdas scheduled in the constructor (= context propagation).
+// Only the context of the owner coroutine should be captured.
+// TODO Put BlockingJob to bind all computations started in instance constructor to instance scope.
+@ApiStatus.Internal
+suspend fun <T> withStoredTemporaryContext(parentScope: CoroutineScope, action: () -> T): T {
+  val existingCoroutineContext = currentCoroutineContext()
+  val scopeContext = parentScope.coroutineContext
+  // `temporaryCoroutineContext` belongs to the initialization processes throughout the whole chain of initialization.
+  // We want to prevent the elements that are relevant to `parentScope` from leaking into the nested initialization processes.
+  val curatedContext = scopeContext.fold(existingCoroutineContext) { newCtx, key -> newCtx.minusKey(key.key) }
+  return installTemporaryThreadContext(curatedContext).use {
+    action()
   }
 }
 

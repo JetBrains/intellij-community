@@ -136,6 +136,8 @@ public class DataManagerImpl extends DataManager {
     }
   }
 
+  /** @deprecated Most components now implement {@link UiDataProvider} */
+  @Deprecated
   public static @Nullable DataProvider getDataProviderEx(@Nullable Object component) {
     DataProvider dataProvider = null;
     if (component instanceof DataProvider) {
@@ -144,11 +146,6 @@ public class DataManagerImpl extends DataManager {
     else if (component instanceof JComponent) {
       dataProvider = getDataProvider((JComponent)component);
     }
-
-    if (dataProvider instanceof BackgroundableDataProvider) {
-      dataProvider = ((BackgroundableDataProvider)dataProvider).createBackgroundDataProvider();
-    }
-
     return dataProvider;
   }
 
@@ -174,19 +171,9 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public @NotNull DataContext customizeDataContext(@NotNull DataContext context, @NotNull Object provider) {
-    class MyAdapter implements EdtNoGetDataProvider, DataValidators.SourceWrapper {
-      @Override
-      public @NotNull Object unwrapSource() { return provider; }
-
-      @Override
-      public void dataSnapshot(@NotNull DataSink sink) {
-        if (provider instanceof UiDataProvider o) o.uiDataSnapshot(sink);
-        else if (provider instanceof DataSnapshotProvider o) o.dataSnapshot(sink);
-      }
-    }
     DataProvider p = provider instanceof DataProvider o ? o :
-                     provider instanceof UiDataProvider ? new MyAdapter() :
-                     provider instanceof DataSnapshotProvider ? new MyAdapter() :
+                     provider instanceof UiDataProvider o ? (EdtNoGetDataProvider)sink -> sink.uiDataSnapshot(o) :
+                     provider instanceof DataSnapshotProvider o ? (EdtNoGetDataProvider)sink -> sink.dataSnapshot(o) :
                      null;
     if (p == null) throw new AssertionError("Unexpected provider: " + provider.getClass().getName());
     return IdeUiService.getInstance().createCustomizedDataContext(context, p);

@@ -9,11 +9,13 @@ import com.intellij.platform.workspace.storage.impl.url.VirtualFileUrlManagerImp
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
+import com.intellij.testFramework.junit5.TestApplication
 import org.junit.jupiter.api.Assumptions.assumeFalse
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.test.*
 
+@TestApplication
 class VirtualFileIndexTest {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 

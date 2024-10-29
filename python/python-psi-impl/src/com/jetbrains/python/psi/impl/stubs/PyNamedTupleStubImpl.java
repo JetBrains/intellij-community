@@ -113,7 +113,7 @@ public final class PyNamedTupleStubImpl implements PyNamedTupleStub {
 
   @NotNull
   @Override
-  public Class<? extends CustomTargetExpressionStubType> getTypeClass() {
+  public Class<PyNamedTupleStubType> getTypeClass() {
     return PyNamedTupleStubType.class;
   }
 

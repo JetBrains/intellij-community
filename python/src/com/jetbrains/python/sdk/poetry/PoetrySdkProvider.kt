@@ -6,13 +6,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkAdditionalData
 import com.intellij.openapi.util.UserDataHolder
-import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.packaging.ui.PyPackageManagementService
-import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
-import com.jetbrains.python.sdk.PySdkProvider
-import com.jetbrains.python.sdk.PythonSdkUtil
+import com.jetbrains.python.sdk.*
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
+import com.jetbrains.python.sdk.poetry.quickFixes.PoetryInstallQuickFix
+import com.jetbrains.python.sdk.poetry.quickFixes.PoetryAssociationQuickFix
+import com.jetbrains.python.sdk.poetry.ui.PyAddNewPoetryPanel
 import org.jdom.Element
 import javax.swing.Icon
 
@@ -21,11 +21,13 @@ import javax.swing.Icon
  */
 
 class PoetrySdkProvider : PySdkProvider {
-  override fun createEnvironmentAssociationFix(module: Module,
-                                               sdk: Sdk,
-                                               isPyCharm: Boolean,
-                                               associatedModulePath: String?): PyInterpreterInspectionQuickFixData? {
-    if (sdk.isPoetry && !PlatformUtils.isFleetBackend()) {
+  override fun createEnvironmentAssociationFix(
+    module: Module,
+    sdk: Sdk,
+    isPyCharm: Boolean,
+    associatedModulePath: String?,
+  ): PyInterpreterInspectionQuickFixData? {
+    if (sdk.isPoetry) {
       val projectUnit = if (isPyCharm) "project" else "module"
       val message = when {
         associatedModulePath != null ->
@@ -42,11 +44,13 @@ class PoetrySdkProvider : PySdkProvider {
     return if (sdk.isPoetry) PoetryInstallQuickFix() else null
   }
 
-  override fun createNewEnvironmentPanel(project: Project?,
-                                         module: Module?,
-                                         existingSdks: List<Sdk>,
-                                         newProjectPath: String?,
-                                         context: UserDataHolder): PyAddNewEnvPanel {
+  override fun createNewEnvironmentPanel(
+    project: Project?,
+    module: Module?,
+    existingSdks: List<Sdk>,
+    newProjectPath: String?,
+    context: UserDataHolder,
+  ): PyAddNewEnvPanel {
     return PyAddNewPoetryPanel(null, null, existingSdks, newProjectPath, context)
   }
 
@@ -63,4 +67,17 @@ class PoetrySdkProvider : PySdkProvider {
   override fun tryCreatePackageManagementServiceForSdk(project: Project, sdk: Sdk): PyPackageManagementService? {
     return if (sdk.isPoetry) PyPoetryPackageManagementService(project, sdk) else null
   }
+}
+
+internal fun validateSdks(module: Module?, existingSdks: List<Sdk>, context: UserDataHolder): List<Sdk> {
+  val moduleFile = module?.baseDir
+  val sdks = findBaseSdks(existingSdks, module, context).takeIf { it.isNotEmpty() }
+             ?: detectSystemWideSdks(module, existingSdks, context)
+
+  return if (moduleFile != null) {
+    PyProjectTomlPythonVersionsService.instance.validateSdkVersions(moduleFile, sdks)
+  }
+  else {
+    sdks
+  }.filter { it.sdkSeemsValid && !it.isPoetry }
 }

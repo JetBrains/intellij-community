@@ -3,9 +3,9 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenConditionWithExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -13,14 +13,13 @@ import org.jetbrains.kotlin.psi.psiUtil.endOffset
 class AddIsToWhenConditionFix(
     element: KtWhenConditionWithExpression,
     private val referenceText: String
-) : KotlinPsiUpdateModCommandAction.ElementBased<KtWhenConditionWithExpression, Unit>(element, Unit) {
+) : PsiUpdateModCommandAction<KtWhenConditionWithExpression>(element) {
 
     override fun getFamilyName(): String = KotlinBundle.message("fix.add.is.to.when", referenceText)
 
     override fun invoke(
         actionContext: ActionContext,
         element: KtWhenConditionWithExpression,
-        elementContext: Unit,
         updater: ModPsiUpdater
     ) {
         val psiFactory = KtPsiFactory(actionContext.project)

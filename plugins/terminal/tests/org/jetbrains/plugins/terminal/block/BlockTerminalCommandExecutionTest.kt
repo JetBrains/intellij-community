@@ -31,6 +31,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import java.nio.file.Path
 import java.util.*
+import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CountDownLatch
 import java.util.function.BiPredicate
 import kotlin.time.Duration
@@ -174,7 +175,23 @@ internal class BlockTerminalCommandExecutionTest(private val shellPath: Path) {
     val view = BlockTerminalView(projectRule.project, session, JBTerminalSystemSettingsProvider(), TerminalTitle())
     Disposer.register(disposableRule.disposable, view)
     view.outputView.controller.finishCommandBlock(0) // emulate `initialized` event as it's consumed in `startBlockTerminalSession()`
+    awaitFirstBlockFinalizedOrRemoved(view.outputView.controller.outputModel)
     return Pair(session, view)
+  }
+
+  private fun awaitFirstBlockFinalizedOrRemoved(outputModel: TerminalOutputModel, duration: Duration = 5.seconds) {
+    val future = CompletableFuture<Unit>()
+    outputModel.addListener(object : TerminalOutputModelListener {
+      override fun blockFinalized(block: CommandBlock) {
+        future.complete(Unit)
+      }
+
+      override fun blockRemoved(block: CommandBlock) {
+        future.complete(Unit)
+      }
+    })
+    val error = { "Timed out waiting for initial block finalized or removed" }
+    PlatformTestUtil.waitWithEventsDispatching(error, { future.isDone }, duration.inWholeSeconds.toInt())
   }
 
   private fun awaitBlocksFinalized(outputModel: TerminalOutputModel, commandBlocks: Int, duration: Duration = 20.seconds) {

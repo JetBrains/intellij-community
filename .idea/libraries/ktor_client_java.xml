@@ -1,0 +1,18 @@
+<component name="libraryTable">
+  <library name="ktor-client-java" type="repository">
+    <properties include-transitive-deps="false" maven-id="io.ktor:ktor-client-java-jvm:2.3.12">
+      <verification>
+        <artifact url="file://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12.jar">
+          <sha256sum>580511f2299c1c0ead906fcb4bbdd24cbc8068f027b4c3ad0d8de5e900d8cabd</sha256sum>
+        </artifact>
+      </verification>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/ktor/ktor-client-java-jvm/2.3.12/ktor-client-java-jvm-2.3.12-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

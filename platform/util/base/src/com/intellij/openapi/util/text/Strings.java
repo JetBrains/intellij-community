@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ArrayUtilRt;
@@ -241,30 +241,44 @@ public final class Strings {
     return indexOfIgnoreCase((CharSequence)where, what, fromIndex);
   }
 
+  @Contract(pure = true)
+  public static int indexOfIgnoreCase(@NotNull CharSequence where,
+                                      @NotNull CharSequence what,
+                                      int start) {
+    return indexOfIgnoreCase(where, what, start, where.length());
+  }
+
   /**
    * Implementation copied from {@link String#indexOf(String, int)} except character comparisons made case-insensitive
    */
   @Contract(pure = true)
-  public static int indexOfIgnoreCase(@NotNull CharSequence where, @NotNull CharSequence what, int fromIndex) {
+  public static int indexOfIgnoreCase(@NotNull CharSequence where,
+                                      @NotNull CharSequence what,
+                                      int startOffset,
+                                      int endOffset) {
+    if (endOffset < startOffset) {
+      return -1;
+    }
+
     int targetCount = what.length();
     int sourceCount = where.length();
 
-    if (fromIndex >= sourceCount) {
+    if (startOffset >= sourceCount) {
       return targetCount == 0 ? sourceCount : -1;
     }
 
-    if (fromIndex < 0) {
-      fromIndex = 0;
+    if (startOffset < 0) {
+      startOffset = 0;
     }
 
     if (targetCount == 0) {
-      return fromIndex;
+      return startOffset;
     }
 
     char first = what.charAt(0);
-    int max = sourceCount - targetCount;
+    int max = endOffset - targetCount;
 
-    for (int i = fromIndex; i <= max; i++) {
+    for (int i = startOffset; i <= max; i++) {
       /* Look for first character. */
       if (!charsEqualIgnoreCase(where.charAt(i), first)) {
         //noinspection StatementWithEmptyBody,AssignmentToForLoopParameter

@@ -257,8 +257,8 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     }
 
     @Override
-    protected ListTableModel createListModel() {
-      return new ListTableModel(new MyNameColumnInfo(), new MyValueColumnInfo());
+    protected ListTableModel<EnvironmentVariable> createListModel() {
+      return new ListTableModel<>(new MyNameColumnInfo(), new MyValueColumnInfo());
     }
 
     protected class MyNameColumnInfo extends NameColumnInfo {

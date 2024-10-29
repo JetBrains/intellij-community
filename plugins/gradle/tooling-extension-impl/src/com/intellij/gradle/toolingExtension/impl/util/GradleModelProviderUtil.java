@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.impl.util;
 
 import com.intellij.openapi.util.Pair;
+import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
 import org.gradle.tooling.model.gradle.BasicGradleProject;
@@ -103,5 +104,78 @@ public final class GradleModelProviderUtil {
       }
       return gradleProject.getChildren();
     });
+  }
+
+  public static <M, P> void buildModelsWithParameter(
+    @NotNull BuildController controller,
+    @NotNull GradleBuild buildModel,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer,
+    @NotNull Class<P> parameterClass,
+    @NotNull Action<? super P> action
+  ) {
+    buildModelsWithParameter(controller, Collections.singleton(buildModel), modelClass, consumer, parameterClass, action);
+  }
+
+  public static <M, P> void buildModelsWithParameter(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer,
+    @NotNull Class<P> parameterClass,
+    @NotNull Action<? super P> action
+  ) {
+    if (Objects.equals(System.getProperty("idea.parallelModelFetch.enabled"), "true")) {
+      buildModelsWithParameterInParallel(controller, buildModels, modelClass, consumer, parameterClass, action);
+    }
+    else {
+      buildModelsWithParameterInSequence(controller, buildModels, modelClass, consumer, parameterClass, action);
+    }
+  }
+
+  private static <M, P> void buildModelsWithParameterInSequence(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer,
+    @NotNull Class<P> parameterClass,
+    @NotNull Action<? super P> action
+  ) {
+    for (GradleBuild buildModel : buildModels) {
+      for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+        M model = controller.findModel(gradleProject, modelClass, parameterClass, action);
+        if (model != null) {
+          consumer.consumeProjectModel(gradleProject, model, modelClass);
+        }
+      }
+    }
+  }
+
+  private static <M, P> void buildModelsWithParameterInParallel(
+    @NotNull BuildController controller,
+    @NotNull Collection<? extends GradleBuild> buildModels,
+    @NotNull Class<M> modelClass,
+    @NotNull GradleModelConsumer consumer,
+    @NotNull Class<P> parameterClass,
+    @NotNull Action<? super P> action
+  ) {
+    List<BuildAction<Pair<BasicGradleProject, M>>> buildActions = new ArrayList<>();
+    for (GradleBuild buildModel : buildModels) {
+      for (BasicGradleProject gradleProject : buildModel.getProjects()) {
+        buildActions.add((BuildAction<Pair<BasicGradleProject, M>>)innerController -> {
+          M model = innerController.findModel(gradleProject, modelClass, parameterClass, action);
+          if (model == null) {
+            return null;
+          }
+          return new Pair<>(gradleProject, model);
+        });
+      }
+    }
+    List<Pair<BasicGradleProject, M>> models = controller.run(buildActions);
+    for (Pair<BasicGradleProject, M> model : models) {
+      if (model != null) {
+        consumer.consumeProjectModel(model.first, model.second, modelClass);
+      }
+    }
   }
 }

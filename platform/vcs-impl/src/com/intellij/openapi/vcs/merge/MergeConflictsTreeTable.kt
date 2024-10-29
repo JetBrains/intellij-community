@@ -6,8 +6,10 @@ import com.intellij.ui.treeStructure.treetable.ListTreeTableModelOnColumns
 import com.intellij.ui.treeStructure.treetable.TreeTable
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
+@ApiStatus.Internal
 class MergeConflictsTreeTable(private val tableModel: ListTreeTableModelOnColumns) : TreeTable(tableModel) {
   init {
     getTableHeader().reorderingAllowed = false

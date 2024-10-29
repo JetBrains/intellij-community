@@ -17,7 +17,7 @@ import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase
 import com.jetbrains.python.run.target.HelpersAwareLocalTargetEnvironmentRequest
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest
-import com.jetbrains.python.sdk.add.target.TargetPanelExtension
+import com.jetbrains.python.sdk.add.v1.TargetPanelExtension
 import com.jetbrains.python.target.PyTargetAwareAdditionalData
 import com.jetbrains.python.target.targetWithVfs.TargetWithMappedLocalVfs
 import org.jetbrains.annotations.ApiStatus
@@ -144,9 +144,6 @@ interface PythonInterpreterTargetEnvironmentFactory : PluginAware {
     @JvmStatic
     fun isMutable(configuration: TargetEnvironmentConfiguration): Boolean =
       EP_NAME.extensionList.mapNotNull { it.isMutable(configuration) }.firstOrNull() ?: false
-
-    fun TargetEnvironmentConfiguration.isOfType(targetEnvironmentType: TargetEnvironmentType<*>): Boolean =
-      typeId == targetEnvironmentType.id
 
     /**
      * Target provides access to its filesystem using VFS (like WSL)

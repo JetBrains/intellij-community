@@ -1,46 +1,41 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.PlatformIcons;
-import com.intellij.util.ObjectUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus.Internal;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Objects;
 
 public final class TodoAttributes implements Cloneable {
-  private Icon myIcon;
+  private static final String ATTRIBUTE_ICON = "icon";
+  private static final String ICON_NULL = "null";
+  private static final String ICON_DEFAULT = "default";
+  private static final String ICON_QUESTION = "question";
+  private static final String ICON_IMPORTANT = "important";
+  private static final String ELEMENT_OPTION = "option";
+  private static final String USE_CUSTOM_COLORS_ATT = "useCustomColors";
+
+  private @Nullable Icon myIcon;
   private TextAttributes myTextAttributes;
   private boolean myShouldUseCustomColors;
 
-  private static final @NonNls String ATTRIBUTE_ICON = "icon";
-  private static final @NonNls String ICON_DEFAULT = "default";
-  private static final @NonNls String ICON_QUESTION = "question";
-  private static final @NonNls String ICON_IMPORTANT = "important";
-  private static final @NonNls String ELEMENT_OPTION = "option";
-  private static final @NonNls String USE_CUSTOM_COLORS_ATT = "useCustomColors";
-
   @Internal
   TodoAttributes(@NotNull Element element, @NotNull TextAttributes defaultTodoAttributes) {
-    String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_DEFAULT);
+    String icon = element.getAttributeValue(ATTRIBUTE_ICON, ICON_NULL);
 
-    IconManager iconManager = IconManager.getInstance();
-    if (ICON_DEFAULT.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoDefault);
-    }
-    else if (ICON_QUESTION.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoQuestion);
-    }
-    else if (ICON_IMPORTANT.equals(icon)){
-      myIcon = iconManager.getPlatformIcon(PlatformIcons.TodoImportant);
-    }
-    else{
-      throw new InvalidDataException(icon);
+    switch (icon) {
+      case ICON_DEFAULT -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault);
+      case ICON_QUESTION -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoQuestion);
+      case ICON_IMPORTANT -> myIcon = IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoImportant);
+      case ICON_NULL -> myIcon = null;
+      default -> throw new InvalidDataException(icon);
     }
 
     myShouldUseCustomColors = Boolean.parseBoolean(element.getAttributeValue(USE_CUSTOM_COLORS_ATT));
@@ -48,7 +43,7 @@ public final class TodoAttributes implements Cloneable {
   }
 
   @Internal
-  public TodoAttributes(@NotNull Icon icon, @NotNull TextAttributes textAttributes) {
+  public TodoAttributes(@Nullable Icon icon, @NotNull TextAttributes textAttributes) {
     myIcon = icon;
     myTextAttributes = textAttributes;
   }
@@ -58,8 +53,12 @@ public final class TodoAttributes implements Cloneable {
     myTextAttributes = textAttributes;
   }
 
-  public @NotNull Icon getIcon(){
-    return ObjectUtils.chooseNotNull(myIcon, IconManager.getInstance().getPlatformIcon(PlatformIcons.TodoDefault));
+  public @Nullable Icon getIcon(){
+    return myIcon;
+  }
+
+  public void setIcon(@Nullable Icon icon) {
+    myIcon = icon;
   }
 
   public @NotNull TextAttributes getTextAttributes() {
@@ -68,46 +67,6 @@ public final class TodoAttributes implements Cloneable {
 
   public @NotNull TextAttributes getCustomizedTextAttributes() {
     return myTextAttributes;
-  }
-
-  public void setIcon(Icon icon) {
-    myIcon = icon;
-  }
-
-  public void writeExternal(@NotNull Element element) {
-    String icon = ICON_DEFAULT;
-    IconManager iconManager = IconManager.getInstance();
-    if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoQuestion)) {
-      icon = ICON_QUESTION;
-    }
-    else if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoImportant)) {
-      icon = ICON_IMPORTANT;
-    }
-
-    if (!icon.equals(ICON_DEFAULT)) {
-      element.setAttribute(ATTRIBUTE_ICON, icon);
-    }
-
-    if (shouldUseCustomTodoColor()) {
-      myTextAttributes.writeExternal(element);
-      element.setAttribute(USE_CUSTOM_COLORS_ATT, "true");
-    }
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof TodoAttributes attributes)) return false;
-
-    return myIcon == attributes.myIcon &&
-           !(myTextAttributes != null ? !myTextAttributes.equals(attributes.myTextAttributes) : attributes.myTextAttributes != null) &&
-           myShouldUseCustomColors == attributes.myShouldUseCustomColors;
-  }
-
-  public int hashCode() {
-    int result = myIcon != null ? myIcon.hashCode() : 0;
-    result = 29 * result + (myTextAttributes != null ? myTextAttributes.hashCode() : 0);
-    result = 29 * result + Boolean.valueOf(myShouldUseCustomColors).hashCode();
-    return result;
   }
 
   public boolean shouldUseCustomTodoColor() {
@@ -121,17 +80,50 @@ public final class TodoAttributes implements Cloneable {
     }
   }
 
+  public void writeExternal(@NotNull Element element) {
+    String icon = null;
+    IconManager iconManager = IconManager.getInstance();
+    if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoQuestion)) {
+      icon = ICON_QUESTION;
+    }
+    else if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoImportant)) {
+      icon = ICON_IMPORTANT;
+    }
+    else if (myIcon == iconManager.getPlatformIcon(PlatformIcons.TodoDefault)) {
+      icon = ICON_DEFAULT;
+    }
+    if (icon != null) {
+      element.setAttribute(ATTRIBUTE_ICON, icon);
+    }
+
+    if (shouldUseCustomTodoColor()) {
+      myTextAttributes.writeExternal(element);
+      element.setAttribute(USE_CUSTOM_COLORS_ATT, "true");
+    }
+  }
+
   @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof TodoAttributes attributes)) return false;
+    return myIcon == attributes.myIcon &&
+           Objects.equals(myTextAttributes, attributes.myTextAttributes) &&
+           myShouldUseCustomColors == attributes.myShouldUseCustomColors;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myIcon != null ? myIcon.hashCode() : 0;
+    result = 29 * result + (myTextAttributes != null ? myTextAttributes.hashCode() : 0);
+    result = 29 * result + Boolean.valueOf(myShouldUseCustomColors).hashCode();
+    return result;
+  }
+
+  @Override
+  @SuppressWarnings("MethodDoesntCallSuperMethod")
   public TodoAttributes clone() {
-    try {
-      TextAttributes textAttributes = myTextAttributes.clone();
-      TodoAttributes attributes = (TodoAttributes)super.clone();
-      attributes.myTextAttributes = textAttributes;
-      attributes.myShouldUseCustomColors = myShouldUseCustomColors;
-      return attributes;
-    }
-    catch (CloneNotSupportedException e) {
-      return null;
-    }
+    var attributes = new TodoAttributes(myIcon, myTextAttributes.clone());
+    attributes.myShouldUseCustomColors = myShouldUseCustomColors;
+    return attributes;
   }
 }

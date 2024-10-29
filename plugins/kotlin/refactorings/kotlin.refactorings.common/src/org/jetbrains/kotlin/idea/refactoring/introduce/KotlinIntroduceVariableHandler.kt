@@ -13,39 +13,16 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringActionHandler
 import com.intellij.refactoring.util.CommonRefactoringUtil
+import com.intellij.util.SlowOperations
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
+import org.jetbrains.kotlin.idea.refactoring.KotlinCommonRefactoringSettings
 import org.jetbrains.kotlin.idea.refactoring.chooseContainer.chooseContainerElementIfNecessary
 import org.jetbrains.kotlin.idea.refactoring.introduce.KotlinIntroduceVariableHelper.Containers
 import org.jetbrains.kotlin.idea.refactoring.selectElement
 import org.jetbrains.kotlin.idea.util.ElementKind
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
-import org.jetbrains.kotlin.psi.KtAnnotationEntry
-import org.jetbrains.kotlin.psi.KtArrayAccessExpression
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtBlockExpression
-import org.jetbrains.kotlin.psi.KtClassBody
-import org.jetbrains.kotlin.psi.KtConstructorCalleeExpression
-import org.jetbrains.kotlin.psi.KtConstructorDelegationReferenceExpression
-import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtFunctionLiteral
-import org.jetbrains.kotlin.psi.KtIfExpression
-import org.jetbrains.kotlin.psi.KtLambdaExpression
-import org.jetbrains.kotlin.psi.KtLoopExpression
-import org.jetbrains.kotlin.psi.KtOperationExpression
-import org.jetbrains.kotlin.psi.KtPsiUtil
-import org.jetbrains.kotlin.psi.KtQualifiedExpression
-import org.jetbrains.kotlin.psi.KtReferenceExpression
-import org.jetbrains.kotlin.psi.KtStatementExpression
-import org.jetbrains.kotlin.psi.KtSuperExpression
-import org.jetbrains.kotlin.psi.KtTypeReference
-import org.jetbrains.kotlin.psi.KtWhenEntry
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
 import org.jetbrains.kotlin.psi.psiUtil.isFunctionalExpression
 import org.jetbrains.kotlin.psi.psiUtil.parents
@@ -94,8 +71,15 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         if (file !is KtFile) return
 
         try {
-            selectElement(editor, file, failOnEmptySuggestion = false, listOf(ElementKind.EXPRESSION)) {
-                collectCandidateTargetContainersAndDoRefactoring(project, editor, it as KtExpression?, isVar = false)
+            selectElement(editor, file, failOnEmptySuggestion = false, listOf(ElementKind.EXPRESSION)) { psi ->
+                SlowOperations.knownIssue("KTIJ-31332").use {
+                    collectCandidateTargetContainersAndDoRefactoring(
+                        project = project,
+                        editor = editor,
+                        expressionToExtract = psi as KtExpression?,
+                        isVar = KotlinCommonRefactoringSettings.getInstance().INTRODUCE_DECLARE_WITH_VAR
+                    )
+                }
             }
         } catch (e: IntroduceRefactoringException) {
             showErrorHint(project, editor, e.message!!)
@@ -189,8 +173,6 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             }
         } else if (editor == null) {
             doRefactoring(candidateContainers.first())
-        } else if (isUnitTestMode()) {
-            doRefactoring(candidateContainers.last())
         } else {
             chooseContainerElementIfNecessary(
                 candidateContainers, editor,
@@ -241,7 +223,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
         }
 
         fun KtElement.getContainer(): KtElement? {
-            if (this is KtBlockExpression) return this
+            if (this is KtBlockExpression || this is KtClassBody) return this
 
             return (parentsWithSelf.zip(parents)).firstOrNull {
                 val (place, parent) = it
@@ -250,7 +232,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
                     is KtBlockExpression -> true
                     is KtWhenEntry -> place == parent.expression
                     is KtDeclarationWithBody -> parent.bodyExpression == place
-                    is KtClassBody -> true
+                    is KtClassBody -> place !is KtEnumEntry
                     is KtFile -> true
                     else -> false
                 }
@@ -262,7 +244,7 @@ abstract class KotlinIntroduceVariableHandler : RefactoringActionHandler {
             for ((place, parent) in parentsWithSelf.zip(parents)) {
                 when {
                     parent is KtContainerNode && place !is KtBlockExpression && !parent.isBadContainerNode(place) -> result = parent
-                    parent is KtClassBody || parent is KtFile -> return result ?: parent as? KtElement
+                    parent is KtClassBody || parent is KtFile || parent is KtFunctionLiteral -> return result ?: parent as? KtElement
                     parent is KtBlockExpression -> result = parent
                     parent is KtWhenEntry && place !is KtBlockExpression -> result = parent
                     parent is KtDeclarationWithBody && parent.bodyExpression == place && place !is KtBlockExpression -> result = parent

@@ -216,6 +216,11 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
             runTest("testData/parameterInfo/functionCall/InheritedWithCurrentFunctions.kt");
         }
 
+        @TestMetadata("InvalidCandidates.kt")
+        public void testInvalidCandidates() throws Exception {
+            runTest("testData/parameterInfo/functionCall/InvalidCandidates.kt");
+        }
+
         @TestMetadata("Invoke.kt")
         public void testInvoke() throws Exception {
             runTest("testData/parameterInfo/functionCall/Invoke.kt");

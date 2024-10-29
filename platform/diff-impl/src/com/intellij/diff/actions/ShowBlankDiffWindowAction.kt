@@ -87,7 +87,7 @@ internal class ShowBlankDiffWindowAction : DumbAwareAction() {
       content2 = createEditableContent(project)
     }
 
-    val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent)
+    val chain = BlankDiffWindowUtil.createBlankDiffRequestChain(content1, content2, baseContent, project)
     BlankDiffWindowUtil.setupBlankContext(chain)
     DiffManagerEx.getInstance().showDiffBuiltin(project, chain, DiffDialogHints.DEFAULT)
   }

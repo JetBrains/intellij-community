@@ -2,6 +2,7 @@
 package com.intellij.platform.buildScripts.testFramework
 
 import com.intellij.util.xml.dom.readXmlAsModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.SoftAssertions
 import org.jetbrains.intellij.build.BuildContext
@@ -15,7 +16,7 @@ fun runEssentialPluginsTest(
   homePath: Path,
   productProperties: ProductProperties,
   buildTools: ProprietaryBuildTools,
-) = runBlocking {
+) = runBlocking(Dispatchers.Default) {
   val buildContext = BuildContextImpl.createContext(
     projectHome = homePath,
     productProperties = productProperties,
@@ -45,7 +46,7 @@ private data class PluginDescription(
   val requiredDependencies: Set<String> = emptySet()
 )
 
-private fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
+private suspend fun getPluginByIdMap(context: BuildContext): Map<String, PluginDescription> {
   val pluginMap = collectPluginDescriptors(
     skipImplementationDetailPlugins = true, //it's not possible to disable implementation detail plugin
     skipBundledPlugins = false,

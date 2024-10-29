@@ -3,11 +3,13 @@ package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.lang.ZipFilePool
+import org.jetbrains.annotations.ApiStatus
 import java.io.Closeable
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
+@ApiStatus.Internal
 class PluginXmlPathResolver(private val pluginJarFiles: List<Path>, private val pool: ZipFilePool?) : PathResolver {
   companion object {
     // don't use Kotlin emptyList here

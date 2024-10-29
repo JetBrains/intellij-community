@@ -25,15 +25,13 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyStubElementTypes;
-import com.jetbrains.python.PythonDialectsTokenSetProvider;
+import com.jetbrains.python.*;
 import com.jetbrains.python.ast.PyAstFunction.Modifier;
 import com.jetbrains.python.ast.impl.PyUtilCore;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.stubs.PyClassElementType;
@@ -383,7 +381,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     cache.put(type, Ref.create());
     List<PyClassLikeType> result = null;
     try {
-      final List<PyClassLikeType> bases = removeNotNullDuplicates(type.getSuperClassTypes(context));
+      final List<PyClassLikeType> bases = moveTypingGenericToTheEnd(removeNotNullDuplicates(type.getSuperClassTypes(context)));
       final List<List<PyClassLikeType>> lines = new ArrayList<>();
       for (PyClassLikeType base : bases) {
         if (base != null) {
@@ -422,6 +420,20 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       cache.put(type, Ref.create(result));
     }
     return result;
+  }
+
+  private static @NotNull List<PyClassLikeType> moveTypingGenericToTheEnd(@NotNull List<PyClassLikeType> bases) {
+    int genericPos = ContainerUtil.indexOf(bases,
+                                           base -> base instanceof PyCustomType customType &&
+                                                   PyTypingTypeProvider.GENERIC.equals(customType.getClassQName()));
+    if (genericPos >= 0) {
+      List<PyClassLikeType> reorderedBases = new ArrayList<>(bases.size());
+      reorderedBases.addAll(bases.subList(0, genericPos));
+      reorderedBases.addAll(bases.subList(genericPos + 1, bases.size()));
+      reorderedBases.add(bases.get(genericPos));
+      return reorderedBases;
+    }
+    return bases;
   }
 
   @NotNull

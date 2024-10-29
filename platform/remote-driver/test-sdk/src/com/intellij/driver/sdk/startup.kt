@@ -16,7 +16,7 @@ interface FUSProjectHotStartUpMeasurerService {
  * This is util method for such enforcement
  */
 fun Driver.waitForStartupFUSToWrite() {
-  waitFor(duration = 10.seconds, interval = 1.seconds) {
+  waitFor("Fus startup is finished", timeout = 10.seconds, interval = 1.seconds) {
     service(FUSProjectHotStartUpMeasurerService::class).isHandlingFinished()
   }
 }

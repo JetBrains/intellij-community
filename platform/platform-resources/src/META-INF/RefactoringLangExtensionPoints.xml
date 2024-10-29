@@ -6,7 +6,9 @@
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate" dynamic="true"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate" dynamic="true"/>
-    <extensionPoint name="refactoring.invertBoolean" interface="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate" dynamic="true"/>
+    <extensionPoint name="refactoring.invertBoolean" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.invertBoolean.InvertBooleanDelegate"/>
+    </extensionPoint>
     <extensionPoint name="refactoring.introduceParameterObject" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectDelegate"/>
     </extensionPoint>

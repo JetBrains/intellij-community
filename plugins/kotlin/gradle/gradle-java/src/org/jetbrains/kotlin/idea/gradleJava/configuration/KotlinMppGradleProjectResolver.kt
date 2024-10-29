@@ -160,8 +160,7 @@ open class KotlinMppGradleProjectResolver : AbstractProjectResolverExtension() {
 }
 
 internal fun reportMultiplatformNotifications(resolverCtx: ProjectResolverContext) {
-    if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio && !PlatformUtils.isMobileIde() &&
-        !PlatformUtils.isAppCode()
+    if (!resolverCtx.isResolveModulePerSourceSet && !KotlinPlatformUtils.isAndroidStudio
     ) {
         notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
         resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())

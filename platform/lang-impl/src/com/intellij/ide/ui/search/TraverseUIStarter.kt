@@ -16,20 +16,23 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
+import com.intellij.ide.ui.search.SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML_NAME
 import com.intellij.idea.AppMode
+import com.intellij.l10n.LocalizationUtil
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModernApplicationStarter
+import com.intellij.openapi.application.ex.ApplicationManagerEx
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.ReflectionUtil
@@ -44,7 +47,6 @@ import java.nio.charset.CodingErrorAction
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.*
-import kotlin.system.exitProcess
 
 /**
  * Used in installer's "build searchable options" step.
@@ -56,21 +58,22 @@ import kotlin.system.exitProcess
  */
 private class TraverseUIStarter : ModernApplicationStarter() {
   override suspend fun start(args: List<String>) {
+    TraverseUIMode.getInstance().setActive(true)
     try {
       doBuildSearchableOptions(
         options = LinkedHashMap(),
         outputPath = Path.of(args[1]).toAbsolutePath().normalize(),
       )
-      exitProcess(0)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true )
     }
     catch (e: Throwable) {
       try {
         println("Searchable options index builder failed")
         e.printStackTrace()
       }
-      catch (ignored: Throwable) {
+      catch (_: Throwable) {
       }
-      exitProcess(-1)
+      ApplicationManagerEx.getApplicationEx().exit( /*force: */ false, /*confirm: */ true, -1 )
     }
   }
 }
@@ -152,8 +155,11 @@ private suspend fun saveResults(outDir: Path, roots: Map<OptionSetId, List<Confi
         hash.putString(module.pluginId.idString)
         hash.putString(module.moduleName ?: "")
 
+        require(LocalizationUtil.getLocaleOrNullForDefault() == null) {
+          "Locale must be default"
+        }
         val fileName = (if (module.moduleName == null) "p-${module.pluginId.idString}" else "m-${module.moduleName}") +
-                       "-" + SearchableOptionsRegistrar.getSearchableOptionsName() + ".json"
+                       "-" + SEARCHABLE_OPTIONS_XML_NAME + ".json"
         val file = outDir.resolve(fileName)
         try {
           Files.newBufferedWriter(file).use { writer ->
@@ -354,7 +360,7 @@ private suspend fun doBuildSearchableOptions(
 
   val defaultProject = serviceAsync<ProjectManager>().defaultProject
   withContext(Dispatchers.EDT) {
-    blockingContext {
+    writeIntentReadAction {
       for (extension in TraverseUIHelper.helperExtensionPoint.extensionList) {
         extension.beforeStart()
       }

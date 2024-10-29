@@ -10,12 +10,12 @@ import com.intellij.psi.util.parentsOfType
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.sun.jdi.Location
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.idea.base.psi.getContainingValueArgument
 import org.jetbrains.kotlin.idea.codeinsight.utils.isInlinedArgument
 import org.jetbrains.kotlin.idea.debugger.KotlinPositionManager
+import org.jetbrains.kotlin.idea.debugger.base.util.runDumbAnalyze
 import org.jetbrains.kotlin.idea.debugger.base.util.safeGetSourcePosition
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
@@ -38,18 +38,18 @@ internal class KotlinVariableNameFinder(val debugProcess: DebugProcessImpl) {
         }
 
         ProgressManager.checkCanceled()
-        analyze(enclosingBlockExpression) {
+        return runDumbAnalyze(enclosingBlockExpression, fallback = emptyList()) f@ {
             val expressionToStartAnalysisFrom = findExpressionToStartAnalysisFrom(enclosingBlockExpression)
             if (!isCoroutineContextAvailable(expressionToStartAnalysisFrom)) {
-                return emptyList()
+                return@f emptyList()
             }
 
             ProgressManager.checkCanceled()
-            val parentFunction = expressionToStartAnalysisFrom.parentOfType<KtFunction>(withSelf = true) ?: return emptyList()
+            val parentFunction = expressionToStartAnalysisFrom.parentOfType<KtFunction>(withSelf = true) ?: return@f emptyList()
             val namesInParameterList = findVariableNamesInParameterList(parentFunction)
             val namesVisibleInExpression = findVariableNames(expressionToStartAnalysisFrom, element, blockParents)
 
-            return namesVisibleInExpression + namesInParameterList
+            namesVisibleInExpression + namesInParameterList
         }
     }
 

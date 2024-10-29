@@ -10,7 +10,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +19,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
-import java.util.Collections;
 import java.util.List;
 
 public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements QuickActionProvider, UiCompatibleDataProvider {
@@ -207,11 +205,11 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   }
 
   public static @NotNull List<AnAction> collectActions(@Nullable JComponent component) {
-    JBIterable<ActionToolbar> toolbars = UIUtil.uiTraverser(component).traverse().filter(ActionToolbar.class);
-    if (toolbars.isEmpty()) {
-      return Collections.emptyList();
-    }
-    return toolbars.flatten(ActionToolbar::getActions).toList();
+    return UIUtil.uiTraverser(component).traverse()
+      .filter(ActionToolbar.class)
+      .map(ActionToolbar::getActionGroup)
+      .filter(AnAction.class)
+      .toList();
   }
 
   private void updateScrolledState() {

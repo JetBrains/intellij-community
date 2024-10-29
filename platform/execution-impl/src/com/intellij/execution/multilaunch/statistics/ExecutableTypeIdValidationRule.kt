@@ -6,7 +6,9 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.internal.statistic.utils.getPluginInfo
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Suppress("UnstableApiUsage")
 class ExecutableTypeIdValidationRule : CustomValidationRule() {
   override fun getRuleId() = "multirun_executable_type_id"

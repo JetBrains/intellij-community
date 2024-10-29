@@ -5,6 +5,8 @@ import com.intellij.usageView.UsageInfo
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinChangeInfoBase
 import org.jetbrains.kotlin.idea.k2.refactoring.changeSignature.KotlinParameterInfo
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.psi.KtCallElement
+import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
@@ -62,6 +64,10 @@ internal class KotlinImplicitThisToParameterUsage(
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
+        val parent = element.parent
+        if (parent is KtCallExpression) {
+            return processUsage(changeInfo, parent, allUsages)
+        }
         val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}") as KtQualifiedExpression
         return element.replace(newQualifiedCall) as KtElement
     }
@@ -69,19 +75,15 @@ internal class KotlinImplicitThisToParameterUsage(
 
 internal class KotlinImplicitThisUsage(
     callElement: KtElement,
-    private val targetDescriptor: Name
+    private val newReceiver: String
 ) : UsageInfo(callElement), KotlinBaseChangeSignatureUsage {
-    private fun getNewReceiverText() = when {
-        targetDescriptor.isSpecial -> "this"
-        else -> "this@${targetDescriptor.asString()}"
-    }
 
     override fun processUsage(
         changeInfo: KotlinChangeInfoBase,
         element: KtElement,
         allUsages: Array<out UsageInfo>
     ): KtElement {
-        val newQualifiedCall = KtPsiFactory(element.project).createExpression("${getNewReceiverText()}.${element.text}"
+        val newQualifiedCall = KtPsiFactory(element.project).createExpression("$newReceiver.${element.text}"
         ) as KtQualifiedExpression
         return element.replace(newQualifiedCall).parent as KtElement
     }

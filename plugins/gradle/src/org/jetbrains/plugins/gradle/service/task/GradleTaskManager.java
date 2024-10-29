@@ -346,6 +346,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   ) {
     final List<String> initScripts = new ArrayList<>();
     List<GradleProjectResolverExtension> extensions = GradleProjectResolverUtil.createProjectResolvers(null).toList();
+    Map<String, String> executionEnvironmentVariables = new HashMap<>();
     for (GradleProjectResolverExtension resolverExtension : extensions) {
       final String resolverClassName = resolverExtension.getClass().getName();
 
@@ -372,7 +373,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion.getVersion());
       }
 
-      resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
+      Map<String, String> taskProcessingEnvironmentVariables = resolverExtension.enhanceTaskProcessing(project, taskNames, script -> {
         if (StringUtil.isNotEmpty(script)) {
           addAllNotNull(
             initScripts,
@@ -381,6 +382,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
             "//");
         }
       }, enhancementParameters);
+      executionEnvironmentVariables.putAll(taskProcessingEnvironmentVariables);
     }
 
     if (!initScripts.isEmpty()) {
@@ -403,6 +405,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     if (effectiveSettings.getArguments().contains(GradleConstants.INIT_SCRIPT_CMD_OPTION)) {
       GradleInitScriptUtil.attachTargetPathMapperInitScript(effectiveSettings);
     }
+    effectiveSettings.withEnvironmentVariables(executionEnvironmentVariables);
   }
 
   private static void writeAndAppendScript(@NotNull GradleExecutionSettings effectiveSettings,

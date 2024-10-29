@@ -55,11 +55,20 @@ public final class OverridingMethodsSearch extends ExtensibleQueryFactory<PsiMet
     return INSTANCE.createUniqueResultsQuery(new SearchParameters(method, scope, checkDeep));
   }
 
+  /**
+   * @param method base method
+   * @param checkDeep if true, indirect overrides will also be returned
+   * @return query containing methods that override the base method
+   */
   @NotNull
   public static Query<PsiMethod> search(@NotNull PsiMethod method, final boolean checkDeep) {
     return search(method, ReadAction.compute(method::getUseScope), checkDeep);
   }
 
+  /**
+   * @param method base method
+   * @return query containing methods that override the base method (directly or indirectly)
+   */
   @NotNull
   public static Query<PsiMethod> search(@NotNull PsiMethod method) {
     return search(method, true);

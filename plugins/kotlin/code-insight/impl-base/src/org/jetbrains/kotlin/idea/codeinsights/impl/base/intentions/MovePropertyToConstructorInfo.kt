@@ -54,7 +54,7 @@ sealed interface MovePropertyToConstructorInfo {
                     propertyAnnotationsText = propertyAnnotationsText,
                 )
             } else {
-                val typeText = element.typeReference?.text ?: element.getVariableSymbol().returnType.render(position = Variance.INVARIANT)
+                val typeText = element.typeReference?.text ?: element.symbol.returnType.render(position = Variance.INVARIANT)
                 return AdditionalParameter(
                     parameterTypeText = typeText,
                     propertyAnnotationsText = propertyAnnotationsText,
@@ -64,7 +64,7 @@ sealed interface MovePropertyToConstructorInfo {
 
         context(KaSession)
         private fun KtExpression.isValidInConstructor(): Boolean {
-            val parentClassSymbol = getStrictParentOfType<KtClass>()?.getClassOrObjectSymbol() ?: return false
+            val parentClassSymbol = getStrictParentOfType<KtClass>()?.classSymbol ?: return false
             var isValid = true
             accept(referenceExpressionRecursiveVisitor { expression ->
                 if (!isValid) return@referenceExpressionRecursiveVisitor

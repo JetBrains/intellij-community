@@ -1,6 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.naming;
 
+import com.intellij.pom.java.JavaFeature;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.IGQuickFixesTestCase;
 
@@ -22,6 +24,11 @@ public class MethodNameSameAsClassNameInspectionTest extends IGQuickFixesTestCas
   public void testInterface() { assertQuickfixNotAvailable(); }
   public void testConflictingCtor() { assertQuickfixNotAvailable(); }
   public void testConflictingCtorErasure() { assertQuickfixNotAvailable(); }
+
+  @SuppressWarnings("SpellCheckingInspection")
+  public void testmain() {
+    IdeaTestUtil.withLevel(getModule(), JavaFeature.IMPLICIT_CLASSES.getMinimumLevel(), () -> assertQuickfixNotAvailable());
+  }
 
   @Override
   protected String getRelativePath() {

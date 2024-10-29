@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -79,10 +79,9 @@ public final class JavaFxApplicationIconsDialog extends DialogWrapper {
   }
 
   private static void addBrowseListener(TextFieldWithBrowseButton withBrowseButton, String extension, Project project) {
-    withBrowseButton.addBrowseFolderListener(JavaFXBundle.message("javafx.application.icons.select.icon.file.title"),
-                                             JavaFXBundle.message("javafx.application.icons.select.icon.file.description",extension), project,
-                                             FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor()
-                                               .withFileFilter(file -> extension.equalsIgnoreCase(file.getExtension())));
+    withBrowseButton.addBrowseFolderListener(project, FileChooserDescriptorFactory.createSingleFileDescriptor(extension)
+      .withTitle(JavaFXBundle.message("javafx.application.icons.select.icon.file.title"))
+      .withDescription(JavaFXBundle.message("javafx.application.icons.select.icon.file.description", extension)));
   }
 
   protected static final class Panel {

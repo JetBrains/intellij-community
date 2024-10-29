@@ -11,11 +11,13 @@ import com.intellij.openapi.vcs.ex.ChangelistsLocalLineStatusTracker.RangeState
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.xml.util.XmlStringUtil
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
 private typealias TrackerState = ChangelistsLocalLineStatusTracker.State
 private typealias FullTrackerState = ChangelistsLocalLineStatusTracker.FullState
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "LineStatusTrackerManager", storages = [(Storage(value = StoragePathMacros.WORKSPACE_FILE))])
 @NonNls

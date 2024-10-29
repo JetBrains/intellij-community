@@ -1,10 +1,9 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package org.jetbrains.intellij.build.impl.support
 
 import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
@@ -13,11 +12,12 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildOptions.Companion.REPAIR_UTILITY_BUNDLE_STEP
 import org.jetbrains.intellij.build.JvmArchitecture.Companion.currentJvmArch
 import org.jetbrains.intellij.build.OsFamily.Companion.currentOs
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.dependencies.TeamCityHelper
 import org.jetbrains.intellij.build.impl.Docker
 import org.jetbrains.intellij.build.impl.OsSpecificDistributionBuilder
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -42,9 +42,13 @@ import kotlin.time.Duration.Companion.minutes
 class RepairUtilityBuilder {
   companion object {
     private val buildLock = Mutex()
+
     suspend fun bundle(context: BuildContext, os: OsFamily, arch: JvmArchitecture, distributionDir: Path) {
       context.executeStep(spanBuilder("bundle repair-utility").setAttribute("os", os.osName), REPAIR_UTILITY_BUNDLE_STEP) {
-        if (!canBinariesBeBuilt(context)) return@executeStep
+        if (!canBinariesBeBuilt(context)) {
+          return@executeStep
+        }
+
         val cache = getBinaryCache(context).await()
         val binary = findBinary(os, arch)
         val path = cache.get(binary)
@@ -145,8 +149,8 @@ class RepairUtilityBuilder {
     }
 
     private suspend fun buildBinaries(context: BuildContext): Map<Binary, Path> {
-      return spanBuilder("build repair-utility").useWithScope {
-        val projectHome = repairUtilityProjectHome(context) ?: return@useWithScope emptyMap()
+      return spanBuilder("build repair-utility").use {
+        val projectHome = repairUtilityProjectHome(context) ?: return@use emptyMap()
         try {
           val baseUrl = context.productProperties.baseDownloadUrl?.removeSuffix("/") 
                         ?: error("'baseDownloadUrl' is not specified in ${context.productProperties.javaClass.name}")
@@ -159,7 +163,7 @@ class RepairUtilityBuilder {
           }
           buildLock.withLock {
             withContext(Dispatchers.IO) {
-              suspendingRetryWithExponentialBackOff {
+              retryWithExponentialBackOff {
                 runProcess(args = listOf("bash", "build.sh"), workingDir = projectHome,
                            additionalEnvVariables = distributionUrls,
                            timeout = 5.minutes,
@@ -172,7 +176,7 @@ class RepairUtilityBuilder {
           if (TeamCityHelper.isUnderTeamCity) {
             throw e
           }
-          return@useWithScope emptyMap<Binary, Path>()
+          return@use emptyMap<Binary, Path>()
         }
 
         val binaries = BINARIES.associateWith { projectHome.resolve(it.relativeSourcePath) }
@@ -215,11 +219,8 @@ class RepairUtilityBuilder {
         }
     }
 
-    fun executableFilesPatterns(context: BuildContext): List<String> {
-      return if (canBinariesBeBuilt(context)) {
-        listOf("bin/repair")
-      }
-      else emptyList()
+    fun executableFilesPatterns(context: BuildContext): Sequence<String> {
+      return if (canBinariesBeBuilt(context)) sequenceOf("bin/repair") else emptySequence()
     }
   }
 }

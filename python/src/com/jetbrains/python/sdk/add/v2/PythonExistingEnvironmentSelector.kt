@@ -7,38 +7,46 @@ import com.intellij.ui.dsl.builder.Align
 import com.intellij.ui.dsl.builder.Panel
 import com.jetbrains.python.PyBundle.message
 import com.jetbrains.python.newProject.collector.InterpreterStatisticsInfo
-import com.jetbrains.python.sdk.add.WslContext
+import com.jetbrains.python.sdk.ModuleOrProject
 import com.jetbrains.python.statistics.InterpreterCreationMode
-import com.jetbrains.python.statistics.InterpreterTarget
 import com.jetbrains.python.statistics.InterpreterType
 
-class PythonExistingEnvironmentSelector(presenter: PythonAddInterpreterPresenter) : PythonAddEnvironment(presenter) {
+class PythonExistingEnvironmentSelector(model: PythonAddInterpreterModel) : PythonExistingEnvironmentConfigurator(model) {
+
+  private lateinit var comboBox: PythonInterpreterComboBox
 
   override fun buildOptions(panel: Panel, validationRequestor: DialogValidationRequestor) {
     with(panel) {
       row(message("sdk.create.custom.python.path")) {
-        pythonInterpreterComboBox(presenter.state.selectedVenv,
-                                  presenter,
-                                  presenter.allSdksFlow,
-                                  presenter::addPythonInterpreter)
+        comboBox = pythonInterpreterComboBox(model.state.selectedInterpreter,
+                                             model,
+                                             model::addInterpreter,
+                                             model.interpreterLoading)
           .align(Align.FILL)
+          .component
       }
     }
   }
 
-  override fun getOrCreateSdk(): Sdk {
-    val selectedSdk = state.selectedVenv.get() ?: error("Unknown sdk selected")
-    return setupSdkIfDetected(selectedSdk, state.allSdks.get())
+  override fun onShown() {
+    comboBox.setItems(model.allInterpreters)
+  }
+
+  override suspend fun getOrCreateSdk(moduleOrProject: ModuleOrProject): Result<Sdk> {
+    // todo error handling, nullability issues
+    return Result.success(setupSdkIfDetected(model.state.selectedInterpreter.get()!!, model.existingSdks)!!)
   }
 
   override fun createStatisticsInfo(target: PythonInterpreterCreationTargets): InterpreterStatisticsInfo {
-    val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    //val statisticsTarget = if (presenter.projectLocationContext is WslContext) InterpreterTarget.TARGET_WSL else target.toStatisticsField()
+    val statisticsTarget = target.toStatisticsField() // todo fix for wsl
     return InterpreterStatisticsInfo(InterpreterType.REGULAR,
                                      statisticsTarget,
                                      false,
                                      false,
                                      true,
-                                     presenter.projectLocationContext is WslContext,
+                                     //presenter.projectLocationContext is WslContext,
+                                     false, // todo fix for wsl
                                      InterpreterCreationMode.CUSTOM)
   }
 }

@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService
+import org.jetbrains.annotations.ApiStatus
 import java.io.InputStream
 import java.io.ObjectInputStream
 import java.io.ObjectStreamClass
@@ -17,6 +18,7 @@ import java.lang.reflect.Proxy
 /**
  * Resolver, that can deserialize data nodes graph using plugin classloaders.
  */
+@ApiStatus.Internal
 class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
   private val rawResolverDelegate: RawExternalSystemProjectResolver<S>,
   private val resolverDelegate: RemoteExternalSystemProjectResolver<S>
@@ -39,6 +41,7 @@ class CustomClassDeserializingResolver<S : ExternalSystemExecutionSettings>(
 /**
  * JDK serialization input stream, that attempts to load deserialized instance's class from a number of classloaders
  */
+@ApiStatus.Internal
 class MultiLoaderObjectInputStream(inputStream: InputStream, val loaders: Collection<ClassLoader>) : ObjectInputStream(inputStream) {
 
   override fun resolveClass(desc: ObjectStreamClass): Class<*> {

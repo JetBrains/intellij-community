@@ -4,6 +4,7 @@ package org.jetbrains.plugins.terminal;
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.configuration.EnvironmentVariablesData;
 import com.intellij.execution.process.LocalPtyOptions;
+import com.intellij.execution.process.ProcessService;
 import com.intellij.execution.wsl.WslPath;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.openapi.application.Application;
@@ -243,25 +244,30 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     TerminalUsageTriggerCollector.triggerLocalShellStarted(myProject, command, isBlockTerminal);
 
     if (isBlockTerminal) {
-      String curVersionString = ApplicationInfo.getInstance().getBuild().asStringWithoutProductCodeAndSnapshot();
-      TerminalUsageLocalStorage.getInstance().getState().setBlockTerminalUsedLastVersion(curVersionString);
+      TerminalUsageLocalStorage.getInstance().recordBlockTerminalUsed();
     }
 
     try {
       long startNano = System.nanoTime();
-      PtyProcessBuilder builder = new PtyProcessBuilder(command)
-        .setEnvironment(envs)
-        .setDirectory(workingDir)
-        .setInitialColumns(initialTermSize != null ? initialTermSize.getColumns() : null)
-        .setInitialRows(initialTermSize != null ? initialTermSize.getRows() : null)
-        .setUseWinConPty(LocalPtyOptions.shouldUseWinConPty())
-        .setSpawnProcessUsingJdkOnMacIntel(Registry.is("run.processes.using.pty.helper.on.mac.intel", true));
-      PtyProcess process = builder.start();
+      PtyProcess process = (PtyProcess)ProcessService.getInstance().startPtyProcess(
+        command,
+        workingDir,
+        envs,
+        LocalPtyOptions.defaults().builder()
+          .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
+          .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
+          .useWinConPty(LocalPtyOptions.shouldUseWinConPty())
+          .build(),
+        null,
+        false,
+        false,
+        false
+      );
       LOG.info("Started " + process.getClass().getName() + " in " + TimeoutUtil.getDurationMillis(startNano) + " ms from "
                + stringifyProcessInfo(command, workingDir, initialTermSize, envs, !LOG.isDebugEnabled()));
       return process;
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new ExecutionException("Failed to start " + stringifyProcessInfo(command, workingDir, initialTermSize, envs, false), e);
     }
   }

@@ -23,7 +23,7 @@
 
   <extensionPoints>
     <extensionPoint name="languageSupport" interface="org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport" dynamic="true"/>
-    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean" dynamic="true"/>
+    <extensionPoint name="injectionConfig" beanClass="org.intellij.plugins.intelliLang.LanguageInjectionConfigBean" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -31,16 +31,19 @@
       <className>org.intellij.plugins.intelliLang.inject.InjectLanguageAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.language.injection</categoryKey>
+      <language/>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.language.injection</categoryKey>
+      <language/>
     </intentionAction>
     <intentionAction>
       <className>org.intellij.plugins.intelliLang.inject.EditInjectionSettingsAction</className>
       <bundleName>messages.LangBundle</bundleName>
       <categoryKey>intention.category.language.injection</categoryKey>
+      <language/>
     </intentionAction>
 
     <highlightErrorFilter implementation="org.intellij.plugins.intelliLang.inject.FrankensteinErrorFilter"/>
@@ -67,7 +70,7 @@
     <projectService serviceInterface="org.intellij.plugins.intelliLang.Configuration"
                     serviceImplementation="org.intellij.plugins.intelliLang.Configuration$Prj"/>
 
-    <psi.referenceContributor implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
+    <psi.referenceContributor language="" implementation="org.intellij.plugins.intelliLang.references.InjectedReferencesContributor"/>
     <psi.symbolReferenceProvider implementationClass="org.intellij.plugins.intelliLang.references.LanguageReferenceContributor"
                                  hostLanguage=""
                                  hostElementClass="com.intellij.psi.PsiComment"
@@ -79,6 +82,7 @@
     <referenceInjector implementation="org.intellij.plugins.intelliLang.references.FileReferenceInjector"/>
     <localInspection implementationClass="org.intellij.plugins.intelliLang.references.InjectedReferencesInspection"
                      enabledByDefault="true" level="ERROR"
+                     language=""
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name"
                      key="inspection.injected.references.display.name" bundle="messages.IntelliLangBundle"/>
   </extensions>

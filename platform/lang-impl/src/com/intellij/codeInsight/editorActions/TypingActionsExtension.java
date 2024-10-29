@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Editor;
@@ -15,8 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public interface TypingActionsExtension {
   ExtensionPointName<TypingActionsExtension> EP_NAME = ExtensionPointName.create("com.intellij.typingActionsExtension");
 
-  @NotNull
-  static TypingActionsExtension findForContext(@NotNull Project project, @NotNull Editor editor) {
+  static @NotNull TypingActionsExtension findForContext(@NotNull Project project, @NotNull Editor editor) {
     final TypingActionsExtension extension =
       ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.isSuitableContext(project, editor));
     return extension == null

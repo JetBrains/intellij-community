@@ -1,15 +1,15 @@
 class A {
     var foo: String? = null
 
-    fun g1(foo: String): Boolean {
+    fun g1(foo: String?): Boolean {
         return this.foo == foo
     }
 
-    fun g2(foo: String): Boolean {
+    fun g2(foo: String?): Boolean {
         return this.foo == foo
     }
 
-    fun g3(foo: String, other: A): Boolean {
+    fun g3(foo: String?, other: A): Boolean {
         return other.foo == foo
     }
 

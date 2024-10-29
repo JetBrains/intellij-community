@@ -44,7 +44,6 @@ class MavenProjectAware(
     }
     if (context.hasUndefinedModifications) {
       MavenLog.LOG.debug("MavenProjectAware.reloadProject - context.hasUndefinedModifications=true")
-      manager.findAllAvailablePomFilesIfNotMavenized()
       val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, undefined modifications", context.isExplicitReload)
       manager.scheduleUpdateAllMavenProjects(spec)
     }
@@ -69,17 +68,9 @@ class MavenProjectAware(
         manager.scheduleUpdateMavenProjects(spec, filesToUpdate, filesToDelete)
       }
       else {
-        manager.findAllAvailablePomFilesIfNotMavenized()
         val spec = MavenSyncSpec.incremental("MavenProjectAware.reloadProject, sync all", context.isExplicitReload)
         manager.scheduleUpdateAllMavenProjects(spec)
       }
-    }
-  }
-
-  private fun hasPomFile(rootDirectory: String): Boolean {
-    val projectTree = manager.projectsTree
-    return MavenConstants.POM_NAMES.any {
-      projectTree.isPotentialProject("$rootDirectory/$it")
     }
   }
 
@@ -95,9 +86,6 @@ class MavenProjectAware(
       result.add(rootDirectory + "/" + MavenConstants.JVM_CONFIG_RELATIVE_PATH)
       result.add(rootDirectory + "/" + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH)
       result.add(rootDirectory + "/" + MavenConstants.MAVEN_WRAPPER_RELATIVE_PATH)
-      if (hasPomFile(rootDirectory)) {
-        result.add(rootDirectory + "/" + MavenConstants.PROFILES_XML)
-      }
     }
     return result
   }

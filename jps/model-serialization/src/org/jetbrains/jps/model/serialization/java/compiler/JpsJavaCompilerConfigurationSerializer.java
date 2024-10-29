@@ -10,11 +10,11 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsCompilerExcludes;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
-import org.jetbrains.jps.model.serialization.JpsProjectExtensionSerializer;
+import org.jetbrains.jps.model.serialization.JpsProjectExtensionWithExternalDataSerializer;
 
 import java.util.List;
 
-public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionSerializer {
+public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExtensionWithExternalDataSerializer {
   public static final String EXCLUDE_FROM_COMPILE = "excludeFromCompile";
   public static final String RESOURCE_EXTENSIONS = "resourceExtensions";
   public static final String ANNOTATION_PROCESSING = "annotationProcessing";
@@ -32,7 +32,9 @@ public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExte
     List.of("!?*.java", "!?*.form", "!?*.class", "!?*.groovy", "!?*.scala", "!?*.flex", "!?*.kt", "!?*.clj", "!?*.aj");
 
   public JpsJavaCompilerConfigurationSerializer() {
-    super("compiler.xml", "CompilerConfiguration");
+    super("compiler.xml", "CompilerConfiguration",
+          "project/compiler.xml",
+          "ExternalCompilerConfiguration");
   }
 
   @Override
@@ -94,6 +96,12 @@ public final class JpsJavaCompilerConfigurationSerializer extends JpsProjectExte
     if (useReleaseOption != null) {
       configuration.setUseReleaseOption(Boolean.parseBoolean(useReleaseOption));
     }
+  }
+
+  @Override
+  public void mergeExternalData(@NotNull Element internalComponent, @NotNull Element externalComponent) {
+    JDOMUtil.deepMerge(internalComponent, externalComponent);
+    JDOMUtil.reduceChildren(BYTECODE_TARGET_LEVEL, internalComponent);
   }
 
   @Override

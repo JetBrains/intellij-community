@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.folding.impl.actions;
 
@@ -11,17 +11,19 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ExpandAllRegionsAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   public ExpandAllRegionsAction() {
     super(new BaseFoldingHandler() {
       @Override
-      public void doExecute(@NotNull final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+      public void doExecute(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
         Project project = editor.getProject();
         assert project != null;
         FoldingModel foldingModel = editor.getFoldingModel();

@@ -16,8 +16,10 @@ import com.intellij.psi.codeStyle.*
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor
 import com.intellij.psi.codeStyle.modifier.TransientCodeStyleSettings
 import com.intellij.util.messages.MessageBusConnection
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 class CodeStyleStatusBarWidget(project: Project) : EditorBasedStatusBarPopup(project = project,
                                                                              isWriteableFileRequired = true), CodeStyleSettingsListener {
   private var panel: CodeStyleStatusBarPanel? = null

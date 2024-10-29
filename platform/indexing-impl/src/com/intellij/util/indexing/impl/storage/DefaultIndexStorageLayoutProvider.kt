@@ -5,11 +5,11 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.IndexStorage
+import com.intellij.util.indexing.impl.InputIndexDataExternalizer
 import com.intellij.util.indexing.impl.forward.*
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider.DefaultStorageLayout
-import com.intellij.util.indexing.impl.storage.DefaultIndexStorageLayoutProvider.SingleEntryStorageLayout
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout
+import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.PagedFileStorage
 import com.intellij.util.io.StorageLockContext
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -42,7 +42,7 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
   internal class DefaultStorageLayout<K, V>(private val extension: FileBasedIndexExtension<K, V>) : VfsAwareIndexStorageLayout<K, V> {
     private val storageLockContext = newStorageLockContext()
 
-    private val forwardIndexAccessor = MapForwardIndexAccessor(InputMapExternalizer(extension))
+    private val forwardIndexAccessor = MapForwardIndexAccessor(defaultMapExternalizerFor(extension))
 
     private val forwardIndexRef: StorageRef<ForwardIndex, IOException> = StorageRef(
       "ForwardIndex[${extension.name}",
@@ -125,6 +125,32 @@ class DefaultIndexStorageLayoutProvider : FileBasedIndexLayoutProvider {
       LOG.info("Clearing storage data for: $extension")
       deleteIndexDirectory(extension)
     }
+  }
+
+}
+
+@Internal
+fun <K, V> defaultMapExternalizerFor(extension: IndexExtension<K, V, *>): DataExternalizer<Map<K, V>> {
+  if (extension is CustomInputMapIndexExtension<*, *>) {
+    @Suppress("UNCHECKED_CAST")
+    return (extension as CustomInputMapIndexExtension<K, V>).createInputMapExternalizer()
+  }
+
+  @Suppress("UNCHECKED_CAST")
+  val keysExternalizer = if (extension is CustomInputsIndexFileBasedIndexExtension<*>) {
+    (extension as CustomInputsIndexFileBasedIndexExtension<K>).createExternalizer()
+  }
+  else {
+    InputIndexDataExternalizer<K>(extension.getKeyDescriptor(), extension.getName())
+  }
+
+  if (extension is ScalarIndexExtension<K>) {
+    val inputMapExternalizer = ValueLessInputMapExternalizer<K>(keysExternalizer)
+    @Suppress("UNCHECKED_CAST")
+    return inputMapExternalizer as DataExternalizer<Map<K, V>>
+  }
+  else {
+    return InputMapExternalizer(keysExternalizer, extension.valueExternalizer, false)
   }
 }
 

@@ -396,6 +396,38 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
 
 
   @Test
+  public void allocateRecord_makesStorageDirty() throws Exception {
+    assertFalse("Expect storage to be clean initially",
+                storage.isDirty());
+    storage.allocateRecord();
+    assertTrue("Expect storage to be dirty after .allocateRecord()",
+               storage.isDirty());
+  }
+
+  @Test
+  public void allocatedRecord_hasNonZeroModCount() throws Exception {
+    int recordId = storage.allocateRecord();
+
+    int recordModCount = storage.getModCount(recordId);
+    assertTrue("New record must have modCount assigned (>0), but: " + recordModCount,
+               recordModCount > 0);
+  }
+
+  @Test
+  public void cleanRecord_makesStorageDirty() throws Exception {
+    int recordId = storage.allocateRecord();
+    storage.setParent(recordId, 1);//just some random modification
+    storage.force();
+    assertFalse("Expect storage to be !dirty after flush",
+                storage.isDirty());
+
+    storage.cleanRecord(recordId);
+    assertTrue("Expect storage to be dirty after .cleanRecord()",
+               storage.isDirty());
+  }
+
+
+  @Test
   public void manyRecordsWritten_MultiThreadedWithoutContention_CouldBeReadBackUnchanged() throws Exception {
     final FSRecord[] records = new FSRecord[maxRecordsToInsert];
 
@@ -829,11 +861,7 @@ public abstract class PersistentFSRecordsStorageTestBase<T extends PersistentFSR
   public static final UpdateAPIMethod MODERN_API_UPDATE_METHOD = new UpdateAPIMethod() {
     @Override
     public void updateInStorage(FSRecord record, PersistentFSRecordsStorage storage) throws IOException {
-      if (!(storage instanceof IPersistentFSRecordsStorage newStorage)) {
-        throw new UnsupportedOperationException(
-          "MODERN API update available only for IPersistentFSRecordsStorage, but " + storage + " doesn't implement that interface");
-      }
-      newStorage.updateRecord(record.id, updatableRecordView -> {
+      storage.updateRecord(record.id, updatableRecordView -> {
         updatableRecordView.setParent(record.parentRef);
         updatableRecordView.setNameId(record.nameRef);
         updatableRecordView.setFlags(record.flags);

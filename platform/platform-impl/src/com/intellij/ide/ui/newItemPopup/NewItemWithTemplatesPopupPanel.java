@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorComponent;
@@ -10,6 +11,7 @@ import com.intellij.ui.components.JBBox;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.render.RenderingUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
@@ -122,7 +124,10 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     MouseAdapter mouseListener = new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
-        if (myApplyAction != null && e.getClickCount() > 1) myApplyAction.consume(e);
+        if (myApplyAction == null || e.getClickCount() <= 1) return;
+        try (AccessToken ignored = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) { // IJPL-162396
+          myApplyAction.consume(e);
+        }
       }
     };
 

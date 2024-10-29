@@ -10,11 +10,13 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public final class TitleWithToolbar extends JPanel {
 
   public TitleWithToolbar(@NlsContexts.BorderTitle @NotNull String title,

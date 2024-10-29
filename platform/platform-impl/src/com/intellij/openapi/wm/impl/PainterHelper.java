@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -11,7 +12,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.Painter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.icons.IconUtilKt;
 import com.intellij.ui.paint.PaintUtil;
@@ -472,8 +472,7 @@ final class PainterHelper implements Painter.Listener {
     }
 
     boolean ensureImageLoaded() {
-      IdeFrame frame = ComponentUtil.getParentOfType(IdeFrame.class, rootComponent);
-      Project project = frame == null ? null : frame.getProject();
+      Project project = ProjectUtil.getProjectForComponent(rootComponent);
       String value = IdeBackgroundUtil.getBackgroundSpec(project, propertyName);
       if (!Objects.equals(value, current)) {
         current = value;

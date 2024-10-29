@@ -20,7 +20,7 @@ import org.jetbrains.plugins.gradle.service.project.wizard.util.generateGradleWr
 import org.jetbrains.plugins.gradle.testFramework.fixtures.FileTestFixture
 import org.jetbrains.plugins.gradle.testFramework.fixtures.GradleProjectTestFixture
 import org.jetbrains.plugins.gradle.testFramework.util.ExternalSystemExecutionTracer
-import org.jetbrains.plugins.gradle.testFramework.util.awaitAnyGradleProjectReload
+import org.jetbrains.plugins.gradle.testFramework.util.awaitGradleOpenProjectConfiguration
 import org.jetbrains.plugins.gradle.testFramework.util.refreshAndAwait
 import org.jetbrains.plugins.gradle.tooling.JavaVersionRestriction
 import org.jetbrains.plugins.gradle.util.getGradleProjectReloadOperation
@@ -72,7 +72,11 @@ internal class GradleProjectTestFixtureImpl(
 
     installGradleProjectReloadWatcher()
 
-    _project = runBlocking { openProjectAsync(fileFixture.root) }
+    _project = runBlocking {
+      awaitGradleOpenProjectConfiguration {
+        openProjectAsync(fileFixture.root)
+      }
+    }
     IndexingTestUtil.waitUntilIndexesAreReady(project)
   }
 
@@ -101,7 +105,7 @@ internal class GradleProjectTestFixtureImpl(
     private suspend fun createProjectCaches(projectRoot: VirtualFile) {
       closeOpenedProjectsIfFailAsync {
         ExternalSystemExecutionTracer.assertExecutionStatusIsSuccess {
-          awaitAnyGradleProjectReload {
+          awaitGradleOpenProjectConfiguration {
             openProjectAsync(projectRoot)
           }
         }

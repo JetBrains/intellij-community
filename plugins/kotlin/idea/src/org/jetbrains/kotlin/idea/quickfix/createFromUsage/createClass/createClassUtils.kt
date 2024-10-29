@@ -34,7 +34,6 @@ import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.descriptors.ClassKind as ClassDescriptorKind
 
-internal fun String.checkClassName(): Boolean = isNotEmpty() && Character.isUpperCase(first())
 
 private fun String.checkPackageName(): Boolean = isNotEmpty() && Character.isLowerCase(first())
 

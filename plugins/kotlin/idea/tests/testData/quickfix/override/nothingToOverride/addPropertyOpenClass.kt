@@ -5,3 +5,4 @@ class Bar: Foo() {
     override<caret> val hoge = 3
 }
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.AddPropertyToSupertypeFix
+/* IGNORE_K2 */

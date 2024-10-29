@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options;
 
 import com.intellij.icons.AllIcons;
@@ -30,12 +30,11 @@ import java.util.Map;
 
 public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurable> implements SearchableConfigurable,
                                                                                                Configurable.NoScroll {
-  @NotNull
-  private final Project myProject;
+  private static final String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
   private final @NlsContexts.ConfigurableName String myDisplayName;
   private final String myHelpTopic;
   private final Map<Module, AtomicNotNullLazyValue<T>> myConfigurablesProviders = new HashMap<>();
-  private final static String PROJECT_ITEM_KEY = "thisisnotthemoduleyouarelookingfor";
+  private final @NotNull Project myProject;
 
   public ModuleAwareProjectConfigurable(@NotNull Project project, @NlsContexts.ConfigurableName String displayName, @NonNls String helpTopic) {
     myProject = project;
@@ -136,8 +135,7 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     layout.show(cardPanel, selectedModule == null ? PROJECT_ITEM_KEY : selectedModule.getName());
   }
 
-  @Nullable
-  protected T createDefaultProjectConfigurable() {
+  protected @Nullable T createDefaultProjectConfigurable() {
     return null;
   }
 
@@ -146,29 +144,25 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
    *
    * @return configurable or null if none
    */
-  @Nullable
-  protected T createProjectConfigurable() {
+  protected @Nullable T createProjectConfigurable() {
     return null;
   }
 
   /**
    * @return Name for project-wide settings in modules list
    */
-  @NotNull
-  protected @NlsContexts.Label String getProjectConfigurableItemName() {
+  protected @NotNull @NlsContexts.Label String getProjectConfigurableItemName() {
     return myProject.getName();
   }
 
   /**
    * @return Icon for project-wide sttings in modules list
    */
-  @Nullable
-  protected Icon getProjectConfigurableItemIcon() {
+  protected @Nullable Icon getProjectConfigurableItemIcon() {
     return AllIcons.Nodes.Project;
   }
 
-  @NotNull
-  protected abstract T createModuleConfigurable(Module module);
+  protected abstract @NotNull T createModuleConfigurable(Module module);
 
   @Override
   public boolean isModified() {
@@ -208,14 +202,12 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     myConfigurablesProviders.clear();
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NotNull String getId() {
     return getClass().getName();
   }
 
-  @NotNull
-  protected final Project getProject() {
+  protected final @NotNull Project getProject() {
     return myProject;
   }
 }

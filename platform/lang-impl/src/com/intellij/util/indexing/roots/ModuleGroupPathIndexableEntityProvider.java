@@ -7,6 +7,7 @@ import com.intellij.platform.workspace.jps.entities.ModuleExtensions;
 import com.intellij.platform.workspace.jps.entities.ModuleGroupPathEntity;
 import com.intellij.platform.workspace.storage.WorkspaceEntity;
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
+@ApiStatus.Internal
 public final class ModuleGroupPathIndexableEntityProvider implements IndexableEntityProvider.Enforced<ModuleGroupPathEntity> {
 
   @Override

@@ -8,8 +8,8 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ExecutionDataKeys
-import com.intellij.openapi.externalSystem.issue.quickfix.ReimportQuickFix.Companion.requestImport
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import org.jetbrains.annotations.ApiStatus
@@ -68,7 +68,7 @@ data class UnresolvedDependencySyncIssue @JvmOverloads constructor(
     override val id = offlineQuickFixId
     override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
       GradleSettings.getInstance(project).isOfflineWork = false
-      return tryRerun(dataContext) ?: requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
+      return tryRerun(dataContext) ?: ExternalSystemUtil.requestImport(project, projectPath, GradleConstants.SYSTEM_ID)
     }
   }
 }

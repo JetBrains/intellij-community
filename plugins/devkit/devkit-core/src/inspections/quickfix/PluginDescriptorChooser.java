@@ -108,7 +108,7 @@ public final class PluginDescriptorChooser {
         }
 
         @Override
-        public PopupStep onChosen(PluginDescriptorCandidate selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(PluginDescriptorCandidate selectedValue, boolean finalChoice) {
           consumer.consume(selectedValue.myDomFileElement);
           return FINAL_CHOICE;
         }

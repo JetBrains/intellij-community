@@ -14,6 +14,7 @@ import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.editor.DocumentationHoverInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.PopupBridge
@@ -110,7 +111,9 @@ private class DocumentationTargetHoverInfo(
       popupUI.setPopup(popup)
       popupUI.updatePopup {
         resizePopup(popup, it)
-        bridge.updateLocation()
+        writeIntentReadAction {
+          bridge.updateLocation()
+        }
       }
       val fileType = editor.virtualFile?.fileType
       DocumentationUsageCollector.QUICK_DOC_SHOWN.log(fileType)

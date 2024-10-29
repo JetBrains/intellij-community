@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -6,10 +6,12 @@ import com.intellij.openapi.fileEditor.FileEditorProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.ThreadingAssertions;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 
+@ApiStatus.Internal
 public final class TestEditorTabGroup {
   private final String name;
 
@@ -31,8 +33,7 @@ public final class TestEditorTabGroup {
     myOpenedFile = virtualFile;
   }
 
-  @Nullable
-  public Pair<FileEditor, FileEditorProvider> getOpenedEditor(){
+  public @Nullable Pair<FileEditor, FileEditorProvider> getOpenedEditor(){
     VirtualFile openedFile = getOpenedFile();
     if (openedFile == null) {
       return null;
@@ -41,8 +42,7 @@ public final class TestEditorTabGroup {
     return myOpenedTabs.get(openedFile);
   }
 
-  @Nullable
-  public VirtualFile getOpenedFile() {
+  public @Nullable VirtualFile getOpenedFile() {
     ThreadingAssertions.assertEventDispatchThread();
     return myOpenedFile;
   }
@@ -58,8 +58,7 @@ public final class TestEditorTabGroup {
     myOpenedTabs.remove(virtualFile);
   }
 
-  @Nullable
-  public Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
+  public @Nullable Pair<FileEditor, FileEditorProvider> getEditorAndProvider(VirtualFile file) {
     return myOpenedTabs.get(file);
   }
 

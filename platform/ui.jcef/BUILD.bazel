@@ -1,0 +1,43 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_javac_options")
+
+kt_javac_options(
+  name = "custom-javac-options",
+  x_ep_disable_all_checks = True,
+  warn = "off",
+  add_exports = [
+    "java.desktop/sun.awt=ALL-UNNAMED",
+    "java.desktop/java.awt.peer=ALL-UNNAMED",
+  ]
+)
+
+kt_jvm_library(
+  name = "ui-jcef",
+  module_name = "intellij.platform.ui.jcef",
+  visibility = ["//visibility:public"],
+  srcs = glob(["jcef/**/*.kt", "jcef/**/*.java"]),
+  javac_opts = ":custom-javac-options",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@libraries//:annotations",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:jcef",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util",
+    "@community//platform/core-api:core",
+    "@community//platform/core-ui",
+    "@community//platform/util-ex",
+    "@community//platform/editor-ui-api:editor",
+    "@community//platform/ide-core",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/util/concurrency",
+    "@community//platform/platform-api:ide",
+    "@community//platform/core-impl",
+    "@libraries//:jbr-api",
+    "@community//platform/jbr",
+  ],
+  exports = ["@libraries//:jcef"]
+)
+### auto-generated section `build` end

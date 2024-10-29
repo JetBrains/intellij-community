@@ -38,7 +38,9 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Lock;
 
+@ApiStatus.Internal
 public final class StubIndexImpl extends StubIndexEx {
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
@@ -78,8 +80,8 @@ public final class StubIndexImpl extends StubIndexEx {
   private AsyncState getAsyncState() {
     AsyncState state = myState; // memory barrier
     if (state == null) {
-      if (myStateFuture == null) {
-        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitUntilIndicesAreInitialized();
+      if (myStateFuture == null && FileBasedIndex.getInstance() instanceof FileBasedIndexEx index) {
+        index.waitUntilIndicesAreInitialized();
       }
       if (ProgressManager.getInstance().isInNonCancelableSection()) {
         try {
@@ -168,7 +170,7 @@ public final class StubIndexImpl extends StubIndexEx {
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
+        Throwable cause = FileBasedIndexEx.extractCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
@@ -276,15 +278,15 @@ public final class StubIndexImpl extends StubIndexEx {
   @Override
   void cleanupMemoryStorage() {
     UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> stubUpdatingIndex = getStubUpdatingIndex();
-    stubUpdatingIndex.getLock().writeLock().lock();
-
+    Lock mainIndexWriteLock = stubUpdatingIndex.getLock().writeLock();
+    mainIndexWriteLock.lock();
     try {
       for (UpdatableIndex<?, ?, ?, ?> index : getAsyncState().myIndices.values()) {
         index.cleanupMemoryStorage();
       }
     }
     finally {
-      stubUpdatingIndex.getLock().writeLock().unlock();
+      mainIndexWriteLock.unlock();
     }
   }
 

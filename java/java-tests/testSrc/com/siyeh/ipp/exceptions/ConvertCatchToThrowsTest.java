@@ -3,6 +3,8 @@
  */
 package com.siyeh.ipp.exceptions;
 
+import com.intellij.ui.ChooserInterceptor;
+import com.intellij.ui.UiInterceptors;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
@@ -22,6 +24,12 @@ public class ConvertCatchToThrowsTest extends IPPTestCase {
   public void testInLoop() { doTest(); }
   public void testInLoopSingleLine() { doTest(); }
   public void testInLoopSingleLineDeclaration() { doTest(); }
+  public void testWithSuperMethods() {
+    UiInterceptors.register(
+      new ChooserInterceptor(null,
+        IntentionPowerPackBundle.message("convert.catch.to.throws.super.and.current.methods")));
+    doTest();
+  }
 
   @Override
   protected String getIntentionName() {

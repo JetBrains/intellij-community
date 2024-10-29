@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
  *
  * @author tav
  */
+@ApiStatus.Internal
 public final class FocusGutterAction extends EditorAction {
   public FocusGutterAction() {
     super(new EditorActionHandler() {

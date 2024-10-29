@@ -11,7 +11,9 @@ import com.intellij.execution.multilaunch.execution.executables.TaskExecutableTe
 import com.intellij.execution.multilaunch.state.ExecutableSnapshot
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class IdleTaskTemplate : TaskExecutableTemplate() {
   override val type = "idle"
 

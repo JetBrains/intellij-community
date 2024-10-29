@@ -1,0 +1,4 @@
+test/DependencyKotlinInheritor
+test/DependencyKotlinInheritor.NestedDependencyKotlinInheritor
+test/Module1KotlinInheritor
+test/Module1KotlinInheritor.NestedModule1KotlinInheritor

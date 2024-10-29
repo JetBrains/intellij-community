@@ -8,4 +8,4 @@ UTypeReferenceExpression (name = java.lang.Object) -> USimpleNameReferenceExpres
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = filterIsInstance) -> null: null
     UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = Some) -> Kotlin_Light_Class:class Some<T : Some<T>>: Some
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = mapTo) -> null: null
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> FUN: mutableSetOf
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = mutableSetOf) -> Decompiled_Method: mutableSetOf

@@ -13,6 +13,7 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.handler.codec.http.*
 import io.netty.util.CharsetUtil
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.CharBuffer
 import java.nio.charset.Charset
 import java.util.*
@@ -135,10 +136,13 @@ fun HttpResponseStatus.sendPlainText(channel: Channel, request: HttpRequest? = n
   createStatusResponse(this, request, description, usePlainText = true).send(channel, request, extraHeaders)
 }
 
-internal fun createStatusResponse(responseStatus: HttpResponseStatus,
-                                  request: HttpRequest?,
-                                  description: String? = null,
-                                  usePlainText: Boolean = false): HttpResponse {
+@Internal
+fun createStatusResponse(
+  responseStatus: HttpResponseStatus,
+  request: HttpRequest?,
+  description: String? = null,
+  usePlainText: Boolean = false,
+): HttpResponse {
   if (request != null && request.method() == HttpMethod.HEAD) {
     return DefaultFullHttpResponse(HttpVersion.HTTP_1_1, responseStatus, Unpooled.EMPTY_BUFFER)
   }

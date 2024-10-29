@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.idea.devkit.inspections
 
@@ -13,6 +13,7 @@ import com.intellij.lang.properties.psi.impl.PropertyImpl
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.psi.PsiElement
@@ -22,7 +23,6 @@ import com.intellij.util.PsiNavigateUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
-import org.jetbrains.idea.devkit.util.PsiUtil
 import java.util.*
 
 @NonNls
@@ -39,7 +39,7 @@ internal fun isImplicitUsageKey(keyName: String): Boolean =
   keyName.endsWith(RESTART_REQUIRED_SUFFIX)
 
 internal fun isRegistryPropertiesFile(psiFile: PsiFile): Boolean =
-  PsiUtil.isIdeaProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
+  IntelliJProjectUtil.isIntelliJPlatformProject(psiFile.project) && psiFile.name == REGISTRY_PROPERTIES_FILENAME
 
 /**
  * Highlights key in `registry.properties` without matching `key.description` entry + corresponding quickfix.
@@ -86,7 +86,7 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
   }
 
-  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction {
+  private class ShowEPDeclarationIntention(private val propertyName: String) : IntentionAction, DumbAware {
     override fun startInWriteAction(): Boolean = false
 
     override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo {
@@ -119,7 +119,7 @@ internal class RegistryPropertiesAnnotator : Annotator, DumbAware {
     }
   }
 
-  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction {
+  private class AddDescriptionKeyIntention(private val myPropertyName: String) : IntentionAction, DumbAware {
 
     @Nls
     override fun getText(): String = DevKitBundle.message("registry.properties.annotator.add.description.text", myPropertyName)

@@ -4,14 +4,16 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileDocumentSynchronizationVetoer;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
+import com.intellij.openapi.vfs.VirtualFileUtil;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class LargeFileSavingVetoer extends FileDocumentSynchronizationVetoer {
   @Override
   public boolean maySaveDocument(@NotNull Document document, boolean isSaveExplicit) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file == null || !file.isValid() || !FileUtilRt.isTooLarge(file.getLength());
+    return file == null || !file.isValid() || !VirtualFileUtil.isTooLarge(file);
   }
 }

@@ -5,13 +5,17 @@ package org.jetbrains.intellij.build.io
 
 import com.fasterxml.jackson.jr.ob.JSON
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.ClosedSendChannelException
+import kotlinx.coroutines.channels.toList
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.io.File
+import java.io.InputStream
 import java.nio.charset.MalformedInputException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -33,19 +37,21 @@ suspend fun runJava(mainClass: String,
                     workingDir: Path? = null,
                     customOutputFile: Path? = null,
                     onError: (() -> Unit)? = null) {
-  @Suppress("NAME_SHADOWING")
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
   val useJsonOutput = jvmArgs.any { it == "-Dintellij.log.to.json.stdout=true" }
-  spanBuilder("runJava")
-    .setAttribute("mainClass", mainClass)
-    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+  val commandLine = buildString {
+    append(mainClass)
+    if (args.any()) {
+      append(args.joinToString(prefix = " ", separator = " "))
+    }
+  }
+  spanBuilder(commandLine)
     .setAttribute(AttributeKey.stringArrayKey("jvmArgs"), jvmArgs)
     .setAttribute("workingDir", "$workingDir")
-    .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope(Dispatchers.IO) { span ->
+    .setAttribute("timeoutMillis", "$timeout")
+    .use(Dispatchers.IO) { span ->
       val toDelete = ArrayList<Path>(3)
       var process: Process? = null
-      val phase = args.joinToString(prefix = "$mainClass ", separator = " ")
       try {
         val classpathFile = Files.createTempFile("classpath-", ".txt").also(toDelete::add)
         val classPathStringBuilder = createClassPathFile(classPath, classpathFile)
@@ -58,7 +64,7 @@ suspend fun runJava(mainClass: String,
         val errorOutputFile = Files.createTempFile("error-out-", ".txt").also(toDelete::add)
         val outputFile = customOutputFile?.also { customOutputFile.parent?.let { Files.createDirectories(it) } }
                          ?: Files.createTempFile("out-", ".txt").also(toDelete::add)
-        logFreeDiskSpace(workingDir, "before $phase")
+        logFreeDiskSpace(workingDir, "before $commandLine")
         process = ProcessBuilder(processArgs)
           .directory(workingDir.toFile())
           .redirectError(errorOutputFile.toFile())
@@ -116,7 +122,7 @@ suspend fun runJava(mainClass: String,
       finally {
         process?.waitFor()
         toDelete.forEach(FileUtilRt::deleteRecursively)
-        logFreeDiskSpace(workingDir, "after $phase")
+        logFreeDiskSpace(workingDir, "after $commandLine")
       }
     }
 }
@@ -187,42 +193,36 @@ private fun createClassPathFile(classPath: Collection<String>, classpathFile: Pa
 @Obsolete
 fun runProcessBlocking(args: List<String>, workingDir: Path? = null, timeoutMillis: Long = DEFAULT_TIMEOUT.inWholeMilliseconds) {
   runBlocking {
-    runProcess(args = args,
-               workingDir = workingDir,
-               timeout = timeoutMillis.milliseconds,
-               additionalEnvVariables = emptyMap(),
-               inheritOut = false)
+    runProcess(
+      args = args,
+      workingDir = workingDir,
+      timeout = timeoutMillis.milliseconds,
+      additionalEnvVariables = emptyMap(),
+      inheritOut = false,
+    )
   }
 }
 
-suspend fun runProcess(vararg args: String,
-                       workingDir: Path? = null,
-                       timeout: Duration = DEFAULT_TIMEOUT,
-                       additionalEnvVariables: Map<String, String> = emptyMap(),
-                       inheritOut: Boolean = false) {
-  runProcess(args.toList(), workingDir, timeout, additionalEnvVariables, inheritOut)
-}
-
-suspend fun runProcess(args: List<String>,
-                       workingDir: Path? = null,
-                       timeout: Duration = DEFAULT_TIMEOUT,
-                       additionalEnvVariables: Map<String, String> = emptyMap(),
-                       inheritOut: Boolean = false,
-                       inheritErrToOut: Boolean = false) {
-  @Suppress("NAME_SHADOWING")
+suspend fun runProcess(
+  args: List<String>,
+  workingDir: Path? = null,
+  timeout: Duration = DEFAULT_TIMEOUT,
+  additionalEnvVariables: Map<String, String> = emptyMap(),
+  inheritOut: Boolean = false,
+  inheritErrToOut: Boolean = false,
+  attachStdOutToException: Boolean = false,
+  stdOutConsumer: (line: String) -> Unit = {},
+  stdErrConsumer: (line: String) -> Unit = {},
+) {
   val workingDir = workingDir ?: Path.of(System.getProperty("user.dir"))
-  spanBuilder("runProcess")
-    .setAttribute(AttributeKey.stringArrayKey("args"), args)
+  val commandLine = args.joinToString(separator = " ")
+  spanBuilder(commandLine)
     .setAttribute("workingDir", "$workingDir")
-    .setAttribute("timeoutMillis", timeout.toString())
-    .useWithScope { span ->
-      withContext(Dispatchers.IO) {
-        val toDelete = ArrayList<Path>(3)
+    .setAttribute("timeoutMillis", "$timeout")
+    .use(Dispatchers.IO) { span ->
         var process: Process? = null
         val phase = args.joinToString(separator = " ")
         try {
-          val errorOutputFile = if (inheritOut) null else Files.createTempFile("error-out-", ".txt").also(toDelete::add)
-          val outputFile = if (inheritOut) null else Files.createTempFile("out-", ".txt").also(toDelete::add)
           logFreeDiskSpace(workingDir, "before $phase")
           process = ProcessBuilder(args)
             .directory(workingDir.toFile())
@@ -234,24 +234,41 @@ suspend fun runProcess(args: List<String>,
                 builder.inheritIO()
                 builder.redirectErrorStream(inheritErrToOut)
               }
-              else {
-                builder.redirectOutput(outputFile!!.toFile())
-                builder.redirectError(errorOutputFile!!.toFile())
+            }.start()
+          val outputChannel = Channel<String>(capacity = Channel.UNLIMITED)
+          if (!inheritOut) {
+            launch(Dispatchers.Default) {
+              withTimeout(timeout) {
+                process.inputStream.consume(process) {
+                  span.addEvent(it)
+                  stdOutConsumer(it)
+                  if (attachStdOutToException) {
+                    try {
+                      outputChannel.send(it)
+                    }
+                    catch (_: ClosedSendChannelException) {
+                    }
+                  }
+                }
               }
             }
-            .start()
+            launch(Dispatchers.Default) {
+              withTimeout(timeout) {
+                process.errorStream.consume(process) {
+                  span.addEvent(it)
+                  stdErrConsumer(it)
+                  try {
+                    outputChannel.send(it)
+                  }
+                  catch (_: ClosedSendChannelException) {
+                  }
+                }
+              }
+            }
+          }
+
           val pid = process.pid()
           span.setAttribute("pid", pid)
-
-          fun errorOccurred() {
-            if (inheritOut) {
-              return
-            }
-
-            span.setAttribute("output", runCatching { Files.readString(outputFile) }.getOrNull() ?: "output file doesn't exist")
-            span.setAttribute("errorOutput",
-                              runCatching { Files.readString(errorOutputFile) }.getOrNull() ?: "error output file doesn't exist")
-          }
 
           try {
             withTimeout(timeout) {
@@ -261,23 +278,23 @@ suspend fun runProcess(args: List<String>,
             }
           }
           catch (e: TimeoutCancellationException) {
-            process.destroyForcibly().waitFor()
-            errorOccurred()
-            throw e
+            throw e.apply {
+              addSuppressed(RuntimeException("Process '$commandLine' (pid=$pid) failed to complete in $timeout" + toLines(outputChannel)))
+            }
+          }
+          finally {
+            outputChannel.close()
           }
 
           val exitCode = process.exitValue()
           if (exitCode != 0) {
-            errorOccurred()
-            throw RuntimeException("Process $pid finished with exitCode $exitCode)")
+            throw RuntimeException("Process '$commandLine' (pid=$pid) finished with exitCode $exitCode" + toLines(outputChannel))
           }
         }
         finally {
           process?.waitFor()
-          toDelete.forEach(FileUtilRt::deleteRecursively)
           logFreeDiskSpace(workingDir, "after $phase")
         }
-      }
     }
 }
 
@@ -306,4 +323,39 @@ internal suspend fun dumpThreads(pid: Long) {
                  ?.let { "$it/bin/jstack" }
                ?: "jstack"
   runProcess(args = listOf(jstack, pid.toString()), inheritOut = true)
+}
+
+private suspend fun InputStream.consume(process: Process, consume: suspend (line: String) -> Unit) {
+  bufferedReader().use { reader ->
+    var isLine = false
+    var linesBuffer = StringBuilder()
+    while (process.isAlive || reader.ready()) {
+      if (reader.ready()) {
+        val char = reader.read().takeIf { it != -1 }?.toChar()
+        when {
+          char == '\n' || char == '\r' -> isLine = true
+          char != null -> linesBuffer.append(char)
+        }
+        if (char == null || !reader.ready() || isLine) {
+          consume(linesBuffer.toString())
+          linesBuffer = StringBuilder()
+          isLine = false
+        }
+      }
+      else {
+        delay(5.milliseconds)
+      }
+    }
+  }
+}
+
+private suspend fun toLines(channel: Channel<String>): String {
+  channel.close()
+  val lines = channel.toList()
+  return if (lines.any()) {
+    lines.joinToString(prefix = ":\n", separator = "\n")
+  }
+  else {
+    ""
+  }
 }

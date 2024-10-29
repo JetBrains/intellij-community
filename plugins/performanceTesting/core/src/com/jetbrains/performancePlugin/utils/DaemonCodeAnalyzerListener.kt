@@ -1,6 +1,7 @@
 package com.jetbrains.performancePlugin.utils
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Ref
 import com.intellij.util.messages.SimpleMessageBusConnection
@@ -11,6 +12,9 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 
 internal object DaemonCodeAnalyzerListener {
+
+  val LOG = logger<DaemonCodeAnalyzerListener>()
+
   /**
    * Listen to the SimpleMessageBusConnection to receive notifications when the daemon finishes.
    *
@@ -24,9 +28,11 @@ internal object DaemonCodeAnalyzerListener {
              spanRef: Ref<Span>,
              timeoutInSeconds: Long = 0,
              expectedOpenedFile: String? = null): DaemonCodeAnalyzerResult {
+    LOG.info("Start listening ${DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC.displayName}")
     val result = DaemonCodeAnalyzerResult(connection, spanRef, timeoutInSeconds)
     connection.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, object : DaemonCodeAnalyzer.DaemonListener {
       override fun daemonFinished(fileEditors: Collection<FileEditor>) {
+        printFinishedAnalyzers(fileEditors)
         if (expectedOpenedFile == null) {
           result.release()
         }
@@ -37,6 +43,15 @@ internal object DaemonCodeAnalyzerListener {
     })
     return result
   }
+
+  private fun printFinishedAnalyzers(fileEditors: Collection<FileEditor>) {
+    try {
+      fileEditors.forEach { LOG.info("daemonFinished for ${it.file.name}") }
+    } catch (throwable:Throwable) {
+      LOG.error("printFinishedAnalyzers failed ${throwable.message}")
+    }
+  }
+
 }
 
 internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBusConnection,
@@ -53,6 +68,10 @@ internal class DaemonCodeAnalyzerResult(private val connection: SimpleMessageBus
     job.exceptionally {
       release()
     }
+  }
+
+  fun isDone(): Boolean {
+    return job.isDone
   }
 
   fun suppressErrors() {

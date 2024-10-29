@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
 import com.intellij.terminal.completion.ShellCommandSpecsManager
 import com.intellij.terminal.completion.spec.ShellCommandSpec
 import com.intellij.util.containers.MultiMap
@@ -51,6 +53,9 @@ import java.time.Duration
  */
 @Service
 internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
+
+  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
+
   /**
    * Cache for all **Light** json-based and code based specs with resolved conflicts.
    * Key is the name of the command.
@@ -135,33 +140,43 @@ internal class ShellCommandSpecsManagerImpl : ShellCommandSpecsManager {
   }
 
   private fun loadCommandSpecsIfNeeded() {
-    if (lightSpecsCache.estimatedSize() == 0L || jsonBasedSpecProviders.estimatedSize() == 0L) {
-      val specsDataMap: MultiMap<String, ShellCommandSpecData> = loadCommandSpecs()
-      for ((name, specs) in specsDataMap.entrySet()) {
-        val specData = if (specs.size > 1) {
-          resolveSpecsConflict(specs)
-        }
-        else specs.first()
-        lightSpecsCache.put(name, specData.spec)
+    if (lightSpecsCache.estimatedSize() != 0L && jsonBasedSpecProviders.estimatedSize() != 0L) {
+      return
+    }
 
-        val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
-        if (jsonSpecData != null) {
-          jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
-        }
+    val specsDataMap: MultiMap<String, ShellCommandSpecData> = loadCommandSpecs()
+
+    for ((name, specs) in specsDataMap.entrySet()) {
+      val specData = if (specs.size > 1) {
+        resolveSpecsConflict(specs)
+      }
+      else {
+        specs.first()
+      }
+
+      lightSpecsCache.put(name, specData.spec)
+
+      val jsonSpecData = specs.find { it.spec is ShellJsonBasedCommandSpec }
+      if (jsonSpecData != null) {
+        jsonBasedSpecProviders.put(name, jsonSpecData.provider as ShellJsonCommandSpecsProvider)
       }
     }
   }
 
   private fun loadCommandSpecs(): MultiMap<String, ShellCommandSpecData> {
-    val specsDataMap = MultiMap<String, ShellCommandSpecData>()
-    for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
-      val specInfos = provider.getCommandSpecs()
-      for (specInfo in specInfos) {
-        val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
-        specsDataMap.putValue(specData.spec.name, specData)
+    tracer.spanBuilder("terminal-load-command-specs").use {
+      val specsDataMap = MultiMap<String, ShellCommandSpecData>()
+      for (provider in ShellCommandSpecsProvider.EP_NAME.extensionList) {
+        tracer.spanBuilder(provider.javaClass.name).use {
+          val specInfos = provider.getCommandSpecs()
+          for (specInfo in specInfos) {
+            val specData = ShellCommandSpecData(specInfo.spec, specInfo.conflictStrategy, provider)
+            specsDataMap.putValue(specData.spec.name, specData)
+          }
+        }
       }
+      return specsDataMap
     }
-    return specsDataMap
   }
 
   private fun clearCaches() {

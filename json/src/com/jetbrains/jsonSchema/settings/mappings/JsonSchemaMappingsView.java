@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.icons.AllIcons;
@@ -116,8 +116,8 @@ public final class JsonSchemaMappingsView implements Disposable {
         }
       }).showInCenterOf(urlButton);
     });
-    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
-                                                     FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+    var descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor().withTitle(JsonBundle.message("json.schema.add.schema.chooser.title"));
+    SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, descriptor);
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -302,11 +302,11 @@ public final class JsonSchemaMappingsView implements Disposable {
         }
 
         @Override
-        public PopupStep onChosen(JsonMappingKind selectedValue, boolean finalChoice) {
+        public PopupStep<?> onChosen(JsonMappingKind selectedValue, boolean finalChoice) {
           if (finalChoice) {
             return doFinalStep(() -> doRun(selectedValue));
           }
-          return PopupStep.FINAL_CHOICE;
+          return FINAL_CHOICE;
         }
       }).show(point);
     }

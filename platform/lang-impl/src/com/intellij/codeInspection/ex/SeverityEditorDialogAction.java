@@ -8,11 +8,13 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class SeverityEditorDialogAction extends AnAction implements DumbAware {
   public SeverityEditorDialogAction() {
     super(ActionsBundle.messagePointer("action.SeverityEditorDialogAction.text"));

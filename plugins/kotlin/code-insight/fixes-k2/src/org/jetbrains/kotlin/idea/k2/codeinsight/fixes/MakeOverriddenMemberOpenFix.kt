@@ -7,16 +7,8 @@ import com.intellij.modcommand.Presentation
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
-import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
-import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolVisibility
+import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithModality
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithVisibility
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getSymbolContainingMemberDeclarations
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.intentions.KotlinPsiUpdateModCommandAction
@@ -67,8 +59,7 @@ internal object MakeOverriddenMemberOpenFixFactory {
     }
 }
 
-context(KaSession)
-private fun computeElementContext(element: KtNamedDeclaration): ElementContext? {
+private fun KaSession.computeElementContext(element: KtNamedDeclaration): ElementContext? {
     val overriddenNonOverridableMembers = mutableListOf<DeclarationPointer>()
     val containingDeclarationNames = mutableListOf<String>()
     val symbol = element.symbol as? KaCallableSymbol ?: return null
@@ -94,7 +85,6 @@ private data class ElementContext(
     val containingDeclarationNames: List<String>,
 )
 
-context(KaSession)
 private fun retainNonOverridableMembers(
     callableMemberSymbols: Collection<KaCallableSymbol>,
 ): Collection<KaCallableSymbol> {
@@ -102,9 +92,9 @@ private fun retainNonOverridableMembers(
 }
 
 private val KaCallableSymbol.isOverridable: Boolean
-    get() = (this as? KaSymbolWithModality)?.modality != KaSymbolModality.FINAL &&
-            (this as? KaSymbolWithVisibility)?.visibility !=  KaSymbolVisibility.PRIVATE &&
-            (this.getSymbolContainingMemberDeclarations() as? KaNamedClassOrObjectSymbol)?.isFinalClass != true
+    get() = modality != KaSymbolModality.FINAL &&
+            visibility != KaSymbolVisibility.PRIVATE &&
+            (this.getSymbolContainingMemberDeclarations() as? KaNamedClassSymbol)?.isFinalClass != true
 
-private val KaNamedClassOrObjectSymbol.isFinalClass: Boolean
+private val KaNamedClassSymbol.isFinalClass: Boolean
     get() = modality == KaSymbolModality.FINAL && classKind != KaClassKind.ENUM_CLASS

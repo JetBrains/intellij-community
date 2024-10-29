@@ -3,7 +3,7 @@ package org.jetbrains.yaml.highlighting
 
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase
 import org.jetbrains.yaml.YAMLBundle
 import org.jetbrains.yaml.inspections.YAMLIncompatibleTypesInspection
@@ -158,7 +158,7 @@ class YAMLIncompatibleTypesInspectionTest : BasePlatformTestCase() {
     }
         - abc: <warning descr="The type of value is 'boolean' while other values use type 'string'">true</warning>
     """.trimIndent())
-    PerformanceTestUtil.newPerformanceTest("Inspection should finish in sane time") {
+    Benchmark.newBenchmark("Inspection should finish in sane time") {
       myFixture.testHighlighting()
     }.warmupIterations(0).attempts(1).start()
   }

@@ -2,9 +2,6 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
@@ -12,10 +9,8 @@ import com.intellij.diff.util.TextDiffType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -31,6 +26,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,13 +60,13 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     boolean isEditorVisible = myEditorComponent != null;
 
     JComponent toolbarComponent = toolbar.getComponent();
-    toolbarComponent.setBorder(null);
+    toolbarComponent.setBorder(JBUI.Borders.empty(2, 0));
     toolbarComponent.setBackground(TOOLBAR_BACKGROUND_COLOR);
 
-    JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
+    JComponent toolbarPanel = JBUI.Panels.simplePanel().addToLeft(new BorderLayoutPanel().addToTop(toolbarComponent));
     Border outsideToolbarBorder = JBUI.Borders.customLine(getBorderColor(), 1, 1, isEditorVisible ? 0 : 1, 1);
     JBInsets insets = JBUI.insets("VersionControl.MarkerPopup.borderInsets",
-                                  ExperimentalUI.isNewUI() ? JBUI.insets(6, 8, 6, 10) : JBInsets.create(1, 5));
+                                  ExperimentalUI.isNewUI() ? JBUI.insets(3, 8, 3, 10) : JBInsets.create(1, 5));
     Border insideToolbarBorder = JBUI.Borders.empty(insets);
     toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
     toolbarPanel.setBackground(TOOLBAR_BACKGROUND_COLOR);
@@ -121,16 +117,24 @@ public class LineStatusMarkerPopupPanel extends JPanel {
     editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
   }
 
-  private int getEditorTextOffset() {
+  int getEditorTextOffset() {
     return createEditorFragmentBorder().getBorderInsets(myEditorComponent).left;
   }
 
   @Override
   public Dimension getPreferredSize() {
-    int gap = JBUI.scale(10);
-    Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
-    Rectangle maxSize = new Rectangle(screenRectangle.width - gap, screenRectangle.height - gap);
+    Window window = UIUtil.getWindow(myEditor.getComponent());
+    Dimension windowSize;
+    if (window != null) {
+      windowSize = window.getSize();
+    }
+    else {
+      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
+      windowSize = new Dimension(screenRectangle.width, screenRectangle.height);
+    }
 
+    int gap = JBUI.scale(10);
+    Rectangle maxSize = new Rectangle(windowSize.width - gap, windowSize.height - gap);
     Dimension size = super.getPreferredSize();
     if (size.width > maxSize.width) {
       size.width = maxSize.width;
@@ -148,41 +152,7 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                  @NotNull LineStatusMarkerPopupPanel panel,
                                  @Nullable Point mousePosition,
                                  @NotNull Disposable popupDisposable) {
-    LightweightHint hint = new LightweightHint(panel);
-    Disposer.register(popupDisposable, () -> UIUtil.invokeLaterIfNeeded(hint::hide));
-    hint.addHintListener(e -> Disposer.dispose(popupDisposable));
-    hint.setForceLightweightPopup(true);
-
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
-    if (mousePosition != null) { // show right after the nearest line
-      int lineHeight = editor.getLineHeight();
-      int delta = (point.y - mousePosition.y) % lineHeight;
-      if (delta < 0) delta += lineHeight;
-      point.y = mousePosition.y + delta;
-    }
-    point.x -= panel.getEditorTextOffset(); // align main editor with the one in popup
-
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING |
-                HintManager.HIDE_BY_ESCAPE;
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
-
-    ApplicationManager.getApplication().getMessageBus().connect(popupDisposable)
-      .subscribe(EditorHintListener.TOPIC, new EditorHintListener() {
-        @Override
-        public void hintShown(@NotNull Editor newEditor, @NotNull LightweightHint newHint, int flags, @NotNull HintHint hintInfo) {
-          // Ex: if popup re-shown by ToggleByWordDiffAction
-          if (newHint.getComponent() instanceof LineStatusMarkerPopupPanel newPopupPanel) {
-            if (newPopupPanel.getEditor().equals(newEditor)) {
-              hint.hide();
-            }
-          }
-        }
-      });
-
-    if (!hint.isVisible()) {
-      Disposer.dispose(popupDisposable);
-    }
+    LineStatusMarkerPopupService.getInstance().showPopupAt(editor, panel, mousePosition, popupDisposable);
   }
 
   @NotNull
@@ -298,15 +268,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
                                        DiffDrawUtil.LAYER_PRIORITY_LST, parentDisposable);
 
     int currentStartOffset = currentTextRange.getStartOffset();
-    List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    highlighters.addAll(
-      new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
-        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
-        .withIgnored(true)
-        .withHideStripeMarkers(true)
-        .withHideGutterMarkers(true)
-        .done());
+    List<RangeHighlighter> highlighters =
+      new ArrayList<>(new DiffDrawUtil.LineHighlighterBuilder(editor, startLine, endLine, TextDiffType.MODIFIED)
+                        .withLayerPriority(DiffDrawUtil.LAYER_PRIORITY_LST)
+                        .withIgnored(true)
+                        .withHideStripeMarkers(true)
+                        .withHideGutterMarkers(true)
+                        .done());
 
     for (DiffFragment fragment : wordDiff) {
       int currentStart = currentStartOffset + fragment.getStartOffset2();

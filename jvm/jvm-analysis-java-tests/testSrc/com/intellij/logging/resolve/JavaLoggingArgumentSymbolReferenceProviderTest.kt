@@ -615,4 +615,52 @@ class JavaLoggingArgumentSymbolReferenceProviderTest : LoggingArgumentSymbolRefe
       """.trimIndent())
     doTest(emptyMap())
   }
+
+  fun `test lazy init in init block`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class StaticInitializer {
+          private static final Logger log;
+  
+          static {
+              log = LogManager.getLogger();
+          }
+      
+          public StaticInitializer() {
+              log.info("{<caret>} {}", 1, 2);
+          }
+      }
+    """.trimIndent())
+    doTest(mapOf(
+      TextRange(1, 3) to "1",
+      TextRange(4, 6) to "2",))
+  }
+
+  fun `test lazy init in constructors`() {
+    myFixture.configureByText("Logging.java", """
+      import org.apache.logging.log4j.LogManager;
+      import org.apache.logging.log4j.Logger;
+      
+      class ConstructorInitializer {
+          private final Logger log;
+  
+          public ConstructorInitializer() {
+              log = LogManager.getLogger();
+          }
+  
+          public ConstructorInitializer(int i) {
+              log = LogManager.getLogger();
+          }
+  
+          public void test() {
+            log.info("{<caret>} {}", 1, 2);
+          }
+      }
+    """.trimIndent())
+    doTest(mapOf(
+      TextRange(1, 3) to "1",
+      TextRange(4, 6) to "2",))
+  }
 }

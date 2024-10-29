@@ -9,8 +9,9 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
@@ -54,30 +55,33 @@ public final class JavaFilePasteProvider implements PasteProvider {
                                     CoreBundle.message("prompt.overwrite.project.file", fileName, "")).ask(project)) {
       return;
     }
-    VirtualFile virtualFile = WriteCommandAction.writeCommandAction(project).withName(
-      JavaBundle.message("paste.class.command.name", className)).compute(() -> {
-      PsiFile file = existingFile;
-      if (file == null) {
-        try {
-          file = targetDir.createFile(fileName);
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    commandProcessor.executeCommand(project, () -> {
+      commandProcessor.markCurrentCommandAsGlobal(project);
+      VirtualFile virtualFile = WriteAction.compute(() -> {
+        PsiFile file = existingFile;
+        if (file == null) {
+          try {
+            file = targetDir.createFile(fileName);
+          }
+          catch (IncorrectOperationException e) {
+            return null;
+          }
         }
-        catch (IncorrectOperationException e) {
-          return null;
+        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+        if (document != null) {
+          document.setText(fileText);
+          PsiDocumentManager.getInstance(project).commitDocument(document);
         }
+        if (file instanceof PsiJavaFile) {
+          updatePackageStatement((PsiJavaFile)file, targetDir);
+        }
+        return file.getVirtualFile();
+      });
+      if (virtualFile != null) {
+        PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1).navigate(true);
       }
-      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-      if (document != null) {
-        document.setText(fileText);
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-      }
-      if (file instanceof PsiJavaFile) {
-        updatePackageStatement((PsiJavaFile)file, targetDir);
-      }
-      return file.getVirtualFile();
-    });
-    if (virtualFile != null) {
-      PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, -1).navigate(true);
-    }
+    }, JavaBundle.message("paste.class.command.name", className), null, UndoConfirmationPolicy.REQUEST_CONFIRMATION, false);
   }
 
   private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {
@@ -86,25 +90,23 @@ public final class JavaFilePasteProvider implements PasteProvider {
     final PsiPackageStatement oldStatement = javaFile.getPackageStatement();
     final Project project = javaFile.getProject();
     if ((oldStatement != null && !oldStatement.getPackageName().equals(aPackage.getQualifiedName()) ||
-        (oldStatement == null && aPackage.getQualifiedName().length() > 0))) {
-      CommandProcessor.getInstance().executeCommand(project, () -> {
-        try {
-          PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-          final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
-          if (oldStatement != null) {
-            oldStatement.replace(newStatement);
-          }
-          else {
-            final PsiElement addedStatement = javaFile.addAfter(newStatement, null);
-            final TextRange textRange = addedStatement.getTextRange();
-            // ensure line break is added after the statement
-            CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
-          }
+        (oldStatement == null && !aPackage.getQualifiedName().isEmpty()))) {
+      try {
+        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+        final PsiPackageStatement newStatement = factory.createPackageStatement(aPackage.getQualifiedName());
+        if (oldStatement != null) {
+          oldStatement.replace(newStatement);
         }
-        catch (IncorrectOperationException e) {
-          // ignore
+        else {
+          final PsiElement addedStatement = javaFile.addAfter(newStatement, null);
+          final TextRange textRange = addedStatement.getTextRange();
+          // ensure line break is added after the statement
+          CodeStyleManager.getInstance(project).reformatRange(javaFile, textRange.getStartOffset(), textRange.getEndOffset()+1);
         }
-      }, JavaBundle.message("command.name.updating.package.statement"), null);
+      }
+      catch (IncorrectOperationException e) {
+        // ignore
+      }
     }
   }
 
@@ -132,7 +134,9 @@ public final class JavaFilePasteProvider implements PasteProvider {
         return aClass.getName();
       }
     }
-    return classes[0].getName();
+    PsiClass detectedClass = classes[0];
+    if (detectedClass instanceof PsiImplicitClass) return null;
+    return detectedClass.getName();
   }
 
   private static PsiClass @NotNull [] getPastedClasses(@NotNull Project project, @NotNull String pasteText) {

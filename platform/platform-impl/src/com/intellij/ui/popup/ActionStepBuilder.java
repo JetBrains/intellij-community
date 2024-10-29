@@ -2,15 +2,12 @@
 package com.intellij.ui.popup;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.InlineActionsHolder;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NotNull;
@@ -18,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,6 +30,7 @@ final class ActionStepBuilder {
   private @NlsContexts.Separator String         mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
+  private final ActionUiKind                    myUiKind;
   private int myMaxIconWidth  = -1;
   private int myMaxIconHeight = -1;
 
@@ -42,7 +39,8 @@ final class ActionStepBuilder {
                     boolean useAlphaAsNumbers,
                     boolean showDisabled,
                     boolean honorActionMnemonics,
-                    @Nullable String actionPlace,
+                    @NotNull String actionPlace,
+                    @NotNull ActionUiKind uiKind,
                     @Nullable PresentationFactory presentationFactory) {
     myUseAlphaAsNumbers = useAlphaAsNumbers;
     myPresentationFactory = presentationFactory == null ? new PresentationFactory() : presentationFactory;
@@ -54,7 +52,8 @@ final class ActionStepBuilder {
     myPrependWithSeparator = false;
     mySeparatorText = null;
     myHonorActionMnemonics = honorActionMnemonics;
-    myActionPlace = ObjectUtils.notNull(actionPlace, ActionPlaces.POPUP);
+    myActionPlace = actionPlace;
+    myUiKind = uiKind;
   }
 
   public @NotNull List<PopupFactoryImpl.ActionItem> getItems() {
@@ -96,7 +95,7 @@ final class ActionStepBuilder {
 
   private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
     List<AnAction> newVisibleActions = Utils.expandActionGroup(
-      actionGroup, myPresentationFactory, myDataContext, myActionPlace);
+      actionGroup, myPresentationFactory, myDataContext, myActionPlace, myUiKind);
     List<AnAction> filtered = myShowDisabled ? newVisibleActions : ContainerUtil.filter(
       newVisibleActions, o -> o instanceof Separator || myPresentationFactory.getPresentation(o).isEnabled());
     calcMaxIconSize(filtered);
@@ -106,13 +105,12 @@ final class ActionStepBuilder {
         mySeparatorText = ((Separator)action).getText();
       }
       else {
-        Presentation presentation = myPresentationFactory.getPresentation(action);
-        appendAction(action, presentation);
+        appendAction(action);
       }
     }
   }
 
-  private void appendAction(@NotNull AnAction action, @NotNull Presentation presentation) {
+  private void appendAction(@NotNull AnAction action) {
     Character mnemonic = null;
     if (myShowNumbers) {
       if (myCurrentNumber < 9) {
@@ -128,30 +126,13 @@ final class ActionStepBuilder {
     }
 
     boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-    List<PopupFactoryImpl.ActionItem> inlineItems = createInlineActionsItems(action, presentation);
     PopupFactoryImpl.ActionItem actionItem = new PopupFactoryImpl.ActionItem(
       action, mnemonic, myShowNumbers, myHonorActionMnemonics,
-      myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText, inlineItems);
-    actionItem.updateFromPresentation(presentation, myActionPlace);
+      myMaxIconWidth, myMaxIconHeight, prependSeparator, mySeparatorText);
+    actionItem.updateFromPresentation(myPresentationFactory, myActionPlace);
     myListModel.add(actionItem);
     myPrependWithSeparator = false;
     mySeparatorText = null;
-  }
-
-  private @NotNull List<PopupFactoryImpl.ActionItem> createInlineActionsItems(@NotNull AnAction action,
-                                                                                    @NotNull Presentation presentation) {
-    List<? extends AnAction> inlineActions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
-    if (inlineActions == null && action instanceof InlineActionsHolder holder) inlineActions = holder.getInlineActions();
-    if (inlineActions == null) return Collections.emptyList();
-    List<PopupFactoryImpl.ActionItem> res = new ArrayList<>();
-    for (AnAction a : inlineActions) {
-      Presentation p = myPresentationFactory.getPresentation(a);
-      if (!p.isVisible()) continue;
-      PopupFactoryImpl.ActionItem item = PopupFactoryImpl.createInlineActionItem(a, myMaxIconWidth, myMaxIconHeight);
-      item.updateFromPresentation(p, myActionPlace);
-      res.add(item);
-    }
-    return res.isEmpty() ? Collections.emptyList() : res;
   }
 
   static @NotNull Pair<Icon, Icon> calcRawIcons(@NotNull AnAction action, @NotNull Presentation presentation, boolean forceChecked) {

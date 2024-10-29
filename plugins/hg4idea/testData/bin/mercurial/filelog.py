@@ -5,7 +5,6 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 from .i18n import _
 from .node import nullrev
@@ -25,14 +24,16 @@ from .revlogutils import (
 
 
 @interfaceutil.implementer(repository.ifilestorage)
-class filelog(object):
-    def __init__(self, opener, path):
+class filelog:
+    def __init__(self, opener, path, try_split=False):
         self._revlog = revlog.revlog(
             opener,
             # XXX should use the unencoded path
             target=(revlog_constants.KIND_FILELOG, path),
             radix=b'/'.join((b'data', path)),
             censorable=True,
+            canonical_parent_order=False,  # see comment in revlog.py
+            try_split=try_split,
         )
         # Full name of the user visible file, relative to the repository root.
         # Used by LFS.
@@ -40,6 +41,15 @@ class filelog(object):
         self.nullid = self._revlog.nullid
         opts = opener.options
         self._fix_issue6528 = opts.get(b'issue6528.fix-incoming', True)
+
+    def get_revlog(self):
+        """return an actual revlog instance if any
+
+        This exist because a lot of code leverage the fact the underlying
+        storage is a revlog for optimization, so giving simple way to access
+        the revlog instance helps such code.
+        """
+        return self._revlog
 
     def __len__(self):
         return len(self._revlog)
@@ -97,11 +107,11 @@ class filelog(object):
     def iscensored(self, rev):
         return self._revlog.iscensored(rev)
 
-    def revision(self, node, _df=None, raw=False):
-        return self._revlog.revision(node, _df=_df, raw=raw)
+    def revision(self, node):
+        return self._revlog.revision(node)
 
-    def rawdata(self, node, _df=None):
-        return self._revlog.rawdata(node, _df=_df)
+    def rawdata(self, node):
+        return self._revlog.rawdata(node)
 
     def emitrevisions(
         self,
@@ -111,6 +121,7 @@ class filelog(object):
         assumehaveparentrevisions=False,
         deltamode=repository.CG_DELTAMODE_STD,
         sidedata_helpers=None,
+        debug_info=None,
     ):
         return self._revlog.emitrevisions(
             nodes,
@@ -119,6 +130,7 @@ class filelog(object):
             assumehaveparentrevisions=assumehaveparentrevisions,
             deltamode=deltamode,
             sidedata_helpers=sidedata_helpers,
+            debug_info=debug_info,
         )
 
     def addrevision(
@@ -151,6 +163,8 @@ class filelog(object):
         addrevisioncb=None,
         duplicaterevisioncb=None,
         maybemissingparents=False,
+        debug_info=None,
+        delta_base_reuse_policy=None,
     ):
         if maybemissingparents:
             raise error.Abort(
@@ -171,6 +185,8 @@ class filelog(object):
                 transaction,
                 addrevisioncb=addrevisioncb,
                 duplicaterevisioncb=duplicaterevisioncb,
+                debug_info=debug_info,
+                delta_base_reuse_policy=delta_base_reuse_policy,
             )
 
     def getstrippoint(self, minlink):
@@ -202,12 +218,13 @@ class filelog(object):
 
         # for revisions with renames, we have to go the slow way
         node = self.node(rev)
-        if self.renamed(node):
-            return len(self.read(node))
         if self.iscensored(rev):
             return 0
+        if self.renamed(node):
+            return len(self.read(node))
 
         # XXX if self.read(node).startswith("\1\n"), this returns (size+4)
+        # XXX See also basefilectx.cmp.
         return self._revlog.size(rev)
 
     def cmp(self, node, text):
@@ -239,7 +256,9 @@ class filelog(object):
     # Used by repo upgrade.
     def clone(self, tr, destrevlog, **kwargs):
         if not isinstance(destrevlog, filelog):
-            raise error.ProgrammingError(b'expected filelog to clone()')
+            msg = b'expected filelog to clone(), not %r'
+            msg %= destrevlog
+            raise error.ProgrammingError(msg)
 
         return self._revlog.clone(tr, destrevlog._revlog, **kwargs)
 
@@ -247,8 +266,8 @@ class filelog(object):
 class narrowfilelog(filelog):
     """Filelog variation to be used with narrow stores."""
 
-    def __init__(self, opener, path, narrowmatch):
-        super(narrowfilelog, self).__init__(opener, path)
+    def __init__(self, opener, path, narrowmatch, try_split=False):
+        super(narrowfilelog, self).__init__(opener, path, try_split=try_split)
         self._narrowmatch = narrowmatch
 
     def renamed(self, node):

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -50,10 +50,6 @@ public final class Xxh3 {
     return Xxh3Impl.hash(data, ByteArrayAccess.INSTANCE, 0, data.length, 0);
   }
 
-  public static long hashLongs(long @NotNull [] input) {
-    return Xxh3Impl.hash(input, LongArrayAccessForLongs.INSTANCE, 0, input.length * Long.BYTES, 0);
-  }
-
   private static final class ByteBufferAccess implements Access<ByteBuffer> {
     private static final VarHandle LONG_HANDLE = MethodHandles.byteBufferViewVarHandle(long[].class, ByteOrder.LITTLE_ENDIAN);
     private static final VarHandle INT_HANDLE = MethodHandles.byteBufferViewVarHandle(int[].class, ByteOrder.LITTLE_ENDIAN);
@@ -75,29 +71,6 @@ public final class Xxh3 {
     @Override
     public int i8(ByteBuffer input, int offset) {
       return input.get(offset);
-    }
-  }
-
-  // special implementation for hashing long array - it is guaranteed that only i64 will be called (as input is aligned)
-  private static final class LongArrayAccessForLongs implements Access<long[]> {
-    private static final LongArrayAccessForLongs INSTANCE = new LongArrayAccessForLongs();
-
-    private LongArrayAccessForLongs() { }
-
-    @Override
-    public long i64(long[] input, int offset) {
-      return input[offset >> 3];
-    }
-
-    @Override
-    public int i32(long[] input, int offset) {
-      long v = input[offset >> 3];
-      return (offset & 7) == 0 ? (int)(v >> 32) : (int)v;
-    }
-
-    @Override
-    public int i8(long[] input, int offset) {
-      throw new UnsupportedOperationException();
     }
   }
 }

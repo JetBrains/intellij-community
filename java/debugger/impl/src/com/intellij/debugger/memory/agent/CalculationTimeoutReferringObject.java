@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.memory.agent;
 
 import com.intellij.debugger.DebuggerContext;
@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiExpression;
-import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValueNode;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
@@ -69,10 +68,6 @@ public class CalculationTimeoutReferringObject implements ReferringObject {
             renderer.renderValue(JavaDebuggerBundle.message("debugger.memory.agent.timeout.error"));
           }
         }, hasChildren);
-      }
-
-      @Override
-      public void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator) {
       }
     };
   }

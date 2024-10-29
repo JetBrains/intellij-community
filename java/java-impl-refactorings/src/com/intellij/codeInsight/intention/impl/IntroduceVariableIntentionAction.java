@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -71,7 +71,7 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
     if (type != null) return new IntroduceEmptyVariableHandlerImpl().generatePreview(editor, element.getContainingFile(), type);
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return IntentionPreviewInfo.EMPTY;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
     if (handler instanceof PreviewableRefactoringActionHandler previewableRefactoringActionHandler) {
       return previewableRefactoringActionHandler.generatePreview(project, expression);
@@ -89,7 +89,7 @@ public final class IntroduceVariableIntentionAction extends BaseRefactoringInten
 
     final PsiExpression expression = detectExpressionStatement(element);
     if (expression == null) return;
-    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    RefactoringSupportProvider supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     JavaIntroduceVariableHandlerBase handler = (JavaIntroduceVariableHandlerBase)supportProvider.getIntroduceVariableHandler();
     assert handler != null;
     handler.invoke(project, editor, expression);

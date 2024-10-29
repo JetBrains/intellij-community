@@ -21,6 +21,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.function.Predicate;
 /**
  * @author Vladislav.Soroka
  */
+@ApiStatus.Internal
 public class SelectExternalSystemNodeDialog extends DialogWrapper {
 
   @NotNull

@@ -1,20 +1,24 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.runToolbar
 
 import com.intellij.execution.ExecutorActionStatus
 import com.intellij.execution.InlineResumeCreator
 import com.intellij.execution.RunnerAndConfigurationSettings
-import com.intellij.execution.runToolbar.*
-import com.intellij.execution.ui.RunWidgetResumeManager
+import com.intellij.execution.runToolbar.RTBarAction
+import com.intellij.execution.runToolbar.RunToolbarMainSlotState
+import com.intellij.execution.runToolbar.RunToolbarProcess
+import com.intellij.execution.runToolbar.mainState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.actionSystem.remoting.ActionRemotePermissionRequirements
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.xdebugger.impl.DebuggerSupport
 import com.intellij.xdebugger.impl.actions.DebuggerActionHandler
 import com.intellij.xdebugger.impl.actions.XDebuggerActionBase
 import com.intellij.xdebugger.impl.actions.handlers.*
+import org.jetbrains.annotations.ApiStatus
 
 abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarAction {
   override fun checkMainSlotVisibility(state: RunToolbarMainSlotState): Boolean {
@@ -36,6 +40,7 @@ abstract class RunToolbarXDebuggerAction : XDebuggerActionBase(false), RTBarActi
   override fun setShortcutSet(shortcutSet: ShortcutSet) {}
 }
 
+@ApiStatus.Internal
 open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarPauseActionHandler()
 
@@ -48,6 +53,7 @@ open class RunToolbarPauseAction : RunToolbarXDebuggerAction() {
   }
 }
 
+@ApiStatus.Internal
 open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   private val handler = RunToolbarResumeActionHandler()
 
@@ -60,50 +66,21 @@ open class RunToolbarResumeAction : RunToolbarXDebuggerAction() {
   }
 }
 
-class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationSettings) : XDebuggerResumeAction() {
+private class InlineXDebuggerResumeAction(configurationSettings: RunnerAndConfigurationSettings) : XDebuggerResumeAction() {
   private val inlineHandler = InlineXDebuggerResumeHandler(configurationSettings)
   override fun getResumeHandler(): InlineXDebuggerResumeHandler {
     return inlineHandler
   }
 }
 
-class CurrentSessionXDebuggerResumeAction : XDebuggerResumeAction() {
-  private val currentSessionHandler = CurrentSessionXDebuggerResumeHandler()
-  override fun getResumeHandler(): CurrentSessionXDebuggerResumeHandler {
-    return currentSessionHandler
-  }
-
-  override fun update(event: AnActionEvent) {
-    event.project?.let {
-      if(!RunWidgetResumeManager.getInstance(it).isFirstVersionAvailable()) {
-        event.presentation.isEnabledAndVisible = false
-        return
-      }
-    }
-    super.update(event)
-  }
-}
-
-open class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction() {
+private class ConfigurationXDebuggerResumeAction : XDebuggerResumeAction(), ActionRemoteBehaviorSpecification.Duplicated {
   private val handler = XDebuggerResumeHandler()
   override fun getResumeHandler(): XDebuggerResumeHandler {
     return handler
   }
-
-  override fun update(event: AnActionEvent) {
-    event.project?.let {
-      if(!RunWidgetResumeManager.getInstance(it).isSecondVersionAvailable()) {
-        event.presentation.isEnabledAndVisible = false
-        return
-      }
-    }
-    super.update(event)
-  }
 }
 
-
-abstract class XDebuggerResumeAction : XDebuggerActionBase(false),
-                                       ActionRemotePermissionRequirements.RunAccess {
+internal abstract class XDebuggerResumeAction : XDebuggerActionBase(false), ActionRemotePermissionRequirements.RunAccess {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT
   }
@@ -149,7 +126,7 @@ abstract class XDebuggerResumeAction : XDebuggerActionBase(false),
   }
 }
 
-class XDebuggerInlineResumeCreator : InlineResumeCreator {
+private class XDebuggerInlineResumeCreator : InlineResumeCreator {
   override fun getInlineResumeCreator(settings: RunnerAndConfigurationSettings, isWidget: Boolean): AnAction {
     return InlineXDebuggerResumeAction(settings)
   }

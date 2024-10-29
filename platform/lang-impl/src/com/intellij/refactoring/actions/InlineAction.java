@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.actions;
 
@@ -15,11 +15,13 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class InlineAction extends BasePlatformRefactoringAction {
 
   public InlineAction() {
@@ -81,9 +83,8 @@ public final class InlineAction extends BasePlatformRefactoringAction {
     return InlineHandlers.getInlineHandlers(language).size() > 0;
   }
 
-  @Nullable
   @Override
-  protected String getActionName(@NotNull DataContext dataContext) {
+  protected @Nullable String getActionName(@NotNull DataContext dataContext) {
     Editor editor = dataContext.getData(CommonDataKeys.EDITOR);
     PsiElement element = findRefactoringTargetInEditor(dataContext, this::isAvailableForLanguage);
     if (element != null && editor != null) {

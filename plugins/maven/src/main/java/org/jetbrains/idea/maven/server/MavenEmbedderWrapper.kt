@@ -6,7 +6,6 @@ import com.intellij.openapi.progress.blockingContext
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.Pair
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
@@ -16,7 +15,7 @@ import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper.LongRunningEmbedderTask
+import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.telemetry.getCurrentTelemetryIds
 import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
@@ -27,6 +26,7 @@ import java.io.Serializable
 import java.nio.file.Path
 import java.rmi.RemoteException
 import java.util.*
+import kotlin.Throws
 
 abstract class MavenEmbedderWrapper internal constructor(private val project: Project) :
   MavenRemoteObjectWrapper<MavenServerEmbedder?>() {
@@ -53,20 +53,29 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     }
   }
 
-  suspend fun resolveProject(fileToDependencyHash: Map<VirtualFile, String?>,
-                             explicitProfiles: MavenExplicitProfiles,
-                             progressReporter: RawProgressReporter,
-                             eventHandler: MavenEventHandler,
-                             workspaceMap: MavenWorkspaceMap?,
-                             updateSnapshots: Boolean,
-                             userProperties: Properties): Collection<MavenServerExecutionResult> {
-    val transformer = if (fileToDependencyHash.isEmpty()) RemotePathTransformerFactory.Transformer.ID
+  suspend fun resolveProject(
+    pomToDependencyHash: Map<VirtualFile, String?>,
+    pomDependencies: Map<VirtualFile, Set<File>>,
+    explicitProfiles: MavenExplicitProfiles,
+    progressReporter: RawProgressReporter,
+    eventHandler: MavenEventHandler,
+    workspaceMap: MavenWorkspaceMap?,
+    updateSnapshots: Boolean,
+    userProperties: Properties,
+  ): Collection<MavenServerExecutionResult> {
+    val transformer = if (pomToDependencyHash.isEmpty()) RemotePathTransformerFactory.Transformer.ID
     else RemotePathTransformerFactory.createForProject(project)
 
     val pomHashMap = PomHashMap()
-    fileToDependencyHash.mapNotNull { (file, checkSum) ->
+    pomToDependencyHash.mapNotNull { (file, checkSum) ->
       transformer.toRemotePath(file.getPath())?.let {
         pomHashMap.put(File(it), checkSum)
+      }
+    }
+
+    pomDependencies.map { (file, dependencies) ->
+      transformer.toRemotePath(file.getPath())?.let {
+        pomHashMap.addFileDependencies(File(it), dependencies.mapNotNull { transformer.toRemotePath(it.path) }.map { File(it) })
       }
     }
 
@@ -138,36 +147,45 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
     return getOrCreateWrappee().resolveArtifactsTransitively(ArrayList(artifacts), ArrayList(remoteRepositories), ourToken)
   }
 
-  suspend fun resolvePlugins(mavenPluginRequests: Collection<Pair<MavenId, NativeMavenProjectHolder>>,
-                             progressReporter: RawProgressReporter?,
-                             eventHandler: MavenEventHandler,
-                             forceUpdateSnapshots: Boolean): List<PluginResolutionResponse> {
-    val pluginResolutionRequests = ArrayList<PluginResolutionRequest>()
-    for (mavenPluginRequest in mavenPluginRequests) {
-      val mavenPluginId = mavenPluginRequest.first
-      try {
-        val id = mavenPluginRequest.second.getId()
-        pluginResolutionRequests.add(PluginResolutionRequest(mavenPluginId, id))
-      }
-      catch (e: RemoteException) {
-        // do not call handleRemoteError here since this error occurred because of previous remote error
-        MavenLog.LOG.warn("Cannot resolve plugin: $mavenPluginId")
-      }
-    }
-    return runLongRunningTask(
+  private fun MavenArtifact.transformPaths(transformer: RemotePathTransformerFactory.Transformer) = this.replaceFile(
+    File(transformer.toIdePath(file.path)!!),
+    null
+  )
+
+  private fun PluginResolutionResponse.transformPaths(transformer: RemotePathTransformerFactory.Transformer): PluginResolutionResponse {
+    return PluginResolutionResponse(
+      this.mavenPluginId,
+      this.pluginArtifact?.transformPaths(transformer),
+      this.pluginDependencyArtifacts.map { it.transformPaths(transformer) }
+    )
+  }
+
+  suspend fun resolvePlugins(
+    resolutionRequests: List<PluginResolutionRequest>,
+    progressReporter: RawProgressReporter?,
+    eventHandler: MavenEventHandler,
+    forceUpdateSnapshots: Boolean,
+  ): List<PluginResolutionResponse> {
+    val responseList = runLongRunningTask(
       LongRunningEmbedderTask { embedder, taskInput ->
-        embedder.resolvePlugins(taskInput, pluginResolutionRequests, forceUpdateSnapshots, ourToken)
+        embedder.resolvePlugins(taskInput, ArrayList(resolutionRequests), forceUpdateSnapshots, ourToken)
       },
       progressReporter, eventHandler)
+
+    val transformer = RemotePathTransformerFactory.createForProject(project)
+    if (transformer == RemotePathTransformerFactory.Transformer.ID) return responseList
+    return responseList.map { it.transformPaths(transformer) }
   }
 
   fun resolvePlugin(plugin: MavenPlugin,
-                    nativeMavenProject: NativeMavenProjectHolder,
+                    mavenProject: MavenProject,
                     forceUpdateSnapshots: Boolean): Collection<MavenArtifact> {
     val mavenId = plugin.mavenId
+    val dependencies = plugin.dependencies.map { MavenId(it.groupId, it.artifactId, it.version) }
+    val resolutionRequests = listOf(PluginResolutionRequest(mavenId, mavenProject.remotePluginRepositories, true, dependencies))
     return runBlockingMaybeCancellable {
-      resolvePlugins(listOf(Pair.create(mavenId, nativeMavenProject)), null, MavenLogEventHandler, forceUpdateSnapshots)
-        .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.artifacts }.toSet()
+      resolvePlugins(resolutionRequests, null, MavenLogEventHandler, forceUpdateSnapshots)
+        .flatMap { resolutionResult: PluginResolutionResponse -> resolutionResult.pluginDependencyArtifacts }.toSet()
     }
   }
 

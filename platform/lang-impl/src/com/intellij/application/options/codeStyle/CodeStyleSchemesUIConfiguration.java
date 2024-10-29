@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -10,12 +10,14 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 
+@ApiStatus.Internal
 @State(
   name = "CodeStyleSchemesUIConfiguration",
   storages = {@Storage(value = "other.xml", roamingType = RoamingType.DISABLED)}
@@ -23,9 +25,8 @@ import java.net.URL;
 public final class CodeStyleSchemesUIConfiguration implements PersistentStateComponent<CodeStyleSchemesUIConfiguration> {
   public String RECENT_IMPORT_FILE_LOCATION = "";
 
-  @Nullable
   @Override
-  public CodeStyleSchemesUIConfiguration getState() {
+  public @Nullable CodeStyleSchemesUIConfiguration getState() {
     return this;
   }
 
@@ -39,8 +40,7 @@ public final class CodeStyleSchemesUIConfiguration implements PersistentStateCom
   }
 
   public static final class Util {
-    @Nullable
-    public static VirtualFile getRecentImportFile() {
+    public static @Nullable VirtualFile getRecentImportFile() {
       CodeStyleSchemesUIConfiguration configuration = getInstance();
       if (configuration != null) {
         String fileLocation = configuration.RECENT_IMPORT_FILE_LOCATION;

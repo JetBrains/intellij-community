@@ -55,7 +55,7 @@ interface Profiler {
 
   fun stopProfileWithNotification(arguments: String): String
 
-  suspend fun stopProfileAsyncWithNotification(arguments: String): String {
+  suspend fun stopProfileAsyncWithNotification(arguments: String): String? {
     return blockingContext {
       stopProfileWithNotification(arguments)
     }

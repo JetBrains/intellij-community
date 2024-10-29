@@ -17,8 +17,10 @@ package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public abstract class MarkObjectActionHandler extends DebuggerActionHandler {
   public abstract boolean isMarked(@NotNull Project project, @NotNull AnActionEvent event);
 }

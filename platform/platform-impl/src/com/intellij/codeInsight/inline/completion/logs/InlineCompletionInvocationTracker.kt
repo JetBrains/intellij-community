@@ -95,6 +95,7 @@ internal class InlineCompletionInvocationTracker(
       *data.toTypedArray(),
       InvokedEvents.EVENT.with(request.event::class.java),
       InvokedEvents.PROVIDER.with(provider),
+      InvokedEvents.PROVIDER_PLUGIN_INFO.with(getPluginInfo(provider)),
       InvokedEvents.TIME_TO_COMPUTE.with(System.currentTimeMillis() - invocationTime),
       InvokedEvents.OUTCOME.with(
         when {

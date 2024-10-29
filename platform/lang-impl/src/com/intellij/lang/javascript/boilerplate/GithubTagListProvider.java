@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.javascript.boilerplate;
 
 import com.google.common.collect.ImmutableSet;
@@ -15,6 +15,7 @@ import com.intellij.platform.templates.github.GeneratorException;
 import com.intellij.platform.templates.github.GithubTagInfo;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 
+@ApiStatus.Internal
 public final class GithubTagListProvider {
 
   private static final Logger LOG = Logger.getInstance(GithubTagListProvider.class);
@@ -35,8 +37,7 @@ public final class GithubTagListProvider {
     myRepositoryName = repositoryName;
   }
 
-  @Nullable
-  public ImmutableSet<GithubTagInfo> getCachedTags() {
+  public @Nullable ImmutableSet<GithubTagInfo> getCachedTags() {
     ThreadingAssertions.assertEventDispatchThread();
     File cacheFile = getTagsCacheFile();
     if (cacheFile.isFile()) {
@@ -51,7 +52,7 @@ public final class GithubTagListProvider {
     return null;
   }
 
-  public void updateTagListAsynchronously(@NotNull final GithubProjectGeneratorPeer peer) {
+  public void updateTagListAsynchronously(final @NotNull GithubProjectGeneratorPeer peer) {
     Runnable action = createUpdateTagListAction(peer);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       action.run();
@@ -61,7 +62,7 @@ public final class GithubTagListProvider {
     }
   }
 
-  private Runnable createUpdateTagListAction(@NotNull final GithubProjectGeneratorPeer peer) {
+  private Runnable createUpdateTagListAction(final @NotNull GithubProjectGeneratorPeer peer) {
     return () -> {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         peer.onTagsUpdated(Collections.emptySet());
@@ -95,7 +96,7 @@ public final class GithubTagListProvider {
     };
   }
 
-  private ImmutableSet<GithubTagInfo> fetchGithubTagsByUrl(@NotNull final String url) throws IOException, GeneratorException {
+  private ImmutableSet<GithubTagInfo> fetchGithubTagsByUrl(final @NotNull String url) throws IOException, GeneratorException {
     LOG.info(getGeneratorName() + "starting cache update from " + url + " ...");
     File cacheFile = getTagsCacheFile();
     GithubDownloadUtil.downloadAtomically(null, url, cacheFile, myUserName, myRepositoryName);
@@ -106,8 +107,7 @@ public final class GithubTagListProvider {
     return "[" + myUserName + "/" + myRepositoryName + "] ";
   }
 
-  @NotNull
-  private ImmutableSet<GithubTagInfo> readTagsFromFile(@NotNull File file) throws GeneratorException {
+  private @NotNull ImmutableSet<GithubTagInfo> readTagsFromFile(@NotNull File file) throws GeneratorException {
     final String content;
     try {
       content = Files.toString(file, StandardCharsets.UTF_8);
@@ -127,8 +127,7 @@ public final class GithubTagListProvider {
     }
   }
 
-  @NotNull
-  private static ImmutableSet<GithubTagInfo> parseContent(@NotNull String tagFileContent) throws GeneratorException {
+  private static @NotNull ImmutableSet<GithubTagInfo> parseContent(@NotNull String tagFileContent) throws GeneratorException {
     if (tagFileContent.trim().isEmpty()) {
       throw new GeneratorException(LangBundle.message("dialog.message.can.parse.fetched.version.list.got.empty.response"));
     }
@@ -142,8 +141,7 @@ public final class GithubTagListProvider {
     return toGithubTagList(jsonElement);
   }
 
-  @NotNull
-  private static ImmutableSet<GithubTagInfo> toGithubTagList(@NotNull JsonElement jsonElement) throws GeneratorException {
+  private static @NotNull ImmutableSet<GithubTagInfo> toGithubTagList(@NotNull JsonElement jsonElement) throws GeneratorException {
     if (jsonElement instanceof JsonArray array) {
       ImmutableSet.Builder<GithubTagInfo> tags = ImmutableSet.builder();
       for (JsonElement element : array) {
@@ -173,8 +171,7 @@ public final class GithubTagListProvider {
     }
   }
 
-  @NotNull
-  private File getTagsCacheFile() {
+  private @NotNull File getTagsCacheFile() {
     File dir = GithubDownloadUtil.getCacheDir(myUserName, myRepositoryName);
     return new File(dir, "tags.json");
   }

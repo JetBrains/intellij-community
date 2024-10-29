@@ -1,8 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.settings;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.JavaDebuggerBundle;
+import com.intellij.debugger.collections.visualizer.CollectionVisualizerEvaluator;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.JavaValuePresentation;
 import com.intellij.debugger.engine.evaluation.*;
@@ -36,8 +38,8 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
@@ -51,7 +53,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -311,7 +312,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
           renderer.setEnabled(true);
           renderers.add(renderer);
         }
-      });
+      }, PsiClass.class);
     }
     catch (IndexNotReadyException | ProcessCanceledException ignore) {
     }
@@ -606,6 +607,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
             createExpressionArrayChildrenRenderer("toArray()", "!isEmpty()", arrayRenderer));
       setClassName(CommonClassNames.JAVA_UTIL_LIST);
       setIsApplicableChecker(type -> DebuggerUtilsAsync.instanceOf(type, getClassName()));
+      setFullValueEvaluator(CollectionVisualizerEvaluator.createFor(getClassName()));
     }
 
     @Override
@@ -621,21 +623,17 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     }
   }
 
-  static void visitAnnotatedElements(String annotationFqn,
-                                     Project project,
-                                     BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer) {
-    Collection<PsiAnnotation> annotations =
-      ReadAction.compute(
-        () -> JavaAnnotationIndex.getInstance().getAnnotations(StringUtil.getShortName(annotationFqn), project, GlobalSearchScope.allScope(project)));
-    annotations.forEach(annotation -> ReadAction.run(() -> {
-      if (!annotation.isValid()) return;
-      PsiElement parent = annotation.getContext();
-      if (parent instanceof PsiModifierList) {
-        PsiElement owner = parent.getParent();
-        if (owner instanceof PsiModifierListOwner && annotationFqn.equals(annotation.getQualifiedName())) {
-          consumer.accept((PsiModifierListOwner)owner, annotation);
-        }
-      }
-    }));
+  static <T extends PsiModifierListOwner> void visitAnnotatedElements(String annotationFqn,
+                                                                      Project project,
+                                                                      BiConsumer<? super PsiModifierListOwner, ? super PsiAnnotation> consumer,
+                                                                      Class<? extends T> @NotNull ... types) {
+    ReadAction.run(() -> {
+      PsiClass annotationClass = JavaPsiFacade.getInstance(project).findClass(annotationFqn, GlobalSearchScope.allScope(project));
+      if (annotationClass == null) return;
+      AnnotatedElementsSearch.searchElements(annotationClass, GlobalSearchScope.allScope(project), types)
+        .forEach((PsiModifierListOwner owner) -> {
+          consumer.accept(owner, AnnotationUtil.findAnnotation(owner, annotationFqn));
+        });
+    });
   }
 }

@@ -8,10 +8,17 @@ import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.diagnostic.telemetry.TelemetryManager
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.terminal.completion.ShellCommandSpecCompletion
+import com.intellij.terminal.completion.ShellDataGeneratorsExecutor
+import com.intellij.terminal.completion.ShellRuntimeContextProvider
 import com.intellij.terminal.completion.spec.ShellCompletionSuggestion
 import com.intellij.terminal.completion.spec.ShellSuggestionType
+import org.jetbrains.plugins.terminal.LocalBlockTerminalRunner.Companion.BLOCK_TERMINAL_AUTOCOMPLETION
 import org.jetbrains.plugins.terminal.action.TerminalCommandCompletionAction
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.findIconForSuggestion
 import org.jetbrains.plugins.terminal.block.completion.TerminalCompletionUtil.getNextSuggestionsString
@@ -26,27 +33,34 @@ import org.jetbrains.plugins.terminal.exp.completion.TerminalShellSupport
 import org.jetbrains.plugins.terminal.util.ShellType
 import java.io.File
 
+/**
+ * Main entry point to the Block Terminal Completion.
+ */
 internal class TerminalCommandSpecCompletionContributor : CompletionContributor(), DumbAware {
+  val tracer = TelemetryManager.getTracer(TerminalCompletionScope)
+
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
-    val session = parameters.editor.getUserData(BlockTerminalSession.KEY)
-    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY)
-    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY)
-    val promptModel = parameters.editor.terminalPromptModel
-    if (session == null ||
-        session.model.isCommandRunning ||
-        runtimeContextProvider == null ||
-        generatorsExecutor == null ||
-        promptModel == null ||
-        parameters.completionType != CompletionType.BASIC) {
+    val session = parameters.editor.getUserData(BlockTerminalSession.KEY) ?: return
+    val runtimeContextProvider = parameters.editor.getUserData(ShellRuntimeContextProviderImpl.KEY) ?: return
+    val generatorsExecutor = parameters.editor.getUserData(ShellDataGeneratorsExecutorImpl.KEY) ?: return
+    val promptModel = parameters.editor.terminalPromptModel ?: return
+
+    if (session.model.isCommandRunning || parameters.completionType != CompletionType.BASIC) {
       return
     }
+
+    if (parameters.isAutoPopup && !Registry.`is`(BLOCK_TERMINAL_AUTOCOMPLETION)) {
+      result.stopHere()
+      return
+    }
+
     if (parameters.editor.getUserData(TerminalCommandCompletionAction.SUPPRESS_COMPLETION) == true) {
       result.stopHere()
       return
     }
 
     val shellSupport = TerminalShellSupport.findByShellType(session.shellIntegration.shellType) ?: return
-    val context = TerminalCompletionContext(session, runtimeContextProvider, generatorsExecutor, shellSupport, parameters)
+    val context = TerminalCompletionContext(runtimeContextProvider, generatorsExecutor, shellSupport, parameters, session.shellIntegration.shellType)
 
     val document = parameters.editor.document
     val caretOffset = parameters.editor.caretModel.offset
@@ -55,20 +69,36 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val allTokens = if (caretOffset != 0 && document.getText(TextRange.create(caretOffset - 1, caretOffset)) == " ") {
       tokens + ""  // user inserted space after the last token, so add empty incomplete token as last
     }
-    else tokens
+    else {
+      tokens
+    }
+
     if (allTokens.isEmpty()) {
       return
     }
 
-    val suggestions = runBlockingCancellable {
-      computeSuggestions(allTokens, context)
+    tracer.spanBuilder("terminal-completion-all").use {
+      val suggestions = runBlockingCancellable {
+        val expandedTokens = expandAliases(context, allTokens)
+        computeSuggestions(expandedTokens, context)
+      }
+      tracer.spanBuilder("terminal-completion-submit-suggestions-to-lookup").use {
+        submitSuggestions(suggestions, allTokens, result, session.shellIntegration.shellType)
+      }
     }
+  }
 
+  private fun submitSuggestions(
+    suggestions: List<ShellCompletionSuggestion>,
+    allTokens: List<String>,
+    result: CompletionResultSet,
+    shellType: ShellType,
+  ) {
     val prefixReplacementIndex = suggestions.firstOrNull()?.prefixReplacementIndex ?: 0
     val prefix = allTokens.last().substring(prefixReplacementIndex)
     val resultSet = result.withPrefixMatcher(PlainPrefixMatcher(prefix, true))
 
-    val elements = suggestions.map { it.toLookupElement(session.shellIntegration.shellType) }
+    val elements = suggestions.map { it.toLookupElement(shellType) }
     resultSet.addAllElements(elements)
 
     if (elements.isNotEmpty()) {
@@ -77,50 +107,106 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private suspend fun computeSuggestions(tokens: List<String>, context: TerminalCompletionContext): List<ShellCompletionSuggestion> {
+    if (tokens.isEmpty()) {
+      return emptyList()
+    }
+
+    val runtimeContext = context.runtimeContextProvider.getContext(tokens.last())
+    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
+    val commandExecutable = tokens.first()
+    val commandArguments = tokens.subList(1, tokens.size)
+    val availableCommandsProvider = suspend { context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator()) }
+    val fileProducer = suspend { context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator()) }
+    val specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>? = { commandName ->
+      tracer.spanBuilder("terminal-completion-compute-completion-items").useWithScope {
+        completion.computeCompletionItems(commandName, commandArguments)
+      }
+    }
+
+    if (commandArguments.isEmpty()) {
+      if (context.shellType == ShellType.POWERSHELL) {
+        // Return no completions for command name to pass the completion to the PowerShell
+        return emptyList()
+      }
+      return computeSuggestionsIfNoArguments(fileProducer, availableCommandsProvider)
+    }
+    else {
+      return computeSuggestionsIfHasArguments(commandExecutable, context, fileProducer, specCompletionFunction)
+    }
+  }
+
+  private suspend fun computeSuggestionsIfNoArguments(
+    fileProducer: suspend () -> List<ShellCompletionSuggestion>,
+    availableCommandsProvider: suspend () -> List<ShellCompletionSuggestion>,
+  ): List<ShellCompletionSuggestion> {
+    val files = fileProducer()
+    val suggestions = if (files.firstOrNull()?.prefixReplacementIndex != 0) {
+      files  // Return only files if some file path prefix is already typed
+    }
+    else {
+      val commands = availableCommandsProvider()
+      commands + files
+    }
+    return suggestions.filter { !it.isHidden }
+  }
+
+  private suspend fun computeSuggestionsIfHasArguments(
+    commandExecutable: String,
+    context: TerminalCompletionContext,
+    fileProducer: suspend () -> List<ShellCompletionSuggestion>,
+    specCompletionFunction: suspend (String) -> List<ShellCompletionSuggestion>?,
+  ): List<ShellCompletionSuggestion> {
+
+    val commandVariants = getCommandNameVariants(commandExecutable)
+    val items = commandVariants.firstNotNullOfOrNull { specCompletionFunction(it) } ?: emptyList()
+    if (items.isNotEmpty()) {
+      return items
+    }
+
+    if (context.parameters.isAutoPopup) {
+      return emptyList()
+    }
+
+    // Fall back to shell-based completion if it is PowerShell. It might provide more specific suggestions than just files.
+    if (context.shellType == ShellType.POWERSHELL) {
+      return emptyList()
+    }
+
+    // Suggest file names if there is nothing to suggest, and completion is invoked manually.
+    return fileProducer().filter { !it.isHidden }
+  }
+
+  private fun getCommandNameVariants(commandExecutable: String): List<String> {
+    val result = mutableListOf(commandExecutable)
+    if (commandExecutable.endsWith(".exe")) {
+      result += commandExecutable.removeSuffix(".exe")
+    }
+    return result
+  }
+
+  private suspend fun expandAliases(
+    context: TerminalCompletionContext,
+    tokens: List<String>,
+  ): List<String> {
+    if (tokens.size < 2) {
+      return tokens
+    }
     // aliases generator does not requires actual typed prefix
     val dummyRuntimeContext = context.runtimeContextProvider.getContext("")
     val aliases: Map<String, String> = context.generatorsExecutor.execute(dummyRuntimeContext, aliasesGenerator())
     val expandedTokens = expandAliases(tokens, aliases, context)
-    if (expandedTokens.isEmpty()) {
-      return emptyList()
-    }
-
-    val runtimeContext = context.runtimeContextProvider.getContext(expandedTokens.last())
-    val completion = ShellCommandSpecCompletion(ShellCommandSpecsManagerImpl.getInstance(), context.generatorsExecutor, context.runtimeContextProvider)
-    val command = expandedTokens.first()
-    val arguments = expandedTokens.subList(1, expandedTokens.size)
-    if (arguments.isEmpty()) {
-      val files = context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator())
-      val suggestions = if (files.firstOrNull()?.prefixReplacementIndex != 0) {
-        files  // Return only files if some file path prefix is already typed
-      }
-      else {
-        val commands = context.generatorsExecutor.execute(runtimeContext, availableCommandsGenerator())
-        commands + files
-      }
-      return suggestions.filter { !it.isHidden }
-    }
-    else {
-      val commandVariants = if (command.endsWith(".exe")) listOf(command.removeSuffix(".exe"), command) else listOf(command)
-      val items = commandVariants.firstNotNullOfOrNull { completion.computeCompletionItems(it, arguments) } ?: emptyList()
-      return when {
-        items.isNotEmpty() -> items
-        // Suggest file names if there is nothing to suggest, and completion is invoked manually.
-        // But not for PowerShell, here it would be better to fall back to shell-based completion
-        !context.parameters.isAutoPopup && context.session.shellIntegration.shellType != ShellType.POWERSHELL -> {
-          context.generatorsExecutor.execute(runtimeContext, fileSuggestionsGenerator()).filter { !it.isHidden }
-        }
-        else -> emptyList()
-      }
-    }
+    return expandedTokens
   }
 
+  /**
+   * Used to support completion even if the real command is hidden behind the alias.
+   */
   private fun expandAliases(tokens: List<String>, aliases: Map<String, String>, context: TerminalCompletionContext): List<String> {
-    // If there is only one token, we should not to expand it, because it is incomplete
+    // If there is only one token, we should not to expand it, because it is incomplete (e.g. `gi|`)
     if (aliases.isEmpty() || tokens.size < 2) {
       return tokens
     }
-    // do not expand last token, because it is incomplete
+    // do not expand last token, because it can be incomplete
     val completeTokens = tokens.subList(0, tokens.size - 1)
     val command = StringBuilder()
     var anyAliasFound = false
@@ -144,6 +230,7 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val realInsertValue = insertValue?.replace("{cursor}", "")
     val nextSuggestions = getNextSuggestionsString(this).takeIf { it.isNotEmpty() }
     val escapedInsertValue = StringUtil.escapeChar(realInsertValue ?: name, ' ')
+
     // Remove path separator from insert value, so there will be an exact match
     // if the prefix is the same string, but without path separator.
     // It is needed, for example, to place the './' item in the first place when '.' is typed.
@@ -152,12 +239,16 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
     val (lookupString, appendPathSeparator) = if (escapedInsertValue.endsWith(File.separatorChar)) {
       escapedInsertValue.removeSuffix(File.separator) to true
     }
-    else escapedInsertValue to false
+    else {
+      escapedInsertValue to false
+    }
+
     val element = LookupElementBuilder.create(this, lookupString)
       .withPresentableText(displayName ?: name)
       .withTailText(nextSuggestions, true)
       .withIcon(actualIcon)
       .withInsertHandler(MyInsertHandler(this, appendPathSeparator, shellType))
+
     val adjustedPriority = priority.coerceIn(0, 100)
     return PrioritizedLookupElement.withPriority(element, adjustedPriority / 100.0)
   }
@@ -191,13 +282,14 @@ internal class TerminalCommandSpecCompletionContributor : CompletionContributor(
   }
 
   private class TerminalCompletionContext(
-    val session: BlockTerminalSession,
-    val runtimeContextProvider: ShellRuntimeContextProviderImpl,
-    val generatorsExecutor: ShellDataGeneratorsExecutorImpl,
+    val runtimeContextProvider: ShellRuntimeContextProvider,
+    val generatorsExecutor: ShellDataGeneratorsExecutor,
     val shellSupport: TerminalShellSupport,
-    val parameters: CompletionParameters
+    val parameters: CompletionParameters,
+    val shellType: ShellType
   ) {
     val project: Project
       get() = parameters.editor.project!!
   }
+
 }

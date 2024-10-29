@@ -5,6 +5,7 @@ import com.intellij.codeInsight.hints.declarative.InlayActionHandler
 import com.intellij.codeInsight.hints.presentation.InlayTextMetrics
 import com.intellij.ide.ui.AntialiasingType
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.ui.paint.EffectPainter
 import org.jetbrains.annotations.ApiStatus.Internal
@@ -32,11 +33,12 @@ sealed class InlayPresentationEntry(
 
   abstract fun computeHeight(metrics: InlayTextMetrics): Int
 
-  abstract fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean)
+  abstract fun handleClick(e: EditorMouseEvent, list: InlayPresentationList, controlDown: Boolean)
 
   var isHoveredWithCtrl: Boolean = false
 }
 
+@Internal
 class TextInlayPresentationEntry(
   @TestOnly
   val text: String,
@@ -44,7 +46,8 @@ class TextInlayPresentationEntry(
   clickArea: InlayMouseArea?
 ) : InlayPresentationEntry(clickArea) {
 
-  override fun handleClick(editor: Editor, list: InlayPresentationList, controlDown: Boolean) {
+  override fun handleClick(e: EditorMouseEvent, list: InlayPresentationList, controlDown: Boolean) {
+    val editor = e.editor
     val project = editor.project
     if (clickArea != null && project != null) {
       val actionData = clickArea.actionData
@@ -53,7 +56,7 @@ class TextInlayPresentationEntry(
         val handler = InlayActionHandler.getActionHandler(handlerId)
         if (handler != null) {
           InlayActionHandlerUsagesCollector.clickHandled(handlerId, handler.javaClass)
-          handler.handleClick(editor, actionData.payload)
+          handler.handleClick(e, actionData.payload)
         }
       }
     }

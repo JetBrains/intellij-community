@@ -4,6 +4,7 @@ package com.intellij.codeInsight.annoPackages;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,10 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
     if (superPackage) return null;
     String name = anno.getQualifiedName();
     if (name == null) return null;
+    PsiExpression parentExpression = PsiTreeUtil.getParentOfType(context, PsiExpression.class);
+    if (parentExpression instanceof PsiTypeCastExpression cast && PsiTreeUtil.isAncestor(cast.getCastType(), context, false)) {
+      return null;
+    }
     if (ArrayUtil.contains(PsiAnnotation.TargetType.LOCAL_VARIABLE, types)) return null;
     Nullability nullability;
     switch (name) {
@@ -37,17 +42,18 @@ public final class JSpecifyAnnotationSupport implements AnnotationPackageSupport
         return null;
       }
     }
-    PsiType targetType = null;
-    if (context instanceof PsiMethod) {
-      targetType = ((PsiMethod)context).getReturnType();
-    }
-    else if (context instanceof PsiVariable) {
-      targetType = ((PsiVariable)context).getType();
-    }
-    if (PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter) return null;
+    if (resolvesToTypeParameter(context)) return null;
     return new NullabilityAnnotationInfo(anno, nullability, true);
   }
-  
+
+  static boolean resolvesToTypeParameter(@NotNull PsiElement context) {
+    PsiType targetType = context instanceof PsiMethod method ? method.getReturnType() :
+                         context instanceof PsiVariable variable ? variable.getType() :
+                         context instanceof PsiJavaCodeReferenceElement && context.getParent() instanceof PsiTypeElement typeElement ? typeElement.getType() :
+                         null;
+    return PsiUtil.resolveClassInClassTypeOnly(targetType) instanceof PsiTypeParameter;
+  }
+
   @Override
   public @NotNull List<String> getNullabilityAnnotations(@NotNull Nullability nullability) {
     return switch (nullability) {

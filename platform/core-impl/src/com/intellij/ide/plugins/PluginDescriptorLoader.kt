@@ -17,7 +17,6 @@ import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.Java11Shim
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import com.intellij.util.io.Decompressor
 import com.intellij.util.io.URLUtil
 import com.intellij.util.lang.UrlClassLoader
@@ -41,13 +40,14 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.zip.ZipFile
 import javax.xml.stream.XMLStreamException
+import kotlin.Throws
 
 private val LOG: Logger
   get() = PluginManagerCore.logger
 
 @TestOnly
-fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext): IdeaPluginDescriptorImpl? {
-  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = NonShareableJavaZipFilePool())
+fun loadDescriptor(file: Path, parentContext: DescriptorListLoadingContext, pool: ZipFilePool): IdeaPluginDescriptorImpl? {
+  return loadDescriptorFromFileOrDir(file = file, context = parentContext, pool = pool)
 }
 
 internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescriptorImpl? {
@@ -59,6 +59,7 @@ internal fun loadForCoreEnv(pluginRoot: Path, fileName: String): IdeaPluginDescr
       descriptorRelativePath = "${PluginManagerCore.META_INF}$fileName",
       pluginDir = null,
       context = parentContext,
+      pool = NonShareableJavaZipFilePool(),
       pathResolver = pathResolver,
       isBundled = true,
       isEssential = true,
@@ -85,6 +86,7 @@ fun loadDescriptorFromDir(
   dir: Path,
   pluginDir: Path?,
   context: DescriptorListLoadingContext,
+  pool: ZipFilePool,
   pathResolver: PathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
   descriptorRelativePath: String = PluginManagerCore.PLUGIN_XML_PATH,
   isBundled: Boolean,
@@ -111,7 +113,7 @@ fun loadDescriptorFromDir(
       useCoreClassLoader = useCoreClassLoader,
     )
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = descriptorRelativePath)
-    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = context, pluginDir = pluginDir ?: dir, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = pluginDir ?: dir, pool = pool)
     descriptor.jarFiles = Collections.singletonList(dir)
     return descriptor
   }
@@ -155,7 +157,8 @@ fun loadDescriptorFromJar(
 
     val descriptor = IdeaPluginDescriptorImpl(raw = raw, path = pluginDir ?: file, isBundled = isBundled, id = null, moduleName = null, useCoreClassLoader = useCoreClassLoader)
     parentContext.debugData?.recordDescriptorPath(descriptor, raw, descriptorRelativePath)
-    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = parentContext, pluginDir = pluginDir ?: file, dataLoader = dataLoader)
+    initMainDescriptorByRaw(descriptor = descriptor, raw = raw, pathResolver = pathResolver, context = parentContext, pluginDir = pluginDir ?: file, dataLoader = dataLoader,
+                            pool = pool)
     descriptor.jarFiles = Collections.singletonList(descriptor.pluginPath)
     return descriptor
   }
@@ -179,16 +182,27 @@ fun initMainDescriptorByRaw(
   context: DescriptorListLoadingContext,
   dataLoader: DataLoader,
   pluginDir: Path,
+  pool: ZipFilePool,
 ) {
+  val moduleDir = pluginDir.resolve("lib/modules").takeIf { Files.isDirectory(it) }
   for (module in descriptor.content.modules) {
     val subDescriptorFile = module.configFile ?: "${module.name}.xml"
     if (module.descriptorContent == null) {
-      val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
-      module.descriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+      val jarFile = moduleDir?.resolve("${module.name}.jar")
+      if (jarFile != null && Files.exists(jarFile)) {
+        val subRaw = loadModuleFromSeparateJar(pool = pool, jarFile = jarFile, subDescriptorFile = subDescriptorFile, context = context, dataLoader = dataLoader)
+        val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
+        subDescriptor.jarFiles = Collections.singletonList(jarFile)
+        module.descriptor = subDescriptor
+      }
+      else {
+        val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
+        module.descriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
+      }
     }
     else {
       val subRaw = readModuleDescriptor(reader = createXmlStreamReader(module.descriptorContent), readContext = context, dataLoader = dataLoader)
-      val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+      val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
       if (subRaw.`package` == null || subRaw.isSeparateJar) {
         subDescriptor.jarFiles = Collections.singletonList(pluginDir.resolve("lib/modules/${module.name}.jar"))
       }
@@ -291,6 +305,7 @@ private fun loadFromPluginDir(
           context = parentContext,
           isBundled = isBundled,
           isEssential = isEssential,
+          pool = pool,
           pathResolver = pathResolver,
           useCoreClassLoader = useCoreClassLoader,
         )
@@ -616,7 +631,7 @@ internal fun CoroutineScope.loadPluginDescriptorsImpl(
         path = PluginManagerCore.PLUGIN_XML_PATH,
         context = context,
         pathResolver = ClassPathXmlPathResolver(classLoader = mainClassLoader, isRunningFromSources = false),
-        useCoreClassLoader = platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader"),
+        useCoreClassLoader = platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader(),
         reader = if (PlatformUtils.isGateway()) {
           getResourceReader(PluginManagerCore.PLUGIN_XML_PATH, classLoader = mainClassLoader)!!
         }
@@ -728,7 +743,7 @@ private fun loadPluginDescriptor(
       subRaw
     }
 
-    val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
+    val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
     if (classPath != null) {
       subDescriptor.jarFiles = classPath
     }
@@ -828,7 +843,7 @@ private fun CoroutineScope.loadCoreModules(
   result: MutableList<Deferred<IdeaPluginDescriptorImpl?>>,
 ): List<Deferred<IdeaPluginDescriptorImpl?>> {
   val pathResolver = ClassPathXmlPathResolver(classLoader = classLoader, isRunningFromSources = isRunningFromSources && !isInDevServerMode)
-  val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || java.lang.Boolean.getBoolean("idea.force.use.core.classloader")
+  val useCoreClassLoader = pathResolver.isRunningFromSources || platformPrefix.startsWith("CodeServer") || forceUseCoreClassloader()
   if (loadCorePlugin(
       platformPrefix = platformPrefix,
       isInDevServerMode = isInDevServerMode,
@@ -983,7 +998,7 @@ private fun loadModuleDescriptors(
       raw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null),
       descriptorPath = subDescriptorFile,
       context = context,
-      moduleName = moduleName,
+      module = module,
     )
   }
 }
@@ -1019,7 +1034,7 @@ private fun loadProductModule(
     )
   }
 
-  val subDescriptor = containerDescriptor.createSub(raw = moduleRaw, descriptorPath = subDescriptorFile, context = context, moduleName = moduleName)
+  val subDescriptor = containerDescriptor.createSub(raw = moduleRaw, descriptorPath = subDescriptorFile, context = context, module = module)
   subDescriptor.jarFiles = jarFile?.let { Java11Shim.INSTANCE.listOf(it) } ?: Java11Shim.INSTANCE.listOf()
   module.descriptor = subDescriptor
   return true
@@ -1086,7 +1101,6 @@ fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPlugi
   return null
 }
 
-@RequiresBlockingContext
 fun loadDescriptor(file: Path, isBundled: Boolean, pathResolver: PathResolver): IdeaPluginDescriptorImpl? {
   DescriptorListLoadingContext().use { context ->
     return runBlocking {
@@ -1267,11 +1281,12 @@ private fun loadDescriptorFromResource(
     context.debugData?.recordDescriptorPath(descriptor = descriptor, rawPluginDescriptor = raw, path = filename)
 
     if (libDir == null) {
+      val runFromSources = pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode || forceUseCoreClassloader()
       for (module in descriptor.content.modules) {
         val subDescriptorFile = module.configFile ?: "${module.name}.xml"
         val subRaw = pathResolver.resolveModuleFile(readContext = context, dataLoader = dataLoader, path = subDescriptorFile, readInto = null)
-        val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, moduleName = module.name)
-        if ((pathResolver.isRunningFromSources || PluginManagerCore.isUnitTestMode) && subDescriptor.packagePrefix == null) {
+        val subDescriptor = descriptor.createSub(raw = subRaw, descriptorPath = subDescriptorFile, context = context, module = module)
+        if (runFromSources && subDescriptor.packagePrefix == null) {
           // no package in run from sources - load module from main classpath
           subDescriptor.jarFiles = Collections.emptyList()
         }
@@ -1295,3 +1310,5 @@ private fun loadDescriptorFromResource(
     closeable?.close()
   }
 }
+
+private fun forceUseCoreClassloader() = java.lang.Boolean.getBoolean("idea.force.use.core.classloader")

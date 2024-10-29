@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.serialization.PropertyMapping
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradlePluginVersion
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinImportingDiagnostic
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.Serializable
@@ -22,6 +23,7 @@ interface ImplementedModulesAware : Serializable {
 }
 
 class KotlinGradleProjectData : AbstractExternalEntityData(GradleConstants.SYSTEM_ID), ImplementedModulesAware {
+    var kotlinGradlePluginVersion: KotlinGradlePluginVersion? = null
     var isResolved: Boolean = false
     var kotlinTarget: String? = null
     var hasKotlinPlugin: Boolean = false

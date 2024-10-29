@@ -5,6 +5,7 @@ import com.intellij.vcs.log.graph.GraphColorManager
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetter
 import com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
+import org.jetbrains.annotations.ApiStatus
 
 private class GraphColorGetterByHead<CommitId : Any>(private val permanentGraphInfo: PermanentGraphInfo<CommitId>,
                                                      private val colorManager: GraphColorManager<CommitId>) : GraphColorGetter {
@@ -21,6 +22,7 @@ private class GraphColorGetterByHead<CommitId : Any>(private val permanentGraphI
  * @property colorManager a [GraphColorManager] implementation to get colors by head commit of the main branch
  *                        and by head commit and layout index of the fragment.
  */
+@ApiStatus.Internal
 class GraphColorGetterByHeadFactory<CommitId : Any>(private val colorManager: GraphColorManager<CommitId>) : GraphColorGetterFactory<CommitId> {
   override fun createColorGetter(permanentGraphInfo: PermanentGraphInfo<CommitId>): GraphColorGetter {
     return GraphColorGetterByHead(permanentGraphInfo, colorManager)

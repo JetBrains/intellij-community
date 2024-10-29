@@ -1,0 +1,2 @@
+headers = interop/myInterop.h
+compilerOpts = -Ilibs/include

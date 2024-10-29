@@ -9,8 +9,8 @@
         <compilerArguments>
           <stringArguments>
             <stringArg name="jvmTarget" arg="11" />
-            <stringArg name="apiVersion" arg="1.9" />
-            <stringArg name="languageVersion" arg="1.9" />
+            <stringArg name="apiVersion" arg="2.0" />
+            <stringArg name="languageVersion" arg="2.0" />
           </stringArguments>
         </compilerArguments>
       </configuration>
@@ -33,10 +33,10 @@
     <orderEntry type="library" exported="" name="maven-resolver-provider" level="project" />
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-file" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.4.2">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-file:1.9.22">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.4.2/maven-resolver-transport-file-1.4.2.jar">
-              <sha256sum>663bc1ab1f5b2e2462d241e48934d84e4cddc950a17f7f19c53ebf1b39cc5569</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22.jar">
+              <sha256sum>4f2a857d8b832494bae9ef6d7db7bb8409378b28aabd3615f03faebe42a4ad1d</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -46,20 +46,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.4.2/maven-resolver-transport-file-1.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.4.2/maven-resolver-transport-file-1.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-file/1.9.22/maven-resolver-transport-file-1.9.22-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-transport-http" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.4.2">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-transport-http:1.9.22">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.4.2/maven-resolver-transport-http-1.4.2.jar">
-              <sha256sum>465bbb05ee2e1504738d26a1bfeca0c85d133476f3f625ceb1c7eb57e39b15ac</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22.jar">
+              <sha256sum>1cf2a88c984e0eae8b3f13e1eec904eedead2f076d1f3c1d5cb5103a21538bd1</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -74,20 +74,20 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.4.2/maven-resolver-transport-http-1.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.4.2/maven-resolver-transport-http-1.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-transport-http/1.9.22/maven-resolver-transport-http-1.9.22-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>
     <orderEntry type="module-library">
       <library name="org.apache.maven.resolver:maven-resolver-connector-basic" type="repository">
-        <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.4.2">
+        <properties maven-id="org.apache.maven.resolver:maven-resolver-connector-basic:1.9.22">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.4.2/maven-resolver-connector-basic-1.4.2.jar">
-              <sha256sum>50174586a20ab1d0082bafaa12939932592164fd0fecdcac2f60af26684b6e34</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22.jar">
+              <sha256sum>4ab68bdec97eec318b2a3bd27e7c954e316f890df92d544b68afd0bf666c9588</sha256sum>
             </artifact>
           </verification>
           <exclude>
@@ -98,11 +98,11 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.4.2/maven-resolver-connector-basic-1.4.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.4.2/maven-resolver-connector-basic-1.4.2-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/resolver/maven-resolver-connector-basic/1.9.22/maven-resolver-connector-basic-1.9.22-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

@@ -1,9 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.CachedSingletonsRegistry;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
@@ -12,21 +10,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
 
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * Manages the relationship between filenames and {@link FileType} instances.
  */
-public abstract class FileTypeManager extends FileTypeRegistry {
-  static {
-    FileTypeRegistry.setInstanceSupplier(FileTypeManager::getInstance);
-  }
-
-  private static final Supplier<FileTypeManager> ourInstance = CachedSingletonsRegistry.lazy(() -> {
-    Application app = ApplicationManager.getApplication();
-    return app == null ? new MockFileTypeManager() : app.getService(FileTypeManager.class);
-  });
-
+public abstract class FileTypeManager extends FileTypeRegistry implements Disposable {
   @Topic.AppLevel
   public static final @NotNull Topic<FileTypeListener> TOPIC = new Topic<>(FileTypeListener.class, Topic.BroadcastDirection.TO_DIRECT_CHILDREN);
 
@@ -35,12 +23,16 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    */
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static FileTypeManager getInstance() {
-    return ourInstance.get();
+    FileTypeRegistry instance = FileTypeRegistry.getInstance();
+    return instance instanceof FileTypeManager ftm ? ftm : new EmptyFileTypeManager();
   }
 
-  /** @deprecated use {@code com.intellij.fileType} extension point instead */
-  @Deprecated(forRemoval = true)
-  public abstract void registerFileType(@NotNull FileType type, String @Nullable ... defaultAssociatedExtensions);
+  protected FileTypeManager() {
+  }
+
+  @Override
+  public void dispose() {
+  }
 
   /**
    * Checks if the specified file is ignored by the IDE. Ignored files are not visible in

@@ -4,6 +4,7 @@ package com.intellij.execution.console;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.util.xmlb.annotations.Attribute;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Provide default settings for folding lines in console output.
@@ -13,6 +14,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * Register in {@code plugin.xml}:<p>
  * {@code <stacktrace.fold substring="at com.intellij.ide.IdeEventQueue"/>}
  */
+@ApiStatus.Internal
 public final class CustomizableConsoleFoldingBean {
   public static final ExtensionPointName<CustomizableConsoleFoldingBean> EP_NAME = new ExtensionPointName<>("com.intellij.stacktrace.fold");
 

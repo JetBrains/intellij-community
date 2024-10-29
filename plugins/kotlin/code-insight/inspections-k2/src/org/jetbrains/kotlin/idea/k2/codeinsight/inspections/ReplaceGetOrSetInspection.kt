@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.psiSafe
+import org.jetbrains.kotlin.idea.base.analysis.api.utils.allOverriddenSymbolsWithSelf
 import org.jetbrains.kotlin.idea.base.psi.textRangeIn
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.applicable.inspections.KotlinApplicableInspectionBase
@@ -73,8 +74,10 @@ internal class ReplaceGetOrSetInspection :
             return null
         }
 
+        if (functionSymbol.name != OperatorNameConventions.GET && functionSymbol.name != OperatorNameConventions.SET) return null
+
         val receiverExpression = element.receiverExpression
-        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnit != false) return null
+        if (receiverExpression is KtSuperExpression || receiverExpression.expressionType?.isUnitType != false) return null
 
         if (functionSymbol.name == OperatorNameConventions.SET && element.isUsedAsExpression) return null
 
@@ -109,6 +112,6 @@ internal class ReplaceGetOrSetInspection :
     context(KaSession)
     private fun KaNamedFunctionSymbol.isExplicitOperator(): Boolean {
         fun KaCallableSymbol.hasOperatorKeyword() = psiSafe<KtNamedFunction>()?.hasModifier(KtTokens.OPERATOR_KEYWORD) == true
-        return hasOperatorKeyword() || allOverriddenSymbols.any { it.hasOperatorKeyword() }
+        return allOverriddenSymbolsWithSelf.any { it.hasOperatorKeyword() }
     }
 }

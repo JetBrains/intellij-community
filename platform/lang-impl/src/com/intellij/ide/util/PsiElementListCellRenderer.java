@@ -1,12 +1,8 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.lang.LangBundle;
-import com.intellij.navigation.ColoredItemPresentation;
-import com.intellij.navigation.ItemPresentation;
-import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -124,8 +120,8 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   }
 
   public static final class ItemMatchers {
-    @Nullable public final Matcher nameMatcher;
-    @Nullable public final Matcher locationMatcher;
+    public final @Nullable Matcher nameMatcher;
+    public final @Nullable Matcher locationMatcher;
 
     public ItemMatchers(@Nullable Matcher nameMatcher, @Nullable Matcher locationMatcher) {
       this.nameMatcher = nameMatcher;
@@ -220,8 +216,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     }
   }
 
-  @Nullable
-  protected TextAttributes getNavigationItemAttributes(Object value) {
+  protected @Nullable TextAttributes getNavigationItemAttributes(Object value) {
     return PSIRenderingUtils.getNavigationItemAttributesStatic(value);
   }
 
@@ -273,18 +268,15 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return this;
   }
 
-  @NotNull
-  protected ColoredListCellRenderer<Object> createLeftRenderer(JList<?> list, Object value) {
+  protected @NotNull ColoredListCellRenderer<Object> createLeftRenderer(JList<?> list, Object value) {
     return new LeftRenderer(value == null ? new ItemMatchers(null, null) : getItemMatchers(list, value));
   }
 
-  @NotNull
-  protected SimpleTextAttributes getErrorAttributes() {
+  protected @NotNull SimpleTextAttributes getErrorAttributes() {
     return DEFAULT_ERROR_ATTRIBUTES;
   }
 
-  @NotNull
-  public ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
+  public @NotNull ItemMatchers getItemMatchers(@NotNull JList list, @NotNull Object value) {
     return new ItemMatchers(MatcherHolder.getAssociatedMatcher(list), null);
   }
 
@@ -315,8 +307,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
    * @deprecated override {@link #getItemLocation} instead
    */
   @Deprecated
-  @Nullable
-  protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
+  protected @Nullable DefaultListCellRenderer getRightCellRenderer(final Object value) {
     if (!UISettings.getInstance().getShowIconInQuickNavigation()) {
       return null;
     }
@@ -340,11 +331,9 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
   public abstract @NlsSafe String getElementText(T element);
 
-  @Nullable
-  protected abstract @NlsSafe String getContainerText(T element, final String name);
+  protected abstract @Nullable @NlsSafe String getContainerText(T element, final String name);
 
-  @Nullable
-  protected @NlsSafe String getContainerTextForLeftComponent(T element, String name, int maxWidth, FontMetrics fm) {
+  protected @Nullable @NlsSafe String getContainerTextForLeftComponent(T element, String name, int maxWidth, FontMetrics fm) {
     return getContainerText(element, name);
   }
 
@@ -362,8 +351,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
     return Comparator.comparing(this::getComparingObject);
   }
 
-  @NotNull
-  public Comparable getComparingObject(T element) {
+  public @NotNull Comparable getComparingObject(T element) {
     return ReadAction.compute(() -> {
       String elementText = getElementText(element);
       String containerText = getContainerText(element, elementText);

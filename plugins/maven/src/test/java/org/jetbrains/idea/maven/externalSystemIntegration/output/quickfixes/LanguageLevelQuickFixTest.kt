@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.pom.java.LanguageLevel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -24,12 +25,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -49,12 +52,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -80,12 +85,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -113,12 +120,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -147,12 +156,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -186,12 +197,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag(p2, "project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag(p2, "project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -233,12 +246,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag(p2, "project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag(p2, "project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -257,12 +272,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -282,12 +299,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getTargetInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -314,12 +333,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -347,12 +368,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p1:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, mavenProject!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -385,12 +408,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag(p2, "project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag(p2, "project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -424,12 +449,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.properties")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.properties")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -470,12 +497,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag(p2, "project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag(p2, "project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)
@@ -517,12 +546,14 @@ class LanguageLevelQuickFixTest : MavenDomTestCase() {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(MavenId("test:p2:1"))
     waitForImportWithinTimeout {
       withContext(Dispatchers.EDT) {
-        LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        writeIntentReadAction {
+          LanguageLevelQuickFixFactory.getInstance(project, (mavenProject)!!)!!.perform(LanguageLevel.JDK_11)
+        }
       }
     }
+    val tag = findTag("project.build.plugins.plugin.configuration")
+    assertNotNull(tag)
     readAction {
-      val tag = findTag("project.build.plugins.plugin.configuration")
-      assertNotNull(tag)
       assertSize(2, tag.subTags)
       assertEquals("11", tag.subTags[0].value.text)
       assertEquals("11", tag.subTags[1].value.text)

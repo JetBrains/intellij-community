@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -48,7 +48,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
   }
 
   @Override
-  public void doExecute(@NotNull final Editor editor, @NotNull Caret caret, final DataContext dataContext) {
+  public void doExecute(final @NotNull Editor editor, @NotNull Caret caret, final DataContext dataContext) {
     if (editor.isViewer() || !EditorModificationUtil.requestWriting(editor)) return;
 
     if (!(editor.getDocument() instanceof DocumentEx document)) {
@@ -423,7 +423,7 @@ public final class JoinLinesHandler extends EditorActionHandler.ForEachCaret {
     return false;
   }
 
-  private static PsiComment getCommentElement(@Nullable final PsiElement element) {
+  private static PsiComment getCommentElement(final @Nullable PsiElement element) {
     return PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
   }
 }

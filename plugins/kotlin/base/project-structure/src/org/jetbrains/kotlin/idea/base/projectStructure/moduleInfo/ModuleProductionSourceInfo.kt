@@ -9,20 +9,25 @@ import org.jetbrains.kotlin.idea.base.facet.additionalVisibleModules
 import org.jetbrains.kotlin.idea.base.facet.stableName
 import org.jetbrains.kotlin.idea.base.projectStructure.KotlinResolveScopeEnlarger
 import org.jetbrains.kotlin.idea.base.projectStructure.productionSourceInfo
+import org.jetbrains.kotlin.idea.base.projectStructure.scope.ModuleSourcesScope
 import org.jetbrains.kotlin.name.Name
 
 data class ModuleProductionSourceInfo internal constructor(
     override val module: Module
 ) : ModuleSourceInfoWithExpectedBy(forProduction = true) {
 
-    override val name = Name.special("<production sources for module ${module.name}>")
+    override val name: Name
+        get() = Name.special("<production sources for module ${module.name}>")
 
     override val stableName: Name by lazy { module.stableName }
 
-    override fun keyForSdk() = KeyForSdks
+    override fun keyForSdk(): KeyForSdks = KeyForSdks
 
     override val contentScope: GlobalSearchScope
-        get() = KotlinResolveScopeEnlarger.enlargeScope(module.moduleProductionSourceScope, module, isTestScope = false)
+        get() = KotlinResolveScopeEnlarger.enlargeScope(module.kotlinProductionSourceScope, module, isTestScope = false)
+
+    private val Module.kotlinProductionSourceScope: GlobalSearchScope
+        get() = ModuleSourcesScope.production(module)
 
     override fun modulesWhoseInternalsAreVisible(): Collection<ModuleInfo> {
         return module.cacheByClassInvalidatingOnRootModifications(KeyForModulesWhoseInternalsAreVisible::class.java) {

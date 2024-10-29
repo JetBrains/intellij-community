@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.projectView.impl;
 
@@ -19,11 +19,12 @@ import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,51 +39,46 @@ import static com.intellij.openapi.module.ModuleGrouperKt.isQualifiedModuleNames
 import static java.awt.EventQueue.isDispatchThread;
 
 public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
-  @NonNls public static final String ID = "ProjectPane";
+  public static final @NonNls String ID = "ProjectPane";
 
   public ProjectViewPane(Project project) {
     super(project);
   }
 
+  @ApiStatus.Internal
   @Override
-  public void configureAsyncSupport(@NotNull AsyncProjectViewSupport support) {
+  public void configureAsyncSupport(@NotNull ProjectViewPaneSupport support) {
     support.setMultiSelectionEnabled(false);
   }
 
-  @NotNull
   @Override
-  public String getTitle() {
+  public @NotNull String getTitle() {
     return IdeBundle.message("title.project");
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return ID;
   }
 
-  @NotNull
   @Override
-  public Icon getIcon() {
+  public @NotNull Icon getIcon() {
     return AllIcons.General.ProjectTab;
   }
 
 
-  @NotNull
   @Override
-  public SelectInTarget createSelectInTarget() {
+  public @NotNull SelectInTarget createSelectInTarget() {
     return new ProjectPaneSelectInTarget(myProject);
   }
 
-  @NotNull
   @Override
-  protected ProjectAbstractTreeStructureBase createStructure() {
+  protected @NotNull ProjectAbstractTreeStructureBase createStructure() {
     return new ProjectViewPaneTreeStructure();
   }
 
-  @NotNull
   @Override
-  protected ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
+  protected @NotNull ProjectViewTree createTree(@NotNull DefaultTreeModel treeModel) {
     return new ProjectViewTree(treeModel) {
       @Override
       public String toString() {
@@ -108,8 +104,7 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
     };
   }
 
-  @NotNull
-  public String getComponentName() {
+  public @NotNull String getComponentName() {
     return "ProjectPane";
   }
 
@@ -193,10 +188,11 @@ public class ProjectViewPane extends AbstractProjectViewPaneWithAsyncSupport {
       archiveFile = null;
 
     ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
+    final VirtualFile baseDir = project.getBaseDir();
     return (archiveFile != null && index.getContentRootForFile(archiveFile, false) != null) ||
            index.getContentRootForFile(file, false) != null ||
            index.isInLibrary(file) ||
-           Comparing.equal(file.getParent(), project.getBaseDir()) ||
+           (baseDir != null && VfsUtilCore.isAncestor(baseDir, file, false)) ||
            (ScratchUtil.isScratch(file) && ProjectView.getInstance(project).isShowScratchesAndConsoles(ID));
   }
 

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger.Severity;
 import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.struct.lazy.LazyLoader;
 import org.jetbrains.java.decompiler.util.DataInputFullStream;
@@ -122,6 +123,7 @@ public class StructContext {
   }
 
   private void addArchive(String path, File file, int type, boolean isOwn) throws IOException {
+    DecompilerContext.getLogger().writeMessage("Adding Archive: " + file.getAbsolutePath(), Severity.TRACE);
     try (ZipFile archive = type == ContextUnit.TYPE_JAR ? new JarFile(file) : new ZipFile(file)) {
       Enumeration<? extends ZipEntry> entries = archive.entries();
       while (entries.hasMoreElements()) {
@@ -145,6 +147,7 @@ public class StructContext {
         if (!entry.isDirectory()) {
           if (name.endsWith(".class")) {
             byte[] bytes = InterpreterUtil.getBytes(archive, entry);
+            DecompilerContext.getLogger().writeMessage("  Loading Class: " + name, Severity.TRACE);
             StructClass cl = StructClass.create(new DataInputFullStream(bytes), isOwn, loader);
             classes.put(cl.qualifiedName, cl);
             unit.addClass(cl, name);
@@ -161,7 +164,46 @@ public class StructContext {
     }
   }
 
+  public void addData(String path, String cls, byte[] data, boolean isOwn) throws IOException {
+        ContextUnit unit = units.get(path);
+        if (unit == null) {
+          unit = new ContextUnit(ContextUnit.TYPE_FOLDER, path, cls, isOwn, saver, decompiledData);
+          units.put(path, unit);
+        }
+
+        StructClass cl = StructClass.create(new DataInputFullStream(data), isOwn, loader);
+        classes.put(cl.qualifiedName, cl);
+        unit.addClass(cl, cls);
+        loader.addClassLink(cl.qualifiedName, new LazyLoader.Link(path, cls, data));
+  }
+
   public Map<String, StructClass> getClasses() {
     return classes;
+  }
+
+  public boolean instanceOf(String valclass, String refclass) {
+    if (valclass.equals(refclass)) {
+      return true;
+    }
+
+    StructClass cl = this.getClass(valclass);
+    if (cl == null) {
+      return false;
+    }
+
+    if (cl.superClass != null && this.instanceOf(cl.superClass.getString(), refclass)) {
+      return true;
+    }
+
+    int[] interfaces = cl.getInterfaces();
+    for (int anInterface : interfaces) {
+      String intfc = cl.getPool().getPrimitiveConstant(anInterface).getString();
+
+      if (this.instanceOf(intfc, refclass)) {
+        return true;
+      }
+    }
+
+    return false;
   }
 }

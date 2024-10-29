@@ -5,6 +5,8 @@ import com.intellij.ide.RecentProjectsManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
+import com.intellij.openapi.application.WriteIntentReadAction
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -27,7 +29,9 @@ abstract class CloseProjectsActionBase : DumbAwareAction(), ActionRemoteBehavior
         // ensure that last closed project frame bounds will be used as newly created project frame bounds
         // (if will be no another focused opened project)
         WindowManager.getInstance().updateDefaultFrameInfoOnProjectClose(it)
-        ProjectManager.getInstance().closeAndDispose(it)
+        WriteIntentReadAction.run {
+          ProjectManager.getInstance().closeAndDispose(it)
+        }
 
         // RecentProjectsManager cannot distinguish close as part of exit (no need to remove project),
         // and close as explicit user initiated action (need to remove project), because reason is not provided to `projectClosed` event.

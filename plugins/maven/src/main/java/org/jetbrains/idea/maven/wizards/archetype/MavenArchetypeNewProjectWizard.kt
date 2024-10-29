@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
-import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.REGULAR_MATCHED_ATTRIBUTES
+import com.intellij.codeInsight.lookup.impl.LookupCellRenderer.Companion.REGULAR_MATCHED_ATTRIBUTES
 import com.intellij.execution.util.setEmptyState
 import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.icons.AllIcons
@@ -47,7 +47,7 @@ import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.JList
 
-class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
+internal class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val id: String = "MavenArchetype"
 
   override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.generator.name")
@@ -98,11 +98,14 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     private lateinit var archetypeDescriptorTable: PropertiesTable
     private lateinit var archetypeDescriptorPanel: JComponent
 
+    private val moduleBuilder = MavenJavaModuleBuilder()
+
     init {
       catalogItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypes() }
       archetypeItemProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeVersions() }
       archetypeVersionProperty.afterChange { if (isAutoReloadArchetypeModel) reloadArchetypeDescriptor() }
       data.putUserData(MavenArchetypeNewProjectWizardData.KEY, this)
+      data.putUserData(RootNewProjectWizardStep.PROJECT_BUILDER_KEY, moduleBuilder)
     }
 
     fun setupCatalogUI(builder: Panel) {
@@ -318,7 +321,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
-      linkMavenProject(project, MavenJavaModuleBuilder()) { builder ->
+      linkMavenProject(project, moduleBuilder) { builder ->
         builder.archetype = MavenArchetype(
           archetypeItem.groupId,
           archetypeItem.artifactId,

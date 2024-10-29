@@ -14,14 +14,15 @@ import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
 import org.jetbrains.plugins.terminal.block.completion.spec.ShellRuntimeDataGenerator
-import org.jetbrains.plugins.terminal.block.session.ShellCommandExecutionManager
+import org.jetbrains.plugins.terminal.block.session.ShellCommandExecutionManagerImpl
+import org.jetbrains.plugins.terminal.block.session.ShellIntegrationFunctions.GET_COMPLETIONS
 
 internal fun powerShellCompletionGenerator(command: String, caretOffset: Int): ShellRuntimeDataGenerator<CompletionResult> {
   return ShellRuntimeDataGenerator(debugName = "powershell completion") { context ->
     assert(context.shellName.isPowerShell())
 
-    val escapedCommand = ShellCommandExecutionManager.escapePowerShellParameter(command)
-    val commandResult = context.runShellCommand("""__JetBrainsIntellijGetCompletions "$escapedCommand" $caretOffset""")
+    val escapedCommand = ShellCommandExecutionManagerImpl.escapePowerShellParameter(command)
+    val commandResult = context.runShellCommand("""${GET_COMPLETIONS.functionName} "$escapedCommand" $caretOffset""")
     if (commandResult.exitCode != 0) {
       logger<PowerShellCompletionContributor>().warn("PowerShell completion generator for command '$command' at offset $caretOffset failed with exit code ${commandResult.exitCode}, output: ${commandResult.output}")
       return@ShellRuntimeDataGenerator emptyCompletionResult()

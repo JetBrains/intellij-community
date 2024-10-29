@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -10,6 +10,7 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
@@ -33,6 +34,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -51,7 +53,7 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
 
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
-  private final static Logger LOG = Logger.getInstance(NavigationGutterIconRenderer.class);
+  private static final Logger LOG = Logger.getInstance(NavigationGutterIconRenderer.class);
   protected final @PopupTitle String myPopupTitle;
   private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
@@ -200,7 +202,9 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected void navigateToItems(@Nullable MouseEvent event) {
     List<Pair<PsiElement, Navigatable>> navigatables = new ArrayList<>();
     for (SmartPsiElementPointer<?> pointer : myPointers.getValue()) {
-      ContainerUtil.addIfNotNull(navigatables, getNavigatable(pointer));
+      try (AccessToken ignore = SlowOperations.knownIssue("IJPL-162960")) {
+        ContainerUtil.addIfNotNull(navigatables, getNavigatable(pointer));
+      }
     }
     if (navigatables.size() == 1) {
       if (myNavigationHandler != null) {

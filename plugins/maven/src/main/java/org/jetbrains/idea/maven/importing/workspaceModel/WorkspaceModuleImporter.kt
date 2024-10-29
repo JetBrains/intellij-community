@@ -25,7 +25,8 @@ import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
 import com.intellij.platform.workspace.storage.url.VirtualFileUrlManager
 import com.intellij.util.containers.addIfNotNull
-import com.intellij.workspaceModel.ide.impl.LegacyBridgeJpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeJpsEntitySourceFactoryInternal
+import com.intellij.workspaceModel.ide.legacyBridge.LegacyBridgeJpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_MODULE_ENTITY_TYPE_ID
 import org.jetbrains.idea.maven.importing.MavenImportUtil
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator
@@ -33,6 +34,8 @@ import org.jetbrains.idea.maven.importing.StandardMavenModuleType
 import org.jetbrains.idea.maven.importing.tree.MavenModuleImportData
 import org.jetbrains.idea.maven.importing.tree.MavenTreeModuleImportData
 import org.jetbrains.idea.maven.importing.tree.dependency.*
+import org.jetbrains.idea.maven.importing.tree.dependency.LibraryDependency
+import org.jetbrains.idea.maven.importing.tree.dependency.ModuleDependency
 import org.jetbrains.idea.maven.model.MavenArtifact
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenImportingSettings
@@ -54,7 +57,7 @@ internal class WorkspaceModuleImporter(
   private val importingSettings: MavenImportingSettings,
   private val folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
   private val stats: WorkspaceImportStats,
-  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>
+  private val workspaceConfigurators: List<MavenWorkspaceConfigurator>,
 ) {
   private val externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(EXTERNAL_SOURCE_ID)
 
@@ -63,9 +66,10 @@ internal class WorkspaceModuleImporter(
     val baseModuleDir = importData.mavenProject.directoryFile.toVirtualFileUrl(virtualFileUrlManager)
     val moduleName = importData.moduleData.moduleName
 
-    val moduleLibrarySource = LegacyBridgeJpsEntitySourceFactory.createEntitySourceForModule(project, baseModuleDir, externalSource,
-                                                                                             existingEntitySourceNames,
-                                                                                             moduleName + ModuleManagerEx.IML_EXTENSION)
+    val factory = LegacyBridgeJpsEntitySourceFactory.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
+    val moduleLibrarySource = factory.createEntitySourceForModule(baseModuleDir, externalSource,
+                                                                  existingEntitySourceNames,
+                                                                  moduleName + ModuleManagerEx.IML_EXTENSION)
 
     val originalModule = storageBeforeImport.resolve(ModuleId(moduleName))
     val dependencies = collectDependencies(moduleName, originalModule, importData.dependencies, moduleLibrarySource)
@@ -76,14 +80,17 @@ internal class WorkspaceModuleImporter(
   }
 
   private fun reuseOrCreateProjectLibrarySource(libraryName: String): EntitySource {
-    return LegacyBridgeJpsEntitySourceFactory.createEntitySourceForProjectLibrary(project, externalSource, existingEntitySourceNames, libraryName)
+    val factory = LegacyBridgeJpsEntitySourceFactory.getInstance(project) as LegacyBridgeJpsEntitySourceFactoryInternal
+    return factory.createEntitySourceForProjectLibrary(externalSource, existingEntitySourceNames, libraryName)
   }
 
-  private fun createModuleEntity(moduleName: String,
-                                 mavenProject: MavenProject,
-                                 mavenModuleType: StandardMavenModuleType,
-                                 dependencies: List<ModuleDependencyItem>,
-                                 entitySource: EntitySource): ModuleEntity {
+  private fun createModuleEntity(
+    moduleName: String,
+    mavenProject: MavenProject,
+    mavenModuleType: StandardMavenModuleType,
+    dependencies: List<ModuleDependencyItem>,
+    entitySource: EntitySource,
+  ): ModuleEntity {
     val moduleEntity = builder addEntity ModuleEntity(moduleName, dependencies, entitySource) {
       this.type = JAVA_MODULE_ENTITY_TYPE_ID
     }
@@ -96,9 +103,11 @@ internal class WorkspaceModuleImporter(
 
   }
 
-  private fun configureModuleEntity(importData: MavenModuleImportData,
-                                    moduleEntity: ModuleEntity,
-                                    folderImportingContext: WorkspaceFolderImporter.FolderImportingContext) {
+  private fun configureModuleEntity(
+    importData: MavenModuleImportData,
+    moduleEntity: ModuleEntity,
+    folderImportingContext: WorkspaceFolderImporter.FolderImportingContext,
+  ) {
     val folderImporter = WorkspaceFolderImporter(builder, virtualFileUrlManager, importingSettings, folderImportingContext, workspaceConfigurators)
     val importFolderHolder = folderImporter.createContentRoots(importData.mavenProject, importData.moduleData.type, moduleEntity,
                                                                stats)
@@ -106,10 +115,12 @@ internal class WorkspaceModuleImporter(
     importJavaSettings(moduleEntity, importData, importFolderHolder)
   }
 
-  private fun collectDependencies(moduleName: String,
-                                  originalModule: ModuleEntity?,
-                                  dependencies: List<MavenImportDependency<*>>,
-                                  moduleLibrarySource: EntitySource): List<ModuleDependencyItem> {
+  private fun collectDependencies(
+    moduleName: String,
+    originalModule: ModuleEntity?,
+    dependencies: List<MavenImportDependency<*>>,
+    moduleLibrarySource: EntitySource,
+  ): List<ModuleDependencyItem> {
     val result = ArrayList<ModuleDependencyItem>(2 + dependencies.size)
 
     // In this way we keep the manual change of the used JDK
@@ -165,9 +176,11 @@ internal class WorkspaceModuleImporter(
     }
 
 
-  private fun createSystemDependency(moduleName: String,
-                                     artifact: MavenArtifact,
-                                     sourceProvider: () -> EntitySource): EntitiesLibraryDependency {
+  private fun createSystemDependency(
+    moduleName: String,
+    artifact: MavenArtifact,
+    sourceProvider: () -> EntitySource,
+  ): EntitiesLibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM == artifact.scope)
 
     val libraryId = LibraryId(artifact.libraryName, LibraryTableId.ModuleLibraryTableId(moduleId = ModuleId(moduleName)))
@@ -181,8 +194,10 @@ internal class WorkspaceModuleImporter(
     return EntitiesLibraryDependency(libraryId, false, artifact.dependencyScope)
   }
 
-  private fun createLibraryDependency(artifact: MavenArtifact,
-                                      sourceProvider: () -> EntitySource): EntitiesLibraryDependency {
+  private fun createLibraryDependency(
+    artifact: MavenArtifact,
+    sourceProvider: () -> EntitySource,
+  ): EntitiesLibraryDependency {
     assert(MavenConstants.SCOPE_SYSTEM != artifact.scope)
     val libraryRootsProvider = {
       val classes = MavenImportUtil.getArtifactUrlForClassifierAndExtension(artifact, null, null)
@@ -210,7 +225,7 @@ internal class WorkspaceModuleImporter(
     scope: EntitiesDependencyScope,
     artifact: MavenArtifact?,
     libraryRootsProvider: () -> List<LibraryRoot>,
-    sourceProvider: () -> EntitySource
+    sourceProvider: () -> EntitySource,
   ): EntitiesLibraryDependency {
     val libraryId = LibraryId(libraryName, LibraryTableId.ProjectLibraryTableId)
 
@@ -223,7 +238,8 @@ internal class WorkspaceModuleImporter(
     libraryId: LibraryId,
     mavenArtifact: MavenArtifact?,
     libraryRootsProvider: () -> List<LibraryRoot>, // lazy provider to avoid roots creation for already added libraries
-    sourceProvider: () -> EntitySource) {
+    sourceProvider: () -> EntitySource,
+  ) {
     if (libraryId in builder) return
 
     val source = sourceProvider()
@@ -233,12 +249,15 @@ internal class WorkspaceModuleImporter(
     addMavenCoordinatesProperties(mavenArtifact, libraryEntity)
   }
 
-  private fun addMavenCoordinatesProperties(mavenArtifact: MavenArtifact,
-                                            libraryEntity: LibraryEntity) {
+  private fun addMavenCoordinatesProperties(
+    mavenArtifact: MavenArtifact,
+    libraryEntity: LibraryEntity,
+  ) {
     val libraryKind = ImportedLibraryType.IMPORTED_LIBRARY_KIND
     val libPropertiesElement = serialize(ImportedLibraryProperties(MavenCoordinates(mavenArtifact.groupId,
                                                                                     mavenArtifact.artifactId,
                                                                                     mavenArtifact.version,
+                                                                                    mavenArtifact.baseVersion,
                                                                                     mavenArtifact.packaging,
                                                                                     mavenArtifact.classifier)).state) ?: return
     libPropertiesElement.name = JpsLibraryTableSerializer.PROPERTIES_TAG
@@ -267,9 +286,11 @@ internal class WorkspaceModuleImporter(
              ?.associate { it.name to it.text } ?: emptyMap()
   }
 
-  private fun importJavaSettings(moduleEntity: ModuleEntity,
-                                 importData: MavenModuleImportData,
-                                 importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders) {
+  private fun importJavaSettings(
+    moduleEntity: ModuleEntity,
+    importData: MavenModuleImportData,
+    importFolderHolder: WorkspaceFolderImporter.CachedProjectFolders,
+  ) {
     val mavenProject = importData.mavenProject
     val languageLevel = MavenImportUtil.getLanguageLevel(mavenProject) { importData.moduleData.sourceLanguageLevel }
 

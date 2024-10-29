@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
@@ -18,9 +19,10 @@ import java.util.List;
 /**
  * @author Dmitry Batkovich
  */
+@ApiStatus.Internal
 public final class ScopesAndSeveritiesHintTable extends JBTable {
-  private final static int SCOPE_COLUMN = 0;
-  private final static int SEVERITY_COLUMN = 1;
+  private static final int SCOPE_COLUMN = 0;
+  private static final int SEVERITY_COLUMN = 1;
 
   public ScopesAndSeveritiesHintTable(final LinkedHashMap<String, HighlightDisplayLevel> scopeToAverageSeverityMap, String defaultScopeName) {
     super(new MyModel(scopeToAverageSeverityMap, defaultScopeName));
@@ -73,7 +75,7 @@ public final class ScopesAndSeveritiesHintTable extends JBTable {
     }
   }
 
-  private final static class MyModel extends AbstractTableModel {
+  private static final class MyModel extends AbstractTableModel {
 
     private final LinkedHashMap<String, HighlightDisplayLevel> myScopeToAverageSeverityMap;
     private final String myDefaultScopeName;

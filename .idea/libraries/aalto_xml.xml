@@ -1,23 +1,23 @@
 <component name="libraryTable">
   <library name="aalto-xml" type="repository">
-    <properties maven-id="com.fasterxml:aalto-xml:1.3.2">
+    <properties maven-id="com.fasterxml:aalto-xml:1.3.3">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.2/aalto-xml-1.3.2.jar">
-          <sha256sum>dcf2d5f453056c3ce848caff4179021bfb83b5efb3a3d779433c5bd70976068b</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.3/aalto-xml-1.3.3.jar">
+          <sha256sum>28829eebb36863b058108fa1b9b8b5cfb94c1871346e4a4f73e69e1fe0a5f0f6</sha256sum>
         </artifact>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2.jar">
-          <sha256sum>badf6081a0bb526fd2c01951dfefad91b6846b6dd0eb0048587e30d1dd334e68</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar">
+          <sha256sum>a61c48d553efad78bc01fffc4ac528bebbae64cbaec170b2a5e39cf61eb51abe</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.2/aalto-xml-1.3.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.3/aalto-xml-1.3.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.2/aalto-xml-1.3.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2/stax2-api-4.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/fasterxml/aalto-xml/1.3.3/aalto-xml-1.3.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/woodstox/stax2-api/4.2.2/stax2-api-4.2.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

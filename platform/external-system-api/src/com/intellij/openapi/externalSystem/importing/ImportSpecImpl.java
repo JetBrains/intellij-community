@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 @ApiStatus.Internal
-public class ImportSpecImpl implements ImportSpec {
+public final class ImportSpecImpl implements ImportSpec {
   @NotNull private final Project myProject;
   @NotNull private final ProjectSystemId myExternalSystemId;
   @NotNull private ProgressExecutionMode myProgressExecutionMode;
@@ -42,6 +43,7 @@ public class ImportSpecImpl implements ImportSpec {
   @Nullable private String myArguments;
   @Nullable private ProjectResolverPolicy myProjectResolverPolicy;
   @Nullable private Runnable myRerunAction;
+  @Nullable private UserDataHolderBase myUserData;
 
   public ImportSpecImpl(@NotNull Project project, @NotNull ProjectSystemId id) {
     myProject = project;
@@ -162,5 +164,14 @@ public class ImportSpecImpl implements ImportSpec {
 
   public void setRerunAction(@Nullable Runnable rerunAction) {
     myRerunAction = rerunAction;
+  }
+
+  @Override
+  public @Nullable UserDataHolderBase getUserData() {
+    return myUserData;
+  }
+
+  public void setUserData(@Nullable UserDataHolderBase userData) {
+    myUserData = userData;
   }
 }

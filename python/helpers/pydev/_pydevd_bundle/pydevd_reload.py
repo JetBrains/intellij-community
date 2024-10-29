@@ -98,15 +98,14 @@ target namespace.
 
 """
 
-import importlib.util
-import importlib.machinery
 import os
-from _pydev_bundle.pydev_imports import Exec
-from _pydevd_bundle import pydevd_dont_trace
-from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
 import sys
 import traceback
 import types
+
+from _pydev_bundle.pydev_imports import Exec
+from _pydevd_bundle import pydevd_dont_trace
+from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
 
 NO_DEBUG = 0
 LEVEL1 = 1
@@ -195,8 +194,73 @@ def xreload(mod):
 #=======================================================================================================================
 # Reload
 #=======================================================================================================================
-class Reload:
+def get_code3(modname, path):
+    # type: (str, str | None) -> types.CodeType | None
 
+    import importlib.util
+    import importlib.machinery
+
+    # Find the module; may raise ImportError
+    spec = importlib.util.find_spec(modname, path)
+    if spec is None:
+        raise ImportError("No module named '%s' could be found" % modname)
+
+    filename = spec.origin
+    stream = open(filename, 'r') if filename else None
+    _, ext = os.path.splitext(filename)
+    if ext in importlib.machinery.SOURCE_SUFFIXES:
+        kind = importlib.machinery.SOURCE_SUFFIXES
+    elif ext in importlib.machinery.BYTECODE_SUFFIXES:
+        kind = importlib.machinery.BYTECODE_SUFFIXES
+    elif ext in importlib.machinery.EXTENSION_SUFFIXES:
+        kind = importlib.machinery.EXTENSION_SUFFIXES
+    else:
+        kind = 'unknown'
+
+    try:
+        # Is it Python source code or byte code read from a file?
+        if kind not in (importlib.machinery.BYTECODE_SUFFIXES, importlib.machinery.SOURCE_SUFFIXES):
+            return
+        if kind == importlib.machinery.SOURCE_SUFFIXES:
+            source = stream.read()
+            code = compile(source, filename, "exec")
+        else:
+            import marshal
+            code = marshal.load(stream)
+    finally:
+        if stream:
+            stream.close()
+
+    return code
+
+
+def get_code2(modname, path):
+    # type: (str, str | None) -> types.CodeType | None
+
+    import imp
+
+    # Find the module; may raise ImportError
+    (stream, filename, (suffix, mode, kind)) = imp.find_module(modname, path)
+
+    # Turn it into a code object
+    try:
+        # Is it Python source code or byte code read from a file?
+        if kind not in (imp.PY_COMPILED, imp.PY_SOURCE):
+            return
+        if kind == imp.PY_SOURCE:
+            source = stream.read()
+            code = compile(source, filename, "exec")
+        else:
+            import marshal
+            code = marshal.load(stream)
+    finally:
+        if stream:
+            stream.close()
+
+    return code
+
+
+class Reload:
     def __init__(self, mod):
         self.mod = mod
         self.found_change = False
@@ -224,38 +288,17 @@ class Reload:
                 # Search the top-level module path
                 pkg = None
                 path = None  # Make find_module() uses the default search path
-            # Find the module; may raise ImportError
-            spec = importlib.util.find_spec(modname, path)
-            if spec is None:
-                raise ImportError("No module named '%s' could be found" % modname)
 
-            filename = spec.origin
-            stream = open(filename, 'r') if filename else None
-            _, ext = os.path.splitext(filename)
-            if ext in importlib.machinery.SOURCE_SUFFIXES:
-                kind = importlib.machinery.SOURCE_SUFFIXES
-            elif ext in importlib.machinery.BYTECODE_SUFFIXES:
-                kind = importlib.machinery.BYTECODE_SUFFIXES
-            elif ext in importlib.machinery.EXTENSION_SUFFIXES:
-                kind = importlib.machinery.EXTENSION_SUFFIXES
+            if sys.version_info < (3,):
+                code = get_code2(modname, path)
             else:
-                kind = 'unknown'
+                code = get_code3(modname, path)
 
-            try:
-                # Is it Python source code or byte code read from a file?
-                if kind not in (importlib.machinery.BYTECODE_SUFFIXES, importlib.machinery.SOURCE_SUFFIXES):
-                    # Fall back to built-in reload()
-                    notify_error('Could not find source to reload (mod: %s)' % (modname,))
-                    return
-                if kind == importlib.machinery.SOURCE_SUFFIXES:
-                    source = stream.read()
-                    code = compile(source, filename, "exec")
-                else:
-                    import marshal
-                    code = marshal.load(stream)
-            finally:
-                if stream:
-                    stream.close()
+            if not code:
+                # Fall back to built-in reload()
+                notify_error('Could not find source to reload (mod: %s)' % (modname,))
+                return
+
             # Execute the code.  We copy the module dict to a temporary; then
             # clear the module dict; then execute the new code in the module
             # dict; then swap things back and around.  This trick (due to

@@ -34,7 +34,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.testFramework.utils.vfs.CheckVFSHealthRule;
-import com.intellij.testFramework.utils.vfs.SkipVFSHealthCheck;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -337,9 +336,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     assertEquals(globalFsModCount + 1, managingFS.getFilesystemModificationCount());
 
-    FSRecords.force();
+    FSRecords.getInstance().force();
     assertFalse("FSRecords.force() was just called, must be !dirty",
-                FSRecords.isDirty());
+                FSRecords.getInstance().isDirty());
     ++globalFsModCount;
 
     int finalGlobalModCount = globalFsModCount;
@@ -374,8 +373,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     ManagingFS managingFS = ManagingFS.getInstance();
     final int globalFsModCountBefore = managingFS.getFilesystemModificationCount();
 
-    FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    FSRecordsImpl vfs = FSRecords.getInstance();
+    vfs.force();
+    assertFalse(vfs.isDirty());
 
     FileAttribute attribute = new FileAttribute("test.attribute", 1, true);
     WriteAction.runAndWait(() -> {
@@ -386,16 +386,16 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
     assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
 
-    assertTrue(FSRecords.isDirty());
-    FSRecords.force();
-    assertFalse(FSRecords.isDirty());
+    assertTrue(vfs.isDirty());
+    vfs.force();
+    assertFalse(vfs.isDirty());
 
     int fileId = ((VirtualFileWithId)vFile).getId();
-    FSRecords.setTimestamp(fileId, FSRecords.getTimestamp(fileId));
-    FSRecords.setLength(fileId, FSRecords.getLength(fileId));
+    vfs.setTimestamp(fileId, vfs.getTimestamp(fileId));
+    vfs.setLength(fileId, vfs.getLength(fileId));
 
     assertEquals(globalFsModCountBefore, managingFS.getFilesystemModificationCount());
-    assertFalse(FSRecords.isDirty());
+    assertFalse(vfs.isDirty());
   }
 
   @Test
@@ -665,7 +665,6 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  @SkipVFSHealthCheck
   public void testConcurrentListAllDoesntCauseDuplicateFileIds() throws Exception {
     PersistentFSImpl pfs = (PersistentFSImpl)PersistentFS.getInstance();
     Application application = ApplicationManager.getApplication();
@@ -978,6 +977,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     events.clear();
   }
 
+  //@IJIgnore(issue = "IJPL-149673")
   @Test
   public void testChildMove() throws IOException {
     final File firstDirIoFile = tempDirectory.newDirectory("dir1");

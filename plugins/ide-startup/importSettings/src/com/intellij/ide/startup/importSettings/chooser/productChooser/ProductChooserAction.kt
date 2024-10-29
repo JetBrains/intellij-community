@@ -19,7 +19,7 @@ import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
 
-abstract class ProductChooserAction : ChooseProductActionButton(null) {
+internal sealed class ProductChooserAction : ChooseProductActionButton(null) {
   private val actionGroup = object : DefaultActionGroup() {
     override fun getChildren(e: AnActionEvent?): Array<AnAction> {
       return this@ProductChooserAction.getChildren(e)
@@ -52,7 +52,7 @@ abstract class ProductChooserAction : ChooseProductActionButton(null) {
         e.presentation.text = e.presentation.text ?: it.templateText
         e.presentation.icon = e.presentation.icon ?: it.templatePresentation.icon
         e.presentation.getClientProperty(UiUtils.DESCRIPTION)?.let { descr ->
-          e.presentation.description =  descr
+          e.presentation.description = descr
         }
       }
       return

@@ -119,8 +119,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
     Predicate<PsiFile> filter = null;
 
     PsiClass[] classes = clsFile.getClasses();
-    if (classes.length > 0) {
-      String sourceFileName = ((ClsClassImpl)classes[0]).getSourceFileName();
+    if (classes.length > 0 && classes[0] instanceof ClsClassImpl cls) {
+      String sourceFileName = cls.getSourceFileName();
       String packageName = clsFile.getPackageName();
       String relativePath = packageName.isEmpty() ? sourceFileName : packageName.replace('.', '/') + '/' + sourceFileName;
       LanguageLevel level = JavaMultiReleaseUtil.getVersion(clsFile);
@@ -223,7 +223,8 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
       String className = virtualFile.getNameWithoutExtension();
       Set<VirtualFile> visitedRoots = new HashSet<>();
       for (OrderEntry entry : index.getOrderEntriesForFile(virtualFile)) {
-        for (VirtualFile rootFile : entry.getFiles(OrderRootType.CLASSES)) {
+        if (!(entry instanceof LibraryOrSdkOrderEntry libraryOrSdkEntry)) continue;
+        for (VirtualFile rootFile : libraryOrSdkEntry.getRootFiles(OrderRootType.CLASSES)) {
           if (visitedRoots.add(rootFile)) {
             VirtualFile classFile = rootFile.findFileByRelativePath(relativePath);
             PsiJavaFile javaFile = classFile == null ? null : getPsiFileInRoot(classFile, className);
@@ -467,18 +468,19 @@ public final class JavaPsiImplementationHelperImpl extends JavaPsiImplementation
         // Check interfaces
         var targetInInterface = Stream.concat(Stream.of(psiClass.getImplementsListTypes()), Stream.of(psiClass.getExtendsListTypes()))
           .map(type -> type.resolve())
-          .map(resolvedType -> findTarget(resolvedType, method, docTag, explicitSuper))
+          .filter(Objects::nonNull)
+          .map(resolvedType -> findTargetRecursively(resolvedType, method, docTag, explicitSuper, true, visitedSet))
           .filter(Objects::nonNull)
           .findFirst();
 
         return targetInInterface.orElse(null);
       }
 
-      private static @Nullable PsiElement findTarget(@Nullable PsiClass psiClass,
+      private static @Nullable PsiElement findTarget(@NotNull PsiClass psiClass,
                                                      @NotNull PsiMethod method,
                                                      @Nullable PsiDocTag docTag,
                                                      @Nullable String explicitSuper) {
-        if (psiClass == null || explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
+        if (explicitSuper != null && !explicitSuper.equals(psiClass.getName())) {
           return null;
         }
 

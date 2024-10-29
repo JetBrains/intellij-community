@@ -1,7 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.configuration
 
-import com.google.common.annotations.VisibleForTesting
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runReadAction
@@ -17,8 +16,13 @@ import com.intellij.openapi.projectRoots.impl.UnknownMissingSdk
 import com.intellij.openapi.projectRoots.impl.UnknownSdkFixAction
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdkLookup
 import com.intellij.openapi.roots.ui.configuration.projectRoot.SdkDownloadTracker
+import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.ThreadingAssertions
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -44,7 +48,7 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
   val onSdkNameResolvedConsumer = Consumer<Sdk?> { onSdkNameResolved(it) }
   val onSdkResolvedConsumer = Consumer<Sdk?> { onSdkResolved(it) }
 
-  fun resolveProgressIndicator() : ProgressIndicator {
+  fun resolveProgressIndicator(): ProgressIndicator {
     val indicator = params.progressIndicator
     if (indicator != null) return indicator
     return ProgressIndicatorBase()
@@ -62,7 +66,8 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
 
     if (sdk != null && !checkSdkHomeAndVersion(sdk)) {
       params.onSdkResolved.invoke(null)
-    } else {
+    }
+    else {
       params.onSdkResolved.invoke(sdk)
     }
   }
@@ -74,11 +79,11 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
     return params.sdkHomeFilter?.invoke(sdkHome) != false && checkSdkVersion(sdk)
   }
 
-  fun checkSdkVersion(sdk: Sdk?) : Boolean {
+  fun checkSdkVersion(sdk: Sdk?): Boolean {
     if (sdk == null) return false
     if (sdkType != null && sdk.sdkType != sdkType) return false
 
-    val versionString = runCatching { sdk.versionString  }.getOrNull() ?: return false
+    val versionString = runCatching { sdk.versionString }.getOrNull() ?: return false
     return params.versionFilter?.invoke(versionString) != false
   }
 
@@ -90,13 +95,18 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
     override fun onSdkResolved(sdk: Sdk) {
       if (checkSdkHomeAndVersion(sdk)) {
         this@SdkLookupContext.onSdkResolved(sdk)
-      } else {
+      }
+      else {
         LOG.warn("Downloaded SDK $fix was does not pass our filters $this@SdkLookupContext")
         this@SdkLookupContext.onSdkResolved(null)
       }
     }
 
     override fun onResolveFailed() {
+      this@SdkLookupContext.onSdkResolved(null)
+    }
+
+    override fun onResolveCancelled() {
       this@SdkLookupContext.onSdkResolved(null)
     }
   }
@@ -107,23 +117,23 @@ private open class SdkLookupContext(private val params: SdkLookupParameters) {
 private val LOG = logger<SdkLookupImpl>()
 
 @VisibleForTesting
+@ApiStatus.Internal
 class SdkLookupImpl : SdkLookup {
-  override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder { service<SdkLookup>().lookup(it) }
+  override fun createBuilder(): SdkLookupBuilder = CommonSdkLookupBuilder(lookup = { service<SdkLookup>().lookup(it) })
 
   override fun lookup(lookup: SdkLookupParameters) {
     SdkLookupContextEx(lookup).lookup()
   }
 
+  @RequiresBackgroundThread
   override fun lookupBlocking(lookup: SdkLookupParameters) {
-    ApplicationManager.getApplication().assertIsNonDispatchThread()
-
     object : SdkLookupContextEx(lookup) {
       override fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
         LOG.warn("It is not possible to wait for SDK download to complete in blocking execution mode. " +
-                  "Use another " + SdkLookupDownloadDecision::class.simpleName)
+                 "Use another " + SdkLookupDownloadDecision::class.simpleName)
 
         return {
-          ApplicationManager.getApplication().assertIsNonDispatchThread()
+          ThreadingAssertions.assertBackgroundThread()
           onSdkNameResolved(sdk)
 
           ///we do not have a better API on SdkDownloadTracker to wait for a download
@@ -135,7 +145,8 @@ class SdkLookupImpl : SdkLookup {
               if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) break
               Thread.sleep(300)
             }
-          } catch (e: InterruptedException) {
+          }
+          catch (_: InterruptedException) {
             rootProgressIndicator.checkCanceled()
             throw ProcessCanceledException()
           }
@@ -157,23 +168,25 @@ class SdkLookupImpl : SdkLookup {
 }
 
 private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupContext(lookup) {
+  val lookupReason = lookup.lookupReason
+
   fun lookup() {
     val rootProgressIndicator = resolveProgressIndicator()
 
-    run {
-      val namedSdk = sdkName?.let {
-        runReadAction {
-          when (sdkType) {
-            null -> ProjectJdkTable.getInstance().findJdk(sdkName)
-            else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
-          }
+    val namedSdk = sdkName?.let {
+      ApplicationManager.getApplication().runReadAction(Computable {
+        when (sdkType) {
+          null -> ProjectJdkTable.getInstance().findJdk(sdkName)
+          else -> ProjectJdkTable.getInstance().findJdk(sdkName, sdkType.name)
         }
-      }
-
-      if (trySdk(namedSdk, rootProgressIndicator)) return
+      })
     }
 
-    for (sdk : Sdk? in SdkDownloadTracker.getInstance().findDownloadingSdks(sdkName)) {
+    if (trySdk(namedSdk, rootProgressIndicator)) {
+      return
+    }
+
+    for (sdk: Sdk? in SdkDownloadTracker.getInstance().findDownloadingSdks(sdkName)) {
       if (trySdk(sdk, rootProgressIndicator)) return
     }
 
@@ -184,14 +197,16 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     continueSdkLookupWithSuggestions(rootProgressIndicator)
   }
 
-  private fun trySdk(sdk: Sdk?, rootProgressIndicator: ProgressIndicator) : Boolean {
+  private fun trySdk(sdk: Sdk?, rootProgressIndicator: ProgressIndicator): Boolean {
     rootProgressIndicator.checkCanceled()
     if (sdk == null) return false
     return testLoadSdkAndWaitIfNeeded(sdk, rootProgressIndicator)
   }
 
-  private fun testLoadSdkAndWaitIfNeeded(sdk: Sdk,
-                                         rootProgressIndicator: ProgressIndicator): Boolean {
+  private fun testLoadSdkAndWaitIfNeeded(
+    sdk: Sdk,
+    rootProgressIndicator: ProgressIndicator,
+  ): Boolean {
 
     if (!checkSdkVersion(sdk)) return false
     if (testSdkAndWaitForDownloadIfNeeded(sdk, rootProgressIndicator)) return true
@@ -199,7 +214,7 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     return false
   }
 
-  fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : Boolean {
+  fun testSdkAndWaitForDownloadIfNeeded(sdk: Sdk, rootProgressIndicator: ProgressIndicator): Boolean {
     if (!SdkDownloadTracker.getInstance().isDownloading(sdk)) return false
 
     //  we need to make sure there is no race conditions,
@@ -212,15 +227,19 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
       when (onDownloadingSdkDetected(sdk)) {
         SdkLookupDownloadDecision.WAIT -> doWaitSdkDownloadToComplete(sdk, rootProgressIndicator)
-        SdkLookupDownloadDecision.SKIP -> {{ false }}
-        SdkLookupDownloadDecision.STOP -> {{ onSdkResolved(null); true }}
+        SdkLookupDownloadDecision.SKIP -> {
+          { false }
+        }
+        SdkLookupDownloadDecision.STOP -> {
+          { onSdkResolved(null); true }
+        }
       }
     }
 
     return action()
   }
 
-  open fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator) : () -> Boolean {
+  open fun doWaitSdkDownloadToComplete(sdk: Sdk, rootProgressIndicator: ProgressIndicator): () -> Boolean {
     val disposable = Disposer.newDisposable()
     val onDownloadCompleted = Consumer<Boolean> { onSucceeded ->
       Disposer.dispose(disposable)
@@ -276,12 +295,12 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
       return
     }
 
-    val unknownSdk = object: UnknownSdk {
+    val unknownSdk = object : UnknownSdk {
       val versionPredicate = versionFilter?.let(::toVersionPredicate)
       val homePredicate = sdkHomeFilter?.let(::toHomePredicate)
 
       override fun getSdkName() = this@SdkLookupContextEx.sdkName
-      override fun getSdkType() : SdkType = this@SdkLookupContextEx.sdkType
+      override fun getSdkType(): SdkType = this@SdkLookupContextEx.sdkType
       override fun getSdkVersionStringPredicate() = versionPredicate
       override fun getSdkHomePredicate() = homePredicate
 
@@ -330,7 +349,8 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
         if (sdkPrototype != null && sdkPrototype in runReadAction { ProjectJdkTable.getInstance().allJdks }) {
           if (testLoadSdkAndWaitIfNeeded(sdkPrototype, indicator)) {
             return@runSdkResolutionUnderProgress
-          } else {
+          }
+          else {
             LOG.warn("The matched local SDK $possibleFix does not pass our filters in ${this@SdkLookupContextEx}")
             return@runSdkResolutionUnderProgress onSdkResolved(null)
           }
@@ -342,10 +362,12 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
 
         possibleFix.addSuggestionListener(getFixListener(possibleFix))
         executeFix(indicator, possibleFix)
-      } catch (e: ProcessCanceledException) {
+      }
+      catch (e: ProcessCanceledException) {
         onSdkResolved(null)
         throw e
-      } catch (t: Throwable) {
+      }
+      catch (t: Throwable) {
         LOG.warn("Failed to resolve SDK for ${this@SdkLookupContextEx}. ${t.message}", t)
 
         onSdkResolved(null)
@@ -371,37 +393,40 @@ private open class SdkLookupContextEx(lookup: SdkLookupParameters) : SdkLookupCo
     possibleFix.applySuggestionAsync(project)
   }
 
-  private fun resolveLocalFix(resolvers: List<UnknownSdkLookup>,
-                              unknownSdk: UnknownSdk,
-                              indicator: ProgressIndicator) = indicator.withPushPop {
+  private fun resolveLocalFix(
+    resolvers: List<UnknownSdkLookup>,
+    unknownSdk: UnknownSdk,
+    indicator: ProgressIndicator,
+  ) = indicator.withPushPop {
     indicator.text = ProjectBundle.message("progress.text.looking.for.local.sdks")
     resolvers
-                     .asSequence()
-                     .onEach { indicator.checkCanceled() }
-                     .mapNotNull { it.proposeLocalFix(unknownSdk, indicator) }
-                     .filter { versionFilter?.invoke(it.versionString) != false }
-                     .filter { sdkHomeFilter?.invoke(it.existingSdkHome) != false }
-                     .onEach { indicator.checkCanceled() }
-                     .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
-                     .firstOrNull()
+      .asSequence()
+      .onEach { indicator.checkCanceled() }
+      .mapNotNull { it.proposeLocalFix(unknownSdk, indicator) }
+      .filter { versionFilter?.invoke(it.versionString) != false }
+      .filter { sdkHomeFilter?.invoke(it.existingSdkHome) != false }
+      .onEach { indicator.checkCanceled() }
+      .filter { onLocalSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
+      .firstOrNull()
   }
 
-  private fun resolveDownloadFix(resolvers: List<UnknownSdkLookup>,
-                                 unknownSdk: UnknownSdk,
-                                 indicator: ProgressIndicator) = indicator.withPushPop {
+  private fun resolveDownloadFix(
+    resolvers: List<UnknownSdkLookup>,
+    unknownSdk: UnknownSdk,
+    indicator: ProgressIndicator,
+  ) = indicator.withPushPop {
     indicator.text = ProjectBundle.message("progress.text.looking.for.downloadable.sdks")
     resolvers
-                        .asSequence()
-                        .onEach { indicator.checkCanceled() }
-                        .mapNotNull { it.proposeDownload(unknownSdk, indicator) }
-                        .filter { versionFilter?.invoke(it.versionString) != false }
-                        .onEach { indicator.checkCanceled() }
-                        .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
-                        .firstOrNull()
+      .asSequence()
+      .onEach { indicator.checkCanceled() }
+      .mapNotNull { it.proposeDownload(unknownSdk, indicator, lookupReason) }
+      .filter { versionFilter?.invoke(it.versionString) != false }
+      .onEach { indicator.checkCanceled() }
+      .filter { onDownloadableSdkSuggested.invoke(it) == SdkLookupDecision.CONTINUE }
+      .firstOrNull()
   }
 
-  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator,
-                                         action: (ProgressIndicator) -> Unit) {
+  open fun runSdkResolutionUnderProgress(rootProgressIndicator: ProgressIndicator, action: (ProgressIndicator) -> Unit) {
     val sdkTypeName = sdkType?.presentableName ?: ProjectBundle.message("sdk")
     val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
 

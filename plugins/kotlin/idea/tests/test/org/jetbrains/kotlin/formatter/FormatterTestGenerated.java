@@ -297,6 +297,21 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 runTest("testData/formatter/parameterList/ArgumentListDoNotWrap.after.kt");
             }
 
+            @TestMetadata("ArgumentListNamedArguments.after.kt")
+            public void testArgumentListNamedArguments() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.kt")
+            public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsInFunction.after.kt")
+            public void testArgumentListNamedArgumentsInFunction() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.kt");
+            }
+
             @TestMetadata("ArgumentListWrapAlways.after.kt")
             public void testArgumentListWrapAlways() throws Exception {
                 runTest("testData/formatter/parameterList/ArgumentListWrapAlways.after.kt");
@@ -1712,6 +1727,21 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArgumentListNamedArguments.after.inv.kt")
+            public void testArgumentListNamedArguments() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArguments.after.inv.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsFunctionCall.after.inv.kt")
+            public void testArgumentListNamedArgumentsFunctionCall() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsFunctionCall.after.inv.kt");
+            }
+
+            @TestMetadata("ArgumentListNamedArgumentsInFunction.after.inv.kt")
+            public void testArgumentListNamedArgumentsInFunction() throws Exception {
+                runTest("testData/formatter/parameterList/ArgumentListNamedArgumentsInFunction.after.inv.kt");
             }
 
             @TestMetadata("DefaultParameterValues.after.inv.kt")

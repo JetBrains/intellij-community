@@ -16,12 +16,14 @@ import com.intellij.openapi.util.SimpleModificationTracker;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
 import kotlin.jvm.functions.Function1;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
+@ApiStatus.Internal
 public class MockDumbService extends DumbService {
   private final Project myProject;
 

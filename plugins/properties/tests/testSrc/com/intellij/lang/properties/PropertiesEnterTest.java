@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ public class PropertiesEnterTest extends LightPlatformCodeInsightTestCase {
     String line = "some.relatively.long.property.name=And here's some property value for that really unique key, nice to have\n";
     String text = StringUtil.repeat(line, 20000) + "<caret>\n" + StringUtil.repeat(line, 10000);
     configureFromFileText("performance.properties", text);
-    PerformanceTestUtil.newPerformanceTest("Property files editing", () -> {
+    Benchmark.newBenchmark("Property files editing", () -> {
       type("aaaa=bbb");
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     }).start();

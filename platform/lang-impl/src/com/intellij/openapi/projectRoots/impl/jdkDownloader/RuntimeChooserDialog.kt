@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.icons.AllIcons
@@ -35,14 +35,14 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.io.path.isDirectory
 
-sealed class RuntimeChooserDialogResult {
+internal sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
   object UseDefault: RuntimeChooserDialogResult()
   data class DownloadAndUse(val item: JdkItem, val path: Path) : RuntimeChooserDialogResult()
   data class UseCustomJdk(val name: String, val path: Path) : RuntimeChooserDialogResult()
 }
 
-class RuntimeChooserDialog(
+internal class RuntimeChooserDialog(
   private val project: Project?,
   private val model: RuntimeChooserModel,
 ) : DialogWrapper(project), DataProvider {
@@ -205,9 +205,8 @@ class RuntimeChooserDialog(
       //download row
       row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
-          project = project,
-          browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
-          fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+          FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle(LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk")),
+          project
         ).align(AlignX.FILL)
           .comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
           .component

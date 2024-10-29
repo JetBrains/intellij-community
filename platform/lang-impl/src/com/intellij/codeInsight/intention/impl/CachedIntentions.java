@@ -170,7 +170,7 @@ public final class CachedIntentions implements IntentionContainer {
     PresentationFactory presentationFactory = new PresentationFactory();
     List<AnAction> actions = Utils.expandActionGroup(
       group, presentationFactory,
-      EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU);
+      EditorUtil.getEditorDataContext(myEditor), ActionPlaces.INTENTION_MENU, ActionUiKind.POPUP);
     List<HighlightInfo.IntentionActionDescriptor> descriptors = new ArrayList<>();
     int order = 0;
     boolean hasSeparatorAbove = false;
@@ -187,7 +187,7 @@ public final class CachedIntentions implements IntentionContainer {
       intentionAction.updateFromPresentation(presentation);
       if (!filter.test(intentionAction)) continue;
       HighlightInfo.IntentionActionDescriptor descriptor = new HighlightInfo.IntentionActionDescriptor(
-        intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null);
+        intentionAction, Collections.emptyList(), intentionAction.getText(), intentionAction.getIcon(0), null, null, null, null);
       descriptors.add(descriptor);
       hasSeparatorAbove = false;
     }

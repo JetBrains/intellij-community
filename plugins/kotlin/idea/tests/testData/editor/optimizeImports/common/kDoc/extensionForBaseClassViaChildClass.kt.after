@@ -1,0 +1,9 @@
+package test
+
+import dependency.Child
+import dependency.baseExt
+
+/**
+ * [Child.baseExt]
+ */
+fun usage() {}

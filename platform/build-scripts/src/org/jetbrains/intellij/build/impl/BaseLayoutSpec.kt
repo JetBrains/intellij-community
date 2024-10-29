@@ -3,9 +3,7 @@
 
 package org.jetbrains.intellij.build.impl
 
-import org.jetbrains.annotations.ApiStatus.Obsolete
 import org.jetbrains.intellij.build.BuildContext
-import java.util.function.BiConsumer
 
 sealed class BaseLayoutSpec(private val layout: BaseLayout) {
   /**
@@ -40,7 +38,7 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
     layout.withProjectLibrary(libraryName)
   }
 
-  fun withProjectLibraries(libraryNames: Iterable<String>) {
+  fun withProjectLibraries(libraryNames: Sequence<String>) {
     layout.withProjectLibraries(libraryNames)
   }
 
@@ -75,14 +73,6 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
       relativeOutputPath = relativeOutputPath,
       extraCopy = extraCopy,
     )
-  }
-
-  fun excludeModuleLibrary(libraryName: String, moduleName: String) {
-    layout.excludedLibraries.computeIfAbsent(moduleName) { ArrayList() }.add(libraryName)
-  }
-
-  fun excludeProjectLibrary(libraryName: String) {
-    layout.excludedLibraries.computeIfAbsent(null) { ArrayList() }.add(libraryName)
   }
 
   /**
@@ -122,10 +112,5 @@ sealed class BaseLayoutSpec(private val layout: BaseLayout) {
 
   fun withPatch(patcher: suspend (ModuleOutputPatcher, BuildContext) -> Unit) {
     layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher(moduleOutputPatcher, buildContext) }
-  }
-
-  @Obsolete
-  fun withSyncPatch(patcher: BiConsumer<ModuleOutputPatcher, BuildContext>) {
-    layout.withPatch { moduleOutputPatcher, _, buildContext -> patcher.accept(moduleOutputPatcher, buildContext) }
   }
 }

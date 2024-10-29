@@ -42,6 +42,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String REBASE_APPLY = "rebase-apply";
   private static final @NonNls String REBASE_MERGE = "rebase-merge";
   private static final @NonNls String PACKED_REFS = "packed-refs";
+  private static final @NonNls String REFTABLE = "reftable";
   private static final @NonNls String REFS = "refs";
   private static final @NonNls String REVERT_HEAD = "REVERT_HEAD";
   private static final @NonNls String HEADS = "heads";
@@ -71,6 +72,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myRebaseApplyPath;
   private final @NonNls String myRebaseMergePath;
   private final @NonNls String myPackedRefsPath;
+  private final @NonNls String myReftablePath;
   private final @NonNls String myRefsHeadsDirPath;
   private final @NonNls String myRefsRemotesDirPath;
   private final @NonNls String myRefsTagsPath;
@@ -99,6 +101,7 @@ public final class GitRepositoryFiles {
     String mainPath = myMainDir.getPath();
     myConfigFilePath = mainPath + slash(CONFIG);
     myPackedRefsPath = mainPath + slash(PACKED_REFS);
+    myReftablePath = mainPath + slash(REFTABLE);
     String refsPath = mainPath + slash(REFS);
     myRefsHeadsDirPath = refsPath + slash(HEADS);
     myRefsTagsPath = refsPath + slash(TAGS);
@@ -160,12 +163,17 @@ public final class GitRepositoryFiles {
     return "/" + s;
   }
 
+  public @NotNull VirtualFile getRootDir() {
+    return myRootDir;
+  }
+
   /**
    * Returns subdirectories and paths of .git which we are interested in - they should be watched by VFS.
    */
   @NotNull
   Collection<String> getPathsToWatch() {
-    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myInfoDirPath, myHooksDirPath, myStashReflogPath);
+    return Arrays.asList(myRefsHeadsDirPath, myRefsRemotesDirPath, myRefsTagsPath, myReftablePath, myInfoDirPath, myHooksDirPath,
+                         myStashReflogPath);
   }
 
   @NotNull
@@ -181,6 +189,11 @@ public final class GitRepositoryFiles {
   @NotNull
   File getRefsTagsFile() {
     return file(myRefsTagsPath);
+  }
+
+  @NotNull
+  File getReftableFile() {
+    return file(myReftablePath);
   }
 
   @NotNull
@@ -337,6 +350,13 @@ public final class GitRepositoryFiles {
   }
 
   /**
+   * .git/reftable/*
+   */
+  public boolean isReftableFile(@NotNull String path) {
+    return path.startsWith(myReftablePath);
+  }
+
+  /**
    * .git/rebase-merge or .git/rebase-apply
    */
   public boolean isRebaseFile(String path) {
@@ -401,7 +421,8 @@ public final class GitRepositoryFiles {
   public void refreshTagsFiles() {
     VirtualFile tagsDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myRefsTagsPath);
     VirtualFile packedRefsFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(myPackedRefsPath);
-    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile);
+    VirtualFile reftableDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myReftablePath);
+    VfsUtil.markDirtyAndRefresh(true, true, false, tagsDir, packedRefsFile, reftableDir);
   }
 
   @NotNull

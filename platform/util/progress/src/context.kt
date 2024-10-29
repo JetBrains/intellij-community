@@ -3,6 +3,7 @@
 
 package com.intellij.platform.util.progress
 
+import com.intellij.concurrency.IntelliJContextElement
 import com.intellij.platform.util.progress.impl.EmptyProgressStep
 import com.intellij.platform.util.progress.impl.ProgressStep
 import kotlinx.coroutines.CoroutineScope
@@ -65,7 +66,9 @@ private fun CoroutineContext.currentProgressStep(): ProgressStep {
   return this[ProgressStepElement.Key]?.step ?: EmptyProgressStep
 }
 
-private class ProgressStepElement(val step: ProgressStep) : AbstractCoroutineContextElement(Key) {
+private class ProgressStepElement(val step: ProgressStep) : AbstractCoroutineContextElement(Key), IntelliJContextElement {
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   object Key : CoroutineContext.Key<ProgressStepElement>
 }
 
@@ -100,8 +103,11 @@ fun RawProgressReporter.asContextElement(): CoroutineContext.Element = ProgressR
 )
 val CoroutineContext.rawProgressReporter: RawProgressReporter? get() = (this[ProgressReporterElement] as? ProgressReporterElement.Raw)?.reporter
 
-private sealed class ProgressReporterElement : AbstractCoroutineContextElement(ProgressReporterElement) {
+private sealed class ProgressReporterElement : AbstractCoroutineContextElement(ProgressReporterElement), IntelliJContextElement {
   companion object : CoroutineContext.Key<ProgressReporterElement>
+
+  override fun produceChildElement(parentContext: CoroutineContext, isStructured: Boolean): IntelliJContextElement = this
+
   data object Step : ProgressReporterElement()
   class Raw(val reporter: RawProgressReporter) : ProgressReporterElement()
 }

@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.configuration
 
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.module.Module
@@ -9,7 +10,11 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.IndexingTestUtil
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCommonCompilerArgumentsHolder
+import org.jetbrains.kotlin.idea.configuration.ui.KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME
+import org.junit.Assert
 
 abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
     protected fun doTestConfigureModulesWithNonDefaultSetup(configurator: KotlinWithLibraryConfigurator<*>) {
@@ -17,6 +22,25 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
         configurator.configure(myProject, emptyList())
         IndexingTestUtil.waitUntilIndexesAreReady(project)
         modules.forEach { assertProperlyConfigured(it, configurator) }
+    }
+
+    override fun setUp() {
+        super.setUp()
+        waitForKotlinSettingsConfiguration()
+    }
+
+    private fun waitForKotlinSettingsConfiguration() {
+        // Make sure that the Kotlin compiler settings are initialized
+        KotlinCommonCompilerArgumentsHolder.getInstance(project)
+        // Updating the settings is done in a coroutine that might take several EDT dispatches to work.
+        // We dispatch them up to 10 times here to ensure the settings are updated correctly.
+        val propertiesComponent = PropertiesComponent.getInstance(project)
+        for (i in 1..5) {
+            if (propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME)) break
+            UIUtil.dispatchAllInvocationEvents()
+            Thread.sleep(100)
+        }
+        Assert.assertTrue(propertiesComponent.isValueSet(KOTLIN_LANGUAGE_VERSION_CONFIGURED_PROPERTY_NAME))
     }
 
     protected fun doTestSingleJvmModule() {

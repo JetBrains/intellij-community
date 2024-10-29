@@ -24,10 +24,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -39,6 +36,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -94,6 +92,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
   private RunDashboardComponentWrapper myContentWrapper;
   private JComponent myEmptyContent;
+  private RunDashboardTypePanel myTypeContent;
 
   public RunDashboardManagerImpl(@NotNull Project project) {
     myProject = project;
@@ -467,9 +466,10 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   }
 
   private void syncConfigurations() {
-    List<RunnerAndConfigurationSettings> settingsList = ContainerUtil.filter(RunManager.getInstance(myProject).getAllSettings(), settings -> {
-      return isShowInDashboard(settings.getConfiguration());
-    });
+    List<RunnerAndConfigurationSettings> settingsList =
+      ContainerUtil.filter(RunManager.getInstance(myProject).getAllSettings(), settings -> {
+        return isShowInDashboard(settings.getConfiguration());
+      });
     List<List<RunDashboardServiceImpl>> result = new ArrayList<>();
     myServiceLock.writeLock().lock();
     try {
@@ -749,30 +749,43 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
       JBPanelWithEmptyText textPanel = new JBPanelWithEmptyText()
         .withEmptyText(ExecutionBundle.message("run.dashboard.configurations.message"));
       textPanel.setFocusable(true);
+      JComponent wrapped = UiDataProvider.wrapComponent(textPanel,
+                                                        sink -> sink.set(PlatformDataKeys.TREE_EXPANDER_HIDE_ACTIONS_IF_NO_EXPANDER, true));
       JPanel mainPanel = new NonOpaquePanel(new BorderLayout());
-      mainPanel.add(textPanel, BorderLayout.CENTER);
-      if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
-        if (ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR) instanceof ActionGroup group) {
-          group.registerCustomShortcutSet(textPanel, myProject);
-          ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
-          toolbar.setTargetComponent(textPanel);
-          mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
-          int left = 0;
-          int right = 0;
-          Border border = toolbar.getComponent().getBorder();
-          if (border != null) {
-            Insets insets = border.getBorderInsets(toolbar.getComponent());
-            left = insets.left;
-            right = insets.right;
-          }
-          toolbar.getComponent().setBorder(JBUI.Borders.empty(1, left, 0, right));
-          textPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
-        }
-      }
-      ClientProperty.put(mainPanel, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
+      mainPanel.add(wrapped, BorderLayout.CENTER);
+      setupToolbar(mainPanel, wrapped, myProject);
       myEmptyContent = mainPanel;
     }
     return myEmptyContent;
+  }
+
+  RunDashboardTypePanel getTypeContent() {
+    if (myTypeContent == null) {
+      myTypeContent = new RunDashboardTypePanel(myProject);
+    }
+    return myTypeContent;
+  }
+
+  static void setupToolbar(@NotNull JPanel mainPanel, @NotNull JComponent component, @NotNull Project project) {
+    if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
+      if (ActionManager.getInstance().getAction(RUN_DASHBOARD_CONTENT_TOOLBAR) instanceof ActionGroup group) {
+        group.registerCustomShortcutSet(component, project);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
+        toolbar.setTargetComponent(component);
+        mainPanel.add(ServiceViewUIUtils.wrapServicesAligned(toolbar), BorderLayout.NORTH);
+        int left = 0;
+        int right = 0;
+        Border border = toolbar.getComponent().getBorder();
+        if (border != null) {
+          Insets insets = border.getBorderInsets(toolbar.getComponent());
+          left = insets.left;
+          right = insets.right;
+        }
+        toolbar.getComponent().setBorder(JBUI.Borders.empty(1, left, 0, right));
+        component.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+      }
+    }
+    ClientProperty.put(mainPanel, ServiceViewDescriptor.ACTION_HOLDER_KEY, Boolean.TRUE);
   }
 
   RunDashboardComponentWrapper getContentWrapper() {
@@ -843,7 +856,12 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
   @Override
   public void noStateLoaded() {
     myTypes.clear();
-    myTypes.addAll(getEnableByDefaultTypes());
+    if (myProject.isDefault()) {
+      myTypes.addAll(getEnableByDefaultTypes());
+    }
+    else {
+      myTypes.addAll(RunDashboardManager.getInstance(ProjectManager.getInstance().getDefaultProject()).getTypes());
+    }
     if (!myTypes.isEmpty()) {
       initTypes();
     }
@@ -919,7 +937,7 @@ public final class RunDashboardManagerImpl implements RunDashboardManager, Persi
           RunnerAndConfigurationSettings settings = node.getConfigurationSettings();
           ((ServiceViewManagerImpl)ServiceViewManager.getInstance(myProject))
             .trackingSelect(node, RunDashboardServiceViewContributor.class,
-                    settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun())
+                            settings.isActivateToolWindowBeforeRun(), settings.isFocusToolWindowBeforeRun())
             .onSuccess(selected -> {
               if (selected != Boolean.TRUE) {
                 selectPreviousContent();

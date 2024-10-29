@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -80,8 +80,7 @@ public class JBColor extends Color {
     func = null;
   }
 
-  @NotNull
-  public static JBColor lazy(@NotNull Supplier<? extends @NotNull Color> supplier) {
+  public static @NotNull JBColor lazy(@NotNull Supplier<? extends @NotNull Color> supplier) {
     return new JBColor(supplier);
   }
 
@@ -141,10 +140,8 @@ public class JBColor extends Color {
     if (color == null) {
       color = findPatternMatch(propertyName);
     }
-    if (UIManager.get(propertyName) == null) {
-      if (Registry.is("ide.save.missing.jb.colors", false)) {
-        return _saveAndReturnColor(propertyName, color == null ? Gray.TRANSPARENT : color);
-      }
+    if (UIManager.get(propertyName) == null && Registry.is("ide.save.missing.jb.colors", false)) {
+      return _saveAndReturnColor(propertyName, color == null ? Gray.TRANSPARENT : color);
     }
     return color;
   }
@@ -180,14 +177,6 @@ public class JBColor extends Color {
   }
 
   private static final Color CACHED_NULL = marker("CACHED_NULL");
-
-  /**
-   * @deprecated use {@link CurrentTheme.Link.Foreground#ENABLED}
-   */
-  @Deprecated(forRemoval = true)
-  public static @NotNull Color link() {
-    return CurrentTheme.Link.Foreground.ENABLED;
-  }
 
   public static void setDark(boolean dark) {
     DARK.setValue(dark);

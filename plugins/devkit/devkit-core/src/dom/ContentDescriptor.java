@@ -3,7 +3,6 @@ package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.util.xml.*;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.dom.impl.ModuleDescriptorNameConverter;
 
@@ -26,5 +25,24 @@ public interface ContentDescriptor extends DomElement {
     @NameValue(referencable = false)
     @Convert(ModuleDescriptorNameConverter.class)
     GenericAttributeValue<IdeaPlugin> getName();
+
+    @NotNull
+    @Stubbed
+    GenericAttributeValue<ModuleLoadingRule> getLoading();
+    
+    enum ModuleLoadingRule implements NamedEnum {
+      REQUIRED("required"), OPTIONAL("optional"), ON_DEMAND("on-demand");
+
+      private final String myValue;
+
+      ModuleLoadingRule(@NotNull String value) {
+        myValue = value;
+      }
+
+      @Override
+      public String getValue() {
+        return myValue;
+      }
+    }
   }
 }

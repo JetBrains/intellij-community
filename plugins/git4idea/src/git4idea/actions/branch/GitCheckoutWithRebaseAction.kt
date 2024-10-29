@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.util.containers.ContainerUtil
 import git4idea.GitBranch
-import git4idea.GitLocalBranch
 import git4idea.GitReference
 import git4idea.GitRemoteBranch
 import git4idea.branch.GitBrancher
@@ -17,11 +16,10 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.GitBranchPopupActions.*
 import git4idea.ui.branch.GitCheckoutAndRebaseRemoteBranchWorkflow
 import git4idea.ui.branch.hasTrackingConflicts
-import java.util.*
 
 class GitCheckoutWithRebaseAction : GitSingleBranchAction(GitBundle.messagePointer("branches.checkout.and.rebase.onto.current")) {
 
-  override val disabledForCurrent = true
+  override fun isEnabledForRef(ref: GitBranch, repositories: List<GitRepository>) = !isCurrentRefInAnyRepo(ref, repositories)
 
   override fun updateIfEnabledAndVisible(e: AnActionEvent, project: Project, repositories: List<GitRepository>, branch: GitBranch) {
     val description = GitBundle.message("branches.checkout.and.rebase.onto.in.one.step",

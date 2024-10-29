@@ -121,6 +121,11 @@ internal class A {
         3.14.toString()
         Any().toString()
 
+        var i = 0
+        (++i).toString()
+        (i++).toString()
+        (1 + 1).toString()
+
         String.format(
             Locale.FRENCH,
             "Je ne mange pas %d jours",

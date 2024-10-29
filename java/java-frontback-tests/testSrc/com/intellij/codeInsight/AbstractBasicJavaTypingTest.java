@@ -174,7 +174,42 @@ public abstract class AbstractBasicJavaTypingTest extends BasePlatformTestCase {
     setLanguageLevel(LanguageLevel.JDK_21_PREVIEW);
     doTest('}');
   }
-  
+
+  public void testCloseBracesAfterSwitchRule() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRuleNewLine() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRuleNewLine2() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRule2ThrowStatement() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRule2Expression() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRule3Expression() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
+  public void testCloseBracesAfterSwitchRule3ExpressionOldLine() {
+    setLanguageLevel(LanguageLevel.JDK_21);
+    doTest('{');
+  }
+
   protected void setLanguageLevel(@NotNull LanguageLevel level) {
     IdeaTestUtil.setProjectLanguageLevel(getProject(), level, myFixture.getTestRootDisposable());
   }

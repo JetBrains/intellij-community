@@ -1,15 +1,17 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdk;
 import com.intellij.openapi.roots.ui.configuration.UnknownSdkDownloadableSdkFix;
+import com.intellij.openapi.roots.ui.configuration.UnknownSdkMultipleDownloadsFix;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase implements UnknownSdkFixAction {
-  private @NotNull final UnknownSdkDownloadableSdkFix myFix;
-  private @NotNull final UnknownSdk mySdk;
+  private final @NotNull UnknownSdkDownloadableSdkFix myFix;
+  private final @NotNull UnknownSdk mySdk;
 
   UnknownMissingSdkFixDownload(@NotNull UnknownSdk sdk,
                                @NotNull UnknownSdkDownloadableSdkFix fix) {
@@ -48,6 +50,37 @@ final class UnknownMissingSdkFixDownload extends UnknownSdkFixActionDownloadBase
                                         myFix.configureSdk(sdk);
                                         UnknownMissingSdkFix.registerNewSdkInJdkTable(sdk.getName(), sdk);
                                       });
+  }
+
+  @Override
+  protected @NotNull String getDownloadDescription() {
+    return myFix.getDownloadDescription();
+  }
+
+  @Override
+  protected @Nullable String getSdkLookupReason() {
+    return myFix.getSdkLookupReason();
+  }
+
+  @Override
+  public boolean supportsSdkChoice() {
+    return myFix instanceof UnknownSdkMultipleDownloadsFix<?>;
+  }
+
+  @Override
+  public @NotNull @Nls String getChoiceActionText() {
+    return ProjectBundle.message("sdk.choice.action.text", mySdk.getSdkType().getPresentableName());
+  }
+
+  @Override
+  public boolean chooseSdk() {
+    if (myFix instanceof UnknownSdkMultipleDownloadsFix<?> multipleDownloadsFix) {
+      if (multipleDownloadsFix.chooseItem(mySdk.getSdkType().getPresentableName())) {
+        giveConsent();
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

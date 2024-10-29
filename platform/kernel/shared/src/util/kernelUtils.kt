@@ -1,36 +1,83 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.kernel.util
 
+import com.intellij.ide.plugins.PluginUtil
+import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.openapi.extensions.ExtensionPointListener
+import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.platform.kernel.EntityTypeProvider
 import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.collectEntityClasses
-import fleet.kernel.Kernel
-import fleet.kernel.KernelMiddleware
-import fleet.kernel.kernel
+import fleet.kernel.*
 import fleet.kernel.rebase.*
+import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
-import fleet.kernel.subscribe
 import fleet.rpc.core.Serialization
-import fleet.util.async.conflateReduce
-import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.atomic.AtomicInteger
+import kotlin.coroutines.CoroutineContext
 
-@ApiStatus.Internal
-@ApiStatus.Experimental
-suspend fun <T> withKernel(middleware: KernelMiddleware, body: suspend () -> T) {
-  val entityClasses = listOf(Kernel::class.java.classLoader).flatMap(::collectEntityClasses)
-  fleet.kernel.withKernel(entityClasses, middleware = middleware) { currentKernel ->
+suspend fun <T> withKernel(middleware: TransactorMiddleware, body: suspend CoroutineScope.() -> T) {
+  val entityClasses = listOf(Transactor::class.java.classLoader).flatMap {
+    collectEntityClasses(it, PluginUtil.getPluginId(it).idString)
+  }
+  withTransactor(entityClasses, middleware = middleware) { _ ->
     withRete {
       body()
     }
   }
+}
+
+fun handleEntityTypes(transactor: Transactor, coroutineScope: CoroutineScope) {
+  transactor.changeAsync {
+    for (extension in EntityTypeProvider.EP_NAME.extensionList) {
+      for (entityType in extension.entityTypes()) {
+        register(entityType)
+      }
+    }
+  }
+  EntityTypeProvider.EP_NAME.addExtensionPointListener(coroutineScope, object : ExtensionPointListener<EntityTypeProvider> {
+    override fun extensionAdded(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      transactor.changeAsync {
+        for (entityType in extension.entityTypes()) {
+          register(entityType)
+        }
+      }
+    }
+
+    override fun extensionRemoved(extension: EntityTypeProvider, pluginDescriptor: PluginDescriptor) {
+      transactor.changeAsync {
+        for (entityType in extension.entityTypes()) {
+          entityType.delete()
+        }
+      }
+    }
+  })
+}
+
+fun CoroutineContext.kernelCoroutineContext(): CoroutineContext {
+  return transactor + this[Rete]!! + this[DbSource.ContextElement]!!
+}
+
+/**
+ * The latest change is indefinitely stored in [Novelty] with all changed entities.
+ * For example, if an entity was removed it and all its fields
+ * will be present in [Novelty.retractions] until a new change happens.
+ *
+ * This might lead to some objects not being collected by GC until the last change is replaced by a new one.
+ *
+ * This method invokes an empty change on DB to push the last one out of memory.
+ * Don't use this method unless there are problems with objects stuck in [Novelty]
+ */
+@ApiStatus.Internal
+suspend fun Transactor.flushLatestChange() {
+  this.changeSuspend {  }
 }
 
 val CommonInstructionSet: InstructionSet =
@@ -47,56 +94,20 @@ val CommonInstructionSet: InstructionSet =
     CreateEntityCoder,
   ))
 
-object ReadTracker {
-  private val readTrackingIndex = ReadTrackingIndex()
-  private val lambdaCounter = AtomicInteger()
-  suspend fun subscribeForChanges() {
-    kernel().subscribe(Channel.UNLIMITED) { initial, changes ->
-      changes
-        .consumeAsFlow()
-        .map { c ->
-          c.dbAfter to c.novelty
-        }
-        .conflateReduce { (_, novelty1), (db2, novelty2) ->
-          db2 to novelty1 + novelty2
-        }
-        .collect { (db, novelty) ->
-          try {
-            withContext(Dispatchers.Main + ModalityState.any().asContextElement()) {
-              val lambdas = readTrackingIndex.query(novelty)
-              asOf(db.withReadTrackingContext(readTrackingIndex)) {
-                lambdas.forEach {
-                  readTrackingIndex.runLambda(it)
-                }
-              }
-              DbContext.set(db)
-            }
-          }
-          catch (e: Throwable) {
-          }
-        }
-    }
-  }
+val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
+  registerCRUDInstructions()
+}))
 
-  @RequiresEdt
-  fun forget(id: Int) {
-    readTrackingIndex.forget(id)
-  }
-
-  /**
-   * returns id of registered lambda, it should be passed to forget on disposing
-   */
-  @RequiresEdt
-  fun reactive(f: () -> Unit): Int {
-    val id = lambdaCounter.incrementAndGet()
-    val lambdaInfo = ReadTrackingIndex.LambdaInfo(id, f)
-    asOf(DbContext.threadBound.impl.withReadTrackingContext(readTrackingIndex)) {
-      readTrackingIndex.runLambda(lambdaInfo)
+suspend fun updateDbInTheEventDispatchThread(): Nothing {
+  withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
+    try {
+      transactor().log.collect { event ->
+        DbContext.threadLocal.set(DbContext<DB>(event.db, null))
+      }
+      awaitCancellation()
     }
-    return id;
+    finally {
+      DbContext.clearThreadBoundDbContext()
+    }
   }
 }
-
-val KernelRpcSerialization = Serialization(SerializersModule {
-  registerCRUDInstructions()
-})

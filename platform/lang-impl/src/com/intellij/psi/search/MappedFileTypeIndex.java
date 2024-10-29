@@ -6,7 +6,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -16,6 +15,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.mapped.MappedFileStorageHelper
 import com.intellij.util.indexing.FileBasedIndexExtension;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.StorageUpdate;
 import com.intellij.util.indexing.containers.*;
 import com.intellij.util.indexing.impl.ValueContainerImpl;
 import com.intellij.util.io.ResilientFileChannel;
@@ -104,7 +104,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
+  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
     try {
       int fileTypeId = getFileTypeId(content == null ? null : content.getFileType());
       if (LOG.isTraceEnabled()) {
@@ -659,7 +659,7 @@ public final class MappedFileTypeIndex extends FileTypeIndexImplBase {
     public void processEntries(@NotNull EntriesProcessor processor) throws StorageException {
       try {
         boolean isCheckCanceledNeeded = isCheckCanceledNeeded();
-        int maxAllocatedID = FSRecords.getInstance().connection().getRecords().maxAllocatedID();
+        int maxAllocatedID = FSRecords.getInstance().connection().records().maxAllocatedID();
         for (int fileId = FSRecords.ROOT_FILE_ID; fileId <= maxAllocatedID; fileId++) {
           if (isCheckCanceledNeeded) {
             ProgressManager.checkCanceled();

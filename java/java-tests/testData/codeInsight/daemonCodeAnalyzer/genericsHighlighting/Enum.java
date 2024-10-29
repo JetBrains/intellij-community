@@ -222,8 +222,8 @@ class NestedEnums {
 }
 
 enum EnumWithoutExpectedArguments {
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">ONE</error>, //comment
-  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">TWO</error>
+  <error descr="Expected 1 argument but found 0">ONE</error>, //comment
+  <error descr="Expected 1 argument but found 0">TWO</error>
   ;
   EnumWithoutExpectedArguments(int a) {}
 }

@@ -43,6 +43,9 @@ internal fun InsertionContext.insertAndShortenReferencesInStringUsingTemporarySu
         suffixToAffectParsingIfNecessary?.isNotEmpty() == true -> suffixToAffectParsingIfNecessary
 
         // if a context receiver has no owner declaration, then its type reference is not resolved and therefore cannot be shortened
+        token?.isContextReceiverWithoutFunctionalTypeDeclaration() == true -> ") () -> Unit"
+
+        // if a context receiver has no owner declaration, then its type reference is not resolved and therefore cannot be shortened
         token?.isContextReceiverWithoutOwnerDeclaration() == true -> ") fun"
 
         caretInTheMiddleOfElement(context = this) -> " "
@@ -75,7 +78,20 @@ private fun caretInTheMiddleOfElement(context: InsertionContext): Boolean {
 
 private fun PsiElement.isContextReceiverWithoutOwnerDeclaration(): Boolean {
     val contextReceiver = parentOfType<KtContextReceiver>()
-    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList ?: return false
+    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+        ?: return false
 
-    return contextReceiverList.parent !is KtDeclaration
+    return when (contextReceiverList.parent) {
+        is KtDeclaration -> false
+        is KtFunctionType -> false
+        else -> true
+    }
+}
+
+private fun PsiElement.isContextReceiverWithoutFunctionalTypeDeclaration(): Boolean {
+    val contextReceiver = parentOfType<KtContextReceiver>()
+    val contextReceiverList = contextReceiver?.parent as? KtContextReceiverList
+        ?: return false
+
+    return contextReceiverList.parent is KtTypeReference
 }

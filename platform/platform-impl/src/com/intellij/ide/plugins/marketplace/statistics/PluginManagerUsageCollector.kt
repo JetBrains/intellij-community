@@ -2,6 +2,8 @@
 package com.intellij.ide.plugins.marketplace.statistics
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performInstalledTabSearch
+import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector.performMarketplaceSearch
 import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerFUSCollector
 import com.intellij.ide.plugins.marketplace.statistics.collectors.PluginManagerMPCollector
 import com.intellij.ide.plugins.marketplace.statistics.enums.DialogAcceptanceResultEnum
@@ -24,7 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger
  */
 
 @ApiStatus.Internal
-internal object PluginManagerUsageCollector {
+object PluginManagerUsageCollector {
   private val fusCollector = PluginManagerFUSCollector()
   private val mpCollector = PluginManagerMPCollector()
 
@@ -54,14 +56,15 @@ internal object PluginManagerUsageCollector {
     return searchIndex.getAndIncrement()
   }
 
-  @JvmStatic
   fun performMarketplaceSearch(
     project: Project?,
     query: SearchQueryParser.Marketplace,
     results: List<IdeaPluginDescriptor>,
     searchIndex: Int,
     pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
-  ) = mpCollector.performMarketplaceSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  ) {
+    mpCollector.performMarketplaceSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  }
 
   @JvmStatic
   fun performInstalledTabSearch(
@@ -70,10 +73,13 @@ internal object PluginManagerUsageCollector {
     results: List<IdeaPluginDescriptor>,
     searchIndex: Int,
     pluginToScore: Map<IdeaPluginDescriptor, Double>? = null
-  ) = mpCollector.performInstalledTabSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  ) {
+    mpCollector.performInstalledTabSearch(project, query, results, searchIndex, sessionId.get(), pluginToScore)
+  }
 
-  @JvmStatic
-  fun searchReset() = mpCollector.searchReset(sessionId.get())
+  fun searchReset() {
+    mpCollector.searchReset(sessionId.get())
+  }
 
   @JvmStatic
   fun pluginCardOpened(descriptor: IdeaPluginDescriptor, group: PluginsGroup?) {

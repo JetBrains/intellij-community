@@ -46,7 +46,8 @@ class TestMethodWithoutAssertionInspection : AbstractBaseUastLocalInspectionTool
     .add("org.hamcrest.MatcherAssert", "assertThat")
     .add("mockit.Verifications", "Verifications")
     .add("kotlin.PreconditionsKt__AssertionsJVMKt", "assert")
-    .add("kotlin.test.AssertionsKt__AssertionsKt", "assert.*|fail.*|expect")
+    .add("kotlin.test.AssertionsKt__AssertionsKt", "assert.*|fail.*|expect") // for K1
+    .add("kotlin.test.AssertionsKt", "assert.*|fail.*|expect") // for K2
     .add("org.testng.Assert", "assert.*|fail.*|expect.*")
     .add("org.testng.AssertJUnit", "assert.*|fail.*")
     .finishDefault()

@@ -1,4 +1,3 @@
-// IGNORE_K2
 import com.sun.corba.se.impl.util.JDKBridge
 import com.sun.org.apache.xpath.internal.operations.And
 import java.lang.StringBuilder

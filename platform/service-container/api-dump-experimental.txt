@@ -1,0 +1,2 @@
+f:com.intellij.serviceContainer.ContextKt
+- *sf:instance(java.lang.Class,kotlin.coroutines.Continuation):java.lang.Object

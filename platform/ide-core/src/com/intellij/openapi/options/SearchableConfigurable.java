@@ -15,14 +15,12 @@ import java.util.List;
  * @see SearchableOptionContributor
  */
 public interface SearchableConfigurable extends ConfigurableWithId {
-
   /**
    * @param option setting search query
    * @return an action to perform when this configurable is opened when a search filter query is entered by the user in setting dialog.
    * This action, for example, can select something in a tree or a list embedded in this setting page that matches the query. 
    */
-  @Nullable
-  default Runnable enableSearch(String option) {
+  default @Nullable Runnable enableSearch(String option) {
     return null;
   }
 
@@ -37,8 +35,7 @@ public interface SearchableConfigurable extends ConfigurableWithId {
    *
    * @return a class which is a cause of the creation of this configurable
    */
-  @NotNull
-  default Class<?> getOriginalClass() {
+  default @NotNull Class<?> getOriginalClass() {
     return this.getClass();
   }
 
@@ -95,37 +92,32 @@ public interface SearchableConfigurable extends ConfigurableWithId {
       myConfigurable = configurable;
     }
 
-    @NotNull
     @Override
-    public String getId() {
+    public @NotNull String getId() {
       return myConfigurable instanceof SearchableConfigurable
              ? ((SearchableConfigurable)myConfigurable).getId()
              : myConfigurable.getClass().getName();
     }
 
-    @Nullable
     @Override
-    public Runnable enableSearch(String option) {
+    public @Nullable Runnable enableSearch(String option) {
       return myConfigurable instanceof SearchableConfigurable
              ? ((SearchableConfigurable)myConfigurable).enableSearch(option)
              : null;
     }
 
-    @Nls
     @Override
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return myConfigurable.getDisplayName();
     }
 
-    @Nullable
     @Override
-    public String getHelpTopic() {
+    public @Nullable String getHelpTopic() {
       return myConfigurable.getHelpTopic();
     }
 
-    @Nullable
     @Override
-    public JComponent createComponent() {
+    public @Nullable JComponent createComponent() {
       return myConfigurable.createComponent();
     }
 

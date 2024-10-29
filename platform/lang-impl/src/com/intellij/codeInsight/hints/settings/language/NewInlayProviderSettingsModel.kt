@@ -113,7 +113,7 @@ internal class NewInlayProviderSettingsModel<T : Any>(
   }
 }
 
-fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case?): String? {
+internal fun getCasePreview(language: Language, provider: Any, case: ImmediateConfigurable.Case?): String? {
   val key = (provider as? InlayHintsProvider<*>)?.key?.id ?: "Parameters"
   val fileType = language.associatedFileType ?: PlainTextFileType.INSTANCE
   return getStream(key, case, provider, fileType.defaultExtension) ?: getStream(key, case, provider, "dockerfile")

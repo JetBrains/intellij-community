@@ -188,7 +188,7 @@ public class InlineParameterTest extends LightRefactoringTestCase {
   public void testRefNewTopLevel() {
     doTest(false);
   }
-  
+
   public void testConflictingFieldName() {
     doTest(true);
   }
@@ -324,6 +324,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
       assertEquals("Method doTest() is already defined in the class <b><code>Test</code></b>", e.getMessage());
     }
+  }
+
+  public void testArrayInitializer() {
+    doTest(false);
   }
 
   private void doTest(final boolean createLocal) {

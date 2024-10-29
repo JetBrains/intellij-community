@@ -8,7 +8,6 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchUtil;
-import one.util.streamex.StreamEx;
 import org.ini4j.Ini;
 import org.ini4j.Profile;
 import org.jetbrains.annotations.NotNull;
@@ -16,10 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +45,10 @@ public final class GitConfig {
   private final @NotNull Core myCore;
 
 
-  private GitConfig(@NotNull Collection<? extends Remote> remotes, @NotNull Collection<? extends Url> urls, @NotNull Collection<? extends BranchConfig> trackedInfos, @NotNull Core core) {
+  private GitConfig(@NotNull Collection<? extends Remote> remotes,
+                    @NotNull Collection<? extends Url> urls,
+                    @NotNull Collection<? extends BranchConfig> trackedInfos,
+                    @NotNull Core core) {
     myRemotes = remotes;
     myUrls = urls;
     myTrackedInfos = trackedInfos;
@@ -67,12 +66,16 @@ public final class GitConfig {
    * @return Git remotes defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitRemote> parseRemotes() {
+  Set<GitRemote> parseRemotes() {
     // populate GitRemotes with substituting urls when needed
-    return StreamEx.of(myRemotes)
-          .map(remote -> convertRemoteToGitRemote(myUrls, remote))
-          .filter(remote -> !remote.getUrls().isEmpty())
-          .toList();
+    LinkedHashSet<GitRemote> result = new LinkedHashSet<>();
+    for (Remote remote : myRemotes) {
+      GitRemote gitRemote = convertRemoteToGitRemote(myUrls, remote);
+      if (!remote.getUrls().isEmpty()) {
+        result.add(gitRemote);
+      }
+    }
+    return result;
   }
 
   private static @NotNull GitRemote convertRemoteToGitRemote(@NotNull Collection<? extends Url> urls, @NotNull Remote remote) {
@@ -85,9 +88,13 @@ public final class GitConfig {
    * Create branch tracking information based on the information defined in {@code .git/config}.
    */
   @NotNull
-  Collection<GitBranchTrackInfo> parseTrackInfos(final @NotNull Collection<? extends GitLocalBranch> localBranches,
-                                                 final @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
-    return ContainerUtil.mapNotNull(myTrackedInfos, config -> convertBranchConfig(config, localBranches, remoteBranches));
+  Set<GitBranchTrackInfo> parseTrackInfos(@NotNull Collection<? extends GitLocalBranch> localBranches,
+                                          @NotNull Collection<? extends GitRemoteBranch> remoteBranches) {
+    LinkedHashSet<GitBranchTrackInfo> result = new LinkedHashSet<>();
+    for (BranchConfig config : myTrackedInfos) {
+      ContainerUtil.addIfNotNull(result, convertBranchConfig(config, localBranches, remoteBranches));
+    }
+    return result;
   }
 
   /**

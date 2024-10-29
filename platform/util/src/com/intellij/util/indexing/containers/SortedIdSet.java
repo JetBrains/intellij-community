@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.function.IntPredicate;
 
-public final class SortedIdSet implements Cloneable, RandomAccessIntContainer {
+final class SortedIdSet implements Cloneable, RandomAccessIntContainer {
   private int[] mySet;
   private int mySetLength;
   private int mySize;

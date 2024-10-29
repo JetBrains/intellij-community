@@ -43,6 +43,7 @@ import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +55,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.filter;
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 public class TodoCheckinHandlerWorker {
   private final static Logger LOG = Logger.getInstance(TodoCheckinHandlerWorker.class);
 

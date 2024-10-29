@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 @file:JvmName("LightServiceMigrationUtil")
 
@@ -8,6 +8,7 @@ import com.intellij.openapi.application.Application
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.IntelliJProjectUtil
 import com.intellij.psi.PsiClass
 import com.intellij.util.xml.DomElement
 import com.intellij.util.xml.DomUtil
@@ -15,7 +16,6 @@ import com.siyeh.ig.callMatcher.CallMatcher
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.util.DevKitDomUtil
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo
-import org.jetbrains.idea.devkit.util.PsiUtil
 import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.visitor.AbstractUastVisitor
@@ -47,13 +47,13 @@ private fun hasDisallowedAttributes(extension: Extension): Boolean {
 }
 
 internal fun isVersion193OrHigher(element: DomElement): Boolean {
-  if (PsiUtil.isIdeaProject(element.module?.project)) return true
+  if (IntelliJProjectUtil.isIntelliJPlatformProject(element.module?.project)) return true
   val buildNumber = PluginPlatformInfo.forDomElement(element).sinceBuildNumber
   return buildNumber != null && buildNumber.baselineVersion >= 193
 }
 
 internal fun isVersion193OrHigher(aClass: PsiClass): Boolean {
-  if (PsiUtil.isIdeaProject(aClass.project)) return true
+  if (IntelliJProjectUtil.isIntelliJPlatformProject(aClass.project)) return true
   val module = ModuleUtilCore.findModuleForPsiElement(aClass) ?: return false
   val buildNumber = PluginPlatformInfo.forModule(module).sinceBuildNumber
   return buildNumber != null && buildNumber.baselineVersion >= 193

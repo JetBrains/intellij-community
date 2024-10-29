@@ -761,7 +761,7 @@ public class StringUtil {
   public static @NotNull String unescapeAnsiStringCharacters(@NotNull String s) {
     StringBuilder buffer = new StringBuilder();
     int length = s.length();
-    int count = 0;
+    int count = 0; // count == -1 if the escape sequence has an arbitrary length
     int radix = 0;
     int suffixLen = 0;
     boolean decode = false;
@@ -837,7 +837,7 @@ public class StringUtil {
             decode = true;
             break;
           case 'x':
-            count = 2;
+            count = -1;
             radix = 0x10;
             suffixLen = 1;
             decode = true;
@@ -860,22 +860,30 @@ public class StringUtil {
         }
         if (decode) {
           decode = false;
-          StringBuilder sb = new StringBuilder(count);
-          for (int pos = idx + suffixLen; pos < length && count > 0; ++pos) {
+          boolean arbitraryLength = count == -1;
+          StringBuilder sb = new StringBuilder(arbitraryLength ? 8 : count);
+          for (int pos = idx + suffixLen; pos < length && (arbitraryLength || count > 0); ++pos) {
             char chl = s.charAt(pos);
             if (!(radix == 0x10 && isHexDigit(chl) || radix == 8 && isOctalDigit(chl))) {
               break;
             }
             sb.append(chl);
-            --count;
+            if (!arbitraryLength) {
+              --count;
+            }
           }
           if (sb.length() != 0) {
             try {
-              long code = Long.parseLong(sb.toString(), radix);
-              //noinspection AssignmentToForLoopParameter
-              idx += sb.length() + suffixLen - 1;
-              // todo: implement UTF-32 support
-              buffer.append((char)code);
+              int code = Integer.parseInt(sb.toString(), radix);
+              if (Character.isValidCodePoint(code)) {
+                //noinspection AssignmentToForLoopParameter
+                idx += sb.length() + suffixLen - 1;
+                // todo: implement UTF-32 support
+                buffer.append(Character.toChars(code));
+              }
+              else {
+                buffer.append('\\').append(ch);
+              }
             }
             catch (NumberFormatException e) {
               buffer.append('\\').append(ch);
@@ -3261,5 +3269,24 @@ public class StringUtil {
   @Contract(pure = true)
   public static int rankForFileSize(long fileSize) {
     return StringUtilRt.rankForFileSize(fileSize);
+  }
+
+  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character) {
+    return findAllIndexesOfSymbol(charSequence, character, 0 , false);
+  }
+  
+  public static List<Integer> findAllIndexesOfSymbol(CharSequence charSequence, char character, int startIndex, boolean ignoreCase) {
+    List<Integer> result = new ArrayList<>();
+    int firstIndex = Math.max(startIndex, 0);
+    int lastIndex = charSequence.length() - 1;
+
+    for (int index = firstIndex; index <= lastIndex; index++) {
+      char charAtIndex = charSequence.charAt(index);
+      if (ignoreCase ? Character.toLowerCase(character) == Character.toLowerCase(charAtIndex)
+                     : character == charAtIndex) {
+        result.add(index);
+      }
+    }
+    return result;
   }
 }

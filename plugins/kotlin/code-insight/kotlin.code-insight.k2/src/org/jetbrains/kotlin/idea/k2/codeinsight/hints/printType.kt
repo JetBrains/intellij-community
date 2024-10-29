@@ -1,33 +1,20 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.hints
 
-import com.intellij.codeInsight.hints.declarative.InlayActionData
-import com.intellij.codeInsight.hints.declarative.PresentationTreeBuilder
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionNavigationHandler
-import com.intellij.codeInsight.hints.declarative.PsiPointerInlayActionPayload
-import com.intellij.codeInsight.hints.declarative.StringInlayActionPayload
+import com.intellij.codeInsight.hints.declarative.*
+import com.intellij.codeInsight.hints.declarative.impl.PresentationTreeBuilderImpl
 import com.intellij.psi.createSmartPointer
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.DefaultTypeClassIds
-import org.jetbrains.kotlin.analysis.api.types.KaCapturedType
-import org.jetbrains.kotlin.analysis.api.types.KaDefinitelyNotNullType
-import org.jetbrains.kotlin.analysis.api.types.KaDynamicType
-import org.jetbrains.kotlin.analysis.api.types.KaErrorType
-import org.jetbrains.kotlin.analysis.api.types.KaFlexibleType
-import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
-import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.analysis.api.types.KaStarTypeProjection
-import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeArgumentWithVariance
-import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
-import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.api.types.KaTypeProjection
-import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassKind
+import org.jetbrains.kotlin.analysis.api.symbols.KaClassSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
+import org.jetbrains.kotlin.analysis.api.types.*
 import org.jetbrains.kotlin.idea.codeInsight.hints.KotlinFqnDeclarativeInlayActionHandler
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.name.StandardClassIds
 
@@ -35,7 +22,7 @@ context(KaSession)
 @ApiStatus.Internal
 internal fun PresentationTreeBuilder.printKtType(type: KaType) {
     // See org.jetbrains.kotlin.analysis.api.renderer.types.KaTypeRenderer.renderType
-    type.abbreviatedType?.let { abbreviatedType ->
+    type.abbreviation?.let { abbreviatedType ->
         printKtType(abbreviatedType)
         return
     }
@@ -102,17 +89,14 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
                 text(".")
             }
             val iterator = type.parameterTypes.iterator()
-            if (iterator.hasNext()) {
-                text("(")
-                while (iterator.hasNext()) {
-                    printKtType(iterator.next())
-                    if (iterator.hasNext()) {
-                        text(", ")
-                    }
+            text("(")
+            while (iterator.hasNext()) {
+                printKtType(iterator.next())
+                if (iterator.hasNext()) {
+                    text(", ")
                 }
-                text(")")
             }
-            text(" -> ")
+            text(") -> ")
             printKtType(type.returnType)
         }
         is KaDynamicType -> {
@@ -129,7 +113,10 @@ internal fun PresentationTreeBuilder.printKtType(type: KaType) {
 
 context(KaSession)
 private fun PresentationTreeBuilder.printNonErrorClassType(type: KaClassType, anotherType: KaClassType? = null) {
-    type.classId.let { printClassId(it, shortNameWithCompanionNameSkip(it)) }
+    val truncatedName = truncatedName(type)
+    if (truncatedName.isNotEmpty()) {
+        printClassId(type.classId, truncatedName)
+    }
 
     val ownTypeArguments = type.typeArguments
     if (ownTypeArguments.isNotEmpty()) {
@@ -172,13 +159,17 @@ private fun PresentationTreeBuilder.printProjection(projection: KaTypeProjection
 
 
 private fun PresentationTreeBuilder.printClassId(classId: ClassId, name: String) {
-    text(
-        name,
-        InlayActionData(
-            StringInlayActionPayload(classId.asFqNameString()),
-            KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
+    if (classId.shortClassName.isSpecial) {
+        text(name)
+    } else {
+        text(
+            name,
+            InlayActionData(
+                StringInlayActionPayload(classId.asFqNameString()),
+                KotlinFqnDeclarativeInlayActionHandler.HANDLER_NAME
+            )
         )
-    )
+    }
 }
 
 private fun isMutabilityFlexibleType(lower: KaType, upper: KaType): Boolean {
@@ -224,8 +215,30 @@ private fun isSimilarTypes(
 ): Boolean = lower.typeArguments.zip(upper.typeArguments)
     .none { (lowerTypeArg, upperTypeArg) -> lowerTypeArg.type != upperTypeArg.type }
 
-private fun shortNameWithCompanionNameSkip(classId: ClassId): String {
-    return classId.relativeClassName.pathSegments()
-        .filter { it != SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT }
-        .joinToString(".")
+private fun truncatedName(classType: KaClassType): String {
+    val names = classType.qualifiers
+        .mapNotNull {
+            val symbol = it.symbol
+            symbol.takeUnless {
+                (it as? KaNamedClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT &&
+                        it.name == SpecialNames.DEFAULT_NAME_FOR_COMPANION_OBJECT
+            }?.name ?: symbol.takeIf { (symbol as? KaClassSymbol)?.classKind == KaClassKind.ANONYMOUS_OBJECT }?.let {
+                SpecialNames.ANONYMOUS
+            }
+        }
+
+    names.joinToString(".", transform = Name::asString)
+        .takeIf { names.size <= 1 || it.length < PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH }
+        ?.let { return it }
+
+    var lastJoinString: String = ""
+    for (name in names.reversed()) {
+        val nameAsString = name.asString()
+        if (lastJoinString.length + nameAsString.length + 1 > PresentationTreeBuilderImpl.MAX_SEGMENT_TEXT_LENGTH) {
+            break
+        }
+        lastJoinString = if (lastJoinString.isEmpty()) nameAsString else "$nameAsString.$lastJoinString"
+    }
+
+    return Typography.ellipsis.toString() + lastJoinString
 }

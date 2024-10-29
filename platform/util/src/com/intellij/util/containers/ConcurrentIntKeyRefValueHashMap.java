@@ -143,7 +143,7 @@ abstract class ConcurrentIntKeyRefValueHashMap<V> implements ConcurrentIntObject
   }
 
   private @NotNull Iterator<Entry<V>> entriesIterator() {
-    Iterator<Entry<IntReference<V>>> entryIterator = ((Iterable<Entry<IntReference<V>>>)myMap.entrySet()).iterator();
+    Iterator<Entry<IntReference<V>>> entryIterator = myMap.entrySet().iterator();
     return new Iterator<Entry<V>>() {
       private Entry<V> nextVEntry;
       private Entry<IntReference<V>> nextReferenceEntry;

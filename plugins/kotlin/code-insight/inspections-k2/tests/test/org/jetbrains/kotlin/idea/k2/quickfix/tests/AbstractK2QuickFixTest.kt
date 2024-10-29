@@ -41,9 +41,9 @@ abstract class AbstractK2QuickFixTest : AbstractQuickFixTest() {
     }
 
     override fun getAfterFileName(beforeFileName: String): String {
-        val firAfterFile = File(dataFilePath(beforeFileName.replace(".kt", ".fir.kt.after")))
-        return if (firAfterFile.exists()) {
-            firAfterFile.name
+        val afterFile = File(dataFilePath(beforeFileName.replace(".kt", ".k2.kt.after")))
+        return if (afterFile.exists()) {
+            afterFile.name
         } else {
             super.getAfterFileName(beforeFileName)
         }

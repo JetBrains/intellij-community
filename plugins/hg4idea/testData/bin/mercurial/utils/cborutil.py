@@ -5,12 +5,9 @@
 # This software may be used and distributed according to the terms of the
 # GNU General Public License version 2 or any later version.
 
-from __future__ import absolute_import
 
 import struct
-import sys
 
-from .. import pycompat
 
 # Very short very of RFC 7049...
 #
@@ -175,9 +172,7 @@ def streamencodemap(d):
     """
     yield encodelength(MAJOR_TYPE_MAP, len(d))
 
-    for key, value in sorted(
-        pycompat.iteritems(d), key=lambda x: _mixedtypesortkey(x[0])
-    ):
+    for key, value in sorted(d.items(), key=lambda x: _mixedtypesortkey(x[0])):
         for chunk in streamencode(key):
             yield chunk
         for chunk in streamencode(value):
@@ -210,7 +205,7 @@ def streamencodenone(v):
 STREAM_ENCODERS = {
     bytes: streamencodebytestring,
     int: streamencodeint,
-    pycompat.long: streamencodeint,
+    int: streamencodeint,
     list: streamencodearray,
     tuple: streamencodearray,
     dict: streamencodemap,
@@ -250,16 +245,8 @@ class CBORDecodeError(Exception):
     """Represents an error decoding CBOR."""
 
 
-if sys.version_info.major >= 3:
-
-    def _elementtointeger(b, i):
-        return b[i]
-
-
-else:
-
-    def _elementtointeger(b, i):
-        return ord(b[i])
+def _elementtointeger(b, i):
+    return b[i]
 
 
 STRUCT_BIG_UBYTE = struct.Struct('>B')
@@ -496,7 +483,7 @@ class bytestringchunk(bytes):
         return self
 
 
-class sansiodecoder(object):
+class sansiodecoder:
     """A CBOR decoder that doesn't perform its own I/O.
 
     To use, construct an instance and feed it segments containing
@@ -989,7 +976,7 @@ class sansiodecoder(object):
         return l
 
 
-class bufferingdecoder(object):
+class bufferingdecoder:
     """A CBOR decoder that buffers undecoded input.
 
     This is a glorified wrapper around ``sansiodecoder`` that adds a buffering

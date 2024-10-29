@@ -5,12 +5,14 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.HashingStrategy;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 import static com.intellij.openapi.vcs.changes.VcsDirtyScopeManagerImpl.getDirtyScopeHashingStrategy;
 
+@ApiStatus.Internal
 public final class VcsDirtyScopeMap {
   private final Map<VcsRoot, Set<FilePath>> myMap = new HashMap<>();
 

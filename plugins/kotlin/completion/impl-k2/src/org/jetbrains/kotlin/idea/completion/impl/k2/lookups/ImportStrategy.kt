@@ -35,7 +35,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
             if (!scope.mayContainName(nameToImport.shortName())) return false
 
             val anyCallableSymbolMatches = scope
-                .getCallableSymbols(nameToImport.shortName())
+                .callables(nameToImport.shortName())
                 .any { callable ->
                     val callableFqName = callable.callableId?.asSingleFqName()
                     callable is KaKotlinPropertySymbol && callableFqName == nameToImport ||
@@ -43,7 +43,7 @@ private fun alreadyHasImport(file: KtFile, nameToImport: FqName): Boolean {
                 }
             if (anyCallableSymbolMatches) return true
 
-            return scope.getClassifierSymbols(nameToImport.shortName()).any { classifier ->
+            return scope.classifiers(nameToImport.shortName()).any { classifier ->
                 val classId = (classifier as? KaClassLikeSymbol)?.classId
                 classId?.asSingleFqName() == nameToImport
             }

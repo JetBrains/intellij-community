@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.BundleBase;
@@ -10,11 +10,11 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,23 +56,40 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame.BOTTOM
  * {@link AbstractNewProjectStep}
  */
 public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implements DumbAware, Disposable {
-  protected DirectoryProjectGenerator<T> myProjectGenerator;
+  protected final DirectoryProjectGenerator<T> myProjectGenerator;
   protected AbstractNewProjectStep.AbstractCallback<T> myCallback;
   protected TextFieldWithBrowseButton myLocationField;
-  protected NotNullLazyValue<File> myProjectDirectory;
+  protected final NotNullLazyValue<File> myProjectDirectory;
   protected JButton myCreateButton;
   protected JLabel myErrorLabel;
   protected NotNullLazyValue<ProjectGeneratorPeer<T>> myLazyGeneratorPeer;
   private AbstractNewProjectStep<T> myProjectStep;
+  private static final String DEFAULT_PROJECT_NAME = "untitled";
+  private final @NlsSafe @NotNull String myNewProjectName;
+  /**
+   * If {@link ProjectGeneratorPeer#getComponent(TextFieldWithBrowseButton, Runnable)} is Kotlin DSL UI, we store it here and use for validation
+   */
+  @Nullable
+  private DialogPanelWrapper myDialogPanelWrapper;
 
   public ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
                                  AbstractNewProjectStep.AbstractCallback<T> callback) {
+    this(projectGenerator, callback, null);
+  }
+
+  /**
+   * @param newProjectName {@link #myLocationField} will have default value ending with this name. Null means default
+   */
+  protected ProjectSettingsStepBase(DirectoryProjectGenerator<T> projectGenerator,
+                                    AbstractNewProjectStep.AbstractCallback<T> callback,
+                                    @NlsSafe @Nullable String newProjectName) {
     super();
     getTemplatePresentation().setIcon(projectGenerator.getLogo());
     getTemplatePresentation().setText(projectGenerator.getName());
     myProjectGenerator = projectGenerator;
     myCallback = callback;
-    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled());
+    myProjectDirectory = NotNullLazyValue.lazy(() -> findSequentNonExistingUntitled().toFile());
+    myNewProjectName = newProjectName != null ? newProjectName : DEFAULT_PROJECT_NAME;
   }
 
   @Override
@@ -82,14 +101,12 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     checkWebProjectValid();
   }
 
-  @NotNull
   @Override
-  public JButton getActionButton() {
+  public @NotNull JButton getActionButton() {
     return myCreateButton;
   }
 
-  @NotNull
-  protected NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
+  protected @NotNull NotNullLazyValue<ProjectGeneratorPeer<T>> createLazyPeer() {
     return myProjectGenerator.createLazyPeer();
   }
 
@@ -116,6 +133,7 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     bottomPanel.add(label, BorderLayout.NORTH);
     bottomPanel.add(button, BorderLayout.EAST);
     mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+    checkValid();
     return mainPanel;
   }
 
@@ -136,18 +154,27 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return button;
   }
 
-  @NotNull
-  protected final ActionListener createCloseActionListener() {
+  protected final @NotNull ActionListener createCloseActionListener() {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         boolean isValid = checkValid();
-        if (isValid && myCallback != null) {
+        if (!isValid) return;
+
+        var dialogPanel = myDialogPanelWrapper;
+        if (dialogPanel != null) {
+          var applyError = dialogPanel.applyOrGetError();
+          setErrorText(applyError != null ? applyError.message : null);
+          if (applyError != null) {
+            return;
+          }
+        }
+        if (myCallback != null) {
           final DialogWrapper dialog = DialogWrapper.findInstance(myCreateButton);
           if (dialog != null) {
             dialog.close(DialogWrapper.OK_EXIT_CODE);
           }
-          try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+          try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
             myCallback.consume(ProjectSettingsStepBase.this, getPeer());
           }
         }
@@ -240,12 +267,15 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       }
 
       ValidationInfo peerValidationResult = getPeer().validate();
+      if (peerValidationResult == null) {
+        var dialogWrapper = myDialogPanelWrapper;
+        peerValidationResult = (dialogWrapper != null) ? dialogWrapper.getInputValidationError() : null;
+      }
       if (peerValidationResult != null) {
         setErrorText(peerValidationResult.message);
         return false;
       }
     }
-
     setErrorText(null);
     return true;
   }
@@ -301,10 +331,21 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     myErrorLabel.setIcon(StringUtil.isEmpty(text) ? null : AllIcons.Actions.Lightning);
   }
 
-  @Nullable
-  protected JPanel createAdvancedSettings() {
+  protected @Nullable JPanel createAdvancedSettings() {
     final JPanel jPanel = new JPanel(new VerticalFlowLayout(0, 5));
-    jPanel.add(getPeer().getComponent(myLocationField, () -> checkValid()));
+    var component = getPeer().getComponent(myLocationField, () -> checkValid());
+    // If a component is a DialogPanel, created with Kotlin DSL UI,
+    // it may have validation which must be obeyed as is done for DialogWrapper
+    if (component instanceof DialogPanel dialogPanel) {
+      var dialogPanelWrapper = new DialogPanelWrapper(dialogPanel);
+      myDialogPanelWrapper = dialogPanelWrapper;
+      dialogPanel.registerValidators(this, map -> {
+        dialogPanelWrapper.setInputValidationError(map.values());
+        checkValid();
+        return Unit.INSTANCE;
+      });
+    }
+    jPanel.add(component);
     return jPanel;
   }
 
@@ -316,12 +357,13 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
     return FileUtil.expandUserHome(FileUtil.toSystemIndependentName(myLocationField.getText()));
   }
 
-  public final void setLocation(@NotNull final String location) {
+  public final void setLocation(final @NotNull String location) {
     myLocationField.setText(getPresentablePath(location));
   }
 
   protected LabeledComponent<TextFieldWithBrowseButton> createLocationComponent() {
     myLocationField = new TextFieldWithBrowseButton();
+    Disposer.register(this, myLocationField);
     final String projectLocation = myProjectDirectory.get().toString();
     myLocationField.setText(projectLocation);
     final int index = projectLocation.lastIndexOf(File.separator);
@@ -331,27 +373,30 @@ public class ProjectSettingsStepBase<T> extends AbstractActionWithPanel implemen
       textField.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, true);
     }
 
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-    myLocationField.addBrowseFolderListener(IdeBundle.message("directory.project.location.title"),
-                                            IdeBundle.message("directory.project.location.description"), null, descriptor);
+    myLocationField.addBrowseFolderListener(null, FileChooserDescriptorFactory.createSingleFolderDescriptor()
+      .withTitle(IdeBundle.message("directory.project.location.title"))
+      .withDescription(IdeBundle.message("directory.project.location.description")));
+    checkValid();
     return LabeledComponent.create(myLocationField,
                                    BundleBase.replaceMnemonicAmpersand(IdeBundle.message("directory.project.location.label")),
                                    BorderLayout.WEST);
   }
 
-  @NotNull
-  protected File findSequentNonExistingUntitled() {
-    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), "untitled", "");
+  /**
+   * Looks for the place for a new project
+   */
+  protected @NotNull Path findSequentNonExistingUntitled() {
+    return FileUtil.findSequentNonexistentFile(new File(ProjectUtil.getBaseDir()), myNewProjectName, "").toPath();
   }
 
   @Override
   public void dispose() { }
 
-  void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
+  final void setProjectStep(@NotNull AbstractNewProjectStep<T> projectStep) {
     myProjectStep = projectStep;
   }
 
-  @Nullable WizardContext getWizardContext() {
+  final @Nullable WizardContext getWizardContext() {
     return myProjectStep != null ? myProjectStep.getWizardContext() : null;
   }
 }

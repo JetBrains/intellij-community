@@ -1,10 +1,11 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -14,6 +15,7 @@ import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
+import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.StampsStorage;
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -58,18 +60,27 @@ public final class FSOperations {
   }
 
   public static void markDirty(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirty(context, round, file, rd, pd.getProjectStamps().getStampStorage(), false);
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.markDirty(context,
+                                          round,
+                                          file,
+                                          rootDescriptor,
+                                          projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target),
+                                          false);
     }
   }
 
   public static void markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage());
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.markDirtyIfNotDeleted(context,
+                                                      round,
+                                                      file,
+                                                      rootDescriptor,
+                                                      projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target));
     }
   }
 
@@ -95,26 +106,30 @@ public final class FSOperations {
    * @return a builder object that marks dirty files and collects data about files marked
    */
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>> DirtyFilesHolderBuilder<R, T> createDirtyFilesHolderBuilder(CompileContext context, final CompilationRound round) {
-    return new DirtyFilesHolderBuilder<R, T>() {
+    return new DirtyFilesHolderBuilder<>() {
       private final Map<T, Map<R, Set<File>>> dirtyFiles = new HashMap<>();
+
       @Override
       public DirtyFilesHolderBuilder<R, T> markDirtyFile(T target, File file) throws IOException {
-        final ProjectDescriptor pd = context.getProjectDescriptor();
-        final R rd = pd.getBuildRootIndex().findParentDescriptor(file, Collections.singleton(target.getTargetType()), context);
-        if (rd != null) {
-          if (pd.fsState.markDirtyIfNotDeleted(context, round, file, rd, pd.getProjectStamps().getStampStorage()) || pd.fsState.isMarkedForRecompilation(context, round, rd, file)) {
-            Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
-            if (targetFiles == null) {
-              targetFiles = new HashMap<>();
-              dirtyFiles.put(target, targetFiles);
-            }
-            Set<File> rootFiles = targetFiles.get(rd);
-            if (rootFiles == null) {
-              rootFiles = FileCollectionFactory.createCanonicalFileSet();
-              targetFiles.put(rd, rootFiles);
-            }
-            rootFiles.add(file);
+        ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+        R rootDescriptor = projectDescriptor.getBuildRootIndex().findParentDescriptor(file, List.of(target.getTargetType()), context);
+        if (rootDescriptor == null) {
+          return this;
+        }
+
+        if (projectDescriptor.fsState.markDirtyIfNotDeleted(context, round, file, rootDescriptor, projectDescriptor.dataManager.getFileStampStorage(target)) ||
+            projectDescriptor.fsState.isMarkedForRecompilation(context, round, rootDescriptor, file)) {
+          Map<R, Set<File>> targetFiles = dirtyFiles.get(target);
+          if (targetFiles == null) {
+            targetFiles = new HashMap<>();
+            dirtyFiles.put(target, targetFiles);
           }
+          Set<File> rootFiles = targetFiles.get(rootDescriptor);
+          if (rootFiles == null) {
+            rootFiles = FileCollectionFactory.createCanonicalFileSet();
+            targetFiles.put(rootDescriptor, rootFiles);
+          }
+          rootFiles.add(file);
         }
         return this;
       }
@@ -126,7 +141,7 @@ public final class FSOperations {
           public void processDirtyFiles(@NotNull FileProcessor<R, T> processor) throws IOException {
             for (Map.Entry<T, Map<R, Set<File>>> entry : dirtyFiles.entrySet()) {
               final T target = entry.getKey();
-              for (Map.Entry<R, Set<File>>  targetEntry: entry.getValue().entrySet()) {
+              for (Map.Entry<R, Set<File>> targetEntry : entry.getValue().entrySet()) {
                 final R rd = targetEntry.getKey();
                 for (File file : targetEntry.getValue()) {
                   processor.apply(target, file, rd);
@@ -155,10 +170,13 @@ public final class FSOperations {
   }
 
   public static void markDeleted(CompileContext context, File file) throws IOException {
-    final JavaSourceRootDescriptor rd = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
-    if (rd != null) {
-      final ProjectDescriptor pd = context.getProjectDescriptor();
-      pd.fsState.registerDeleted(context, rd.target, file, pd.getProjectStamps().getStampStorage());
+    JavaSourceRootDescriptor rootDescriptor = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context, file);
+    if (rootDescriptor != null) {
+      ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+      projectDescriptor.fsState.registerDeleted(context,
+                                                rootDescriptor.target,
+                                                file,
+                                                projectDescriptor.dataManager.getFileStampStorage(rootDescriptor.target));
     }
   }
 
@@ -168,9 +186,15 @@ public final class FSOperations {
     }
   }
 
-  public static void markDirty(CompileContext context, final CompilationRound round, final ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
-    final ProjectDescriptor pd = context.getProjectDescriptor();
-    markDirtyFiles(context, target, round, pd.getProjectStamps().getStampStorage(), true, null, filter);
+  public static void markDirty(CompileContext context, CompilationRound round, ModuleBuildTarget target, @Nullable FileFilter filter) throws IOException {
+    ProjectDescriptor projectDescriptor = context.getProjectDescriptor();
+    markDirtyFiles(context,
+                   target,
+                   round,
+                   projectDescriptor.dataManager.getFileStampStorage(target),
+                   true,
+                   null,
+                   filter);
   }
 
   public static void markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk) throws IOException {
@@ -221,11 +245,11 @@ public final class FSOperations {
 
     removeTargetsAlreadyMarkedDirty(context, dirtyTargets);
 
-    final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = context.getProjectDescriptor().getProjectStamps().getStampStorage();
+    BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     for (ModuleBuildTarget target : dirtyTargets) {
-      markDirtyFiles(context, target, round, stampsStorage, true, null, filter);
+      StampsStorage<?> stampStorage = dataManager.getFileStampStorage(target);
+      markDirtyFiles(context, target, round, stampStorage, true, null, filter);
     }
-
   }
 
   private static Set<JpsModule> getDependentModulesRecursively(final JpsModule module, final JpsJavaClasspathKind kind) {
@@ -245,7 +269,7 @@ public final class FSOperations {
   static void markDirtyFiles(CompileContext context,
                              BuildTarget<?> target,
                              final CompilationRound round,
-                             StampsStorage<? extends StampsStorage.Stamp> stampsStorage,
+                             @Nullable StampsStorage<?> stampStorage,
                              boolean forceMarkDirty,
                              @Nullable Set<? super File> currentFiles,
                              @Nullable FileFilter filter) throws IOException {
@@ -259,7 +283,7 @@ public final class FSOperations {
       if (filter == null) {
         context.getProjectDescriptor().fsState.clearRecompile(rd);
       }
-      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), stampsStorage, forceMarkDirty, currentFiles, filter);
+      completelyMarkedDirty &= traverseRecursively(context, rd, round, rd.getRootFile(), stampStorage, forceMarkDirty, currentFiles, filter);
     }
 
     if (completelyMarkedDirty) {
@@ -276,7 +300,7 @@ public final class FSOperations {
                                              final BuildRootDescriptor rd,
                                              final CompilationRound round,
                                              final File file,
-                                             final @NotNull StampsStorage<? extends StampsStorage.Stamp> stampStorage,
+                                             @Nullable StampsStorage<?> stampStorage,
                                              final boolean forceDirty,
                                              @Nullable Set<? super File> currentFiles, @Nullable FileFilter filter) throws IOException {
 
@@ -290,14 +314,13 @@ public final class FSOperations {
         else {
           boolean markDirty = forceDirty;
           if (!markDirty) {
-            markDirty = attrs != null?
-              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file, attrs) :
-              stampStorage.isDirtyStamp(stampStorage.getPreviousStamp(file, rd.getTarget()), file);
+            Path nioFile = file.toPath();
+            markDirty = stampStorage == null || stampStorage.getCurrentStampIfUpToDate(nioFile, rd.getTarget(), attrs) == null;
           }
           if (markDirty) {
-            // if it is full project rebuild, all storages are already completely cleared;
+            // if it is a full project rebuild, all storages are already completely cleared;
             // so passing null because there is no need to access the storage to clear non-existing data
-            final StampsStorage<? extends StampsStorage.Stamp> marker = context.isProjectRebuild()? null : stampStorage;
+            StampsStorage<?> marker = context.isProjectRebuild()? null : stampStorage;
             context.getProjectDescriptor().fsState.markDirty(context, round, file, rd, marker, false);
           }
           if (currentFiles != null) {
@@ -318,12 +341,18 @@ public final class FSOperations {
     void consume(@NotNull File file, @Nullable BasicFileAttributes attrs) throws IOException;
   }
   
-  public static void traverseRecursively(BuildRootIndex rootIndex, final BuildRootDescriptor rd, final File fromFile, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    traverseRecursively(fromFile, f -> rootIndex.isDirectoryAccepted(f, rd), f -> rootIndex.isFileAccepted(f, rd), processor);
+  public static void traverseRecursively(BuildRootIndex rootIndex,
+                                         BuildRootDescriptor rd,
+                                         File fromFile,
+                                         @NotNull FSOperations.FileConsumer processor) throws IOException {
+    traverseRecursively(fromFile.toPath(), f -> rootIndex.isDirectoryAccepted(f.toPath(), rd), f -> rootIndex.isFileAccepted(f, rd), processor);
   }
 
-  private static void traverseRecursively(final File fromFile, @NotNull FileFilter dirFilter, @NotNull FileFilter fileFilter, @NotNull FSOperations.FileConsumer processor) throws IOException {
-    Files.walkFileTree(fromFile.toPath(), EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
+  private static void traverseRecursively(@NotNull Path fromFile,
+                                          @NotNull FileFilter dirFilter,
+                                          @NotNull FileFilter fileFilter,
+                                          @NotNull FSOperations.FileConsumer processor) throws IOException {
+    Files.walkFileTree(fromFile, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult visitFileFailed(Path file, IOException e) throws IOException {
         if (e instanceof NoSuchFileException) {
@@ -417,7 +446,8 @@ public final class FSOperations {
     return lastModified(file.toPath());
   }
 
-  private static long lastModified(Path path) {
+  @ApiStatus.Internal
+  public static long lastModified(Path path) {
     try {
       return Files.getLastModifiedTime(path).toMillis();
     }
@@ -430,8 +460,8 @@ public final class FSOperations {
   }
 
   public static void copy(File fromFile, File toFile) throws IOException {
-    final Path from = fromFile.toPath();
-    final Path to = toFile.toPath();
+    Path from = fromFile.toPath();
+    Path to = toFile.toPath();
     try {
       try {
         Files.copy(from, to, StandardCopyOption.REPLACE_EXISTING);

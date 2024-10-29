@@ -4,8 +4,10 @@ package com.intellij.ide.plugins.marketplace.statistics.features
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
+import org.jetbrains.annotations.ApiStatus
 import java.lang.Character.UnicodeScript
 
+@ApiStatus.Internal
 object PluginManagerUserQueryFeatureProvider {
   // whitespaces and basic punctuation symbols
   private const val WORDS_DELIMITERS = "\\s\\p{P}"

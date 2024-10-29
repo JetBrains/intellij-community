@@ -7,6 +7,7 @@ import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandlerBase;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -22,7 +23,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> {
+public class PyHighlightExitPointsHandler extends HighlightUsagesHandlerBase<PsiElement> implements DumbAware {
   private final PsiElement myTarget;
 
   public PyHighlightExitPointsHandler(final Editor editor, final PsiFile file, final PsiElement target) {

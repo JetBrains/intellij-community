@@ -17,12 +17,12 @@ package com.intellij.diff.tools.util.base;
 
 import com.intellij.diff.DiffContext;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.DataSink;
+import com.intellij.openapi.actionSystem.UiCompatibleDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,9 +32,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public abstract class DiffPanelBase extends JPanel implements DataProvider {
+public abstract class DiffPanelBase extends JPanel implements UiCompatibleDataProvider {
   @Nullable protected final Project myProject;
-  @NotNull private final DataProvider myDataProvider;
   @NotNull protected final DiffContext myContext;
 
   @NotNull private final List<JComponent> myPersistentNotifications = new ArrayList<>();
@@ -51,12 +50,9 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
   @SuppressWarnings("NotNullFieldNotInitialized") // field initialized in concrete constructors
   @NotNull protected String myCurrentCard;
 
-  public DiffPanelBase(@Nullable Project project,
-                       @NotNull DataProvider provider,
-                       @NotNull DiffContext context) {
+  public DiffPanelBase(@Nullable Project project, @NotNull DiffContext context) {
     super(new BorderLayout());
     myProject = project;
-    myDataProvider = provider;
     myContext = context;
 
     myCardLayout = new CardLayout();
@@ -101,10 +97,8 @@ public abstract class DiffPanelBase extends JPanel implements DataProvider {
     }
   }
 
-  @Nullable
   @Override
-  public Object getData(@NotNull @NonNls String dataId) {
-    return myDataProvider.getData(dataId);
+  public void uiDataSnapshot(@NotNull DataSink sink) {
   }
 
   //

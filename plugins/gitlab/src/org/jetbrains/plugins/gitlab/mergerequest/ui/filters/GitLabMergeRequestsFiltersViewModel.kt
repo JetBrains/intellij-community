@@ -17,6 +17,7 @@ import org.jetbrains.plugins.gitlab.api.dto.GitLabUserDTO
 import org.jetbrains.plugins.gitlab.mergerequest.data.GitLabProject
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestStateFilterValue
 import org.jetbrains.plugins.gitlab.mergerequest.ui.filters.GitLabMergeRequestsFiltersValue.MergeRequestsMemberFilterValue
+import org.jetbrains.plugins.gitlab.util.GitLabCoroutineUtil
 import org.jetbrains.plugins.gitlab.util.GitLabStatistics
 
 internal interface GitLabMergeRequestsFiltersViewModel : ReviewListSearchPanelViewModel<GitLabMergeRequestsFiltersValue, GitLabMergeRequestsQuickFilter> {
@@ -48,7 +49,7 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
       scope,
       historyModel,
       emptySearch = GitLabMergeRequestsFiltersValue.EMPTY,
-      defaultQuickFilter = defaultQuickFilter(currentUser)
+      defaultFilter = defaultQuickFilter(currentUser).filter
     ) {
   override fun GitLabMergeRequestsFiltersValue.withQuery(query: String?): GitLabMergeRequestsFiltersValue {
     return copy(searchQuery = query)
@@ -82,8 +83,10 @@ internal class GitLabMergeRequestsFiltersViewModelImpl(
     copy(label = it)
   }
 
-  override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> = projectData.members
-  override val labels: Flow<Result<List<GitLabLabelDTO>>> = projectData.labels
+  override val mergeRequestMembers: Flow<Result<List<GitLabUserDTO>>> =
+    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getMembersBatches)
+  override val labels: Flow<Result<List<GitLabLabelDTO>>> =
+    GitLabCoroutineUtil.batchesResultsFlow(projectData.dataReloadSignal, projectData::getLabelsBatches)
 
   override fun reloadData() {
     projectData.reloadData()

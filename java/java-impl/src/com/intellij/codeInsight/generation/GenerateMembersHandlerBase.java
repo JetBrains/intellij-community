@@ -232,7 +232,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
                                                             boolean copyJavadocCheckbox,
                                                             Project project) {
     MemberChooser<ClassMember> chooser =
-      new MemberChooser<>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls()) {
+      new MemberChooser<>(members, allowEmptySelection, true, project, getHeaderPanel(project), getOptionControls(project)) {
         @Override
         protected @Nullable String getHelpId() {
           return GenerateMembersHandlerBase.this.getHelpId();
@@ -245,6 +245,10 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
 
   protected @Nullable JComponent getHeaderPanel(Project project) {
     return null;
+  }
+
+  protected JComponent @Nullable [] getOptionControls(@Nullable Project project) {
+    return getOptionControls();
   }
 
   protected JComponent @Nullable [] getOptionControls() {

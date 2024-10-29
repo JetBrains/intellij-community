@@ -3,9 +3,9 @@ package com.intellij.platform.feedback.dialog.uiBlocks
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.platform.feedback.dialog.EMAIL_REGEX
 import com.intellij.platform.feedback.dialog.TEXT_FIELD_EMAIL_COLUMN_SIZE
 import com.intellij.platform.feedback.dialog.feedbackAgreement
+import com.intellij.platform.feedback.impl.EMAIL_REGEX
 import com.intellij.platform.feedback.impl.bundle.CommonFeedbackBundle
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.components.JBCheckBox

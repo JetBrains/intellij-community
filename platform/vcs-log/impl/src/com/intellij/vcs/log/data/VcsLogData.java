@@ -28,6 +28,7 @@ import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import io.opentelemetry.api.trace.Span;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -40,7 +41,6 @@ import static com.intellij.openapi.vcs.VcsScopeKt.VcsScope;
 
 public final class VcsLogData implements Disposable, VcsLogDataProvider {
   private static final Logger LOG = Logger.getInstance(VcsLogData.class);
-  public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
 
   public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
@@ -98,7 +98,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
-                                          this::fireDataPackChangeEvent, RECENT_COMMITS_COUNT);
+                                          this::fireDataPackChangeEvent, getRecentCommitsCount());
     Disposer.register(this, myRefresher);
 
     myContainingBranchesGetter = new ContainingBranchesGetter(this, this);
@@ -262,7 +262,6 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
         listener.onDataPackChange(dataPack);
       }
     }, o -> myDisposableFlag.isDisposed());
-    myIndexDiagnosticRunner.onDataPackChange();
   }
 
   public void addDataPackChangeListener(final @NotNull DataPackChangeListener listener) {
@@ -382,6 +381,7 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
     return myLogProviders.get(root);
   }
 
+  @ApiStatus.Internal
   public @NotNull VcsUserRegistryImpl getUserRegistry() {
     return myUserRegistry;
   }
@@ -445,5 +445,9 @@ public final class VcsLogData implements Disposable, VcsLogDataProvider {
 
   public static @NotNull RegistryValue getIndexingRegistryValue() {
     return Registry.get("vcs.log.index.enable");
+  }
+
+  public static int getRecentCommitsCount() {
+    return Registry.intValue("vcs.log.recent.commits.count");
   }
 }

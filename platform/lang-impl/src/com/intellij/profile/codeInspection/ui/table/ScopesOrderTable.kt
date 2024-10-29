@@ -9,11 +9,13 @@ import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ListTableModel
 import com.intellij.util.ui.table.IconTableCellRenderer
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JTable
 import javax.swing.ListSelectionModel
 import javax.swing.table.TableCellRenderer
 
+@ApiStatus.Internal
 class ScopesOrderTable : TableView<NamedScope>() {
   private val model = ListTableModel<NamedScope>(IconColumn, NameColumn, SetColumn)
 

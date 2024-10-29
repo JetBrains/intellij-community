@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.slicer;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -28,11 +28,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public final class SliceLeafAnalyzer {
   private static final Logger LOG = Logger.getInstance(SliceLeafAnalyzer.class);
 
-  @NotNull
-  private final SliceLeafEquality myLeafEquality;
+  private final @NotNull SliceLeafEquality myLeafEquality;
 
-  @NotNull
-  private final SliceLanguageSupportProvider myProvider;
+  private final @NotNull SliceLanguageSupportProvider myProvider;
 
   public SliceLeafAnalyzer(@NotNull SliceLeafEquality leafEquality, @NotNull SliceLanguageSupportProvider provider) {
     myLeafEquality = leafEquality;
@@ -72,10 +70,9 @@ public final class SliceLeafAnalyzer {
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, description);
   }
 
-  @NotNull
-  public SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
-                                                        @NotNull SliceRootNode oldRoot,
-                                                        @NotNull Map<SliceNode, Collection<PsiElement>> map) {
+  public @NotNull SliceRootNode createTreeGroupedByValues(@NotNull Collection<? extends PsiElement> leaves,
+                                                          @NotNull SliceRootNode oldRoot,
+                                                          @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     SliceNode oldRootStart = oldRoot.myCachedChildren.get(0);
     SliceRootNode root = oldRoot.copy();
     root.setChanged();
@@ -106,7 +103,7 @@ public final class SliceLeafAnalyzer {
     return root;
   }
 
-  public void startAnalyzeValues(@NotNull final AbstractTreeStructure treeStructure, @NotNull final Runnable finish) {
+  public void startAnalyzeValues(final @NotNull AbstractTreeStructure treeStructure, final @NotNull Runnable finish) {
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
     final Ref<Collection<PsiElement>> leafExpressions = Ref.create(null);
 
@@ -116,7 +113,7 @@ public final class SliceLeafAnalyzer {
     ProgressManager.getInstance().run(new Task.Backgroundable(
       root.getProject(), LangBundle.message("progress.title.expanding.all.nodes", encouragementPiece), true) {
       @Override
-      public void run(@NotNull final ProgressIndicator indicator) {
+      public void run(final @NotNull ProgressIndicator indicator) {
         Collection<PsiElement> l = calcLeafExpressions(root, treeStructure, map);
         leafExpressions.set(l);
       }
@@ -204,10 +201,9 @@ public final class SliceLeafAnalyzer {
     return map.get(node);
   }
 
-  @NotNull
-  public Collection<PsiElement> calcLeafExpressions(@NotNull final SliceNode root,
-                                                    @NotNull AbstractTreeStructure treeStructure,
-                                                    @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
+  public @NotNull Collection<PsiElement> calcLeafExpressions(final @NotNull SliceNode root,
+                                                             @NotNull AbstractTreeStructure treeStructure,
+                                                             final @NotNull Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
     AtomicInteger depth = new AtomicInteger();
     boolean printToLog = LOG.isTraceEnabled();
@@ -219,7 +215,7 @@ public final class SliceLeafAnalyzer {
       }
 
       @Override
-      public void visit(@NotNull final SliceNode element) {
+      public void visit(final @NotNull SliceNode element) {
         element.calculateDupNode();
         node(element, map).clear();
         SliceNode duplicate = element.getDuplicate();

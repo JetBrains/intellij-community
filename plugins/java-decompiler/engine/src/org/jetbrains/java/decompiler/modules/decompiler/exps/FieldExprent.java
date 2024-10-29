@@ -1,13 +1,16 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
-import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
+import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersion;
+import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructField;
 import org.jetbrains.java.decompiler.struct.attr.StructLocalVariableTableAttribute;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.gen.FieldDescriptor;
@@ -18,10 +21,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class FieldExprent extends Exprent {
   private final String name;
@@ -29,12 +29,13 @@ public class FieldExprent extends Exprent {
   private final boolean isStatic;
   private Exprent instance;
   private final FieldDescriptor descriptor;
-
-  public FieldExprent(LinkConstant cn, Exprent instance, Set<Integer> bytecodeOffsets) {
+  @Nullable
+  private VarType inferredType;
+  public FieldExprent(LinkConstant cn, Exprent instance, BitSet bytecodeOffsets) {
     this(cn.elementName, cn.className, instance == null, instance, FieldDescriptor.parseDescriptor(cn.descriptor), bytecodeOffsets);
   }
 
-  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, Set<Integer> bytecodeOffsets) {
+  public FieldExprent(String name, String classname, boolean isStatic, Exprent instance, FieldDescriptor descriptor, BitSet bytecodeOffsets) {
     super(EXPRENT_FIELD);
     this.name = name;
     this.classname = classname;
@@ -47,7 +48,25 @@ public class FieldExprent extends Exprent {
 
   @Override
   public VarType getExprType() {
-    return descriptor.type;
+    return inferredType == null ? descriptor.type : inferredType;
+  }
+
+  @Override
+  public void inferExprType(VarType upperBound) {
+    StructClass cl = DecompilerContext.getStructContext().getClass(classname);
+    Map<String, Map<VarType, VarType>> types = cl == null ? Collections.emptyMap() : cl.getAllGenerics();
+
+    StructField ft = null;
+    while(cl != null) {
+      ft = cl.getField(name, descriptor.descriptorString);
+      if (ft != null)
+        break;
+      cl = cl.superClass == null ? null : DecompilerContext.getStructContext().getClass((String)cl.superClass.value);
+    }
+
+    if (ft != null && ft.getSignature() != null) {
+      inferredType = ft.getSignature().type.remap(types.getOrDefault(cl.qualifiedName, Collections.emptyMap()));
+    }
   }
 
   @Override
@@ -56,8 +75,7 @@ public class FieldExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
     if (instance != null) {
       lst.add(instance);
     }
@@ -97,7 +115,7 @@ public class FieldExprent extends Exprent {
 
       if (instance != null && instance.type == Exprent.EXPRENT_VAR) {
         VarExprent instVar = (VarExprent)instance;
-        VarVersionPair pair = new VarVersionPair(instVar);
+        VarVersion pair = new VarVersion(instVar);
 
         MethodWrapper currentMethod = (MethodWrapper)DecompilerContext.getProperty(DecompilerContext.CURRENT_METHOD_WRAPPER);
 
@@ -180,6 +198,12 @@ public class FieldExprent extends Exprent {
 
   public String getName() {
     return name;
+  }
+
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, instance);
+    measureBytecode(values);
   }
 
   // *****************************************************************************

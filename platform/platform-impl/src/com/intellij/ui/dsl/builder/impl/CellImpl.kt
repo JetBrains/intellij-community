@@ -413,7 +413,13 @@ internal class CellImpl<T : JComponent>(
 
   private fun doEnabled(isEnabled: Boolean) {
     if (viewComponent is JScrollPane) {
-      component.isEnabled = isEnabled
+      if (viewComponent === component) {
+        // ScrollPane was added via [Row.cell] method
+        viewComponent.viewport?.view?.isEnabled = isEnabled
+      }
+      else {
+        component.isEnabled = isEnabled
+      }
     }
     else {
       viewComponent.isEnabled = isEnabled

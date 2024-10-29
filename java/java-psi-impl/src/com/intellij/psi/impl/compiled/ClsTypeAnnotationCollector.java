@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.psi.impl.cache.TypeAnnotationContainer;
+import com.intellij.psi.impl.cache.ExplicitTypeAnnotationContainer;
 import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -12,7 +12,7 @@ import org.jetbrains.org.objectweb.asm.TypePath;
 import java.io.ByteArrayOutputStream;
 import java.util.Arrays;
 
-class ClsTypeAnnotationCollector extends TypeAnnotationContainer.Collector {
+class ClsTypeAnnotationCollector extends ExplicitTypeAnnotationContainer.Collector {
   private final @NotNull FirstPassData myFirstPassData;
 
   ClsTypeAnnotationCollector(@NotNull TypeInfo info, @NotNull FirstPassData classInfo) {

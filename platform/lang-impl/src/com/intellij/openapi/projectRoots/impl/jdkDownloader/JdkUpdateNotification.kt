@@ -19,6 +19,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
 import com.intellij.openapi.vfs.VfsUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.io.path.invariantSeparatorsPathString
@@ -39,6 +40,7 @@ private val LOG = logger<JdkUpdateNotification>()
  *    - the update notification is dismissed (or rejected)
  *    - the JDK update is completed
  */
+@ApiStatus.Internal
 class JdkUpdateNotification(val jdk: Sdk,
                             val oldItem: JdkItem,
                             val newItem: JdkItem,

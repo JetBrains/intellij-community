@@ -11,7 +11,9 @@ import com.intellij.platform.backend.documentation.PsiDocumentationTargetProvide
 import com.intellij.psi.PsiDocCommentBase
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.kdoc.KDocRenderer.renderKDoc
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
@@ -20,8 +22,14 @@ import org.jetbrains.kotlin.psi.KtFile
 
 class KotlinPsiDocumentationTargetProvider : PsiDocumentationTargetProvider {
     override fun documentationTarget(element: PsiElement, originalElement: PsiElement?): DocumentationTarget? {
-        val elementWithDocumentation = element.navigationElement ?: element
-        return if (elementWithDocumentation.language.`is`(KotlinLanguage.INSTANCE)) KotlinDocumentationTarget(elementWithDocumentation, originalElement) else null
+        return if (element.language.`is`(KotlinLanguage.INSTANCE)) {
+            KotlinDocumentationTarget(element, originalElement).takeUnless {
+                // show documentation based on java presentation
+                element.navigationElement is KtFile && originalElement?.containingFile is PsiJavaFile
+            }
+        } else {
+            null
+        }
     }
 }
 

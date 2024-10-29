@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -12,7 +12,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -52,9 +51,8 @@ final class AutoCompletionProvider {
       return "AutocompletionContributor";
     }
 
-    @Nls
     @Override
-    public @NotNull String getGroupName() {
+    public @Nls @NotNull String getGroupName() {
       return IdeBundle.message("searcheverywhere.autocompletion.tab.name");
     }
 
@@ -84,12 +82,6 @@ final class AutoCompletionProvider {
     @Override
     public @NotNull ListCellRenderer<? super AutoCompletionCommand> getElementsRenderer() {
       return new CommandRenderer();
-    }
-
-    @Override
-    public @Nullable Object getDataForItem(@NotNull AutoCompletionCommand element,
-                                           @NotNull String dataId) {
-      return null;
     }
   }
 

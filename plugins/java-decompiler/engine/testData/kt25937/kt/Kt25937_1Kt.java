@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 )
 public final class Kt25937_1Kt {
    public static final int some1() {
-      return Kt25937Kt.callSuspendBlock((Function1)(new Function1<Continuation<? super Unit>, Object>((Continuation)null) {
+      return Kt25937Kt.callSuspendBlock(new Function1<Continuation<? super Unit>, Object>((Continuation)null) {
          int label;
 
          @Nullable
@@ -44,6 +44,6 @@ public final class Kt25937_1Kt {
          public final Object invoke(Object var1) {
             return ((<undefinedtype>)this.create((Continuation)var1)).invokeSuspend(Unit.INSTANCE);
          }
-      }));
+      });
    }
 }

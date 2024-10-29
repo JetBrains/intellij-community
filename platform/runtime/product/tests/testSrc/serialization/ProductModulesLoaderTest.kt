@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.runtime.product.serialization
 
-import com.intellij.platform.runtime.product.ModuleImportance
+import com.intellij.platform.runtime.product.RuntimeModuleLoadingRule
 import com.intellij.platform.runtime.product.ProductMode
 import com.intellij.platform.runtime.repository.RuntimeModuleId
 import com.intellij.platform.runtime.repository.createRepository
@@ -32,14 +32,14 @@ class ProductModulesLoaderTest {
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "<idea-plugin><id>plugin</id></idea-plugin>")
     val xml = generateProductModulesWithPlugin()
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (root, util) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, root.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
     assertEquals("util", util.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.SERVICE, util.importance)
+    assertEquals(RuntimeModuleLoadingRule.ON_DEMAND, util.loadingRule)
     assertEquals(emptySet<RuntimeModuleId>(), productModules.mainModuleGroup.optionalModuleIds)
 
     val pluginGroup = productModules.bundledPluginModuleGroups.single()
@@ -57,21 +57,21 @@ class ProductModulesLoaderTest {
       xml(FILE_NAME, """
         <product-modules>
           <main-root-modules>
-            <module importance="functional">root</module>
-            <module importance="optional">optional</module>
-            <module importance="optional">unknown-optional</module>
+            <module loading="required">root</module>
+            <module loading="optional">optional</module>
+            <module loading="optional">unknown-optional</module>
           </main-root-modules>
         </product-modules>
       """.trimIndent())
     }.generateInTempDir().resolve(FILE_NAME)
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val mainGroupModules = productModules.mainModuleGroup.includedModules.sortedBy { it.moduleDescriptor.moduleId.stringId }
     assertEquals(2, mainGroupModules.size)
     val (optional, root) = mainGroupModules
     assertEquals("root", root.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, root.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, root.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.OPTIONAL, optional.importance)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown-optional"), productModules.mainModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
   
@@ -86,15 +86,15 @@ class ProductModulesLoaderTest {
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "optional", "unknown")
 
     val xml = generateProductModulesWithPlugin()
-    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.LOCAL_IDE, repository)
+    val productModules = ProductModulesSerialization.loadProductModules(xml, ProductMode.MONOLITH, repository)
     val pluginModuleGroup = productModules.bundledPluginModuleGroups.single()
     val pluginModules = pluginModuleGroup.includedModules
     assertEquals(2, pluginModules.size)
     val (plugin, optional) = pluginModules
     assertEquals("plugin", plugin.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.FUNCTIONAL, plugin.importance)
+    assertEquals(RuntimeModuleLoadingRule.REQUIRED, plugin.loadingRule)
     assertEquals("optional", optional.moduleDescriptor.moduleId.stringId)
-    assertEquals(ModuleImportance.OPTIONAL, optional.importance)
+    assertEquals(RuntimeModuleLoadingRule.OPTIONAL, optional.loadingRule)
     assertEquals(setOf("optional", "unknown"), pluginModuleGroup.optionalModuleIds.mapTo(HashSet()) { it.stringId })
   }
   
@@ -103,12 +103,12 @@ class ProductModulesLoaderTest {
     val repository = createRepository(
       tempDirectory.rootPath,
       RawRuntimeModuleDescriptor.create("root", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("intellij.platform.frontend", emptyList(), emptyList()),
-      RawRuntimeModuleDescriptor.create("intellij.platform.localIde", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.frontend.split", emptyList(), emptyList()),
+      RawRuntimeModuleDescriptor.create("intellij.platform.monolith", emptyList(), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin", listOf("plugin"), emptyList()),
       RawRuntimeModuleDescriptor.create("plugin.common", emptyList(), listOf("plugin")),
-      RawRuntimeModuleDescriptor.create("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend")),
-      RawRuntimeModuleDescriptor.create("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.localIde")),
+      RawRuntimeModuleDescriptor.create("plugin.frontend", emptyList(), listOf("plugin", "intellij.platform.frontend.split")),
+      RawRuntimeModuleDescriptor.create("plugin.localIde", emptyList(), listOf("plugin", "intellij.platform.monolith")),
     )
     writePluginXmlWithModules(tempDirectory.rootPath / "plugin", "plugin", "plugin.common", "plugin.frontend", "plugin.localIde")
 
@@ -123,7 +123,7 @@ class ProductModulesLoaderTest {
       assertEquals("plugin.common", common.moduleDescriptor.moduleId.stringId)
       assertEquals(additionalModuleName, additional.moduleDescriptor.moduleId.stringId)
     }
-    checkGroup(ProductMode.LOCAL_IDE, "plugin.localIde")
+    checkGroup(ProductMode.MONOLITH, "plugin.localIde")
     checkGroup(ProductMode.FRONTEND, "plugin.frontend")
   }
 
@@ -148,7 +148,7 @@ class ProductModulesLoaderTest {
               <from-module>root</from-module>
             </include>
             <main-root-modules>
-              <module importance="functional">additional</module>
+              <module loading="required">additional</module>
             </main-root-modules>
             <bundled-plugins>
               <module>plugin</module>
@@ -217,7 +217,7 @@ class ProductModulesLoaderTest {
             <product-modules>
               <main-root-modules>
                ${mainModules.joinToString("\n") { 
-                  "<module importance=\"functional\">$it</module>"
+                  "<module loading=\"required\">$it</module>"
                }}
               </main-root-modules>
               <bundled-plugins>

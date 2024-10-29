@@ -97,7 +97,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
       if (noClassesFound.get()) {
         //check visibility
-        var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+        var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
         var handler = supportProvider.getExtractInterfaceHandler();
         if (handler == null)  {
           throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
@@ -122,12 +122,12 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);
-    var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+    var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
     var handler = (JavaPullUpHandlerBase)supportProvider.getPullUpHandler();
     if (handler == null)  {
       throw new IllegalStateException("Handler is null, supportProvider class = " + supportProvider.getClass());
     }
-    handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy<>(DocCommentPolicy.ASIS));
+    handler.runSilently(containingClass, baseClass, new MemberInfo[]{memberInfo}, new DocCommentPolicy(DocCommentPolicy.ASIS));
   }
 
   @Override
@@ -164,13 +164,13 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
 
     registrar.add(new PullAsAbstractUpFix(methodWithOverrides, name));
     if (canBePulledUp) {
-      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
       registrar.add(new RunRefactoringAction(supportProvider.getPullUpHandler(), JavaBundle.message("pull.members.up.fix.name")));
     }
 
 
     if (! (containingClass instanceof PsiAnonymousClass)){
-      var supportProvider = LanguageRefactoringSupport.INSTANCE.forLanguage(JavaLanguage.INSTANCE);
+      var supportProvider = LanguageRefactoringSupport.getInstance().forLanguage(JavaLanguage.INSTANCE);
 
       registrar.add(new RunRefactoringAction(supportProvider.getExtractInterfaceHandler(), JavaBundle.message("extract.interface.command.name")));
       registrar.add(new RunRefactoringAction(supportProvider.getExtractSuperClassHandler(), JavaBundle.message("extract.superclass.command.name")));

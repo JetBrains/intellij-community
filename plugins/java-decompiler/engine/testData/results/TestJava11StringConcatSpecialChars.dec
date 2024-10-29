@@ -12,12 +12,26 @@ public class TestJava11StringConcatSpecialChars {
 
 class 'java11/TestJava11StringConcatSpecialChars' {
    method 'testOrdinaryInfix (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;' {
+      0      4
+      1      4
+      2      4
       3      4
+      4      4
+      5      4
+      6      4
+      7      4
       8      4
    }
 
    method 'testSpecialCharsInfix (Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;' {
+      0      8
+      1      8
+      2      8
       3      8
+      4      8
+      5      8
+      6      8
+      7      8
       8      8
    }
 }

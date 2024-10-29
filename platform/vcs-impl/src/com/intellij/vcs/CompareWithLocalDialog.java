@@ -109,7 +109,7 @@ public final class CompareWithLocalDialog {
     return changesPanel;
   }
 
-  private static abstract class MyLoadingChangesPanel extends JPanel implements DataProvider, Disposable {
+  private static abstract class MyLoadingChangesPanel extends JPanel implements UiDataProvider, Disposable {
     public static final DataKey<MyLoadingChangesPanel> DATA_KEY = DataKey.create("git4idea.log.MyLoadingChangesPanel");
 
     private final SimpleAsyncChangesBrowser myChangesBrowser;
@@ -144,13 +144,9 @@ public final class CompareWithLocalDialog {
       myChangesBrowser.setChangesToDisplay(changes != null ? changes : Collections.emptyList());
     }
 
-    @Nullable
     @Override
-    public Object getData(@NotNull String dataId) {
-      if (DATA_KEY.is(dataId)) {
-        return this;
-      }
-      return null;
+    public void uiDataSnapshot(@NotNull DataSink sink) {
+      sink.set(DATA_KEY, this);
     }
   }
 

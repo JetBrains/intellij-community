@@ -408,7 +408,7 @@ public class PythonTask {
     final ProcessHandler process = createProcess(env);
     final Project project = myModule.getProject();
     stopProcessWhenAppClosed(process);
-    process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_GUEST, true);
+    process.putUserData(ToolWindowContentExtractor.SYNC_TAB_TO_REMOTE_CLIENTS, true);
     new RunContentExecutor(project, process)
       .withFilter(new PythonTracebackFilter(project))
       .withConsole(consoleView)

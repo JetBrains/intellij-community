@@ -3,8 +3,11 @@
 package com.intellij.openapi.roots.ui.componentsList.layout;
 
 
+import org.jetbrains.annotations.ApiStatus;
+
 import java.awt.*;
 
+@ApiStatus.Internal
 public abstract class ComponentOperation {
   public abstract void applyTo(Component component);
 

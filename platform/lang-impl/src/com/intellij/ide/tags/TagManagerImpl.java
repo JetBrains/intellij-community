@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.tags;
 
 import com.intellij.ide.bookmarks.Bookmark;
@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -21,6 +22,7 @@ import java.util.regex.Pattern;
  *
  * @author gregsh
  */
+@ApiStatus.Internal
 public final class TagManagerImpl extends TagManager {
 
   private final Project myProject;
@@ -29,9 +31,8 @@ public final class TagManagerImpl extends TagManager {
     myProject = project;
   }
 
-  @NotNull
   @Override
-  public Collection<Tag> getTags(@NotNull PsiElement element) {
+  public @NotNull Collection<Tag> getTags(@NotNull PsiElement element) {
     Bookmark bookmark = BookmarkManager.getInstance(myProject).findElementBookmark(element);
     if (bookmark == null) return Collections.emptySet();
     String desc = bookmark.getDescription();

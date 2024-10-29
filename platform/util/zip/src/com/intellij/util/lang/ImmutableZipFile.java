@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -22,6 +22,7 @@ import java.util.zip.ZipException;
 @ApiStatus.Internal
 public final class ImmutableZipFile implements ZipFile {
   public static final int MIN_EOCD_SIZE = 22;
+  public static final int CENTRAL_DIRECTORY_FILE_HEADER_SIGNATURE = 0x02014b50;
   public static final int EOCD = 0x6054B50;
 
   private static final int INDEX_FORMAT_VERSION = 4;

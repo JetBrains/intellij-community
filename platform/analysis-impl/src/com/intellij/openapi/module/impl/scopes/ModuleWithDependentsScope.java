@@ -19,6 +19,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.containers.HashSetQueue;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@ApiStatus.Internal
 public final class ModuleWithDependentsScope extends GlobalSearchScope implements VirtualFileEnumerationAware {
   private final Set<Module> myRootModules;
   private final ProjectFileIndex myProjectFileIndex;

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.actions.ImportModuleAction;
@@ -28,6 +28,7 @@ import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestObservation;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -121,19 +123,20 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
       throw new RuntimeException(e);
     }
     assertNotNull(myCreatedProject);
-
-    UIUtil.dispatchAllInvocationEvents();
-    IndexingTestUtil.waitUntilIndexesAreReady(myCreatedProject);
-
-    return myCreatedProject;
-  }
-
-  protected Project getCreatedProject() {
+    waitForConfiguration(myCreatedProject);
     return myCreatedProject;
   }
 
   private Module createModuleFromWizard(@NotNull Project project) {
-    return new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+    Module createdModule = new NewModuleAction().createModuleFromWizard(project, null, myWizard);
+    waitForConfiguration(project);
+    return createdModule;
+  }
+
+  protected void waitForConfiguration(@NotNull Project project) {
+    UIUtil.dispatchAllInvocationEvents();
+    IndexingTestUtil.waitUntilIndexesAreReady(project);
+    TestObservation.waitForConfiguration(TimeUnit.MINUTES.toMillis(10), project);
   }
 
   private static void setSelectedTemplate(@NotNull Step step, @NotNull String group, @Nullable String name) {
@@ -152,10 +155,6 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
     var npwStep = (NewProjectWizardStep)moduleWizardStep;
     adjuster.accept(npwStep);
-  }
-
-  protected void cancelWizardRun() {
-    throw new CancelWizardException();
   }
 
   private static class CancelWizardException extends RuntimeException {
@@ -186,9 +185,10 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     }
   }
 
-  protected void createWizard(@Nullable Project project) throws IOException {
+  protected void createWizard(@Nullable Project project) {
     setWizard(createWizard(project, contentRoot));
-    UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
+    // to make default selection applied
+    UIUtil.dispatchAllInvocationEvents();
   }
 
   protected Project createProject(Consumer<? super Step> adjuster) throws IOException {

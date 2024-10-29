@@ -14,6 +14,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
+import com.intellij.psi.SmartPsiElementPointer
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil.SelectableTemplateElement
@@ -43,7 +44,7 @@ class KotlinVariableInplaceIntroducer(
     addedVariable: KtProperty,
     originalExpression: KtExpression?,
     occurrencesToReplace: Array<KtExpression>,
-    suggestedNames: Collection<String>,
+    private val suggestedNames: Collection<String>,
     private val expressionRenderedType: String?,
     private val mustSpecifyTypeExplicitly: Boolean,
     @Nls title: String,
@@ -58,10 +59,10 @@ class KotlinVariableInplaceIntroducer(
     project = project,
     editor = editor,
 ) {
-    private val suggestedNames = suggestedNames.toTypedArray()
     private var expressionTypeCheckBox: JCheckBox? = null
-    private val addedVariablePointer = addedVariable.createSmartPointer()
-    private val addedVariable get() = addedVariablePointer.element
+    private val addedVariablePointer: SmartPsiElementPointer<KtProperty> = addedVariable.createSmartPointer()
+    private val addedVariable: KtProperty?
+        get() = addedVariablePointer.element
 
     private fun createPopupPanel(): DialogPanel {
         return panel {
@@ -99,11 +100,13 @@ class KotlinVariableInplaceIntroducer(
         }
     }
 
-    override fun getVariable() = addedVariable
+    override fun getVariable(): KtProperty? = addedVariable
 
-    override fun suggestNames(replaceAll: Boolean, variable: KtProperty?) = suggestedNames
+    override fun suggestNames(replaceAll: Boolean, variable: KtProperty?): Array<String> {
+        return suggestedNames.toTypedArray()
+    }
 
-    override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>) = addedVariable
+    override fun createFieldToStartTemplateOn(replaceAll: Boolean, names: Array<out String>): KtProperty? = addedVariable
 
     override fun buildTemplateAndStart(
         refs: Collection<PsiReference>,
@@ -159,7 +162,7 @@ class KotlinVariableInplaceIntroducer(
         ) { }
     }
 
-    override fun getInitialName() = super.getInitialName().quoteIfNeeded()
+    override fun getInitialName(): String = super.getInitialName().quoteIfNeeded()
 
     override fun updateTitle(variable: KtProperty?, value: String?) {
         expressionTypeCheckBox?.isEnabled = value == null || value.isIdentifier()
@@ -170,7 +173,7 @@ class KotlinVariableInplaceIntroducer(
         // Do not delete introduced variable as it was created outside of in-place refactoring
     }
 
-    override fun isReplaceAllOccurrences() = true
+    override fun isReplaceAllOccurrences(): Boolean = true
 
     override fun setReplaceAllOccurrences(allOccurrences: Boolean) {
 

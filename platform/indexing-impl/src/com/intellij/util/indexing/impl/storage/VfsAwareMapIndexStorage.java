@@ -98,7 +98,7 @@ public class VfsAwareMapIndexStorage<Key, Value> extends MapIndexStorage<Key, Va
   public boolean processKeys(@NotNull Processor<? super Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
     try {
-      clearCachedMappings();
+      invalidateCachedMappings();
 
       Project project = scope.getProject();
       if (myKeyHashToVirtualFileMapping != null && project != null && idFilter != null) {

@@ -13,3 +13,7 @@ actual fun <!LINE_MARKER("descr='Has expects in common module'")!>foo<!>() {}
 
 actual annotation class <!LINE_MARKER("descr='Has expects in common module'")!>Preview<!>
 actual object <!LINE_MARKER("descr='Has expects in common module'")!>SomeObject<!>
+
+actual interface <!LINE_MARKER("descr='Has expects in common module'")!>WithCompanion<!> {
+    actual companion <!LINE_MARKER("descr='Has expects in common module'")!>object<!> {}
+}

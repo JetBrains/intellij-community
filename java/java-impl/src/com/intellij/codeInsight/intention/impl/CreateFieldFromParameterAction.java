@@ -18,11 +18,13 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.FinalUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Max Medvedev
@@ -54,7 +56,7 @@ public final class CreateFieldFromParameterAction extends PsiUpdateModCommandAct
       // for unused parameter there will be a separate quick fix
       return false;
     }
-    final PsiType type = getSubstitutedType(parameter);
+    final PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
     final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
     return FieldFromParameterUtils.isAvailable(parameter, type, targetClass, false) &&
            parameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
@@ -76,12 +78,13 @@ public final class CreateFieldFromParameterAction extends PsiUpdateModCommandAct
   @Override
   protected void invoke(@NotNull ActionContext context, @NotNull PsiParameter parameter, @NotNull ModPsiUpdater updater) {
     Project project = parameter.getProject();
-    PsiType type = getSubstitutedType(parameter);
+    PsiType type = FieldFromParameterUtils.getSubstitutedType(parameter);
+    if (type == null) return;
     JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     String parameterName = parameter.getName();
     String propertyName = styleManager.variableNameToPropertyName(parameterName, VariableKind.PARAMETER);
 
-    PsiMethod method = (PsiMethod)parameter.getDeclarationScope();
+    if (!(parameter.getDeclarationScope() instanceof PsiMethod method)) return;
     PsiClass targetClass = method.getContainingClass();
     if (targetClass == null) return;
 
@@ -91,11 +94,16 @@ public final class CreateFieldFromParameterAction extends PsiUpdateModCommandAct
     SuggestedNameInfo suggestedNameInfo = styleManager.suggestVariableName(kind, propertyName, null, type);
     SuggestedNameInfo uniqueNameInfo = styleManager.suggestUniqueVariableName(suggestedNameInfo, targetClass, true);
 
-    boolean isFinal = !isMethodStatic && method.isConstructor();
+    boolean maybeFinal = !isMethodStatic && method.isConstructor();
+    boolean isFinal = maybeFinal && targetClass.getConstructors().length == 1;
+    PsiField field = FieldFromParameterUtils.createFieldAndAddAssignment(
+      project, targetClass, method, parameter, type, uniqueNameInfo.names[0], isMethodStatic, isFinal);
+    assert field != null;
+    if (maybeFinal && !isFinal && FinalUtils.canBeFinal(field)) {
+      Objects.requireNonNull(field.getModifierList()).setModifierProperty(PsiModifier.FINAL, true);
+    }
 
-    PsiVariable variable = createField(project, targetClass, method, parameter, type, uniqueNameInfo.names[0], isMethodStatic, isFinal);
-
-    updater.rename(variable, List.of(uniqueNameInfo.names));
+    updater.rename(field, List.of(uniqueNameInfo.names));
   }
 
   private static boolean isUnusedSymbolInspectionEnabled(@NotNull PsiElement element) {
@@ -108,20 +116,5 @@ public final class CreateFieldFromParameterAction extends PsiUpdateModCommandAct
     }
     HighlightingLevelManager levelManager = HighlightingLevelManager.getInstance(file.getProject());
     return levelManager.shouldInspect(file);
-  }
-
-  private static PsiType getSubstitutedType(@NotNull PsiParameter parameter) {
-    return FieldFromParameterUtils.getSubstitutedType(parameter);
-  }
-
-  private static PsiVariable createField(@NotNull Project project,
-                                         @NotNull PsiClass targetClass,
-                                         @NotNull PsiMethod method,
-                                         @NotNull PsiParameter myParameter,
-                                         PsiType type,
-                                         @NotNull String fieldName,
-                                         boolean methodStatic,
-                                         boolean isFinal) {
-    return FieldFromParameterUtils.createFieldAndAddAssignment(project, targetClass, method, myParameter, type, fieldName, methodStatic, isFinal);
   }
 }

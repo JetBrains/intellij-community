@@ -30,8 +30,8 @@ import com.intellij.workspaceModel.ide.legacyBridge.impl.java.JAVA_TEST_ROOT_ENT
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.model.ExternalSourceSet
-import org.jetbrains.plugins.gradle.model.GradleLightProject
 import org.jetbrains.plugins.gradle.model.GradleSourceSetModel
+import org.jetbrains.plugins.gradle.service.project.GradleContentRootIndex
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil.getModuleId
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 import org.jetbrains.plugins.gradle.service.syncAction.GradleSyncContributor
@@ -68,11 +68,20 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
     val moduleEntities = storage.entities<ModuleEntity>()
 
+    val contentRootIndex = GradleContentRootIndex()
+
+    for (buildModel in context.allBuilds) {
+      for (projectModel in buildModel.projects) {
+        val sourceSetModel = context.getProjectModel(projectModel, GradleSourceSetModel::class.java) ?: continue
+        for (sourceSet in sourceSetModel.sourceSets.values) {
+          contentRootIndex.addSourceRoots(sourceSet)
+        }
+      }
+    }
+
     val linkedProjectRootPath = Path.of(context.projectPath)
     val linkedProjectRootUrl = linkedProjectRootPath.toVirtualFileUrl(virtualFileUrlManager)
     val linkedProjectEntitySource = GradleLinkedProjectEntitySource(linkedProjectRootUrl)
-
-    val contentRootWeightMap = buildContentRootWeightMap(context)
 
     for (buildModel in context.allBuilds) {
 
@@ -96,7 +105,7 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
 
           val sourceSetEntitySource = GradleSourceSetEntitySource(projectEntitySource, sourceSet.name)
 
-          val contentRoots = resolveContentRoots(virtualFileUrlManager, projectModel, sourceSet, contentRootWeightMap)
+          val contentRoots = resolveContentRoots(virtualFileUrlManager, externalProject, sourceSet, contentRootIndex)
           val sourceRootData = GradleSourceRootData(externalProject, sourceSet, projectModuleEntity, sourceSetEntitySource, contentRoots)
 
           if (moduleEntities.any { isConflictedModuleEntity(it, sourceRootData) }) {
@@ -321,86 +330,19 @@ class GradleSourceRootSyncContributor : GradleSyncContributor {
     }
   }
 
-  private fun buildContentRootWeightMap(context: ProjectResolverContext): Map<Path, Int> {
-    val result = LinkedHashMap<Path, Int>()
-    for (buildModel in context.allBuilds) {
-      for (projectModel in buildModel.projects) {
-        val sourceSetModel = context.getProjectModel(projectModel, GradleSourceSetModel::class.java) ?: continue
-        for (sourceSet in sourceSetModel.sourceSets.values) {
-          val contentRootPaths = LinkedHashSet<Path>()
-          for (sourceDirectorySet in sourceSet.sources.values) {
-            for (sourceDirectory in sourceDirectorySet.srcDirs) {
-              val sourceRootPath = sourceDirectory.toPath()
-              contentRootPaths.addAll(resolveParentPaths(sourceRootPath))
-            }
-          }
-          for (contentRootPath in contentRootPaths) {
-            result[contentRootPath] = result.getOrDefault(contentRootPath, 0) + 1
-          }
-        }
-      }
-    }
-    return result
-  }
-
   private fun resolveContentRoots(
     virtualFileUrlManager: VirtualFileUrlManager,
-    projectModel: GradleLightProject,
+    externalProject: ExternalProject,
     sourceSet: ExternalSourceSet,
-    contentRootWeightMap: Map<Path, Int>,
+    contentRootIndex: GradleContentRootIndex,
   ): Set<VirtualFileUrl> {
     val contentRootUrls = LinkedHashSet<VirtualFileUrl>()
-    val contentRootPaths = resolveContentRoots(projectModel, sourceSet, contentRootWeightMap)
+    val contentRootPaths = contentRootIndex.resolveContentRoots(externalProject, sourceSet)
     for (contentRootPath in contentRootPaths) {
       val contentRootUrl = contentRootPath.toVirtualFileUrl(virtualFileUrlManager)
       contentRootUrls.add(contentRootUrl)
     }
     return contentRootUrls
-  }
-
-  private fun resolveContentRoots(
-    projectModel: GradleLightProject,
-    sourceSet: ExternalSourceSet,
-    contentRootWeightMap: Map<Path, Int>,
-  ): Set<Path> {
-
-    val projectRootPath = projectModel.projectDirectory.toPath()
-
-    val contentRootPaths = LinkedHashSet<Path>()
-    val sourceRootPaths = LinkedHashSet<Path>()
-
-    for (sourceDirectorySet in sourceSet.sources.values) {
-      for (sourceDirectory in sourceDirectorySet.srcDirs) {
-        val sourceRootPath = sourceDirectory.toPath()
-        if (sourceRootPath.startsWith(projectRootPath)) {
-          sourceRootPaths.add(sourceRootPath)
-        }
-        else {
-          contentRootPaths.add(sourceRootPath)
-        }
-      }
-    }
-
-    for (sourceRootPath in sourceRootPaths) {
-      if (contentRootWeightMap[sourceRootPath.parent] == 1) {
-        contentRootPaths.add(sourceRootPath.parent)
-      }
-      else {
-        contentRootPaths.add(sourceRootPath)
-      }
-    }
-
-    return contentRootPaths
-  }
-
-  private fun resolveParentPaths(path: Path): List<Path> {
-    val result = ArrayList<Path>()
-    var parentPath: Path? = path
-    while (parentPath != null) {
-      result.add(parentPath)
-      parentPath = parentPath.parent
-    }
-    return result
   }
 
   private fun resolveUniqueModuleName(

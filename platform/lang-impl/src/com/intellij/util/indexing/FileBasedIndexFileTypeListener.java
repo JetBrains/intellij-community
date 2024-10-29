@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 final class FileBasedIndexFileTypeListener implements FileTypeListener {
   @Override
-  public void fileTypesChanged(@NotNull final FileTypeEvent event) {
+  public void fileTypesChanged(final @NotNull FileTypeEvent event) {
     FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     if (fileBasedIndex.getRegisteredIndexes() == null) {
       return;

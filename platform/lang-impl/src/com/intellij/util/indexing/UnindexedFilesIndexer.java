@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -105,23 +105,25 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       LOG.info("Finished for " + myProject.getName() + ". System property 'idea.indexes.pretendNoFiles' is enabled.");
       return;
     }
+    SpanBuilder spanBuilder = TelemetryManager.getInstance().getTracer(Indexes).spanBuilder("InternalSpanForIndexingDiagnostic");
+    TraceKt.use(spanBuilder, span -> {
+      projectDumbIndexingHistory.setScanningIds(files.getScanningIds());
 
-    projectDumbIndexingHistory.setScanningIds(files.getScanningIds());
+      PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
 
-    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+      ProgressIndicator poweredIndicator =
+        PoweredProgressIndicator.wrap(indicator, getPowerForSmoothProgressIndicator());
+      poweredIndicator.setIndeterminate(false);
+      poweredIndicator.setFraction(0);
+      poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
 
-    ProgressIndicator poweredIndicator =
-      PoweredProgressIndicator.wrap(indicator, getPowerForSmoothProgressIndicator());
-    poweredIndicator.setIndeterminate(false);
-    poweredIndicator.setFraction(0);
-    poweredIndicator.setText(IndexingBundle.message("progress.indexing.updating"));
-
-    ProgressManager.getInstance().runProcess(() -> {
-      doIndexFiles(projectDumbIndexingHistory);
-    }, poweredIndicator);
-
-    LOG.info(
-      snapshot.getLogResponsivenessSinceCreationMessage("Finished for " + myProject.getName() + ". Unindexed files update"));
+      ProgressManager.getInstance().runProcess(() -> {
+        doIndexFiles(projectDumbIndexingHistory);
+      }, poweredIndicator);
+      LOG.info(
+        snapshot.getLogResponsivenessSinceCreationMessage("Finished for " + myProject.getName() + ". Unindexed files update"));
+      return null;
+    });
   }
 
   private void doIndexFiles(@NotNull ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory) {
@@ -265,8 +267,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     return new UnindexedFilesIndexer(myProject, mergedQueue, mergedReason);
   }
 
-  @NotNull
-  private String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
+  private @NotNull String mergeReasons(@NotNull UnindexedFilesIndexer otherIndexingTask) {
     String trimmedReason = StringUtil.trimStart(indexingReason, "Merged ");
     String trimmedOtherReason = StringUtil.trimStart(otherIndexingTask.indexingReason, "Merged ");
     if (otherIndexingTask.files.isEmpty() && trimmedReason.endsWith(trimmedOtherReason)) {

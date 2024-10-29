@@ -4,6 +4,7 @@ package git4idea.performanceTesting
 import com.intellij.ide.DataManager
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.playback.PlaybackContext
 import com.intellij.openapi.vcs.actions.VcsContextUtil
@@ -33,7 +34,7 @@ class ShowFileHistoryCommand(text: String, line: Int) : PerformanceCommandCorout
 
       val focusedComponent = IdeFocusManager.findInstance().focusOwner
       val dataContext = DataManager.getInstance().getDataContext(focusedComponent)
-      val selectedFiles = VcsContextUtil.selectedFilePaths(dataContext)
+      val selectedFiles = writeIntentReadAction { VcsContextUtil.selectedFilePaths (dataContext) }
       LOG.info("is active window ${ProjectUtil.getActiveProject()}")
       LOG.info("Selected file paths ${selectedFiles.size}")
 

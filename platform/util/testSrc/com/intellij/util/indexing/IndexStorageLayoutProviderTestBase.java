@@ -285,14 +285,8 @@ public abstract class IndexStorageLayoutProviderTestBase {
         ByteArraySequence serializedData = forwardIndex.get(inputId);
         forwardIndexAccessor.getDiffBuilder(inputId, serializedData).differentiate(
           expectedInputData,
-          (k, v, _inputId) -> {
-            inconsistencies.add("add(" + k + ", " + v + ")[" + _inputId + "]");
-          },
-          (k, v, _inputId) -> {
-            inconsistencies.add("update(" + k + ", " + v + ")[" + _inputId + "]");
-          },
-          (k, _inputId) -> {
-            inconsistencies.add("remove(" + k + ")[" + _inputId + "]");
+          (kind, k, v, _inputId) -> {
+            inconsistencies.add(kind + "(" + k + ", " + v + ")[" + _inputId + "]");
           }
         );
       }
@@ -351,16 +345,11 @@ public abstract class IndexStorageLayoutProviderTestBase {
           inputId,
           serializedData
         );
-        diffBuilder.differentiate(expectedInputData,
-                                  (k, v, _inputId) -> {
-                                    fail();
-                                  },
-                                  (k, v, _inputId) -> {
-                                    fail();
-                                  },
-                                  (k, _inputId) -> {
-                                    fail();
-                                  });
+        diffBuilder.differentiate(
+          expectedInputData,
+          (kind, key, value, _inputId) -> {
+            fail("Shouldn't be any difference, but: " + kind + "(" + key + ", " + value + ")[" + _inputId + "]");
+          });
       }
 
       assertTrue(

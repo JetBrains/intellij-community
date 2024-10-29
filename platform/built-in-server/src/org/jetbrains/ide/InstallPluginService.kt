@@ -28,6 +28,7 @@ internal class InstallPluginService : RestService() {
   var isAvailable = true
 
   private val trustedPredefinedHosts = setOf(
+    "jetbrains.com",
     "marketplace.jetbrains.com",
     "plugins.jetbrains.com",
     "package-search.services.jetbrains.com",

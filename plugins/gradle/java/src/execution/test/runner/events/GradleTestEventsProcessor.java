@@ -28,13 +28,13 @@ public final class GradleTestEventsProcessor {
   ) {
     var descriptor = event.getDescriptor();
     if (event instanceof ExternalSystemStartEvent) {
-      if (StringUtil.isEmpty(descriptor.getMethodName())) {
+      if (StringUtil.isEmpty(descriptor.getMethodName()) || isNewParametrizedTest(descriptor)) {
         return new BeforeSuiteEventProcessor(console);
       }
       return new BeforeTestEventProcessor(console);
     }
     if (event instanceof ExternalSystemFinishEvent) {
-      if (StringUtil.isEmpty(descriptor.getMethodName())) {
+      if (StringUtil.isEmpty(descriptor.getMethodName()) || isNewParametrizedTest(descriptor)) {
         return new AfterSuiteEventProcessor(console);
       }
       return new AfterTestEventProcessor(console);
@@ -44,5 +44,12 @@ public final class GradleTestEventsProcessor {
     }
     LOG.warn("Undefined progress event " + event.getClass().getSimpleName() + " " + event);
     return null;
+  }
+
+  private static boolean isNewParametrizedTest(@NotNull TestOperationDescriptor descriptor) {
+    String className = descriptor.getClassName();
+    String suiteName = descriptor.getSuiteName();
+    String methodName = descriptor.getMethodName();
+    return className != null && suiteName != null && suiteName.equals(methodName);
   }
 }

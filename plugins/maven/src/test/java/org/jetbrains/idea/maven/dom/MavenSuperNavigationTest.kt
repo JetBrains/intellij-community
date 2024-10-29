@@ -3,13 +3,15 @@ package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.junit.Test
 
 class MavenSuperNavigationTest : MavenDomTestCase() {
   @Test
-  fun testNavigationToManagingDependencyWithoutModules() = runBlocking(Dispatchers.EDT) {
+  fun testNavigationToManagingDependencyWithoutModules() = runBlocking {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -34,7 +36,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
     fixture.performEditorAction("GotoSuperMethod")
 
-    fixture.checkResultWithInlays(
+    checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -59,7 +61,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithoutModules() = runBlocking(Dispatchers.EDT) {
+  fun testNavigationToManagingPluginWithoutModules() = runBlocking {
     configureProjectPom(
       """
         <groupId>test</groupId>
@@ -86,7 +88,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
 
     fixture.performEditorAction("GotoSuperMethod")
 
-    fixture.checkResultWithInlays(
+    checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -113,7 +115,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testGotoToParentProject() = runBlocking(Dispatchers.EDT) {
+  fun testGotoToParentProject() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -144,7 +146,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingDependencyWithModules() = runBlocking(Dispatchers.EDT) {
+  fun testNavigationToManagingDependencyWithModules() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -187,7 +189,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
     fixture.performEditorAction("GotoSuperMethod")
 
     configTest(parent)
-    fixture.checkResultWithInlays(
+    checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -210,7 +212,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testNavigationToManagingPluginWithModules() = runBlocking(Dispatchers.EDT) {
+  fun testNavigationToManagingPluginWithModules() = runBlocking {
     val parent = createProjectPom(
       """
         <groupId>test</groupId>
@@ -258,7 +260,7 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
     fixture.performEditorAction("GotoSuperMethod")
 
     configTest(parent)
-    fixture.checkResultWithInlays(
+    checkResultWithInlays(
       createPomXml(
         """
           <groupId>test</groupId>
@@ -281,5 +283,14 @@ class MavenSuperNavigationTest : MavenDomTestCase() {
           </build>
           """.trimIndent()
       ))
+  }
+
+  private suspend fun checkResultWithInlays(text: String) {
+    withContext(Dispatchers.EDT) {
+      //readaction is not enough
+      writeIntentReadAction {
+        fixture.checkResultWithInlays(text)
+      }
+    }
   }
 }

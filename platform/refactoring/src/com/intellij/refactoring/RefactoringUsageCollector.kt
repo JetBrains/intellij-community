@@ -7,7 +7,9 @@ import com.intellij.internal.statistic.eventLog.events.ClassEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import org.jetbrains.annotations.ApiStatus.Internal
 
+@Internal
 object RefactoringUsageCollector : CounterUsagesCollector() {
   private val GROUP = EventLogGroup("refactoring", 4)
 

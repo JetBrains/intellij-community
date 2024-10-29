@@ -42,7 +42,7 @@ internal class GradleTestEventConverter(
 ) {
 
   private val isTestSuite: Boolean by lazy {
-    isSuite && className.isEmpty()
+    isSuite && (className.isEmpty() || suiteName == methodName)
   }
 
   private val isTestClass: Boolean by lazy {

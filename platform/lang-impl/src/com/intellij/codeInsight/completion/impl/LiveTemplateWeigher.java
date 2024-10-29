@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -13,9 +13,8 @@ public final class LiveTemplateWeigher extends LookupElementWeigher {
     super("templates", Registry.is("ide.completion.show.live.templates.on.top"), false);
   }
 
-  @Nullable
   @Override
-  public Comparable weigh(@NotNull LookupElement element) {
+  public @Nullable Comparable weigh(@NotNull LookupElement element) {
     return element instanceof LiveTemplateLookupElement;
   }
 }

@@ -6,3 +6,8 @@ interface A {
 class C : A {
   <caret>
 }
+
+// MEMBER: "foo(value: String): Int"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

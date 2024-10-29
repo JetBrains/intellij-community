@@ -8,6 +8,7 @@ import com.intellij.vcs.log.graph.api.LiteLinearGraph;
 import com.intellij.vcs.log.graph.api.elements.GraphEdge;
 import com.intellij.vcs.log.graph.api.elements.GraphEdgeType;
 import com.intellij.vcs.log.graph.impl.facade.LinearGraphController;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Set;
 
 public final class LinearGraphUtils {
+  @ApiStatus.Internal
   public static final LinearGraphController.LinearGraphAnswer DEFAULT_GRAPH_ANSWER =
     new LinearGraphController.LinearGraphAnswer(Cursor.getDefaultCursor(), null);
 
@@ -41,6 +43,7 @@ public final class LinearGraphUtils {
     return false;
   }
 
+  @ApiStatus.Internal
   @Nullable
   public static NormalEdge asNormalEdge(@Nullable GraphEdge edge) {
     if (isNormalEdge(edge)) {
@@ -108,6 +111,7 @@ public final class LinearGraphUtils {
     }
   }
 
+  @ApiStatus.Internal
   public static LinearGraphController.LinearGraphAnswer createSelectedAnswer(@NotNull LinearGraph linearGraph,
                                                                              @NotNull Collection<Integer> selectedNodeIndexes) {
     Set<Integer> selectedIds = new HashSet<>();

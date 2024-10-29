@@ -15,12 +15,14 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.TimerUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Rectangle
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 open class FixWidthSegmentedActionToolbarComponent(place: String, group: ActionGroup) : SegmentedActionToolbarComponent(place, group) {
 
   protected var project: Project? = null

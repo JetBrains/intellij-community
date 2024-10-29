@@ -7,9 +7,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CustomizeColoredTreeCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public final class FixedHotfixGroupElement extends GroupingElement {
   private final CustomizeColoredTreeCellRenderer myCustomizeColoredTreeCellRenderer;
 

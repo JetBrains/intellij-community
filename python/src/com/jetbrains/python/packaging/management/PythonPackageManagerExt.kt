@@ -28,7 +28,9 @@ import com.jetbrains.python.run.PythonInterpreterTargetEnvironmentFactory
 import com.jetbrains.python.run.buildTargetedCommandLine
 import com.jetbrains.python.run.ensureProjectSdkAndModuleDirsAreOnTarget
 import com.jetbrains.python.run.prepareHelperScriptExecution
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.math.min
 
@@ -98,8 +100,10 @@ suspend fun PythonPackageManager.runPackagingTool(operation: String, arguments: 
   }
 
   val result = withBackgroundProgress(project, text, cancellable = true) {
-    blockingContext {
-      handler.runProcess(10 * 60 * 1000)
+    withContext(Dispatchers.IO) {
+      blockingContext {
+        handler.runProcess(10 * 60 * 1000)
+      }
     }
   }
 
@@ -140,8 +144,10 @@ fun PythonPackageManager.isInstalled(name: String): Boolean {
   return installedPackages.any { it.name.lowercase() == name.lowercase() }
 }
 
-fun PythonRepositoryManager.createSpecification(name: String,
-                                                versionSpec: String? = null): PythonPackageSpecification? {
+fun PythonRepositoryManager.createSpecification(
+  name: String,
+  versionSpec: String? = null,
+): PythonPackageSpecification? {
   val repository = packagesByRepository().firstOrNull { it.second.any { pkg -> normalizePackageName(pkg) == normalizePackageName(name) } }?.first
   return repository?.createForcedSpecPackageSpecification(name, versionSpec)
 }

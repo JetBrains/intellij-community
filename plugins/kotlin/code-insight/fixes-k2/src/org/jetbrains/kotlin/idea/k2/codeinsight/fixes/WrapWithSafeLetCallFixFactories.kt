@@ -10,8 +10,8 @@ import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
+import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.receiverType
 import org.jetbrains.kotlin.builtins.StandardNames
@@ -22,7 +22,10 @@ import org.jetbrains.kotlin.idea.core.FirKotlinNameSuggester
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.psi.psiUtil.argumentIndex
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelector
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 
 object WrapWithSafeLetCallFixFactories {
@@ -175,8 +178,7 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KaSession)
-    private fun isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
+    private fun KaSession.isCallingFunctionalTypeVariableInLocalScope(callExpression: KtCallExpression): Boolean? {
         val calleeExpression = callExpression.calleeExpression
         val calleeName = calleeExpression?.text?.let(Name::identifierIfValid) ?: return null
         val callSite = callExpression.parent as? KtQualifiedExpression ?: callExpression
@@ -184,7 +186,7 @@ object WrapWithSafeLetCallFixFactories {
         val localScope = callExpression.containingKtFile.scopeContext(callSite).compositeScope()
         // If no symbol in the local scope contains the called symbol, then the symbol must be a member symbol.
 
-        return localScope.getCallableSymbols(calleeName).any { symbol ->
+        return localScope.callables(calleeName).any { symbol ->
             symbol.psi?.let { it == functionalVariableSymbol.psi } == true
         }
     }
@@ -202,8 +204,7 @@ object WrapWithSafeLetCallFixFactories {
         else emptyList()
     }
 
-    context(KaSession)
-    private fun createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
+    private fun KaSession.createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
     ): List<WrapWithSafeLetCallModCommandAction> {
@@ -252,8 +253,7 @@ object WrapWithSafeLetCallFixFactories {
         )
     }
 
-    context(KaSession)
-    private fun getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
+    private fun KaSession.getDeclaredParameterNameForArgument(argumentExpression: KtExpression): String? {
         val valueArgument = argumentExpression.parent as? KtValueArgument ?: return null
         val callExpression = argumentExpression.parentOfType<KtCallExpression>()
         val successCallTarget = callExpression?.resolveToCall()?.singleFunctionCallOrNull()?.symbol ?: return null
@@ -261,8 +261,7 @@ object WrapWithSafeLetCallFixFactories {
         return successCallTarget.valueParameters.getOrNull(valueArgument.argumentIndex)?.name?.identifierOrNullIfSpecial
     }
 
-    context(KaSession)
-    private fun findParentExpressionAtNullablePosition(expression: KtExpression?): KtExpression? {
+    private fun KaSession.findParentExpressionAtNullablePosition(expression: KtExpression?): KtExpression? {
         if (expression == null) return null
         var current = expression.surroundingExpression
         while (current != null && !isExpressionAtNullablePosition(current)) {
@@ -271,8 +270,7 @@ object WrapWithSafeLetCallFixFactories {
         return current
     }
 
-    context(KaSession)
-    private fun isExpressionAtNullablePosition(expression: KtExpression): Boolean {
+    private fun KaSession.isExpressionAtNullablePosition(expression: KtExpression): Boolean {
         val parent = expression.parent
         return when {
             parent is KtProperty && expression == parent.initializer -> {
@@ -330,8 +328,7 @@ object WrapWithSafeLetCallFixFactories {
      * type. The function returns null if any necessary assumptions are not met. For example, if the call is not resolved to a unique
      * function or the function doesn't have a parameter at the given index. Then caller can do whatever needed to cover such cases.
      */
-    context(KaSession)
-    private fun doesFunctionAcceptNull(call: KaCall, index: Int): Boolean? {
+    private fun KaSession.doesFunctionAcceptNull(call: KaCall, index: Int): Boolean? {
         val symbol = (call as? KaFunctionCall<*>)?.symbol ?: return null
         if (index == -1) {
             // Null extension receiver means the function does not accept extension receiver and hence cannot be invoked on a nullable

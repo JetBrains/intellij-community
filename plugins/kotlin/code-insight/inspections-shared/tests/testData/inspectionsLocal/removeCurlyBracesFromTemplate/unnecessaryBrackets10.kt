@@ -1,0 +1,7 @@
+// HIGHLIGHT: GENERIC_ERROR_OR_WARNING
+// IGNORE_K1
+
+fun foo() {
+    val x = 4
+    val y = $$"$$<caret>{x}"
+}

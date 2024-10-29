@@ -7,10 +7,10 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassOrObjectSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaTypeAliasSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.analysis.api.types.abbreviatedTypeOrSelf
+import org.jetbrains.kotlin.analysis.api.types.abbreviationOrSelf
 import org.jetbrains.kotlin.analysis.api.types.symbol
 import org.jetbrains.kotlin.psi.*
 
@@ -51,7 +51,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
 
     private fun getClassTypeDeclaration(symbol: KtClassOrObject): Array<PsiElement> {
         analyze(symbol) {
-            (symbol.symbol as? KaNamedClassOrObjectSymbol)?.psi?.let { return arrayOf(it) }
+            (symbol.symbol as? KaNamedClassSymbol)?.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY
     }
@@ -59,7 +59,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
     private fun getTypeAliasDeclaration(symbol: KtTypeAlias): Array<PsiElement> {
         analyze(symbol) {
             val typeAliasSymbol = symbol.symbol as? KaTypeAliasSymbol
-            (typeAliasSymbol?.expandedType?.expandedSymbol as? KaNamedClassOrObjectSymbol)?.psi?.let {
+            (typeAliasSymbol?.expandedType?.expandedSymbol as? KaNamedClassSymbol)?.psi?.let {
                 return arrayOf(it)
             }
         }
@@ -70,7 +70,7 @@ internal class KotlinTypeDeclarationProvider : TypeDeclarationProvider {
         analyze(this) {
             val symbol = symbol as? KaCallableSymbol ?: return PsiElement.EMPTY_ARRAY
             val type = typeFromSymbol(symbol) ?: return PsiElement.EMPTY_ARRAY
-            val targetSymbol = type.upperBoundIfFlexible().abbreviatedTypeOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
+            val targetSymbol = type.upperBoundIfFlexible().abbreviationOrSelf.symbol ?: return PsiElement.EMPTY_ARRAY
             targetSymbol.psi?.let { return arrayOf(it) }
         }
         return PsiElement.EMPTY_ARRAY

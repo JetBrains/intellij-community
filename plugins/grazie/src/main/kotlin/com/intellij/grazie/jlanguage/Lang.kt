@@ -23,6 +23,7 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
   DANISH("Danish", "Danish", RemoteLangDescriptor.DANISH, "Dansk"),
   GERMANY_GERMAN("German (Germany)", "GermanyGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Deutschland)"),
   AUSTRIAN_GERMAN("German (Austria)", "AustrianGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Österreich)"),
+  SWISS_GERMAN("German (Switzerland)", "SwissGerman", RemoteLangDescriptor.GERMAN, "Deutsch (Die Schweiz)"),
   GREEK("Greek", "Greek", RemoteLangDescriptor.GREEK, "Ελληνικά"),
   ESPERANTO("Esperanto", "Esperanto", RemoteLangDescriptor.ESPERANTO, "Esperanto"),
   SPANISH("Spanish", "Spanish", RemoteLangDescriptor.SPANISH, "Español"),

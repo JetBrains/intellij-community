@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages.similarity
 
 import com.intellij.openapi.Disposable
@@ -37,7 +37,7 @@ internal class UsagePreviewComponent private constructor(
     myUsageView = usageView
     header = createHeaderWithLocationLink(usageInfo)
     add(header)
-    mySnippetComponent = UsageCodeSnippetComponent(renderingData)
+    mySnippetComponent = UsageCodeSnippetComponent(renderingData, usageInfo)
     add(mySnippetComponent)
     if (!Disposer.tryRegister(parent, this)) {
       Disposer.dispose(parent)
@@ -48,7 +48,7 @@ internal class UsagePreviewComponent private constructor(
     removeAll()
     header = createHeaderWithLocationLink(usageInfo)
     Disposer.dispose(mySnippetComponent)
-    mySnippetComponent = UsageCodeSnippetComponent(renderingData)
+    mySnippetComponent = UsageCodeSnippetComponent(renderingData, usageInfo)
     add(header)
     add(mySnippetComponent)
   }
@@ -83,23 +83,17 @@ internal class UsagePreviewComponent private constructor(
       usageView: UsageView,
       usageInfo: UsageInfo
     ): ActionLink? {
-      val project = usageInfo.project
-      val file = usageInfo.virtualFile
-      val element = usageInfo.element
-      val actionLink: ActionLink?
-      if (file != null) {
-        actionLink = ActionLink(file.name, object : AbstractAction() {
-          override fun actionPerformed(e: ActionEvent) {
-            SimilarUsagesCollector.logNavigateToUsageClicked(project, sourceComponent.javaClass, usageView)
-            PsiNavigateUtil.navigate(element)
-          }
-        })
-        actionLink.background = UIUtil.TRANSPARENT_COLOR
-        actionLink.isOpaque = false
-        actionLink.icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, project)
-        return actionLink
-      }
-      return null
+      val file = usageInfo.virtualFile ?: return null
+      val actionLink = ActionLink(file.name, object : AbstractAction() {
+        override fun actionPerformed(e: ActionEvent) {
+          SimilarUsagesCollector.logNavigateToUsageClicked(usageInfo.project, sourceComponent.javaClass, usageView)
+          PsiNavigateUtil.navigate(usageInfo.element)
+        }
+      })
+      actionLink.background = UIUtil.TRANSPARENT_COLOR
+      actionLink.isOpaque = false
+      actionLink.icon = IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, usageInfo.project)
+      return actionLink
     }
   }
 }

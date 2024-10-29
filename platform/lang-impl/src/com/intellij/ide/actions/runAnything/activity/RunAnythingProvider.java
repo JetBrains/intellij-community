@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.runAnything.activity;
 
 import com.intellij.ide.actions.runAnything.RunAnythingContext;
@@ -122,9 +122,7 @@ public interface RunAnythingProvider<V> {
   /**
    * Returns help group title this provider belongs to
    */
-  @Nullable
-  @Nls(capitalization = Nls.Capitalization.Title)
-  default String getHelpGroupTitle() {
+  default @Nullable @Nls(capitalization = Nls.Capitalization.Title) String getHelpGroupTitle() {
     return null;
   }
 
@@ -170,8 +168,7 @@ public interface RunAnythingProvider<V> {
    * @param dataContext use it to fetch project, module, working directory
    * @param pattern     input string
    */
-  @Nullable
-  static RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
+  static @Nullable RunAnythingProvider findMatchedProvider(@NotNull DataContext dataContext, @NotNull String pattern) {
     return ContainerUtil.find(EP_NAME.getExtensionList(), provider -> provider.findMatchingValue(dataContext, pattern) != null);
   }
 }

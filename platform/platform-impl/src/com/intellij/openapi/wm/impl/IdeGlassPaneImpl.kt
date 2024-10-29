@@ -58,7 +58,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   private var prevPressEvent: MouseEvent? = null
 
   @Suppress("MemberVisibilityCanBePrivate")
-  internal var windowShadowPainter: AbstractPainter? = null
+  internal @JvmField var windowShadowPainter: AbstractPainter? = null
   private var paintersInstalled = false
   private var loadingIndicator: IdePaneLoadingLayer? = null
 
@@ -457,6 +457,7 @@ class IdeGlassPaneImpl : JComponent, IdeGlassPaneEx, IdeEventQueue.EventDispatch
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
+  @JvmName("getNamedPainters")
   internal fun getNamedPainters(name: String): PainterHelper {
     return namedPainters.computeIfAbsent(name) { PainterHelper(this) }
   }

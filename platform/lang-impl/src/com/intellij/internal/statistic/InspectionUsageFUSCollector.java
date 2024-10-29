@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic;
 
 import com.intellij.codeInspection.InspectionEP;
@@ -70,9 +70,8 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
   private static final BooleanEventField INSPECTION_ENABLED_FIELD = EventFields.Boolean("inspection_enabled");
   private static final PrimitiveEventField<Object> OPTION_VALUE_FIELD = new PrimitiveEventField<>() {
-    @NotNull
     @Override
-    public List<String> getValidationRule() {
+    public @NotNull List<String> getValidationRule() {
       return Arrays.asList("{enum#boolean}", "{regexp#integer}");
     }
 
@@ -85,9 +84,8 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
       }
     }
 
-    @NotNull
     @Override
-    public String getName() {
+    public @NotNull String getName() {
       return "option_value";
     }
   };
@@ -141,9 +139,8 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     return GROUP;
   }
 
-  @NotNull
   @Override
-  public Set<MetricEvent> getMetrics(@NotNull final Project project) {
+  public @NotNull Set<MetricEvent> getMetrics(final @NotNull Project project) {
     final Set<MetricEvent> result = new HashSet<>();
 
     final var profileManager = InspectionProjectProfileManager.getInstance(project);
@@ -243,8 +240,7 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     }
   }
 
-  @NotNull
-  private static MetricEvent create(InspectionToolWrapper<?, ?> tool, PluginInfo info, boolean enabled) {
+  private static @NotNull MetricEvent create(InspectionToolWrapper<?, ?> tool, PluginInfo info, boolean enabled) {
     return NOT_DEFAULT_STATE.metric(
       INSPECTION_ID_FIELD.with(isSafeToReport(info) ? tool.getID() : "third.party"),
       EventFields.Language.with(Language.findLanguageByID(tool.getLanguage())),
@@ -253,8 +249,7 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     );
   }
 
-  @NotNull
-  private static MetricEvent create(InspectionProfileImpl profile) {
+  private static @NotNull MetricEvent create(InspectionProfileImpl profile) {
     return PROFILE.metric(
       profile.isProjectLevel(),
       profile.toString().equals(profile.isProjectLevel() ? "Project Default" : "Default"),
@@ -266,8 +261,7 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     return info != null && info.isSafeToReport();
   }
 
-  @Nullable
-  private static PluginInfo getInfo(InspectionToolWrapper<?, ?> tool) {
+  private static @Nullable PluginInfo getInfo(InspectionToolWrapper<?, ?> tool) {
     InspectionEP extension = tool.getExtension();
     PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
     return pluginDescriptor != null ? getPluginInfoByDescriptor(pluginDescriptor) : null;
@@ -299,8 +293,7 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
     }
   }
 
-  @Nullable
-  private static MetricEvent getChangedScopeAndSeverityEvent(ScopeToolState tool, PluginInfo info) {
+  private static @Nullable MetricEvent getChangedScopeAndSeverityEvent(ScopeToolState tool, PluginInfo info) {
     if (!isSafeToReport(info)) {
       return null;
     }
@@ -343,8 +336,7 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
 
     // strictly speaking, it may return not the very fresh inspectionIds, e.g., after dropping caches (it is not race free)
     // That's fine in case of inspection ids
-    @NotNull
-    private static HashSet<String> getKnownInspectionIds() {
+    private static @NotNull HashSet<String> getKnownInspectionIds() {
       HashSet<String> ids = knownInspectionIds;
       if (ids != null) {
         return ids;
@@ -382,15 +374,13 @@ public final class InspectionUsageFUSCollector extends ProjectUsagesCollector {
       return inspectionIds;
     }
 
-    @NotNull
     @Override
-    public String getRuleId() {
+    public @NotNull String getRuleId() {
       return "tool";
     }
 
-    @NotNull
     @Override
-    protected ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
+    protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
       if (getKnownInspectionIds().contains(data)) {
         return ValidationResultType.ACCEPTED;
       }

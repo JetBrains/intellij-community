@@ -134,21 +134,6 @@ class KotlinFacetBridgeTest : KotlinFacetTestCase() {
         assertTrue(getEntity().compilerSettings!!.scriptTemplates == scriptTemplates)
     }
 
-    private fun fireFacetChangedEvent(mainFacet: KotlinFacet) {
-        val allFacets = FacetManager.getInstance(myModule).allFacets
-        assertSize(1, allFacets)
-        assertSame(mainFacet, allFacets[0])
-
-        allFacets.forEach { facet -> FacetManager.getInstance(myModule).facetConfigurationChanged(facet) }
-    }
-
-    private fun getKotlinFacet(): KotlinFacet {
-        val facetManager = FacetManager.getInstance(myModule)
-        assertSize(1, facetManager.allFacets)
-        return facetManager.allFacets[0] as KotlinFacet
-    }
-
-
     private fun getEntity(): KotlinSettingsEntity {
         val entityStorage = WorkspaceModel.getInstance(myProject).currentSnapshot
         val entities: List<KotlinSettingsEntity> = entityStorage.entities(KotlinSettingsEntity::class.java).toList()

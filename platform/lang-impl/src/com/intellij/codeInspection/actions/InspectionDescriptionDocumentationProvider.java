@@ -8,9 +8,11 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class InspectionDescriptionDocumentationProvider extends AbstractDocumentationProvider {
   @Override
   public @Nls String generateDoc(PsiElement element, @Nullable PsiElement originalElement) {

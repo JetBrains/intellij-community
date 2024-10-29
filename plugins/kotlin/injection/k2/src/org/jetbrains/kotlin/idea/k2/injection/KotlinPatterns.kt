@@ -6,7 +6,6 @@ import com.intellij.patterns.StandardPatterns
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.renderer.types.impl.KaTypeRendererForSource
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
@@ -68,8 +67,8 @@ internal class KotlinFunctionPattern : KotlinFunctionPatternBase() {
 @Suppress("unused")
 internal class KtParameterPattern : KtParameterPatternBase() {
     override fun KtParameter.hasAnnotation(fqName: String): Boolean = analyze(this) {
-        val paramSymbol = getParameterSymbol()
-        paramSymbol is KaValueParameterSymbol && paramSymbol.annotations.any { annotation ->
+        val symbol = symbol
+        symbol is KaValueParameterSymbol && symbol.annotations.any { annotation ->
             annotation.classId?.asFqNameString() == fqName
         }
     }

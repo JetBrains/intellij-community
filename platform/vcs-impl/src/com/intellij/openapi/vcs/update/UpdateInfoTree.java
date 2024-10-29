@@ -199,40 +199,29 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    super.uiDataSnapshot(sink);
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
-      return null;
+      return;
     }
-    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
-      VirtualFilePointer pointer = getSelectedFilePointer();
+    VirtualFilePointer pointer = getSelectedFilePointer();
+    sink.set(VcsDataKeys.FILE_PATHS, getFilePathIterable());
+    sink.set(PlatformDataKeys.TREE_EXPANDER,
+             myGroupByChangeList ? myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null : myTreeExpander);
+    sink.set(UPDATE_VIEW_SELECTED_PATH,
+             pointer != null ? getFilePath(pointer) : null);
+    sink.set(UPDATE_VIEW_FILES_ITERABLE, myTreeIterable);
+    sink.set(LABEL_BEFORE, myBefore);
+    sink.set(LABEL_AFTER, myAfter);
+
+    sink.lazy(CommonDataKeys.NAVIGATABLE, () -> {
       if (pointer == null || !pointer.isValid()) return null;
       VirtualFile selectedFile = pointer.getFile();
       return selectedFile != null ? new OpenFileDescriptor(myProject, selectedFile) : null;
-    }
-    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    });
+    sink.lazy(CommonDataKeys.VIRTUAL_FILE_ARRAY, () -> {
       return getVirtualFileArray();
-    }
-    else if (VcsDataKeys.FILE_PATHS.is(dataId)) {
-      return getFilePathIterable();
-    } else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      if (myGroupByChangeList) {
-        return myTreeBrowser != null ? myTreeBrowser.getTreeExpander() : null;
-      }
-      else {
-        return myTreeExpander;
-      }
-    } else if (UPDATE_VIEW_SELECTED_PATH.is(dataId)) {
-      VirtualFilePointer pointer = getSelectedFilePointer();
-      return pointer != null ? getFilePath(pointer) : null;
-    } else if (UPDATE_VIEW_FILES_ITERABLE.is(dataId)) {
-      return myTreeIterable;
-    } else if (LABEL_BEFORE.is(dataId)) {
-      return myBefore;
-    }  else if (LABEL_AFTER.is(dataId)) {
-      return myAfter;
-    }
-
-    return super.getData(dataId);
+    });
   }
 
   private final class MyTreeIterator implements Iterator<Pair<FilePath, FileStatus>> {

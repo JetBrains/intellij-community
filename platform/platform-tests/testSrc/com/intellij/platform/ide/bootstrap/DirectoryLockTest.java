@@ -62,6 +62,8 @@ public abstract sealed class DirectoryLockTest {
   }
 
   public static final class FallbackModeTest extends DirectoryLockTest {
+    @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
+
     @Override
     protected Path getTestDir() {
       var path = SystemInfo.isWindows ? "C:\\tests\\" + tempDir.getRootPath().getFileName() : tempDir.getRootPath().toString();
@@ -72,7 +74,6 @@ public abstract sealed class DirectoryLockTest {
   @Rule public final TestRule watcher = TestLoggerFactory.createTestWatcher();
   @Rule public final Timeout timeout = Timeout.seconds(30);
   @Rule public final TempDirectory tempDir = new TempDirectory();
-  @Rule public final InMemoryFsRule memoryFs = new InMemoryFsRule(SystemInfo.isWindows);
   @Rule public final ApplicationRule app = new ApplicationRule();
 
   private Path testDir;
@@ -121,6 +122,15 @@ public abstract sealed class DirectoryLockTest {
   public void lockingVacantDirectories() throws Exception {
     var lock = createLock(Files.createDirectories(testDir.resolve("c")), Files.createDirectories(testDir.resolve("s")));
     assertNull(lock.lockOrActivate(currentDir, List.of()));
+  }
+
+  @Test
+  public void lockingReadOnlyDirectory() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+    var configDir = Files.createDirectories(testDir.resolve("c"));
+    NioFiles.setReadOnly(configDir, true);
+    var lock = createLock(configDir, Files.createDirectories(testDir.resolve("s")));
+    assertThatThrownBy(() -> lock.lockOrActivate(currentDir, List.of())).isInstanceOf(IOException.class);
   }
 
   @Test

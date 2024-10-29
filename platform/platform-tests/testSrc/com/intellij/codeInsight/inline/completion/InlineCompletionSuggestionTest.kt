@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionSuggestionTest.TestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.elements.InlineCompletionGrayTextElement
 import com.intellij.codeInsight.inline.completion.impl.GradualMultiSuggestInlineCompletionProvider
 import com.intellij.codeInsight.inline.completion.session.InlineCompletionSession
@@ -147,6 +146,8 @@ internal class InlineCompletionSuggestionTest : InlineCompletionTestCase() {
     override val id: InlineCompletionProviderID
       get() = InlineCompletionProviderID("TEST")
 
-    override fun isEnabled(event: InlineCompletionEvent): Boolean = true
+    override fun isEnabled(event: InlineCompletionEvent): Boolean {
+      return event is InlineCompletionEvent.DirectCall || event is InlineCompletionEvent.DocumentChange
+    }
   }
 }

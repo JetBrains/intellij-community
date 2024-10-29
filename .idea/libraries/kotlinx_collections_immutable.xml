@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="kotlinx-collections-immutable" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.7">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.7/kotlinx-collections-immutable-jvm-0.3.7.jar">
-          <sha256sum>0c461865231ff825d6fa18d9d333363c1f3866ffb685451e5fca66c1f22c873e</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8.jar">
+          <sha256sum>72e9a9b0003ec5254b638186f7ca1675b08006bdde4c9c4c589970342ccd2e77</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.7/kotlinx-collections-immutable-jvm-0.3.7.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.7/kotlinx-collections-immutable-jvm-0.3.7-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlinx/kotlinx-collections-immutable-jvm/0.3.8/kotlinx-collections-immutable-jvm-0.3.8-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

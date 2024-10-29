@@ -92,24 +92,6 @@ public final class Maven40EffectivePomDumper {
     if (null != s) buffer.append(s);
   }
 
-  public static @Nullable String checksum(@Nullable MavenProject project) {
-    if (null == project) return null;
-
-    Model pom = project.getModel();
-    cleanModel(pom);
-
-    StringWriter sWriter = new StringWriter();
-    MavenXpp3Writer pomWriter = new MavenXpp3Writer();
-    try {
-      pomWriter.write(sWriter, pom);
-    }
-    catch (IOException e) {
-      return null;
-    }
-
-    return ChecksumUtil.checksum(sWriter.toString());
-  }
-
   // See org.apache.maven.plugins.help.EffectivePomMojo#execute from maven-help-plugin
   @Nullable
   public static String evaluateEffectivePom(Maven40ServerEmbedderImpl embedder,

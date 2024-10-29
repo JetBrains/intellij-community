@@ -20,7 +20,6 @@ import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.awt.Component
-import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.KeyStroke
 
@@ -38,13 +37,9 @@ abstract class ActionManagerEx : ActionManager() {
 
     @Internal
     @JvmStatic
-    fun doWithLazyActionManager(whatToDo: Consumer<ActionManager>) {
-      withLazyActionManager(scope = null, task = whatToDo::accept)
-    }
-
-    @Internal
-    inline fun withLazyActionManager(scope: CoroutineScope?, crossinline task: (ActionManager) -> Unit) {
+    fun withLazyActionManager(scope: CoroutineScope?, task: (ActionManager) -> Unit) {
       val app = ApplicationManager.getApplication()
+      if (app == null || app.isDisposed) return
       val created = app.serviceIfCreated<ActionManager>()
       if (created == null) {
         (scope ?: (app as ComponentManagerEx).getCoroutineScope()).launch {
@@ -60,18 +55,13 @@ abstract class ActionManagerEx : ActionManager() {
     }
   }
 
-  abstract fun performWithActionCallbacks(action: AnAction,
-                                          event: AnActionEvent,
-                                          runnable: Runnable)
+  abstract fun performWithActionCallbacks(action: AnAction, event: AnActionEvent, runnable: Runnable)
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean): ActionToolbar
 
   abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, decorateButtons: Boolean, customizable: Boolean): ActionToolbar
 
-  abstract fun createActionToolbar(place: String,
-                                   group: ActionGroup,
-                                   horizontal: Boolean,
-                                   separatorCreator: Function<in String, out Component>): ActionToolbar
+  abstract fun createActionToolbar(place: String, group: ActionGroup, horizontal: Boolean, separatorCreator: Function<in String, out Component>): ActionToolbar
 
   @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
@@ -85,6 +75,7 @@ abstract class ActionManagerEx : ActionManager() {
   @Internal
   abstract fun fireAfterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult)
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
@@ -93,10 +84,12 @@ abstract class ActionManagerEx : ActionManager() {
     fireBeforeActionPerformed(action, event)
   }
 
+  @ApiStatus.ScheduledForRemoval
   @Deprecated("Use [ActionUtil.performActionDumbAwareWithCallbacks] instead",
               ReplaceWith("ActionUtil.performActionDumbAwareWithCallbacks"),
               DeprecationLevel.ERROR)
   fun fireAfterActionPerformed(action: AnAction, @Suppress("unused") dataContext: DataContext, event: AnActionEvent) {
+    @Suppress("DEPRECATION")
     fireAfterActionPerformed(action, event, AnActionResult.PERFORMED)
   }
 
@@ -169,5 +162,4 @@ interface ActionRuntimeRegistrar {
   fun getId(action: AnAction): String?
 
   fun getBaseAction(overridingAction: OverridingAction): AnAction?
-
 }

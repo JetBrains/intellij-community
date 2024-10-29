@@ -1,0 +1,13 @@
+<idea-plugin package="com.intellij.platform.debugger.impl.frontend">
+  <dependencies>
+    <plugin id="com.intellij.platform.experimental.frontend"/>
+    <module name="intellij.platform.frontend"/>
+  </dependencies>
+  <actions>
+    <action id="QuickEvaluateExpression" class="com.intellij.platform.debugger.impl.frontend.actions.QuickEvaluateAction"/>
+  </actions>
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceImplementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManager"/>
+    <postStartupActivity implementation="com.intellij.platform.debugger.impl.frontend.evaluate.quick.common.ValueLookupManagerProjectActivity"/>
+  </extensions>
+</idea-plugin>

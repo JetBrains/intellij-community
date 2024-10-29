@@ -4,6 +4,7 @@ package com.intellij.psi.impl.java;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.TokenList;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.JavaFileElementType;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -39,6 +40,8 @@ public final class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension
   @Override
   public DataIndexer<Boolean, PlusOffsets, FileContent> getIndexer() {
     return inputData -> {
+      if (Strings.indexOf(inputData.getContentAsText(), '+') < 0) return Map.of();
+
       TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
 
       IntList result = new IntArrayList();

@@ -9,7 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBIntSpinner;
 import com.intellij.ui.TooltipWithClickableLinks;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
@@ -37,6 +39,10 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
   private ActionLink myActionLink;
   private JBTextField myAttachProcessFilter;
   private JBLabel myAttachFilterLabel;
+  private JBLabel myDebuggerPortLabel;
+  private JBIntSpinner myDebuggerPort;
+  private JBCheckBox myRunDebuggerInServerMode;
+  private JPanel myDebuggerPortPanel;
 
   private enum PyQtBackend {
     AUTO(PyBundle.messagePointer("python.debugger.qt.backend.auto")),
@@ -63,6 +69,11 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
     private final Supplier<@Nls String> myDisplayNameSupplier;
   }
 
+  private static final class PortRange {
+    public static final int MIN = 0;
+    public static final int MAX = 65535;
+  }
+
   private final Project myProject;
 
   public PyDebuggerConfigurable(Project project) {
@@ -73,6 +84,14 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
       @Override
       public void itemStateChanged(ItemEvent e) {
         myPyQtBackend.setEnabled(mySupportQt.isSelected());
+      }
+    });
+
+    myDebuggerPortPanel.setVisible(myRunDebuggerInServerMode.isSelected());
+    myRunDebuggerInServerMode.addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        myDebuggerPortPanel.setVisible(myRunDebuggerInServerMode.isSelected());
       }
     });
 
@@ -109,6 +128,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
            mySupportQt.isSelected() != settings.isSupportQtDebugging() ||
            (myPyQtBackend.getSelectedItem() != null &&
             !StringUtil.toLowerCase((((PyQtBackend)myPyQtBackend.getSelectedItem()).name())).equals(settings.getPyQtBackend())) ||
+           myRunDebuggerInServerMode.isSelected() != settings.isRunDebuggerInServerMode() ||
+           myDebuggerPort.getNumber() != settings.getDebuggerPort() ||
            !myAttachProcessFilter.getText().equals(settings.getAttachProcessFilter());
   }
 
@@ -126,6 +147,9 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
       settings.setPyQtBackend(StringUtil.toLowerCase(((PyQtBackend)selectedBackend).name()));
     }
 
+    settings.setRunDebuggerInServerMode(myRunDebuggerInServerMode.isSelected());
+    settings.setDebuggerPort(myDebuggerPort.getNumber());
+
     settings.setAttachProcessFilter(myAttachProcessFilter.getText());
   }
 
@@ -138,6 +162,8 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
     myDropIntoDebuggerOnFailedTests.setSelected(settings.isDropIntoDebuggerOnFailedTest());
     mySupportQt.setSelected(settings.isSupportQtDebugging());
     myPyQtBackend.setSelectedItem(PyQtBackend.valueOf(StringUtil.toUpperCase(settings.getPyQtBackend())));
+    myDebuggerPort.setNumber(settings.getDebuggerPort());
+    myRunDebuggerInServerMode.setSelected(settings.isRunDebuggerInServerMode());
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
   }
 
@@ -159,5 +185,17 @@ public final class PyDebuggerConfigurable implements SearchableConfigurable, Con
         }
         Messages.showInfoMessage(myProject, message, PyBundle.message("debugger.delete.signature.cache"));
     });
+
+    myRunDebuggerInServerMode = new JBCheckBox();
+    myDebuggerPortPanel = new JPanel();
+    myDebuggerPortLabel = new JBLabel(PyBundle.message("form.debugger.debugger.port"));
+    myDebuggerPort = new JBIntSpinner(0, PortRange.MIN, PortRange.MAX);
+
+    if (!Registry.is("python.debug.use.single.port")) {
+      myRunDebuggerInServerMode.setVisible(false);
+      myDebuggerPortPanel.setVisible(false);
+      myDebuggerPortLabel.setVisible(false);
+      myDebuggerPort.setVisible(false);
+    }
   }
 }

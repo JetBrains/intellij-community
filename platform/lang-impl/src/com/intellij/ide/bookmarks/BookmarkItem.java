@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmarks;
 
 import com.intellij.openapi.editor.markup.EffectType;
@@ -15,6 +15,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.ItemWrapper;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ import java.awt.*;
 /**
  * @author zajac
  */
+@ApiStatus.Internal
 public final class BookmarkItem extends ItemWrapper implements Comparable<BookmarkItem>{
   private final Bookmark myBookmark;
 
@@ -98,8 +100,7 @@ public final class BookmarkItem extends ItemWrapper implements Comparable<Bookma
   }
 
   @Override
-  @Nls
-  public String footerText() {
+  public @Nls String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }
 

@@ -49,7 +49,7 @@ public class DeannotateIntentionAction implements ModCommandAction {
     if (listOwner != null) {
       final ExternalAnnotationsManager externalAnnotationsManager = ExternalAnnotationsManager.getInstance(context.project());
       final PsiAnnotation[] annotations = externalAnnotationsManager.findExternalAnnotations(listOwner);
-      if (annotations != null && annotations.length > 0) {
+      if (annotations.length > 0) {
         String message;
         if (annotations.length == 1) {
           message = JavaBundle.message("deannotate.intention.action.text", "@" + annotations[0].getQualifiedName());
@@ -78,7 +78,7 @@ public class DeannotateIntentionAction implements ModCommandAction {
       return annotationsManager.deannotateModCommand(List.of(listOwner), List.of(myAnnotationName));
     }
     final PsiAnnotation[] externalAnnotations = annotationsManager.findExternalAnnotations(listOwner);
-    if (externalAnnotations == null) return ModCommand.nop();
+    if (externalAnnotations.length == 0) return ModCommand.nop();
     return ModCommand.chooseAction(JavaBundle.message("deannotate.intention.chooser.title"),
                                    ContainerUtil.map(externalAnnotations, anno -> new DeannotateIntentionAction(
                                      Objects.requireNonNull(anno.getQualifiedName()))));

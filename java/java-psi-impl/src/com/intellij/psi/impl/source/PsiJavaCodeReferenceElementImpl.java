@@ -1057,6 +1057,15 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
+  public PsiElement getOriginalElement() {
+    PsiElement parent = getParent();
+    if (parent instanceof PsiTypeElement) {
+      return PsiImplUtil.getCorrespondingOriginalElementOfType(this, PsiJavaCodeReferenceElement.class);
+    }
+    return this;
+  }
+
+  @Override
   public final String toString() {
     return "PsiJavaCodeReferenceElement:" + getText();
   }

@@ -9,12 +9,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public abstract class ApplyFilePatchBase<T extends FilePatch> implements ApplyFilePatch {
   protected final static Logger LOG = Logger.getInstance(ApplyFilePatchBase.class);
   protected final T myPatch;

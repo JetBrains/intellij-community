@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.options
 
 import com.intellij.application.options.editor.CheckboxDescriptor
@@ -25,7 +25,7 @@ private val cdShowWhitespacesInLSTGutterCheckBox
   get() = CheckboxDescriptor(ApplicationBundle.message("editor.options.whitespace.line.color"),
                              vcsSettings::SHOW_WHITESPACES_IN_LST)
 
-class VcsGeneralEditorOptionsExtension : UiDslUnnamedConfigurable.Simple() {
+internal class VcsGeneralEditorOptionsExtension : UiDslUnnamedConfigurable.Simple() {
   override fun Panel.createContent() {
     group(ApplicationBundle.message("editor.options.gutter.group")) {
       fun fireLSTSettingsChanged() {

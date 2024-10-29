@@ -4,6 +4,7 @@ package com.intellij.analysis.problemsView.toolWindow
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.ToggleOptionAction
 import com.intellij.openapi.project.DumbAware
+import org.jetbrains.annotations.ApiStatus
 
 internal class AutoscrollToSource : ProblemsViewToggleAction({ it.autoscrollToSource })
 internal class OpenInPreviewTab : ProblemsViewToggleAction({ it.openInPreviewTab })
@@ -13,6 +14,7 @@ internal class SortFoldersFirst : ProblemsViewToggleAction({ it.sortFoldersFirst
 internal class SortBySeverity : ProblemsViewToggleAction({ it.sortBySeverity })
 internal class SortByName : ProblemsViewToggleAction({ it.sortByName })
 
+@ApiStatus.Internal
 abstract class ProblemsViewToggleAction(optionSupplier: (ProblemsViewPanel) -> Option?)
   : DumbAware, ToggleOptionAction({ it.project?.let{ProblemsView.getSelectedPanel(it)}?.let(optionSupplier) }) {
   override fun getActionUpdateThread(): ActionUpdateThread {

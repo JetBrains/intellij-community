@@ -23,6 +23,12 @@ public class Simple {
     System.out.println(s.<error descr="Cannot resolve symbol 'field'">field</error>);
   }
   
+  void callKnownCtor(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    new IOException(cls);
+    // No three-arg ctor anyway
+    new IOException<error descr="Cannot resolve constructor 'IOException(Cls, Cls, Cls)'">(cls, cls, cls)</error>;
+  }
+  
   void testImports(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">UnusedClass</info> inner) {
     <info descr="null">var</info> x = <error descr="Cannot resolve symbol 'Value'">Value</error>;
     System.out.println(<info descr="Not resolved until the project is fully loaded">UsedInClassObject</info>.class);
@@ -108,12 +114,60 @@ public class Simple {
     mySet.toArray(<info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">EMPTY_ARRAY</info>);
   }
   
+  void varTest() {
+    <info descr="null">var</info> x = <info descr="Not resolved until the project is fully loaded">Cls</info>.<info descr="Not resolved until the project is fully loaded">getSomething</info>();
+    x.<info descr="Not resolved until the project is fully loaded">getSomethingElse</info>();
+    <info descr="null">var</info> y = x;
+    <info descr="null">var</info> z = y.<info descr="Not resolved until the project is fully loaded">getSomethingCompletelyDifferent</info>();
+    z.<info descr="Not resolved until the project is fully loaded">getFromZ</info>();
+    
+    <info descr="null">var</info> t = <error descr="Variable 't' might not have been initialized">t</error>;
+  }
+  
   void overloaded(int x) {}
   void overloaded(boolean x) {}
+  
+  void useInner() {
+    Clss.Inner cls = new Clss.Inner();
+    Clss.Inner[] result = (Clss.Inner[]) cls.<info descr="Not resolved until the project is fully loaded">toArray</info>(12);
+  }
+
+
+  void testThrow(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    try {
+      cls.<info descr="Not resolved until the project is fully loaded">unknownM</info>();
+    } catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {
+
+    } catch (IOException | RuntimeException ex) {
+
+    }
+  }
+  
+  void testThrow2() {
+    try {
+      declaredUnknownException();
+    }
+    catch (<info descr="Not resolved until the project is fully loaded">Cls</info> x) {}
+  }
+  
+  void testThrow3() {
+    // We don't know whether Cls is checked or not
+    declaredUnknownException();
+  }
+  
+  void declaredUnknownException() throws <info descr="Not resolved until the project is fully loaded">Cls</info> {}
+  
+  void testConcat(<info descr="Not resolved until the project is fully loaded">Cls</info> cls) {
+    System.out.println("hello " + cls.<info descr="Not resolved until the project is fully loaded">getSomething</info>() + "!!!");
+  }
   
   static class Clss implements <info descr="Not resolved until the project is fully loaded">MyInterface</info> {
     void run() {
       <info descr="Not resolved until the project is fully loaded">foo</info>(<info descr="Not resolved until the project is fully loaded">bar</info>);
+    }
+    
+    static class Inner extends <info descr="Not resolved until the project is fully loaded">Cls</info> {
+      
     }
   }
 }

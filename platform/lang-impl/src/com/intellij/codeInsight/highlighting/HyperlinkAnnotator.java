@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -37,6 +37,7 @@ import java.util.List;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static java.util.Objects.requireNonNull;
 
+@ApiStatus.Internal
 @ApiStatus.NonExtendable
 public class HyperlinkAnnotator implements Annotator, DumbAware {
 
@@ -131,10 +132,8 @@ public class HyperlinkAnnotator implements Annotator, DumbAware {
     return hasUnprocessedReferences;
   }
 
-  @Nls
-  @NotNull
   @ApiStatus.Internal
-  public static String getMessage() {
+  public static @Nls @NotNull String getMessage() {
     String message = IdeBundle.message("open.url.in.browser.tooltip");
     Shortcut[] shortcuts = requireNonNull(KeymapManager.getInstance()).getActiveKeymap().getShortcuts(IdeActions.ACTION_GOTO_DECLARATION);
     String shortcutText = "";

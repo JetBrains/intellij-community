@@ -1,6 +1,10 @@
 class <caret>KA {
     val name = "A"
     fun foo(s: String): String = "A: $s"
+
+    companion object {
+        val a = "companion"
+    }
 }
 
 fun packageFun(s: String): String = s + KA().name
@@ -28,4 +32,8 @@ class KClient {
 
 object KClientObj {
     val a = KA()
+}
+
+fun useCompanion() {
+    val a = KA.a
 }

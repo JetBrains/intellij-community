@@ -1,8 +1,9 @@
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
@@ -11,6 +12,7 @@ import java.rmi.RemoteException;
 /**
  * Generic interface with common functionality for all remote services that work with external system.
  */
+@ApiStatus.Internal
 public interface RemoteExternalSystemService<S extends ExternalSystemExecutionSettings> extends Remote, ExternalSystemTaskAware {
 
   /**

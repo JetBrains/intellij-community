@@ -16,6 +16,9 @@
 
 package com.intellij.history.integration.ui.models;
 
+import org.jetbrains.annotations.ApiStatus;
+
+@ApiStatus.Internal
 public interface Progress {
   Progress EMPTY = new Empty();
 

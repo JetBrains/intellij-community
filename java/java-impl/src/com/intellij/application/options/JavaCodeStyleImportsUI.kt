@@ -36,7 +36,7 @@ internal class JavaCodeStyleImportsUI(packages: JComponent, importLayout: JCompo
           .applyToComponent {
             preferredSize = JBDimension(100, 150)
           }
-      }
+      }.resizableRow()
     }
     row {
       cell(fqnInJavadocOption)

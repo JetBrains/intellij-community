@@ -1,0 +1,49 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "projectModel-impl",
+  module_name = "intellij.platform.projectModel.impl",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java", "gen/**/*.kt", "gen/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/projectModel-api:projectModel",
+    "@community//platform/core-impl",
+    "@community//jps/model-api:jps-model",
+    "@community//jps/model-impl:jps-model-impl",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@libraries//:kotlin-stdlib",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@community//platform/util-ex",
+    "@community//platform/util/concurrency",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@libraries//:intellij-deps-fastutil",
+    "@libraries//:guava",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:kryo5",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@libraries//:hash4j",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/diagnostic",
+  ],
+  exports = [
+    "@community//platform/projectModel-api:projectModel",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//platform/util-ex",
+    "@community//platform/util/concurrency",
+    "@community//platform/workspace/storage:workspace-storage",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

@@ -12,14 +12,14 @@ public interface ServiceViewManager {
   }
 
   @NotNull
-  Promise<Void> select(@NotNull Object service, @NotNull Class<?> contributorClass, boolean activate, boolean focus);
+  Promise<Void> select(@NotNull Object service, @NotNull Class<?> rootContributorClass, boolean activate, boolean focus);
 
   @NotNull
-  Promise<Void> expand(@NotNull Object service, @NotNull Class<?> contributorClass);
+  Promise<Void> expand(@NotNull Object service, @NotNull Class<?> rootContributorClass);
 
   @NotNull
-  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> contributorClass);
+  Promise<Void> extract(@NotNull Object service, @NotNull Class<?> rootContributorClass);
 
   @Nullable
-  String getToolWindowId(@NotNull Class<?> contributorClass);
+  String getToolWindowId(@NotNull Class<?> rootContributorClass);
 }

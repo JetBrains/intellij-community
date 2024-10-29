@@ -17,8 +17,6 @@ interface Properties {
   //noinspection GrUnresolvedAccess
   public static final String sourceSetName = SOURCE_SET_NAME
   //noinspection GrUnresolvedAccess
-  public static final String javaModuleName = JAVA_MODULE_NAME
-  //noinspection GrUnresolvedAccess
   public static final boolean useManifestJar = USE_MANIFEST_JAR
   //noinspection GrUnresolvedAccess
   public static final boolean useArgsFile = USE_ARGS_FILE
@@ -73,25 +71,7 @@ allprojects {
           workingDir = workingDirectory
         }
         standardInput = System.in
-        if (Properties.javaModuleName) {
-          classpath = tasks[sourceSets[Properties.sourceSetName].jarTaskName].outputs.files +
-                      project.sourceSets[Properties.sourceSetName].runtimeClasspath
-          if (isOlderThan64) {
-            doFirst {
-              jvmArgs += [
-                '--module-path', classpath.asPath,
-                '--module', Properties.javaModuleName + '/' + Properties.mainClassToRun
-              ]
-              classpath = files()
-            }
-          }
-          else {
-            mainModule = Properties.javaModuleName
-          }
-        }
-        else {
-          classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
-        }
+        classpath = project.sourceSets[Properties.sourceSetName].runtimeClasspath
       }
     }
   }

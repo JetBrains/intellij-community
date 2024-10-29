@@ -60,7 +60,7 @@ class FooEnum {
     <error descr="Cannot assign 'Object[]' to 'E'">e</error> = new Object[0]
     <error descr="Cannot assign 'Closure<Void>' to 'E'">e</error> = { int a, int t -> println(a + t) }
     <error descr="Cannot assign 'Object' to 'E'">e</error> = s
-    <error descr="Cannot return 'Matcher' from method returning 'Object'"><error descr="Cannot assign 'Matcher' to 'E'">e</error> = "aaa" =~ /aaa/</error>
+    <error descr="Cannot assign 'Matcher' to 'E'">e</error> = "aaa" =~ /aaa/
   }
 
   def enumVariable() {

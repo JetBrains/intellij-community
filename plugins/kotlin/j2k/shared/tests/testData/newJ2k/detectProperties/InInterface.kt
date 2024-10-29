@@ -6,10 +6,8 @@ internal interface I {
     fun setSomething3(value: Int)
 
     val something4: Int
-
     fun setSomething4(value: String?)
 
     val something5: Int
-
     fun setSomething5(value: Int): Int
 }

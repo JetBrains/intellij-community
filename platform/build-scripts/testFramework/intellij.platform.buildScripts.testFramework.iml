@@ -26,11 +26,11 @@
     <orderEntry type="library" name="kotlinx-collections-immutable" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="module" module-name="intellij.platform.buildScripts.downloader" />
-    <orderEntry type="module" module-name="intellij.platform.diagnostic.telemetry" />
     <orderEntry type="module" module-name="intellij.tools.reproducibleBuilds.diff" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
     <orderEntry type="module" module-name="intellij.platform.runtime.product" />
     <orderEntry type="library" name="devkit.runtime.module.repository.jps" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
+    <orderEntry type="library" name="tcServiceMessages" level="project" />
   </component>
 </module>

@@ -15,12 +15,14 @@ import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.psi.FilePropertyKey;
 import com.intellij.psi.FilePropertyKeyImpl;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin.Ulitin
  */
+@ApiStatus.Internal
 public final class TemplateDataLanguagePusher extends FilePropertyPusherBase<Language> {
   private static final FileAttribute PERSISTENCE = new FileAttribute("template_language", 4, true);
   public static final FilePropertyKey<Language> KEY =

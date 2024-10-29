@@ -1,0 +1,167 @@
+e:com.intellij.vcs.log.graph.api.EdgeFilter
+- java.lang.Enum
+- sf:ALL:com.intellij.vcs.log.graph.api.EdgeFilter
+- sf:NORMAL_ALL:com.intellij.vcs.log.graph.api.EdgeFilter
+- sf:NORMAL_DOWN:com.intellij.vcs.log.graph.api.EdgeFilter
+- sf:NORMAL_UP:com.intellij.vcs.log.graph.api.EdgeFilter
+- sf:SPECIAL:com.intellij.vcs.log.graph.api.EdgeFilter
+- f:downNormal:Z
+- f:special:Z
+- f:upNormal:Z
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.api.EdgeFilter
+- s:values():com.intellij.vcs.log.graph.api.EdgeFilter[]
+com.intellij.vcs.log.graph.api.GraphLayout
+- a:getHeadNodeIndex():java.util.List
+- a:getLayoutIndex(I):I
+- a:getOneOfHeadNodeIndex(I):I
+com.intellij.vcs.log.graph.api.LinearGraph
+- a:getAdjacentEdges(I,com.intellij.vcs.log.graph.api.EdgeFilter):java.util.List
+- a:getGraphNode(I):com.intellij.vcs.log.graph.api.elements.GraphNode
+- a:getNodeId(I):I
+- a:getNodeIndex(I):java.lang.Integer
+- a:nodesCount():I
+com.intellij.vcs.log.graph.api.LiteLinearGraph
+- a:getNodes(I,com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter):java.util.List
+- a:nodesCount():I
+e:com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- java.lang.Enum
+- sf:ALL:com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- sf:DOWN:com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- sf:UP:com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- f:down:Z
+- f:edgeFilter:com.intellij.vcs.log.graph.api.EdgeFilter
+- f:up:Z
+- s:filter(Z):com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter
+- s:values():com.intellij.vcs.log.graph.api.LiteLinearGraph$NodeFilter[]
+f:com.intellij.vcs.log.graph.api.elements.GraphEdge
+- com.intellij.vcs.log.graph.api.elements.GraphElement
+- <init>(java.lang.Integer,java.lang.Integer,java.lang.Integer,com.intellij.vcs.log.graph.api.elements.GraphEdgeType):V
+- s:createEdgeWithTargetId(I,java.lang.Integer,com.intellij.vcs.log.graph.api.elements.GraphEdgeType):com.intellij.vcs.log.graph.api.elements.GraphEdge
+- s:createNormalEdge(I,I,com.intellij.vcs.log.graph.api.elements.GraphEdgeType):com.intellij.vcs.log.graph.api.elements.GraphEdge
+- equals(java.lang.Object):Z
+- getDownNodeIndex():java.lang.Integer
+- getTargetId():java.lang.Integer
+- getType():com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- getUpNodeIndex():java.lang.Integer
+- hashCode():I
+e:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- java.lang.Enum
+- sf:DOTTED:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- sf:DOTTED_ARROW_DOWN:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- sf:DOTTED_ARROW_UP:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- sf:NOT_LOAD_COMMIT:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- sf:USUAL:com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- isNormalEdge():Z
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.api.elements.GraphEdgeType
+- s:values():com.intellij.vcs.log.graph.api.elements.GraphEdgeType[]
+com.intellij.vcs.log.graph.api.elements.GraphElement
+f:com.intellij.vcs.log.graph.api.elements.GraphNode
+- com.intellij.vcs.log.graph.api.elements.GraphElement
+- <init>(I):V
+- <init>(I,com.intellij.vcs.log.graph.api.elements.GraphNodeType):V
+- equals(java.lang.Object):Z
+- getNodeIndex():I
+- getType():com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- hashCode():I
+e:com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- java.lang.Enum
+- sf:NOT_LOAD_COMMIT:com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- sf:UNMATCHED:com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- sf:USUAL:com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- s:valueOf(java.lang.String):com.intellij.vcs.log.graph.api.elements.GraphNodeType
+- s:values():com.intellij.vcs.log.graph.api.elements.GraphNodeType[]
+com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+- a:convertToNodeIds(java.util.Collection):java.util.Set
+- a:getCommitId(I):java.lang.Object
+- a:getNodeId(java.lang.Object):I
+- a:getTimestamp(I):J
+com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+- a:getBranchNodeIds():java.util.Set
+- a:getLinearGraph():com.intellij.vcs.log.graph.api.LinearGraph
+- a:getPermanentCommitsInfo():com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
+- a:getPermanentGraphLayout():com.intellij.vcs.log.graph.api.GraphLayout
+com.intellij.vcs.log.graph.api.printer.GraphColorGetter
+- a:getNodeColor(I,I):I
+com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
+- a:createColorGetter(com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo):com.intellij.vcs.log.graph.api.printer.GraphColorGetter
+com.intellij.vcs.log.graph.api.printer.GraphPrintElement
+- com.intellij.vcs.log.graph.PrintElement
+- a:getGraphElement():com.intellij.vcs.log.graph.api.elements.GraphElement
+com.intellij.vcs.log.graph.api.printer.PrintElementGenerator
+- a:getPrintElements(I):java.util.Collection
+com.intellij.vcs.log.graph.api.printer.PrintElementPresentationManager
+- a:getColorId(com.intellij.vcs.log.graph.api.elements.GraphElement):I
+- a:isSelected(com.intellij.vcs.log.graph.api.printer.GraphPrintElement):Z
+f:com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+- com.intellij.vcs.log.graph.PermanentGraph
+- com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
+- sf:Companion:com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl$Companion
+- createVisibleGraph(com.intellij.vcs.log.graph.PermanentGraph$Options,java.util.Set,java.util.Set):com.intellij.vcs.log.graph.VisibleGraph
+- f:createVisibleGraph(com.intellij.vcs.log.graph.PermanentGraph$Options,java.util.Set,java.util.Set,java.util.function.BiConsumer):com.intellij.vcs.log.graph.VisibleGraph
+- getAllCommits():java.util.List
+- getBranchNodeIds():java.util.Set
+- getChildren(java.lang.Object):java.util.List
+- getContainedInBranchCondition(java.util.Collection):java.util.function.Predicate
+- getContainingBranches(java.lang.Object):java.util.Set
+- getLinearGraph():com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+- sf:newInstance(java.util.List,com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory,java.util.Comparator,java.util.Set):com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+f:com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl$Companion
+- f:newInstance(java.util.List,com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory,java.util.Comparator,java.util.Set):com.intellij.vcs.log.graph.impl.facade.PermanentGraphImpl
+c:com.intellij.vcs.log.graph.impl.permanent.PermanentLinearGraphImpl
+- com.intellij.vcs.log.graph.api.LinearGraph
+- getAdjacentEdges(I,com.intellij.vcs.log.graph.api.EdgeFilter):java.util.List
+- getGraphNode(I):com.intellij.vcs.log.graph.api.elements.GraphNode
+- getNodeId(I):I
+- getNodeIndex(I):java.lang.Integer
+- nodesCount():I
+f:com.intellij.vcs.log.graph.impl.print.GraphColorGetterByNodeFactory
+- com.intellij.vcs.log.graph.api.printer.GraphColorGetterFactory
+- <init>(kotlin.jvm.functions.Function2):V
+- createColorGetter(com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo):com.intellij.vcs.log.graph.api.printer.GraphColorGetter
+c:com.intellij.vcs.log.graph.utils.BfsWalk
+- <init>(I,com.intellij.vcs.log.graph.api.LiteLinearGraph):V
+- <init>(I,com.intellij.vcs.log.graph.api.LiteLinearGraph,com.intellij.vcs.log.graph.utils.Flags,Z):V
+- b:<init>(I,com.intellij.vcs.log.graph.api.LiteLinearGraph,com.intellij.vcs.log.graph.utils.Flags,Z,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:currentNodes():java.util.Queue
+- p:getQueue():java.util.Queue
+- f:getStart():I
+- isFinished():Z
+- f:step(kotlin.jvm.functions.Function1):java.util.List
+- bs:step$default(com.intellij.vcs.log.graph.utils.BfsWalk,kotlin.jvm.functions.Function1,I,java.lang.Object):java.util.List
+- f:walk(kotlin.jvm.functions.Function1):V
+- bs:walk$default(com.intellij.vcs.log.graph.utils.BfsWalk,kotlin.jvm.functions.Function1,I,java.lang.Object):V
+f:com.intellij.vcs.log.graph.utils.DfsWalk
+- <init>(java.util.Collection,com.intellij.vcs.log.graph.api.LinearGraph):V
+- <init>(java.util.Collection,com.intellij.vcs.log.graph.api.LiteLinearGraph,com.intellij.vcs.log.graph.utils.Flags):V
+- f:walk(Z,kotlin.jvm.functions.Function1):V
+com.intellij.vcs.log.graph.utils.Flags
+- a:get(I):Z
+- a:set(I,Z):V
+- a:setAll(Z):V
+- a:size():I
+f:com.intellij.vcs.log.graph.utils.LinearGraphUtils
+- <init>():V
+- s:asLiteLinearGraph(com.intellij.vcs.log.graph.api.LinearGraph):com.intellij.vcs.log.graph.api.LiteLinearGraph
+- s:convertIdsToNodeIndexes(com.intellij.vcs.log.graph.api.LinearGraph,java.util.Collection):java.util.Set
+- s:convertNodeIndexesToIds(com.intellij.vcs.log.graph.api.LinearGraph,java.util.Collection):java.util.Set
+- s:getCursor(Z):java.awt.Cursor
+- s:getDownNodes(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
+- s:getDownNodesIncludeNotLoad(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
+- s:getEdge(com.intellij.vcs.log.graph.api.LinearGraph,I,I):com.intellij.vcs.log.graph.api.elements.GraphEdge
+- s:getNotNullNodeIndex(com.intellij.vcs.log.graph.api.elements.GraphEdge):I
+- s:getUpNodes(com.intellij.vcs.log.graph.api.LinearGraph,I):java.util.List
+- s:intEqual(java.lang.Integer,I):Z
+- s:isEdgeDown(com.intellij.vcs.log.graph.api.elements.GraphEdge,I):Z
+- s:isEdgeUp(com.intellij.vcs.log.graph.api.elements.GraphEdge,I):Z
+- s:isNormalEdge(com.intellij.vcs.log.graph.api.elements.GraphEdge):Z
+c:com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+- com.intellij.vcs.log.graph.utils.Flags
+- <init>(I):V
+- <init>(I,Z):V
+- equals(java.lang.Object):Z
+- get(I):Z
+- hashCode():I
+- set(I,Z):V
+- setAll(Z):V
+- size():I

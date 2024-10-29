@@ -42,4 +42,5 @@ public class RedundantCastInspectionLambdaTest extends LightDaemonAnalyzerTestCa
   public void testSameUpperBounds() { doTest(); }
   public void testSameResolveWithConditionalBranches() { doTest(); }
   public void testIgnoreMessageFormatCall() { doTest(); }
+  public void testClassCastMethodReference() { doTest(); }
 }

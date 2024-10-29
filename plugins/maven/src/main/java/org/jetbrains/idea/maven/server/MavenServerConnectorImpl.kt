@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server
 
-import com.intellij.concurrency.escapeCancellation
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -10,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.job
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.future.asCompletableFuture
 import org.jetbrains.idea.maven.utils.MavenCoroutineScopeProvider
 import org.jetbrains.idea.maven.utils.MavenLog
 import java.io.File
@@ -91,12 +93,16 @@ open class MavenServerConnectorImpl(project: Project,
         // the computation below spawns an immortal server that will not terminate
         // if someone is interested in the termination of the current computation, they do not need to wait for maven to terminate.
         // hence, we spawn the server in the context of maven plugin, so that it has cancellation of all other maven processes
-        escapeCancellation(MavenCoroutineScopeProvider.getCoroutineScope(project).coroutineContext.job) {
-          val server = mySupport!!.acquire(this, "", indicator)
-          startPullingDownloadListener(server)
-          startPullingLogger(server)
-          myServerPromise.setResult(server)
-        }
+        MavenCoroutineScopeProvider.getCoroutineScope(project).async(context = Dispatchers.IO, start = CoroutineStart.UNDISPATCHED) {
+          runCatching {
+            val server = mySupport!!.acquire(this, "", indicator)
+            startPullingDownloadListener(server)
+            startPullingLogger(server)
+            myServerPromise.setResult(server)
+          }
+        }.asCompletableFuture()
+          .get() // there are no suspensions inside, so this code will not block
+          .getOrThrow()
         MavenLog.LOG.debug("[connector] in " + dirForLogs + " has been connected " + this@MavenServerConnectorImpl)
       }
       catch (e: Throwable) {

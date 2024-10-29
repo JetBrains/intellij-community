@@ -245,7 +245,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
   }
 
   private void closeSuitesBundle(@NotNull CoverageSuitesBundle suite, boolean removeWatches) {
-    if (myActiveBundles.remove(suite.getCoverageEngine()) == null) return;
+    if (!myActiveBundles.remove(suite.getCoverageEngine(), suite)) return;
     CoverageViewManager.getInstance(myProject).closeView(suite);
     if (removeWatches) {
       ExternalCoverageWatchManager.getInstance(myProject).clearWatches();

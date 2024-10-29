@@ -3,8 +3,10 @@ package com.intellij.slicer;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 @State(name = "SliceToolwindowSettings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class SliceToolwindowSettings implements PersistentStateComponent<SliceToolwindowSettings> {

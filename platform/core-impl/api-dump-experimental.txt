@@ -1,0 +1,51 @@
+*:com.intellij.ide.plugins.PluginEnabler
+- sf:HEADLESS:com.intellij.ide.plugins.PluginEnabler$Headless
+- a:disable(java.util.Collection):Z
+- disableById(java.util.Set):Z
+- a:enable(java.util.Collection):Z
+- enableById(java.util.Set):Z
+- s:getInstance():com.intellij.ide.plugins.PluginEnabler
+- a:isDisabled(com.intellij.openapi.extensions.PluginId):Z
+*:com.intellij.ide.plugins.PluginEnabler$Headless
+- com.intellij.ide.plugins.PluginEnabler
+- a:isIgnoredDisabledPlugins():Z
+- a:setIgnoredDisabledPlugins(Z):V
+*c:com.intellij.lang.impl.TokenSequence
+- com.intellij.lexer.TokenList
+- getTokenCount():I
+- getTokenEnd(I):I
+- getTokenStart(I):I
+- getTokenType(I):com.intellij.psi.tree.IElementType
+- getTokenizedText():java.lang.CharSequence
+- s:performLexing(java.lang.CharSequence,com.intellij.lexer.Lexer):com.intellij.lang.impl.TokenSequence
+com.intellij.openapi.application.ex.ApplicationEx
+- com.intellij.openapi.application.Application
+- *:runWriteActionWithCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
+- *:runWriteActionWithNonCancellableProgressInDispatchThread(java.lang.String,com.intellij.openapi.project.Project,javax.swing.JComponent,java.util.function.Consumer):Z
+a:com.intellij.openapi.application.ex.ApplicationInfoEx
+- com.intellij.openapi.application.ApplicationInfo
+- *a:isPreview():Z
+*a:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard
+- sf:EP_NAME:com.intellij.openapi.extensions.ExtensionPointName
+- <init>():V
+- ps:fail(java.lang.String):com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
+- a:isWritable(com.intellij.openapi.editor.Document):com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
+- ps:success():com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
+*c:com.intellij.openapi.editor.impl.DocumentWriteAccessGuard$Result
+- getFailureReason():java.lang.String
+- isSuccess():Z
+a:com.intellij.openapi.fileEditor.impl.FileDocumentManagerBase
+- com.intellij.openapi.fileEditor.FileDocumentManager
+- *s:isTrackable(com.intellij.openapi.vfs.VirtualFile):Z
+f:com.intellij.psi.impl.PsiModificationTrackerImpl
+- com.intellij.psi.impl.PsiTreeChangePreprocessor
+- com.intellij.psi.util.PsiModificationTracker
+- *:incLanguageModificationCount(com.intellij.lang.Language):V
+f:com.intellij.psi.impl.file.PsiFileImplUtil
+- *s:setNonPhysicalFileDeleteHandler(com.intellij.psi.PsiFile,java.util.function.Consumer):V
+c:com.intellij.psi.impl.source.resolve.ResolveCache
+- com.intellij.openapi.Disposable
+- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
+- *:resolveWithCaching(com.intellij.model.psi.PsiSymbolReference,Z,com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver):java.util.Collection
+*:com.intellij.psi.impl.source.resolve.ResolveCache$PsiSymbolReferenceResolver
+- a:resolve(com.intellij.model.psi.PsiSymbolReference):java.util.Collection

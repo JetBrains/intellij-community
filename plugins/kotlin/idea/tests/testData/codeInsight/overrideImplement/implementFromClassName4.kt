@@ -20,3 +20,9 @@ class <caret>Test : A {
     override fun a2() {
     }
 }
+
+// MEMBER: "a1(): Unit"
+// MEMBER: "a3(): Unit"
+// MEMBER: "a5(): Unit"
+// MEMBER: "a7(): Unit"
+// MEMBER: "a8(): Unit"

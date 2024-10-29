@@ -162,6 +162,10 @@ public final class RenderingUtil {
     return Boolean.FALSE.equals(component.getClientProperty(PAINT_HOVERED_BACKGROUND));
   }
 
+  @ApiStatus.Internal
+  public static void setHoverPaintingDisabled(@NotNull JComponent component, boolean disabled) {
+    component.putClientProperty(PAINT_HOVERED_BACKGROUND, !disabled);
+  }
   public static @Nullable Color getHoverBackground(@NotNull JList<?> list) {
     if (isHoverPaintingDisabled(list)) return null;
     return CurrentTheme.List.Hover.background(isFocused(list));

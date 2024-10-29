@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.concurrency.ThreadingAssertions
@@ -22,12 +21,13 @@ import java.awt.*
 import java.util.*
 import javax.swing.JLayeredPane
 import javax.swing.JPanel
+import javax.swing.JRootPane
 import javax.swing.SwingConstants
 
 /**
  * @author Alexander Lobas
  */
-internal class ActionCenterBalloonLayout(parent: IdeRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
+internal class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayoutImpl(parent, insets) {
   private val collapsedData = HashMap<Balloon, CollapseInfo>()
 
   override fun dispose() {

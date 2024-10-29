@@ -108,7 +108,7 @@ public final class MethodOnlyUsedFromInnerClassInspection extends BaseInspection
       if (method.equals(containingMethod)) { // recursive call
         return true;
       }
-      final PsiClass containingClass = ClassUtils.getContainingClass(element);
+      final PsiClass containingClass = PsiUtil.getContainingClass(element);
       if (containingClass == null) {
         return false;
       }

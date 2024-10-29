@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Key;
@@ -49,6 +50,11 @@ public final class VcsDiffUtil {
     return revision.isEmpty() ? fileName : String.format("%s (%s)", revision, fileName); //NON-NLS
   }
 
+  /**
+   * @deprecated - Consider using {@link DiffTitleFilePathCustomizer#getTitleCustomizers} and
+   * {@link com.intellij.diff.util.DiffUtil#addTitleCustomizers(DiffRequest, List)} instead
+   */
+  @Deprecated
   public static void putFilePathsIntoChangeContext(@NotNull Change change, @NotNull Map<Key<?>, Object> context) {
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
@@ -73,9 +79,7 @@ public final class VcsDiffUtil {
   @NotNull
   private static String getShortHash(@Nullable ContentRevision revision) {
     if (revision == null) return "";
-    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
-    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
-    return revisionNumber.asString();
+    return getShortRevisionString(revision.getRevisionNumber());
   }
 
   @NlsSafe

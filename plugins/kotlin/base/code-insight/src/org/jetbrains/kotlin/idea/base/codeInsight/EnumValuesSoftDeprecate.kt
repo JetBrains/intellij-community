@@ -32,7 +32,7 @@ fun isSoftDeprecatedEnumValuesMethod(
 context(KaSession)
 @ApiStatus.Internal
 fun getEntriesPropertyOfEnumClass(enumClassSymbol: KaClassSymbol): KaCallableSymbol? =
-    enumClassSymbol.staticMemberScope.getCallableSymbols(StandardNames.ENUM_ENTRIES).firstOrNull()
+    enumClassSymbol.staticMemberScope.callables(StandardNames.ENUM_ENTRIES).firstOrNull()
 
 @ApiStatus.Internal
 fun PsiElement.isEnumValuesSoftDeprecateEnabled(): Boolean = languageVersionSettings.isEnumValuesSoftDeprecateEnabled()

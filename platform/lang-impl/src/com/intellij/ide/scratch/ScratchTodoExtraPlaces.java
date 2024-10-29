@@ -4,9 +4,11 @@ package com.intellij.ide.scratch;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.todo.TodoIndexers;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ScratchTodoExtraPlaces implements TodoIndexers.ExtraPlaceChecker {
   @Override
   public boolean accept(@Nullable Project project, @NotNull VirtualFile file) {

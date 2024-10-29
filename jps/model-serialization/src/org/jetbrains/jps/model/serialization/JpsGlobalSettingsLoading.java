@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.model.serialization;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,7 +12,6 @@ import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 
@@ -26,11 +24,10 @@ public final class JpsGlobalSettingsLoading {
 
   private JpsGlobalSettingsLoading() {}
 
-  public static void loadGlobalSettings(JpsGlobal global, String optionsPath) throws IOException {
+  public static void loadGlobalSettings(@NotNull JpsGlobal global, @NotNull Path optionsPath) throws IOException {
     JpsGlobalLoader.configurePathMapper(global);
-    Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
-    Map<String, String> pathVariables = loadPathVariables(global, optionsDir);
-    createInstance(global, pathVariables).load(optionsDir);
+    Map<String, String> pathVariables = loadPathVariables(global, optionsPath);
+    createInstance(global, pathVariables).load(optionsPath);
   }
 
   private static @NotNull JpsGlobalLoader createInstance(JpsGlobal global, Map<String, String> pathVariables) {
@@ -42,10 +39,9 @@ public final class JpsGlobalSettingsLoading {
     return JpsModelSerializationDataService.computeAllPathVariables(global);
   }
 
-  public static Map<String, String> computeAllPathVariables(@NotNull String optionsPath) {
+  public static Map<String, String> computeAllPathVariables(@NotNull Path optionsPath) {
     JpsModel model = JpsElementFactory.getInstance().createModel();
-    Path optionsDir = Paths.get(FileUtil.toCanonicalPath(optionsPath));
-    return loadPathVariables(model.getGlobal(), optionsDir);
+    return loadPathVariables(model.getGlobal(), optionsPath);
   }
 
   public static final class GlobalLibrariesSerializer extends JpsGlobalExtensionSerializer {

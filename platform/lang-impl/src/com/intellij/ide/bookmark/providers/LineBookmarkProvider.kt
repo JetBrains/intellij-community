@@ -32,15 +32,15 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.tree.project.ProjectFileNode
-import com.intellij.util.Alarm.ThreadToUse.POOLED_THREAD
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
+import kotlinx.coroutines.CoroutineScope
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 
 @kotlin.Suppress("ExtensionClassShouldBeFinalAndNonPublic")
-class LineBookmarkProvider(private val project: Project) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
+class LineBookmarkProvider(private val project: Project, coroutineScope: CoroutineScope) : BookmarkProvider, EditorMouseListener, Simple, AsyncFileListener {
   override fun getWeight(): Int = Int.MIN_VALUE
   override fun getProject(): Project = project
 
@@ -198,7 +198,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     return null
   }
 
-  private val validateAlarm = SingleAlarm(::validateAndUpdate, 100, project, POOLED_THREAD)
+  private val validateAlarm = SingleAlarm.singleAlarm(task = ::validateAndUpdate, delay = 100, coroutineScope = coroutineScope)
 
   private fun validateAndUpdate() {
     val manager = BookmarksManager.getInstance(project) ?: return

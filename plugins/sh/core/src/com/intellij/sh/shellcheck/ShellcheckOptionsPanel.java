@@ -41,8 +41,8 @@ public class ShellcheckOptionsPanel {
     myDisabledInspections = disabledInspections;
     myProject = ProjectUtil.guessCurrentProject(getPanel());
 
-    myShellcheckSelector.addBrowseFolderListener(ShBundle.message("sh.shellcheck.path.label"), "", myProject,
-                                                 FileChooserDescriptorFactory.createSingleFileDescriptor());
+    myShellcheckSelector.addBrowseFolderListener(myProject, FileChooserDescriptorFactory.createSingleFileDescriptor()
+      .withTitle(ShBundle.message("sh.shellcheck.path.label")));
     myShellcheckSelector.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent documentEvent) {

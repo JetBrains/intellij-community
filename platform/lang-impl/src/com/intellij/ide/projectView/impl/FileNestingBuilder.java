@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,8 +32,7 @@ public final class FileNestingBuilder {
   /**
    * Returns all possible nesting rules, including transitive rules
    */
-  @NotNull
-  public synchronized Collection<ProjectViewFileNestingService.NestingRule> getNestingRules() {
+  public synchronized @NotNull Collection<ProjectViewFileNestingService.NestingRule> getNestingRules() {
     final ProjectViewFileNestingService fileNestingService = ProjectViewFileNestingService.getInstance();
     final List<ProjectViewFileNestingService.NestingRule> baseRules = fileNestingService.getRules();
     final long modCount = fileNestingService.getModificationCount();
@@ -95,9 +94,8 @@ public final class FileNestingBuilder {
     As a result we get a number of separated parent-to-many-children sub-graphs, and use them to nest child files under parent file in Project View.
     One child still may have more than one parent. For real use cases it is not expected to happen, but anyway it's not a big problem, it will be shown as a subnode more than once.
    */
-  @NotNull
-  public <T> MultiMap<T, T> mapParentToChildren(@NotNull final Collection<? extends T> nodes,
-                                                @NotNull final Function<? super T, String> fileNameFunc) {
+  public @NotNull <T> MultiMap<T, T> mapParentToChildren(final @NotNull Collection<? extends T> nodes,
+                                                final @NotNull Function<? super T, String> fileNameFunc) {
 
     final Collection<ProjectViewFileNestingService.NestingRule> rules = getNestingRules();
     if (rules.isEmpty()) return MultiMap.empty();
@@ -147,8 +145,8 @@ public final class FileNestingBuilder {
   /**
    * Returns [matching parent; matching child] pair
    */
-  public static Couple<Boolean> checkMatchingAsParentOrChild(@NotNull final ProjectViewFileNestingService.NestingRule rule,
-                                                             @NotNull final String fileName) {
+  public static Couple<Boolean> checkMatchingAsParentOrChild(final @NotNull ProjectViewFileNestingService.NestingRule rule,
+                                                             final @NotNull String fileName) {
     String parentFileSuffix = rule.getParentFileSuffix();
     String childFileSuffix = rule.getChildFileSuffix();
 
@@ -167,10 +165,9 @@ public final class FileNestingBuilder {
     return Couple.of(matchesParent, matchesChild);
   }
 
-  @NotNull
-  private static <T> Edge<T> getOrCreateEdge(@NotNull final Map<Pair<String, ProjectViewFileNestingService.NestingRule>, Edge<T>> baseNameAndRuleToEdge,
-                                             @NotNull final String baseName,
-                                             @NotNull final ProjectViewFileNestingService.NestingRule rule) {
+  private static @NotNull <T> Edge<T> getOrCreateEdge(final @NotNull Map<Pair<String, ProjectViewFileNestingService.NestingRule>, Edge<T>> baseNameAndRuleToEdge,
+                                                      final @NotNull String baseName,
+                                                      final @NotNull ProjectViewFileNestingService.NestingRule rule) {
     final Pair<String, ProjectViewFileNestingService.NestingRule> baseNameAndRule = Pair.create(baseName, rule);
 
     Edge<T> edge = baseNameAndRuleToEdge.get(baseNameAndRule);
@@ -181,9 +178,9 @@ public final class FileNestingBuilder {
     return edge;
   }
 
-  private static <T> void updateInfoIfEdgeComplete(@NotNull final MultiMap<T, T> parentToChildren,
-                                                   @NotNull final Set<? super T> allChildNodes,
-                                                   @NotNull final Edge<? extends T> edge) {
+  private static <T> void updateInfoIfEdgeComplete(final @NotNull MultiMap<T, T> parentToChildren,
+                                                   final @NotNull Set<? super T> allChildNodes,
+                                                   final @NotNull Edge<? extends T> edge) {
     if (edge.from != null && edge.to != null) { // if edge complete
       allChildNodes.add(edge.to);
       parentToChildren.remove(edge.to); // nodes that appear as a child shouldn't be a parent of another edge, corresponding edges removed
@@ -194,9 +191,7 @@ public final class FileNestingBuilder {
   }
 
   private static final class Edge<T> {
-    @Nullable
-    private T from;
-    @Nullable
-    private T to;
+    private @Nullable T from;
+    private @Nullable T to;
   }
 }

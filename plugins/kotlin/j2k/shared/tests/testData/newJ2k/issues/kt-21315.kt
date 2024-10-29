@@ -3,6 +3,6 @@ class Test {
 
     init {
         foo = 2
-        val foo = foo
+        var foo = foo
     }
 }

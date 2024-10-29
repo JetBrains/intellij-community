@@ -17,3 +17,13 @@ open class B: A() {
 class C: B() {
     <caret>
 }
+
+// MEMBER: "fOverride(): Unit"
+// MEMBER: "vLateinit: String"
+// MEMBER: "contains(n: Int): Boolean"
+// MEMBER: "fInfix(n: Int): Unit"
+// MEMBER: "fProtected(): Unit"
+// MEMBER: "fInternal(): Unit"
+// MEMBER: "equals(other: Any?): Boolean"
+// MEMBER: "hashCode(): Int"
+// MEMBER: "toString(): String"

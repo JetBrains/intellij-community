@@ -47,5 +47,5 @@ public interface InferenceContext {
   }
 
   <T extends GroovyPsiElement>
-  @Nullable PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends PsiType> calculator);
+  @Nullable PsiType getExpressionType(@NotNull T element, @NotNull Function<? super T, ? extends @Nullable PsiType> calculator);
 }

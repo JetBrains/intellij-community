@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.classCanBeRecord;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -294,7 +294,9 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
           recordStyleNaming = true;
           break;
         }
-        if (mySuggestAccessorsRenaming && fieldName.equals(PropertyUtilBase.getPropertyNameByGetter(psiMethod))) {
+        if (mySuggestAccessorsRenaming && fieldName.equals(PropertyUtilBase.getPropertyNameByGetter(psiMethod)) &&
+            !ContainerUtil.exists(psiMethod.findDeepestSuperMethods(),
+                                  superMethod -> superMethod instanceof PsiCompiledElement || superMethod instanceof SyntheticElement)) {
           backingField = field;
           break;
         }

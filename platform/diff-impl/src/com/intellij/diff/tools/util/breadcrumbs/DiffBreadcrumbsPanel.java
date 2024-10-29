@@ -20,9 +20,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.xml.breadcrumbs.BreadcrumbsPanel;
 import com.intellij.xml.breadcrumbs.BreadcrumbsUtilEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class DiffBreadcrumbsPanel extends BreadcrumbsPanel {
   private boolean myCrumbsShown;
 

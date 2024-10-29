@@ -34,17 +34,17 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.wm.impl.status.EncodingPanel;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.refactoring.copy.CopyFilesOrDirectoriesHandler;
 import com.intellij.testFramework.*;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.TimeoutUtil;
@@ -64,7 +64,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -920,7 +919,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
   public void testBigFileInsideJarCorrectlyHandlesBOM() throws IOException {
     File tmpDir = createTempDirectory();
     File jar = new File(tmpDir, "x.jar");
-    String bigText = StringUtil.repeat("u", FileUtilRt.LARGE_FOR_CONTENT_LOADING+1);
+    String bigText = StringUtil.repeat("u", FileSizeLimit.getDefaultContentLoadLimit() + 1);
     byte[] utf16beBytes = ArrayUtil.mergeArrays(CharsetToolkit.UTF16BE_BOM, bigText.getBytes(StandardCharsets.UTF_16BE));
     String name = "some_random_name";
     IoTestUtil.createTestJar(jar, Collections.singletonList(Pair.create(name, utf16beBytes)));
@@ -1021,12 +1020,12 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     Document document = Objects.requireNonNull(getDocument(file));
     WriteCommandAction.runWriteCommandAction(myProject, () -> document.insertString(0, " "));
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-    encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
-    PerformanceTestUtil.newPerformanceTest("encoding re-detect requests", ()->{
+    encodingManager.waitAllTasksExecuted();
+    Benchmark.newBenchmark("encoding re-detect requests", ()->{
       for (int i=0; i<100_000_000;i++) {
         encodingManager.queueUpdateEncodingFromContent(document);
       }
-      encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
+      encodingManager.waitAllTasksExecuted();
       UIUtil.dispatchAllInvocationEvents();
     }).start();
   }
@@ -1073,7 +1072,7 @@ public class FileEncodingTest extends HeavyPlatformTestCase implements TestDialo
     }
 
     EncodingManagerImpl encodingManager = (EncodingManagerImpl)EncodingManager.getInstance();
-    encodingManager.waitAllTasksExecuted(60, TimeUnit.SECONDS);
+    encodingManager.waitAllTasksExecuted();
     UIUtil.dispatchAllInvocationEvents();
 
     FileEditorManager.getInstance(getProject()).closeFile(file);

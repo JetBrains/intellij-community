@@ -77,10 +77,10 @@
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module-library">
       <library name="coverage-report" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.20">
+        <properties maven-id="org.jetbrains.intellij.deps:coverage-report:1.0.25">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.20/coverage-report-1.0.20.jar">
-              <sha256sum>5959f0aa7f33c74c8cde6babb2d9b92638f0e143461d2c37f6859f731c275c59</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar">
+              <sha256sum>8627281c15b1b5347ca618d0dbc2090aa92a096a867c1d030198a51efcc33bfe</sha256sum>
             </artifact>
             <artifact url="file://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar">
               <sha256sum>04d65ec1bde6cea20e3495d5e78ef96ab774d9936434861d3254bd88e7e94f92</sha256sum>
@@ -91,12 +91,12 @@
           </exclude>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.20/coverage-report-1.0.20.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.20/coverage-report-1.0.20-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/coverage-report/1.0.25/coverage-report-1.0.25-sources.jar!/" />
           <root url="jar://$MAVEN_REPOSITORY$/org/freemarker/freemarker/2.3.32/freemarker-2.3.32-sources.jar!/" />
         </SOURCES>
       </library>

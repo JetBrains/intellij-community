@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
@@ -18,7 +19,6 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider.Companion.openEditor
-import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -45,8 +45,10 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     }
   }
 
-  private val contentAsync = appScope.async {
-    WhatsNewContent.getWhatsNewContent()
+  private val contentAsync by lazy {
+    appScope.async {
+      WhatsNewContent.getWhatsNewContent()
+    }
   }
 
   suspend fun openWhatsNew(project: Project) {
@@ -75,7 +77,8 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     val title = IdeBundle.message("update.whats.new", ApplicationNamesInfo.getInstance().fullProductName)
     withContext(Dispatchers.EDT) {
       LOG.info("Opening What's New in editor.")
-      openEditor(project, title, whatsNewContent.getRequest(dataContext))?.let {
+      val editor = writeIntentReadAction { openEditor(project, title, whatsNewContent.getRequest(dataContext)) }
+      editor?.let {
         project.serviceAsync<FileEditorManager>().addTopComponent(it, ReactionsPanel.createPanel(PLACE, reactionChecker))
         WhatsNewCounterUsageCollector.openedPerformed(project, byClient)
 
@@ -99,8 +102,9 @@ internal class WhatsNewAction : AnAction(), com.intellij.openapi.project.DumbAwa
     return ActionUpdateThread.BGT
   }
 
+  @OptIn(ExperimentalCoroutinesApi::class)
   override fun update(e: AnActionEvent) {
-      e.presentation.isEnabledAndVisible = runBlockingCancellable { contentAsync.await() != null }
+      e.presentation.isEnabledAndVisible = if (contentAsync.isCompleted) contentAsync.getCompleted() != null else false
       e.presentation.setText(IdeBundle.messagePointer("whats.new.action.custom.text", ApplicationNamesInfo.getInstance().fullProductName))
       e.presentation.setDescription(IdeBundle.messagePointer("whats.new.action.custom.description", ApplicationNamesInfo.getInstance().fullProductName))
   }

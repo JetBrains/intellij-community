@@ -29,7 +29,7 @@ public class VmOptionsEditorTest extends LightPlatform4TestCase {
     assertFalse(expanded.getEditor().isOneLineMode());
     checkExpectedText(expanded, """
       -XX:Abc="hello world"
-      -XX<caret>:Def=123""");
+      -XX:Def<caret>=123""");
     editor.collapse();
     
     expanded.removeNotify();

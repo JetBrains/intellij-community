@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -8,40 +8,44 @@ import com.intellij.internal.statistic.eventLog.events.EventId2
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.jetbrains.jps.model.java.JdkVersionDetector
 
-object JdkDownloaderLogger : CounterUsagesCollector() {
+internal object JdkDownloaderLogger : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 3)
-
-  private const val UNKNOWN_VENDOR = "Unknown"
-  private val KNOWN_VENDORS = JdkVersionDetector.Variant.entries
-                                .mapNotNull { it.displayName }
-                                .toList() + UNKNOWN_VENDOR
-
-  private val DOWNLOAD: EventId1<Boolean> = GROUP.registerEvent("download", EventFields.Boolean("success"))
+  private val GROUP: EventLogGroup = EventLogGroup("jdk.downloader", 6)
 
   private val DETECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("detected",
-                                                                         EventFields.String("product", KNOWN_VENDORS),
-                                                                         EventFields.Int("version"))
-  private val SELECTED_SDK: EventId2<String?, Int> = GROUP.registerEvent("selected",
-                                                                         EventFields.String("product", KNOWN_VENDORS),
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
                                                                          EventFields.Int("version"))
 
-  fun logDownload(success: Boolean) {
-    DOWNLOAD.log(success)
+  private val DOWNLOADED_SDK: EventId2<String?, Int> = GROUP.registerEvent("jdk.downloaded",
+                                                                         EventFields.String("product", JdkVersionDetector.VENDORS),
+                                                                         EventFields.Int("version"))
+
+  private val FAILURE: EventId1<DownloadFailure> = GROUP.registerEvent("failure",
+                                                                       EventFields.Enum("reason", DownloadFailure::class.java))
+
+  enum class DownloadFailure {
+    WrongProtocol, WSLIssue, FileDoesNotExist, RuntimeException, IncorrectFileSize, ChecksumMismatch, ExtractionFailed, Cancelled,
   }
 
-  fun logSelected(jdkItem: JdkItem) {
-    val vendor = KNOWN_VENDORS.firstOrNull { jdkItem.fullPresentationText.contains(it) } ?: UNKNOWN_VENDOR
-    SELECTED_SDK.log(vendor, jdkItem.jdkMajorVersion)
+  @Deprecated(message = "Use logDownload(JdkItem) instead")
+  fun logDownload(success: Boolean) {}
+
+  fun logDownload(item: JdkItem) {
+    val variant = item.detectVariant()
+    DOWNLOADED_SDK.log(variant.displayName, item.jdkMajorVersion)
+  }
+
+  fun logFailed(failure: DownloadFailure) {
+    FAILURE.log(failure)
   }
 
   @JvmStatic
   fun logDetected(jdkInfo: JdkVersionDetector.JdkVersionInfo?) {
     val (name, version) = when {
                             jdkInfo == null -> null
-                            jdkInfo.variant.displayName in KNOWN_VENDORS -> jdkInfo.variant.displayName to jdkInfo.version.feature
-                            else -> UNKNOWN_VENDOR to jdkInfo.version.feature
+                            jdkInfo.variant.displayName in JdkVersionDetector.VENDORS -> jdkInfo.variant.displayName to jdkInfo.version.feature
+                            else -> JdkVersionDetector.Variant.Unknown.displayName to jdkInfo.version.feature
                           } ?: return
     DETECTED_SDK.log(name, version)
   }

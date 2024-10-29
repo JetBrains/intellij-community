@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.util.Range
 import com.intellij.util.containers.PeekableIteratorWrapper
+import org.jetbrains.annotations.ApiStatus
 import kotlin.math.max
 
 /**
@@ -15,6 +16,7 @@ import kotlin.math.max
  *
  * @see com.intellij.openapi.vcs.ex.BulkRangeChangeHandler
  */
+@ApiStatus.Internal
 class ChangedRangesShifter {
   private val result = mutableListOf<Range>()
 

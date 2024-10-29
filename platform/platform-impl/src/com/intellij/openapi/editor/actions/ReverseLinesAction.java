@@ -4,8 +4,8 @@ package com.intellij.openapi.editor.actions;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import org.jetbrains.annotations.NotNull;
 
-public final class ReverseLinesAction extends EditorAction {
-  public ReverseLinesAction() {
+final class ReverseLinesAction extends EditorAction {
+  ReverseLinesAction() {
     super(new AbstractPermuteLinesHandler() {
       @Override
       public void permute(String @NotNull [] lines) {

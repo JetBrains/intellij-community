@@ -12,12 +12,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.refactoring.PackageWrapper
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesProcessor
 import com.intellij.refactoring.move.moveClassesOrPackages.MultipleRootsMoveDestination
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
 import org.jetbrains.kotlin.idea.core.util.toPsiDirectory
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveSourceDescriptor
-import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveTargetDescriptor
+import org.jetbrains.kotlin.idea.k2.refactoring.move.descriptor.K2MoveOperationDescriptor
 import org.jetbrains.kotlin.idea.k2.refactoring.move.processor.K2MoveDeclarationsRefactoringProcessor
 import org.jetbrains.kotlin.idea.refactoring.runRefactoringTest
 import org.jetbrains.kotlin.name.FqName
@@ -33,6 +33,7 @@ abstract class AbstractK2MoveTopLevelTest : AbstractMultifileMoveRefactoringTest
 }
 
 internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
+    @OptIn(KaAllowAnalysisOnEdt::class)
     override fun runRefactoring(rootDir: VirtualFile, mainFile: PsiFile, elementsAtCaret: List<PsiElement>, config: JsonObject) {
         val project = mainFile.project
         if (mainFile.name.endsWith(".java")) {
@@ -47,29 +48,36 @@ internal object K2MoveTopLevelRefactoringAction : KotlinMoveRefactoringAction {
                 /* moveCallback = */ null
             ).run()
         } else {
-            val sourceDescriptor = K2MoveSourceDescriptor.ElementSource(elementsAtCaret.filterIsInstance<KtNamedDeclaration>().toSet())
             val targetSourceRoot = config.getNullableString("targetSourceRoot") ?: ""
             val targetPackage = config.getNullableString("targetPackage")
-            val targetDescriptor = if (targetPackage != null) {
-                val fileName = if (sourceDescriptor.elements.size == 1) {
-                    sourceDescriptor.elements.first().name?.capitalizeAsciiOnly() + ".kt"
+            val declarationsToMove = elementsAtCaret.filterIsInstance<KtNamedDeclaration>()
+            val (fileName, pkgName, baseDir) = if (targetPackage != null) {
+                val fileName = if (declarationsToMove.size == 1) {
+                    declarationsToMove.first().name?.capitalizeAsciiOnly() + ".kt"
                 } else {
-                    sourceDescriptor.elements.first().containingKtFile.name
+                    declarationsToMove.first().containingKtFile.name
                 }
-                K2MoveTargetDescriptor.File(fileName, FqName(targetPackage), rootDir.findDirectory(targetSourceRoot)?.toPsiDirectory(project)!!)
+                Triple(fileName, FqName(targetPackage), rootDir.findDirectory(targetSourceRoot)?.toPsiDirectory(project)!!)
             } else {
-                val targetFile = PsiManager.getInstance(project).findFile(rootDir.findFileByRelativePath(config.getString("targetFile"))!!)
-                K2MoveTargetDescriptor.File(targetFile as KtFile)
+                val targetFile = PsiManager.getInstance(project)
+                    .findFile(rootDir.findFileByRelativePath(config.getString("targetFile"))!!) as KtFile
+                Triple(targetFile.name, targetFile.packageFqName, targetFile.containingDirectory!!)
             }
-            val descriptor = K2MoveDescriptor.Declarations(
-                project,
-                sourceDescriptor,
-                targetDescriptor,
-                config.searchForText(),
-                config.searchInComments(),
-                config.searchReferences()
-            )
-            K2MoveDeclarationsRefactoringProcessor(descriptor).run()
+            val moveOperationDescriptor = allowAnalysisOnEdt {
+                K2MoveOperationDescriptor.Declarations(
+                    project,
+                    declarationsToMove,
+                    baseDir,
+                    fileName,
+                    pkgName,
+                    config.searchForText(),
+                    config.searchInComments(),
+                    config.searchReferences(),
+                    config.moveExpectedActuals(),
+                    dirStructureMatchesPkg = true
+                )
+            }
+            K2MoveDeclarationsRefactoringProcessor(moveOperationDescriptor).run()
         }
     }
 }

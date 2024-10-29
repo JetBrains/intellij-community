@@ -36,10 +36,11 @@ class MavenConfigurationProducer : LazyRunConfigurationProducer<MavenRunConfigur
     val file = location.virtualFile ?: return false
     if (!MavenUtil.isPomFile(location.project, file)) return false
     if (location !is MavenGoalLocation) return false
-    if (context.module == null) return false
+    val module = context.module
+    if (module == null) return false
     val goals = location.goals
     val profiles = MavenProjectsManager.getInstance(location.getProject()).explicitProfiles
-    configuration.name = context.module.name + " " + goals.joinToString(separator = ",", prefix = "[", postfix = "]")
+    configuration.name = module.name + " " + goals.joinToString(separator = ",", prefix = "[", postfix = "]")
 
     configuration.runnerParameters = MavenRunnerParameters(true, file.parent.path, file.name, goals, profiles.enabledProfiles,
                                                            profiles.disabledProfiles)

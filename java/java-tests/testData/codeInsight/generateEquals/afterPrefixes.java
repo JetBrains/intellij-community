@@ -3,7 +3,6 @@ class Simple {
 
     @Override
     public boolean equals(Object p_o_r) {
-        if (this == p_o_r) return true;
         if (p_o_r == null || getClass() != p_o_r.getClass()) return false;
 
         final Simple l_that_v = (Simple) p_o_r;

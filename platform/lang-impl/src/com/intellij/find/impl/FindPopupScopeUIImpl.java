@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -41,9 +41,9 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
   static final ScopeType DIRECTORY = new ScopeType("Directory", FindBundle.messagePointer("find.popup.scope.directory"), EmptyIcon.ICON_0);
   static final ScopeType SCOPE = new ScopeType("Scope", FindBundle.messagePointer("find.popup.scope.scope"), EmptyIcon.ICON_0);
 
-  @NotNull private final FindUIHelper myHelper;
-  @NotNull private final Project myProject;
-  @NotNull private final FindPopupPanel myFindPopupPanel;
+  private final @NotNull FindUIHelper myHelper;
+  private final @NotNull Project myProject;
+  private final @NotNull FindPopupPanel myFindPopupPanel;
   private final Pair<ScopeType, JComponent> @NotNull [] myComponents;
 
   private ComboBox<String> myModuleComboBox;
@@ -159,9 +159,8 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     }
   }
 
-  @Nullable
   @Override
-  public ValidationInfo validate(@NotNull FindModel model, FindPopupScopeUI.ScopeType selectedScope) {
+  public @Nullable ValidationInfo validate(@NotNull FindModel model, FindPopupScopeUI.ScopeType selectedScope) {
     if (selectedScope == DIRECTORY) {
       return myDirectoryChooser.validate(model);
     }
@@ -180,9 +179,8 @@ final class FindPopupScopeUIImpl implements FindPopupScopeUI {
     return false;
   }
 
-  @NotNull
   @Override
-  public ScopeType initByModel(@NotNull FindModel findModel) {
+  public @NotNull ScopeType initByModel(@NotNull FindModel findModel) {
     myDirectoryChooser.initByModel(findModel);
 
     final String dirName = findModel.getDirectoryName();

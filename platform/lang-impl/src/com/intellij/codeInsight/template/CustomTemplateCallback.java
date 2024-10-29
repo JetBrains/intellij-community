@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template;
 
 import com.intellij.codeInsight.template.impl.TemplateImpl;
@@ -31,10 +31,10 @@ import java.util.Set;
 public class CustomTemplateCallback {
   private static final Logger LOGGER = Logger.getInstance(CustomTemplateCallback.class);
   private final TemplateManager myTemplateManager;
-  @NotNull private final Editor myEditor;
-  @NotNull private final PsiFile myFile;
+  private final @NotNull Editor myEditor;
+  private final @NotNull PsiFile myFile;
   private final int myOffset;
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private final boolean myInInjectedFragment;
   protected Set<TemplateContextType> myApplicableContextTypes;
 
@@ -55,13 +55,11 @@ public class CustomTemplateCallback {
     return myTemplateManager;
   }
 
-  @NotNull
-  public PsiFile getFile() {
+  public @NotNull PsiFile getFile() {
     return myFile;
   }
 
-  @NotNull
-  public PsiElement getContext() {
+  public @NotNull PsiElement getContext() {
     return getContext(myFile, getOffset(), myInInjectedFragment);
   }
 
@@ -74,13 +72,11 @@ public class CustomTemplateCallback {
     return selectionModel.hasSelection() ? selectionModel.getSelectionStart() : Math.max(editor.getCaretModel().getOffset() - 1, 0);
   }
 
-  @Nullable
-  public TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
+  public @Nullable TemplateImpl findApplicableTemplate(@NotNull @NlsSafe String key) {
     return ContainerUtil.getFirstItem(findApplicableTemplates(key));
   }
 
-  @NotNull
-  public List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
+  public @NotNull List<TemplateImpl> findApplicableTemplates(@NotNull @NlsSafe String key) {
     List<TemplateImpl> result = new ArrayList<>();
     for (TemplateImpl candidate : getMatchingTemplates(key)) {
       if (isAvailableTemplate(candidate)) {
@@ -105,8 +101,7 @@ public class CustomTemplateCallback {
     myTemplateManager.startTemplate(myEditor, template, false, predefinedValues, listener);
   }
 
-  @NotNull
-  private static List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
+  private static @NotNull List<TemplateImpl> getMatchingTemplates(@NotNull String templateKey) {
     TemplateSettings settings = TemplateSettings.getInstance();
     List<TemplateImpl> candidates = new ArrayList<>();
     for (TemplateImpl template : settings.getTemplates(templateKey)) {
@@ -117,18 +112,15 @@ public class CustomTemplateCallback {
     return candidates;
   }
 
-  @NotNull
-  public Editor getEditor() {
+  public @NotNull Editor getEditor() {
     return myEditor;
   }
 
-  @NotNull
-  public FileType getFileType() {
+  public @NotNull FileType getFileType() {
     return myFile.getFileType();
   }
 
-  @NotNull
-  public Project getProject() {
+  public @NotNull Project getProject() {
     return myProject;
   }
 
@@ -144,13 +136,11 @@ public class CustomTemplateCallback {
     myEditor.getSelectionModel().removeSelection();
   }
 
-  @NotNull
-  public static PsiElement getContext(@NotNull PsiFile file, int offset) {
+  public static @NotNull PsiElement getContext(@NotNull PsiFile file, int offset) {
     return getContext(file, offset, true);
   }
 
-  @NotNull
-  public static PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
+  public static @NotNull PsiElement getContext(@NotNull PsiFile file, int offset, boolean searchInInjectedFragment) {
     PsiElement element = null;
     if (searchInInjectedFragment && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());

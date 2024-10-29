@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JButton
 
+@ApiStatus.Internal
 class LearnButton : JButton {
   constructor(buttonAction: Action, contentEnabled: Boolean) : super() {
     action = buttonAction

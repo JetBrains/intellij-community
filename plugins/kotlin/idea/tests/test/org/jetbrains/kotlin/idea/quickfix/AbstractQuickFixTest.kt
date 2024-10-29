@@ -25,10 +25,12 @@ import com.intellij.platform.testFramework.core.FileComparisonFailedError
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiUtilBase
 import com.intellij.testFramework.*
+import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 import com.intellij.util.ui.UIUtil
 import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.idea.base.test.KotlinTestHelpers
 import org.jetbrains.kotlin.idea.caches.resolve.ResolveInDispatchThreadException
 import org.jetbrains.kotlin.idea.caches.resolve.forceCheckForResolveInDispatchThreadInTests
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -83,6 +85,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             LoadingOrder.FIRST,
             newDisposable
         )
+        (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
     }
 
     override fun tearDown() {
@@ -97,7 +100,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
     }
 
     protected open val disableTestDirective: String
-        get() = if (isFirPlugin) IgnoreTests.DIRECTIVES.IGNORE_K2 else IgnoreTests.DIRECTIVES.IGNORE_K1
+        get() = IgnoreTests.DIRECTIVES.of(pluginMode)
 
     override fun runInDispatchThread(): Boolean = false
 
@@ -111,6 +114,7 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
                     val inspections = parseInspectionsToEnable(beforeFileName, beforeFileText).toTypedArray()
 
                     try {
+                        KotlinTestHelpers.registerChooserInterceptor(myFixture.testRootDisposable)
                         myFixture.enableInspections(*inspections)
 
                         doKotlinQuickFixTest(beforeFileName)
@@ -146,7 +150,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
             assertTrue("no `called` event should happen: $calledEventIds", calledEventIds.isEmpty())
             return
         }
-        val calledId = calledEventIds.singleOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
+        //multiple, when chooser is provided
+        val calledId = calledEventIds.firstOrNull() as? String ?: error("single `called` event is expected: $calledEventIds")
 
         val fusDirectiveName = if (isFirPlugin) {
             "FUS_K2_QUICKFIX_NAME"

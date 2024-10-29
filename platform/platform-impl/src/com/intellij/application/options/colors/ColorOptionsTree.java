@@ -14,6 +14,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.StatusText;
 import org.jdesktop.swingx.treetable.DefaultMutableTreeTableNode;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,6 +24,7 @@ import java.util.*;
 
 import static com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath.getNameSeparator;
 
+@ApiStatus.Internal
 public final class ColorOptionsTree extends Tree {
   private final String myCategoryName;
   private final DefaultTreeModel myTreeModel;

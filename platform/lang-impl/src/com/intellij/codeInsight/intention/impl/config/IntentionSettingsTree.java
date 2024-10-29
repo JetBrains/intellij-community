@@ -22,6 +22,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,6 +37,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+@ApiStatus.Internal
 public abstract class IntentionSettingsTree {
   private JComponent myComponent;
   private CheckboxTree myTree;
@@ -94,9 +96,9 @@ public abstract class IntentionSettingsTree {
 
   protected abstract void selectionChanged(Object selected);
 
-  protected abstract List<IntentionActionMetaData> filterModel(String filter, boolean force);
+  protected abstract Collection<IntentionActionMetaData> filterModel(String filter, boolean force);
 
-  public void filter(List<IntentionActionMetaData> intentionsToShow) {
+  public void filter(@NotNull Collection<IntentionActionMetaData> intentionsToShow) {
     refreshCheckStatus((CheckedTreeNode)myTree.getModel().getRoot());
     reset(copyAndSort(intentionsToShow));
   }
@@ -109,7 +111,7 @@ public abstract class IntentionSettingsTree {
 
     IntentionManagerSettings intentionManagerSettings = IntentionManagerSettings.getInstance();
     myIntentionToCheckStatus.clear();
-    List<IntentionActionMetaData> intentions = intentionManagerSettings.getMetaData();
+    Collection<@NotNull IntentionActionMetaData> intentions = intentionManagerSettings.getMetaData();
     for (IntentionActionMetaData metaData : intentions) {
       myIntentionToCheckStatus.put(metaData, intentionManagerSettings.isEnabled(metaData));
     }
@@ -147,7 +149,7 @@ public abstract class IntentionSettingsTree {
     }
   }
 
-  private static @NotNull List<IntentionActionMetaData> copyAndSort(@NotNull List<IntentionActionMetaData> intentionsToShow) {
+  private static @NotNull List<IntentionActionMetaData> copyAndSort(@NotNull Collection<IntentionActionMetaData> intentionsToShow) {
     List<IntentionActionMetaData> copy = new ArrayList<>(intentionsToShow);
     copy.sort((data1, data2) -> {
       String[] category1 = data1.myCategory;

@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -18,7 +19,6 @@ import com.intellij.util.PlatformUtils
 import com.jetbrains.python.PythonLanguage
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings
 import com.jetbrains.python.console.PyConsoleOptions
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
@@ -36,7 +36,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
     }
   }
 
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute() {
     val propertyManager = serviceAsync<PropertiesComponent>()
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration")) {
       propertyManager.setValue("PyCharm.InitialConfiguration", "true")
@@ -50,7 +50,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration.V3")) {
       propertyManager.setValue("PyCharm.InitialConfiguration.V3", "true")
-      asyncScope.launch {
+      (ApplicationManager.getApplication() as ComponentManagerEx).getCoroutineScope().launch {
         while (!LoadingState.COMPONENTS_LOADED.isOccurred) {
           delay(10.milliseconds)
         }
@@ -84,7 +84,7 @@ private class PyCharmCorePluginConfigurator : ApplicationInitializedListener {
 
     if (!propertyManager.getBoolean("PyCharm.InitialConfiguration.V8")) {
       propertyManager.setValue("PyCharm.InitialConfiguration.V8", true)
-      PyConsoleOptions.getInstance(ProjectManager.getInstance().getDefaultProject()).setCommandQueueEnabled(PlatformUtils.isDataSpell())
+      PyConsoleOptions.getInstance(serviceAsync<ProjectManager>().getDefaultProject()).setCommandQueueEnabled(PlatformUtils.isDataSpell())
     }
 
     serviceAsync<Experiments>().setFeatureEnabled("terminal.shell.command.handling", false)

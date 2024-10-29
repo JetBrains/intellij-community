@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameterObject;
 
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
@@ -53,8 +53,7 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    * Refactoring handler should choose which method to refactor based on element selected, e.g. suggest to choose super method if selected method overrides another method.
    * {@link AbstractIntroduceParameterObjectDialog} should be implemented to start the refactoring
    */
-  @Nullable
-  public abstract RefactoringActionHandler getHandler(PsiElement element);
+  public abstract @Nullable RefactoringActionHandler getHandler(PsiElement element);
 
 
   /**
@@ -107,8 +106,7 @@ public abstract class IntroduceParameterObjectDelegate<M extends PsiNamedElement
    *
    * @return                   access level which is required for a parameter {@link ReadWriteAccessDetector.Access}. If write access is needed, both accessors are expected.
    */
-  @Nullable
-  public abstract <M1 extends PsiNamedElement, P1 extends ParameterInfo>
+  public abstract @Nullable <M1 extends PsiNamedElement, P1 extends ParameterInfo>
   ReadWriteAccessDetector.Access collectInternalUsages(Collection<? super FixableUsageInfo> usages,
                                                        M overridingMethod,
                                                        IntroduceParameterObjectClassDescriptor<M1, P1> classDescriptor,

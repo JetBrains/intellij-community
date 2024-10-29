@@ -73,7 +73,7 @@ public final class BackgroundUpdateHighlightersUtil {
         if (!myInfoIsError && UpdateHighlightersUtil.isCovered(info, severityRegistrar, oldInfo)) {
           return false;
         }
-        RangeHighlighterEx oldHighlighter = oldInfo.highlighter;
+        RangeHighlighterEx oldHighlighter = oldInfo.getHighlighter();
         if (oldHighlighter != null && oldInfo.equals(info)) {
           recycler.recycleHighlighter(info);
         }
@@ -188,10 +188,10 @@ public final class BackgroundUpdateHighlightersUtil {
   @RequiresBackgroundThread
   @RequiresReadLock
   public static void setHighlightersInRange(@NotNull TextRange range,
-                                     @NotNull List<? extends HighlightInfo> infos,
-                                     @NotNull MarkupModelEx markup,
-                                     int group,
-                                     @NotNull HighlightingSession session) {
+                                            @NotNull List<? extends HighlightInfo> infos,
+                                            @NotNull MarkupModelEx markup,
+                                            int group,
+                                            @NotNull HighlightingSession session) {
     Project project = session.getProject();
     Document document = session.getDocument();
 

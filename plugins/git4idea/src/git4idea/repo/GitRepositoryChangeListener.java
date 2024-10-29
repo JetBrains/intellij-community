@@ -18,11 +18,17 @@ package git4idea.repo;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@link #repositoryChanged(GitRepository)} is called on every {@link GitRepository} change.
- * @author Kirill Likhodedov
+ * The listener is called on every {@link GitRepository} change.
+ * <p>
+ * It is also called on tag references changes, that are not stored in {@link GitRepository} state
+ * and do not trigger {@link GitRepositoryStateChangeListener}, see {@link GitRepositoryUpdater}.
+ * <p>
+ * It is NOT called on staging area changes (.git/index file).
+ *
+ * @see GitRepositoryStateChangeListener
+ * @see GitRepositoryUpdater
  */
 public interface GitRepositoryChangeListener {
 
   void repositoryChanged(@NotNull GitRepository repository);
-
 }

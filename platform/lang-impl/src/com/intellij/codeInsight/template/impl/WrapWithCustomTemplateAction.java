@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.CustomLiveTemplate;
@@ -24,7 +24,7 @@ import java.util.Set;
 public final class WrapWithCustomTemplateAction extends AnAction {
   private final CustomLiveTemplate myTemplate;
   private final Editor myEditor;
-  @Nullable private final Runnable myAfterExecutionCallback;
+  private final @Nullable Runnable myAfterExecutionCallback;
   private final PsiFile myFile;
 
   public WrapWithCustomTemplateAction(CustomLiveTemplate template,

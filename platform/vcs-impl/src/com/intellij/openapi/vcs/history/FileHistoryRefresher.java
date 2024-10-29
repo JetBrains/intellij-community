@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.util.Alarm;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.concurrent.Future;
  *
  * @author Kirill Likhodedov
  */
+@ApiStatus.Internal
 public class FileHistoryRefresher implements FileHistoryRefresherI {
   @NotNull private static final ExecutorService ourExecutor =
     SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");

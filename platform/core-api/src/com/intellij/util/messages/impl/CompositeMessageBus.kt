@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.messages.impl
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
@@ -41,7 +41,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   /**
    * Must be a concurrent map, because remove operation may be concurrently performed (synchronized only per topic).
    */
-  override fun setLazyListeners(map: ConcurrentMap<String, MutableList<ListenerDescriptor>>) {
+  final override fun setLazyListeners(map: ConcurrentMap<String, MutableList<ListenerDescriptor>>) {
     val topicClassToListenerDescriptor = topicClassToListenerDescriptor
     if (topicClassToListenerDescriptor === EMPTY_MAP) {
       this.topicClassToListenerDescriptor = map
@@ -56,20 +56,20 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun hasChildren(): Boolean = childBuses.isNotEmpty()
+  final override fun hasChildren(): Boolean = childBuses.isNotEmpty()
 
   fun addChild(bus: MessageBusImpl) {
     childrenListChanged(this)
     childBuses.add(bus)
   }
 
-  fun onChildBusDisposed(childBus: MessageBusImpl) {
+  internal fun onChildBusDisposed(childBus: MessageBusImpl) {
     val removed = childBuses.remove(childBus)
     childrenListChanged(this)
     LOG.assertTrue(removed)
   }
 
-  override fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
+  final override fun <L> createPublisher(topic: Topic<L>, direction: BroadcastDirection): MessagePublisher<L> {
     return when (direction) {
       BroadcastDirection.TO_PARENT -> ToParentMessagePublisher(topic, this)
       BroadcastDirection.TO_DIRECT_CHILDREN -> {
@@ -83,12 +83,12 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun computeSubscribers(topic: Topic<*>): Array<Any?> {
+  final override fun computeSubscribers(topic: Topic<*>): Array<Any?> {
     // light project
     return if (owner.isDisposed) ArrayUtilRt.EMPTY_OBJECT_ARRAY else super.computeSubscribers(topic)
   }
 
-  override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
+  final override fun doComputeSubscribers(topic: Topic<*>, result: MutableList<in Any>, subscribeLazyListeners: Boolean) {
     if (subscribeLazyListeners) {
       subscribeLazyListeners(topic)
     }
@@ -122,7 +122,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
         try {
           listenerMap.computeIfAbsent(listenerDescriptor.pluginDescriptor) { mutableListOf() }.add(owner.createListener(listenerDescriptor))
         }
-        catch (ignore: ExtensionNotApplicableException) {
+        catch (_: ExtensionNotApplicableException) {
         }
         catch (e: ProcessCanceledException) {
           // ProgressManager have an asserting for this case
@@ -138,14 +138,14 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
+  final override fun notifyOnSubscriptionToTopicToChildren(topic: Topic<*>) {
     for (childBus in childBuses) {
       childBus.subscriberCache.remove(topic)
       childBus.notifyOnSubscriptionToTopicToChildren(topic)
     }
   }
 
-  override fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
+  final override fun notifyConnectionTerminated(topicAndHandlerPairs: Array<Any>): Boolean {
     val isChildClearingNeeded = super.notifyConnectionTerminated(topicAndHandlerPairs)
     if (!isChildClearingNeeded) {
       return false
@@ -156,12 +156,12 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
 
     // disposed handlers are not removed for TO_CHILDREN topics in the same way as for other directions
-    // because it is not wise to check each child bus - waitingBuses list can be used instead of checking each child bus message queue
+    // because it is not wise to check each child bus
     rootBus.queue.queue.removeIf { nullizeHandlersFromMessage(it, topicAndHandlerPairs) }
     return false
   }
 
-  override fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
+  final override fun clearSubscriberCache(topicAndHandlerPairs: Array<Any>) {
     super.clearSubscriberCache(topicAndHandlerPairs)
 
     for (bus in childBuses) {
@@ -169,7 +169,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun removeEmptyConnectionsRecursively() {
+  final override fun removeEmptyConnectionsRecursively() {
     super.removeEmptyConnectionsRecursively()
 
     for (bus in childBuses) {
@@ -180,10 +180,10 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   /**
    * Clear publisher cache, including child buses.
    */
-  override fun clearPublisherCache() {
+  final override fun clearPublisherCache() {
     // keep it simple - we can infer plugin id from topic.getListenerClass(), but granular clearing is not worth the code complication
     publisherCache.clear()
-    childBuses.forEach { childBus ->
+    for (childBus in childBuses) {
       if (childBus is CompositeMessageBus) {
         childBus.clearPublisherCache()
       }
@@ -193,7 +193,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun unsubscribeLazyListeners(module: IdeaPluginDescriptor, listenerDescriptors: List<ListenerDescriptor>) {
+  final override fun unsubscribeLazyListeners(module: IdeaPluginDescriptor, listenerDescriptors: List<ListenerDescriptor>) {
     topicClassToListenerDescriptor.values.removeIf(Predicate { descriptors ->
       if (descriptors.removeIf { it.pluginDescriptor === module }) {
         return@Predicate descriptors.isEmpty()
@@ -245,7 +245,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
+  final override fun disconnectPluginConnections(predicate: Predicate<Class<*>>) {
     super.disconnectPluginConnections(predicate)
 
     for (bus in childBuses) {
@@ -254,7 +254,7 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
   }
 
   @TestOnly
-  override fun clearAllSubscriberCache() {
+  final override fun clearAllSubscriberCache() {
     LOG.assertTrue(rootBus !== this)
 
     rootBus.subscriberCache.clear()
@@ -264,8 +264,10 @@ open class CompositeMessageBus : MessageBusImpl, MessageBusEx {
     }
   }
 
-  override fun disposeChildren() {
-    childBuses.forEach(Disposer::dispose)
+  final override fun disposeChildren() {
+    for (childBus in childBuses) {
+      Disposer.dispose(childBus)
+    }
   }
 }
 
@@ -276,13 +278,15 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
     var hasHandlers = false
     var handlers = bus.subscriberCache.computeIfAbsent(topic, bus::computeSubscribers)
     if (handlers.isNotEmpty()) {
-      error = executeOrAddToQueue(topic = topic,
-                                  method = method,
-                                  args = args,
-                                  handlers = handlers,
-                                  jobQueue = queue,
-                                  prevError = null,
-                                  bus = bus)
+      error = executeOrAddToQueue(
+        topic = topic,
+        method = method,
+        args = args,
+        handlers = handlers,
+        jobQueue = queue,
+        prevError = null,
+        bus = bus,
+      )
       hasHandlers = true
     }
 
@@ -294,7 +298,11 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
 
       handlers = childBus.subscriberCache.computeIfAbsent(topic) { topic1 ->
         val result = mutableListOf<Any>()
-        childBus.doComputeSubscribers(topic1, result, !childBus.owner.isParentLazyListenersIgnored)
+        childBus.doComputeSubscribers(
+          topic = topic1,
+          result = result,
+          subscribeLazyListeners = !childBus.owner.isParentLazyListenersIgnored,
+        )
         if (result.isEmpty()) {
           ArrayUtilRt.EMPTY_OBJECT_ARRAY
         }
@@ -307,7 +315,15 @@ private class ToDirectChildrenMessagePublisher<L>(topic: Topic<L>, bus: Composit
       }
 
       hasHandlers = true
-      error = executeOrAddToQueue(topic, method, args, handlers, queue, error, childBus)
+      error = executeOrAddToQueue(
+        topic = topic,
+        method = method,
+        args = args,
+        handlers = handlers,
+        jobQueue = queue,
+        prevError = error,
+        bus = childBus,
+      )
     }
     error?.let(::throwError)
     return hasHandlers

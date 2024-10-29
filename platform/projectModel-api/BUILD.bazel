@@ -1,0 +1,34 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+kt_jvm_library(
+  name = "projectModel",
+  module_name = "intellij.platform.projectModel",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/core-api:core",
+    "@community//jps/model-api:jps-model",
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/util/jdom:util-jdom",
+    "@community//platform/util/concurrency",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@community//platform/workspace/jps:workspace-jps",
+    "@community//platform/backend/workspace:backend-workspace",
+    "@community//platform/util/xmlDom:util-xmlDom",
+  ],
+  exports = [
+    "@community//platform/core-api:core",
+    "@community//jps/model-api:jps-model",
+  ],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

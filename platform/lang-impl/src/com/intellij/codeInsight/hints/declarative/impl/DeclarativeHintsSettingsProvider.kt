@@ -7,7 +7,9 @@ import com.intellij.codeInsight.hints.settings.InlayProviderSettingsModel
 import com.intellij.codeInsight.hints.settings.InlaySettingsProvider
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class DeclarativeHintsSettingsProvider : InlaySettingsProvider {
   override fun createModels(project: Project, language: Language): List<InlayProviderSettingsModel> {
     val providerDescriptions = InlayHintsProviderExtensionBean.EP.extensionList

@@ -4,8 +4,10 @@ package com.intellij.externalDependencies.impl;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableProvider;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public final class ExternalDependenciesConfigurableProvider extends ConfigurableProvider {
   private final Project myProject;
 

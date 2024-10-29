@@ -15,11 +15,16 @@ class TestCodeConstructs {
 class 'pkg/TestCodeConstructs' {
    method 'expressions ()V' {
       7      6
+      8      6
+      9      6
       b      7
    }
 
    method 'fieldIncrement ()Ljava/lang/Integer;' {
+      4      10
       6      10
+      7      10
+      8      10
       b      10
       12      10
    }

@@ -1,10 +1,12 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -15,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.NonCodeUsageInfoFactory;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
@@ -27,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.ObjectUtils.tryCast;
-
 
 public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineToAnonymousClassProcessor.class);
@@ -48,7 +50,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     myClass = psiClass;
     myCallToInline = callToInline;
     myInlineThisOnly = inlineThisOnly;
-    if (myInlineThisOnly) assert myCallToInline != null;
+    assert !myInlineThisOnly || myCallToInline != null;
     mySearchInComments = searchInComments;
     mySearchInNonJavaFiles = searchInNonJavaFiles;
   }
@@ -152,7 +154,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         super.checkAddMember(member);
       }
     };
-    InlineMethodProcessor.addInaccessibleMemberConflicts(myClass, usages, collector, result);
+    addInaccessibleMemberConflicts(usages, collector, result);
     myClass.accept(new JavaRecursiveElementVisitor(){
       @Override
       public void visitParameter(@NotNull PsiParameter parameter) {
@@ -198,6 +200,29 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       }
     });
     return result;
+  }
+
+  private void addInaccessibleMemberConflicts(UsageInfo[] usages,
+                                              ReferencedElementsCollector collector,
+                                              MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
+    PsiElement element = myClass.getLBrace();
+    while (element != null) {
+      element.accept(collector);
+      element = element.getNextSibling();
+    }
+    final Map<PsiMember, Set<PsiMember>> containersToReferenced = 
+      InlineMethodProcessor.getInaccessible(collector.myReferencedMembers, usages, myClass);
+    String classDescription = RefactoringUIUtil.getDescription(myClass, true);
+
+    containersToReferenced.forEach((container, inaccessibles) -> {
+      for (PsiMember inaccessible : inaccessibles) {
+        final String referencedDescription = RefactoringUIUtil.getDescription(inaccessible, true);
+        final String containerDescription = RefactoringUIUtil.getDescription(container, true);
+        String message = RefactoringBundle.message("0.which.is.used.in.1.not.accessible.from.call.site.s.in.2",
+                                                   referencedDescription, classDescription, containerDescription);
+        conflicts.putValue(usages.length == 1 ? inaccessible : container, StringUtil.capitalize(message));
+      }
+    });
   }
 
   @Override
@@ -310,12 +335,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     }
     else {
       PsiClassType[] classTypes = aClass.getExtendsListTypes();
-      if (classTypes.length > 0) {
-        superType = classTypes [0];
-      }
-      else {
-        superType = factory.createType(superClass);
-      }
+      superType = classTypes.length > 0 ? classTypes[0] : factory.createType(superClass);
     }
     return superType;
   }
@@ -325,5 +345,4 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
   protected String getCommandName() {
     return JavaRefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }
-
 }

@@ -48,6 +48,7 @@ import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.PlatformInternalWorkspaceFileIndexContributor
 import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileIndexEx
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import java.lang.Runnable
 import java.util.concurrent.atomic.AtomicReference
@@ -65,6 +66,7 @@ private val WATCHED_ROOTS_PROVIDER_EP_NAME = ExtensionPointName<WatchedRootsProv
 /**
  * ProjectRootManager extended with the ability to watch events.
  */
+@ApiStatus.Internal
 open class ProjectRootManagerComponent(
   project: Project,
   coroutineScope: CoroutineScope

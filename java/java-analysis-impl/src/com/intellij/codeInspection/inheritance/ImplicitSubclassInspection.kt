@@ -35,7 +35,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
   private fun checkClass(aClass: UClass, manager: InspectionManager, isOnTheFly: Boolean): Array<ProblemDescriptor> {
     val psiClass = aClass.javaPsi
-    val classIsFinal = aClass.isFinal || psiClass.hasModifierProperty(PsiModifier.PRIVATE)
+    val classIsFinal = aClass.isFinal
 
     val problems = SmartList<ProblemDescriptor>()
 
@@ -114,7 +114,7 @@ class ImplicitSubclassInspection : LocalInspectionTool() {
 
   private val methodHighlightableModifiersSet = setOf(PsiModifier.FINAL, PsiModifier.STATIC)
 
-  private val classHighlightableModifiersSet = setOf(PsiModifier.FINAL, PsiModifier.PRIVATE)
+  private val classHighlightableModifiersSet = setOf(PsiModifier.FINAL)
 
   private class MakeExtendableFix(uDeclaration: UDeclaration,
                                   hintTargetName: String,

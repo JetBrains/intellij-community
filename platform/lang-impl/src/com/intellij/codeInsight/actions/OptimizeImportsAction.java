@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -153,7 +153,7 @@ public final class OptimizeImportsAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     boolean available = isActionAvailable(event);
-    if (ActionPlaces.isPopupPlace(event.getPlace())) {
+    if (event.isFromContextMenu()) {
       presentation.setEnabledAndVisible(available);
     }
     else {
@@ -257,9 +257,8 @@ public final class OptimizeImportsAction extends AnAction {
       return myOnlyVcsCheckBox.isSelected();
     }
 
-    @Nullable
     @Override
-    protected JComponent createCenterPanel() {
+    protected @Nullable JComponent createCenterPanel() {
       myOnlyVcsCheckBox = new JCheckBox(CodeInsightBundle.message("process.scope.changed.files"));
       myOnlyVcsCheckBox.setEnabled(myContextHasChanges);
       boolean lastRunVcsChangedTextEnabled = myLastRunOptions.getLastTextRangeType() == TextRangeType.VCS_CHANGED_TEXT;

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameter;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
+import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -210,9 +211,8 @@ public final class PsiSubstitutorImpl implements PsiSubstitutor {
         return result;
       }
       PsiSubstitutor resultSubstitutor = processClass(aClass, resolveResult.getSubstitutor());
-      PsiClassType result = JavaPsiFacade.getElementFactory(aClass.getProject())
-        .createType(aClass, resultSubstitutor, classType.getLanguageLevel());
-      return result.annotate(classType.getAnnotationProvider());
+      return new PsiImmediateClassType(aClass, resultSubstitutor, classType.getLanguageLevel(),
+                                       classType.getAnnotationProvider(), classType.getPsiContext());
     }
 
     private @NotNull PsiSubstitutor processClass(@NotNull PsiClass resolve, @NotNull PsiSubstitutor originalSubstitutor) {

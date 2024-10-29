@@ -22,12 +22,14 @@ data class ConfigureKotlinNotificationState(
     val notConfiguredModules: Collection<String>
 )
 
+private const val CONFIGURE_NOTIFICATION_GROUP_ID = "Configure Kotlin in Project"
+
 class ConfigureKotlinNotification(
     project: Project,
     excludeModules: List<Module>,
     val notificationState: ConfigureKotlinNotificationState
 ) : Notification(
-    KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
+    CONFIGURE_NOTIFICATION_GROUP_ID,
     @Suppress("DialogTitleCapitalization") KotlinProjectConfigurationBundle.message("configure.kotlin"),
     notificationState.notificationString,
     NotificationType.WARNING

@@ -7,7 +7,6 @@ import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.analysis.api.annotations.hasAnnotation
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.idea.quickfix.AutoImportVariant
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -48,8 +47,7 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         var actualVariants: List<AutoImportVariant>? = null
         val executeListener = object : KotlinAddImportActionInfo.ExecuteListener {
             override fun onExecute(variants: List<AutoImportVariant>) {
-                assertNull(actualVariants)
-                actualVariants = variants
+                actualVariants = actualVariants.orEmpty() + variants
             }
         }
         KotlinAddImportActionInfo.setExecuteListener(file, testRootDisposable, executeListener)
@@ -57,8 +55,10 @@ abstract class AbstractAddImportActionTestBase : KotlinLightCodeInsightFixtureTe
         (StatisticsManager.getInstance() as StatisticsManagerImpl).enableStatistics(myFixture.testRootDisposable)
         increaseUseCountOf(InTextDirectivesUtils.findListWithPrefixes(fixture.file.text, INCREASE_USE_COUNT_DIRECTIVE))
 
-        val importFix = myFixture.availableIntentions.singleOrNull { it.familyName == "Import" } ?: error("No import fix available")
-        importFix.invoke(project, editor, file)
+        myFixture.availableIntentions
+            .filter { it.familyName == "Import" }
+            .ifEmpty { error("No import fix available") }
+            .forEach { importFix -> importFix.invoke(project, editor, file) }
 
         assertNotNull(actualVariants)
 
@@ -110,9 +110,9 @@ private class MockAutoImportCallableWeigher : KotlinAutoImportCallableWeigher {
         symbolToBeImported: KaCallableSymbol,
         unresolvedReferenceExpression: KtNameReferenceExpression
     ): Int {
-        val symbolAnnotated = symbolToBeImported.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+        val symbolAnnotated = TEST_ANNOTATION_CLASS_ID in symbolToBeImported.annotations
         val receiverAnnotated =
-            unresolvedReferenceExpression.parentOfType<KtFunction>()?.symbol?.hasAnnotation(TEST_ANNOTATION_CLASS_ID)
+            unresolvedReferenceExpression.parentOfType<KtFunction>()?.symbol?.annotations?.contains(TEST_ANNOTATION_CLASS_ID)
         return if (symbolAnnotated && receiverAnnotated == true) 1 else 0
     }
 

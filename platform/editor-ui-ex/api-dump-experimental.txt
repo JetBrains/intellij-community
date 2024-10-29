@@ -1,0 +1,24 @@
+*f:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint
+- <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition):V
+- <init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition,java.lang.String):V
+- b:<init>(java.lang.String,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition,java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getActionId():java.lang.String
+- f:getBackend():java.lang.String
+- f:getCondition():com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+*e:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+- java.lang.Enum
+- sf:CaretInside:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+- sf:CaretOnEnd:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+- sf:CaretOnStart:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+- b:<init>(java.lang.String,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- s:getEntries():kotlin.enums.EnumEntries
+- isAvailable(I,com.intellij.openapi.editor.RangeMarker):Z
+- s:valueOf(java.lang.String):com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition
+- s:values():com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint$AvailabilityCondition[]
+f:com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHintKt
+- *sf:addActionAvailabilityHint(com.intellij.openapi.editor.Inlay,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
+- *sf:addActionAvailabilityHint(com.intellij.openapi.editor.RangeMarker,com.intellij.openapi.editor.ex.util.EditorActionAvailabilityHint[]):V
+- *sf:clearAvailabilityHints(com.intellij.openapi.editor.Inlay):V
+- *sf:clearAvailabilityHints(com.intellij.openapi.editor.markup.RangeHighlighter):V
+f:com.intellij.openapi.editor.impl.DocumentMarkupModel
+- *s:getExistingMarkupModels(com.intellij.openapi.editor.Document):java.util.List

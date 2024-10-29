@@ -41,20 +41,15 @@ import java.util.*;
 /**
  * @author Eugene Zhuravlev
  */
-abstract class ProjectLayoutPanel<T> extends JPanel {
+abstract class ProjectLayoutPanel<T extends Dependency> extends JPanel {
 
   private final ElementsChooser<T> myEntriesChooser;
-  private final JList myDependenciesList;
+  private final JList<Dependency> myDependenciesList;
   private final ModuleInsight myInsight;
 
-  private final Comparator<T> COMPARATOR = (o1, o2) -> {
-    final int w1 = getWeight(o1);
-    final int w2 = getWeight(o2);
-    if (w1 != w2) {
-      return w1 - w2;
-    }
-    return getElementText(o1).compareToIgnoreCase(getElementText(o2));
-  };
+  private final Comparator<Dependency> COMPARATOR = Comparator
+    .comparingInt(Dependency::getWeight)
+    .thenComparing(dependency -> getElementText(dependency), String.CASE_INSENSITIVE_ORDER);
 
   ProjectLayoutPanel(final ModuleInsight insight) {
     super(new BorderLayout());
@@ -102,11 +97,13 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
           return;
         }
         final List<T> entries = getSelectedEntries();
-        final Collection deps = getDependencies(entries);
+        final Collection<Dependency> deps = getDependencies(entries);
 
-        final DefaultListModel depsModel = (DefaultListModel)myDependenciesList.getModel();
+        final DefaultListModel<Dependency> depsModel = (DefaultListModel<Dependency>)myDependenciesList.getModel();
         depsModel.clear();
-        for (Object dep : alphaSortList(new ArrayList(deps))) {
+        ArrayList<Dependency> depsList = new ArrayList<>(deps);
+        depsList.sort(COMPARATOR);
+        for (Dependency dep : depsList) {
           depsModel.addElement(dep);
         }
       }
@@ -135,15 +132,15 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     return myInsight;
   }
 
-  private JList createList() {
-    final JList list = new JBList(new DefaultListModel());
+  private JList<Dependency> createList() {
+    final JList<Dependency> list = new JBList<>(new DefaultListModel<>());
     list.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     list.setCellRenderer(new MyListCellRenderer());
     return list;
   }
 
-  public final Collection getDependencies(final List<? extends T> entries) {
-    final Set deps = new HashSet();
+  public final Collection<Dependency> getDependencies(final List<? extends T> entries) {
+    final Set<Dependency> deps = new HashSet<>();
     for (T et : entries) {
       deps.addAll(getDependencies(et));
     }
@@ -162,17 +159,14 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   public void rebuild() {
     myEntriesChooser.clear();
-    for (final T entry : alphaSortList(getEntries())) {
+    List<T> entries = getEntries();
+    entries.sort(COMPARATOR);
+    for (final T entry : entries) {
       myEntriesChooser.addElement(entry, true, new EntryProperties(entry));
     }
     if (myEntriesChooser.getElementCount() > 0) {
       myEntriesChooser.selectElements(Collections.singleton(myEntriesChooser.getElementAt(0)));
     }
-  }
-
-  private List<T> alphaSortList(final List<T> entries) {
-    entries.sort(COMPARATOR);
-    return entries;
   }
 
   @Nullable
@@ -187,19 +181,6 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       return file.isDirectory()? PlatformIcons.FOLDER_ICON : PlatformIcons.JAR_ICON;
     }
     return null;
-  }
-
-  protected int getWeight(Object element) {
-    if (element instanceof File) {
-      return 10;
-    }
-    if (element instanceof ModuleDescriptor) {
-      return 20;
-    }
-    if (element instanceof LibraryDescriptor) {
-      return ((LibraryDescriptor)element).getJars().size() > 1? 30 : 40;
-    }
-    return Integer.MAX_VALUE;
   }
 
   protected static @NlsSafe String getElementText(Object element) {
@@ -226,7 +207,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       }
 
       final Collection<? extends DetectedProjectRoot> sourceRoots = moduleDescriptor.getSourceRoots();
-      if (sourceRoots.size() > 0) {
+      if (!sourceRoots.isEmpty()) {
         StringJoiner joiner = new StringJoiner(",", " [", "]");
         for (DetectedProjectRoot root : sourceRoots) {
           joiner.add(root.getDirectory().getName());
@@ -259,7 +240,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract List<T> getEntries();
 
-  protected abstract Collection getDependencies(T entry);
+  protected abstract Collection<? extends Dependency> getDependencies(T entry);
 
   @Nullable
   protected abstract T merge(List<? extends T> entries);

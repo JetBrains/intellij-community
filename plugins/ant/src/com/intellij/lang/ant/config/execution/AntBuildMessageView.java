@@ -55,7 +55,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class AntBuildMessageView extends JPanel implements DataProvider, OccurenceNavigator, Disposable {
+public final class AntBuildMessageView extends JPanel
+  implements UiDataProvider, OccurenceNavigator, Disposable {
+
   private static final Logger LOG = Logger.getInstance(AntBuildMessageView.class);
 
   public enum MessageType {
@@ -459,18 +461,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
-    Object data = myCurrentView.getData(dataId);
-    if (data != null) {
-      return data;
-    }
-    if (PlatformCoreDataKeys.HELP_ID.is(dataId)) {
-      return HelpID.ANT;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
-      return myTreeExpander;
-    }
-    return null;
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    sink.set(PlatformCoreDataKeys.HELP_ID, HelpID.ANT);
+    sink.set(PlatformDataKeys.TREE_EXPANDER, myTreeExpander);
+    myCurrentView.uiDataSnapshot(sink);
   }
 
   private static AntMessage createErrorMessage(@AntMessage.Priority int priority, @NlsSafe String text) {

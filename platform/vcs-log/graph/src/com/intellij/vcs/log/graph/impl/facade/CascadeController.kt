@@ -4,7 +4,9 @@ package com.intellij.vcs.log.graph.impl.facade
 import com.intellij.vcs.log.graph.api.elements.GraphElement
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.api.printer.GraphPrintElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class CascadeController protected constructor(protected val delegateController: LinearGraphController,
                                                        val permanentGraphInfo: PermanentGraphInfo<*>) : LinearGraphController {
   override fun performLinearGraphAction(action: LinearGraphController.LinearGraphAction): LinearGraphController.LinearGraphAnswer {

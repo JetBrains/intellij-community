@@ -5,8 +5,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.xdebugger.XDebuggerBundle
 import org.jetbrains.annotations.Nls
 
-enum class AttachDialogHostType(@Nls @NlsContexts.Button val displayText: String) {
-  LOCAL(XDebuggerBundle.message("xdebugger.local.attach.button.name")),
-  REMOTE(XDebuggerBundle.message("xdebugger.remote.attach.button.name")),
-  DOCKER(XDebuggerBundle.message("xdebugger.docker.attach.button.name"))
+abstract class AttachDialogHostType(@Nls @NlsContexts.Button val displayText: String) {
+  object LOCAL: AttachDialogHostType(XDebuggerBundle.message("xdebugger.local.attach.button.name"))
+  object REMOTE: AttachDialogHostType(XDebuggerBundle.message("xdebugger.remote.attach.button.name"))
+  object DOCKER: AttachDialogHostType(XDebuggerBundle.message("xdebugger.docker.attach.button.name"))
 }

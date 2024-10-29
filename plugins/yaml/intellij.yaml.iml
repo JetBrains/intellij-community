@@ -17,6 +17,7 @@
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.json" />
     <orderEntry type="module" module-name="intellij.json.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.editor.ex" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />

@@ -7,6 +7,7 @@
   <technology name="allure2" class="io.qameta.allure.Step"/>
   <technology name="apache-bval" class="org.apache.bval.jsr.ApacheValidationProvider"/>
   <technology name="apache-camel" class="org.apache.camel.Processor"/>
+  <technology name="apache-commons-lang3" class="org.apache.commons.lang3.ArrayUtils"/>
   <technology name="apache-deltaspike" class="org.apache.deltaspike.core.api.config.DeltaSpikeConfig"/>
   <technology name="apache-deltaspike-data" class="org.apache.deltaspike.data.api.EntityRepository"/>
   <technology name="apache-dubbo" class="org.apache.dubbo.config.ServiceConfig"/>
@@ -30,18 +31,23 @@
   <technology name="breeze" class="breeze.linalg.DenseVector"/>
   <technology name="camunda-bpm" class="org.camunda.bpm.model.bpmn.Bpmn"/>
   <technology name="cats" class="cats.Functor"/>
+  <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
   <technology name="citrus" class="com.consol.citrus.Citrus"/>
   <technology name="coherence" class="com.oracle.coherence.persistence.PersistentStore"/>
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
   <technology name="cucumber" class="io.cucumber.java.Before"/>
+  <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
+  <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
+  <technology name="fastjson2" class="com.alibaba.fastjson2.JSONObject"/>
+  <technology name="fastutil" class="it.unimi.dsi.fastutil.Function"/>
   <technology name="finagle" class="com.twitter.finagle.Client"/>
   <technology name="flowable-bpm" class="org.flowable.engine.repository.Model"/>
   <technology name="fluentlenium" class="org.fluentlenium.core.annotation.Page"/>
@@ -59,6 +65,7 @@
   <technology name="groovy" class="groovy.lang.GroovyObject"/>
   <technology name="grpc" class="io.grpc.ManagedChannel"/>
   <technology name="gson" class="com.google.gson.Gson"/>
+  <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
@@ -89,6 +96,7 @@
   <technology name="jakarta-ws" class="jakarta.jws.WebService"/>
   <technology name="javafx" class="javafx.scene.Scene"/>
   <technology name="javalin" class="io.javalin.Javalin"/>
+  <technology name="javax-annotation" class="javax.annotation.Nullable"/>
   <technology name="javax-batch" class="javax.batch.api.BatchProperty"/>
   <technology name="javax-cdi" class="javax.enterprise.context.ApplicationScoped"/>
   <technology name="javax-ejb" class="javax.ejb.EJB"/>
@@ -111,6 +119,7 @@
   <technology name="jooby" class="org.jooby.Jooby"/>
   <technology name="jooq" class="org.jooq.DSLContext"/>
   <technology name="json-path" class="com.jayway.jsonpath.JsonPath"/>
+  <technology name="junit3" class="junit.framework.TestCase"/>
   <technology name="junit4" class="org.junit.Test"/>
   <technology name="junit5" class="org.junit.jupiter.api.Test"/>
   <technology name="kafka" class="org.apache.kafka.clients.consumer.Consumer"/>
@@ -186,6 +195,7 @@
   <technology name="spek" class="org.jetbrains.spek.api.Spek"/>
   <technology name="sphinx" class="org.axonframework.commandhandling.CommandHandler"/>
   <technology name="spock" class="spock.mock.MockingApi"/>
+  <technology name="spotbugs" class="edu.umd.cs.findbugs.annotations.Nullable"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.AbstractExchange"/>
   <technology name="spring-amqp" class="org.springframework.amqp.core.Message"/>
   <technology name="spring-batch" class="org.springframework.batch.core.Job"/>
@@ -200,7 +210,7 @@
   <technology name="spring-core" class="org.springframework.context.ApplicationContext"/>
   <technology name="spring-data-commons" class="org.springframework.data.repository.Repository"/>
   <technology name="spring-data-hadoop" class="org.springframework.data.hadoop.HadoopException"/>
-  <technology name="spring-data-jdbc-ext" class="org.springframework.data.jdbc.support.DatabaseType"/>
+  <technology name="spring-data-jdbc-ext" class="org.springframework.data.jdbc.support.JdbcUtil"/>
   <technology name="spring-data-jpa" class="org.springframework.data.jpa.repository.Query"/>
   <technology name="spring-data-mongo" class="org.springframework.data.mongodb.MongoDbFactory"/>
   <technology name="spring-data-neo4j" class="org.springframework.data.neo4j.config.Neo4jConfiguration"/>

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.longLine;
 
 import com.intellij.application.options.CodeStyle;
@@ -78,8 +78,7 @@ public final class LongLineInspection extends LocalInspectionTool {
     };
   }
 
-  @Nullable
-  private static PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
+  private static @Nullable PsiElement findElementInRange(@NotNull PsiFile file, @NotNull TextRange range) {
     PsiElement left = file.findElementAt(range.getStartOffset());
     if (left == null) return null;
     PsiElement right = file.findElementAt(range.getEndOffset() - 1);

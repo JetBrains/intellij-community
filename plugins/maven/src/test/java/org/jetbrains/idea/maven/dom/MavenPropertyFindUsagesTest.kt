@@ -2,14 +2,13 @@
 package org.jetbrains.idea.maven.dom
 
 import com.intellij.maven.testFramework.MavenDomTestCase
-import com.intellij.openapi.application.EDT
-import kotlinx.coroutines.Dispatchers
+import com.intellij.openapi.application.readAction
 import kotlinx.coroutines.runBlocking
 import org.junit.Test
 
 class MavenPropertyFindUsagesTest : MavenDomTestCase() {
 
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp() = runBlocking {
     super.setUp()
 
     importProjectAsync("""
@@ -20,8 +19,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindModelPropertyFromReference() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindModelPropertyFromReference() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -35,8 +34,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindModelPropertyFromReferenceWithDifferentQualifiers() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1</version>
@@ -50,8 +49,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromTag() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindUsagesFromTag() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <<caret>version>1</version>
@@ -65,8 +64,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromTagValue() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindUsagesFromTagValue() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>1<caret>1</version>
@@ -77,8 +76,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesFromProperty() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindUsagesFromProperty() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -92,8 +91,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForEnvProperty() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindUsagesForEnvProperty() = runBlocking {
+    updateProjectPom("""
   <groupId>test</groupId>
   <artifactId>module1</artifactId>
   <version>11</version>
@@ -105,8 +104,8 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForSystemProperty() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testFindUsagesForSystemProperty() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version>11</version>
@@ -118,10 +117,10 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
   }
 
   @Test
-  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking(Dispatchers.EDT) {
+  fun testFindUsagesForSystemPropertyInFilteredResources() = runBlocking {
     createProjectSubDir("res")
 
-    importProjectAsync("""
+    updateProjectPom("""
                     <groupId>test</groupId>
                     <artifactId>module1</artifactId>
                     <version>1</version>
@@ -135,17 +134,19 @@ class MavenPropertyFindUsagesTest : MavenDomTestCase() {
                       </resources>
                     </build>
                     """.trimIndent())
+    updateAllProjects()
 
     val f = createProjectSubFile("res/foo.properties",
                                  "foo=abc\${user<caret>.home}abc")
 
     val result = search(f)
-    assertContain(result, findTag("project.name"), MavenDomUtil.findPropertyValue(project, f, "foo"))
+    val expected = readAction { MavenDomUtil.findPropertyValue(project, f, "foo") }
+    assertContain(result, findTag("project.name"), expected)
   }
 
   @Test
-  fun testHighlightingFromTag() = runBlocking(Dispatchers.EDT) {
-    createProjectPom("""
+  fun testHighlightingFromTag() = runBlocking {
+    updateProjectPom("""
                        <groupId>test</groupId>
                        <artifactId>module1</artifactId>
                        <version><caret>1</version>

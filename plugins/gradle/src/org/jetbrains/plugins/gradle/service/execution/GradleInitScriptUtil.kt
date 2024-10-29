@@ -132,16 +132,12 @@ fun loadCommonTasksUtilsScript():String {
   return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleTasksUtil.gradle")
 }
 
-fun loadJvmDebugInitScript(
-  debuggerId: String,
-  parameters: String,
-  jvmArgs: List<String>
-): String {
-  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle", mapOf(
-      "DEBUGGER_ID" to debuggerId.toGroovyStringLiteral(),
-      "PROCESS_PARAMETERS" to parameters.toGroovyStringLiteral(),
-      "PROCESS_OPTIONS" to jvmArgs.toGroovyListLiteral { toGroovyStringLiteral() }
-    ))
+fun loadCommonDebuggerUtilsScript():String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/GradleDebuggerUtil.gradle")
+}
+
+fun loadJvmDebugInitScript(): String {
+  return loadInitScript("/org/jetbrains/plugins/gradle/tooling/internal/init/JvmDebugInit.gradle")
 }
 
 private val JUNIT_3_COMPARISON_FAILURE = listOf("junit.framework.ComparisonFailure")
@@ -180,7 +176,6 @@ fun loadApplicationInitScript(
   javaExePath: String,
   sourceSetName: String,
   params: String?,
-  javaModuleName: String?,
   intelliJRtPath: String?,
   workingDirectory: String?,
   useManifestJar: Boolean,
@@ -197,7 +192,6 @@ fun loadApplicationInitScript(
         "MAIN_CLASS_TO_RUN" to mainClassToRun.toGroovyStringLiteral(),
         "JAVA_EXE_PATH" to "mapPath(${javaExePath.toGroovyStringLiteral()})",
         "SOURCE_SET_NAME" to sourceSetName.toGroovyStringLiteral(),
-        "JAVA_MODULE_NAME" to if (javaModuleName.isNullOrEmpty()) "null" else javaModuleName.toGroovyStringLiteral(),
         "INTELLIJ_RT_PATH" to if (intelliJRtPath.isNullOrEmpty()) "null" else "mapPath(${intelliJRtPath.toGroovyStringLiteral()})",
         "WORKING_DIRECTORY" to if (workingDirectory.isNullOrEmpty()) "null" else "mapPath(${workingDirectory.toGroovyStringLiteral()})",
         // params should be kept as is; they will be embedded into the init-script directly

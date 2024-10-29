@@ -15,7 +15,9 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.Restarter
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FixWSLFirewallAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val result = MessageDialogBuilder

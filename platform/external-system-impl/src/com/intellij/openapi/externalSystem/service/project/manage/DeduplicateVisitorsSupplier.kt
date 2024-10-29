@@ -8,8 +8,10 @@ import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData
 import com.intellij.util.containers.Interner
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Function
 
+@ApiStatus.Internal
 class DeduplicateVisitorsSupplier {
   private val myModuleData: Interner<ModuleData> = Interner.createInterner()
   private val myLibraryData: Interner<LibraryData> = Interner.createInterner()

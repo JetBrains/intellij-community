@@ -271,10 +271,13 @@ public class FragmentedSettingsBuilder<Settings extends FragmentedSettings> impl
                                                                           callback, -1);
     popup.setHandleAutoSelectionBeforeShow(true);
     popup.addListSelectionListener(e -> {
-      JBPopup jbPopup = PopupUtil.getPopupContainerFor((Component)e.getSource());
-      Object selectedItem = PlatformCoreDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
-      if (selectedItem instanceof AnActionHolder) {
-        jbPopup.setAdText(getHint(((AnActionHolder)selectedItem).getAction()), SwingConstants.LEFT);
+      Component component = (Component)e.getSource();
+      if (component instanceof JList<?> list) {
+        Object selectedItem = list.getSelectedValue();
+        if (selectedItem instanceof AnActionHolder) {
+          JBPopup jbPopup = PopupUtil.getPopupContainerFor(component);
+          jbPopup.setAdText(getHint(((AnActionHolder)selectedItem).getAction()), SwingConstants.LEFT);
+        }
       }
     });
     return popup;

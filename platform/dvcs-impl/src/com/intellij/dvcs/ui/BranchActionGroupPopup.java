@@ -4,6 +4,7 @@ package com.intellij.dvcs.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -499,14 +500,13 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
     boolean shouldBeShown();
   }
 
-  private static final class HideableActionGroup extends ActionGroupWrapper implements MoreHideableActionGroup,
-                                                                                       DumbAware,
-                                                                                       AlwaysVisibleActionGroup {
+  private static final class HideableActionGroup extends ActionGroupWrapper implements MoreHideableActionGroup, DumbAware {
     @NotNull private final MoreAction myMoreAction;
 
     private HideableActionGroup(@NotNull ActionGroup actionGroup, @NotNull MoreAction moreAction) {
       super(actionGroup);
       myMoreAction = moreAction;
+      getTemplatePresentation().putClientProperty(ActionUtil.ALWAYS_VISIBLE_GROUP, true);
     }
 
     @Override

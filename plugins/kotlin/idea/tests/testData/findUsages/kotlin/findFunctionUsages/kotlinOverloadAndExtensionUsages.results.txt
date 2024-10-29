@@ -3,5 +3,5 @@
 [kotlinOverloadAndExtensionUsages.0.kt] Function call 32 a.foo(1, "")
 [kotlinOverloadAndExtensionUsages.0.kt] Function call 37 foo(t)
 [kotlinOverloadAndExtensionUsages.0.kt] Function call 41 foo(s)
+[kotlinOverloadAndExtensionUsages.1.kt] Delegate to super method 3 super<A>.foo(t)
 [kotlinOverloadAndExtensionUsages.1.kt] Function call 11 a.foo(0, "")
-[kotlinOverloadAndExtensionUsages.1.kt] Function call 3 super<A>.foo(t)

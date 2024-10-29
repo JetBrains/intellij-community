@@ -357,7 +357,7 @@ private fun setTextOptions(targetPointer: Pointer<out RenameTarget>, newOptions:
   }
 }
 
-fun TemplateState.getNewName(): String {
+internal fun TemplateState.getNewName(): String {
   return requireNotNull(getVariableValue(PRIMARY_VARIABLE_NAME)).text
 }
 

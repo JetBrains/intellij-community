@@ -1,5 +1,5 @@
 // "Replace with filter" "false"
-// TOOL: org.jetbrains.kotlin.idea.inspections.SuspiciousCollectionReassignmentInspection
+// TOOL: org.jetbrains.kotlin.idea.codeInsight.inspections.shared.SuspiciousCollectionReassignmentInspection
 // ACTION: Change type to mutable
 // ACTION: Join with initializer
 // ACTION: Replace overloaded operator with function call

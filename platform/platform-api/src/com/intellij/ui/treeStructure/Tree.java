@@ -88,6 +88,8 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   private transient boolean settingUI;
   private transient TreeExpansionListener uiTreeExpansionListener;
 
+  private final @NotNull AtomicInteger processingDoubleClick = new AtomicInteger();
+
   private final @NotNull MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
 
   @ApiStatus.Internal
@@ -449,6 +451,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
     super.processKeyEvent(e);
   }
 
+  @Override
+  public boolean getDragEnabled() {
+    // Temporarily disable dragging to avoid bogus double click mouse events from
+    // javax.swing.plaf.basic.DragRecognitionSupport, created in
+    // javax.swing.plaf.basic.BasicTreeUI.Handler.mouseReleasedDND.
+    return super.getDragEnabled() && processingDoubleClick.get() == 0;
+  }
+
   /**
    * Hack to prevent loosing multiple selection on Mac when clicking Ctrl+Left Mouse Button.
    * See faulty code at BasicTreeUI.selectPathForEvent():2245
@@ -463,7 +473,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       e2 = MacUIUtil.fixMacContextMenuIssue(e);
     }
 
-    super.processMouseEvent(e2);
+    var isDoubleClick = e.getClickCount() >= 2;
+    if (isDoubleClick) processingDoubleClick.incrementAndGet();
+    try {
+      super.processMouseEvent(e2);
+    }
+    finally {
+      if (isDoubleClick) processingDoubleClick.decrementAndGet();
+    }
 
     if (e != e2 && e2.isConsumed()) e.consume();
   }
@@ -580,7 +597,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @ApiStatus.Internal
   public void fireAccessibleTreeExpanded(@NotNull TreePath path) {
     if (accessibleContext != null) {
-      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(Tree.this, path));
+      ((AccessibleJTree)accessibleContext).treeExpanded(new TreeExpansionEvent(this, path));
     }
   }
 
@@ -597,7 +614,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   @ApiStatus.Internal
   public void fireAccessibleTreeCollapsed(@NotNull TreePath path) {
     if (accessibleContext != null) {
-      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(Tree.this, path));
+      ((AccessibleJTree)accessibleContext).treeCollapsed(new TreeExpansionEvent(this, path));
     }
   }
 
@@ -1362,6 +1379,14 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     @Override
     public void setCachedPresentation(@Nullable CachedTreePresentation presentation) {
+      if (cachedPresentation != null && presentation != null) {
+        // This can happen if the presentation is applied twice too quickly, before the previous one is cleared.
+        // This causes glitches because the new presentation doesn't have the real-to-cache node mapping
+        // for the nodes that have already been loaded.
+        // We could try copying this cache to the new instance here, but it's error-prone and not really necessary
+        // because it's most likely that the new presentation is the same as the previous one.
+        return;
+      }
       cachedPresentation = presentation == null ? null : new CachedPresentationImpl(presentation);
       if (cachedPresentation != null) {
         var rootPath = getRootPath();

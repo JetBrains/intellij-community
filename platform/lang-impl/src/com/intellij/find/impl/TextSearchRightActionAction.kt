@@ -12,9 +12,11 @@ import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicBooleanProperty
 import com.intellij.openapi.project.DumbAwareToggleAction
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.Icon
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 sealed class TextSearchRightActionAction(val message: String,
                                          icon: Icon,
                                          hoveredIcon: Icon,

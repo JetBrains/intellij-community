@@ -9,7 +9,7 @@ import com.intellij.openapi.util.SystemInfoRt
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 
-object MnemonicUsageCollector : CounterUsagesCollector() {
+internal object MnemonicUsageCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   private val GROUP = EventLogGroup("ui.mnemonic", 2)

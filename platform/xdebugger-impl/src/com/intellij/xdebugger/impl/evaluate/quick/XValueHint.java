@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -21,9 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.*;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugSession;
@@ -44,6 +42,10 @@ import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodePresentationConfigurator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +68,7 @@ public class XValueHint extends AbstractValueHint {
   private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
+  private Disposable myXValueDisposable;
 
   public XValueHint(@NotNull Project project,
                     @NotNull Editor editor,
@@ -78,7 +81,8 @@ public class XValueHint extends AbstractValueHint {
     this(project, session.getDebugProcess().getEditorsProvider(), editor, point, type, expressionInfo, evaluator, session, fromKeyboard);
   }
 
-  protected XValueHint(@NotNull Project project,
+  @ApiStatus.Internal
+  public XValueHint(@NotNull Project project,
                        @NotNull XDebuggerEditorsProvider editorsProvider,
                        @NotNull Editor editor,
                        @NotNull Point point,
@@ -121,6 +125,10 @@ public class XValueHint extends AbstractValueHint {
 
   @Override
   protected void onHintHidden() {
+    if (myXValueDisposable != null && !myInsideShow) {
+      Disposer.dispose(myXValueDisposable);
+      myXValueDisposable = null;
+    }
     disposeVisibleHint();
   }
 
@@ -216,9 +224,16 @@ public class XValueHint extends AbstractValueHint {
 
     @Override
     public void evaluated(@NotNull final XValue result) {
+      LOG.assertTrue(myXValueDisposable == null, "XValue wasn't disposed before evaluating new one.");
+      myXValueDisposable = Disposer.newDisposable();
+      if (result instanceof HintXValue) {
+        Disposer.register(myXValueDisposable, (Disposable)result);
+      }
+
       result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
         private XFullValueEvaluator myFullValueEvaluator;
         private boolean myShown = false;
+        private SimpleColoredComponent mySimpleColoredComponent;
 
         @Override
         public void applyPresentation(@Nullable Icon icon,
@@ -256,7 +271,29 @@ public class XValueHint extends AbstractValueHint {
                              .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
             }
 
-            showTooltipPopup(createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator));
+            // On presentation change we update our shown popup and resize if needed
+            if (mySimpleColoredComponent != null) {
+              if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+                ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).stopLoading();
+              }
+              Icon previousIcon = mySimpleColoredComponent.getIcon();
+              var previousPreferredWidth = mySimpleColoredComponent.getPreferredSize().width;
+
+              mySimpleColoredComponent.clear();
+              fillSimpleColoredComponent(mySimpleColoredComponent, previousIcon, text, myFullValueEvaluator);
+
+              var delta = mySimpleColoredComponent.getPreferredSize().width - previousPreferredWidth;
+              if (delta < 0) return;
+
+              resizePopup(delta, 0);
+              return;
+            }
+
+            mySimpleColoredComponent = createExpandableHintComponent(icon, text, getShowPopupRunnable(result, myFullValueEvaluator), myFullValueEvaluator, valuePresenter);
+            if (mySimpleColoredComponent instanceof SimpleColoredComponentWithProgress) {
+              ((SimpleColoredComponentWithProgress)mySimpleColoredComponent).startLoading();
+            }
+            showTooltipPopup(mySimpleColoredComponent);
           }
           myShown = true;
         }

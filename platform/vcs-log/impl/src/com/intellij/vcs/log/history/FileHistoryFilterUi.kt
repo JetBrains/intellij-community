@@ -18,9 +18,11 @@ import com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogPopupComponentAction
 import com.intellij.vcs.log.visible.VisiblePack
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
+import org.jetbrains.annotations.ApiStatus
 import java.util.function.Consumer
 import javax.swing.JComponent
 
+@ApiStatus.Internal
 class FileHistoryFilterUi(private val path: FilePath,
                           private val hash: Hash?,
                           private val root: VirtualFile,

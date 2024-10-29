@@ -3,6 +3,7 @@ package com.intellij.platform.util.io.storages.appendonlylog;
 
 import com.intellij.openapi.util.IntRef;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.ContentTooBigException;
 import com.intellij.util.io.IOUtil;
 import com.intellij.platform.util.io.storages.StorageTestingUtils;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -49,7 +50,7 @@ public class AppendOnlyLogOverMMappedFileTest {
   @Before
   public void setUp() throws IOException {
     assertEquals("THREADS_COUNT(" + THREADS_COUNT + ") must divide ENOUGH_RECORDS(" + ENOUGH_RECORDS + ")",
-                        0,
+                 0,
                  ENOUGH_RECORDS % THREADS_COUNT);
 
 
@@ -89,8 +90,8 @@ public class AppendOnlyLogOverMMappedFileTest {
       return true;
     });
     assertEquals("Data written must be the data read back",
-                        dataToWrite,
-                        dataReadBackRef.get());
+                 dataToWrite,
+                 dataReadBackRef.get());
   }
 
   @Test
@@ -257,7 +258,7 @@ public class AppendOnlyLogOverMMappedFileTest {
 
     assertThrows(
       "Log must throws exception if full record (payload+header) doesn't fit into a page, ",
-      IllegalArgumentException.class,
+      ContentTooBigException.class,
       () -> appendOnlyLog.append(data -> data, PAGE_SIZE - headerSize + 1)
     );
   }
@@ -282,6 +283,21 @@ public class AppendOnlyLogOverMMappedFileTest {
 
   //Special/edge cases, regressions:
 
+
+  @Test
+  public void readingRecordWithNULL_ID_leadsToException() throws IOException {
+    assertThrows(IllegalArgumentException.class, () -> {
+      appendOnlyLog.read(0, buffer -> null);
+    });
+  }
+
+  @Test
+  public void readingRecordWithNegative_ID_leadsToException() throws IOException {
+    assertThrows(IllegalArgumentException.class, () -> {
+      appendOnlyLog.read(-1, buffer -> null);
+    });
+  }
+
   @Test
   public void singleEmptyRecordWritten_CouldBeReadBackAsIs() throws Exception {
     byte[] dataToWrite = new byte[0];
@@ -292,8 +308,8 @@ public class AppendOnlyLogOverMMappedFileTest {
       return bytes;
     });
     assertArrayEquals("Data written must be the data read back",
-                             dataToWrite,
-                             dataReadBack);
+                      dataToWrite,
+                      dataReadBack);
   }
 
   @Test
@@ -308,8 +324,8 @@ public class AppendOnlyLogOverMMappedFileTest {
       return true;
     });
     assertArrayEquals("Data written must be the data read back",
-                             dataToWrite,
-                             dataReadBackRef.get());
+                      dataToWrite,
+                      dataReadBackRef.get());
   }
 
   @Test
@@ -371,8 +387,8 @@ public class AppendOnlyLogOverMMappedFileTest {
       Object stringWritten = idToStringWritten.get(recordId);
       if (!stringReadBack.equals(stringWritten)) {
         assertEquals("[" + i + "]: data written[recordId: " + recordId + "] must be the data read back[recordId: " + recordId + "]",
-                            stringWritten,
-                            stringReadBack);
+                     stringWritten,
+                     stringReadBack);
       }
 
       i.inc();
@@ -386,8 +402,8 @@ public class AppendOnlyLogOverMMappedFileTest {
       long recordId = recordsIds[i];
       String stringReadBack = appendOnlyLog.read(recordId, IOUtil::readString);
       assertEquals("[" + i + "]: data written must be the data read back",
-                          stringsWritten[i],
-                          stringReadBack);
+                   stringsWritten[i],
+                   stringReadBack);
     }
   }
 

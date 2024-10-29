@@ -15,10 +15,12 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
+@ApiStatus.Internal
 public abstract class AppFontConfigurable implements SearchableConfigurable, Configurable.NoMargin, NoScroll {
 
   private final NotNullLazyValue<AppFontPanel> myFontPanelInstance =

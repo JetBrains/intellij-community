@@ -5,9 +5,11 @@ import com.intellij.codeInsight.codeVision.ui.model.CodeVisionListData
 import com.intellij.openapi.editor.Inlay
 import com.intellij.util.DocumentUtil
 import com.intellij.util.text.CharArrayUtil
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.Rectangle
 
+@ApiStatus.Internal
 class BlockCodeVisionInlayRenderer : CodeVisionInlayRendererBase(){
   override fun calculateCodeVisionEntryBounds(element: CodeVisionEntry): Rectangle? {
     val hoveredEntryBounds = painter.hoveredEntryBounds(inlay.editor, inlayState(inlay), inlay.getUserData(CodeVisionListData.KEY), element)

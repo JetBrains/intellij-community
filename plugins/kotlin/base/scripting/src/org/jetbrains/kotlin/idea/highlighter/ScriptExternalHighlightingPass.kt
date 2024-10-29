@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.IdeScriptReportSink
+import org.jetbrains.kotlin.idea.core.script.getScriptReports
 import org.jetbrains.kotlin.idea.script.ScriptDiagnosticFixProvider
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
 import org.jetbrains.kotlin.psi.KtFile
@@ -28,7 +28,7 @@ class ScriptExternalHighlightingPass(
         val document = document
 
         if (!file.isScript()) return
-        val reports = IdeScriptReportSink.getReports(file)
+        val reports = getScriptReports(file)
 
         val infos = reports.mapNotNull { scriptDiagnostic ->
             val (startOffset, endOffset) = scriptDiagnostic.location?.let { computeOffsets(document, it) } ?: (0 to 0)
@@ -37,7 +37,7 @@ class ScriptExternalHighlightingPass(
             @Suppress("HardCodedStringLiteral")
             val message = scriptDiagnostic.message + exceptionMessage
             val severity = scriptDiagnostic.severity.convertSeverity() ?: return@mapNotNull null
-            val annotation = HighlightInfo.newHighlightInfo(com.intellij.codeInsight.daemon.impl.HighlightInfo.convertSeverity(severity))
+            val annotation = HighlightInfo.newHighlightInfo(HighlightInfo.convertSeverity(severity))
                 .range(startOffset,endOffset)
                 .descriptionAndTooltip(message)
             if (startOffset == endOffset) {

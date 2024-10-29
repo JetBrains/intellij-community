@@ -5,7 +5,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import javax.swing.*;
@@ -215,12 +214,6 @@ public class SearchModelTest extends BasePlatformTestCase {
       @Override
       public ListCellRenderer<? super Object> getElementsRenderer() {
         throw new UnsupportedOperationException();
-      }
-
-      @Nullable
-      @Override
-      public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-        return null;
       }
     };
   }

@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryManager;
 import com.intellij.openapi.util.registry.RegistryValue;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -14,6 +15,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class RegistryToggleAction extends ToggleAction {
 
   private final @NotNull RegistryValue myRegistryValue;

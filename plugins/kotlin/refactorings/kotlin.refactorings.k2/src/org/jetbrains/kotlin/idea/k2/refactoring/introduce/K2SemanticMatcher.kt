@@ -7,13 +7,13 @@ import com.intellij.psi.util.elementType
 import com.intellij.psi.util.startOffset
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
+import org.jetbrains.kotlin.analysis.api.base.KaConstantValue
 import org.jetbrains.kotlin.analysis.api.fir.diagnostics.KaFirDiagnostic
 import org.jetbrains.kotlin.analysis.api.resolution.*
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaTypeParameterType
-import org.jetbrains.kotlin.analysis.utils.errors.unexpectedElementError
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.getArgumentOrIndexExpressions
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider.mapArgumentsToParameterIndices
 import org.jetbrains.kotlin.idea.base.psi.isInsideKtTypeReference
@@ -220,7 +220,7 @@ object K2SemanticMatcher {
                 val patternElement = patternSymbol.psi as? PsiNamedElement
                 if (patternElement != null && parameterSubstitution.containsKey(patternElement)) {
                     if (patternSymbol is KaCallableSymbol && targetSymbol is KaCallableSymbol) {
-                        if (!targetSymbol.returnType.isSubTypeOf(patternSymbol.returnType)) return false
+                        if (!targetSymbol.returnType.isSubtypeOf(patternSymbol.returnType)) return false
                     }
                     val expression =
                         KtPsiFactory(patternElement.project).createExpression((targetSymbol as KaNamedSymbol).name.asString())
@@ -228,7 +228,11 @@ object K2SemanticMatcher {
                     return oldElement !is KtElement || oldElement.text == expression.text
                 }
             }
-
+            if (targetSymbol is KaSyntheticJavaPropertySymbol && patternSymbol is KaSyntheticJavaPropertySymbol &&
+                targetSymbol.callableId == patternSymbol.callableId
+            ) {
+                return true
+            }
             return targetSymbol == patternSymbol || symbols[targetSymbol] == patternSymbol
         }
 
@@ -241,7 +245,7 @@ object K2SemanticMatcher {
         fun areTypesEqualOrAssociated(targetType: KaType?, patternType: KaType?): Boolean {
             if (targetType == null || patternType == null) return targetType == null && patternType == null
 
-            return targetType.isEqualTo(patternType) ||
+            return targetType.semanticallyEquals(patternType) ||
                     targetType is KaTypeParameterType &&
                     patternType is KaTypeParameterType &&
                     symbols[targetType.symbol] == patternType.symbol
@@ -292,11 +296,7 @@ object K2SemanticMatcher {
 
         context(KaSession)
         private fun getSingleParameterSymbolForAnonymousFunctionOrNull(function: KtFunction): KaValueParameterSymbol? {
-            val anonymousFunction = when (function) {
-                is KtNamedFunction -> function.getAnonymousFunctionSymbol()
-                is KtFunctionLiteral -> function.getAnonymousFunctionSymbol()
-                else -> unexpectedElementError<KtFunction>(function)
-            }
+            val anonymousFunction = function.symbol as? KaAnonymousFunctionSymbol ?: return null
             return anonymousFunction.valueParameters.singleOrNull()
         }
     }
@@ -453,8 +453,15 @@ object K2SemanticMatcher {
 
         override fun visitConstantExpression(expression: KtConstantExpression, data: KtElement): Boolean {
             val patternExpression = data.deparenthesized() as? KtConstantExpression ?: return false
-
-            return expression.text == patternExpression.text
+            with(analysisSession) {
+                val evaluatedExpression = expression.evaluate() ?: return false
+                val evaluatedPatternExpression = patternExpression.evaluate() ?: return false
+                if (evaluatedExpression.value is KaConstantValue.ErrorValue ||
+                    evaluatedPatternExpression.value is KaConstantValue.ErrorValue ||
+                    evaluatedExpression.render() != evaluatedPatternExpression.render()
+                ) return false
+            }
+            return true
         }
 
         override fun visitLabeledExpression(expression: KtLabeledExpression, data: KtElement): Boolean = false // TODO()
@@ -876,8 +883,8 @@ object K2SemanticMatcher {
         patternParameter: KtTypeParameter,
         context: MatchingContext,
     ): Boolean {
-        val targetSymbol = targetParameter.getTypeParameterSymbol()
-        val patternSymbol = patternParameter.getTypeParameterSymbol()
+        val targetSymbol = targetParameter.symbol
+        val patternSymbol = patternParameter.symbol
 
         // TODO: should we check variance and reified modifier?
         if (targetSymbol.upperBounds.size != patternSymbol.upperBounds.size) return false
@@ -895,10 +902,10 @@ object K2SemanticMatcher {
     ): Boolean = context.areTypesEqualOrAssociated(targetTypeReference.type, patternTypeReference.type)
 
     context(KaSession)
-    private fun KtFunction.getFunctionLikeSymbol(): KaFunctionSymbol = getSymbolOfType<KaFunctionSymbol>()
+    private fun KtFunction.getFunctionLikeSymbol(): KaFunctionSymbol = symbol as KaFunctionSymbol
 
     context(KaSession)
-    private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = getSymbolOfType<KaCallableSymbol>()
+    private fun KtCallableDeclaration.getCallableSymbol(): KaCallableSymbol = symbol as KaCallableSymbol
 
     private val KtInstanceExpressionWithLabel.mainReference: KtReference get() = instanceReference.mainReference
 

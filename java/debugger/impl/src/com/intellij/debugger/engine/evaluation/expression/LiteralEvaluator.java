@@ -33,7 +33,7 @@ class LiteralEvaluator implements Evaluator {
     if (myValue == null) {
       return null;
     }
-    VirtualMachineProxyImpl vm = context.getDebugProcess().getVirtualMachineProxy();
+    VirtualMachineProxyImpl vm = context.getSuspendContext().getVirtualMachineProxy();
     if (myValue instanceof Boolean) {
       return DebuggerUtilsEx.createValue(vm, myExpectedType, ((Boolean)myValue).booleanValue());
     }

@@ -1,4 +1,3 @@
-// IGNORE_K2
 class C {
     private static int staticField1 = 0;
     private static int staticField2 = 0;

@@ -16,6 +16,7 @@ import com.intellij.util.concurrency.ThreadingAssertions
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import javax.swing.JFrame
 
 @ApiStatus.Internal
 interface ToolWindowManagerState : PersistentStateComponent<Element> {
@@ -26,7 +27,7 @@ interface ToolWindowManagerState : PersistentStateComponent<Element> {
   val recentToolWindows: LinkedList<String>
   val scheduledLayout: AtomicProperty<DesktopLayout?>
   val isEditorComponentActive: Boolean
-  var frame: ProjectFrameHelper?
+  var projectFrame: JFrame?
   var moreButton: ToolWindowAnchor
 }
 
@@ -54,12 +55,12 @@ class ToolWindowManagerStateImpl : ToolWindowManagerState {
       return ComponentUtil.getParentOfType(EditorsSplitters::class.java, IdeFocusManager.getGlobalInstance().focusOwner) != null
     }
 
-  override var frame: ProjectFrameHelper? = null
+  override var projectFrame: JFrame? = null
 
   override var moreButton: ToolWindowAnchor = ToolWindowAnchor.LEFT
 
   override fun getState(): Element? {
-    if (frame == null) {
+    if (projectFrame == null) {
       return null
     }
 

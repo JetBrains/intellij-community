@@ -119,6 +119,8 @@ public class DarculaJBPopupComboPopup<T> implements ComboPopup, ComboBoxPopup.Co
     });
     myPopup.addListener((AccessibleDarculaJBPopupComboPopup)getAccessibleContext());
 
+    myPopup.getSpeedSearch().installSupplyTo(myComboBox, false);
+
     myPopup.setMinimumSize(myComboBox.getSize());
     myPopup.showUnderneathOf(myComboBox);
   }

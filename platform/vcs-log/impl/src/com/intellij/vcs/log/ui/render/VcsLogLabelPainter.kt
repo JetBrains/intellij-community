@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render
 
 import com.intellij.vcs.log.VcsLogRefManager
@@ -8,7 +8,7 @@ import com.intellij.vcs.log.ui.VcsBookmarkRef
 import java.awt.Color
 import javax.swing.JComponent
 
-class VcsLogLabelPainter(private val logData: VcsLogData, component: JComponent, iconCache: LabelIconCache) :
+internal class VcsLogLabelPainter(private val logData: VcsLogData, component: JComponent, iconCache: LabelIconCache) :
   LabelPainter(component, iconCache) {
 
   var showTagNames: Boolean = false

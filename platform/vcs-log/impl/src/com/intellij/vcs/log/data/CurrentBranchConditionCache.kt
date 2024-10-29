@@ -8,10 +8,12 @@ import com.intellij.openapi.util.Predicates
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.util.VcsLogUtil
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.AtomicReference
 import java.util.function.Predicate
 
+@ApiStatus.Internal
 class CurrentBranchConditionCache(private val logData: VcsLogData, parent: Disposable) : Disposable {
   private val executor: ExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("VcsLog Current Branch Condition",
                                                                                                1)

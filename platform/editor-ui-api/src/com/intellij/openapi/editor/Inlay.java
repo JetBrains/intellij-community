@@ -95,14 +95,6 @@ public interface Inlay<T extends EditorCustomElementRenderer> extends Disposable
   @Nullable GutterIconRenderer getGutterIconRenderer();
 
   /**
-   * @deprecated Use {@link #update()} instead.
-   */
-  @Deprecated(forRemoval = true)
-  default void updateSize() {
-    update();
-  }
-
-  /**
    * Updates inlay properties (width, height, gutter icon renderer) from inlay's renderer. Also, repaints the inlay.
    *
    * @see EditorCustomElementRenderer#calcWidthInPixels(Inlay)

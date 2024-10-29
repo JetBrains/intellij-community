@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -43,7 +43,7 @@ public class VFSAttributeAccessBenchmark {
     @Setup
     public void setup(FSRecordsContext vfsContext) throws Exception {
       FSRecordsImpl vfs = vfsContext.vfs();
-      PersistentFSRecordsStorage records = vfs.connection().getRecords();
+      PersistentFSRecordsStorage records = vfs.connection().records();
       for (int i = 0; i < FILE_RECORDS_COUNT; i++) {
         int fileId = records.allocateRecord();
         if (minFileId == 0) {

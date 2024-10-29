@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.webcore.packaging;
 
 import com.intellij.CommonBundle;
@@ -189,8 +189,7 @@ public class InstalledPackagesPanel extends JPanel {
     return AnAction.EMPTY_ARRAY;
   }
 
-  @NotNull
-  protected ManagePackagesDialog createManagePackagesDialog() {
+  protected @NotNull ManagePackagesDialog createManagePackagesDialog() {
     return new ManagePackagesDialog(myProject,
                                     myPackageManagementService,
                                     new PackageManagementService.Listener() {
@@ -210,8 +209,7 @@ public class InstalledPackagesPanel extends JPanel {
                                     }, createNotificationPanel());
   }
 
-  @NotNull
-  protected PackagesNotificationPanel createNotificationPanel() {
+  protected @NotNull PackagesNotificationPanel createNotificationPanel() {
     return new PackagesNotificationPanel();
   }
 
@@ -254,7 +252,7 @@ public class InstalledPackagesPanel extends JPanel {
     return Collections.emptySet();
   }
 
-  private void upgradePackage(@NotNull final InstalledPackage pkg, @Nullable final String toVersion) {
+  private void upgradePackage(final @NotNull InstalledPackage pkg, final @Nullable String toVersion) {
     final PackageManagementService selPackageManagementService = myPackageManagementService;
     myPackageManagementService.fetchPackageVersions(pkg.getName(), new CatchingConsumer<>() {
       @Override
@@ -276,7 +274,7 @@ public class InstalledPackagesPanel extends JPanel {
 
             @Override
             public void operationFinished(final String packageName,
-                                          @Nullable final PackageManagementService.ErrorDescription errorDescription) {
+                                          final @Nullable PackageManagementService.ErrorDescription errorDescription) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 myPackagesTable.clearSelection();
                 updatePackages(selPackageManagementService);
@@ -318,8 +316,7 @@ public class InstalledPackagesPanel extends JPanel {
     });
   }
 
-  @Nullable
-  private PackageManagementServiceEx getServiceEx() {
+  private @Nullable PackageManagementServiceEx getServiceEx() {
     return ObjectUtils.tryCast(myPackageManagementService, PackageManagementServiceEx.class);
   }
 
@@ -361,7 +358,7 @@ public class InstalledPackagesPanel extends JPanel {
     return true;
   }
 
-  protected boolean canInstallPackage(@NotNull final InstalledPackage pyPackage) {
+  protected boolean canInstallPackage(final @NotNull InstalledPackage pyPackage) {
     return true;
   }
 
@@ -389,7 +386,7 @@ public class InstalledPackagesPanel extends JPanel {
 
         @Override
         public void operationFinished(final String packageName,
-                                      @Nullable final PackageManagementService.ErrorDescription errorDescription) {
+                                      final @Nullable PackageManagementService.ErrorDescription errorDescription) {
           ApplicationManager.getApplication().invokeLater(() -> {
             myPackagesTable.clearSelection();
             updatePackages(selPackageManagementService);
@@ -414,8 +411,7 @@ public class InstalledPackagesPanel extends JPanel {
     }
   }
 
-  @NotNull
-  private List<InstalledPackage> getSelectedPackages() {
+  private @NotNull List<InstalledPackage> getSelectedPackages() {
     final List<InstalledPackage> results = new ArrayList<>();
     final int[] rows = myPackagesTable.getSelectedRows();
     for (int row : rows) {
@@ -451,7 +447,7 @@ public class InstalledPackagesPanel extends JPanel {
     ActivityTracker.getInstance().inc();
   }
 
-  public void doUpdatePackages(@NotNull final PackageManagementService packageManagementService) {
+  public void doUpdatePackages(final @NotNull PackageManagementService packageManagementService) {
     onUpdateStarted();
     ProgressManager.getInstance().run(new Task.Backgroundable(myProject,
                                                               IdeBundle.message("packages.settings.loading"),
@@ -533,7 +529,7 @@ public class InstalledPackagesPanel extends JPanel {
         }
 
         @Override
-        public void consume(@Nullable final String latestVersion) {
+        public void consume(final @Nullable String latestVersion) {
           UIUtil.invokeLaterIfNeeded(() -> {
             if (finalIndex < myPackagesTableModel.getRowCount()) {
               InstalledPackage p = getInstalledPackageAt(finalIndex);
@@ -570,7 +566,7 @@ public class InstalledPackagesPanel extends JPanel {
     return PackageVersionComparator.VERSION_COMPARATOR.compare(currentVersion, availableVersion) < 0;
   }
 
-  private void refreshLatestVersions(@NotNull final PackageManagementService packageManagementService) {
+  private void refreshLatestVersions(final @NotNull PackageManagementService packageManagementService) {
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(() -> {
       if (packageManagementService == myPackageManagementService) {

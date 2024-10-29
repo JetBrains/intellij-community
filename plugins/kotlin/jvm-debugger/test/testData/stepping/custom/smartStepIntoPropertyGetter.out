@@ -1,0 +1,20 @@
+LineBreakpoint created at smartStepIntoPropertyGetter.kt:13
+LineBreakpoint created at smartStepIntoPropertyGetter.kt:27
+LineBreakpoint created at smartStepIntoPropertyGetter.kt:41
+LineBreakpoint created at smartStepIntoPropertyGetter.kt:56
+LineBreakpoint created at smartStepIntoPropertyGetter.kt:70
+Run Java
+Connected to the target VM
+smartStepIntoPropertyGetter.kt:13
+smartStepIntoPropertyGetter.kt:5
+smartStepIntoPropertyGetter.kt:27
+smartStepIntoPropertyGetter.kt:19
+smartStepIntoPropertyGetter.kt:41
+smartStepIntoPropertyGetter.kt:33
+smartStepIntoPropertyGetter.kt:56
+smartStepIntoPropertyGetter.kt:48
+smartStepIntoPropertyGetter.kt:70
+smartStepIntoPropertyGetter.kt:62
+Disconnected from the target VM
+
+Process finished with exit code 0

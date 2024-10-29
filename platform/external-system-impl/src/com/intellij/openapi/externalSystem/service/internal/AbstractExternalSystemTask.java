@@ -14,11 +14,10 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -281,6 +280,19 @@ public abstract class AbstractExternalSystemTask extends UserDataHolderBase impl
     return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
   }
 
+  /**
+   * @see com.intellij.openapi.util.UserDataHolderBase#copyUserDataTo
+   */
+  @ApiStatus.Internal
+  @SuppressWarnings({"unchecked", "rawtypes"})
+  protected void putUserDataTo(@NotNull UserDataHolder dataHolder) {
+    var userMap = getUserMap();
+    for (Key key : userMap.getKeys()) {
+      dataHolder.putUserData(key, userMap.get(key));
+    }
+  }
+
+  @ApiStatus.Internal
   protected static @NotNull ExternalSystemTaskNotificationListener wrapWithListener(
     @NotNull ExternalSystemProgressNotificationManagerImpl manager
   ) {

@@ -85,6 +85,11 @@ public class K1ExpressionTypeTestGenerated extends AbstractK1ExpressionTypeTest 
         runTest("testData/codeInsight/expressionType/IfAsExpressionInsideBlock.kt");
     }
 
+    @TestMetadata("IfAsStatement.kt")
+    public void testIfAsStatement() throws Exception {
+        runTest("testData/codeInsight/expressionType/IfAsStatement.kt");
+    }
+
     @TestMetadata("ImplicitInvoke_fromCompanionObject.kt")
     public void testImplicitInvoke_fromCompanionObject() throws Exception {
         runTest("testData/codeInsight/expressionType/ImplicitInvoke_fromCompanionObject.kt");

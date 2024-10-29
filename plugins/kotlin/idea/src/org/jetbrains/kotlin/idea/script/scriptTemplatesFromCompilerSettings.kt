@@ -7,11 +7,11 @@ import org.jetbrains.kotlin.config.CompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettings
 import org.jetbrains.kotlin.idea.compiler.configuration.KotlinCompilerSettingsListener
 import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
-import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
 import org.jetbrains.kotlin.idea.util.application.executeOnPooledThread
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
+import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
 import java.io.File
 import kotlin.io.path.Path
@@ -20,7 +20,7 @@ import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
 
 class ScriptTemplatesFromCompilerSettingsProvider(
     private val project: Project
-) : ScriptDefinitionSourceAsContributor {
+) : ScriptDefinitionsSource {
 
     init {
         project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
@@ -54,7 +54,5 @@ class ScriptTemplatesFromCompilerSettingsProvider(
                 ).asSequence()
             }
         }
-
-    override val id: String = "KotlinCompilerScriptTemplatesSettings"
 }
 

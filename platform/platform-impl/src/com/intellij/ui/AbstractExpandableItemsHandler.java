@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.LoadingState;
@@ -12,15 +12,17 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.MovablePopup;
 import com.intellij.ui.popup.list.SelectablePanel;
-import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.MouseEventHandler;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +39,14 @@ import java.util.function.Consumer;
 public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType extends JComponent> implements ExpandableItemsHandler<KeyType> {
   protected final ComponentType myComponent;
 
-  private final Alarm myUpdateAlarm = new Alarm();
+  private final SingleEdtTaskScheduler updateAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
+
+  @TestOnly
+  @ApiStatus.Internal
+  public @NotNull SingleEdtTaskScheduler getUpdateAlarm() {
+    return updateAlarm;
+  }
+
   private final CellRendererPane myRendererPane = new CellRendererPane();
   private final JComponent myTipComponent = new JComponent() {
     @Override
@@ -46,18 +55,18 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
         UIUtil.drawImage(g, myImage, 0, 0, null);
       }
       else if (myKey != null) {
-          ToolTipDetails details = calcToolTipDetails(myKey);
-          if (details != null) {
-            Graphics2D g2d = (Graphics2D)g.create();
-            try {
-              if (details.clip != null) {
-                g2d.clip(details.clip);
-              }
-              details.painter.accept(g2d);
+        ToolTipDetails details = calcToolTipDetails(myKey);
+        if (details != null) {
+          Graphics2D g2d = (Graphics2D)g.create();
+          try {
+            if (details.clip != null) {
+              g2d.clip(details.clip);
             }
-            finally {
-                g2d.dispose();
-            }
+            details.painter.accept(g2d);
+          }
+          finally {
+            g2d.dispose();
+          }
         }
       }
     }
@@ -69,6 +78,8 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   private Rectangle myKeyItemBounds;
   private BufferedImage myImage;
   private int borderArc = 0;
+  // We cannot use buffered rendering in rem-dev case as the backend might not have the required fonts to render text
+  private static final boolean RENDER_IN_POPUP = AppMode.isRemoteDevHost();
 
   public static void setRelativeBounds(@NotNull Component parent, @NotNull Rectangle bounds,
                                        @NotNull Component child, @NotNull Container validationParent) {
@@ -81,8 +92,13 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
   protected AbstractExpandableItemsHandler(final @NotNull ComponentType component) {
     myComponent = component;
-    myComponent.add(myRendererPane);
-    myComponent.validate();
+    if (RENDER_IN_POPUP) {
+      myTipComponent.add(myRendererPane);
+    }
+    else {
+      myComponent.add(myRendererPane);
+      myComponent.validate();
+    }
     var popup = new MovablePopup(myComponent, myTipComponent);
     // On Wayland, heavyweight popup might get automatically displaced
     // by the server if they appear to cross the screen boundary, which
@@ -103,7 +119,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
       @Override
       public void mouseExited(MouseEvent event) {
-        // don't hide the hint if mouse exited to owner component
+        // don't hide the hint if mouse exited to an owner component
         if (myComponent.getMousePosition() == null) {
           hideHint();
         }
@@ -243,19 +259,23 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
     handleSelectionChange(ClientProperty.isTrue(myComponent, IGNORE_ITEM_SELECTION) ? myKey : selected, false);
   }
 
-  protected void handleSelectionChange(final KeyType selected, final boolean processIfUnfocused) {
+  protected void handleSelectionChange(KeyType selected, boolean processIfUnfocused) {
     if (!EventQueue.isDispatchThread()) {
       return;
     }
-    myUpdateAlarm.cancelAllRequests();
+
+    updateAlarm.cancel();
+
     if (selected == null || !isHandleSelectionEnabled(selected, processIfUnfocused)) {
       hideHint();
       return;
     }
+
     if (!selected.equals(myKey)) {
       hideHint();
     }
-    myUpdateAlarm.addRequest(() -> doHandleSelectionChange(selected, processIfUnfocused), 10);
+
+    updateAlarm.request(10, () -> doHandleSelectionChange(selected, processIfUnfocused));
   }
 
   private boolean isHandleSelectionEnabled(@NotNull KeyType selected, boolean processIfUnfocused) {
@@ -285,8 +305,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
       Rectangle bounds = details.bounds;
       Shape clip = details.clip;
       myTipComponent.setPreferredSize(bounds.getSize());
-      // We cannot use buffered rendering in rem-dev case, cause backend might not have the required fonts to render text
-      if (!AppMode.isRemoteDevHost()) {
+      if (!RENDER_IN_POPUP) {
         myImage = createPopupContent(bounds, details.painter, clip);
       }
       myPopup.setTransparent(clip != null);
@@ -358,7 +377,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
   }
 
   private void hideHint() {
-    myUpdateAlarm.cancelAllRequests();
+    updateAlarm.cancel();
     if (myPopup.isVisible()) {
       myPopup.setVisible(false);
       repaintKeyItem();
@@ -430,7 +449,7 @@ public abstract class AbstractExpandableItemsHandler<KeyType, ComponentType exte
 
     Rectangle screen = ScreenUtil.getScreenRectangle(location);
 
-    // exclude case when myComponent touches screen boundary with its right edge, and popup would be displayed on adjacent screen
+    // exclude case when myComponent touches screen boundary with its right edge, and popup would be displayed on the adjacent screen
     if (location.x == screen.x) return null;
 
     int borderSize = isPaintBorder() ? 1 : 0;

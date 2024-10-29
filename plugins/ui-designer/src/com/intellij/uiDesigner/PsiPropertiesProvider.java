@@ -20,7 +20,7 @@ import java.util.HashMap;
 
 public final class PsiPropertiesProvider implements PropertiesProvider {
   private final Module myModule;
-  private final HashMap<String, HashMap> myCache;
+  private final HashMap<String, HashMap<String, LwIntrospectedProperty>> myCache;
 
   public PsiPropertiesProvider(final @NotNull Module module) {
     myModule = module;
@@ -28,7 +28,7 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
   }
 
   @Override
-  public @Nullable HashMap getLwProperties(final String className) {
+  public @Nullable HashMap<String, LwIntrospectedProperty> getLwProperties(final String className) {
     if (myCache.containsKey(className)) {
       return myCache.get(className);
     }
@@ -40,11 +40,11 @@ public final class PsiPropertiesProvider implements PropertiesProvider {
       return null;
     }
 
-    final HashMap result = new HashMap();
+    final HashMap<String, LwIntrospectedProperty> result = new HashMap<>();
 
     final PsiMethod[] methods = aClass.getAllMethods();
     for (final PsiMethod method : methods) {
-      // it's a setter candidate.. try to find getter
+      // it's a setter candidate. try to find getter
 
       if (!PropertyUtilBase.isSimplePropertySetter(method)) {
         continue;

@@ -11,6 +11,7 @@ import com.intellij.vcs.log.VcsLogListener;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -84,6 +85,16 @@ public abstract class VcsLogUiBase implements VcsLogUiEx {
                          @NotNull SettableFuture<JumpResult> future,
                          boolean silently,
                          boolean focus) {
+    future.set(JumpResult.COMMIT_DOES_NOT_MATCH);
+  }
+
+  @Override
+  @ApiStatus.Internal
+  public <T> JumpResult jumpToSync(@NotNull T commitId,
+                                   @NotNull BiFunction<? super VisiblePack, ? super T, Integer> rowGetter,
+                                   boolean silently,
+                                   boolean focus) {
+    return JumpResult.COMMIT_DOES_NOT_MATCH;
   }
 
   @Override

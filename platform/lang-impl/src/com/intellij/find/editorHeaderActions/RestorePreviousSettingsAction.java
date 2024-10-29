@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.EditorSearchSession;
@@ -8,12 +8,14 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;
 
+@ApiStatus.Internal
 public final class RestorePreviousSettingsAction extends AnAction implements ShortcutProvider, DumbAware, LightEditCompatible {
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -39,9 +41,8 @@ public final class RestorePreviousSettingsAction extends AnAction implements Sho
     findModel.copyFrom(FindManager.getInstance(project).getPreviousFindModel());
   }
 
-  @Nullable
   @Override
-  public ShortcutSet getShortcut() {
+  public @Nullable ShortcutSet getShortcut() {
     return new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0));
   }
 }

@@ -14,32 +14,44 @@ import java.util.concurrent.atomic.AtomicInteger
 
 internal class MockRemoteCommunicator : TestRemoteCommunicator() {
   private val filesAndVersions = mutableMapOf<String, Version>()
+  var isConnected = true
   private val myClientV2 = lazy {
     object : CloudConfigFileClientV2(defaultUrl, Configuration().auth(JbaTokenAuthProvider("my-test-token")),
                                      CloudConfigServerCommunicator.DUMMY_ETAG_STORAGE, clientVersionContext) {
+
+      private fun checkConnected() {
+        if (!isConnected) {
+          throw IOException(DISCONNECTED_ERROR)
+        }
+      }
       override fun read(filePath: String): InputStream {
+        checkConnected()
         val version = filesAndVersions[filePath] ?: throw IOException("file $filePath is not found")
         versionIdStorage.store(filePath, version.versionInfo.versionId)
         return ByteArrayInputStream(version.content)
       }
 
       override fun write(filePath: String, content: InputStream) {
+        checkConnected()
         val version = Version(content.readAllBytes())
         filesAndVersions[filePath] = version
         versionIdStorage.store(filePath, version.versionInfo.versionId);
       }
 
       override fun delete(filePath: String) {
+        checkConnected()
         filesAndVersions - filePath
         versionIdStorage.remove(filePath)
       }
 
       override fun getLatestVersion(filePath: String): FileVersionInfo? {
+        checkConnected()
         val version = filesAndVersions[filePath] ?: return null
         return version.versionInfo
       }
 
       override fun getVersions(file: String): MutableList<FileVersionInfo> {
+        checkConnected()
         return Collections.singletonList(getLatestVersion(file))
       }
     }
@@ -53,12 +65,13 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
     ByteArrayOutputStream().use { stream ->
       SettingsSnapshotZipSerializer.serializeToStream(snapshot, stream)
       val content = stream.toByteArray()
-      client.write(currentSnapshotFilePath(), ByteArrayInputStream(content))
+      val (snapshotFilePath, _) = currentSnapshotFilePath() ?: return
+      client.write(snapshotFilePath, ByteArrayInputStream(content))
     }
   }
 
   override fun getVersionOnServer(): SettingsSnapshot? {
-    val snapshotFilePath = currentSnapshotFilePath()
+    val (snapshotFilePath, _) = currentSnapshotFilePath() ?: return null
     return getSnapshotFromVersion(filesAndVersions[snapshotFilePath]?.content)
   }
 
@@ -91,5 +104,6 @@ internal class MockRemoteCommunicator : TestRemoteCommunicator() {
 
   companion object {
     private val versionRef = AtomicInteger()
+    const val DISCONNECTED_ERROR = "disconnected"
   }
 }

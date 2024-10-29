@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.extractSuperclass;
 
 import com.intellij.openapi.command.CommandProcessor;
@@ -62,11 +62,9 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract void setDocCommentPolicySetting(int policy);
 
-  @Nullable
-  protected abstract String validateName(String name);
+  protected abstract @Nullable String validateName(String name);
   
-  @Nullable
-  protected @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
+  protected @Nullable @NlsContexts.DialogMessage String validateQualifiedName(String packageName, @NotNull String extractedSuperName) {
     return null;
   }
 
@@ -76,8 +74,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
 
   protected abstract @NlsContexts.Label String getPackageNameLabelText();
 
-  @NotNull
-  protected abstract String getEntityName();
+  protected abstract @NotNull String getEntityName();
 
   protected abstract void preparePackage() throws OperationFailedException;
 
@@ -197,8 +194,7 @@ public abstract class ExtractSuperBaseDialog<ClassType extends PsiElement, Membe
     getPreviewAction().setEnabled(!isExtractSuperclass());
   }
 
-  @NotNull
-  public String getExtractedSuperName() {
+  public @NotNull String getExtractedSuperName() {
     return myExtractedSuperNameField.getText().trim();
   }
 

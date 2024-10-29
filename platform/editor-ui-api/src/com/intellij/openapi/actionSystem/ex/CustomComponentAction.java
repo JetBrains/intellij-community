@@ -10,6 +10,10 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * A custom component provider and updater for actions in toolbars.
+ * Use {@link ActionUtil#COMPONENT_PROVIDER} or implement in {@link AnAction} directly.
+ */
 public interface CustomComponentAction {
   Key<JComponent> COMPONENT_KEY = Key.create("customComponent");
   Key<AnAction> ACTION_KEY = Key.create("customComponentAction");

@@ -106,7 +106,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   public Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation) {
     Collection<LombokProblem> result = Collections.emptyList();
     // check first for fields, methods and filter it out, because PsiClass is parent of all annotations and will match other parents too
-    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiMethod.class, PsiClass.class);
+    PsiElement psiElement = PsiTreeUtil.getParentOfType(psiAnnotation, PsiField.class, PsiRecordComponent.class, PsiMethod.class, PsiClass.class);
     if (psiElement instanceof PsiClass) {
       ProblemValidationSink problemNewBuilder = new ProblemValidationSink();
       validate(psiAnnotation, (PsiClass) psiElement, problemNewBuilder);

@@ -1,24 +1,22 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl.ijent.nio
 
-import com.intellij.platform.core.nio.fs.DelegatingFileSystem
 import java.nio.file.*
+import java.nio.file.attribute.UserPrincipalLookupService
 
 /**
  * See [IjentWslNioFileSystemProvider].
  */
-internal class IjentWslNioFileSystem(
+class IjentWslNioFileSystem(
   private val provider: IjentWslNioFileSystemProvider,
+  private val wslId: String,
   private val ijentFs: FileSystem,
   private val originalFs: FileSystem,
-) : DelegatingFileSystem<IjentWslNioFileSystemProvider>() {
-  override fun toString(): String = """${javaClass.simpleName}(ijentId=${provider.ijentId}, wslLocalRoot=${provider.wslLocalRoot})"""
-
-  override fun getDelegate(): FileSystem = originalFs
-
-  override fun getDelegate(root: String): FileSystem = originalFs
+) : FileSystem() {
+  override fun toString(): String = """${javaClass.simpleName}($provider)"""
 
   override fun close() {
+    provider.removeFileSystem(wslId)
     ijentFs.close()
   }
 
@@ -44,4 +42,16 @@ internal class IjentWslNioFileSystem(
       addAll(originalFs.supportedFileAttributeViews())
       addAll(ijentFs.supportedFileAttributeViews())
     }
+
+  override fun getPath(first: String, vararg more: String): Path =
+    IjentWslNioPath(this, originalFs.getPath(first, *more), null)
+
+  override fun getPathMatcher(syntaxAndPattern: String?): PathMatcher =
+    originalFs.getPathMatcher(syntaxAndPattern)
+
+  override fun getUserPrincipalLookupService(): UserPrincipalLookupService =
+    originalFs.userPrincipalLookupService
+
+  override fun newWatchService(): WatchService =
+    originalFs.newWatchService()
 }

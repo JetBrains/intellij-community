@@ -87,7 +87,7 @@ class PaletteListPopupStep implements ListPopupStep<ComponentItem>, SpeedSearchF
   }
 
   @Override
-  public PopupStep onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
+  public PopupStep<?> onChosen(final ComponentItem selectedValue, final boolean finalChoice) {
     myFinalRunnable = () -> myRunnable.process(selectedValue);
     return PopupStep.FINAL_CHOICE;
   }

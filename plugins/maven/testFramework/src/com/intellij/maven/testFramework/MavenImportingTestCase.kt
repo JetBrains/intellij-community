@@ -11,10 +11,10 @@ import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.ModuleListener
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.testFramework.*
@@ -386,7 +387,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     runBlockingMaybeCancellable { updateAllProjects() }
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
       }
     }
     IndexingTestUtil.waitUntilIndexesAreReady(project);
@@ -404,7 +405,7 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     updateAllProjects()
     if (failOnReadingError) {
       for (each in projectsManager.getProjectsTree().projects) {
-        assertFalse("Failed to import Maven project: " + each.getProblems(), each.hasReadingProblems())
+        assertFalse("Failed to import Maven project: " + each.problems, each.hasReadingProblems())
       }
     }
   }
@@ -421,53 +422,61 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     isAutoReloadEnabled = true
   }
 
-  private fun assertAutoReloadIsInitialized() {
-    assertTrue("Auto-reload is disabled for tests by default", isAutoReloadEnabled)
+  private fun assertAutoReloadIsEnabled() {
+    assertTrue("Auto-reload is disabled in this test", isAutoReloadEnabled)
   }
 
-  protected suspend fun assertHasPendingProjectForReload() {
-    assertAutoReloadIsInitialized()
-    assertWithinTimeout(10) {
-      assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
-    }
+  protected fun assertHasPendingProjectForReload() {
+    assertAutoReloadIsEnabled()
+    blockTillCinfigurationReady()
+    assertTrue("Expected notification about pending projects for auto-reload", myNotificationAware!!.isNotificationVisible())
     assertNotEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
   protected fun assertNoPendingProjectForReload() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
+    blockTillCinfigurationReady()
     assertFalse(myNotificationAware!!.isNotificationVisible())
     assertEmpty(myNotificationAware!!.getProjectsWithNotification())
   }
 
   @RequiresBackgroundThread
   protected suspend fun scheduleProjectImportAndWait() {
-    assertAutoReloadIsInitialized()
+    assertAutoReloadIsEnabled()
 
     // otherwise all imports will be skipped
     assertHasPendingProjectForReload()
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        myProjectTracker!!.scheduleProjectRefresh()
-      }
+    withContext(Dispatchers.EDT) {
+      myProjectTracker!!.scheduleProjectRefresh()
     }
+
+    awaitConfiguration()
 
     // otherwise project settings was modified while importing
     assertNoPendingProjectForReload()
   }
 
-  protected suspend fun scheduleProjectImportAndWaitAsync() {
-    assertAutoReloadIsInitialized()
-
-    // otherwise all imports will be skipped
-    assertHasPendingProjectForReload()
-    waitForImportWithinTimeout {
-      withContext(Dispatchers.EDT) {
-        myProjectTracker!!.scheduleProjectRefresh()
-      }
+  @RequiresBackgroundThread
+  protected suspend fun awaitConfiguration() {
+    val isEdt = ApplicationManager.getApplication().isDispatchThread
+    if (isEdt) {
+      MavenLog.LOG.warn("Calling awaitConfiguration() from EDT sometimes causes deadlocks, even though it shouldn't")
     }
+    assertFalse("Call awaitConfiguration() from background thread", isEdt)
+    Observation.awaitConfiguration(project) { message ->
+      logConfigurationMessage(message)
+    }
+  }
 
-    // otherwise project settings was modified while importing
-    assertNoPendingProjectForReload()
+  protected fun blockTillCinfigurationReady() {
+    runBlockingCancellable {
+      awaitConfiguration()
+    }
+  }
+
+  private fun logConfigurationMessage(message: String) {
+    if (message.contains("scanning")) return
+    MavenLog.LOG.warn(message)
   }
 
   protected suspend fun updateAllProjects() {
@@ -550,11 +559,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @RequiresBackgroundThread
   protected suspend fun waitForImportWithinTimeout(action: suspend () -> Unit) {
-    waitForImportWithinTimeout(project, action)
-  }
-
-  @RequiresBackgroundThread
-  protected suspend fun waitForImportWithinTimeout(project: Project, action: suspend () -> Unit) {
     MavenLog.LOG.warn("waitForImportWithinTimeout started")
     val importStarted = AtomicBoolean(false)
     val importFinished = AtomicBoolean(false)
@@ -591,15 +595,13 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
     action()
 
-    assertWithinTimeout {
-      assertTrue(
-        importStarted.get()
-        && importFinished.get()
-        && pluginResolutionFinished.get()
-        && artifactDownloadingFinished.get()
-      )
-      MavenLog.LOG.warn("waitForImportWithinTimeout finished")
-    }
+    awaitConfiguration()
+
+    assertTrue("Import failed: start", importStarted.get())
+    assertTrue("Import failed: finish", importFinished.get())
+    assertTrue("Import failed: plugins", pluginResolutionFinished.get())
+    assertTrue("Import failed: artifacts", artifactDownloadingFinished.get())
+    MavenLog.LOG.warn("waitForImportWithinTimeout finished")
   }
 
   private class MavenImportLoggingListener : MavenImportListener {

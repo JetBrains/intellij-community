@@ -18,12 +18,14 @@ package com.intellij.diff.tools.util.side;
 import com.intellij.diff.tools.holders.EditorHolder;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.breadcrumbs.DiffBreadcrumbsPanel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class OnesideContentPanel extends JPanel {
   private final DiffContentPanel myPanel;
 

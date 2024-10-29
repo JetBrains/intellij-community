@@ -17,7 +17,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil;
+import com.intellij.tools.ide.metrics.benchmark.Benchmark;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -45,7 +45,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     FormatterImpl formatter = (FormatterImpl)FormatterEx.getInstanceEx();
     CommonCodeStyleSettings.IndentOptions options = settings.getIndentOptions(JavaFileType.INSTANCE);
 
-    PerformanceTestUtil.newPerformanceTest("Java Formatting [1]", () -> {
+    Benchmark.newBenchmark("Java Formatting [1]", () -> {
       FormattingModel model =
         LanguageFormatting.INSTANCE.forContext(file).createModel(FormattingContext.create(file, settings));
       formatter.formatWithoutModifications(model.getDocumentModel(), model.getRootBlock(), settings, options, file.getTextRange());
@@ -58,7 +58,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
 
   public void testPerformance2() {
     getSettings().setDefaultRightMargin(120);
-    PerformanceTestUtil.newPerformanceTest("Java Formatting [2]", () -> doTest())
+    Benchmark.newBenchmark("Java Formatting [2]", () -> doTest())
       .warmupIterations(5)
       .attempts(20)
       .start();
@@ -76,7 +76,7 @@ public class JavaFormatterPerformanceTest extends JavaFormatterTestCase {
     indentOptions.USE_TAB_CHARACTER = true;
     indentOptions.TAB_SIZE = 4;
 
-    PerformanceTestUtil.newPerformanceTest("Java Formatting [3]", () -> doTest())
+    Benchmark.newBenchmark("Java Formatting [3]", () -> doTest())
       .warmupIterations(100)
       .attempts(300)
       .start();

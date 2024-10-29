@@ -30,10 +30,11 @@ import com.jetbrains.jsonSchema.impl.light.nodes.isNotBlank
 internal fun JsonSchemaObject.collectNestedCompletions(
   project: Project,
   node: NestedCompletionsNode?,
-  completionPath: SchemaPath?,
-  collector: (path: SchemaPath?, schema: JsonSchemaObject) -> Unit,
+  completionPath: SchemaPath? = null,
+  collector: (path: SchemaPath?, schema: JsonSchemaObject) -> CompletionNextStep,
 ) {
-  collector(completionPath, this) // Breadth first
+  val nextStep = collector(completionPath, this) // Breadth first
+  if (nextStep == CompletionNextStep.Stop) return
 
   node
     ?.children
@@ -43,6 +44,11 @@ internal fun JsonSchemaObject.collectNestedCompletions(
         subSchema.collectNestedCompletions(project, childNode, completionPath / name, collector)
       }
     }
+}
+
+internal enum class CompletionNextStep {
+  Continue,
+  Stop
 }
 
 private fun JsonSchemaObject.findSubSchemasByName(project: Project, name: String): Iterable<JsonSchemaObject> =

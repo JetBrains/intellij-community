@@ -14,13 +14,15 @@ import java.util.Set;
  * Not thread-safe.
  */
 public class JavaElementArrangementEntry extends DefaultArrangementEntry
-  implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry {
+  implements TypeAwareArrangementEntry, NameAwareArrangementEntry, ModifierAwareArrangementEntry, AnnotationAwareArrangementEntry {
 
   private final @NotNull Set<ArrangementSettingsToken> myModifiers = new HashSet<>();
   private final @NotNull Set<ArrangementSettingsToken> myTypes = new HashSet<>();
 
   private final @NotNull ArrangementSettingsToken myType;
   private final @Nullable String myName;
+
+  private boolean myHasAnnotation = false;
 
   public JavaElementArrangementEntry(@Nullable ArrangementEntry parent,
                                      @NotNull TextRange range,
@@ -66,11 +68,21 @@ public class JavaElementArrangementEntry extends DefaultArrangementEntry
   }
 
   @Override
+  public boolean hasAnnotation() {
+    return myHasAnnotation;
+  }
+
+  @Override
   public String toString() {
     return String.format(
       "[%d; %d): %s %s %s",
       getStartOffset(), getEndOffset(), StringUtil.toLowerCase(StringUtil.join(myModifiers, " ")),
       StringUtil.toLowerCase(myTypes.iterator().next().toString()), myName == null ? "<no name>" : myName
     );
+  }
+
+  @Override
+  public void setHasAnnotation() {
+    myHasAnnotation = true;
   }
 }

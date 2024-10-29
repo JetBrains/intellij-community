@@ -1,9 +1,10 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.instanceContainer.tests
 
 import com.intellij.platform.instanceContainer.CycleInitializationException
 import com.intellij.platform.instanceContainer.InstanceNotRegisteredException
 import com.intellij.platform.instanceContainer.internal.*
+import com.intellij.testFramework.assertErrorLogged
 import com.intellij.testFramework.common.timeoutRunBlocking
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Test
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.TestInfo
 import org.junit.jupiter.api.assertThrows
 import kotlin.coroutines.EmptyCoroutineContext
 import kotlin.test.*
-import kotlin.time.Duration.Companion.hours
 
 class InstanceContainerTest {
 
@@ -93,63 +93,187 @@ class InstanceContainerTest {
   }
 
   @Test
-  fun registration(testInfo: TestInfo): Unit = timeoutRunBlocking {
+  fun register(testInfo: TestInfo): Unit = timeoutRunBlocking {
     val keyClass = MyServiceInterface::class.java
     val keyClassName = keyClass.name
     val pluginScope = CoroutineScope(CoroutineName("plugin scope"))
     withContainer(testInfo.displayName) { container ->
-      val instance1 = MyServiceImplementation1()
-      val handle1 = container.startRegistration(pluginScope).run {
-        assertThrows<InstanceNotRegisteredException> {
-          registerInitializer(keyClassName, ThrowingInitializer, override = true)
-        }
-        registerInitializer(keyClassName, ReadyInitializer(instance1), override = false)
-        assertThrows<InstanceAlreadyRegisteredException> {
+      val instance = MyServiceImplementation1()
+      val handle = container.startRegistration(pluginScope).run {
+        // initial registration - ok
+        registerInitializer(keyClassName, ReadyInitializer(instance), override = false)
+
+        // re-registration in the same scope
+        assertErrorLogged<InstanceAlreadyRegisteredException> {
           registerInitializer(keyClassName, ThrowingInitializer, override = false)
         }
+
         assertNotNull(complete())
       }
       assertEquals(1, container.instanceHolders().size)
-      val holder1 = assertRegistered(container, keyClass, instance1, initialized = false)
+      val holder = assertRegistered(container, keyClass, instance, initialized = false)
 
-      val instance2 = MyServiceImplementation2()
-      val handle2 = container.startRegistration(pluginScope).run {
-        assertThrows<InstanceAlreadyRegisteredException> {
+      container.startRegistration(pluginScope).run {
+        // re-registration in a different scope
+        assertErrorLogged<InstanceAlreadyRegisteredException> {
           registerInitializer(keyClassName, ThrowingInitializer, override = false)
         }
-        registerInitializer(keyClassName, ReadyInitializer(instance2), override = true)
-        assertThrows<InstanceAlreadyRegisteredException> {
-          registerInitializer(keyClassName, ThrowingInitializer, override = false)
-        }
-        assertNotNull(complete())
+        assertNull(complete())
       }
-      assertEquals(1, container.instanceHolders().size)
-      val holder2 = assertRegistered(container, keyClass, instance2, initialized = false)
+      assertRegistered(container, keyClass, instance, initialized = true)
 
-      val handle3 = container.startRegistration(pluginScope).run {
-        assertThrows<InstanceAlreadyRegisteredException> {
-          registerInitializer(keyClassName, ThrowingInitializer, override = false)
+      val unregistered = handle.unregister().entries.single()
+      assertEquals(keyClassName, unregistered.key)
+      assertSame(holder, unregistered.value)
+    }
+  }
+
+  @Test
+  fun override(testInfo: TestInfo): Unit = timeoutRunBlocking {
+    val keyClass = MyServiceInterface::class.java
+    val keyClassName = keyClass.name
+    val pluginScope = CoroutineScope(CoroutineName("plugin scope"))
+    withContainer(testInfo.displayName) { container ->
+
+      fun InstanceRegistrar.testOverrideNonExistent() {
+        assertErrorLogged<InstanceNotRegisteredException> {
+          overrideInitializer(keyClassName, ThrowingInitializer)
         }
+        assertNull(complete())
+      }
+
+      fun InstanceRegistrar.testRemoveNonExistent() {
+        assertErrorLogged<InstanceNotRegisteredException> {
+          overrideInitializer(keyClassName, null)
+        }
+        assertNull(complete())
+      }
+
+      suspend fun InstanceRegistrar.testOverride(instance: MyServiceInterface) {
+        overrideInitializer(keyClassName, ReadyInitializer(instance))
+        val handle = assertNotNull(complete())
+        val holder = assertRegistered(container, keyClass, instance, initialized = false)
+        val unregistered = handle.unregister().entries.single()
+        assertSame(keyClassName, unregistered.key)
+        assertSame(holder, unregistered.value)
+      }
+
+      suspend fun InstanceRegistrar.testRemove() {
         overrideInitializer(keyClassName, null)
-        //assertThrows<InstanceNotRegisteredException> {
-        //  registerInitializer(keyClassName, ThrowingInitializer, override = true)
-        //}
-        assertNotNull(complete())
+        val handle = assertNotNull(complete())
+        assertNotRegistered(container, keyClass)
+        val unregistered = handle.unregister()
+        assertEquals(0, unregistered.size) // TODO consider removing [keyClass → null] mapping
       }
-      assertEquals(0, container.instanceHolders().size)
+
+      fun InstanceRegistrar.testRemoveCancellingOut() {
+        overrideInitializer(keyClassName, null)
+        assertNull(complete())
+      }
+
+      val instance1 = MyServiceImplementation1()
+      val instance2 = MyServiceImplementation2()
+
+      // override non-existent
+      container.startRegistration(pluginScope).run {
+        testOverrideNonExistent()
+      }
       assertNotRegistered(container, keyClass)
 
-      assertEquals(0, handle3.unregister().size)
+      // remove non-registered
+      container.startRegistration(pluginScope).run {
+        testRemoveNonExistent()
+      }
+      assertNotRegistered(container, keyClass)
 
-      assertSame(holder2, assertRegistered(container, keyClass, instance2, initialized = true))
-      val unregistered2 = handle2.unregister().entries.single()
-      assertEquals(keyClassName, unregistered2.key)
-      assertSame(holder2, unregistered2.value)
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ReadyInitializer(instance1))
+        val handle = assertNotNull(complete())
+        assertRegistered(container, keyClass, instance1, initialized = false)
 
-      assertSame(holder1, assertRegistered(container, keyClass, instance1, initialized = true))
-      val unregistered1 = handle1.unregister().entries.single()
-      assertEquals(keyClassName, unregistered1.key)
-      assertSame(holder1, unregistered1.value)
+        // override registered
+        container.startRegistration(pluginScope).run {
+          testOverride(instance2)
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        // override overridden
+        container.startRegistration(pluginScope).run {
+          overrideInitializer(keyClassName, ThrowingInitializer)
+          testOverride(instance2)
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        // override removed
+        container.startRegistration(pluginScope).run {
+          overrideInitializer(keyClassName, null)
+          testOverride(instance2)
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        // remove registered
+        container.startRegistration(pluginScope).run {
+          testRemove()
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        // remove overridden
+        container.startRegistration(pluginScope).run {
+          overrideInitializer(keyClassName, ThrowingInitializer)
+          testRemove()
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        // remove removed
+        container.startRegistration(pluginScope).run {
+          overrideInitializer(keyClassName, null)
+          testRemove()
+        }
+        assertRegistered(container, keyClass, instance1, initialized = true)
+
+        handle.unregister()
+      }
+      assertNotRegistered(container, keyClass)
+
+      // override registered in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        testOverride(instance1)
+      }
+
+      // override overridden in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        overrideInitializer(keyClassName, ThrowingInitializer)
+        testOverride(instance1)
+      }
+
+      // override removed in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        overrideInitializer(keyClassName, null)
+        testOverrideNonExistent()
+      }
+
+      // remove registered in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        testRemoveCancellingOut()
+      }
+
+      // remove overridden in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        overrideInitializer(keyClassName, ThrowingInitializer)
+        testRemoveCancellingOut()
+      }
+
+      // remove removed in the same scope
+      container.startRegistration(pluginScope).run {
+        registerInitializer(keyClassName, ThrowingInitializer)
+        overrideInitializer(keyClassName, null)
+        testRemoveNonExistent()
+      }
     }
   }
 

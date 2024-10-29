@@ -155,8 +155,8 @@ class ActionButton implements ActionListener {
     DataContext dataContext = CustomizedDataContext.withSnapshot(parent, sink -> {
       sink.set(CommonDataKeys.VIRTUAL_FILE, ObjectUtils.tryCast(myTabInfo.getObject(), VirtualFile.class));
     });
-    return new AnActionEvent(inputEvent, dataContext, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
-                             ActionManager.getInstance(), modifiers);
+    return new AnActionEvent(dataContext, presentation, myPlace != null ? myPlace : ActionPlaces.UNKNOWN,
+                             ActionUiKind.TOOLBAR, inputEvent, modifiers, ActionManager.getInstance());
   }
 
   public void setAutoHide(final boolean autoHide) {

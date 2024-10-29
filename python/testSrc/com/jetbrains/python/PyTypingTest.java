@@ -593,17 +593,71 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
-  // PY-18427
-  public void testConditionalType() {
-    doTest("int | str",
+  // PY-18427 PY-76243
+  public void testConditionalTypeAlias() {
+    doTest("int",
            """
              if something:
                  Type = int
              else:
                  Type = str
 
-             def f(expr: Type):
-                 pass
+             expr: Type
+             """);
+  }
+
+  public void testConditionalGenericTypeAliasWithoutExplicitParameter() {
+    doTest("list[str]",
+           """
+             if something:
+                 Type = list
+             else:
+                 Type = set
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testConditionalGenericTypeAliasWithExplicitParameter() {
+    doTest("list[str]",
+           """
+             from typing import TypeVar
+             
+             T = TypeVar("T")
+             
+             if something:
+                 Type = list[T]
+             else:
+                 Type = set[T]
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testTypeAliasOfUnionOfGenericTypes() {
+    doTest("list[str] | set[str]",
+           """
+             from typing import TypeVar
+             
+             T = TypeVar("T")
+             
+             Type = list[T] | set[T]
+             
+             expr: Type[str]
+             """);
+  }
+
+  public void testTypeAliasOfUnionOfGenericTypesWithDifferentArity() {
+    doTest("dict[str, int] | set[int]",
+           """
+             from typing import TypeVar
+             
+             T1 = TypeVar("T1")
+             T2 = TypeVar("T2")
+             
+             Type = dict[T1, T2] | set[T2]
+             
+             expr: Type[str, int]
              """);
   }
 
@@ -1950,28 +2004,24 @@ public class PyTypingTest extends PyTestCase {
              """
                from __future__ import annotations
                if something:
-                   Type = int
+                   x: int
                else:
-                   Type = str
-
-               def f(expr: Type):
-                   pass
+                   x: str
+               expr = x
                """);
     });
   }
 
   // PY-44974
-  public void testWithoutFromFutureImport() {
+  public void testBitwiseOrUnionWithoutFromFutureImport() {
     runWithLanguageLevel(LanguageLevel.PYTHON39, () -> {
       doTest("Union[int, str]",
              """
                if something:
-                   Type = int
+                   x: int
                else:
-                   Type = str
-
-               def f(expr: Type):
-                   pass
+                   x: str
+               expr = x
                """);
     });
   }
@@ -5256,8 +5306,20 @@ public class PyTypingTest extends PyTestCase {
   }
 
   // PY-71002
+  public void testTypeAliasOneWithoutDefault() {
+    doTest("dict[Any, str] | list[float]", """
+      from typing import TypeVar, TypeAlias
+      T = TypeVar("T")
+      U = TypeVar("U", default=str)
+      B = TypeVar("B", default=float)
+      Alias : TypeAlias = dict[T, U] | list[B]
+      expr: Alias
+      """);
+  }
+
+  // PY-71002
   public void testNewStyleTypeAliasOneWithoutDefault() {
-    doTest("dict[T, str] | list[float]", """
+    doTest("dict[Any, str] | list[float]", """
       type Alias[T, U = str, B = float] = dict[T, U] | list[B]
       expr: Alias
       """);
@@ -5526,6 +5588,388 @@ public class PyTypingTest extends PyTestCase {
       """);
   }
 
+  // PY-71002
+  public void testNewStyleTypeAliasParameterizedInMultipleSteps() {
+    doTest("float | int | str", """
+      from typing import Union
+      type A[T1, T2, T3 = str] = Union[T1, T2, T3]
+      type B[T1, T2 = int] = A[T1, T2]
+      type C[T1] = B[T1]
+      type D = C[float]
+      expr: D
+      """);
+  }
+
+  // PY-71002
+  public void testMixedOldAndNewStyleTypeAliasesParameterizedInMultipleSteps() {
+    doTest("float | int | str", """
+      from typing import Union, TypeVar, TypeAlias
+      T = TypeVar("T")
+      T1 = TypeVar("T1", default=int)
+      type A[T1, T2, T3 = str] = Union[T1, T2, T3]
+      B: TypeAlias = A[T, T1]
+      C: TypeAlias = B[T]
+      type D = C[float]
+      expr: D
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAssignedSubscriptionExpression() {
+    doTest("dict[int, str]", """
+      type my_dict[K = float, V = bool] = dict[K, V]
+      type myIntStrDict = my_dict[int, str]
+      expr: myIntStrDict
+      """);
+  }
+
+  // PY-71002
+  public void testNewStyleTypeAliasWithAssignedSubscriptionExpressionAliasingUnion() {
+    doTest("bool | list[float]", """
+      type Alias[T = int, U = str] = U | list[T]
+      type Alias2 = Alias[float, bool]
+      expr: Alias2
+      """);
+  }
+
+  // PY-71002
+  public void testOldStyleTypeAliasWithAssignedSubscriptionExpressionAliasingUnion() {
+    doTest("float | list[bool]", """
+      from typing import TypeVar, Generic, TypeAlias
+      T = TypeVar("T", default=int)
+      U = TypeVar("U", default=str)
+      Alias: TypeAlias = U | list[T]
+      Alias2: TypeAlias = Alias[float, bool]
+      expr: Alias2
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecNewStyle() {
+    doTest("Clazz[[str], [str], [str]]", """
+      class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
+      expr = Clazz[[str]]()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecOldStyle() {
+    doTest("Clazz[[str], [str], [str]]", """
+      from typing import Generic, ParamSpec
+      P1 = ParamSpec("P1")
+      P2 = ParamSpec("P2", default=P1)
+      P3 = ParamSpec("P3", default=P2)
+      class Clazz(Generic[P1, P2, P3]): ...
+      expr = Clazz[[str]]()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecOldStyleNoExplicit() {
+    doTest("Clazz[[str], [str], [bool, bool], [bool, bool]]", """
+      from typing import Generic, ParamSpec
+      P1 = ParamSpec("P1", default=[str])
+      P2 = ParamSpec("P2", default=P1)
+      P3 = ParamSpec("P3", default=[bool, bool])
+      P4 = ParamSpec("P4", default=P3)
+      class Clazz(Generic[P1, P2, P3, P4]): ...
+      expr = Clazz()
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecWithDefaultInConstructor() {
+    doTest("(int, str, str) -> None | None", """
+      from typing import Generic, ParamSpec, Callable
+      P = ParamSpec("P", default=[int, str, str])
+      class ClassA(Generic[P]):
+          def __init__(self, x: Callable[P, None] = None) -> None:
+              self.x = x
+              ...
+      expr = ClassA().x
+      """);
+  }
+
+  // PY-71002
+  public void testParamSpecDefaultTypeRefersToAnotherParamSpecWithEllipsis() {
+    doTest("Clazz[Any, [float], [float]]", """
+      class Clazz[**P1, **P2 = P1, **P3 = P2]: ...
+      expr = Clazz[..., [float]]()
+      """);
+  }
+
+  public void testDataclassTransformConstructorSignature() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform
+      
+      @dataclass_transform()
+      def deco(cls):
+          ...
+      
+      @deco
+      class MyClass:
+           id: int
+           name: str
+      
+      MyCl<caret>ass()
+      """);
+  }
+
+  public void testDataclassTransformConstructorSignatureDecoratedBaseClassAttributeExcluded() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> SubSub", """
+      from typing import dataclass_transform
+      
+      @dataclass_transform()
+      class Base:
+          excluded: int
+      
+      class Sub(Base):
+          id: int
+      
+      class SubSub(Sub):
+           name: str
+      
+      Sub<caret>Sub()
+      """);
+  }
+
+  public void testDataclassTransformConstructorSignatureMetaClassBaseClassAttributeNotExcluded() {
+    doTestExpressionUnderCaret("(included: int, id: int, name: str) -> SubSub", """
+      from typing import dataclass_transform
+     
+      @dataclass_transform()
+      class Meta(type):
+          pass
+      
+      class Base(metaclass=Meta):
+          included: int
+      
+      class Sub(Base):
+          id: int
+      
+      class SubSub(Sub):
+          name: str
+
+      Sub<caret>Sub()
+      """);
+  }
+
+  public void testDataclassTransformOverloads() {
+    doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform, overload
+      
+      @overload
+      def deco(name: str):
+          ...
+      
+      
+      @dataclass_transform()
+      @overload
+      def deco(cls: type):
+          ...
+      
+      @overload
+      def deco():
+          ...
+      
+      def deco(*args, **kwargs):
+          ...
+      
+      @deco
+      class MyClass:
+           id: int
+           name: str
+      
+      MyCl<caret>ass()
+      """);
+  }
+
+  public void testDataclassTransformOwnKwOnlyOmittedAndTakenFromKwOnlyDefault() {
+    doTestExpressionUnderCaret("(Any, id: int, name: str) -> MyClass", """
+      from typing import dataclass_transform, Callable
+      
+      
+      @dataclass_transform(kw_only_default=True)
+      def deco(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      
+      @deco(frozen=True)
+      class MyClass:
+          id: int
+          name: str
+      
+      
+      My<caret>Class()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnly() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass(kw_only=True)
+      class Order:
+          id: str = my_field()
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyDefaultOverridesDecoratorsKwOnlyDefault() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(kw_only_default=True, field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass()
+      class Order:
+          id: str = my_field()
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnly() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass(kw_only=True)
+      class Order:
+          id: str = my_field(kw_only=False)
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  public void testDataclassTransformFieldSpecifierKwOnlyOverridesDecoratorsKwOnlyDefault() {
+    doTestExpressionUnderCaret("(id: str, Any, addr: list[str]) -> Order", """
+      from typing import Callable, dataclass_transform
+      
+      def my_field(kw_only=False):
+          ...
+      
+      @dataclass_transform(kw_only_default=True, field_specifiers=(my_field,))
+      def my_dataclass(**kwargs) -> Callable[[type], type]:
+          ...
+      
+      @my_dataclass()
+      class Order:
+          id: str = my_field(kw_only=False)
+          addr: list[str]
+      
+      Ord<caret>er()
+      """);
+  }
+
+  // PY-76076
+  public void testGenericAliasUnderVersionGuard() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import f
+      
+      expr = f("foo")
+      """);
+  }
+
+  // PY-76076
+  public void testGenericMethodReturnTypeImportedUnderVersionGuard() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import C
+      expr = C().m()
+      """);
+  }
+
+  // PY-60968
+  public void testGenericMethodReturnTypeImportedUnderVersionGuardInStub() {
+    doMultiFileStubAwareTest("list[str]", """
+      from mod import C
+      expr = C().m()
+      """);
+  }
+
+  // PY-76076
+  public void testFunctionDefinitionUnderVersionGuard() {
+    doTest("list[str]", """
+      import sys
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      if sys.version_info >= (3,):
+          def f(x: T) -> list[T]: ...
+      else:
+          def f(x: T) -> set[T]: ...
+      
+      expr = f("foo")
+      """);
+  }
+
+  // PY-76076
+  public void testClassDefinitionUnderVersionGuard() {
+    doTest("list[str]", """
+      import sys
+      from typing import TypeVar
+      
+      T = TypeVar("T")
+      
+      if sys.version_info >= (3,):
+          class C:
+              def m(self, x: T) -> list[T]: ...
+      else:
+          class C:
+              def m(self, x: T) -> set[T]: ...
+      
+      expr = C().m("foo")
+      """);
+  }
+
+  // PY-76076
+  public void testVariableDefinitionUnderVersionGuard() {
+    doTest("int", """
+      import sys
+      
+      if sys.version_info < (3, 0):
+          x: str = "foo"
+      else:
+          x: int = 42
+      
+      expr = x
+      """);
+  }
+
+  // PY-76243
+  public void testGenericClassDeclaredInStubPackage() {
+    runWithAdditionalClassEntryInSdkRoots("types/" + getTestName(false) + "/site-packages", () -> {
+      doTest("MyClass[int]",
+             """
+               from pkg.mod import MyClass
+               expr: MyClass[int]
+               """);
+    });
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -5551,6 +5995,15 @@ public class PyTypingTest extends PyTestCase {
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
     final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
+  }
+
+  private void doTestExpressionUnderCaret(@NotNull String expectedType, @NotNull String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    PyExpression expr = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), PyExpression.class);
+    TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }

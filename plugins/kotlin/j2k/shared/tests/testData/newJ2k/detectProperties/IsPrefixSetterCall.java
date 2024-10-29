@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class TestSetter {
     private static void setThing(int thing) { }
 

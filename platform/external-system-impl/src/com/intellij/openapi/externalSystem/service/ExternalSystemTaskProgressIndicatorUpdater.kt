@@ -53,9 +53,9 @@ abstract class ExternalSystemTaskProgressIndicatorUpdater {
       }
       event is ExternalSystemTaskExecutionEvent && event.progressEvent is ExternalSystemStatusEvent<*> -> {
         val progressEvent = event.progressEvent as ExternalSystemStatusEvent<*>
-        total = progressEvent.getTotal()
-        progress = progressEvent.getProgress()
-        unit = progressEvent.getUnit()
+        total = progressEvent.total
+        progress = progressEvent.progress
+        unit = progressEvent.unit
       }
       else -> return
     }

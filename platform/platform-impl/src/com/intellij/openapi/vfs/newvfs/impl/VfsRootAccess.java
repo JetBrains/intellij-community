@@ -116,6 +116,8 @@ public final class VfsRootAccess {
       }
 
       if (!isUnder) {
+        // one of the possible problems https://youtrack.jetbrains.com/issue/IJPL-156861/smartReadAction-should-wait-for-queued-scannings#focus=Comments-27-10189819.0-0
+        // and see the comment above
         throw new VfsRootAccessNotAllowedError(child, new ArrayList<>(allowed));
       }
     }
@@ -130,6 +132,7 @@ public final class VfsRootAccess {
 
     Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
+    allowed.add(FileUtil.toSystemIndependentName(PathManager.getConfigPath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
     // The following is to avoid errors in tests like "File accessed outside allowed roots: file://C:/Program Files/idea/lib/idea.jar"
@@ -195,8 +198,9 @@ public final class VfsRootAccess {
           return null; // all is allowed
         }
         ReadAction.run(() -> {
-          for (String url : ProjectRootManager.getInstance(project).getContentRootUrls()) {
-            allowed.add(VfsUtilCore.urlToPath(url));
+          for (VirtualFile root : ProjectRootManager.getInstance(project).getContentRoots()) {
+            allowed.add(root.getPath());
+            allowed.add(root.getCanonicalPath());
           }
           for (Module module : ModuleManager.getInstance(project).getModules()) {
             Sdk moduleSdk = ModuleRootManager.getInstance(module).getSdk();

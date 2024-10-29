@@ -1,0 +1,19 @@
+// COMPILER_ARGUMENTS: -Xplugin=$TEST_DIR$/compose_fake_plugin.jar
+// FILE: main.kt
+// ALLOW_ERRORS
+import androidx.compose.runtime.Composable
+
+@Composable suspend fun <!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_SUSPEND_FUN] Composable function cannot be annotated as suspend'")!>Foo<!>() {}
+
+fun acceptSuspend(fn: suspend () -> Unit) { print(fn) }
+fun acceptComposableSuspend(fn: <!HIGHLIGHTING("severity='ERROR'; descr='[AMBIGUOUS_FUNCTION_TYPE_KIND] Multiple function type conversions are prohibited for a single type. Detected type conversions: [suspend, @Composable]'")!>@Composable suspend () -> Unit<!>) { print(fn.hashCode()) }
+
+val foo: suspend () -> Unit = <!HIGHLIGHTING("severity='ERROR'; descr='[INITIALIZER_TYPE_MISMATCH] Initializer type mismatch: expected 'kotlin.coroutines.SuspendFunction0<kotlin.Unit>', actual 'androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>'.'")!>@Composable {}<!>
+val bar: suspend () -> Unit = {}
+fun Test() {
+    val composableLambda = @Composable {}
+    acceptSuspend @Composable <!HIGHLIGHTING("severity='ERROR'; descr='[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is 'androidx.compose.runtime.internal.ComposableFunction0<kotlin.Unit>', but 'kotlin.coroutines.SuspendFunction0<kotlin.Unit>' was expected.'")!>{}<!>
+    acceptComposableSuspend @Composable {}
+    acceptComposableSuspend(composableLambda)
+    acceptSuspend(<!HIGHLIGHTING("severity='ERROR'; descr='[ARGUMENT_TYPE_MISMATCH] Argument type mismatch: actual type is 'kotlin.Function0<kotlin.Unit>', but 'kotlin.coroutines.SuspendFunction0<kotlin.Unit>' was expected.'")!><!HIGHLIGHTING("severity='ERROR'; descr='[COMPOSABLE_SUSPEND_FUN] Composable function cannot be annotated as suspend'")!>@Composable <!HIGHLIGHTING("severity='ERROR'; descr='[ANONYMOUS_SUSPEND_FUNCTION] Anonymous suspend functions are prohibited.'")!>suspend<!> fun()<!> { }<!>)
+}

@@ -19,7 +19,8 @@ import org.jetbrains.annotations.ApiStatus.OverrideOnly
 @Internal
 interface ActionConfigurationCustomizer {
   companion object {
-    internal val EP: ExtensionPointName<ActionConfigurationCustomizer> = ExtensionPointName("com.intellij.actionConfigurationCustomizer")
+    @Internal
+    @JvmField val EP: ExtensionPointName<ActionConfigurationCustomizer> = ExtensionPointName("com.intellij.actionConfigurationCustomizer")
   }
 
   /**

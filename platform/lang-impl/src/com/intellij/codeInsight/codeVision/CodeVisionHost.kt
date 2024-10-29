@@ -9,12 +9,12 @@ import com.intellij.codeInsight.codeVision.ui.model.PlaceholderCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.RichTextCodeVisionEntry
 import com.intellij.codeInsight.codeVision.ui.model.richText.RichText
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
-import com.intellij.codeInsight.daemon.impl.grave.CodeVisionGrave
 import com.intellij.codeInsight.hints.InlayGroup
 import com.intellij.codeInsight.hints.codeVision.CodeVisionProjectSettings
 import com.intellij.codeInsight.hints.codeVision.ModificationStampUtil
 import com.intellij.codeInsight.hints.settings.language.isInlaySettingsEditor
 import com.intellij.codeInsight.hints.settings.showInlaySettings
+import com.intellij.codeWithMe.ClientId
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
@@ -152,7 +152,6 @@ open class CodeVisionHost(val project: Project) {
     return providers.firstOrNull { it.id == id }
   }
 
-  @RequiresReadLock
   suspend fun collectPlaceholders(editor: Editor, psiFile: PsiFile?): List<Pair<TextRange, CodeVisionEntry>> {
     return withTimeoutOrNull(100.milliseconds) {
       readAction {
@@ -377,7 +376,7 @@ open class CodeVisionHost(val project: Project) {
       mergingQueueFront.queue(object : Update("") {
         override fun run() {
           val modalityState = ModalityState.stateForComponent(editor.contentComponent).asContextElement()
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState) {
+          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT + modalityState + ClientId.coroutineContext()) {
             blockingContext {
               recalculateLenses(if (shouldRecalculateAll) emptyList() else providersToRecalculate)
             }
@@ -412,7 +411,6 @@ open class CodeVisionHost(val project: Project) {
     }
 
     editorLifetime.onTermination {
-      editor.project?.service<CodeVisionGrave>()?.bury(editor, context.getValidPairResult())
       context.clearLenses()
     }
   }

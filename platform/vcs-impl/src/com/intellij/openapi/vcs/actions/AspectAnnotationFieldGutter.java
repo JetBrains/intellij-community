@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
 import com.intellij.openapi.vcs.annotate.TextAnnotationPresentation;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
   @NotNull protected final LineAnnotationAspect myAspect;
   private final boolean myIsGutterAction;

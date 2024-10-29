@@ -2,6 +2,7 @@
 package com.intellij.debugger.statistics
 
 import com.intellij.debugger.engine.DebugProcess
+import com.intellij.debugger.engine.SteppingAction
 import com.intellij.debugger.ui.breakpoints.Breakpoint
 import com.intellij.openapi.util.Key
 import java.util.concurrent.ConcurrentHashMap
@@ -72,10 +73,6 @@ data class BreakpointInstallStatistic(val breakpoint: Breakpoint<*>) : Statistic
  * Do not override equals/hashCode here to make sure that different stepping requests are collected separately.
  */
 class SteppingStatistic(val action: SteppingAction, val engine: Engine) : StatisticElement
-
-enum class SteppingAction {
-  STEP_INTO, STEP_OUT, STEP_OVER
-}
 
 enum class Engine {
   JAVA, KOTLIN

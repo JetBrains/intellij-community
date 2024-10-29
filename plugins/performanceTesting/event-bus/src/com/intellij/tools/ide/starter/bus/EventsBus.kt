@@ -16,17 +16,13 @@ object EventsBus {
   val SHARED_EVENTS_FLOW = SharedEventsFlow(LocalEventBusServerClient(LocalEventBusServer), EVENTS_FLOW)
 
   fun executeWithExceptionHandling(ignoreExceptions: Boolean = true, block: () -> Unit) {
-    try {
-      block()
-    }
-    catch (t: Throwable) {
-      if (ignoreExceptions) {
-        LOG.info("Ignored: $t")
+    runCatching { block() }.onFailure { t ->
+        if (ignoreExceptions) {
+          LOG.info("Ignored: $t")
+        } else {
+          throw t
+        }
       }
-      else {
-        throw t
-      }
-    }
   }
 
   /**
@@ -41,9 +37,11 @@ object EventsBus {
     }
   }
 
-  /** Can have only one subscription by pair subscriber + event
+  /**
+   * Can have only one subscription by pair subscriber + event
    * Subscriber might be invoked multiple times on different events since unsubscription happens only after end of test.
-   *  */
+   * If you need to unsubscribe earlier call [unsubscribe]
+   */
   inline fun <reified EventType : Event> subscribe(
     subscriber: Any,
     timeout: Duration = 2.minutes,
@@ -61,9 +59,21 @@ object EventsBus {
     return this
   }
 
+  inline fun <reified EventType : Event> unsubscribe(subscriber: Any, ignoreExceptions: Boolean = true) {
+    executeWithExceptionHandling(ignoreExceptions) {
+      if (SharedEvent::class.java.isAssignableFrom(EventType::class.java)) {
+        SHARED_EVENTS_FLOW.unsubscribe(eventClass = EventType::class.java, subscriber = subscriber)
+      }
+      else
+        EVENTS_FLOW.unsubscribe(eventClass = EventType::class.java, subscriber = subscriber)
+    }
+  }
+
   fun unsubscribeAll() {
+    LOG.info("Unsubscribing all events")
     SHARED_EVENTS_FLOW.unsubscribeAll()
     EVENTS_FLOW.unsubscribeAll()
+    LOG.info("Unsubscribed all events")
   }
 
   fun startServerProcess(ignoreExceptions: Boolean = true) {

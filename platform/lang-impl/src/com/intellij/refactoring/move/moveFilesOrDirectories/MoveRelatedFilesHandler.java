@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.projectView.impl.NestingTreeStructureProvider;
@@ -12,6 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+@ApiStatus.Internal
 public final class MoveRelatedFilesHandler extends MoveFilesOrDirectoriesHandler {
   @Override
   public boolean canMove(PsiElement[] elements, PsiElement targetContainer, @Nullable PsiReference reference) {
@@ -38,9 +40,9 @@ public final class MoveRelatedFilesHandler extends MoveFilesOrDirectoriesHandler
   }
 
   @Override
-  public PsiElement @Nullable [] adjustForMove(@NotNull final Project project,
+  public PsiElement @Nullable [] adjustForMove(final @NotNull Project project,
                                                PsiElement @NotNull [] sourceElements,
-                                               @Nullable final PsiElement targetElement) {
+                                               final @Nullable PsiElement targetElement) {
     sourceElements = super.adjustForMove(project, sourceElements, targetElement);
     if (sourceElements == null) return null;
 

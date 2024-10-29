@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.copy;
 
 import com.intellij.CommonBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.impl.FileChooserUtil;
 import com.intellij.openapi.fileTypes.FileType;
@@ -48,9 +47,9 @@ import java.util.List;
 public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements DumbAware {
   public static final int MAX_PATH_LENGTH = 70;
 
-  @NonNls private static final String COPY = "Copy";
-  @NonNls private static final String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
-  @NonNls private static final String RECENT_KEYS = "CopyFile.RECENT_KEYS";
+  private static final @NonNls String COPY = "Copy";
+  private static final @NonNls String COPY_OPEN_IN_EDITOR = "Copy.OpenInEditor";
+  private static final @NonNls String RECENT_KEYS = "CopyFile.RECENT_KEYS";
 
   public static String shortenPath(@NotNull VirtualFile file) {
     return StringUtil.shortenPathWithEllipsis(file.getPresentableUrl(), MAX_PATH_LENGTH);
@@ -234,11 +233,10 @@ public class CopyFilesOrDirectoriesDialog extends RefactoringDialog implements D
       if (recentEntries != null) {
         getTargetDirectoryComponent().setHistory(recentEntries);
       }
-      final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
-      myTargetDirectoryField.addBrowseFolderListener(RefactoringBundle.message("select.target.directory"),
-                                                     RefactoringBundle.message("the.file.will.be.copied.to.this.directory"),
-                                                     myProject, descriptor,
-                                                     TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
+      var descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
+        .withTitle(RefactoringBundle.message("select.target.directory"))
+        .withDescription(RefactoringBundle.message("the.file.will.be.copied.to.this.directory"));
+      myTargetDirectoryField.addBrowseFolderListener(myProject, descriptor, TextComponentAccessors.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT);
       getTargetDirectoryComponent().addDocumentListener(new DocumentAdapter() {
         @Override
         protected void textChanged(@NotNull DocumentEvent e) {

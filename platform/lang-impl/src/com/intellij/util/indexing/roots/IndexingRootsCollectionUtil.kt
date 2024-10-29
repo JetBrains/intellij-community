@@ -123,11 +123,11 @@ internal data class EntityCustomKindRootsDescription<E : WorkspaceEntity>(val en
   }
 }
 
-fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
+internal fun selectRootVirtualFiles(value: Collection<VirtualFile>): List<VirtualFile> {
   return selectRootItems(value) { file -> file.path }
 }
 
-fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
+internal fun selectRootVirtualFileUrls(urls: Collection<VirtualFileUrl>): List<VirtualFileUrl> {
   return selectRootItems(urls) { url -> JpsPathUtil.urlToPath(url.url) }
 }
 
@@ -477,10 +477,6 @@ private class RootData<E : WorkspaceEntity>(val contributor: WorkspaceFileIndexC
     }
   }
 
-  fun registerExcludedRoot(root: VirtualFile) {
-    excludedRoots.add(root)
-  }
-
   fun registerExcludedRoot(root: VirtualFileUrl) {
     root.virtualFile?.let { excludedRoots.add(it) }
   }
@@ -519,10 +515,6 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
     rootData.registerExcludedRoot(excludedRoot)
   }
 
-  override fun registerExcludedRoot(excludedRoot: VirtualFile, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
-    rootData.registerExcludedRoot(excludedRoot)
-  }
-
   override fun registerExcludedRoot(excludedRoot: VirtualFileUrl, excludedFrom: WorkspaceFileKind, entity: WorkspaceEntity) {
     rootData.registerExcludedRoot(excludedRoot)
   }
@@ -532,10 +524,6 @@ private class MyWorkspaceFileSetRegistrar<E : WorkspaceEntity>(contributor: Work
   }
 
   override fun registerExclusionCondition(root: VirtualFileUrl, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
-    rootData.registerExcludedRoot(root)
-  }
-
-  override fun registerExclusionCondition(root: VirtualFile, condition: (VirtualFile) -> Boolean, entity: WorkspaceEntity) {
     rootData.registerExcludedRoot(root)
   }
 

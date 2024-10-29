@@ -137,7 +137,10 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-  protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  @Deprecated
+  private static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  public static final String MAVEN_REPO_LOCAL = "maven.repo.local";
+
 
   @SuppressWarnings("unchecked")
   private static final Pair<Pattern, String>[] SUPER_POM_PATHS = new Pair[]{
@@ -300,12 +303,12 @@ public class MavenUtil {
   }
 
   @NotNull
-  public static java.nio.file.Path getPluginSystemDir(@NotNull String folder) {
+  public static Path getPluginSystemDir(@NotNull String folder) {
     return PathManagerEx.getAppSystemDir().resolve("Maven").resolve(folder);
   }
 
   @NotNull
-  public static java.nio.file.Path getBaseDir(@NotNull VirtualFile file) {
+  public static Path getBaseDir(@NotNull VirtualFile file) {
     VirtualFile virtualBaseDir = getVFileBaseDir(file);
     return virtualBaseDir.toNioPath();
   }
@@ -617,14 +620,14 @@ public class MavenUtil {
 
   /**
    * @deprecated do not use this method, it mixes path to maven home and labels like "Use bundled maven"
-   * use {@link MavenUtil#getMavenHomeFile(org.jetbrains.idea.maven.project.StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
+   * use {@link MavenUtil#getMavenHomeFile(StaticResolvedMavenHomeType) getMavenHomeFile(StaticResolvedMavenHomeType} instead
    */
   @Nullable
   @Deprecated(forRemoval = true)
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
     if (!isEmptyOrSpaces(overrideMavenHome)) {
       //noinspection HardCodedStringLiteral
-      return MavenUtil.getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
+      return getMavenHomeFile(staticOrBundled(resolveMavenHomeType(overrideMavenHome)));
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
@@ -800,7 +803,7 @@ public class MavenUtil {
   }
 
   public static boolean isEmptyOrSpaces(@Nullable String str) {
-    return str == null || str.length() == 0 || str.trim().length() == 0;
+    return str == null || str.isBlank();
   }
 
 
@@ -947,11 +950,21 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveDefaultLocalRepository() {
+    String mavenRepoLocal = System.getProperty(MAVEN_REPO_LOCAL);
+
+    if (mavenRepoLocal != null) {
+      MavenLog.LOG.info("using " + MAVEN_REPO_LOCAL + "=" + mavenRepoLocal + " as maven home");
+      return new File(mavenRepoLocal);
+    }
+
     String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
     if (forcedM2Home != null) {
+      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
       return new File(forcedM2Home);
     }
+
     File result = doResolveLocalRepository(resolveUserSettingsFile(null), null);
+
     if (result == null) {
       result = new File(resolveM2Dir(), REPOSITORY_DIR);
     }
@@ -970,10 +983,17 @@ public class MavenUtil {
                                             @Nullable String overriddenUserSettingsFile) {
     String forcedM2Home = System.getProperty(PROP_FORCED_M2_HOME);
     if (forcedM2Home != null) {
+      MavenLog.LOG.error(PROP_FORCED_M2_HOME + " is deprecated, use maven.repo.local property instead");
       return new File(forcedM2Home);
     }
     File result = null;
     if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
+
+    String localRepoHome = System.getProperty(MAVEN_REPO_LOCAL);
+    if (localRepoHome != null) {
+      MavenLog.LOG.debug("Using " + MAVEN_REPO_LOCAL + "=" + localRepoHome);
+      return new File(localRepoHome);
+    }
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(mavenHomeType));
@@ -1018,7 +1038,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static java.nio.file.Path getArtifactPath(@NotNull java.nio.file.Path localRepository,
+  public static Path getArtifactPath(@NotNull Path localRepository,
                                                    @NotNull MavenId id,
                                                    @NotNull String extension,
                                                    @Nullable String classifier) {
@@ -1041,7 +1061,7 @@ public class MavenUtil {
   }
 
   @Nullable
-  public static java.nio.file.Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
+  public static Path getRepositoryParentFile(@NotNull Project project, @NotNull MavenId id) {
     if (id.getGroupId() == null || id.getArtifactId() == null || id.getVersion() == null) {
       return null;
     }
@@ -1049,10 +1069,10 @@ public class MavenUtil {
     return getParentFile(id, projectsManager.getLocalRepository());
   }
 
-  private static java.nio.file.Path getParentFile(@NotNull MavenId id, File localRepository) {
+  private static Path getParentFile(@NotNull MavenId id, File localRepository) {
     assert id.getGroupId() != null;
     String[] pathParts = id.getGroupId().split("\\.");
-    java.nio.file.Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
+    Path path = Paths.get(localRepository.getAbsolutePath(), pathParts);
     path = Paths.get(path.toString(), id.getArtifactId(), id.getVersion());
     return path;
   }
@@ -1259,8 +1279,8 @@ public class MavenUtil {
     Set<String> goals = new HashSet<>(MavenConstants.PHASES);
 
     for (MavenProject mavenProject : manager.getProjects()) {
-      for (MavenPlugin plugin : mavenProject.getPlugins()) {
-        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(manager.getLocalRepository(), plugin.getMavenId());
+      for (var mavenProjectPluginInfo : mavenProject.getPluginInfos()) {
+        MavenPluginInfo pluginInfo = MavenArtifactUtil.readPluginInfo(mavenProjectPluginInfo.getArtifact());
         if (pluginInfo != null) {
           for (MavenPluginInfo.Mojo mojo : pluginInfo.getMojos()) {
             goals.add(mojo.getDisplayName());

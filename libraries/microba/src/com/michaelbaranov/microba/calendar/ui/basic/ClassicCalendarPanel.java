@@ -1,31 +1,16 @@
 package com.michaelbaranov.microba.calendar.ui.basic;
 
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
-import java.awt.Insets;
+import com.michaelbaranov.microba.calendar.resource.Resource;
+
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Locale;
-import java.util.Set;
-import java.util.TimeZone;
-
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.SwingConstants;
-
-import com.michaelbaranov.microba.calendar.resource.Resource;
+import java.util.*;
 
 class ClassicCalendarPanel extends JPanel implements
     PropertyChangeListener {
@@ -42,21 +27,21 @@ class ClassicCalendarPanel extends JPanel implements
 
   private Calendar calendar;
 
-  private JButton prevButton;
+  private final JButton prevButton;
 
-  private JButton nextButton;
+  private final JButton nextButton;
 
-  private JLabel selectedDateLabel;
+  private final JLabel selectedDateLabel;
 
   private DateFormat format;
 
-  private Set focusableComponents = new HashSet();
+  private final Set<JComponent> focusableComponents = new HashSet<>();
 
-  private JButton fastPrevButton;
+  private final JButton fastPrevButton;
 
-  private JButton fastNextButton;
+  private final JButton fastNextButton;
 
-  public ClassicCalendarPanel(Date aDate, Locale aLocale, TimeZone zone) {
+  ClassicCalendarPanel(Date aDate, Locale aLocale, TimeZone zone) {
     this.locale = aLocale;
     this.zone = zone;
 
@@ -104,6 +89,7 @@ class ClassicCalendarPanel extends JPanel implements
 
     nextButton.addActionListener(new ActionListener() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         Date old = calendar.getTime();
         calendar.add(Calendar.MONTH, 1);
@@ -113,6 +99,7 @@ class ClassicCalendarPanel extends JPanel implements
     });
     prevButton.addActionListener(new ActionListener() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         Date old = calendar.getTime();
         calendar.add(Calendar.MONTH, -1);
@@ -122,6 +109,7 @@ class ClassicCalendarPanel extends JPanel implements
     });
     fastNextButton.addActionListener(new ActionListener() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         Date old = calendar.getTime();
         calendar.add(Calendar.YEAR, 1);
@@ -131,6 +119,7 @@ class ClassicCalendarPanel extends JPanel implements
     });
     fastPrevButton.addActionListener(new ActionListener() {
 
+      @Override
       public void actionPerformed(ActionEvent e) {
         Date old = calendar.getTime();
         calendar.add(Calendar.YEAR, -1);
@@ -204,10 +193,12 @@ class ClassicCalendarPanel extends JPanel implements
     reflectData();
   }
 
+  @Override
   public Locale getLocale() {
     return locale;
   }
 
+  @Override
   public void setLocale(Locale locale) {
     Locale old = this.locale;
     this.locale = locale;
@@ -228,6 +219,7 @@ class ClassicCalendarPanel extends JPanel implements
     reflectData();
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     if (evt.getPropertyName().equals("focusable")) {
       Boolean value = (Boolean) evt.getNewValue();
@@ -246,7 +238,7 @@ class ClassicCalendarPanel extends JPanel implements
 
   }
 
-  public Collection getFocusableComponents() {
+  public Collection<JComponent> getFocusableComponents() {
     return focusableComponents;
   }
 

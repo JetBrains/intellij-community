@@ -14,8 +14,15 @@ public class TestMethodReferenceSameName {
 
 class 'TestMethodReferenceSameName' {
    method 'foo ()V' {
+      0      4
       1      4
+      2      4
+      3      4
       e      5
+      f      5
+      10      5
+      11      5
+      12      5
       13      6
    }
 }

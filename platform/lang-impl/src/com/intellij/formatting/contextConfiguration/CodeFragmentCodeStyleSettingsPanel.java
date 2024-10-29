@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.contextConfiguration;
 
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
@@ -28,7 +28,7 @@ final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePa
   private static final Logger LOG = Logger.getInstance(CodeFragmentCodeStyleSettingsPanel.class);
 
   private final CodeStyleSettingsCodeFragmentFilter.CodeStyleSettingsToShow mySettingsToShow;
-  @NotNull private final LanguageCodeStyleSettingsProvider mySettingsProvider;
+  private final @NotNull LanguageCodeStyleSettingsProvider mySettingsProvider;
   private final SelectedTextFormatter mySelectedTextFormatter;
   private SpacesPanelWithoutPreview mySpacesPanel;
   private WrappingAndBracesPanelWithoutPreview myWrappingPanel;
@@ -80,8 +80,7 @@ final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePa
     reset(getSettings());
   }
 
-  @Nullable
-  private SpacesPanelWithoutPreview getSpacesPanel(CodeStyleSettings settings) {
+  private @Nullable SpacesPanelWithoutPreview getSpacesPanel(CodeStyleSettings settings) {
     SpacesPanelWithoutPreview spacesPanel = new SpacesPanelWithoutPreview(settings);
     if (spacesPanel.hasSomethingToShow()) {
       return spacesPanel;
@@ -212,8 +211,7 @@ final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePa
       isFirstUpdate = false;
     }
 
-    @NotNull
-    private Collection<String> populateWithAssociatedFields(Collection<String> settingNames) {
+    private @NotNull Collection<String> populateWithAssociatedFields(Collection<String> settingNames) {
       Set<String> commonFields = new HashSet<>();
       for (String fieldName : settingNames) {
         SettingsGroup settingsGroup = getAssociatedSettingsGroup(fieldName);
@@ -249,8 +247,7 @@ final class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePa
     }
   }
 
-  @NotNull
-  private static CodeStyleSettingsCustomizable getFilteredSettingsConsumer(@NotNull Collection<String> names, @NotNull CodeStyleSettingsCustomizable original) {
+  private static @NotNull CodeStyleSettingsCustomizable getFilteredSettingsConsumer(@NotNull Collection<String> names, @NotNull CodeStyleSettingsCustomizable original) {
     return new CodeStyleSettingsCustomizable() {
       @Override
       public void showAllStandardOptions() {

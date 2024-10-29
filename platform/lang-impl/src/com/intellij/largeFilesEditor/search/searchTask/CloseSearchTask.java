@@ -4,11 +4,13 @@ package com.intellij.largeFilesEditor.search.searchTask;
 import com.intellij.largeFilesEditor.search.SearchResult;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class CloseSearchTask extends SearchTaskBase {
   private static final Logger logger = Logger.getInstance(CloseSearchTask.class);
 

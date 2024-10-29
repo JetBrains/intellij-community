@@ -1,15 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 public class MonitorExprent extends Exprent {
 
@@ -19,7 +17,7 @@ public class MonitorExprent extends Exprent {
   private final int monType;
   private Exprent value;
 
-  public MonitorExprent(int monType, Exprent value, Set<Integer> bytecodeOffsets) {
+  public MonitorExprent(int monType, Exprent value, BitSet bytecodeOffsets) {
     super(EXPRENT_MONITOR);
     this.monType = monType;
     this.value = value;
@@ -33,8 +31,7 @@ public class MonitorExprent extends Exprent {
   }
 
   @Override
-  public List<Exprent> getAllExprents() {
-    List<Exprent> lst = new ArrayList<>();
+  public List<Exprent> getAllExprents(List<Exprent> lst) {
     lst.add(value);
     return lst;
   }
@@ -73,5 +70,11 @@ public class MonitorExprent extends Exprent {
 
   public Exprent getValue() {
     return value;
+  }
+
+  @Override
+  public void fillBytecodeRange(@Nullable BitSet values) {
+    measureBytecode(values, value);
+    measureBytecode(values);
   }
 }

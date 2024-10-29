@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.completion.*;
@@ -53,7 +53,7 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
   public LiveTemplateCompletionContributor() {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(), new CompletionProvider<>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters,
+      protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
                                     @NotNull CompletionResultSet result) {
         ProgressManager.checkCanceled();
@@ -172,10 +172,9 @@ public final class LiveTemplateCompletionContributor extends CompletionContribut
     }
   }
 
-  @Nullable
-  public static TemplateImpl findFullMatchedApplicableTemplate(@NotNull Editor editor,
-                                                               int offset,
-                                                               @NotNull Collection<? extends TemplateImpl> availableTemplates) {
+  public static @Nullable TemplateImpl findFullMatchedApplicableTemplate(@NotNull Editor editor,
+                                                                         int offset,
+                                                                         @NotNull Collection<? extends TemplateImpl> availableTemplates) {
     Map<TemplateImpl, String> templates = filterTemplatesByPrefix(availableTemplates, editor, offset, true, false);
     if (templates.size() == 1) {
       TemplateImpl template = ContainerUtil.getFirstItem(templates.keySet());

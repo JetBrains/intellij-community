@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -55,20 +55,17 @@ public final class LiveTemplatesConfigurable implements SearchableConfigurable, 
   }
 
   @Override
-  @NotNull
-  public String getHelpTopic() {
+  public @NotNull String getHelpTopic() {
     return ID;
   }
 
   @Override
-  @NotNull
-  public String getId() {
+  public @NotNull String getId() {
     return getHelpTopic();
   }
 
   @Override
-  @Nullable
-  public Runnable enableSearch(final String option) {
+  public @Nullable Runnable enableSearch(final String option) {
     return () -> myPanel.selectNode(option);
   }
 

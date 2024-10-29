@@ -2,20 +2,28 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.ModCommand;
+import com.intellij.modcommand.Presentation;
+import com.intellij.modcommand.PsiBasedModCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.IntentionPowerPackBundle;
-import com.siyeh.ipp.base.MCIntention;
-import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Bas Leijdekkers
  */
-public final class ConvertCatchToThrowsIntention extends MCIntention {
+public final class ConvertCatchToThrowsIntention extends PsiBasedModCommandAction<PsiElement> {
+
+  public ConvertCatchToThrowsIntention() {
+    super(PsiElement.class);
+  }
 
   @Override
   public @NotNull String getFamilyName() {
@@ -23,18 +31,87 @@ public final class ConvertCatchToThrowsIntention extends MCIntention {
   }
 
   @Override
-  protected @NotNull String getTextForElement(@NotNull PsiElement element) {
-    return IntentionPowerPackBundle.message("convert.catch.to.throws.intention.name");
+  protected boolean isElementApplicable(@NotNull PsiElement element, @NotNull ActionContext context) {
+    final PsiElement parent = element.getParent();
+    if (!(parent instanceof PsiCatchSection)) {
+      return false;
+    }
+    if (element instanceof PsiCodeBlock) {
+      return false;
+    }
+    final PsiElement owner = PsiTreeUtil.getParentOfType(parent, PsiMethod.class, PsiClass.class, PsiLambdaExpression.class);
+    if (owner instanceof PsiLambdaExpression) {
+      final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(owner);
+      return !(method instanceof PsiCompiledElement);
+    }
+    return owner instanceof PsiMethod;
+  }
+
+  private static PsiMethod @NotNull [] getSuperMethods(@NotNull PsiMethod targetMethod) {
+    List<PsiMethod> result = new ArrayList<>();
+    collectSuperMethods(targetMethod, result);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
+  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<? super PsiMethod> result) {
+    PsiMethod[] superMethods = method.findSuperMethods(true);
+    for (PsiMethod superMethod : superMethods) {
+      result.add(superMethod);
+      collectSuperMethods(superMethod, result);
+    }
   }
 
   @Override
-  protected @NotNull PsiElementPredicate getElementPredicate() {
-    return new ConvertCatchToThrowsPredicate();
-  }
-
-  @Override
-  protected void invoke(@NotNull PsiElement element) {
+  protected @NotNull ModCommand perform(@NotNull ActionContext context, @NotNull PsiElement element) {
     final PsiCatchSection catchSection = (PsiCatchSection)element.getParent();
+    final PsiMethod method = getMethod(catchSection);
+    if (method == null) return ModCommand.nop();
+    PsiType catchType = catchSection.getCatchType();
+    if (catchType == null) return ModCommand.nop();
+    PsiMethod[] superMethods = getSuperMethods(method);
+    if (superMethods.length == 0) {
+      return ModCommand.psiUpdate(catchSection, (copyCatchSection, upd) -> {
+        deleteCatchAndAddToCurrentMethod(copyCatchSection, catchType);
+      });
+    }
+    return ModCommand.chooseAction(
+      IntentionPowerPackBundle.message("convert.catch.to.throws.intention.name.capitalized"),
+      ModCommand.psiUpdateStep(catchSection,
+                               IntentionPowerPackBundle.message("convert.catch.to.throws.super.and.current.methods"),
+                               (copyCatchSection, upd) -> {
+                                 List<PsiMethod> superMethodsToModify = new ArrayList<>();
+                                 PsiFile containingFile = catchSection.getContainingFile();
+                                 PsiFile copyCatchSectionContainingFile = copyCatchSection.getContainingFile();
+                                 for (PsiMethod superMethod : superMethods) {
+                                   if (!superMethod.isPhysical() || superMethod instanceof PsiCompiledElement) continue;
+                                   if (superMethod.getContainingFile() == containingFile) {
+                                     superMethodsToModify.add(
+                                       PsiTreeUtil.findSameElementInCopy(superMethod, copyCatchSectionContainingFile));
+                                   }
+                                   else {
+                                     PsiMethod copySuperMethod = upd.getWritable(superMethod);
+                                     superMethodsToModify.add(copySuperMethod);
+                                   }
+                                 }
+                                 deleteCatchAndAddToCurrentMethod(copyCatchSection, catchType);
+                                 for (PsiMethod superMethod : superMethodsToModify) {
+                                   addToThrowsList(superMethod.getThrowsList(), catchType);
+                                 }
+                               }),
+      ModCommand.psiUpdateStep(catchSection,
+                               IntentionPowerPackBundle.message("convert.catch.to.throws.only.current.method"),
+                               (copyCatchSection, upd) -> deleteCatchAndAddToCurrentMethod(copyCatchSection, catchType))
+    );
+  }
+
+  private static void deleteCatchAndAddToCurrentMethod(@NotNull PsiCatchSection copyCatchSection, @NotNull PsiType catchType) {
+    PsiMethod copyMethod = getMethod(copyCatchSection);
+    deleteCatchSection(copyCatchSection);
+    if (copyMethod == null) return;
+    addToThrowsList(copyMethod.getThrowsList(), catchType);
+  }
+
+  private static @Nullable PsiMethod getMethod(@NotNull PsiCatchSection catchSection) {
     final NavigatablePsiElement owner = PsiTreeUtil.getParentOfType(catchSection, PsiMethod.class, PsiLambdaExpression.class);
     final PsiMethod method;
     if (owner instanceof PsiMethod) {
@@ -44,17 +121,15 @@ public final class ConvertCatchToThrowsIntention extends MCIntention {
       method = LambdaUtil.getFunctionalInterfaceMethod(owner);
     }
     else {
-      return;
+      return null;
     }
     if (method == null) {
-      return;
+      return null;
     }
-    // todo warn if method implements or overrides some base method
-    //             Warning
-    // "Method xx() of class XX implements/overrides method of class
-    // YY. Do you want to modify the base method?"
-    //                                             [Yes][No][Cancel]
-    addToThrowsList(method.getThrowsList(), catchSection.getCatchType());
+    return method;
+  }
+
+  private static void deleteCatchSection(PsiCatchSection catchSection) {
     final PsiTryStatement tryStatement = catchSection.getTryStatement();
     if (tryStatement.getCatchSections().length > 1 || tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) {
       catchSection.delete();
@@ -62,6 +137,11 @@ public final class ConvertCatchToThrowsIntention extends MCIntention {
     else {
       BlockUtils.unwrapTryBlock(tryStatement);
     }
+  }
+
+  @Override
+  protected Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiElement element) {
+    return Presentation.of(IntentionPowerPackBundle.message("convert.catch.to.throws.intention.name"));
   }
 
   private static void addToThrowsList(PsiReferenceList throwsList, PsiType catchType) {

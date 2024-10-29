@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public final class FormatOnSaveUsagesCollector extends ProjectUsagesCollector {
+final class FormatOnSaveUsagesCollector extends ProjectUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("actions.on.save", 1);
 
   private static final EventId1<Boolean> REFORMAT_CODE_ON_SAVE = GROUP.registerEvent("reformat.code", EventFields.Enabled);

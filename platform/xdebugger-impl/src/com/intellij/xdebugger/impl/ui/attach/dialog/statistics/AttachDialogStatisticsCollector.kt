@@ -11,7 +11,7 @@ import com.intellij.xdebugger.impl.ui.attach.dialog.AttachViewType
 internal object AttachDialogStatisticsCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("debugger.attach.dialog", 3)
+  private val GROUP = EventLogGroup("debugger.attach.dialog", 4)
 
   private val IS_MAIN_ACTION_EVENT_FIELD = EventFields.Boolean("isMainAction")
   private val VIEW_TYPE_EVENT_FIELD = EventFields.Enum<AttachViewType>("viewType")
@@ -19,7 +19,7 @@ internal object AttachDialogStatisticsCollector : CounterUsagesCollector() {
   private val SEARCH_FIELD_USED_EVENT_FIELD = EventFields.Boolean("searchFieldUsed")
   private val DEBUGGER_NAME_EVENT_FIELD = EventFields.Class("selectedDebugger")
 
-  private val HOST_SWITCHED = GROUP.registerEvent("host.switched", EventFields.Enum<AttachDialogHostType>("hostType"))
+  private val HOST_SWITCHED = GROUP.registerEvent("host.switched", EventFields.Class("hostType"))
   private val VIEW_SWITCHED = GROUP.registerEvent("view.switched", VIEW_TYPE_EVENT_FIELD)
   private val SEARCH_FIELD_USED = GROUP.registerEvent("search.filter.used")
   private val DEBUGGERS_FILTER_SET = GROUP.registerEvent("debuggers.filter.set")
@@ -30,7 +30,7 @@ internal object AttachDialogStatisticsCollector : CounterUsagesCollector() {
                                                                 DEBUGGERS_FILTER_SET_EVENT_FIELD,
                                                                 SEARCH_FIELD_USED_EVENT_FIELD)
 
-  fun hostSwitched(view: AttachToProcessView) = HOST_SWITCHED.log(view.getHostType())
+  fun hostSwitched(view: AttachToProcessView) = HOST_SWITCHED.log(view.getHostType().javaClass)
   fun viewSwitched(viewType: AttachViewType) = VIEW_SWITCHED.log(viewType)
   fun searchFieldUsed() = SEARCH_FIELD_USED.log()
   fun debuggersFilterSet() = DEBUGGERS_FILTER_SET.log()

@@ -22,12 +22,8 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
-import com.intellij.openapi.util.Computable
-import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.NlsActions.ActionText
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ClientProperty
@@ -37,21 +33,28 @@ import com.intellij.util.SlowOperationCanceledException
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.event.*
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 import javax.swing.Action
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.KeyStroke
+import kotlin.Throws
 
 private val LOG = logger<ActionUtil>()
 private val InputEventDummyAction = EmptyAction.createEmptyAction(null, null, true)
 
 object ActionUtil {
+
+  @JvmField
+  val SHOW_TEXT_IN_TOOLBAR: Key<Boolean> = Key.create("SHOW_TEXT_IN_TOOLBAR")
+
+  @JvmField
+  val USE_SMALL_FONT_IN_TOOLBAR: Key<Boolean> = Key.create("USE_SMALL_FONT_IN_TOOLBAR")
 
   @JvmField
   val TOOLTIP_TEXT: Key<@NlsContexts.Tooltip String> = Key.create(JComponent.TOOL_TIP_TEXT_KEY)
@@ -87,9 +90,16 @@ object ActionUtil {
   @JvmField
   val SECONDARY_ICON: Key<Icon> = Key.create("SECONDARY_ICON")
 
+  /** Same as [CompactActionGroup] */
+  @JvmField
+  val HIDE_DISABLED_CHILDREN: Key<Boolean> = Key.create("HIDE_DISABLED_CHILDREN")
+
   /** Same as [AlwaysVisibleActionGroup] */
   @JvmField
   val ALWAYS_VISIBLE_GROUP: Key<Boolean> = Key.create("ALWAYS_VISIBLE_GROUP")
+
+  @JvmField
+  val ALWAYS_VISIBLE_INLINE_ACTION: Key<Boolean> = Key.create("ALWAYS_VISIBLE_INLINE_ACTION")
 
   @JvmField
   val ALLOW_PlAIN_LETTER_SHORTCUTS: Key<Boolean> = Key.create("ALLOW_PlAIN_LETTER_SHORTCUTS")
@@ -100,13 +110,16 @@ object ActionUtil {
 
   @JvmField
   @Suppress("DEPRECATION", "removal")
-  val SECONDARY_TEXT: Key<String> = Presentation.PROP_VALUE
+  val SECONDARY_TEXT: Key<@Nls String> = Presentation.PROP_VALUE
 
   @JvmField
   val SEARCH_TAG: Key<@NonNls String> = Key.create("SEARCH_TAG")
 
   @JvmField
   val INLINE_ACTIONS: Key<List<AnAction>> = Key.create("INLINE_ACTIONS")
+
+  @JvmField
+  val COMPONENT_PROVIDER: Key<CustomComponentAction> = Key.create("COMPONENT_PROVIDER")
 
   // Internal keys
 
@@ -121,9 +134,11 @@ object ActionUtil {
   private val WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE: Key<Boolean> = Key.create("WOULD_BE_VISIBLE_IF_NOT_DUMB_MODE")
 
   @JvmStatic
-  fun showDumbModeWarning(project: Project?,
-                          action: AnAction,
-                          vararg events: AnActionEvent) {
+  fun showDumbModeWarning(
+    project: Project?,
+    action: AnAction,
+    vararg events: AnActionEvent,
+  ) {
     val actionNames = events.asSequence()
       .map { it.presentation.text }.filter { it.isNotEmpty() }.toList()
     if (LOG.isDebugEnabled) {
@@ -131,19 +146,10 @@ object ActionUtil {
     }
     if (project == null) return
     DumbService.getInstance(project).showDumbModeNotificationForAction(
-      getActionUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
+      getActionsUnavailableMessage(actionNames), ActionManager.getInstance().getId(action))
   }
 
-  @JvmStatic
-  private fun getActionUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
-    return when {
-      actionNames.isEmpty() -> getUnavailableMessage("This action", false)
-      actionNames.size == 1 -> getUnavailableMessage("'${actionNames[0]}'", false)
-      else -> getUnavailableMessage("None of the following actions", true) +
-              ": ${actionNames.joinToString(", ")}"
-    }
-  }
-
+  @Deprecated("Use getActionUnavailableMessage(@ActionText String?) or getActionsUnavailableMessage(actionNames: List<@ActionText String>)")
   @JvmStatic
   fun getUnavailableMessage(action: String, plural: Boolean): @NlsContexts.PopupContent String {
     if (plural) {
@@ -152,6 +158,24 @@ object ActionUtil {
     }
     return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action,
                              ApplicationNamesInfo.getInstance().productName)
+  }
+
+  @JvmStatic
+  fun getActionUnavailableMessage(@ActionText action: String?): @NlsContexts.PopupContent String {
+    val productName = ApplicationNamesInfo.getInstance().productName
+    if (action == null) return IdeBundle.message("popup.content.this.action.not.available.while.updating.indices", productName)
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, productName)
+  }
+
+  @JvmStatic
+  fun getActionsUnavailableMessage(actionNames: List<@ActionText String>): @NlsContexts.PopupContent String {
+    return when {
+      actionNames.isEmpty() -> getActionUnavailableMessage(null)
+      actionNames.size == 1 -> getActionUnavailableMessage(actionNames[0])
+      else -> IdeBundle.message("popup.content.none.of.following.actions.are.available.while.updating.indices",
+                                ApplicationNamesInfo.getInstance().productName,
+                                actionNames.joinToString(", "))
+    }
   }
 
   /**
@@ -259,15 +283,18 @@ object ActionUtil {
    */
   @Throws(ProcessCanceledException::class)
   @JvmStatic
-  fun <T> underModalProgress(project: Project,
-                             progressTitle: @NlsContexts.ProgressTitle String,
-                             computable: Computable<T>): T {
+  fun <T> underModalProgress(
+    project: Project,
+    progressTitle: @NlsContexts.ProgressTitle String,
+    computable: Computable<T>,
+  ): T {
     val dumbService = DumbService.getInstance(project)
     val useAlternativeResolve = dumbService.isAlternativeResolveEnabled
     val inReadAction = ThrowableComputable<T, RuntimeException> { ApplicationManager.getApplication().runReadAction(computable) }
     val prioritizedRunnable = ThrowableComputable<T, RuntimeException> { ProgressManager.getInstance().computePrioritized(inReadAction) }
     val process = if (useAlternativeResolve) ThrowableComputable {
-      dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable) }
+      dumbService.computeWithAlternativeResolveEnabled(prioritizedRunnable)
+    }
     else prioritizedRunnable
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(process, progressTitle, true, project)
   }
@@ -319,9 +346,11 @@ object ActionUtil {
 
   @ApiStatus.Internal
   @JvmStatic
-  fun doPerformActionOrShowPopup(action: AnAction,
-                                 e: AnActionEvent,
-                                 popupShow: Consumer<in JBPopup?>?) {
+  fun doPerformActionOrShowPopup(
+    action: AnAction,
+    e: AnActionEvent,
+    popupShow: Consumer<in JBPopup>?,
+  ) {
     if (action is ActionGroup && !e.presentation.isPerformGroup) {
       val dataContext = e.dataContext
       val place = ActionPlaces.getActionGroupPopupPlace(e.place)
@@ -347,24 +376,29 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun performInputEventHandlerWithCallbacks(inputEvent: InputEvent, runnable: Runnable) {
-    val place = if (inputEvent is KeyEvent) ActionPlaces.KEYBOARD_SHORTCUT else if (inputEvent is MouseEvent) ActionPlaces.MOUSE_SHORTCUT else ActionPlaces.UNKNOWN
-    val event = AnActionEvent.createFromInputEvent(
-      inputEvent, place, InputEventDummyAction.templatePresentation.clone(),
-      DataManager.getInstance().getDataContext(Objects.requireNonNull(inputEvent.component)))
+  fun performInputEventHandlerWithCallbacks(uiKind: ActionUiKind, place: String?, inputEvent: InputEvent, runnable: Runnable) {
+    val place = place ?: when (inputEvent) {
+      is KeyEvent -> ActionPlaces.KEYBOARD_SHORTCUT
+      is MouseEvent -> ActionPlaces.MOUSE_SHORTCUT
+      else -> ActionPlaces.UNKNOWN
+    }
+    val context = DataManager.getInstance().getDataContext(inputEvent.component)
+    val event = AnActionEvent.createEvent(InputEventDummyAction, context, null, place, uiKind, inputEvent)
     (event.actionManager as ActionManagerEx).performWithActionCallbacks(InputEventDummyAction, event, runnable)
   }
 
   @JvmStatic
-  fun performDumbAwareWithCallbacks(action: AnAction,
-                                    event: AnActionEvent,
-                                    performRunnable: Runnable) {
-    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action,  event, performRunnable)
+  fun performDumbAwareWithCallbacks(
+    action: AnAction,
+    event: AnActionEvent,
+    performRunnable: Runnable,
+  ) {
+    (event.actionManager as ActionManagerEx).performWithActionCallbacks(action, event, performRunnable)
   }
 
   @JvmStatic
   fun createEmptyEvent(): AnActionEvent {
-    return AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, DataContext.EMPTY_CONTEXT)
+    return AnActionEvent.createEvent(DataContext.EMPTY_CONTEXT, null, ActionPlaces.UNKNOWN, ActionUiKind.NONE, null)
   }
 
   @JvmStatic
@@ -385,9 +419,11 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun registerForEveryKeyboardShortcut(component: JComponent,
-                                       action: ActionListener,
-                                       shortcuts: ShortcutSet) {
+  fun registerForEveryKeyboardShortcut(
+    component: JComponent,
+    action: ActionListener,
+    shortcuts: ShortcutSet,
+  ) {
     for (shortcut in shortcuts.shortcuts) {
       if (shortcut is KeyboardShortcut) {
         val first: KeyStroke = shortcut.firstKeyStroke
@@ -443,24 +479,37 @@ object ActionUtil {
     return a1
   }
 
+  @Deprecated("Use [invokeAction(action, event, onDone)] instead")
   @JvmStatic
-  fun invokeAction(action: AnAction,
-                   component: Component,
-                   place: String,
-                   inputEvent: InputEvent?,
-                   onDone: Runnable?) {
-    invokeAction(action, DataManager.getInstance().getDataContext(component), place, inputEvent, onDone)
+  fun invokeAction(
+    action: AnAction,
+    component: Component,
+    place: String,
+    inputEvent: InputEvent?,
+    onDone: Runnable?,
+  ) {
+    val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
+    val dataContext = DataManager.getInstance().getDataContext(component)
+    val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
+    invokeAction(action, event, onDone)
+  }
+
+  @Deprecated("Use [invokeAction(action, event, onDone)] instead")
+  @JvmStatic
+  fun invokeAction(
+    action: AnAction,
+    dataContext: DataContext,
+    place: String,
+    inputEvent: InputEvent?,
+    onDone: Runnable?,
+  ) {
+    val uiKind = if (ActionPlaces.isPopupPlace(place)) ActionUiKind.POPUP else ActionUiKind.NONE
+    val event = AnActionEvent.createEvent(action, dataContext, null, place, uiKind, inputEvent)
+    invokeAction(action, event, onDone)
   }
 
   @JvmStatic
-  fun invokeAction(action: AnAction,
-                   dataContext: DataContext,
-                   place: String,
-                   inputEvent: InputEvent?,
-                   onDone: Runnable?) {
-    val presentation = action.templatePresentation.clone()
-    val event = AnActionEvent.createFromInputEvent(inputEvent, place, presentation, dataContext)
-    event.setInjectedContext(action.isInInjectedContext)
+  fun invokeAction(action: AnAction, event: AnActionEvent, onDone: Runnable?) {
     if (lastUpdateAndCheckDumb(action, event, false)) {
       try {
         performActionDumbAwareWithCallbacks(action, event)
@@ -472,9 +521,11 @@ object ActionUtil {
   }
 
   @JvmStatic
-  fun createActionListener(actionId: String,
-                           component: Component,
-                           place: String): ActionListener {
+  fun createActionListener(
+    actionId: String,
+    component: Component,
+    place: String,
+  ): ActionListener {
     return ActionListener { e: ActionEvent? ->
       val action = getAction(actionId) ?: return@ActionListener
       invokeAction(action, component, place, null, null)
@@ -562,10 +613,12 @@ object ActionUtil {
 
   @ApiStatus.Experimental
   @JvmStatic
-  fun createToolbarComponent(target: JComponent,
-                             place: @NonNls String,
-                             group: ActionGroup,
-                             horizontal: Boolean): JComponent {
+  fun createToolbarComponent(
+    target: JComponent,
+    place: @NonNls String,
+    group: ActionGroup,
+    horizontal: Boolean,
+  ): JComponent {
     val toolbar = ActionManager.getInstance().createActionToolbar(place, group, horizontal)
     toolbar.targetComponent = target
     return toolbar.component

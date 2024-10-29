@@ -2,6 +2,7 @@
 package com.intellij.gradle.toolingExtension.util;
 
 import org.gradle.util.GradleVersion;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public final class GradleVersionUtil {
@@ -48,6 +49,7 @@ public final class GradleVersionUtil {
   /**
    * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isGradleNewerThan(@NotNull GradleVersion actualVersion, @NotNull String version) {
@@ -57,6 +59,7 @@ public final class GradleVersionUtil {
   /**
    * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isGradleNewerThan(@NotNull String actualVersion, @NotNull String version) {
@@ -66,6 +69,7 @@ public final class GradleVersionUtil {
   /**
    * @deprecated See {@link GradleVersionUtil#isCurrentGradleNewerThan} for details
    */
+  @ApiStatus.ScheduledForRemoval
   @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static boolean isCurrentGradleOlderOrSameAs(@NotNull String version) {

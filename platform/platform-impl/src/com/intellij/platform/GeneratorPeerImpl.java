@@ -2,6 +2,7 @@
 package com.intellij.platform;
 
 import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ public class GeneratorPeerImpl<T> implements ProjectGeneratorPeer<T> {
   }
 
   @Override
-  public @NotNull JComponent getComponent() {
+  public @NotNull JComponent getComponent(@NotNull TextFieldWithBrowseButton myLocationField, @NotNull Runnable checkValid) {
     return myComponent;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -26,8 +26,8 @@ import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.Alarm;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.SingleEdtTaskScheduler;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -49,7 +49,7 @@ import java.util.Map;
 import java.util.Set;
 
 final class TrafficLightPopup {
-  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
+  private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = new ExtensionPointName<>("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
   private final Editor myEditor;
@@ -57,7 +57,7 @@ final class TrafficLightPopup {
   private final JPanel myContent = new JPanel(new GridBagLayout());
   private final Map<String, JProgressBar> myProgressBarMap = new HashMap<>();
   private final AncestorListener myAncestorListener;
-  private final Alarm popupAlarm = new Alarm();
+  private final SingleEdtTaskScheduler popupAlarm = SingleEdtTaskScheduler.createSingleEdtTaskScheduler();
 
   private JBPopup myPopup;
   private boolean insidePopup;
@@ -104,17 +104,15 @@ final class TrafficLightPopup {
   }
 
   void scheduleShow(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> showPopup(event, analyzerStatus), Registry.intValue("ide.tooltip.initialReshowDelay"));
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialReshowDelay"), () -> showPopup(event, analyzerStatus));
   }
 
   void scheduleHide() {
-    popupAlarm.cancelAllRequests();
-    popupAlarm.addRequest(() -> {
+    popupAlarm.cancelAndRequest(Registry.intValue("ide.tooltip.initialDelay.highlighter"), () -> {
       if (canClose()) {
         hidePopup();
       }
-    }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
+    });
   }
 
   private void showPopup(@NotNull InputEvent event, @NotNull AnalyzerStatus analyzerStatus) {
@@ -358,7 +356,6 @@ final class TrafficLightPopup {
     new HelpTooltip().setDescription(msg).installOn(label);
     return label;
   }
-
 
   private static final class MenuAction extends DefaultActionGroup implements HintManagerImpl.ActionToIgnore {
     private MenuAction(@NotNull List<? extends AnAction> actions, @NotNull AnAction compactViewAction) {

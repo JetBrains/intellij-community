@@ -443,12 +443,9 @@ public final class KotlinJvmDifferentiateStrategy extends JvmDifferentiateStrate
   }
 
   private static final class PropertyDescriptor{
-    @NotNull
-    final String name;
-    @NotNull
-    final JvmMethod getter;
-    @Nullable
-    final JvmMethod setter;
+    final @NotNull String name;
+    final @NotNull JvmMethod getter;
+    final @Nullable JvmMethod setter;
 
     PropertyDescriptor(@NotNull String name, @NotNull JvmMethod getter, @Nullable JvmMethod setter) {
       this.name = name;

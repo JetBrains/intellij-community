@@ -8,6 +8,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiFileRange;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -136,6 +137,7 @@ public interface Pointer<T> {
    * This method is deprecated because the pointer equality was intended to be used without the read action,
    * while often being impossible to implement without it, which makes it infeasible to use on the EDT.
    */
+  @ApiStatus.Internal
   @Deprecated
   @Contract(value = "_, _, _ -> new", pure = true)
   static <T, U> @NotNull Pointer<T> delegatingPointer(@NotNull Pointer<? extends U> underlyingPointer,

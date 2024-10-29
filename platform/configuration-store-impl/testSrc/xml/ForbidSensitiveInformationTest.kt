@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
+import com.intellij.testFramework.rethrowLoggedErrorsIn
 import com.intellij.util.SystemProperties
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.OptionTag
@@ -27,7 +28,7 @@ internal class ForbidSensitiveInformationTest {
   }
 
   @Test
-  fun `do not store password as attribute`() {
+  fun `do not store password as attribute`(): Unit = rethrowLoggedErrorsIn {
     @Tag("bean")
     class Bean {
       @Attribute
@@ -57,7 +58,7 @@ internal class ForbidSensitiveInformationTest {
   }
 
   @Test
-  fun `do not store password as element`() {
+  fun `do not store password as element`(): Unit = rethrowLoggedErrorsIn {
     @Tag("component")
     class Bean {
       var password: String? = null
@@ -95,7 +96,7 @@ internal class ForbidSensitiveInformationTest {
   }
 
   @Test
-  fun `do not store password as tag`() {
+  fun `do not store password as tag`(): Unit = rethrowLoggedErrorsIn {
     @Tag("server")
     class Server {
       @Tag("password")

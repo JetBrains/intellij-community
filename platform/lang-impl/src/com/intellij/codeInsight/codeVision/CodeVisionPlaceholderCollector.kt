@@ -10,6 +10,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 @Internal
 sealed interface CodeVisionPlaceholderCollector
 
+@Internal
 interface BypassBasedPlaceholderCollector : CodeVisionPlaceholderCollector {
   fun collectPlaceholders(element: PsiElement, editor: Editor) : List<TextRange>
 }

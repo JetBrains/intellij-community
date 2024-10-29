@@ -1,7 +1,8 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.mock.Mock;
+import com.intellij.openapi.components.ComponentManagerEx;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
@@ -47,7 +48,8 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
     };
 
     EditorManager editorManager = new EditorManager();
-    myHistory = new IdeDocumentHistoryImpl(getProject()) {
+    Project project = getProject();
+    myHistory = new IdeDocumentHistoryImpl(project, ((ComponentManagerEx)project).getCoroutineScope()) {
       @Override
       protected FileEditorManagerEx getFileEditorManager() {
         return editorManager;
@@ -59,7 +61,7 @@ public class IdeDocumentHistoryTest extends HeavyPlatformTestCase {
       }
 
       @Override
-      protected void executeCommand(Runnable runnable, String name, Object groupId) {
+      protected void executeCommand(@NotNull Runnable runnable, String name, Object groupId) {
         myHistory.onCommandStarted(groupId);
         runnable.run();
         myHistory.onSelectionChanged();

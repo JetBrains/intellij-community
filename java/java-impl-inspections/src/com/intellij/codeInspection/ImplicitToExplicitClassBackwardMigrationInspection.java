@@ -6,7 +6,6 @@ import com.intellij.modcommand.ModPsiUpdater;
 import com.intellij.modcommand.PsiUpdateModCommandQuickFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.JavaFeature;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
@@ -41,10 +40,6 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
           return;
         }
         String message = JavaBundle.message("inspection.implicit.to.explicit.class.backward.migration.name");
-        if (isInfoMode()) {
-          holder.registerProblem(aClass, message, new ReplaceWithExplicitClassFix());
-          return;
-        }
 
         PsiMethod method = PsiMethodUtil.findMainMethod(aClass);
         if (method == null) {
@@ -55,10 +50,6 @@ public final class ImplicitToExplicitClassBackwardMigrationInspection extends Ab
           return;
         }
         holder.registerProblem(identifier, message, new ReplaceWithExplicitClassFix());
-      }
-
-      private boolean isInfoMode() {
-        return InspectionProjectProfileManager.isInformationLevel(SHORT_NAME, holder.getFile());
       }
     };
   }

@@ -30,7 +30,10 @@ package net.n3.nanoxml;
 
 
 import java.io.Reader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.Properties;
 
 
 /**
@@ -44,36 +47,38 @@ public final class StdXMLParser {
   /**
    * The builder which creates the logical structure of the XML data.
    */
-  private IXMLBuilder builder;
+  private final IXMLBuilder builder;
 
 
   /**
    * The reader from which the parser retrieves its data.
    */
-  private StdXMLReader reader;
+  private final StdXMLReader reader;
 
 
   /**
    * The entity resolver.
    */
-  private IXMLEntityResolver entityResolver;
+  private final IXMLEntityResolver entityResolver;
 
 
   /**
    * The validator that will process entity references and validate the XML
    * data.
    */
-  private IXMLValidator validator;
-
+  private final IXMLValidator validator;
 
   /**
    * Creates a new parser.
    */
-  public StdXMLParser() {
-    builder = null;
-    validator = null;
-    reader = null;
-    entityResolver = new XMLEntityResolver();
+  public StdXMLParser(StdXMLReader reader,
+                      IXMLBuilder builder,
+                      IXMLValidator validator,
+                      IXMLEntityResolver entityResolver) {
+    this.builder = builder;
+    this.validator = validator;
+    this.reader = reader;
+    this.entityResolver = entityResolver;
   }
 
   /**
@@ -85,14 +90,6 @@ public final class StdXMLParser {
     return builder;
   }
 
-  /**
-   * Sets the builder which creates the logical structure of the XML data.
-   *
-   * @param builder the non-null builder
-   */
-  public void setBuilder(IXMLBuilder builder) {
-    this.builder = builder;
-  }
 
   /**
    * Returns the validator that validates the XML data.
@@ -103,14 +100,6 @@ public final class StdXMLParser {
     return validator;
   }
 
-  /**
-   * Sets the validator that validates the XML data.
-   *
-   * @param validator the non-null validator
-   */
-  public void setValidator(IXMLValidator validator) {
-    this.validator = validator;
-  }
 
   /**
    * Returns the entity resolver.
@@ -121,14 +110,6 @@ public final class StdXMLParser {
     return entityResolver;
   }
 
-  /**
-   * Sets the entity resolver.
-   *
-   * @param resolver the non-null resolver
-   */
-  public void setResolver(IXMLEntityResolver resolver) {
-    entityResolver = resolver;
-  }
 
   /**
    * Returns the reader from which the parser retrieves its data.
@@ -139,14 +120,6 @@ public final class StdXMLParser {
     return reader;
   }
 
-  /**
-   * Sets the reader from which the parser retrieves its data.
-   *
-   * @param reader the reader
-   */
-  public void setReader(StdXMLReader reader) {
-    this.reader = reader;
-  }
 
   /**
    * Parses the data and lets the builder create the logical data structure.

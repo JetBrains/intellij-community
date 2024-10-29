@@ -1,4 +1,7 @@
 // ATTACH_LIBRARY: maven(org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3)-javaagent
+// REGISTRY: debugger.async.stacks.coroutines=false
+
+
 
 import kotlinx.coroutines.*
 
@@ -32,7 +35,3 @@ suspend fun someInt(): Int {
 
 // STEP_OUT: 1
 // STEP_OVER: 3
-
-// REGISTRY: debugger.filter.breakpoints.by.coroutine.id=true
-// REGISTRY: debugger.always.suspend.thread.before.switch=true
-// REGISTRY: debugger.async.stacks.coroutines=false

@@ -5,4 +5,4 @@ import com.intellij.platform.diagnostic.telemetry.PlatformMetrics
 import com.intellij.platform.diagnostic.telemetry.Scope
 
 @JvmField
-val FindUsagesScope: Scope = Scope("findUsages", PlatformMetrics)
+internal val FindUsagesScope: Scope = Scope("findUsages", PlatformMetrics)

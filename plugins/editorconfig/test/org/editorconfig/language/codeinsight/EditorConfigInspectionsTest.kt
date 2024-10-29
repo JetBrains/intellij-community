@@ -4,7 +4,7 @@ package org.editorconfig.language.codeinsight
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.application.ex.PathManagerEx
-import com.intellij.tools.ide.metrics.benchmark.PerformanceTestUtil
+import com.intellij.tools.ide.metrics.benchmark.Benchmark
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.ThrowableRunnable
@@ -100,6 +100,11 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     EditorConfigValueUniquenessInspection::class
   )
 
+  fun testFantomasOptions() = doTest(
+    EditorConfigKeyCorrectnessInspection::class,
+    EditorConfigValueCorrectnessInspection::class
+  )
+
   fun testHeaderProcessingPerformance() {
     doTestPerf(EditorConfigNoMatchingFilesInspection::class)
   }
@@ -115,7 +120,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
   private fun doTestPerf(inspection: KClass<out LocalInspectionTool>) {
     myFixture.enableInspections(inspection.java)
     myFixture.configureByFile("${getTestName(true)}/.editorconfig")
-    PerformanceTestUtil.newPerformanceTest("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
+    Benchmark.newBenchmark("${inspection.simpleName} performance", ThrowableRunnable<Throwable> {
       myFixture.doHighlighting()
     }).attempts(1).start()
   }
@@ -126,7 +131,7 @@ class EditorConfigInspectionsTest : BasePlatformTestCase() {
     vararg inspections: KClass<out LocalInspectionTool>,
     checkWarnings: Boolean = true,
     checkWeakWarnings: Boolean = false,
-    checkInfos: Boolean = false
+    checkInfos: Boolean = false,
   ) {
     myFixture.enableInspections(inspections.map(KClass<out LocalInspectionTool>::java))
     myFixture.testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, "${getTestName(true)}/.editorconfig")

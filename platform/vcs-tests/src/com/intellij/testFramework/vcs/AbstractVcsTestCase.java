@@ -27,6 +27,8 @@ import com.intellij.testFramework.builders.EmptyModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 
@@ -79,7 +82,7 @@ public abstract class AbstractVcsTestCase {
 
     projectCreated();
 
-    myWorkingCopyDir = VfsUtil.createDirectories(clientRoot.getPath());
+    myWorkingCopyDir = Objects.requireNonNull(VfsUtil.createDirectories(clientRoot.getPath()));
     ProjectLevelVcsManagerImpl.getInstanceImpl(myProject).waitForInitialized();
   }
 
@@ -246,4 +249,19 @@ public abstract class AbstractVcsTestCase {
     HeavyPlatformTestCase.setBinaryContent(file, content);
   }
 
+  public static <T extends Throwable> void runWithRetries(ThrowableRunnable<T> task) {
+    int attempts = 0;
+    while (true) {
+      try {
+        attempts++;
+        task.run();
+        return;
+      }
+      catch (Throwable e) {
+        if (attempts >= 3) {
+          ExceptionUtil.rethrow(e);
+        }
+      }
+    }
+  }
 }

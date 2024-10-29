@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.highlighter.ProjectFileType;
@@ -31,11 +31,6 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
   }
 
   @Override
-  public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
-    return super.isFileVisible(file, showHiddenFiles) && (file.isDirectory() || isProjectFile(file));
-  }
-
-  @Override
   public boolean isFileSelectable(@Nullable VirtualFile file) {
     return file != null && (isProjectDirectory(file) || isProjectFile(file));
   }
@@ -46,7 +41,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
       if (isIprFile(file) || isIdeaDirectory(file)) {
         return dressIcon(file, ProductIcons.getInstance().getProjectNodeIcon());
       }
-      Icon icon = getImporterIcon(file);
+      var icon = getImporterIcon(file);
       if (icon != null) {
         return dressIcon(file, icon);
       }
@@ -58,12 +53,13 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     if (file.isInLocalFileSystem()) {
       try {
         var path = file.getFileSystem().getNioPath(file);
-        if (path != null && Path.of(SystemProperties.getUserHome()).startsWith(path)) {
+        if (path == null || !path.startsWith(Path.of(SystemProperties.getUserHome()))) {
           return false;
         }
       }
       catch (InvalidPathException e) {
         Logger.getInstance(OpenProjectFileChooserDescriptor.class).error(e);
+        return false;
       }
     }
 
@@ -81,7 +77,7 @@ public class OpenProjectFileChooserDescriptor extends FileChooserDescriptor {
     return !file.isDirectory() && file.isValid() && (isIprFile(file) || hasImportProvider(file));
   }
 
-  private static boolean isProjectDirectory(@NotNull VirtualFile file) {
+  private static boolean isProjectDirectory(VirtualFile file) {
     return file.isDirectory() && file.isValid() && (isIdeaDirectory(file) || hasImportProvider(file));
   }
 

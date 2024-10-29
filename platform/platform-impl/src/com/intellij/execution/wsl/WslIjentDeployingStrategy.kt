@@ -4,6 +4,8 @@ package com.intellij.execution.wsl
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IntellijInternalApi
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ijent.spi.IjentConnectionStrategy
 import com.intellij.platform.ijent.spi.IjentDeployingOverShellProcessStrategy
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +16,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 class WslIjentDeployingStrategy(
   scope: CoroutineScope,
+  override val ijentLabel: String,
   private val distribution: WSLDistribution,
   private val project: Project?,
   private val wslCommandLineOptionsModifier: (WSLCommandLineOptions) -> Unit = {}
@@ -22,7 +25,7 @@ class WslIjentDeployingStrategy(
     distribution.getWslPath(path)
 
   @OptIn(IntellijInternalApi::class, DelicateCoroutinesApi::class)
-  override suspend fun createShellProcess(): ShellProcessWrapper {
+  override suspend fun createShellProcess(): Process {
     // IJent can start an interactive shell by itself whenever it needs.
     // Enabling an interactive shell for IJent by default can bring problems, because stdio of IJent must not be populated
     // with possible user extensions in ~/.profile
@@ -36,6 +39,14 @@ class WslIjentDeployingStrategy(
     val commandLine = WSLDistribution.neverRunTTYFix(GeneralCommandLine("/bin/sh"))
     distribution.doPatchCommandLine(commandLine, project, wslCommandLineOptions)
 
-    return ShellProcessWrapper(computeDetached { commandLine.createProcess() })
+    return computeDetached { commandLine.createProcess() }
+  }
+
+  override suspend fun getConnectionStrategy(): IjentConnectionStrategy {
+    return object : IjentConnectionStrategy {
+      override suspend fun canUseVirtualSockets(): Boolean {
+        return Registry.`is`("ijent.allow.hyperv.connection") && distribution.version == 2
+      }
+    }
   }
 }

@@ -388,7 +388,7 @@ public final class BasicJavaDocParser {
     while (!builder.eof()) {
       builder.advanceLexer();
       previousToken = token;
-      token = getTokenType(builder);
+      token = getTokenType(builder, false);
       if (token == needle) {
         return token;
       }
@@ -398,7 +398,7 @@ public final class BasicJavaDocParser {
       }
 
       // Markdown specific, check for EOL
-      if (token == JavaDocTokenType.DOC_SPACE && previousToken == JavaDocTokenType.DOC_SPACE) {
+      if (token == TokenType.WHITE_SPACE && previousToken == TokenType.WHITE_SPACE) {
         break;
       }
     }
@@ -605,10 +605,15 @@ public final class BasicJavaDocParser {
 
   @Nullable
   private static IElementType getTokenType(PsiBuilder builder) {
+    return getTokenType(builder, true);
+  }
+
+  @Nullable
+  private static IElementType getTokenType(PsiBuilder builder, boolean skipWhitespace) {
     IElementType tokenType;
     while ((tokenType = builder.getTokenType()) == JavaDocTokenType.DOC_SPACE) {
       builder.remapCurrentToken(TokenType.WHITE_SPACE);
-      builder.advanceLexer();
+      if (skipWhitespace) builder.advanceLexer();
     }
     return tokenType;
   }

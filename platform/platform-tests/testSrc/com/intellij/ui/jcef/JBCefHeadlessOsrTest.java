@@ -3,7 +3,7 @@ package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import com.intellij.util.Function;
+import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.Before;
@@ -11,7 +11,6 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.swing.*;
-import java.awt.*;
 
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
@@ -44,11 +43,20 @@ public class JBCefHeadlessOsrTest {
     JBCefBrowser browser = JBCefBrowser.createBuilder()
       .setOffScreenRendering(true)
       .setOSRHandlerFactory(new JBCefOSRHandlerFactory() {
-        final Rectangle bounds = new Rectangle(1024, 768);
+         @Override
+         @NotNull
+         public JComponent createComponent(boolean isMouseWheelEventEnabled) {
+          return new JBCefOsrComponent(isMouseWheelEventEnabled);
+        }
 
-        @Override
-        public @NotNull Function<JComponent, Rectangle> createScreenBoundsProvider() {
-          return component -> bounds;
+         @Override
+         @NotNull
+         public CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
+          assert component instanceof JBCefOsrComponent;
+          JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
+          JBCefOsrHandler handler = new JBCefOsrHandler();
+          osrComponent.setRenderHandler(handler);
+          return handler;
         }
       })
       .setUrl("chrome:version")

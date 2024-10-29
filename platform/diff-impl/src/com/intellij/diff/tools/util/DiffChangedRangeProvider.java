@@ -3,11 +3,13 @@ package com.intellij.diff.tools.util;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public interface DiffChangedRangeProvider {
   @Nullable
   List<TextRange> getChangedRanges(@NotNull Editor editor);

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -28,12 +28,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppJavaExecutorUtil;
+import com.intellij.util.concurrency.CoroutineDispatcherBackedExecutor;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import kotlinx.coroutines.CoroutineScope;
+import org.jetbrains.annotations.*;
 
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
@@ -41,15 +40,16 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+@ApiStatus.Internal
 @State(name = "Encoding", storages = @Storage("encoding.xml"), category = SettingsCategory.CODE)
 public final class EncodingManagerImpl extends EncodingManager implements PersistentStateComponent<EncodingManagerImpl.State>, Disposable {
   private static final Logger LOG = Logger.getInstance(EncodingManagerImpl.class);
 
+  @ApiStatus.Internal
   static final class State {
     private @NotNull EncodingReference myDefaultEncoding = new EncodingReference(StandardCharsets.UTF_8);
     private @NotNull EncodingReference myDefaultConsoleEncoding = EncodingReference.DEFAULT;
@@ -77,13 +77,18 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
 
   private static final Key<Charset> CACHED_CHARSET_FROM_CONTENT = Key.create("CACHED_CHARSET_FROM_CONTENT");
 
-  private final ExecutorService changedDocumentExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
-    "EncodingManagerImpl Document Pool", AppExecutorUtil.getAppExecutorService(), JobSchedulerImpl.getJobPoolParallelism(), this);
+  private final CoroutineDispatcherBackedExecutor changedDocumentExecutor;
 
   private final AtomicBoolean myDisposed = new AtomicBoolean();
 
-  public EncodingManagerImpl() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+  public EncodingManagerImpl(@NotNull CoroutineScope coroutineScope) {
+    changedDocumentExecutor = AppJavaExecutorUtil.createBoundedTaskExecutor(
+      "EncodingManagerImpl Document Pool",
+      coroutineScope,
+      JobSchedulerImpl.getJobPoolParallelism()
+    );
+
+    ApplicationManager.getApplication().getMessageBus().connect(coroutineScope).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
       @Override
       public void appClosing() {
         // should call before dispose in write action
@@ -238,18 +243,23 @@ public final class EncodingManagerImpl extends EncodingManager implements Persis
   }
 
   public void clearDocumentQueue() {
-    if (((BoundedTaskExecutor)changedDocumentExecutor).isEmpty()) return;
+    if (changedDocumentExecutor.isEmpty()) {
+      return;
+    }
+
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not call clearDocumentQueue() from under write action because some queued detectors require read action");
     }
-    ((BoundedTaskExecutor)changedDocumentExecutor).clearAndCancelAll();
+
     // after clear and canceling all queued tasks, make sure they all are finished
-    waitAllTasksExecuted(1, TimeUnit.MINUTES);
+    //noinspection TestOnlyProblems
+    changedDocumentExecutor.cancelAndWaitAllTasksExecuted(1, TimeUnit.MINUTES);
   }
 
-  void waitAllTasksExecuted(long timeout, @NotNull TimeUnit unit) {
+  @TestOnly
+  void waitAllTasksExecuted() {
     try {
-      ((BoundedTaskExecutor)changedDocumentExecutor).waitAllTasksExecuted(timeout, unit);
+      changedDocumentExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       LOG.error(e);

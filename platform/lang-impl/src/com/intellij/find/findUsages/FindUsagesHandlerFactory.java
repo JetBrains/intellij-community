@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.findUsages;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -35,8 +35,7 @@ public abstract class FindUsagesHandlerFactory implements PluginAware {
    * @return a handler, which is used for Find Usages action (and related actions),
    * or {@code null} if this factory cannot provide a handler
    */
-  @Nullable
-  public abstract FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages);
+  public abstract @Nullable FindUsagesHandler createFindUsagesHandler(@NotNull PsiElement element, final boolean forHighlightUsages);
 
   public enum OperationMode {
     /**

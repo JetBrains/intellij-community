@@ -77,8 +77,7 @@ public abstract class AbstractRearrangerTest extends BasePlatformTestCase {
       ArrangementAtomMatchCondition[] conditions = new ArrangementAtomMatchCondition[tokens.length + 1];
       conditions[0] = atom(nameFilter);
       for (int i = 0; i < tokens.length; i++) conditions[i + 1] = atom(tokens[i]);
-      ArrangementMatchCondition compositeCondition = ArrangementUtil.combine(conditions);
-      return new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition));
+      return rule(conditions);
     }
   }
 

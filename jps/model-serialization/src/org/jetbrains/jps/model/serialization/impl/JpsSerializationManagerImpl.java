@@ -9,15 +9,30 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.serialization.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 
 public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   @Override
-  public @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPath, boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsModel loadModel(@NotNull String projectPath, @Nullable String optionsPathString, boolean loadUnloadedModules) throws IOException {
+    Path optionsPath = optionsPathString != null ? Paths.get(optionsPathString).normalize() : null;
+    Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
+    return loadModel(Paths.get(projectPath), externalConfigurationDirectory, optionsPath, loadUnloadedModules);
+  }
+
+  @Override
+  @NotNull
+  public JpsModel loadModel(@NotNull Path projectPath, @Nullable Path externalConfigurationDirectory, @Nullable Path optionsPath,
+                            boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
-      return serializationViaWorkspaceModel.loadModel(projectPath, optionsPath, loadUnloadedModules);
+      String projectCachePath = System.getProperty("jps.workspace.storage.project.cache.path");
+      Path workspaceStorageCachePath = projectCachePath != null ? Paths.get(projectCachePath) : null;
+      String globalCachePath = System.getProperty("jps.workspace.storage.global.cache.path");
+      Path globalWorkspaceStoragePath = globalCachePath != null ? Paths.get(globalCachePath) : null;
+      return serializationViaWorkspaceModel.loadModel(projectPath, workspaceStorageCachePath, externalConfigurationDirectory, optionsPath,
+                                                      globalWorkspaceStoragePath, loadUnloadedModules);
     }
 
     JpsModel model = JpsElementFactory.getInstance().createModel();
@@ -25,7 +40,9 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
       JpsGlobalSettingsLoading.loadGlobalSettings(model.getGlobal(), optionsPath);
     }
     Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, model.getGlobal().getPathMapper(), Paths.get(projectPath), loadUnloadedModules);
+    JpsProject project = model.getProject();
+    JpsPathMapper pathMapper = model.getGlobal().getPathMapper();
+    JpsProjectLoader.loadProject(project, pathVariables, pathMapper, projectPath, loadUnloadedModules, externalConfigurationDirectory);
     return model;
   }
 
@@ -35,14 +52,27 @@ public final class JpsSerializationManagerImpl extends JpsSerializationManager {
   }
 
   @Override
-  public @NotNull JpsProject loadProject(@NotNull String projectPath, @NotNull Map<String, String> pathVariables, boolean loadUnloadedModules) throws IOException {
+  public @NotNull JpsProject loadProject(@NotNull String projectPathString, @NotNull Map<String, String> pathVariables, boolean loadUnloadedModules) throws IOException {
+    Path projectPath = Paths.get(projectPathString);
+    Path externalConfigurationDirectory = JpsProjectConfigurationLoading.getExternalConfigurationDirectoryFromSystemProperty();
+    return loadProject(projectPath, externalConfigurationDirectory, pathVariables, loadUnloadedModules);
+  }
+
+  @Override
+  @NotNull
+  public JpsProject loadProject(@NotNull Path projectPath,
+                                @Nullable Path externalConfigurationDirectory,
+                                @NotNull Map<String, String> pathVariables,
+                                boolean loadUnloadedModules) throws IOException {
     JpsSerializationViaWorkspaceModel serializationViaWorkspaceModel = JpsSerializationViaWorkspaceModel.getInstance();
     if (serializationViaWorkspaceModel != null) {
-      return serializationViaWorkspaceModel.loadProject(projectPath, pathVariables, loadUnloadedModules);
+      return serializationViaWorkspaceModel.loadProject(projectPath, externalConfigurationDirectory, pathVariables, loadUnloadedModules);
     }
-    
+
     JpsModel model = JpsElementFactory.getInstance().createModel();
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, JpsPathMapper.IDENTITY, Paths.get(projectPath), loadUnloadedModules);
+    JpsProject project = model.getProject();
+    JpsProjectLoader.loadProject(project, pathVariables, JpsPathMapper.IDENTITY, projectPath, loadUnloadedModules,
+                                 externalConfigurationDirectory);
     return model.getProject();
   }
 }

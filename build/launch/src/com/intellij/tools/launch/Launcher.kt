@@ -9,8 +9,6 @@ import com.intellij.tools.launch.os.ProcessOutputStrategy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.jps.model.java.JpsJavaClasspathKind
-import java.net.InetAddress
-import java.net.ServerSocket
 
 object Launcher {
   @Suppress("SSBasedInspection")
@@ -60,16 +58,6 @@ object Launcher {
         )
       )
       return IdeLauncher.launchCommand(localLauncherFactory, ideLaunchContext).process to null
-    }
-  }
-
-  fun findFreePort(): Int {
-    synchronized(this) {
-      val socket = ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"))
-      val result = socket.localPort
-      socket.reuseAddress = true
-      socket.close()
-      return result
     }
   }
 }

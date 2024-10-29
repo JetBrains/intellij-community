@@ -121,7 +121,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
           }
           for (project in ProjectUtil.getOpenProjects()) {
             val projectQueueFile = project.getQueueFile()
-            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, registeredIndexes.wasCorrupted, ManagingFS.getInstance().creationTimestamp)
+            val projectDirtyFilesQueue = readProjectDirtyFilesQueue(projectQueueFile, ManagingFS.getInstance().creationTimestamp)
             fileBasedIndex.dirtyFiles.getProjectDirtyFiles(project)?.addFiles(projectDirtyFilesQueue.fileIds)
             fileBasedIndex.setLastSeenIndexInOrphanQueue(project, projectDirtyFilesQueue.lastSeenIndexInOrphanQueue)
             val indexesWereCorrupted = registeredIndexes.wasCorrupted

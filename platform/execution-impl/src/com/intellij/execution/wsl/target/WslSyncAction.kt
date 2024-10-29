@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.util.TimeoutUtil
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import javax.swing.JOptionPane
 
@@ -19,6 +20,7 @@ import javax.swing.JOptionPane
 /**
  * Demonstrates how [WslSync.syncWslFolders] works
  */
+@ApiStatus.Internal
 @Suppress("HardCodedStringLiteral") // This is a test, internal only action
 class WslSyncAction : DumbAwareAction("WSL Sync") {
   override fun actionPerformed(e: AnActionEvent) {

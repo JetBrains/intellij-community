@@ -8,6 +8,7 @@ import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.projectView.ProjectViewNode;
+import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.ModuleGroup;
 import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
@@ -360,74 +361,56 @@ public class CommanderPanel extends JPanel {
     myTitlePanel.setVisible(flag);
   }
 
-  public Object getDataImpl(final String dataId) {
-    if (myBuilder == null) return null;
-    if (LangDataKeys.IDE_VIEW.is(dataId)) {
-      return myIdeView;
-    }
-    else if (PlatformCoreDataKeys.SELECTED_ITEM.is(dataId)) {
-      return getSelectedNode();
-    }
-    else if (PlatformCoreDataKeys.SELECTED_ITEMS.is(dataId)) {
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      if (selection.isEmpty()) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-      return getSelectedNodes().toArray();
-    }
-    else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      if (selection.isEmpty()) return Navigatable.EMPTY_NAVIGATABLE_ARRAY;
-      return selection.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
-    }
-    else if (PlatformCoreDataKeys.BGT_DATA_PROVIDER.is(dataId)) {
-      AbstractTreeNode<?> parentNode = myBuilder.getParentNode();
-      List<AbstractTreeNode<?>> selection = getSelectedNodes();
-      DataProvider structureProvider = myProjectTreeStructure == null ? null :
-                                       (DataProvider)myProjectTreeStructure.getDataFromProviders(selection, dataId);
-      return CompositeDataProvider.compose(slowId -> getSlowData(slowId, parentNode, selection), structureProvider);
-    }
-    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-      return myDeleteElementProvider;
-    }
-    else if (myProjectTreeStructure != null) {
-      return myProjectTreeStructure.getDataFromProviders(getSelectedNodes(), dataId);
-    }
+  public void uiDataSnapshot(@NotNull DataSink sink) {
+    if (myBuilder == null) return;
+    List<AbstractTreeNode<?>> selection = getSelectedNodes();
+    AbstractTreeNode<?> node = getSelectedNode();
+    AbstractTreeNode<?> parentNode = myBuilder.getParentNode();
 
-    return null;
-  }
+    sink.set(LangDataKeys.IDE_VIEW, myIdeView);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEM, node);
+    sink.set(PlatformCoreDataKeys.SELECTED_ITEMS,
+             selection.isEmpty() ? ArrayUtil.EMPTY_OBJECT_ARRAY : getSelectedNodes().toArray());
+    sink.set(CommonDataKeys.NAVIGATABLE_ARRAY,
+             selection.isEmpty() ? Navigatable.EMPTY_NAVIGATABLE_ARRAY : selection.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY));
+    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteElementProvider);
 
-  private static @Nullable Object getSlowData(@NotNull String dataId,
-                                              @Nullable AbstractTreeNode<?> parentNode,
-                                              @NotNull List<AbstractTreeNode<?>> selection) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (myProjectTreeStructure != null) {
+      List<TreeStructureProvider> providers = myProjectTreeStructure.getProviders();
+      if (providers != null && !providers.isEmpty()) {
+        for (TreeStructureProvider provider : ContainerUtil.reverse(providers)) {
+          provider.uiDataSnapshot(sink, selection);
+        }
+      }
+    }
+    sink.lazy(CommonDataKeys.PSI_ELEMENT, () -> {
       return getNodeElement(ContainerUtil.getOnlyItem(selection));
-    }
-    else if (PlatformCoreDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+    });
+    sink.lazy(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY, () -> {
       if (selection.isEmpty()) return PsiElement.EMPTY_ARRAY;
       return PsiUtilCore.toPsiElementArray(ContainerUtil.mapNotNull(selection, CommanderPanel::getNodeElement));
-    }
-    else if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataId)) {
+    });
+    sink.lazy(LangDataKeys.PASTE_TARGET_PSI_ELEMENT, () -> {
       Object element = parentNode != null ? parentNode.getValue() : null;
-      return element instanceof PsiElement ? element : null;
-    }
-    else if (PlatformCoreDataKeys.MODULE.is(dataId)) {
+      return element instanceof PsiElement o ? o : null;
+    });
+    sink.lazy(PlatformCoreDataKeys.MODULE, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof Module ? selectedValue : null;
-    }
-    else if (ModuleGroup.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof Module o ? o : null;
+    });
+    sink.lazy(ModuleGroup.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof ModuleGroup ? new ModuleGroup[]{(ModuleGroup)selectedValue} : null;
-    }
-    else if (LibraryGroupElement.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof ModuleGroup o ? new ModuleGroup[]{o} : null;
+    });
+    sink.lazy(LibraryGroupElement.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof LibraryGroupElement ? new LibraryGroupElement[]{(LibraryGroupElement)selectedValue} : null;
-    }
-    else if (NamedLibraryElement.ARRAY_DATA_KEY.is(dataId)) {
+      return selectedValue instanceof LibraryGroupElement o ? new LibraryGroupElement[]{o} : null;
+    });
+    sink.lazy(NamedLibraryElement.ARRAY_DATA_KEY, () -> {
       Object selectedValue = getNodeValue(ContainerUtil.getOnlyItem(selection));
-      return selectedValue instanceof NamedLibraryElement ? new NamedLibraryElement[]{(NamedLibraryElement)selectedValue} : null;
-    }
-    return null;
+      return selectedValue instanceof NamedLibraryElement o ? new NamedLibraryElement[]{o} : null;
+    });
   }
-
 
   public void setProjectTreeStructure(final ProjectAbstractTreeStructureBase projectTreeStructure) {
     myProjectTreeStructure = projectTreeStructure;

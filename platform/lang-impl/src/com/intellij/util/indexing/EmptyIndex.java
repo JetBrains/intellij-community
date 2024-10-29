@@ -1,10 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.UpdateData;
 import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.EmptyValueContainer;
@@ -85,7 +84,7 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) {
+  public void updateWith(@NotNull UpdateData<Key, Value> updateData) {
   }
 
   @Override
@@ -112,15 +111,13 @@ final class EmptyIndex<Key, Value, Input> implements UpdatableIndex<Key, Value, 
   }
 
   @Override
-  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) {
+  public @NotNull StorageUpdate mapInputAndPrepareUpdate(int inputId, @Nullable Input content) {
     return prepareUpdate(inputId, InputData.empty());
   }
 
   @Override
-  public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
-    return () -> {
-      return true;
-    };
+  public @NotNull StorageUpdate prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
+    return StorageUpdate.NOOP;
   }
 
   @Override

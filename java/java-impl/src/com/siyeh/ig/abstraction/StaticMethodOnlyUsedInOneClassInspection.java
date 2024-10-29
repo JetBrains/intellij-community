@@ -31,7 +31,10 @@ import com.siyeh.ig.BaseGlobalInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.BaseSharedLocalInspection;
 import com.siyeh.ig.fixes.RefactoringInspectionGadgetsFix;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.DeclarationSearchUtils;
+import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TestUtils;
+import com.siyeh.ig.psiutils.UtilityClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
@@ -182,7 +185,8 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
             final GlobalJavaInspectionContext.UsagesProcessor processor = new GlobalJavaInspectionContext.UsagesProcessor() {
               @Override
               public boolean process(PsiReference reference) {
-                final PsiClass containingClass = ClassUtils.getContainingClass(reference.getElement());
+                PsiElement element = reference.getElement();
+                final PsiClass containingClass = PsiUtil.getContainingClass(element);
                 if (containingClass == null) return false;
                 if (problemDescriptionsProcessor.getDescriptions(refEntity) != null) {
                   if (containingClass != ref.get()) {
@@ -301,7 +305,7 @@ public final class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalIn
     public boolean process(PsiReference reference) {
       ProgressManager.checkCanceled();
       final PsiElement element = reference.getElement();
-      final PsiClass usageClass = ClassUtils.getContainingClass(element);
+      final PsiClass usageClass = PsiUtil.getContainingClass(element);
       if (usageClass == null) {
         return true;
       }

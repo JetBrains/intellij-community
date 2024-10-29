@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.ex;
 
@@ -30,6 +30,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +45,7 @@ import java.util.*;
 import static com.intellij.application.options.colors.ColorAndFontOptions.selectOrEditColor;
 import static com.intellij.codeInsight.daemon.impl.SeverityRegistrar.SeverityBasedTextAttributes;
 
+@ApiStatus.Internal
 public final class SeverityEditorDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(SeverityEditorDialog.class);
 
@@ -57,8 +59,8 @@ public final class SeverityEditorDialog extends DialogWrapper {
   private final boolean myCloseDialogWhenSettingsShown;
   private final CardLayout myCard;
   private final JPanel myRightPanel;
-  @NonNls private static final String DEFAULT = "DEFAULT";
-  @NonNls private static final String EDITABLE = "EDITABLE";
+  private static final @NonNls String DEFAULT = "DEFAULT";
+  private static final @NonNls String EDITABLE = "EDITABLE";
 
   public static void show(@NotNull Project project,
                           @Nullable HighlightSeverity selectedSeverity,
@@ -220,8 +222,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
     reset(myOptionsList.getSelectedValue());
   }
 
-  @NotNull
-  public SeverityBasedTextAttributes createSeverity(@NotNull String name, @NotNull TextAttributes parent) {
+  public @NotNull SeverityBasedTextAttributes createSeverity(@NotNull String name, @NotNull TextAttributes parent) {
     HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
                                                                                                TextAttributesKey
                                                                                                  .createTextAttributesKey(name));
@@ -343,13 +344,11 @@ public final class SeverityEditorDialog extends DialogWrapper {
   }
 
   @Override
-  @Nullable
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
-  public HighlightInfoType getSelectedType() {
+  public @Nullable HighlightInfoType getSelectedType() {
     final SeverityBasedTextAttributes selection =  myOptionsList.getSelectedValue();
     return selection != null ? selection.getType() : null;
   }

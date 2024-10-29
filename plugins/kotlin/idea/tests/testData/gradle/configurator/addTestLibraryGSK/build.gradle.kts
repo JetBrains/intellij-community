@@ -3,5 +3,5 @@ plugins {
 }
 
 dependencies {
-    compile(kotlin("stdlib-jre8"))
+    implementation(kotlin("stdlib-jre8"))
 }

@@ -1,5 +1,4 @@
 // FIR_COMPARISON
-// FIR_IDENTICAL
 package first
 
 import java.util.HashMap

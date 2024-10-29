@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.codeInsight.daemon.Validator;
@@ -132,7 +132,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
     public void validate(final @NotNull XmlTag tag, @NotNull ValidationHost host) {
       if (!isFromSchemaNs(tag)) return;
       final String nsPrefix = tag.getNamespacePrefix();
-      final XmlTag[] attrDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "attribute");
+      final XmlTag[] attrDeclTags = tag.findSubTags((!nsPrefix.isEmpty() ? nsPrefix + ":" : "") + "attribute");
 
       XmlUtil.doDuplicationCheckForElements(
         attrDeclTags,
@@ -141,7 +141,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
         host
       );
 
-      final XmlTag[] elementDeclTags = tag.findSubTags((nsPrefix.length() > 0 ? nsPrefix + ":" : "") + "element");
+      final XmlTag[] elementDeclTags = tag.findSubTags((!nsPrefix.isEmpty() ? nsPrefix + ":" : "") + "element");
 
       XmlUtil.doDuplicationCheckForElements(
         elementDeclTags,

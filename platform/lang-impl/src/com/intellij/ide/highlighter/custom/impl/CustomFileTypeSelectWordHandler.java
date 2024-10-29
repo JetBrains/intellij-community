@@ -7,12 +7,14 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 
+@ApiStatus.Internal
 public final class CustomFileTypeSelectWordHandler extends BraceMatcherBasedSelectioner {
   @Override
   public boolean canSelect(@NotNull PsiElement e) {

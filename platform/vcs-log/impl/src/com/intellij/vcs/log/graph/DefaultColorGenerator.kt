@@ -8,6 +8,7 @@ import com.intellij.ui.JBColor
 import com.intellij.vcs.log.paint.ColorGenerator
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import java.util.function.IntFunction
 import javax.swing.UIManager
@@ -16,6 +17,7 @@ import kotlin.math.abs
 /**
  * @author erokhins
  */
+@ApiStatus.Internal
 @Service(Service.Level.APP)
 class DefaultColorGenerator(coroutineScope: CoroutineScope) : ColorGenerator {
   private val colorMap = Int2ObjectOpenHashMap<JBColor>().also {

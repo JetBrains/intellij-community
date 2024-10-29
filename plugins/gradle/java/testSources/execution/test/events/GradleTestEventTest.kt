@@ -4,6 +4,7 @@ package org.jetbrains.plugins.gradle.execution.test.events
 import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.testFramework.GradleExecutionTestCase
 import org.jetbrains.plugins.gradle.testFramework.annotations.AllGradleVersionsSource
+import org.jetbrains.plugins.gradle.testFramework.util.assumeThatGradleIsAtLeast
 import org.junit.jupiter.params.ParameterizedTest
 
 class GradleTestEventTest : GradleExecutionTestCase() {
@@ -160,6 +161,36 @@ class GradleTestEventTest : GradleExecutionTestCase() {
       assertTestEventCount("successTest", 0, 0, 1, 1, 0, 0)
       assertTestEventCount("failedTest", 0, 0, 1, 1, 1, 0)
       assertTestEventCount("ignoredTest", 0, 0, 1, 1, 0, 1)
+    }
+  }
+
+  @ParameterizedTest
+  @AllGradleVersionsSource
+  fun `test parametrized test count`(gradleVersion: GradleVersion) {
+    assumeThatGradleIsAtLeast(gradleVersion,"7.0")
+    testJunit5Project(gradleVersion) {
+      writeText("src/test/java/org/example/TestCase.java", """
+      | import org.junit.jupiter.params.ParameterizedTest;
+      | import org.junit.jupiter.params.provider.ValueSource;
+      |
+      |import static org.junit.jupiter.api.Assertions.assertFalse;
+      |
+      |public class TestCase {
+      |  @ParameterizedTest
+      |  @ValueSource(strings = { "a", "b", "c" })
+      |  public void test(String str) {
+      |    assertFalse(str.isEmpty());
+      |  }
+      |}
+      """.trimMargin())
+
+      executeTasks(":test", isRunAsTest = true)
+      val pattern = "[%d] %s"
+
+      assertTestEventCount("test(String)",1, 1, 0, 0, 0, 0)
+      assertTestEventCount(String.format(pattern, 1, 'a'),0, 0, 1, 1, 0, 0)
+      assertTestEventCount(String.format(pattern, 2, 'b'),0, 0, 1, 1, 0, 0)
+      assertTestEventCount(String.format(pattern, 3, 'c'),0, 0, 1, 1, 0, 0)
     }
   }
 }

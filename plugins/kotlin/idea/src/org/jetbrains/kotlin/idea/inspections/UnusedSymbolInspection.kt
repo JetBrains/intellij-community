@@ -70,7 +70,7 @@ import org.jetbrains.kotlin.idea.isMainFunction
 import org.jetbrains.kotlin.idea.quickfix.RemoveUnusedFunctionParameterFix
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
-import org.jetbrains.kotlin.idea.search.findScriptsWithUsages
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
@@ -150,7 +150,9 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
             val project = declaration.project
             val psiSearchHelper = PsiSearchHelper.getInstance(project)
 
-            if (!findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) } && !ApplicationManager.getApplication().isUnitTestMode) {
+            if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) {
+                    DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }
+                && !ApplicationManager.getApplication().isUnitTestMode) {
                 // Not all script configuration are loaded; behave like it is used
                 return TOO_MANY_OCCURRENCES
             }

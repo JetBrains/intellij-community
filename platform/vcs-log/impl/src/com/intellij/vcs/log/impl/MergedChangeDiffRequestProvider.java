@@ -1,11 +1,13 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
+import com.intellij.diff.DiffEditorTitleCustomizer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -20,6 +22,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer;
+import com.intellij.openapi.vcs.history.DiffTitleFilePathCustomizer.RevisionWithTitle;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -60,10 +64,15 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
                                                                  @NotNull UserDataHolder context,
                                                                  @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
-    return new SimpleDiffRequest(requestTitle,
-                                 ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
-                                 ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                 leftTitle, rightTitle);
+    SimpleDiffRequest request = new SimpleDiffRequest(requestTitle,
+                                                      ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
+                                                      ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
+                                                      leftTitle, rightTitle);
+    List<DiffEditorTitleCustomizer> titleCustomizers =
+      DiffTitleFilePathCustomizer.getTitleCustomizers(project,
+                                                      RevisionWithTitle.create(leftRevision, leftTitle),
+                                                      RevisionWithTitle.create(rightRevision, rightTitle));
+    return DiffUtil.addTitleCustomizers(request, titleCustomizers);
   }
 
   private static @NotNull @Nls String getRevisionTitle(@NotNull Map<Key<?>, Object> context,
@@ -131,11 +140,21 @@ public class MergedChangeDiffRequestProvider implements ChangeDiffRequestProvide
       else if (centerRevision == null) {
         return createTwoSideRequest(project, leftRevision, rightRevision, requestTitle, leftTitle, rightTitle, context, indicator);
       }
-      return new SimpleDiffRequest(requestTitle,
-                                   ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
-                                   ChangeDiffRequestProducer.createContent(project, centerRevision, context, indicator),
-                                   ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
-                                   leftTitle, centerTitle, rightTitle);
+
+      SimpleDiffRequest request = new SimpleDiffRequest(requestTitle,
+                                                        ChangeDiffRequestProducer.createContent(project, leftRevision, context, indicator),
+                                                        ChangeDiffRequestProducer.createContent(project, centerRevision, context,
+                                                                                                indicator),
+                                                        ChangeDiffRequestProducer.createContent(project, rightRevision, context, indicator),
+                                                        leftTitle, centerTitle, rightTitle);
+      List<DiffEditorTitleCustomizer> titleCustomizers = DiffTitleFilePathCustomizer.getTitleCustomizers(
+        project,
+        RevisionWithTitle.create(leftRevision, leftTitle),
+        RevisionWithTitle.create(centerRevision, centerTitle),
+        RevisionWithTitle.create(rightRevision, rightTitle)
+      );
+
+      return DiffUtil.addTitleCustomizers(request, titleCustomizers);
     }
 
     @Override

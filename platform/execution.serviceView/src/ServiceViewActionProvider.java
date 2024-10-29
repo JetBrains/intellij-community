@@ -31,7 +31,6 @@ import java.awt.event.ComponentEvent;
 import java.awt.event.ComponentListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -103,21 +102,14 @@ final class ServiceViewActionProvider {
       group.add(collapseAllAction);
     }
 
-    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TOOLBAR, group, true);
+    ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SERVICES_TREE_TOOLBAR, group, true);
     treeActionsToolBar.setTargetComponent(component);
     return treeActionsToolBar;
   }
 
   List<AnAction> getAdditionalGearActions() {
-    List<AnAction> result = new ArrayList<>();
-    AnAction selectActiveServiceActions = ActionManager.getInstance().getAction("ServiceView.SelectActiveService");
-    ContainerUtil.addIfNotNull(result, selectActiveServiceActions);
-    result.add(Separator.getInstance());
-    AnAction configureServicesActions = ActionManager.getInstance().getAction("ServiceView.ConfigureServices");
-    ContainerUtil.addIfNotNull(result, configureServicesActions);
-    AnAction showServicesActions = ActionManager.getInstance().getAction("ServiceView.ShowServices");
-    ContainerUtil.addIfNotNull(result, showServicesActions);
-    return result;
+    AnAction additionalActions = ActionManager.getInstance().getAction("ServiceView.Gear");
+    return ContainerUtil.createMaybeSingletonList(additionalActions);
   }
 
   @Nullable
@@ -253,7 +245,7 @@ final class ServiceViewActionProvider {
     if (descriptor == null) return AnAction.EMPTY_ARRAY;
 
     ActionGroup group = toolbar ? descriptor.getToolbarActions() : descriptor.getPopupActions();
-    return group == null ? AnAction.EMPTY_ARRAY : group.getChildren(e);
+    return group == null ? AnAction.EMPTY_ARRAY : new AnAction[] { group };
   }
 
   public static JComponent createEmptyToolbar(boolean horizontal, JComponent targetComponent) {

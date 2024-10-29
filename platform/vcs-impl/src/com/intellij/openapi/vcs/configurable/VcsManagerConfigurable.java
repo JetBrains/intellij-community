@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictConfigurable;
 import com.intellij.openapi.vcs.changes.ui.IgnoredSettingsPanel;
 import com.intellij.openapi.vcs.impl.VcsEP;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,6 +30,7 @@ import java.util.List;
 import static com.intellij.openapi.options.ex.ConfigurableWrapper.wrapConfigurable;
 import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
+@ApiStatus.Internal
 public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.Abstract
   implements Weighted, ConfigurableGroup, Configurable.NoScroll, Configurable.WithEpDependencies {
 

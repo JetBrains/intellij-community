@@ -30,19 +30,18 @@ public final class RevisionsCollector {
   public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
                                                 RootEntry rootEntry,
                                                 @NotNull String path,
-                                                String projectId,
-                                                @Nullable String pattern) {
-    return collect(facade, rootEntry, path, projectId, pattern, true);
+                                                String projectId) {
+    return collect(facade, rootEntry, path, projectId, null, true);
   }
 
   public static @NotNull List<Revision> collect(LocalHistoryFacade facade,
                                                 RootEntry rootEntry,
                                                 @NotNull String path,
                                                 String projectId,
-                                                @Nullable String pattern,
+                                                @Nullable HistoryPathFilter filter,
                                                 boolean before) {
     List<Revision> result = new ArrayList<>();
-    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, pattern, changeSet -> {
+    LocalHistoryFacadeKt.collectChanges(facade, projectId, path, filter, changeSet -> {
       result.add(new ChangeRevision(facade, rootEntry, path, changeSet, before));
       return Unit.INSTANCE;
     });

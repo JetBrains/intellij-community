@@ -8,11 +8,10 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.DebugAttachDetectorArgs;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.management.ManagementFactory;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 import java.util.concurrent.ScheduledFuture;
@@ -84,23 +83,13 @@ public final class DebugAttachDetector {
     return property != null && property.isEmpty();
   }
 
-  private static final @Nullable String DEBUG_ARGS = getDebugArgs();
-
-  private static @Nullable String getDebugArgs() {
-    for (String value : ManagementFactory.getRuntimeMXBean().getInputArguments()) {
-      if (value.contains("-agentlib:jdwp")) {
-        return value;
-      }
-    }
-    return null;
-  }
-
   public static boolean isDebugEnabled() {
-    return DEBUG_ARGS != null;
+    return DebugAttachDetectorArgs.getDebugArgs() != null;
   }
 
   private static boolean isDebugServer() {
-    return DEBUG_ARGS != null && DEBUG_ARGS.contains("server=y");
+    String args = DebugAttachDetectorArgs.getDebugArgs();
+    return args != null && args.contains("server=y");
   }
 
   public static boolean isAttached() {

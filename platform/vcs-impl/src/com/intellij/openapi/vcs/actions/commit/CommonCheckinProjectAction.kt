@@ -60,6 +60,7 @@ class CommonCheckinProjectAction : DumbAwareAction() {
   }
 }
 
+@ApiStatus.Internal
 class ToggleChangesViewCommitUiAction : DumbAwareToggleAction() {
   override fun getActionUpdateThread(): ActionUpdateThread {
     return ActionUpdateThread.BGT

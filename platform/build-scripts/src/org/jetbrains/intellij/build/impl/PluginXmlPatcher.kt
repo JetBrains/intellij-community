@@ -42,7 +42,7 @@ fun getCompatiblePlatformVersionRange(compatibleBuildRange: CompatibleBuildRange
   return Pair(sinceBuild, untilBuild)
 }
 
-internal fun patchPluginXml(
+internal suspend fun patchPluginXml(
   moduleOutputPatcher: ModuleOutputPatcher,
   plugin: PluginLayout,
   releaseDate: String,
@@ -81,7 +81,7 @@ internal fun patchPluginXml(
 
     embedContentModules(
       xml = element,
-      file = context.findFileInModuleSources(pluginModule, "META-INF/plugin.xml")!!,
+      file = findFileInModuleSources(module = pluginModule, relativePath = "META-INF/plugin.xml")!!,
       xIncludePathResolver = createXIncludePathResolver(plugin.includedModules.map { it.moduleName } + platformLayout.includedModules.map { it.moduleName }, context),
       layout = plugin,
       context = context,

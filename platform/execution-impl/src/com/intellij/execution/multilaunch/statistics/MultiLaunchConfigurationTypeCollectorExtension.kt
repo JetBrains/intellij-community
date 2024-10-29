@@ -4,7 +4,7 @@ import com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollecto
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsageCollectorExtension
 
-class MultiLaunchConfigurationTypeCollectorExtension : FeatureUsageCollectorExtension {
+internal class MultiLaunchConfigurationTypeCollectorExtension : FeatureUsageCollectorExtension {
   override fun getGroupId() = RunConfigurationTypeUsagesCollector.GROUP.id
 
   override fun getEventId() = RunConfigurationTypeUsagesCollector.CONFIGURED_IN_PROJECT

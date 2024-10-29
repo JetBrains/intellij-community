@@ -32,9 +32,13 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     setText(fix.getNotificationText());
 
     if (myAction != null) {
-      HyperlinkLabel label = createActionLabel(myAction.getActionShortText(), () -> {
+      final String actionText = myAction.supportsSdkChoice() ? myAction.getChoiceActionText() : myAction.getActionShortText();
+      HyperlinkLabel label = createActionLabel(actionText, () -> {
         if (!myIsRunning.compareAndSet(false, true)) return;
-        myAction.applySuggestionAsync(project);
+        if (myAction instanceof FixWithConsent ucFix) ucFix.giveConsent();
+        if (!myAction.supportsSdkChoice() || myAction.supportsSdkChoice() && myAction.chooseSdk()) {
+          myAction.applySuggestionAsync(project);
+        }
       }, true);
 
       String tooltip = myAction.getActionTooltipText();

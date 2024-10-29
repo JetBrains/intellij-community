@@ -4,12 +4,15 @@ package com.intellij.util.messages;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-@ApiStatus.Internal
 public interface MessageBusOwner {
+
+  @ApiStatus.Internal
   @NotNull Object createListener(@NotNull ListenerDescriptor descriptor);
 
+  @ApiStatus.Internal
   boolean isDisposed();
 
+  @ApiStatus.Internal
   default boolean isParentLazyListenersIgnored() {
     return false;
   }

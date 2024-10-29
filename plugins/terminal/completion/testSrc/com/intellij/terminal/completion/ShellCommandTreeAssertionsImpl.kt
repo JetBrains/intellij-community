@@ -1,12 +1,11 @@
 package com.intellij.terminal.completion
 
 import com.intellij.terminal.completion.engine.*
-import com.intellij.util.containers.JBIterable
 import com.intellij.util.containers.TreeTraversal
 import junit.framework.TestCase.assertTrue
 
 internal class ShellCommandTreeAssertionsImpl(root: ShellCommandTreeNode<*>) : ShellCommandTreeAssertions {
-  private val allChildren: JBIterable<ShellCommandTreeNode<*>> = TreeTraversal.PRE_ORDER_DFS.traversal(root) { node -> node.children }
+  private val allChildren: List<ShellCommandTreeNode<*>> = TreeTraversal.PRE_ORDER_DFS.traversal(root) { node -> node.children }.toList()
 
   override fun assertSubcommandOf(cmd: String, parentCmd: String) {
     val childNode = allChildren.find { it.text == cmd } ?: error("Not found node with name: $cmd")

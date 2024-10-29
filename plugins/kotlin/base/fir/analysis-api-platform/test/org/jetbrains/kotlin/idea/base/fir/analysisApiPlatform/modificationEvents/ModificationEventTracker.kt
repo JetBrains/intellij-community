@@ -5,16 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.kotlin.analysis.api.platform.analysisMessageBus
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinCodeFragmentContextModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinGlobalSourceOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationEventKind
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModificationTopics
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleOutOfBlockModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationKind
-import org.jetbrains.kotlin.analysis.api.platform.modification.KotlinModuleStateModificationListener
-import org.jetbrains.kotlin.analysis.api.platform.modification.isModuleLevel
+import org.jetbrains.kotlin.analysis.api.platform.modification.*
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.junit.Assert
 
@@ -160,7 +151,7 @@ open class ModificationEventTracker(
         if (forbiddenEvents.isEmpty()) return
 
         Assert.fail(
-            "The following forbidden events for $label should not have been published:\n- ${forbiddenEvents.joinToString("\n -")}"
+            "The following forbidden events for '$label' should not have been published:\n- ${forbiddenEvents.joinToString("\n -")}"
         )
     }
 

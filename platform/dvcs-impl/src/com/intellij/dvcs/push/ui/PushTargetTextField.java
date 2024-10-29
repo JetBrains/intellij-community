@@ -52,7 +52,7 @@ public class PushTargetTextField extends TextFieldWithCompletion {
     return new ValuesCompletionProviderDumbAware<>(new DefaultTextCompletionValueDescriptor.StringValueDescriptor() {
       @Override
       public int compare(String item1, String item2) {
-        return Integer.compare(targetVariants.indexOf(item1), targetVariants.indexOf(item2));
+        return 0; // keep 'targetVariants' order intact
       }
     }, targetVariants);
   }

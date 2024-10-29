@@ -1,7 +1,7 @@
 package a
 
 private class <caret>Test {
-    fun test {
+    fun test() {
         foo(Foo())
     }
 }

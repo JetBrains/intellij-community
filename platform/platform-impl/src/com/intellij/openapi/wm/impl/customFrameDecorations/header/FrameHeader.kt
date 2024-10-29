@@ -4,10 +4,11 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header
 import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.ui.UISettings
 import com.intellij.idea.ActionsBundle
-import com.intellij.openapi.wm.impl.IdeRootPane
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.CustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.hideNativeLinuxTitle
 import com.intellij.util.ui.JBFont
 import java.awt.Font
 import java.awt.Frame
@@ -16,7 +17,7 @@ import javax.swing.JFrame
 import javax.swing.JPopupMenu
 import javax.swing.JSeparator
 
-internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(frame) {
+internal abstract class FrameHeader(protected val frame: JFrame) : CustomHeader(frame) {
   private val iconifyAction = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"),
                                                         AllIcons.Windows.MinimizeSmall) { iconify() }
   private val restoreAction = CustomFrameAction(CommonBundle.message("button.without.mnemonic.restore"),
@@ -102,7 +103,7 @@ internal open class FrameHeader(protected val frame: JFrame) : CustomHeader(fram
   }
 
   private fun createButtonsPane(): CustomFrameButtons? {
-    if (IdeRootPane.hideNativeLinuxTitle) {
+    if (hideNativeLinuxTitle(UISettings.shadowInstance)) {
       return LinuxResizableCustomFrameButtons.create(closeAction, restoreAction, iconifyAction, maximizeAction)
     }
     return null

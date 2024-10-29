@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * @author max
@@ -6,7 +6,9 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.ide.highlighter.custom.AbstractCustomLexer;
-import com.intellij.ide.highlighter.custom.tokens.*;
+import com.intellij.ide.highlighter.custom.tokens.BraceTokenParser;
+import com.intellij.ide.highlighter.custom.tokens.TokenParser;
+import com.intellij.ide.highlighter.custom.tokens.WhitespaceParser;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -21,12 +23,10 @@ import java.util.ArrayList;
 
 public final class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
   @Override
-  @NotNull
-  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+  public @NotNull SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
     return new SyntaxHighlighterBase() {
-      @NotNull
       @Override
-      public Lexer getHighlightingLexer() {
+      public @NotNull Lexer getHighlightingLexer() {
         return createPlainTextLexer();
       }
 
@@ -37,8 +37,7 @@ public final class PlainTextSyntaxHighlighterFactory extends SyntaxHighlighterFa
     };
   }
 
-  @NotNull
-  public static Lexer createPlainTextLexer() {
+  public static @NotNull Lexer createPlainTextLexer() {
     ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
 

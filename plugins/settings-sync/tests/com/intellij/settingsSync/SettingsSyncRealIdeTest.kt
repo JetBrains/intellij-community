@@ -3,6 +3,7 @@ package com.intellij.settingsSync
 import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.idea.TestFor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -14,19 +15,23 @@ import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.annotations.Attribute
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
-import org.junit.jupiter.api.Disabled
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.nio.charset.Charset
 import java.time.Instant
 import kotlin.io.path.div
 import kotlin.io.path.exists
 import kotlin.io.path.readText
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
 
   @Test
-  fun `settings are pushed`() {
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+  fun `settings are pushed`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    SettingsSyncSettings.getInstance().migrationFromOldStorageChecked = true
+    saveComponentStore()
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
 
     executeAndWaitUntilPushed {
       GeneralSettings.getInstance().initModifyAndSave {
@@ -40,11 +45,12 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
           autoSaveFiles = false
         }
       }
+      fileState(SettingsSyncSettings.getInstance().toFileState())
     }
   }
 
   @Test
-  fun `scheme changes are logged`() {
+  fun `scheme changes are logged`() = timeoutRunBlockingAndStopBridge {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     val keymap = createKeymap()
@@ -73,10 +79,9 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `quickly modified settings are pushed together`() {
+  fun `quickly modified settings are pushed together`() = timeoutRunBlockingAndStopBridge {
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    bridge.suspendEventProcessing()
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
@@ -84,9 +89,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
       SHOW_INTENTION_BULB = false
     }
 
-    val pushedSnapshot = executeAndWaitUntilPushed {
-      bridge.resumeEventProcessing()
-    }
+    val pushedSnapshot = executeAndWaitUntilPushed {}
 
     pushedSnapshot.assertSettingsSnapshot {
       fileState {
@@ -103,7 +106,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `existing settings are copied on initialization`() {
+  fun `existing settings are copied on initialization`() = timeoutRunBlockingAndStopBridge {
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
@@ -131,7 +134,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `disabled categories should be ignored when copying settings on initialization`() {
+  fun `disabled categories should be ignored when copying settings on initialization`() = timeoutRunBlockingAndStopBridge {
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
@@ -166,7 +169,7 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from server are applied`() {
+  fun `settings from server are applied`() = timeoutRunBlockingAndStopBridge(5.seconds) {
     val generalSettings = GeneralSettings.getInstance().init()
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
@@ -177,13 +180,14 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
                                                             setOf(fileState), null, emptyMap(), emptySet()))
 
     waitForSettingsToBeApplied(generalSettings) {
-      fireSettingsChanged()
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
     }
     Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
+    bridge.waitForAllExecuted()
   }
 
   @Test
-  fun `enabling category should copy existing settings from that category`() {
+  fun `enabling category should copy existing settings from that category`() = timeoutRunBlockingAndStopBridge {
     SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.CODE, isEnabled = false)
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
@@ -223,21 +227,121 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `exportable non-roamable settings should not be synced`() {
+  fun `not enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    assertIdeCrossSync(false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer)
+
+    assertIdeCrossSync(false)
+
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState { autoSaveFiles = false }
+      }
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true }
+      }
+    }
+  }
+
+  @Test
+  fun `enabling cross IDE sync initially works as expected`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    assertIdeCrossSync(false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer, true)
+
+    assertIdeCrossSync(true)
+
+    assertServerSnapshot {
+      fileState {
+        GeneralSettings().withState { autoSaveFiles = false }
+      }
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true }
+      }
+    }
+  }
+
+  @Test
+  fun `sync settings are always uploaded even if system settings are disabled`() = timeoutRunBlockingAndStopBridge {
+    SettingsSyncSettings.getInstance().init()
+    GeneralSettings.getInstance().initModifyAndSave { autoSaveFiles = false }
+
+    SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.SYSTEM, false)
+
+    initSettingsSync(SettingsSyncBridge.InitMode.PushToServer, false)
+
+    assertServerSnapshot {
+      // the state of `GeneralSettings` should be explicitly absent
+      fileState {
+        SettingsSyncSettings().also { it.syncEnabled = true; it.setCategoryEnabled(SettingsCategory.SYSTEM, false) }
+      }
+    }
+  }
+
+  @Test
+  fun `exportable non-roamable settings should not be synced`() = timeoutRunBlockingAndStopBridge {
     testVariousComponentsShouldBeSyncedOrNot(ExportableNonRoamable(), expectedToBeSynced = false)
   }
 
   @Test
-  fun `roamable settings should be synced`() {
+  fun `roamable settings should be synced`() = timeoutRunBlockingAndStopBridge {
     testVariousComponentsShouldBeSyncedOrNot(Roamable(), expectedToBeSynced = true)
   }
 
-  private fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
+
+  @Test
+  @TestFor(issues = ["IJPL-162877"])
+  fun `don't sync non-roamable files`() = timeoutRunBlockingAndStopBridge {
+    val nonRoamable = ExportableNonRoamable()
+
+    nonRoamable.init()
+    val generalSettings = GeneralSettings.getInstance().init()
+    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+
+    val generalSettingsState = GeneralSettings().apply {
+      isSaveOnFrameDeactivation = false
+    }.toFileState()
+    val nonRoamableState = ExportableNonRoamable().apply {
+      aState.foo = "bar"
+    }.toFileState()
+
+    remoteCommunicator.prepareFileOnServer(SettingsSnapshot(
+      MetaInfo(Instant.now(), getLocalApplicationInfo()),
+      setOf(generalSettingsState, nonRoamableState),
+      null, emptyMap(), emptySet()
+    ))
+
+    waitForSettingsToBeApplied(generalSettings) {
+      SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+    }
+    Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
+    Assertions.assertTrue(nonRoamable.aState.foo == "")
+
+    bridge.waitForAllExecuted()
+
+    val state = nonRoamable::class.annotations.find { it is State } as State
+    val file = state.storages.first().value
+
+    // we shouldn't drop non-roamable files as they might be used by other IDEs
+    val syncCopy = settingsSyncStorage.resolve("options").resolve(file)
+    val localCopy = configDir.resolve("options").resolve(file)
+    Assertions.assertTrue(syncCopy.exists(), "File should be copied from server")
+    Assertions.assertFalse(localCopy.exists(), "File should not be updated (it's not roamamble)")
+  }
+
+
+  private suspend fun testVariousComponentsShouldBeSyncedOrNot(component: BaseComponent, expectedToBeSynced: Boolean) {
     component.aState.foo = "bar"
     runBlocking {
       application.componentStore.saveComponent(component)
     }
-    application.registerComponentImplementation(component.javaClass, component.javaClass, false)
 
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
@@ -254,46 +358,14 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     }
   }
 
-  private data class AState(@Attribute var foo: String = "")
-
-  @State(name = "SettingsSyncTestExportableNonRoamable",
-         storages = [Storage("settings-sync-test.exportable-non-roamable.xml", roamingType = RoamingType.DISABLED, exportable = true)])
-  private class ExportableNonRoamable: BaseComponent()
-
-  @State(name = "SettingsSyncTestRoamable",
-         storages = [Storage("settings-sync-test.roamable.xml", roamingType = RoamingType.DEFAULT)],
-         category = SettingsCategory.UI)
-  private class Roamable: BaseComponent()
-
-  private open class BaseComponent : PersistentStateComponent<AState> {
-    var aState = AState()
-
-    override fun getState() = aState
-
-    override fun loadState(state: AState) {
-      this.aState = state
-    }
-  }
-
-  private fun performInOfflineMode(action: () -> Unit) {
-    //remoteCommunicator.offline = true
-    //val cdl = CountDownLatch(1)
-    //remoteCommunicator.startPushLatch = cdl
-    //action()
-    //assertTrue("Didn't await for the push request", cdl.await(5, TIMEOUT_UNIT))
-  }
-
   @Test
-  @Disabled // TODO investigate
-  fun `local and remote changes in different files are both applied`() {
+  fun `local and remote changes in different files are both applied`() = timeoutRunBlockingAndStopBridge {
     val generalSettings = GeneralSettings.getInstance().init()
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
     // prepare local commit but don't allow it to be pushed
-    performInOfflineMode {
-      EditorSettingsExternalizable.getInstance().initModifyAndSave {
-        SHOW_INTENTION_BULB = false
-      }
+    UISettings.getInstance().initModifyAndSave {
+      compactTreeIndents = true
     }
     // at this point there is an unpushed local commit
 
@@ -306,8 +378,9 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
     //remoteCommunicator.offline = false
 
     executeAndWaitUntilPushed {
-      waitForSettingsToBeApplied(generalSettings, EditorSettingsExternalizable.getInstance()) {
-        fireSettingsChanged() // merge will happen here
+      waitForSettingsToBeApplied(generalSettings) {
+        SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.SyncRequest)
+        // merge will happen here
       }
     }
 
@@ -318,29 +391,29 @@ internal class SettingsSyncRealIdeTest : SettingsSyncRealIdeTestBase() {
         }
       }
       fileState {
-        EditorSettingsExternalizable().withState {
-          SHOW_INTENTION_BULB = false
+        UISettings().withState {
+          compactTreeIndents = true
         }
       }
     }
     Assertions.assertFalse(generalSettings.isSaveOnFrameDeactivation)
-    Assertions.assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
+    Assertions.assertTrue(UISettings.getInstance().compactTreeIndents)
   }
 
-/*
-  @TestFor(issues = ["IDEA-291623"])
-  @Test
-  fun `zip file size limit exceed`() {
-    val notificationServiceSpy = Mockito.spy<NotificationServiceImpl>()
-    ApplicationManager.getApplication().replaceService(NotificationService::class.java, notificationServiceSpy, disposable)
+  /*
+    @TestFor(issues = ["IDEA-291623"])
+    @Test
+    fun `zip file size limit exceed`() {
+      val notificationServiceSpy = Mockito.spy<NotificationServiceImpl>()
+      ApplicationManager.getApplication().replaceService(NotificationService::class.java, notificationServiceSpy, disposable)
 
-    EditorSettingsExternalizable.getInstance().initModifyAndSave {
-      languageBreadcrumbsMap = (1..100000).associate { UUID.randomUUID().toString() to true } // please FIXME if you now a better way to make a fat file
-    }
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+      EditorSettingsExternalizable.getInstance().initModifyAndSave {
+        languageBreadcrumbsMap = (1..100000).associate { UUID.randomUUID().toString() to true } // please FIXME if you now a better way to make a fat file
+      }
+      initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
 
-    verify(notificationServiceSpy).notifyZipSizeExceed()
-  }*/
+      verify(notificationServiceSpy).notifyZipSizeExceed()
+    }*/
 
   //@Test
   fun `only changed components should be reloaded`() {

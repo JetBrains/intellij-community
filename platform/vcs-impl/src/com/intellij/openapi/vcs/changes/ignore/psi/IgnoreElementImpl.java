@@ -29,11 +29,13 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.ContributedReferenceHost;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Definition of {@link ASTWrapperPsiElement}.
  */
+@ApiStatus.Internal
 public class IgnoreElementImpl extends ASTWrapperPsiElement implements ContributedReferenceHost {
 
   public IgnoreElementImpl(ASTNode node) {

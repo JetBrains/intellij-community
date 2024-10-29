@@ -1,6 +1,8 @@
 package com.intellij.settingsSync
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.testFramework.common.timeoutRunBlocking
+import com.intellij.testFramework.common.waitUntil
 import com.intellij.testFramework.registerExtension
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
@@ -10,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import kotlin.io.path.div
+import kotlin.time.Duration.Companion.seconds
 
 internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
 
@@ -22,14 +25,14 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from provider should be collected`() {
+  fun `settings from provider should be collected`() = timeoutRunBlockingAndStopBridge {
     val ideState = TestState("IDE value")
     settingsProvider.settings = ideState
     GeneralSettings.getInstance().initModifyAndSave {
       autoSaveFiles = false
     }
 
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     val expectedContent = TestSettingsProvider().serialize(ideState)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
@@ -47,15 +50,15 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `settings from provider changed on another client should be applied`() {
+  fun `settings from provider changed on another client should be applied`() = timeoutRunBlockingAndStopBridge {
     val state = TestState("Server value")
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       provided(settingsProvider.id, state)
     })
 
+
     initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
-    fireSettingsChanged()
-    bridge.waitForAllExecuted()
+    syncSettingsAndWait()
 
     val expectedContent = TestSettingsProvider().serialize(state)
     assertFileWithContent(expectedContent, settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
@@ -63,26 +66,36 @@ internal class SettingsProviderTest : SettingsSyncRealIdeTestBase() {
   }
 
   @Test
-  fun `test merge settings provider settings`() {
+  fun `test merge settings provider settings`() = timeoutRunBlockingAndStopBridge {
     val serverState = TestState(property = "Server value")
     remoteCommunicator.prepareFileOnServer(settingsSnapshot {
       provided(settingsProvider.id, serverState)
     })
-    initSettingsSync(SettingsSyncBridge.InitMode.JustInit)
+    initSettingsSync()
 
     val localState = TestState(foo = "Local value")
     SettingsSyncEvents.getInstance().fireSettingsChanged(SyncSettingsEvent.IdeChange(settingsSnapshot {
       provided(settingsProvider.id, localState)
     }))
 
-    fireSettingsChanged()
-    bridge.waitForAllExecuted()
+    syncSettingsAndWait()
 
     val expectedState = TestState(property = "Server value", foo = "Local value")
     assertFileWithContent(TestSettingsProvider().serialize(expectedState),
                           settingsSyncStorage / ".metainfo" / settingsProvider.id / settingsProvider.fileName)
     assertEquals(expectedState, settingsProvider.settings, "Settings were not applied")
   }
+
+  private fun syncSettingsAndWait(event: SyncSettingsEvent = SyncSettingsEvent.SyncRequest) {
+    SettingsSyncEvents.getInstance().fireSettingsChanged(event)
+    bridge.waitForAllExecuted()
+    timeoutRunBlocking {
+      waitUntil("Waiting for queue to finish processing") {
+        bridge.queueSize == 0
+      }
+    }
+  }
+
 
   @Serializable
   internal data class TestState(

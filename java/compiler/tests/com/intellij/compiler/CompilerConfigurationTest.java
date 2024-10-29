@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
+import com.intellij.compiler.server.CompilerConfigurationUtils;
 import com.intellij.module.ModuleGroupTestsKt;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.JDOMUtil;
@@ -66,6 +67,89 @@ public class CompilerConfigurationTest extends HeavyPlatformTestCase {
     ProcessorConfigProfile newProfile = getConfiguration().getAnnotationProcessingConfiguration(module);
     assertNotNull(newProfile);
     assertEquals("bar", assertOneElement(newProfile.getModuleNames()));
+  }
+
+  public void testDefaultParallelCompilationOptionIsAutomatic() {
+    assertEquals(getConfiguration().getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+  }
+
+  public void testDefaultParallelCompilationOptionDoesNotChangeXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    assertNotNull(configuration.getParallelCompilationOption());
+    assertThat(configuration.getState()).isEqualTo("<state />");
+  }
+
+  public void testChangedInOldWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationEnabled(true);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>"""
+    );
+
+    configuration.setParallelCompilationEnabled(false);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>"""
+    );
+
+  }
+
+  public void testChangedInNewWayParallelCompilationOptionChangesXml() {
+    CompilerConfigurationImpl configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.ENABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Enabled" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.AUTOMATIC);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Automatic" />
+     </state>""");
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertEquals(configuration.getParallelCompilationOption(), ParallelCompilationOption.DISABLED);
+    assertThat(configuration.getState()).isEqualTo(
+     """
+     <state>
+       <option name="PARALLEL_COMPILATION_OPTION" value="Disabled" />
+     </state>""");
+  }
+
+  public void testParallelCompilationOptionMapToBoolean() {
+    CompilerConfiguration configuration = getConfiguration();
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.ENABLED);
+
+    assertTrue(configuration.isParallelCompilationEnabled());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.AUTOMATIC);
+
+    assertEquals(configuration.isParallelCompilationEnabled(), CompilerConfigurationUtils.isParallelCompilationAllowedWithCurrentSpecs());
+
+    configuration.setParallelCompilationOption(ParallelCompilationOption.DISABLED);
+
+    assertFalse(configuration.isParallelCompilationEnabled());
   }
 
   private CompilerConfigurationImpl getConfiguration() {

@@ -4,8 +4,9 @@ public final class AnchorType {
     @org.jetbrains.annotations.NotNull private static final var Center: float = AnchorType(0.5)
     @org.jetbrains.annotations.NotNull private static final var End: float = AnchorType(1.0)
     @org.jetbrains.annotations.NotNull private final var ratio: float
-    public final fun getRatio$light_idea_test_case() : float = UastEmptyExpression
-    public fun AnchorType(@org.jetbrains.annotations.NotNull ratio: float) = UastEmptyExpression
+    public fun toString() : java.lang.String = UastEmptyExpression
+    public fun hashCode() : int = UastEmptyExpression
+    public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
     public static final class Companion {
         public final fun getStart() : float = UastEmptyExpression
         public final fun getCenter() : float = UastEmptyExpression
@@ -47,7 +48,9 @@ public final class Alignment {
         @org.jetbrains.annotations.NotNull private static final var CenterHorizontally: int = Horizontal(1)
         @org.jetbrains.annotations.NotNull private static final var End: int = Horizontal(2)
         @org.jetbrains.annotations.NotNull private final var value: int
-        private fun Horizontal(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
+        public fun toString() : java.lang.String = UastEmptyExpression
+        public fun hashCode() : int = UastEmptyExpression
+        public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
             public final fun getStart() : int = UastEmptyExpression
@@ -61,7 +64,9 @@ public final class Alignment {
         @org.jetbrains.annotations.NotNull private static final var CenterVertically: int = Vertical(1)
         @org.jetbrains.annotations.NotNull private static final var Bottom: int = Vertical(2)
         @org.jetbrains.annotations.NotNull private final var value: int
-        private fun Vertical(@org.jetbrains.annotations.NotNull value: int) = UastEmptyExpression
+        public fun toString() : java.lang.String = UastEmptyExpression
+        public fun hashCode() : int = UastEmptyExpression
+        public fun equals(@org.jetbrains.annotations.Nullable other: java.lang.Object) : boolean = UastEmptyExpression
         public static final class Companion {
             private fun Companion() = UastEmptyExpression
             public final fun getTop() : int = UastEmptyExpression

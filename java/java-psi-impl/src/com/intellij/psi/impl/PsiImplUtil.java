@@ -38,6 +38,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairFunction;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
@@ -882,5 +883,28 @@ public final class PsiImplUtil {
     }
 
     return implicitImports.toArray(ImplicitlyImportedElement.EMPTY_ARRAY);
+  }
+
+  /**
+   * Retrieves the corresponding original element for the given PsiElement by looking for a corresponding child within the
+   * parent's original element children.
+   *
+   * @param <T> the type of the PsiElement to find, which is common for a compiled and non-compiled element (e.g., {@link PsiTypeElement})
+   * @param element the PsiElement to find the corresponding original element for
+   * @param cls the class type of the PsiElement
+   * @return the corresponding original element of the specified type if found, otherwise returns the input element
+   */
+  public static <T extends PsiElement> @NotNull T getCorrespondingOriginalElementOfType(@NotNull T element, @NotNull Class<T> cls) {
+    PsiElement parent = element.getParent();
+    if (parent != null) {
+      PsiElement original = parent.getOriginalElement();
+      if (original != parent) {
+        long index = StreamEx.of(parent.getChildren()).select(cls).indexOf(element).orElse(-1);
+        if (index != -1) {
+          return StreamEx.of(original.getChildren()).select(cls).skip(index).findFirst().orElse(element);
+        }
+      }
+    }
+    return element;
   }
 }

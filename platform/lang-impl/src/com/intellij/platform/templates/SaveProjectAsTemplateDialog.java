@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.templates;
 
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
@@ -20,6 +20,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +34,10 @@ import java.util.List;
 /**
  * @author Dmitry Avdeev
  */
+@ApiStatus.Internal
 public final class SaveProjectAsTemplateDialog extends DialogWrapper {
 
-  @NotNull private final Project myProject;
+  private final @NotNull Project myProject;
   private JPanel myPanel;
   private JTextField myName;
   private EditorTextField myDescription;
@@ -79,27 +81,23 @@ public final class SaveProjectAsTemplateDialog extends DialogWrapper {
     init();
   }
 
-  @Nullable
   @Override
-  protected JComponent createCenterPanel() {
+  protected @Nullable JComponent createCenterPanel() {
     return myPanel;
   }
 
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
+  public @Nullable JComponent getPreferredFocusedComponent() {
     return myName;
   }
 
-  @Nullable
   @Override
-  protected String getDimensionServiceKey() {
+  protected @Nullable String getDimensionServiceKey() {
     return "save.project.as.template.dialog";
   }
 
-  @Nullable
   @Override
-  protected ValidationInfo doValidate() {
+  protected @Nullable ValidationInfo doValidate() {
     if (StringUtil.isEmpty(myName.getText())) {
       return new ValidationInfo(LangBundle.message("dialog.message.template.name.should.be.empty"));
     }
@@ -142,5 +140,5 @@ public final class SaveProjectAsTemplateDialog extends DialogWrapper {
     return ModuleManager.getInstance(myProject).findModuleByName(item);
   }
 
-  private final static Logger LOG = Logger.getInstance(SaveProjectAsTemplateDialog.class);
+  private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateDialog.class);
 }

@@ -13,6 +13,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.Service;
 import com.intellij.openapi.editor.colors.Groups;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.StartupUiUtil;
+import kotlinx.coroutines.CoroutineScope;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implements ActionRemoteBehaviorSpecification.Frontend {
-  private final Alarm switchAlarm = new Alarm();
 
   @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
@@ -59,34 +60,8 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
-
-    switchAlarm.cancelAllRequests();
-    if (Registry.is("ide.instant.theme.switch")) {
-      popup.addListSelectionListener(event -> {
-        Object item = ((JList<?>)event.getSource()).getSelectedValue();
-        if (item instanceof AnActionHolder) {
-          AnAction anAction = ((AnActionHolder)item).getAction();
-          if (anAction instanceof LafChangeAction) {
-            switchAlarm.cancelAllRequests();
-            switchAlarm.addRequest(() -> {
-              LafChangeAction action = (LafChangeAction)anAction;
-              switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo, false);
-            }, Registry.get("ide.instant.theme.switch.delay").asInteger());
-          }
-        }
-      });
-    }
-
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        switchAlarm.cancelAllRequests();
-        if (Registry.is("ide.instant.theme.switch") && !event.isOk()) {
-          switchLafAndUpdateUI(LafManager.getInstance(), initialLaf, false);
-        }
-      }
-    });
+    ApplicationManager.getApplication().getService(QuickChangeLookAndFeelService.class)
+      .preparePopup(popup);
 
     super.showPopup(e, popup);
   }
@@ -106,49 +81,12 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
   }
 
   @ApiStatus.Internal
-  public static void switchLafAndUpdateUI(final @NotNull LafManager lafManager,
+  public static void switchLafAndUpdateUI(@NotNull LafManager lafManager,
                                           @NotNull UIThemeLookAndFeelInfo lf,
                                           boolean async,
                                           boolean force,
                                           boolean lockEditorScheme) {
-    UIThemeLookAndFeelInfo cur = lafManager.getCurrentUIThemeLookAndFeel();
-    if (!force && cur == lf) return;
-    ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
-
-    final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
-    lafManager.setCurrentLookAndFeel(lf, lockEditorScheme);
-
-    Runnable updater = () -> {
-      // a twist not to updateUI twice: here, and in DarculaInstaller
-      // double updateUI shall be avoided and causes NPE in some components (HelpView)
-      Ref<Boolean> updated = Ref.create(false);
-      Disposable disposable = Disposer.newDisposable();
-      ApplicationManager.getApplication().getMessageBus().connect(disposable)
-        .subscribe(LafManagerListener.TOPIC, source -> updated.set(true));
-      try {
-        if (StartupUiUtil.isUnderDarcula()) {
-          DarculaInstaller.install();
-        }
-        else if (wasDarcula) {
-          DarculaInstaller.uninstall();
-        }
-      }
-      finally {
-        Disposer.dispose(disposable);
-        if (!updated.get()) {
-          lafManager.updateUI();
-        }
-        if (animator != null) {
-          animator.hideSnapshotWithAnimation();
-        }
-      }
-    };
-    if (async) {
-      SwingUtilities.invokeLater(updater);
-    }
-    else {
-      updater.run();
-    }
+    QuickChangeLookAndFeelService.switchLafAndUpdateUI(lafManager, lf, async, force, lockEditorScheme);
   }
 
   @Override
@@ -171,6 +109,95 @@ public final class QuickChangeLookAndFeel extends QuickSwitchSchemeAction implem
 
     private static @Nullable Icon getIcon(boolean currentLaf) {
       return Registry.is("ide.instant.theme.switch") ? null : currentLaf ? AllIcons.Actions.Forward : ourNotCurrentAction;
+    }
+  }
+
+  @Service(Service.Level.APP)
+  static final class QuickChangeLookAndFeelService {
+    private final Alarm switchAlarm;
+
+    QuickChangeLookAndFeelService(CoroutineScope cs) {
+      switchAlarm = new Alarm(cs, Alarm.ThreadToUse.SWING_THREAD);
+    }
+
+    void preparePopup(ListPopup popup) {
+      UIThemeLookAndFeelInfo initialLaf = LafManager.getInstance().getCurrentUIThemeLookAndFeel();
+
+      switchAlarm.cancelAllRequests();
+      if (Registry.is("ide.instant.theme.switch")) {
+        popup.addListSelectionListener(event -> {
+          Object item = ((JList<?>)event.getSource()).getSelectedValue();
+          if (item instanceof AnActionHolder) {
+            AnAction anAction = ((AnActionHolder)item).getAction();
+            if (anAction instanceof LafChangeAction) {
+              switchAlarm.cancelAllRequests();
+              switchAlarm.addRequest(() -> {
+                LafChangeAction action = (LafChangeAction)anAction;
+                switchLafAndUpdateUI(LafManager.getInstance(), action.myLookAndFeelInfo);
+              }, Registry.get("ide.instant.theme.switch.delay").asInteger());
+            }
+          }
+        });
+      }
+
+      popup.addListener(new JBPopupListener() {
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          switchAlarm.cancelAllRequests();
+          if (Registry.is("ide.instant.theme.switch") && !event.isOk()) {
+            switchLafAndUpdateUI(LafManager.getInstance(), initialLaf);
+          }
+        }
+      });
+    }
+
+    static void switchLafAndUpdateUI(@NotNull LafManager lafManager, @NotNull UIThemeLookAndFeelInfo laf) {
+      switchLafAndUpdateUI(lafManager, laf, false, false, false);
+    }
+
+    static void switchLafAndUpdateUI(final @NotNull LafManager lafManager,
+                                            @NotNull UIThemeLookAndFeelInfo lf,
+                                            boolean async,
+                                            boolean force,
+                                            boolean lockEditorScheme) {
+      UIThemeLookAndFeelInfo cur = lafManager.getCurrentUIThemeLookAndFeel();
+      if (!force && cur == lf) return;
+      ChangeLAFAnimator animator = Registry.is("ide.intellij.laf.enable.animation") ? ChangeLAFAnimator.showSnapshot() : null;
+
+      final boolean wasDarcula = StartupUiUtil.isUnderDarcula();
+      lafManager.setCurrentLookAndFeel(lf, lockEditorScheme);
+
+      Runnable updater = () -> {
+        // a twist not to updateUI twice: here, and in DarculaInstaller
+        // double updateUI shall be avoided and causes NPE in some components (HelpView)
+        Ref<Boolean> updated = Ref.create(false);
+        Disposable disposable = Disposer.newDisposable();
+        ApplicationManager.getApplication().getMessageBus().connect(disposable)
+          .subscribe(LafManagerListener.TOPIC, source -> updated.set(true));
+        try {
+          if (StartupUiUtil.isUnderDarcula()) {
+            DarculaInstaller.install();
+          }
+          else if (wasDarcula) {
+            DarculaInstaller.uninstall();
+          }
+        }
+        finally {
+          Disposer.dispose(disposable);
+          if (!updated.get()) {
+            lafManager.updateUI();
+          }
+          if (animator != null) {
+            animator.hideSnapshotWithAnimation();
+          }
+        }
+      };
+      if (async) {
+        SwingUtilities.invokeLater(updater);
+      }
+      else {
+        updater.run();
+      }
     }
   }
 }

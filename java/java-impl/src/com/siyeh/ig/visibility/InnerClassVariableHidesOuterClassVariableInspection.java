@@ -20,13 +20,13 @@ import com.intellij.codeInspection.options.OptPane;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonJavaRefactoringUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.fixes.RenameFix;
-import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.codeInspection.options.OptPane.checkbox;
@@ -85,7 +85,7 @@ public final class InnerClassVariableHidesOuterClassVariableInspection
       if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(fieldName)) {
         return;    //special case
       }
-      PsiClass ancestorClass = ClassUtils.getContainingClass(aClass);
+      PsiClass ancestorClass = PsiUtil.getContainingClass(aClass);
       while (ancestorClass != null) {
         final PsiField ancestorField = ancestorClass.findFieldByName(fieldName, false);
         if (ancestorField != null) {
@@ -96,7 +96,7 @@ public final class InnerClassVariableHidesOuterClassVariableInspection
           }
         }
         aClass = ancestorClass;
-        ancestorClass = ClassUtils.getContainingClass(aClass);
+        ancestorClass = PsiUtil.getContainingClass(aClass);
       }
     }
   }

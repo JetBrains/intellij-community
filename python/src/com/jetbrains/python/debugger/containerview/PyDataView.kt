@@ -23,7 +23,6 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.content.ContentManager
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.xdebugger.XDebuggerManager
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.console.PydevConsoleCommunication
 import com.jetbrains.python.debugger.PyDebugProcess
@@ -153,15 +152,6 @@ class PyDataView(private val project: Project) : DumbAware {
     }
   }
 
-  private fun getFrameAccessor(handler: ProcessHandler): PyFrameAccessor? {
-    for (process in XDebuggerManager.getInstance(project).getDebugProcesses(PyDebugProcess::class.java)) {
-      if (Comparing.equal(handler, process.processHandler)) {
-        return process
-      }
-    }
-    return null
-  }
-
   fun closeDisconnectedFromConsoleTabs() {
     closeTabs { frameAccessor: PyFrameAccessor? ->
       frameAccessor is PydevConsoleCommunication && !isConnected(frameAccessor)
@@ -259,6 +249,11 @@ class PyDataView(private val project: Project) : DumbAware {
     @JvmStatic
     fun setColoringEnabled(project: Project, value: Boolean) {
       PropertiesComponent.getInstance(project).setValue(COLORED_BY_DEFAULT, value, true)
+    }
+
+    @JvmStatic
+    fun setAutoResizeEnabled(project: Project, value: Boolean) {
+      PropertiesComponent.getInstance(project).setValue(AUTO_RESIZE, value, true)
     }
 
     fun getInstance(project: Project): PyDataView = project.service<PyDataView>()

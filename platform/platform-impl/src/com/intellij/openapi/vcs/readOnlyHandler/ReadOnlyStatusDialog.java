@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.list.TargetPopup;
 import com.intellij.util.ui.NamedColorUtil;
 import com.intellij.util.ui.OptionsDialog;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,6 +24,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ReadOnlyStatusDialog extends OptionsDialog {
   private static final SimpleTextAttributes BOLD_ATTRIBUTES =
     new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, JBColor.foreground());

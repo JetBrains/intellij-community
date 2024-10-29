@@ -5,4 +5,3 @@ fun f() {
     val copy1: List<Int> = ArrayList(<caret>v)
     val copy2 = ArrayList(v)
 }
-// IGNORE_K2

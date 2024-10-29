@@ -15,7 +15,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * @see <a href="https://plugins.jetbrains.com/docs/intellij/plugin-services.html">Plugin Services</a>
  */
+@ApiStatus.Internal
 public final class ServiceDescriptor {
+
   public ServiceDescriptor(String serviceInterface,
                            String serviceImplementation,
                            String testServiceImplementation,

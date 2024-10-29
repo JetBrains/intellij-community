@@ -10,11 +10,16 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.ui.JBAccountInfoService
 import com.intellij.util.io.createParentDirectories
 import com.intellij.util.io.write
+import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.dircache.DirCache
+import org.eclipse.jgit.lib.Config
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.revwalk.RevWalk
+import org.eclipse.jgit.storage.file.FileBasedConfig
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
+import org.eclipse.jgit.util.FS
+import org.eclipse.jgit.util.SystemReader
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Rule
@@ -28,6 +33,7 @@ import java.nio.file.attribute.FileAttribute
 import java.nio.file.attribute.FileTime
 import java.time.Instant
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.io.path.*
 
 
@@ -293,6 +299,67 @@ internal class GitSettingsLogTest {
   }
 
   @Test
+  @TestFor(issues = ["IJPL-156917"])
+  fun `should not attempt to read global configs`() {
+    val userHomeDefault = System.getProperty("user.home")
+    try {
+      val userHome = Files.createTempDirectory("gitSettingsLogTest")
+      System.setProperty("user.home", userHome.absolutePathString())
+
+      arrayOf<FileAttribute<*>>()
+      val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
+      editorXml.writeText("editorContent")
+      val config1 = userHome / "config.1"
+      val config2 = userHome / "config.2"
+      val config3 = userHome / "config.3"
+      val settingsLog = initializeGitSettingsLog(editorXml)
+      val actualSystemReader = SystemReader.getInstance()
+      val userConfigRead = AtomicBoolean(false)
+      val systemConfigRead = AtomicBoolean(false)
+      val jgitConfigRead = AtomicBoolean(false)
+      SystemReader.setInstance(object : SystemReader() {
+        override fun getHostname() = actualSystemReader.hostname
+        override fun getenv(variable: String?) = actualSystemReader.getenv(variable)
+        override fun getProperty(key: String?) = actualSystemReader.getProperty(key)
+
+        override fun openUserConfig(parent: Config?, fs: FS?): FileBasedConfig {
+          userConfigRead.set(true)
+          return FileBasedConfig(config1.toFile(), fs)
+        }
+
+        override fun openSystemConfig(parent: Config?, fs: FS?): FileBasedConfig {
+          systemConfigRead.set(true)
+          return FileBasedConfig(config2.toFile(), fs)
+        }
+
+        override fun openJGitConfig(parent: Config?, fs: FS?): FileBasedConfig {
+          jgitConfigRead.set(true)
+          return FileBasedConfig(config3.toFile(), fs)
+        }
+
+        override fun getCurrentTime() = actualSystemReader.currentTime
+
+        override fun getTimezone(`when`: Long) = actualSystemReader.getTimezone(`when`)
+      })
+      settingsLog.forceWriteToMaster(
+        settingsSnapshot {
+          fileState("options/editor.xml", "ideEditorContent")
+        }, "Local changes"
+      )
+      settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
+        fileState("options/editor.xml", "ideEditorContent")
+      }
+      assertFalse(jgitConfigRead.get())
+      assertFalse(systemConfigRead.get())
+      assertFalse(userConfigRead.get())
+    }
+    finally {
+      System.setProperty("user.home", userHomeDefault)
+    }
+
+  }
+
+  @Test
   fun `plugins state is written to the settings log`() {
     arrayOf<FileAttribute<*>>()
     val editorXml = (configDir / "options" / "editor.xml").createParentDirectories().createFile()
@@ -536,6 +603,44 @@ internal class GitSettingsLogTest {
     catch (ex: Exception) {
       fail("Shouldn't fail: ${ex.message}")
     }
+  }
+
+  @Test
+  @TestFor(issues = ["IJPL-13061"])
+  fun `drop for unfinished modifications`() {
+    val editorXml = (configDir / "options" / "editor.xml").write("Editor Initial")
+    val lafXml = (configDir / "options" / "laf.xml").write("LaF Initial")
+    val generalXml = (configDir / "options" / "ide.general.xml").write("General Initial")
+
+    val settingsLog = initializeGitSettingsLog(lafXml, editorXml)
+
+
+    settingsLog.applyCloudState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Cloud")
+        fileState("options/ide.general.xml", "General Cloud")
+      }, "Remote changes"
+    )
+    settingsLog.advanceMaster()
+
+    settingsLog.applyIdeState(
+      settingsSnapshot {
+        fileState("options/editor.xml", "Editor Ide")
+        fileState("options/ide.general.xml", "General Ide")
+      }, "Local changes"
+    )
+
+    generalXml.write("General Cloud")
+    (configDir / "settingsSync" / "options" / "ide.general.xml").write("General New")
+    val repository = FileRepositoryBuilder()
+      .setGitDir((configDir / "settingsSync"/ ".git").toFile())
+      .setAutonomous(true).readEnvironment().build()
+    val git = Git(repository)
+    val addCommand = git.add()
+    addCommand.addFilepattern("options/ide.general.xml")
+    addCommand.call()
+
+    initializeGitSettingsLog(lafXml, editorXml, generalXml)
   }
 
   private fun checkUsernameEmail(expectedName: String, expectedEmail: String) {

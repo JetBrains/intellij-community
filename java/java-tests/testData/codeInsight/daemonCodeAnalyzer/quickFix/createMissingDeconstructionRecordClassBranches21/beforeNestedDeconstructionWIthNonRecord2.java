@@ -1,4 +1,4 @@
-// "Create missing switch branch 'StringPair<Boxed>(String t2, Box t)'" "true-preview"
+// "Create missing branch 'StringPair<Boxed>(String t2, Box t)'" "true-preview"
 
 sealed interface Boxed permits Box, Box2 {}
 

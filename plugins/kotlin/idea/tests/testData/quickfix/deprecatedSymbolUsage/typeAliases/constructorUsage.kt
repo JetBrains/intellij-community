@@ -15,3 +15,4 @@ fun foo() {
 }
 
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+/* IGNORE_K2 */

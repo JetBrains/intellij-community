@@ -8,6 +8,7 @@ import com.intellij.execution.compound.CompoundRunConfiguration;
 import com.intellij.execution.compound.SettingsAndEffectiveTarget;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.ExecutorGroup;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runToolbar.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -22,19 +23,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.util.JavaCoroutines;
 import kotlin.Unit;
 import kotlin.coroutines.Continuation;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.function.Consumer;
 
+@ApiStatus.Internal
 public final class ExecutorRegistryImpl extends ExecutorRegistry {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
@@ -337,7 +337,16 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
       }
     }
 
-    public static boolean canRun(@NotNull Project project, @NotNull Executor executor, RunConfiguration configuration) {
+    public static boolean canRun(@NotNull Project project,
+                                 @NotNull Executor executor,
+                                 @NotNull RunConfiguration configuration) {
+      return canRun(project, executor, configuration, null);
+    }
+
+    public static boolean canRun(@NotNull Project project,
+                                 @NotNull Executor executor,
+                                 @NotNull RunConfiguration configuration,
+                                 @Nullable Ref<Boolean> isStartingTracker) {
       List<SettingsAndEffectiveTarget> pairs;
       if (configuration instanceof CompoundRunConfiguration) {
         pairs = ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets();
@@ -346,28 +355,36 @@ public final class ExecutorRegistryImpl extends ExecutorRegistry {
         ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
         pairs = Collections.singletonList(new SettingsAndEffectiveTarget(configuration, target));
       }
-      return canRun(project, pairs, executor);
+      if (isStartingTracker != null) isStartingTracker.set(false);
+      return canRun(project, pairs, executor, isStartingTracker);
     }
 
-    public static boolean canRun(@NotNull Project project, @NotNull List<SettingsAndEffectiveTarget> pairs, @NotNull Executor executor) {
+    private static boolean canRun(@NotNull Project project,
+                                  @NotNull List<SettingsAndEffectiveTarget> pairs,
+                                  @NotNull Executor executor,
+                                  @Nullable Ref<Boolean> isStartingTracker) {
       if (pairs.isEmpty()) {
         return false;
       }
 
       for (SettingsAndEffectiveTarget pair : pairs) {
         RunConfiguration configuration = pair.getConfiguration();
-        if (configuration instanceof CompoundRunConfiguration) {
-          if (!canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets(), executor)) {
+        if (configuration instanceof CompoundRunConfiguration o) {
+          if (!canRun(project, o.getConfigurationsWithEffectiveRunTargets(), executor, isStartingTracker)) {
             return false;
           }
           continue;
         }
 
         ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), configuration);
-        if (runner == null
-            || !ExecutionTargetManager.canRun(configuration, pair.getTarget())
-            || ExecutionManager.getInstance(project).isStarting(executor.getId(), runner.getRunnerId())) {
+        if (runner == null || !ExecutionTargetManager.canRun(configuration, pair.getTarget())) {
           return false;
+        }
+        else if (ExecutionManager.getInstance(project).isStarting(
+          RunnerAndConfigurationSettingsImpl.getUniqueIdFor(configuration),
+          executor.getId(), runner.getRunnerId())) {
+          if (isStartingTracker != null) isStartingTracker.set(true);
+          else return false;
         }
       }
       return true;

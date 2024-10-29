@@ -10,15 +10,17 @@ import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.TestMetadataUtil
 import java.io.File
 
 /**
  * Base class for K2CreateXXXFromUsageTest.
- * Just override [getTestDataPath]  and you're good
- *
+ * Just pass correct `[testDataCreateFromUsagePath]` - a relative path inside `/createUsage/
  */
-abstract class K2AbstractCreateFromUsageTest : LightIntentionActionTestCase() {
-    abstract override fun getTestDataPath(): String
+abstract class K2AbstractCreateFromUsageTest(private val testDataCreateFromUsagePath: String) : LightIntentionActionTestCase() {
+    override fun getTestDataPath(): String {
+        return TestMetadataUtil.getTestDataPath(javaClass) + "/idea/tests/testData/quickfix/createFromUsage/" + testDataCreateFromUsagePath
+    }
 
     override fun getRelativeBasePath():String {
         return StringUtil.substringAfter(javaClass.name, "$")!!

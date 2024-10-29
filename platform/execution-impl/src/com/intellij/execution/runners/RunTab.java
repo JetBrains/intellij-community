@@ -14,6 +14,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.execution.ui.layout.impl.GridImpl;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
+import com.intellij.execution.ui.layout.impl.RunnerLayoutUiImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -32,14 +33,13 @@ import com.intellij.ui.tabs.JBTabsEx;
 import com.intellij.ui.tabs.TabInfo;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
-public abstract class RunTab implements DataProvider, Disposable {
+public abstract class RunTab implements Disposable {
   /**
    * Takes out an action of 'More' group and adds it on the toolbar.
    * <p>
@@ -84,27 +84,18 @@ public abstract class RunTab implements DataProvider, Disposable {
     mySearchScope = searchScope;
 
     myUi = RunnerLayoutUi.Factory.getInstance(project).create(runnerType, runnerTitle, sessionName, this);
-    myUi.getContentManager().addDataProvider(this);
+    myUi.getContentManager().addDataProvider((EdtNoGetDataProvider)sink -> {
+      sink.set(KEY, RunTab.this);
+      sink.set(LangDataKeys.RUN_CONTENT_DESCRIPTOR, myRunContentDescriptor);
+      sink.set(SingleContentSupplier.KEY, getSupplier());
+      if (myEnvironment != null) {
+        sink.set(ExecutionDataKeys.EXECUTION_ENVIRONMENT, myEnvironment);
+        sink.set(LangDataKeys.RUN_PROFILE, myEnvironment.getRunProfile());
+      }
+    });
   }
 
-  @Override
-  public @Nullable Object getData(@NotNull @NonNls String dataId) {
-    if (LangDataKeys.RUN_PROFILE.is(dataId)) {
-      return myEnvironment == null ? null : myEnvironment.getRunProfile();
-    }
-    else if (ExecutionDataKeys.EXECUTION_ENVIRONMENT.is(dataId)) {
-      return myEnvironment;
-    }
-    else if (LangDataKeys.RUN_CONTENT_DESCRIPTOR.is(dataId)) {
-      return myRunContentDescriptor;
-    } else if (SingleContentSupplier.KEY.is(dataId)) {
-      return getSupplier();
-    } else if (KEY.is(dataId)) {
-      return this;
-    }
-    return null;
-  }
-
+  @ApiStatus.Internal
   protected @Nullable SingleContentSupplier getSupplier() {
     return null;
   }
@@ -148,6 +139,7 @@ public abstract class RunTab implements DataProvider, Disposable {
    * Default implementation of {@link SingleContentSupplier}.
    * Isn't used directly by {@link RunTab}, but can be used by inheritors.
    */
+  @ApiStatus.Internal
   protected class RunTabSupplier implements SingleContentSupplier {
 
     private final @Nullable ActionGroup myActionGroup;
@@ -159,13 +151,13 @@ public abstract class RunTab implements DataProvider, Disposable {
     ) {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+        RunnerContentUi contentUi = myUi instanceof RunnerLayoutUiImpl o ? o.getContentUI() : null;
         return contentUi == null ? EMPTY_ARRAY : contentUi.getViewActions();
       }
 
       @Override
       public void update(@NotNull AnActionEvent e) {
-        RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+        RunnerContentUi contentUi = myUi instanceof RunnerLayoutUiImpl o ? o.getContentUI() : null;
         e.getPresentation().setEnabledAndVisible(contentUi != null && contentUi.getViewActions().length > 0);
       }
 
@@ -187,7 +179,7 @@ public abstract class RunTab implements DataProvider, Disposable {
 
     @Override
     public @NotNull JBTabs getTabs() {
-      RunnerContentUi contentUi = RunnerContentUi.KEY.getData((DataProvider)myUi);
+      RunnerContentUi contentUi = myUi instanceof RunnerLayoutUiImpl o ? o.getContentUI() : null;
       return Objects.requireNonNull(contentUi).getTabs();
     }
 
@@ -226,13 +218,13 @@ public abstract class RunTab implements DataProvider, Disposable {
     @Override
     public void close(@NotNull TabInfo tab) {
       GridImpl grid = (GridImpl)tab.getComponent();
-      ViewContext context = ViewContext.CONTEXT_KEY.getData(grid);
-      Content[] content = ViewContext.CONTENT_KEY.getData(grid);
-      if (context == null || content == null || content.length == 0) {
+      ViewContext context = grid.getViewContext();
+      List<Content> content = grid.getContents();
+      if (content.isEmpty()) {
         SingleContentSupplier.super.close(tab);
         return;
       }
-      context.getContentManager().removeContent(content[0], context.isToDisposeRemovedContent());
+      context.getContentManager().removeContent(content.get(0), context.isToDisposeRemovedContent());
     }
 
     @Override

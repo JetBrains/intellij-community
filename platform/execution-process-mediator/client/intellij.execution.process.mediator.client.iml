@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="intellij.execution.process.mediator.daemon" />
     <orderEntry type="module" module-name="intellij.execution.process.mediator.common" />
     <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
@@ -23,19 +24,19 @@
     <orderEntry type="module" module-name="intellij.platform.testFramework.junit5" scope="TEST" />
     <orderEntry type="module-library">
       <library name="grpc-inprocess" type="repository">
-        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.61.0">
+        <properties include-transitive-deps="false" maven-id="io.grpc:grpc-inprocess:1.65.1">
           <verification>
-            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0.jar">
-              <sha256sum>2e12b260d8ef51bd0bd1ce6034b832dae8d93fdafb34788a404a3a2da495111c</sha256sum>
+            <artifact url="file://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1.jar">
+              <sha256sum>6e3b197f5668e26fec19a831d2dd1f6d53b6eb9d4d3978b8ffd4ff68f1aae020</sha256sum>
             </artifact>
           </verification>
         </properties>
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.61.0/grpc-inprocess-1.61.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/io/grpc/grpc-inprocess/1.65.1/grpc-inprocess-1.65.1-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

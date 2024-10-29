@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class Init {
     public String field1;
     public String field2;

@@ -37,7 +37,7 @@ public final class OptimizeImportsRefactoringHelper implements RefactoringHelper
   }
 
   @Override
-  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<@NotNull PsiElement> elements) {
+  public Set<PsiJavaFile> prepareOperation(UsageInfo @NotNull [] usages, @NotNull List<? extends @NotNull PsiElement> elements) {
     Set<PsiJavaFile> movedFiles = ContainerUtil.map2SetNotNull(elements, e -> ObjectUtils.tryCast(e.getContainingFile(), PsiJavaFile.class));
     return ContainerUtil.union(movedFiles, prepareOperation(usages));
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -53,17 +53,16 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.matches("Surround with 'if \\(.+\\)'") || // might produce uninitialized variable or missing return statement problem
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
-           actionText.startsWith("Create missing branches: ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
+           actionText.startsWith("Create missing branches ") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.startsWith("Surround with try-with-resources block") || // if 'close' throws, we don't add a new 'catch' for that, see IDEA-196544
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
-           actionText.matches("Replace with throws .*") || //may break catches with explicit exceptions
-           actionText.equals("Generate 'clone()' method which always throws exception") || // IDEA-207048
+           actionText.matches("Replace with throws .*") || // may break catches with explicit exceptions
            actionText.matches("Replace '.+' with '.+' in cast") || // can produce uncompilable code by design
            actionText.matches("Replace with '(new .+\\[]|.+\\[]::new)'") || // Suspicious toArray may introduce compilation error
-           actionText.equals("Rollback changes in current line"); //revert only one line
+           actionText.equals("Rollback changes in current line"); // revert only one line
   }
 
   static boolean skipPreview(@NotNull IntentionAction action) {
@@ -108,6 +107,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.startsWith("Delete unnecessary import") ||
                                       intentionText.startsWith("Delete empty class initializer") ||
                                       intentionText.startsWith("Replace with 'throws Exception'") ||
+                                      intentionText.equals("Replace 'catch' section with 'throws' declaration") ||
                                       intentionText.startsWith("Replace unicode escape with character") ||
                                       intentionText.startsWith("Remove 'serialVersionUID' field") ||
                                       intentionText.startsWith("Remove unnecessary") ||

@@ -11,6 +11,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -19,6 +20,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public final class PresentationModeProgressPanel {
   private final MyInlineProgressIndicator progress;
   private final JBIterable<InlineProgressIndicator.ProgressButton> myEastButtons;

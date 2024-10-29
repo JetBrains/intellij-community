@@ -1,8 +1,9 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.view
 
 import com.intellij.debugger.engine.DebugProcessImpl
+import com.intellij.debugger.engine.DebuggerManagerThreadImpl
 import com.intellij.debugger.engine.SuspendContextImpl
 import com.intellij.debugger.engine.JavaExecutionStack
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl
@@ -44,17 +45,19 @@ class CoroutineSelectedNodeListener(
         val selectedNodes = tree.getSelectedNodes(XValueNodeImpl::class.java, null)
         val valueContainer = selectedNodes.getSingleCoroutineFrameValueContainer() ?: return false
         val frameItem = valueContainer.frameItem
-        val frame = frameItem.createFrame(debugProcess) ?: return false
-        val executionStack =
-            if (frameItem is RunningCoroutineStackFrameItem)
-                createExecutionStack(frameItem.frame.threadProxy(), debugProcess)
-            else
-                debugProcess.suspendContext.thread?.let {
-                    createExecutionStack(it, debugProcess)
-                }
+        debugProcess.invokeInManagerThread {
+            val frame = frameItem.createFrame(debugProcess) ?: return@invokeInManagerThread
+            val executionStack =
+                if (frameItem is RunningCoroutineStackFrameItem)
+                    createExecutionStack(frameItem.frame.threadProxy(), debugProcess)
+                else
+                    debugProcess.suspendContext.thread?.let {
+                        createExecutionStack(it, debugProcess)
+                    }
 
-        if (executionStack != null) {
-            setCurrentStackFrame(executionStack, frame)
+            if (executionStack != null) {
+                setCurrentStackFrame(executionStack, frame)
+            }
         }
         return true
     }
@@ -70,16 +73,16 @@ class CoroutineSelectedNodeListener(
     }
 }
 
-private fun createExecutionStack(threadReference: ThreadReferenceProxyImpl, debugProcess: DebugProcessImpl): JavaExecutionStack? =
-    debugProcess.invokeInManagerThread {
-        val executionStack = JavaExecutionStack(
-            threadReference,
-            debugProcess,
-            debugProcess.suspendContext.thread == threadReference
-        )
-        executionStack.initTopFrame()
-        executionStack
-    }
+private fun createExecutionStack(threadReference: ThreadReferenceProxyImpl, debugProcess: DebugProcessImpl): JavaExecutionStack {
+    DebuggerManagerThreadImpl.assertIsManagerThread()
+    val executionStack = JavaExecutionStack(
+        threadReference,
+        debugProcess,
+        debugProcess.suspendContext.thread == threadReference
+    )
+    executionStack.initTopFrame()
+    return executionStack
+}
 
 private fun Array<XValueNodeImpl>.getSingleCoroutineFrameValueContainer(): CoroutineView.CoroutineFrameValue? =
     singleOrNull()?.valueContainer as? CoroutineView.CoroutineFrameValue

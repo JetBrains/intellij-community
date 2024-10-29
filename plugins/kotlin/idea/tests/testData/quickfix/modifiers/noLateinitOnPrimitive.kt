@@ -4,6 +4,7 @@
 // ACTION: Add full qualifier
 // ACTION: Introduce import alias
 // ACTION: Make 'a' 'abstract'
+// ACTION: Initialize with constructor parameter
 // ACTION: Move to constructor parameters
 // ACTION: Move to constructor
 // ACTION: Add getter

@@ -61,7 +61,7 @@ object K2StatisticsInfoProvider {
         is KaClassLikeSymbol -> symbol.classId?.asFqNameString()?.let { StatisticsInfo(context, it) }
         is KaCallableSymbol -> symbol.callableId?.let { callableId ->
             val containerFqName = callableId.classId?.asFqNameString() ?: callableId.packageName
-            val declarationText = prettyPrint { renderer.renderDeclaration(analysisSession, symbol, this) }
+            val declarationText = prettyPrint { renderer.renderDeclaration(useSiteSession, symbol, this) }
             StatisticsInfo(context, "$containerFqName###$declarationText")
         }
 

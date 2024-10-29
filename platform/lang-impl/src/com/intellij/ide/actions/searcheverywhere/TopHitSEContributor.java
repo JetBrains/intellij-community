@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
@@ -32,8 +32,9 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.*;
 import java.util.function.Consumer;
 
 public final class TopHitSEContributor implements SearchEverywhereContributor<Object> {
@@ -50,15 +51,13 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     mySearchStringSetter = setter;
   }
 
-  @NotNull
   @Override
-  public String getSearchProviderId() {
+  public @NotNull String getSearchProviderId() {
     return TopHitSEContributor.class.getSimpleName();
   }
 
-  @NotNull
   @Override
-  public String getGroupName() {
+  public @NotNull String getGroupName() {
     return IdeBundle.message("search.everywhere.group.name.top.hit");
   }
 
@@ -78,9 +77,8 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     fill(pattern, consumer);
   }
 
-  @NotNull
   @Override
-  public List<SearchEverywhereCommandInfo> getSupportedCommands() {
+  public @NotNull List<SearchEverywhereCommandInfo> getSupportedCommands() {
     List<SearchEverywhereCommandInfo> res = new ArrayList<>();
     final HashSet<String> found = new HashSet<>();
     for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
@@ -93,11 +91,6 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
       }
     }
     return res;
-  }
-
-  @Override
-  public Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
-    return null;
   }
 
   @Override
@@ -125,9 +118,8 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return TOP_HIT_ELEMENT_PRIORITY;
   }
 
-  @NotNull
   @Override
-  public ListCellRenderer<? super Object> getElementsRenderer() {
+  public @NotNull ListCellRenderer<? super Object> getElementsRenderer() {
     return new TopHitRenderer(myProject);
   }
 
@@ -277,8 +269,7 @@ public final class TopHitSEContributor implements SearchEverywhereContributor<Ob
     return o instanceof OptionDescription;
   }
 
-  @Nls
-  private static String getSettingText(OptionDescription value) {
+  private static @Nls String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {
       hit = value.getOption();

@@ -4,6 +4,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.ide.util.TipAndTrickManager"
+                        serviceImplementation="com.intellij.ide.util.TipAndTrickManagerImpl"/>
+
     <backgroundPostStartupActivity id="TipOfTheDayActivity"
                                    implementation="com.intellij.ide.TipOfTheDayStartupActivity"
                                    order="last"/>
@@ -25,6 +28,10 @@
                  restartRequired="false"/>
   </extensions>
 
+  <applicationListeners>
+    <listener class="com.intellij.platform.tips.CloseTipDialogOnPluginUnloadingListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
+  
   <projectListeners>
     <listener class="com.intellij.ide.util.TipsUsageManager$TipsUsageListener"
               activeInTestMode="false"

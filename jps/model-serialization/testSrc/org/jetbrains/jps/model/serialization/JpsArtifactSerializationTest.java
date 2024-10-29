@@ -3,15 +3,18 @@ package org.jetbrains.jps.model.serialization;
 
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.jetbrains.jps.model.serialization.JpsProjectSerializationTest.SAMPLE_PROJECT_PATH;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
-public class JpsArtifactSerializationTest extends JpsSerializationTestCase {
+public class JpsArtifactSerializationTest {
+  @Test
   public void testLoadProject() {
-    loadProject(SAMPLE_PROJECT_PATH);
-    List<JpsArtifact> artifacts = getService().getSortedArtifacts(myProject);
+    JpsProjectData projectData = JpsProjectData.loadFromTestData(SAMPLE_PROJECT_PATH, getClass());
+    List<JpsArtifact> artifacts = getService().getSortedArtifacts(projectData.getProject());
     assertEquals(2, artifacts.size());
     assertEquals("dir", artifacts.get(0).getName());
     assertEquals("jar", artifacts.get(1).getName());

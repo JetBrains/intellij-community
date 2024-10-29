@@ -5,10 +5,13 @@ import com.intellij.openapi.client.ClientSystemInfo
 import com.intellij.openapi.editor.event.EditorMouseEvent
 import com.intellij.openapi.editor.event.EditorMouseEventArea
 import com.intellij.openapi.editor.event.EditorMouseListener
+import com.intellij.openapi.editor.ex.EditorEx
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Point
 import java.awt.event.MouseEvent
 import javax.swing.SwingUtilities
 
+@ApiStatus.Internal
 class DeclarativeInlayEditorMouseListener : EditorMouseListener {
   override fun mouseClicked(e: EditorMouseEvent) {
     if (e.isConsumed) return
@@ -27,6 +30,10 @@ class DeclarativeInlayEditorMouseListener : EditorMouseListener {
     val controlDown = isControlDown(event)
     renderer.handleLeftClick(e, translated, controlDown)
     inlay.update()
+  }
+
+  override fun mouseReleased(e: EditorMouseEvent) {
+    (e.editor as? EditorEx)?.setCustomCursor(DeclarativeInlayHintsMouseMotionListener::class.java, null)
   }
 
   private fun isControlDown(e: MouseEvent): Boolean = (ClientSystemInfo.isMac() && e.isMetaDown) || e.isControlDown

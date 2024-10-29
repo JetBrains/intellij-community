@@ -41,7 +41,6 @@
     <remoteServer.deploymentSource.type
       implementation="com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceType"/>
 
-    <!--suppress PluginXmlValidity -->
     <execution.syntheticConfigurationTypeProvider implementation="com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar$Provider"/>
   </extensions>
 

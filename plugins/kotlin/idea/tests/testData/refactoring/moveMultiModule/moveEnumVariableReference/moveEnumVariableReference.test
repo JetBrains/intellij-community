@@ -1,0 +1,8 @@
+{
+  "filesToMove": ["A/src/a/Refer.kt"],
+  "type": "MOVE_FILES_WITH_DECLARATIONS",
+  "targetDirectory": "B/src/b",
+  "withRuntime": "true",
+  "enabledInK1": "true",
+  "enabledInK2": "true"
+}

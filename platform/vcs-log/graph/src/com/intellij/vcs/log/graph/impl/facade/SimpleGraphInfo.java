@@ -22,6 +22,7 @@ import com.intellij.vcs.log.graph.utils.impl.IntTimestampGetter;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -29,6 +30,7 @@ import java.util.function.Function;
 
 import static com.intellij.vcs.log.graph.utils.LinearGraphUtils.asLiteLinearGraph;
 
+@ApiStatus.Internal
 public final class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
   private final @NotNull LinearGraph myLinearGraph;
   private final @NotNull GraphLayout myGraphLayout;

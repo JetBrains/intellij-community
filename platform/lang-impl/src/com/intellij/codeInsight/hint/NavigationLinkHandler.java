@@ -8,12 +8,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Handles tooltip links in format {@code #navigation/file_path:offset}.
  * On a click opens specified file in an editor and positions caret to the given offset.
  */
+@ApiStatus.Internal
 public final class NavigationLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance(NavigationLinkHandler.class);
 

@@ -2,8 +2,10 @@
 package com.intellij.platform.ide.bootstrap
 
 import com.intellij.idea.AppMode
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal object CommandLineArgs {
+@Internal
+object CommandLineArgs {
   private const val SPLASH = "splash"
   private const val NO_SPLASH = "nosplash"
 

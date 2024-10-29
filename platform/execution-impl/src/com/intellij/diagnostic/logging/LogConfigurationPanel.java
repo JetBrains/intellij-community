@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic.logging;
 
 import com.intellij.diagnostic.DiagnosticBundle;
@@ -113,10 +113,10 @@ public final class LogConfigurationPanel<T extends RunConfigurationBase> extends
                myFilesTable.getSelectedObject() != null).disableUpDownActions().createPanel(), BorderLayout.CENTER);
 
     myWholePanel.setPreferredSize(new Dimension(-1, 150));
-    myOutputFile.addBrowseFolderListener(ExecutionBundle.message("choose.file.to.save.console.output"),
-                                         ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"), null,
-                                         FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor(),
-                                         TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
+    var descriptor = FileChooserDescriptorFactory.createSingleFileOrFolderDescriptor()
+      .withTitle(ExecutionBundle.message("choose.file.to.save.console.output"))
+      .withDescription(ExecutionBundle.message("console.output.would.be.saved.to.the.specified.file"));
+    myOutputFile.addBrowseFolderListener(null, descriptor, TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT);
     myRedirectOutputCb.addActionListener(e -> myOutputFile.setEnabled(myRedirectOutputCb.isSelected()));
   }
 

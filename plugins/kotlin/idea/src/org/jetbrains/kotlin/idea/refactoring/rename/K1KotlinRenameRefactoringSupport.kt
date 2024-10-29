@@ -28,24 +28,6 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 
 internal class K1RenameRefactoringSupport : KotlinRenameRefactoringSupport {
-    override fun processForeignUsages(
-        element: PsiElement,
-        newName: String,
-        usages: Array<UsageInfo>,
-        fallbackHandler: (UsageInfo) -> Unit
-    ) {
-        ForeignUsagesRenameProcessor.processAll(element, newName, usages, fallbackHandler)
-    }
-
-    override fun prepareForeignUsagesRenaming(
-        element: PsiElement,
-        newName: String,
-        allRenames: MutableMap<PsiElement, String>,
-        scope: SearchScope
-    ) {
-        ForeignUsagesRenameProcessor.prepareRenaming(element, newName, allRenames, scope)
-    }
-
     override fun checkUsagesRetargeting(
         declaration: KtNamedDeclaration,
         newName: String,

@@ -4,6 +4,7 @@ package com.intellij.codeInsight.actions.onSave;
 import com.intellij.application.options.GeneralCodeStylePanel;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.ide.actionsOnSave.ActionOnSaveComment;
 import com.intellij.ide.actionsOnSave.ActionOnSaveContext;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
@@ -21,6 +22,7 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
@@ -47,10 +49,23 @@ final class FormatOnSaveActionInfo extends FormatOnSaveActionInfoBase<FormatOnSa
   }
 
   @Override
+  public @Nullable ActionOnSaveComment getComment() {
+    if (isActionOnSaveEnabled()) {
+      ActionOnSaveComment customComment = FormatOnSavePresentationService.getInstance().getCustomFormatComment(getContext());
+      if (customComment != null) {
+        return customComment;
+      }
+    }
+    return super.getComment();
+  }
+
+  @Override
   public @NotNull List<? extends ActionLink> getActionLinks() {
-    return List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), __ -> {
+    var result = new ArrayList<>(List.of(new ActionLink(CodeInsightBundle.message("actions.on.save.page.link.configure.scope"), __ -> {
       GeneralCodeStylePanel.selectFormatterTab(getSettings());
-    }));
+    })));
+    result.addAll(FormatOnSavePresentationService.getInstance().getCustomFormatActionLinks(getContext()));
+    return result;
   }
 
   @Override

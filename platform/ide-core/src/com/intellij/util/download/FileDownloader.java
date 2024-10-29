@@ -55,17 +55,4 @@ public interface FileDownloader {
    */
   @NotNull
   List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir) throws IOException;
-
-  /**
-   * @deprecated specify target directory in {@link #downloadWithProgress} or {@link #downloadFilesWithProgress} method instead
-   */
-  @Deprecated(forRemoval = true)
-  @NotNull
-  FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath);
-
-  /**
-   * @deprecated use {@link #downloadFilesWithProgress} instead
-   */
-  @Deprecated(forRemoval = true)
-  VirtualFile @Nullable [] download();
 }

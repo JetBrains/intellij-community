@@ -3,8 +3,8 @@ class Test {
         return if (p > 0) "response" else null
     }
 
-    private var nullableInitializerField = nullableString(3)
-    private val nullableInitializerFieldFinal = nullableString(3)
+    private var nullableInitializerField: String? = nullableString(3)
+    private val nullableInitializerFieldFinal: String? = nullableString(3)
     var nullableInitializerPublicField: String? = nullableString(3)
 
     fun testProperty() {

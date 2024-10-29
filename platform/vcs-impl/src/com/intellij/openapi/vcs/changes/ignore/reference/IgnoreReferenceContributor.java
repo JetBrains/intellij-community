@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreEntry;
 import com.intellij.openapi.vcs.changes.ignore.psi.IgnoreFile;
 import com.intellij.psi.*;
 import com.intellij.util.ProcessingContext;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -37,7 +38,8 @@ import static com.intellij.patterns.PlatformPatterns.psiFile;
 /**
  * PSI elements references contributor.
  */
-public class IgnoreReferenceContributor extends PsiReferenceContributor {
+@ApiStatus.Internal
+public final class IgnoreReferenceContributor extends PsiReferenceContributor {
   /**
    * Registers new references provider for PSI element.
    *

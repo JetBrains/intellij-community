@@ -1,0 +1,3 @@
+unresolved: [Regular]
+"": [UnresolvedDelegateFunction(expectedFunctionSignature=getValue(Nothing?, KProperty0<*>))]
+42: [UnresolvedDelegateFunction(expectedFunctionSignature=getValue(Nothing?, KProperty0<*>))]

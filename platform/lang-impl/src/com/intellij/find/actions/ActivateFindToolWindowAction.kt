@@ -11,7 +11,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.usageView.UsageViewContentManager
 import com.intellij.util.ui.StatusText
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ActivateFindToolWindowAction : ToolWindowEmptyStateAction(ToolWindowId.FIND, AllIcons.Toolwindows.ToolWindowFind) {
   override fun ensureToolWindowCreated(project: Project) {
     UsageViewContentManager.getInstance(project)

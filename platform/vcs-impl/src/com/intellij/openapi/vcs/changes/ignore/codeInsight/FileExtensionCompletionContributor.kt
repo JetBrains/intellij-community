@@ -6,10 +6,12 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.util.ProcessingContext
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * File extension completion by mask e.g. "*.*", "*.txt" etc.
  */
+@ApiStatus.Internal
 class FileExtensionCompletionContributor : CompletionContributor() {
   init {
     extend(CompletionType.BASIC, PlatformPatterns.psiElement(),
@@ -33,7 +35,7 @@ class FileExtensionCompletionContributor : CompletionContributor() {
   }
 }
 
-fun fileExtensionCompletionSupported(text: String): Boolean {
+internal fun fileExtensionCompletionSupported(text: String): Boolean {
   return text.startsWith(FileExtensionCompletionContributor.EXTENSION_MASK) ||
          text.contains("/${FileExtensionCompletionContributor.EXTENSION_MASK}")
 }

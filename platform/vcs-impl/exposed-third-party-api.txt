@@ -1,6 +1,4 @@
 com/google/gson/Gson
-io/opentelemetry/api/common/AttributeKey
 it/unimi/dsi/fastutil/Hash$Strategy
-it/unimi/dsi/fastutil/ints/IntList
 kotlin/jvm/internal/DefaultConstructorMarker
 kotlin/reflect/KMutableProperty0

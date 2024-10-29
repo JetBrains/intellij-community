@@ -35,10 +35,6 @@ c:com.intellij.xdebugger.DefaultDebugProcessHandler
 com.intellij.xdebugger.Obsolescent
 - org.jetbrains.concurrency.Obsolescent
 - isObsolete():Z
-*:com.intellij.xdebugger.XAlternativeSourceHandler
-- a:getAlternativePosition(com.intellij.xdebugger.frame.XStackFrame):com.intellij.xdebugger.XSourcePosition
-- a:getAlternativeSourceKindState():kotlinx.coroutines.flow.StateFlow
-- a:isAlternativeSourceKindPreferred(com.intellij.xdebugger.frame.XSuspendContext):Z
 a:com.intellij.xdebugger.XDebugProcess
 - p:<init>(com.intellij.xdebugger.XDebugSession):V
 - checkCanInitBreakpoints():Z
@@ -46,13 +42,10 @@ a:com.intellij.xdebugger.XDebugProcess
 - createConsole():com.intellij.execution.ui.ExecutionConsole
 - createTabLayouter():com.intellij.xdebugger.ui.XDebugTabLayouter
 - createValueMarkerProvider():com.intellij.xdebugger.frame.XValueMarkerProvider
-- *:dependsOnPlugin(com.intellij.ide.plugins.IdeaPluginDescriptor):Z
 - p:doGetProcessHandler():com.intellij.execution.process.ProcessHandler
-- *:getAlternativeSourceHandler():com.intellij.xdebugger.XAlternativeSourceHandler
 - getBreakpointHandlers():com.intellij.xdebugger.breakpoints.XBreakpointHandler[]
 - getCurrentStateHyperlinkListener():javax.swing.event.HyperlinkListener
 - getCurrentStateMessage():java.lang.String
-- *:getDropFrameHandler():com.intellij.xdebugger.frame.XDropFrameHandler
 - a:getEditorsProvider():com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 - f:getProcessHandler():com.intellij.execution.process.ProcessHandler
@@ -206,11 +199,6 @@ a:com.intellij.xdebugger.XSourcePositionWrapper
 - getFile():com.intellij.openapi.vfs.VirtualFile
 - f:getLine():I
 - f:getOffset():I
-*:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler
-- *sf:Companion:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
-- a:areInlineBreakpointsDisabled(com.intellij.openapi.vfs.VirtualFile):Z
-*f:com.intellij.xdebugger.breakpoints.InlineBreakpointsDisabler$Companion
-- f:getEP():com.intellij.openapi.extensions.ExtensionPointName
 e:com.intellij.xdebugger.breakpoints.SuspendPolicy
 - java.lang.Enum
 - sf:ALL:com.intellij.xdebugger.breakpoints.SuspendPolicy
@@ -411,21 +399,39 @@ f:com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities
 - sf:BY_TYPE:I
 - sf:DEFAULT:I
 - <init>():V
+com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport
+- a:findExceptionReference(com.intellij.openapi.project.Project,com.intellij.psi.PsiElement):com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionReference
+com.intellij.xdebugger.codeinsight.ControlExceptionBreakpointSupport$ExceptionReference
+- a:createBreakpoint(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.XBreakpoint
+- a:findExistingBreakpoint(com.intellij.openapi.project.Project):com.intellij.xdebugger.breakpoints.XBreakpoint
+- a:getDisplayName():java.lang.String
 e:com.intellij.xdebugger.evaluation.EvaluationMode
 - java.lang.Enum
 - sf:CODE_FRAGMENT:com.intellij.xdebugger.evaluation.EvaluationMode
 - sf:EXPRESSION:com.intellij.xdebugger.evaluation.EvaluationMode
 - s:valueOf(java.lang.String):com.intellij.xdebugger.evaluation.EvaluationMode
 - s:values():com.intellij.xdebugger.evaluation.EvaluationMode[]
-c:com.intellij.xdebugger.evaluation.ExpressionInfo
+f:com.intellij.xdebugger.evaluation.ExpressionInfo
+- sf:Companion:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
 - <init>(com.intellij.openapi.util.TextRange):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String):V
 - <init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement):V
-- getDisplayText():java.lang.String
-- getElement():com.intellij.psi.PsiElement
-- getExpressionText():java.lang.String
-- getTextRange():com.intellij.openapi.util.TextRange
+- b:<init>(com.intellij.openapi.util.TextRange,java.lang.String,java.lang.String,com.intellij.psi.PsiElement,I,kotlin.jvm.internal.DefaultConstructorMarker):V
+- f:getDisplayText():java.lang.String
+- f:getElement():com.intellij.psi.PsiElement
+- f:getExpressionText():java.lang.String
+- f:getTextRange():com.intellij.openapi.util.TextRange
+bc:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+- kotlinx.serialization.internal.GeneratedSerializer
+- sf:INSTANCE:com.intellij.xdebugger.evaluation.ExpressionInfo$$serializer
+- f:childSerializers():kotlinx.serialization.KSerializer[]
+- f:deserialize(kotlinx.serialization.encoding.Decoder):com.intellij.xdebugger.evaluation.ExpressionInfo
+- f:getDescriptor():kotlinx.serialization.descriptors.SerialDescriptor
+- f:serialize(kotlinx.serialization.encoding.Encoder,com.intellij.xdebugger.evaluation.ExpressionInfo):V
+- typeParametersSerializers():kotlinx.serialization.KSerializer[]
+f:com.intellij.xdebugger.evaluation.ExpressionInfo$Companion
+- f:serializer():kotlinx.serialization.KSerializer
 a:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - sf:DEFAULT:com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - <init>():V
@@ -439,9 +445,9 @@ a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 - a:getFileType():com.intellij.openapi.fileTypes.FileType
 - getInlineDebuggerHelper():com.intellij.xdebugger.evaluation.InlineDebuggerHelper
 - getSupportedLanguages(com.intellij.openapi.project.Project,com.intellij.xdebugger.XSourcePosition):java.util.Collection
-- *:isEvaluateExpressionFieldEnabled():Z
 a:com.intellij.xdebugger.evaluation.XDebuggerEditorsProviderBase
 - com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
+- sf:DEBUGGER_FILE_KEY:com.intellij.openapi.util.Key
 - <init>():V
 - createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.psi.PsiElement,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
 - createDocument(com.intellij.openapi.project.Project,com.intellij.xdebugger.XExpression,com.intellij.xdebugger.XSourcePosition,com.intellij.xdebugger.evaluation.EvaluationMode):com.intellij.openapi.editor.Document
@@ -490,18 +496,20 @@ a:com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink
 - getShortcutSupplier():java.util.function.Supplier
 - getTextAttributes():com.intellij.ui.SimpleTextAttributes
 - a:onClick(java.awt.event.MouseEvent):V
-*:com.intellij.xdebugger.frame.XDropFrameHandler
-- a:canDrop(com.intellij.xdebugger.frame.XStackFrame):Z
-- a:drop(com.intellij.xdebugger.frame.XStackFrame):V
 a:com.intellij.xdebugger.frame.XExecutionStack
 - sf:EMPTY_ARRAY:com.intellij.xdebugger.frame.XExecutionStack[]
 - p:<init>(java.lang.String):V
 - p:<init>(java.lang.String,javax.swing.Icon):V
 - a:computeStackFrames(I,com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer):V
+- getAdditionalDisplayInfo():com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
 - f:getDisplayName():java.lang.String
 - getExecutionLineIconRenderer():com.intellij.openapi.editor.markup.GutterIconRenderer
 - f:getIcon():javax.swing.Icon
 - a:getTopFrame():com.intellij.xdebugger.frame.XStackFrame
+c:com.intellij.xdebugger.frame.XExecutionStack$AdditionalDisplayInfo
+- <init>(java.lang.String,java.lang.String):V
+- getText():java.lang.String
+- getTooltip():java.lang.String
 com.intellij.xdebugger.frame.XExecutionStack$XStackFrameContainer
 - com.intellij.xdebugger.Obsolescent
 - com.intellij.xdebugger.frame.XValueCallback
@@ -548,8 +556,6 @@ a:com.intellij.xdebugger.frame.XStackFrame
 - getEqualityObject():java.lang.Object
 - getEvaluator():com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 - getSourcePosition():com.intellij.xdebugger.XSourcePosition
-*:com.intellij.xdebugger.frame.XStringValueModifier
-- a:stringToXExpression(java.lang.String):com.intellij.xdebugger.XExpression
 a:com.intellij.xdebugger.frame.XSuspendContext
 - <init>():V
 - computeExecutionStacks(com.intellij.xdebugger.frame.XSuspendContext$XExecutionStackContainer):V
@@ -585,10 +591,12 @@ c:com.intellij.xdebugger.frame.XValueChildrenList
 - add(java.lang.String,com.intellij.xdebugger.frame.XValue):V
 - addBottomGroup(com.intellij.xdebugger.frame.XValueGroup):V
 - addTopGroup(com.intellij.xdebugger.frame.XValueGroup):V
+- addTopValue(com.intellij.xdebugger.frame.XNamedValue):V
 - s:bottomGroup(com.intellij.xdebugger.frame.XValueGroup):com.intellij.xdebugger.frame.XValueChildrenList
 - getBottomGroups():java.util.List
 - getName(I):java.lang.String
 - getTopGroups():java.util.List
+- getTopValues():java.util.List
 - getValue(I):com.intellij.xdebugger.frame.XValue
 - s:singleton(com.intellij.xdebugger.frame.XNamedValue):com.intellij.xdebugger.frame.XValueChildrenList
 - s:singleton(java.lang.String,com.intellij.xdebugger.frame.XValue):com.intellij.xdebugger.frame.XValueChildrenList
@@ -749,14 +757,6 @@ com.intellij.xdebugger.ui.DebuggerColors
 - sf:NOT_TOP_FRAME_ATTRIBUTES:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_SELECTION:com.intellij.openapi.editor.colors.TextAttributesKey
 - sf:SMART_STEP_INTO_TARGET:com.intellij.openapi.editor.colors.TextAttributesKey
-*:com.intellij.xdebugger.ui.TextValueVisualizer
-- canVisualize(java.lang.String):Z
-- a:visualize(java.lang.String):java.util.List
-*:com.intellij.xdebugger.ui.VisualizedContentTab
-- a:createComponent(com.intellij.openapi.project.Project):javax.swing.JComponent
-- a:getId():java.lang.String
-- a:getName():java.lang.String
-- onShown(com.intellij.openapi.project.Project,Z):V
 c:com.intellij.xdebugger.ui.XDebugTabLayouter
 - <init>():V
 - registerAdditionalContent(com.intellij.execution.ui.RunnerLayoutUi):V

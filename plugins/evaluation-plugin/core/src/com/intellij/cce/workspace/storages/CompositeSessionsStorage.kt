@@ -34,7 +34,7 @@ class CompositeSessionsStorage(storageDir: String) : SessionsStorage(storageDir)
   }
 
   override fun getSessions(path: String): FileSessionsInfo {
-    val (projectName, filePath) = path.split(":")
+    val (projectName, filePath) = path.split(":", limit = 2)
     return storages[projectName]!!.getSessions(filePath)
   }
 }

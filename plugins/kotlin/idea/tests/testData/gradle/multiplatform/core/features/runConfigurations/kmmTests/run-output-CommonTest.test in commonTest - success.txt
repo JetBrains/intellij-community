@@ -1,4 +1,4 @@
-<time>: Executing ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "CommonTest.test in commonTest - success"'...
+<time>: Executing ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "CommonTest.test in commonTest - success"'…
 <time>: Execution finished ':cleanIosSimulatorArm64Test :iosSimulatorArm64Test --tests "CommonTest.test in commonTest - success"'.
 
 <exitCode: 0>

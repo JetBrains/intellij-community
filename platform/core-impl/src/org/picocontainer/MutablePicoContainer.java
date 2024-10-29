@@ -9,6 +9,7 @@
 */
 package org.picocontainer;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -36,6 +37,7 @@ public interface MutablePicoContainer extends PicoContainer {
   /**
    * @deprecated Use services.
    */
+  @ApiStatus.Internal
   @Deprecated
   ComponentAdapter registerComponentInstance(Object componentKey, Object componentInstance);
 

@@ -14,7 +14,7 @@ import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
-public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
+final class UpdateInfoStatsCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ide.update.dialog", 2);
   private static final EventId1<String> CLICK =
     GROUP.registerEvent("link.clicked", EventFields.StringValidatedByCustomRule("url", UrlValidationRule.class));
@@ -30,7 +30,8 @@ public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
 
   public static final class UrlValidationRule extends CustomValidationRule {
     private static final String ID = "update_dialog_rule_id";
-    private static final List<String> JB_DOMAINS = Arrays.asList("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.org", "jb.gg");
+    private static final List<String> JB_DOMAINS =
+      Arrays.asList("jetbrains.com", "intellij.net", "intellij.com", "kotlinlang.org", "jb.gg");
 
     @Override
     public @NotNull String getRuleId() {
@@ -45,7 +46,8 @@ public final class UpdateInfoStatsCollector extends CounterUsagesCollector {
           return ValidationResultType.ACCEPTED;
         }
       }
-      catch (Exception ignored) { }
+      catch (Exception ignored) {
+      }
       return ValidationResultType.REJECTED;
     }
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/* Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
@@ -7,14 +7,16 @@ import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
 import com.intellij.codeInsight.daemon.impl.actions.IntentionActionWithFixAllOption;
 import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
-import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.ExternalAnnotator;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.annotation.ProblemGroup;
 import com.intellij.modcommand.ModCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.ReportingClassSubstitutor;
@@ -55,7 +57,6 @@ import static com.intellij.openapi.util.NlsContexts.Tooltip;
 @ApiStatus.NonExtendable
 public class HighlightInfo implements Segment {
   private static final Logger LOG = Logger.getInstance(HighlightInfo.class);
-
   /**
    * Short name of the {@link com.intellij.codeInsight.daemon.impl.HighlightVisitorBasedInspection} tool, which needs to be treated differently from other inspections:
    * it doesn't have "disable" or "suppress" quickfixes
@@ -69,12 +70,8 @@ public class HighlightInfo implements Segment {
   private static final byte AFTER_END_OF_LINE_MASK = 0x4;
   private static final byte FILE_LEVEL_ANNOTATION_MASK = 0x8;
   private static final byte NEEDS_UPDATE_ON_TYPING_MASK = 0x10;
-  /** true if this HighlightInfo was created as an error for some unresolved reference, so there likely will be some "Import" quickfixes after {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} being asked about em */
+  /** true if this HighlightInfo was created as an error for some unresolved reference, so there likely will be some "Import" quickfixes after {@link UnresolvedReferenceQuickFixProvider} being asked about em */
   private static final byte UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK = 0x20;
-
-  // this HighlightInfo was created during visiting PsiElement with this range
-  @Deprecated
-  private RangeMarker visitingRange;
 
   @MagicConstant(intValues = {HAS_HINT_MASK, FROM_INJECTION_MASK, AFTER_END_OF_LINE_MASK, FILE_LEVEL_ANNOTATION_MASK, NEEDS_UPDATE_ON_TYPING_MASK, UNRESOLVED_REFERENCE_QUICK_FIXES_COMPUTED_MASK})
   private @interface FlagConstant {
@@ -90,49 +87,16 @@ public class HighlightInfo implements Segment {
    * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
    */
   @Deprecated
+  @Unmodifiable
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   /**
    * @deprecated use {@link #findRegisteredQuickFix(BiFunction)} instead
    */
   @Deprecated
+  @Unmodifiable
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  /**
-   * Find the quickfix (among ones added by {@link #registerFix}) selected by returning non-null value from the {@code predicate}
-   * and return that value, or null if the quickfix was not found.
-   */
-  public <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
-    Set<IntentionActionDescriptor> processed = new HashSet<>();
-    List<Pair<IntentionActionDescriptor, RangeMarker>> markers;
-    List<Pair<IntentionActionDescriptor, TextRange>> ranges;
-    synchronized (this) {
-      markers = quickFixActionMarkers;
-      ranges = quickFixActionRanges;
-    }
-    // prefer range markers as having more actual offsets
-    T result = find(markers, processed, predicate);
-    if (result != null) return result;
-    return find(ranges, processed, predicate);
-  }
-
-  private static @Nullable <T> T find(@Nullable List<? extends Pair<IntentionActionDescriptor, ? extends Segment>> markers,
-                                      @NotNull Set<? super IntentionActionDescriptor> processed,
-                                      @NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends T> predicate) {
-    if (markers != null) {
-      for (Pair<IntentionActionDescriptor, ? extends Segment> pair : markers) {
-        Segment segment = pair.second;
-        TextRange range = segment instanceof RangeMarker ? ((RangeMarker)segment).isValid() ? ((RangeMarker)segment).getTextRange() : null : (TextRange)segment;
-        if (range == null) continue;
-        IntentionActionDescriptor descriptor = pair.first;
-        if (!processed.add(descriptor)) continue;
-        T result = predicate.apply(descriptor, range);
-        if (result != null) {
-          return result;
-        }
-      }
-    }
-    return null;
-  }
+  private @Unmodifiable List<IntentionActionDescriptor> myIntentionActionDescriptors = List.of();
 
   private final @DetailedDescription String description;
   private final @Tooltip String toolTip;
@@ -145,9 +109,9 @@ public class HighlightInfo implements Segment {
    * Quick fix text range: the range within which the Alt-Enter should open the quick fix popup.
    * Might be bigger than (getStartOffset(), getEndOffset()) when it's deemed more usable,
    * e.g., when "import class" fix wanted to be Alt-Entered from everywhere at the same line.
-   *
    */
   private long fixRange;
+  private @Nullable("null means it's the same as highlighter") RangeMarker fixMarker;
   /**
    * @see FlagConstant for allowed values
    */
@@ -157,10 +121,9 @@ public class HighlightInfo implements Segment {
 
   private @Nullable Object fileLevelComponentsStorage;
 
-  private @Nullable("null means it the same as highlighter") RangeMarker fixMarker;
-  volatile RangeHighlighterEx highlighter;
+  private volatile RangeHighlighterEx highlighter;
   /**
-   * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider} later
+   * in case this HighlightInfo is created to highlight unresolved reference, store this reference here to be able to call {@link UnresolvedReferenceQuickFixProvider} later
    */
   final PsiReference unresolvedReference;
 
@@ -208,6 +171,26 @@ public class HighlightInfo implements Segment {
     this.toolId = toolId;
     this.group = group;
     this.unresolvedReference = unresolvedReference;
+  }
+
+  /**
+   * Find the quickfix (among ones added by {@link #registerFixes}) selected by returning non-null value from the {@code predicate}
+   * and return that value, or null if the quickfix was not found.
+   */
+  public synchronized <T> T findRegisteredQuickFix(@NotNull BiFunction<? super @NotNull IntentionActionDescriptor, ? super @NotNull TextRange, ? extends @Nullable T> predicate) {
+    Set<IntentionActionDescriptor> processed = new HashSet<>();
+    for (IntentionActionDescriptor descriptor : myIntentionActionDescriptors) {
+      TextRange fixRange = descriptor.getFixRange();
+      if (fixRange == null) {
+        fixRange = TextRange.create(this);
+      }
+      if (!processed.add(descriptor)) continue;
+      T result = predicate.apply(descriptor, fixRange);
+      if (result != null) {
+        return result;
+      }
+    }
+    return null;
   }
 
   /**
@@ -305,7 +288,8 @@ public class HighlightInfo implements Segment {
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    * or tooltip without changes.
    */
-  private static @Nullable @Tooltip String encodeTooltip(@Nullable @Tooltip String tooltip, @Nullable @DetailedDescription String description) {
+  private static @Nullable @Tooltip String encodeTooltip(@Nullable @Tooltip String tooltip,
+                                                         @Nullable @DetailedDescription String description) {
     if (tooltip == null) return null;
 
     String stripped = XmlStringUtil.stripHtml(tooltip);
@@ -349,20 +333,15 @@ public class HighlightInfo implements Segment {
   // todo remove along with DefaultHighlightInfoProcessor
   @Deprecated
   void setVisitingTextRange(@NotNull PsiFile psiFile, @NotNull Document document, long range) {
-    if (document instanceof DocumentWindow window) {
-      range = TextRangeScalarUtil.toScalarRange(window.injectedToHost(TextRangeScalarUtil.create(range)));
-      document = window.getDelegate();
-      psiFile = InjectedLanguageManager.getInstance(psiFile.getProject()).getTopLevelFile(psiFile);
-    }
-    visitingRange = HighlightingSessionImpl.getOrCreateVisitingRangeMarker(psiFile, document, range);
   }
 
-  // todo remove along with DefaultHighlightInfoProcessor
+  /**
+   * @deprecated todo remove along with DefaultHighlightInfoProcessor
+   */
   @Deprecated
   @NotNull
   Segment getVisitingTextRange() {
-    RangeMarker visitingRange = this.visitingRange;
-    return visitingRange != null && visitingRange.isValid() ? visitingRange : this;
+    return TextRange.EMPTY_RANGE;
   }
 
   public @NotNull HighlightSeverity getSeverity() {
@@ -507,10 +486,8 @@ public class HighlightInfo implements Segment {
     if (getDescription() != null) s += ", description='" + getDescription() + "'";
     s += "; severity=" + getSeverity();
     synchronized (this) {
-      if (quickFixActionRanges != null) {
-        s += "; quickFixes: " + StringUtil.join(
-          quickFixActionRanges, q -> ReportingClassSubstitutor.getClassToReport(q.getFirst().myAction).getName(), ", ");
-      }
+      s += "; quickFixes: " + StringUtil.join(
+        myIntentionActionDescriptors, q -> ReportingClassSubstitutor.getClassToReport(q.myAction).getName(), ", ");
     }
     if (gutterIconRenderer != null) {
       s += "; gutter: " + gutterIconRenderer;
@@ -520,6 +497,9 @@ public class HighlightInfo implements Segment {
     }
     if (forcedTextAttributesKey != null) {
       s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
+    }
+    if (unresolvedReference != null) {
+      s += "; unresolvedReference: " + unresolvedReference;
     }
     return s;
   }
@@ -640,11 +620,12 @@ public class HighlightInfo implements Segment {
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();
     if (fixes != null) {
-      for (Annotation.QuickFixInfo quickFixInfo : fixes) {
-        TextRange range = quickFixInfo.textRange;
-        HighlightDisplayKey k = quickFixInfo.key != null ? quickFixInfo.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
-        info.registerFix(quickFixInfo.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), range, k);
-      }
+      List<IntentionActionDescriptor> qfrs = ContainerUtil.map(fixes, af -> {
+        TextRange range = af.textRange;
+        HighlightDisplayKey k = af.key != null ? af.key : HighlightDisplayKey.find(ANNOTATOR_INSPECTION_SHORT_NAME);
+        return new IntentionActionDescriptor(af.quickFix, null, HighlightDisplayKey.getDisplayNameByKey(k), null, k, annotation.getProblemGroup(), info.getSeverity(), range);
+      });
+      info.registerFixes(qfrs);
     }
 
     return info;
@@ -702,25 +683,33 @@ public class HighlightInfo implements Segment {
 
   public int getActualStartOffset() {
     RangeHighlighterEx h = highlighter;
-    return h == null || !h.isValid() ? startOffset : h.getStartOffset();
+    return h == null || !h.isValid() || isFileLevelAnnotation() ? startOffset : h.getStartOffset();
   }
 
   public int getActualEndOffset() {
     RangeHighlighterEx h = highlighter;
-    return h == null || !h.isValid() ? endOffset : h.getEndOffset();
+    return h == null || !h.isValid()  || isFileLevelAnnotation() ? endOffset : h.getEndOffset();
   }
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
-    volatile List<? extends IntentionAction> myOptions;
+    volatile List<? extends IntentionAction> myOptions; // null means not initialized yet
     final @Nullable HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
     private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
-    private TextRange myFixRange;
+    /**
+     * either {@link TextRange} (when the info is just created) or {@link RangeMarker} (when the info is bound to the document)
+     * maybe null or empty, in which case it's considered to be equal to the info's range
+     */
+    private Segment myFixRange;
 
+    /**
+     * @deprecated use {@link #IntentionActionDescriptor(IntentionAction, List, String, Icon, HighlightDisplayKey, ProblemGroup, HighlightSeverity, Segment)}
+     */
+    @Deprecated
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<? extends IntentionAction> options,
                                      @Nullable @Nls String displayName,
@@ -728,6 +717,17 @@ public class HighlightInfo implements Segment {
                                      @Nullable HighlightDisplayKey key,
                                      @Nullable ProblemGroup problemGroup,
                                      @Nullable HighlightSeverity severity) {
+      this(action, options, displayName, icon, key, problemGroup, severity, null);
+    }
+
+    public IntentionActionDescriptor(@NotNull IntentionAction action,
+                                     @Nullable List<? extends IntentionAction> options,
+                                     @Nullable @Nls String displayName,
+                                     @Nullable Icon icon,
+                                     @Nullable HighlightDisplayKey key,
+                                     @Nullable ProblemGroup problemGroup,
+                                     @Nullable HighlightSeverity severity,
+                                     @Nullable Segment fixRange) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -735,9 +735,11 @@ public class HighlightInfo implements Segment {
       myKey = key;
       myProblemGroup = problemGroup;
       mySeverity = severity;
+      myFixRange = fixRange;
     }
 
-    @Nullable IntentionActionDescriptor copyWithEmptyAction() {
+    @Nullable
+    IntentionActionDescriptor withEmptyAction() {
       if (myKey == null || myKey.getID().equals(ANNOTATOR_INSPECTION_SHORT_NAME)) {
         // No need to show "Inspection 'Annotator' options" quick fix, it wouldn't be actionable.
         return null;
@@ -746,7 +748,11 @@ public class HighlightInfo implements Segment {
       String displayName = HighlightDisplayKey.getDisplayNameByKey(myKey);
       if (displayName == null) return null;
       return new IntentionActionDescriptor(new EmptyIntentionAction(displayName), myOptions, myDisplayName, myIcon,
-                                           myKey, myProblemGroup, mySeverity);
+                                           myKey, myProblemGroup, mySeverity, myFixRange);
+    }
+    @NotNull
+    IntentionActionDescriptor withFixRange(@NotNull TextRange fixRange) {
+      return new IntentionActionDescriptor(myAction, myOptions, myDisplayName, myIcon, myKey, myProblemGroup, mySeverity, fixRange);
     }
 
     public @NotNull IntentionAction getAction() {
@@ -768,7 +774,7 @@ public class HighlightInfo implements Segment {
           myCanCleanup = false;
         }
         else {
-          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.toString(), element);
+          InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(myKey.getShortName(), element);
           myCanCleanup = toolWrapper != null && toolWrapper.isCleanupTool();
         }
       }
@@ -808,7 +814,7 @@ public class HighlightInfo implements Segment {
       IntentionManager intentionManager = IntentionManager.getInstance();
       List<IntentionAction> newOptions = intentionManager.getStandardIntentionOptions(key, element);
       InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
-      InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.toString(), element);
+      InspectionToolWrapper<?, ?> toolWrapper = profile.getInspectionTool(key.getShortName(), element);
       if (toolWrapper != null) {
         myCanCleanup = toolWrapper.isCleanupTool();
 
@@ -894,11 +900,8 @@ public class HighlightInfo implements Segment {
      * Used to check intention's availability at given offset
      */
     public TextRange getFixRange() {
-      return myFixRange;
-    }
-
-    void setFixRange(@NotNull TextRange fixRange) {
-      myFixRange = fixRange;
+      Segment range = myFixRange;
+      return range instanceof TextRange tr ? tr : range instanceof RangeMarker marker ? marker.getTextRange() : null;
     }
   }
 
@@ -934,61 +937,71 @@ public class HighlightInfo implements Segment {
 
   /**
    * @deprecated Use {@link Builder#registerFix(IntentionAction, List, String, TextRange, HighlightDisplayKey)} instead
+   * Invoking this method might lead to disappearing/flickering quick fixes, due to inherent data races because of the unrestricted call context.
    */
   @Deprecated
-  public synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
-  void registerFix(@Nullable IntentionAction action,
-                          @Nullable List<? extends IntentionAction> options,
-                          @Nullable @Nls String displayName,
-                          @Nullable TextRange fixRange,
-                          @Nullable HighlightDisplayKey key) {
-    if (action == null) return;
-    if (fixRange == null) fixRange = new TextRange(getActualStartOffset(), getActualEndOffset());
-    if (quickFixActionRanges == null) {
-      quickFixActionRanges = ContainerUtil.createLockFreeCopyOnWriteList();
+  public
+  void registerFix(@NotNull IntentionAction action,
+                   @Nullable List<? extends IntentionAction> options,
+                   @Nullable @Nls String displayName,
+                   @Nullable TextRange fixRange,
+                   @Nullable HighlightDisplayKey key) {
+    registerFixes(List.of(new IntentionActionDescriptor(action, options, displayName, null, key, myProblemGroup, getSeverity(), fixRange)));
+  }
+
+  synchronized // synchronized to avoid concurrent access to quickFix* fields; TODO rework to lock-free
+  void registerFixes(@NotNull List<? extends @NotNull IntentionActionDescriptor> fixes) {
+    if (fixes.isEmpty()) {
+      return;
     }
-    IntentionActionDescriptor desc =
-      new IntentionActionDescriptor(action, options, displayName, null, key, getProblemGroup(), getSeverity());
-    quickFixActionRanges.add(Pair.create(desc, fixRange));
-    if (fixMarker != null && fixMarker.isValid()) {
-      this.fixRange = TextRangeScalarUtil.toScalarRange(fixMarker);
-    }
-    else {
-      RangeMarker fixMarker = this.fixMarker;
-      RangeHighlighterEx highlighter = this.highlighter;
-      Document document = fixMarker != null ? fixMarker.getDocument() :
-                          highlighter != null ? highlighter.getDocument() :
-                          quickFixActionMarkers != null && !quickFixActionMarkers.isEmpty() && quickFixActionMarkers.get(0).getSecond() != null ? quickFixActionMarkers.get(0).getSecond().getDocument() :
-                          null;
-      if (document != null) {
-        // coerce fixRange inside document
-        int newEnd = Math.min(document.getTextLength(), TextRangeScalarUtil.endOffset(this.fixRange));
-        int newStart = Math.min(newEnd, TextRangeScalarUtil.startOffset(this.fixRange));
-        this.fixRange = TextRangeScalarUtil.toScalarRange(newStart, newEnd);
+    Document document = null;
+    List<IntentionActionDescriptor> result = new ArrayList<>(myIntentionActionDescriptors.size() + fixes.size());
+    result.addAll(myIntentionActionDescriptors);
+    for (IntentionActionDescriptor descriptor : fixes) {
+      if (descriptor.myAction instanceof HintAction) {
+        setHint(true);
       }
+      if (descriptor.myFixRange instanceof RangeMarker marker) {
+        document = marker.getDocument();
+      }
+      TextRange fixRange = descriptor.getFixRange();
+      if (fixRange == null) {
+        fixRange = TextRange.create(this);
+        descriptor = descriptor.withFixRange(fixRange);
+      }
+      result.add(descriptor);
+      this.fixRange = TextRangeScalarUtil.union(this.fixRange, TextRangeScalarUtil.toScalarRange(fixRange));
     }
-    this.fixRange = TextRangeScalarUtil.union(this.fixRange, TextRangeScalarUtil.toScalarRange(fixRange));
-    if (action instanceof HintAction) {
-      setHint(true);
+    myIntentionActionDescriptors = List.copyOf(result);
+    RangeHighlighterEx highlighter = this.highlighter;
+    if (document == null) {
+      RangeMarker fixMarker = this.fixMarker;
+      document = fixMarker != null ? fixMarker.getDocument() :
+                 highlighter != null ? highlighter.getDocument() :
+                 null;
     }
-    RangeHighlighterEx myHighlighter = highlighter;
-    if (myHighlighter != null && myHighlighter.isValid()) {
-      // highlighter already has been created, we need to update quickFixActionMarkers
-      long highlighterRange = TextRangeScalarUtil.toScalarRange(myHighlighter);
-      Long2ObjectMap<RangeMarker> cache = reuseRangeMarkerCacheIfCreated(highlighterRange);
-      updateQuickFixFields(myHighlighter.getDocument(), cache, highlighterRange);
+    if (document != null) {
+      // coerce fixRange inside document
+      int newEnd = Math.min(document.getTextLength(), TextRangeScalarUtil.endOffset(this.fixRange));
+      int newStart = Math.min(newEnd, TextRangeScalarUtil.startOffset(this.fixRange));
+      this.fixRange = TextRangeScalarUtil.toScalarRange(newStart, newEnd);
+    }
+    if (highlighter != null && highlighter.isValid()) {
+      //highlighter already has been created, we need to update quickFixActionMarkers
+      long highlighterRange = TextRangeScalarUtil.toScalarRange(highlighter);
+      Long2ObjectMap<RangeMarker> cache = getRangeMarkerCache();
+      updateQuickFixFields(highlighter.getDocument(), cache, highlighterRange);
     }
   }
 
-  private @NotNull Long2ObjectMap<RangeMarker> reuseRangeMarkerCacheIfCreated(long targetRange) {
+  @NotNull
+  private Long2ObjectMap<RangeMarker> getRangeMarkerCache() {
     Long2ObjectMap<RangeMarker> cache = new Long2ObjectOpenHashMap<>();
-    if (quickFixActionMarkers != null) {
-      for (Pair<IntentionActionDescriptor, RangeMarker> pair : quickFixActionMarkers) {
-        RangeMarker marker = pair.getSecond();
-        if (marker.isValid() && TextRangeScalarUtil.toScalarRange(marker) == targetRange) {
-          cache.put(targetRange, marker);
-          break;
-        }
+    for (IntentionActionDescriptor pair : myIntentionActionDescriptors) {
+      Segment fixRange = pair.myFixRange;
+      if (fixRange instanceof RangeMarker marker && marker.isValid()) {
+        cache.put(TextRangeScalarUtil.toScalarRange(marker), marker);
+        break;
       }
     }
     return cache;
@@ -996,20 +1009,16 @@ public class HighlightInfo implements Segment {
 
   public synchronized //TODO rework to lock-free
   void unregisterQuickFix(@NotNull Condition<? super IntentionAction> condition) {
-    if (quickFixActionRanges != null) {
-      quickFixActionRanges.removeIf(pair -> condition.value(pair.first.getAction()));
-    }
-    if (quickFixActionMarkers != null) {
-      quickFixActionMarkers.removeIf(pair -> condition.value(pair.first.getAction()));
-    }
+    myIntentionActionDescriptors = List.copyOf(ContainerUtil.filter(myIntentionActionDescriptors, descriptor -> !condition.value(descriptor.getAction())));
   }
 
   public synchronized IntentionAction getSameFamilyFix(@NotNull IntentionActionWithFixAllOption action) {
-    if (quickFixActionRanges == null) return null;
-    for (Pair<IntentionActionDescriptor, TextRange> range : quickFixActionRanges) {
-      IntentionAction other = IntentionActionDelegate.unwrap(range.first.myAction);
+    for (IntentionActionDescriptor descriptor : myIntentionActionDescriptors) {
+      IntentionAction other = IntentionActionDelegate.unwrap(descriptor.getAction());
       if (other instanceof IntentionActionWithFixAllOption &&
-          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) return other;
+          action.belongsToMyFamily((IntentionActionWithFixAllOption)other)) {
+        return other;
+      }
     }
     return null;
   }
@@ -1045,25 +1054,11 @@ public class HighlightInfo implements Segment {
   synchronized void updateQuickFixFields(@NotNull Document document,
                                          @NotNull Long2ObjectMap<RangeMarker> range2markerCache,
                                          long finalHighlighterRange) {
-    if (quickFixActionMarkers != null && quickFixActionRanges != null && quickFixActionRanges.size() == quickFixActionMarkers.size() +1) {
-      // markers already created, make quickFixRanges <-> quickFixMarkers consistent by adding new marker to the quickFixMarkers if necessary
-      Pair<IntentionActionDescriptor, TextRange> last = ContainerUtil.getLastItem(quickFixActionRanges);
-      Segment textRange = last.getSecond();
-      if (textRange.getEndOffset() <= document.getTextLength()) {
-        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
-        quickFixActionMarkers.add(Pair.create(last.getFirst(), marker));
+    for (IntentionActionDescriptor descriptor : myIntentionActionDescriptors) {
+      Segment fixRange = descriptor.myFixRange;
+      if (fixRange instanceof TextRange tr) {
+        descriptor.myFixRange = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(tr));
       }
-      return;
-    }
-    if (quickFixActionRanges != null && quickFixActionMarkers == null) {
-      List<Pair<IntentionActionDescriptor, RangeMarker>> list = new ArrayList<>(quickFixActionRanges.size());
-      for (Pair<IntentionActionDescriptor, TextRange> pair : quickFixActionRanges) {
-        TextRange textRange = pair.second;
-        if (textRange.getEndOffset() > document.getTextLength()) continue;
-        RangeMarker marker = getOrCreate(document, range2markerCache, TextRangeScalarUtil.toScalarRange(textRange));
-        list.add(Pair.create(pair.first, marker));
-      }
-      quickFixActionMarkers = ContainerUtil.createLockFreeCopyOnWriteList(list);
     }
     if (fixRange == finalHighlighterRange) {
       fixMarker = null; // null means it the same as highlighter's range
@@ -1099,5 +1094,55 @@ public class HighlightInfo implements Segment {
   @ApiStatus.Internal
   boolean isInjectionRelated() {
     return HighlightInfoUpdaterImpl.isInjectionRelated(toolId);
+  }
+
+  static @NotNull HighlightInfo createComposite(@NotNull List<? extends HighlightInfo> infos) {
+    // derive composite's offsets from an info with tooltip, if present
+    HighlightInfo anchorInfo = ContainerUtil.find(infos, info -> info.getToolTip() != null);
+    if (anchorInfo == null) anchorInfo = infos.get(0);
+    HighlightInfo info = new HighlightInfo(null, null, anchorInfo.type, anchorInfo.startOffset, anchorInfo.endOffset,
+                                           createCompositeDescription(infos), createCompositeTooltip(infos),
+                                           anchorInfo.type.getSeverity(null), false, null, false, 0,
+                                           anchorInfo.getProblemGroup(), null, anchorInfo.getGutterIconRenderer(), anchorInfo.getGroup(),
+                                           null);
+    info.highlighter = anchorInfo.getHighlighter();
+    info.myIntentionActionDescriptors = ContainerUtil.concat(ContainerUtil.map(infos, i->((HighlightInfo)i).myIntentionActionDescriptors));
+    return info;
+  }
+  private static @Nullable @NlsSafe String createCompositeDescription(@NotNull List<? extends HighlightInfo> infos) {
+    StringBuilder description = new StringBuilder();
+    boolean isNull = true;
+    for (HighlightInfo info : infos) {
+      String itemDescription = info.getDescription();
+      if (itemDescription != null) {
+        itemDescription = itemDescription.trim();
+        description.append(itemDescription);
+        if (!itemDescription.endsWith(".")) {
+          description.append('.');
+        }
+        description.append(' ');
+
+        isNull = false;
+      }
+    }
+    return isNull ? null : description.toString();
+  }
+
+  private static @Nullable @NlsSafe String createCompositeTooltip(@NotNull List<? extends HighlightInfo> infos) {
+    StringBuilder result = new StringBuilder();
+    for (HighlightInfo info : infos) {
+      String toolTip = info.getToolTip();
+      if (toolTip != null) {
+        if (!result.isEmpty()) {
+          result.append("<hr size=1 noshade>");
+        }
+        toolTip = XmlStringUtil.stripHtml(toolTip);
+        result.append(toolTip);
+      }
+    }
+    if (result.isEmpty()) {
+      return null;
+    }
+    return XmlStringUtil.wrapInHtml(result);
   }
 }

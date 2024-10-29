@@ -20,6 +20,7 @@ __all__ = ['display']
 
 HOST = os.getenv("PYCHARM_DISPLAY_HOST", "http://127.0.0.1")
 PROJECT_HASH = os.getenv("PYCHARM_PROJECT_ID", "")
+PYCHARM_UUID = os.getenv("PYCHARM_UUID", "")
 PORT_ENV = int(os.getenv("PYCHARM_DISPLAY_PORT", "-1"))
 PORT = PORT_ENV
 if PORT == -1:
@@ -58,7 +59,7 @@ def try_empty_proxy(buffer):
     opener = urllib_request.build_opener(empty_proxy)
     urllib_request.install_opener(opener)
     try:
-        url = HOST + ":" + str(PORT) + "/api/python.scientific?project=" + PROJECT_HASH
+        url = HOST + ":" + str(PORT) + "/api/python.scientific?project=" + PROJECT_HASH + "&token=" + PYCHARM_UUID
         urllib_request.urlopen(url, buffer)
     except:
         sys.stderr.write("Error: failed to send plot to %s:%s\n" % (HOST, PORT))
@@ -74,7 +75,7 @@ def _send_display_message(message_spec):
     buffer = serialized.encode()
     try:
         debug("Sending display message to %s:%s" % (HOST, PORT))
-        url = HOST + ":" + str(PORT) + "/api/python.scientific?project=" + PROJECT_HASH
+        url = HOST + ":" + str(PORT) + "/api/python.scientific?project=" + PROJECT_HASH+ "&token=" + PYCHARM_UUID
 
         if PYCHARM_DISPLAY_HTTP_PROXY is not None:
             debug("Using HTTP proxy %s" % PYCHARM_DISPLAY_HTTP_PROXY)

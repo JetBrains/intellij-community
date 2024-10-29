@@ -171,6 +171,40 @@ public interface IntentionPreviewInfo {
     public @NotNull String modifiedText() {
       return myModifiedText;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+
+      CustomDiff diff = (CustomDiff)o;
+      return myLineNumbers == diff.myLineNumbers &&
+             myFileType.equals(diff.myFileType) &&
+             myOrigText.equals(diff.myOrigText) &&
+             myModifiedText.equals(diff.myModifiedText) &&
+             Objects.equals(myFileName, diff.myFileName);
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myFileType.hashCode();
+      result = 31 * result + myOrigText.hashCode();
+      result = 31 * result + myModifiedText.hashCode();
+      result = 31 * result + Objects.hashCode(myFileName);
+      result = 31 * result + Boolean.hashCode(myLineNumbers);
+      return result;
+    }
+
+    @Override
+    public String toString() {
+      return "CustomDiff{" +
+             "myFileType=" + myFileType +
+             ", myOrigText='" + myOrigText + '\'' +
+             ", myModifiedText='" + myModifiedText + '\'' +
+             ", myFileName='" + myFileName + '\'' +
+             ", myLineNumbers=" + myLineNumbers +
+             '}';
+    }
   }
 
   /**

@@ -27,8 +27,8 @@ open class CodeFragmentFromPsiBuilder(private val project: Project, val language
 
     val filePath = FilesHelper.getRelativeToProjectPath(project, file.path)
     val visitors = getVisitors().filter { it.language == language && it.feature == featureName }
-    if (visitors.isEmpty()) throw IllegalStateException("No suitable visitors")
-    if (visitors.size > 1) throw IllegalStateException("More than 1 suitable visitors")
+    if (visitors.isEmpty()) throw IllegalStateException("No suitable visitors. language=$language, feature=$featureName")
+    if (visitors.size > 1) throw IllegalStateException("More than 1 suitable visitors. language=$language, feature=$featureName. visitors=${visitors.joinToString { it.javaClass.simpleName }}")
     val fileTokens = getFileTokens(visitors.first(), psi)
     fileTokens.path = filePath
     fileTokens.text = file.text()
@@ -36,7 +36,7 @@ open class CodeFragmentFromPsiBuilder(private val project: Project, val language
   }
 
   private fun getFileTokens(visitor: EvaluationVisitor, psi: PsiElement): CodeFragment {
-    if (visitor !is PsiElementVisitor) throw IllegalArgumentException("Visitor must implement PsiElementVisitor")
+    if (visitor !is PsiElementVisitor) throw IllegalArgumentException("Visitor ${visitor.javaClass.simpleName} must implement PsiElementVisitor")
     dumbService.runReadActionInSmartMode {
       assert(!dumbService.isDumb) { "Generating actions during indexing." }
       psi.accept(visitor)

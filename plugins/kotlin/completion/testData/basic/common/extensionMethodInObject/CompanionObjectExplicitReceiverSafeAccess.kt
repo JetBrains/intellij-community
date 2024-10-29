@@ -12,6 +12,5 @@ fun usage(t: T) {
     t?.foo<caret>
 }
 
-// IGNORE_K2
 // EXIST: { lookupString: "fooExtension", itemText: "fooExtension", icon: "Function"}
 // EXIST: { lookupString: "fooProperty", itemText: "fooProperty", icon: "org/jetbrains/kotlin/idea/icons/field_value.svg"}

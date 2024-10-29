@@ -96,9 +96,8 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     return computeReferencedCodeSafeToDelete(psiMember, Predicates.alwaysTrue());
   }
 
-  public static @NotNull List<PsiElement> computeReferencedCodeSafeToDelete(
-    @Nullable PsiMember psiMember,
-    @NotNull Predicate<? super PsiElement> additionalFilter) {
+  public static @NotNull List<PsiElement> computeReferencedCodeSafeToDelete(@Nullable PsiMember psiMember,
+                                                                            @NotNull Predicate<? super PsiElement> additionalFilter) {
     final PsiElement body;
     if (psiMember instanceof PsiMethod method) {
       body = method.getBody();

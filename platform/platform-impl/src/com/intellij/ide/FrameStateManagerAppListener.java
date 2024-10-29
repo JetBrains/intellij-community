@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
@@ -27,14 +27,18 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
         return;
       }
 
-      WindowEvent windowEvent = (WindowEvent)e;
-      IdeFrame frame = ProjectUtil.getRootFrameForWindow(windowEvent.getWindow());
+      var windowEvent = (WindowEvent)e;
+      var frame = ProjectUtil.getRootFrameForWindow(windowEvent.getWindow());
       if (frame == null) {
         return;
       }
 
-      IdeFrame otherFrame = ProjectUtil.getRootFrameForWindow(windowEvent.getOppositeWindow());
+      var otherFrame = ProjectUtil.getRootFrameForWindow(windowEvent.getOppositeWindow());
       if (frame == otherFrame) {
+        return;
+      }
+
+      if (isDisposed()) {
         return;
       }
 
@@ -48,8 +52,14 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void applicationActivated(@NotNull IdeFrame ideFrame) {
+    if (isDisposed()) {
+      return;
+    }
+
     publisher.onFrameActivated();
+
     // don't fire events when welcome screen is activated/deactivated
     if (ideFrame instanceof IdeFrameImpl) {
       LifecycleUsageTriggerCollector.onFrameActivated(ideFrame.getProject());
@@ -57,8 +67,9 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
   }
 
   @Override
+  @SuppressWarnings("deprecation")
   public void applicationDeactivated(@NotNull IdeFrame ideFrame) {
-    if (ApplicationManager.getApplication().isDisposed()) {
+    if (isDisposed()) {
       return;
     }
 
@@ -66,6 +77,12 @@ final class FrameStateManagerAppListener implements ApplicationActivationListene
     if (ideFrame instanceof IdeFrameImpl) {
       LifecycleUsageTriggerCollector.onFrameDeactivated(ideFrame.getProject());
     }
+
     publisher.onFrameDeactivated();
+  }
+
+  private static boolean isDisposed() {
+    var app = ApplicationManager.getApplication();
+    return app == null || app.isDisposed();
   }
 }

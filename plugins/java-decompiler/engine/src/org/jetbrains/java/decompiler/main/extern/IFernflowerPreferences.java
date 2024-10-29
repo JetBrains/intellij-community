@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -37,19 +37,31 @@ public interface IFernflowerPreferences {
   String CONVERT_RECORD_PATTERN = "crp";
   String CONVERT_PATTERN_SWITCH = "cps";
 
+  String STANDARDIZE_FLOATING_POINT_NUMBERS = "sfn";
+  String INCLUDE_ENTIRE_CLASSPATH = "iec";
+  String INLINE_SIMPLE_LAMBDAS = "isl";
+  String HIDE_RECORD_CONSTRUCTOR_AND_GETTERS = "ucrc";
+
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
   String RENAME_ENTITIES = "ren";
   String USER_RENAMER_CLASS = "urc";
   String NEW_LINE_SEPARATOR = "nls";
+  String CHECK_CLOSABLE_INTERFACE = "cci";
   String INDENT_STRING = "ind";
   String BANNER = "ban";
 
   String DUMP_ORIGINAL_LINES = "__dump_original_lines__";
   String UNIT_TEST_MODE = "__unit_test_mode__";
+  String DOTS_FOLDER = "dsf";
 
   String LINE_SEPARATOR_WIN = "\r\n";
   String LINE_SEPARATOR_UNX = "\n";
+
+  String USE_JAD_VARNAMING = "jvn"; // Overwrites any Local Variable names with JAD style names
+  String USE_JAD_PARAMETER_RENAMING = "jpr"; // Include parameter names in JAD naming
+
+  String SKIP_EXTRA_FILES = "sef";
 
   Map<String, Object> DEFAULTS = getDefaults();
 
@@ -85,6 +97,12 @@ public interface IFernflowerPreferences {
     defaults.put(CONVERT_RECORD_PATTERN, "0");
     defaults.put(CONVERT_PATTERN_SWITCH, "0");
 
+    defaults.put(STANDARDIZE_FLOATING_POINT_NUMBERS, "0");
+    defaults.put(INCLUDE_ENTIRE_CLASSPATH, "0");
+    defaults.put(CHECK_CLOSABLE_INTERFACE, "1");
+    defaults.put(INLINE_SIMPLE_LAMBDAS, "1");
+    defaults.put(HIDE_RECORD_CONSTRUCTOR_AND_GETTERS, "1");
+
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");
     defaults.put(RENAME_ENTITIES, "0");
@@ -93,6 +111,9 @@ public interface IFernflowerPreferences {
     defaults.put(BANNER, "");
     defaults.put(UNIT_TEST_MODE, "0");
     defaults.put(DUMP_ORIGINAL_LINES, "0");
+    defaults.put(USE_JAD_VARNAMING, "0");
+    defaults.put(USE_JAD_PARAMETER_RENAMING, "0");
+    defaults.put(SKIP_EXTRA_FILES, "0");
 
     return Collections.unmodifiableMap(defaults);
   }

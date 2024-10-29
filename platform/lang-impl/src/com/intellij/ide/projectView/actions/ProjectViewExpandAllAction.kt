@@ -7,8 +7,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys.TREE_EXPANDER
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Experimental
 
+@ApiStatus.Internal
 @Experimental
 class ProjectViewExpandAllAction : DumbAwareAction(), ActionRemoteBehaviorSpecification.Frontend {
 

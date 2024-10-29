@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.trackers
 
 import com.intellij.openapi.application.runUndoTransparentWriteAction
@@ -8,11 +8,14 @@ import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertNotEquals
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.psi.KtBlockExpression
+import org.jetbrains.kotlin.psi.KtCallExpression
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPsiFactory
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isContractDescriptionCallPsiCheck
 
 class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCodeInsightFixtureTestCase() {
@@ -224,6 +227,98 @@ class CustomProjectWideOutOfBlockKotlinModificationTrackerTest : KotlinLightCode
             assertion = { before, after ->
                 assertNull(property.delegate)
                 assertNotEquals(before, after)
+            }
+        )
+    }
+
+    fun `test remove big block without backing field`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+            val prop: Int
+                get() {
+                    <caret>run { class Foo { fun bar() = run { (fun() { return Unit })() } } }
+                    field
+                    return 0
+                }
+        """.trimIndent()
+        ) as KtFile
+
+        val callExpression = file.findElementAt(myFixture.caretOffset)?.getNonStrictParentOfType<KtCallExpression>()!!
+        doTest(
+            actionUnderWriteAction = { callExpression.delete() },
+            assertion = { before, after ->
+                // They should be the same, but the platform decides to recreate the entire body
+                assertNotEquals(before, after)
+            }
+        )
+    }
+
+    fun `test remove big block with backing field`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+            val prop: Int
+                get() {
+                    <caret>run { class Foo { fun bar() = run { (fun(): Int { return field })() } } }
+                    return 0
+                }
+        """.trimIndent()
+        ) as KtFile
+
+        val callExpression = file.findElementAt(myFixture.caretOffset)?.getNonStrictParentOfType<KtCallExpression>()!!
+        doTest(
+            actionUnderWriteAction = { callExpression.delete() },
+            assertion = { before, after ->
+                assertNotEquals(before, after)
+            }
+        )
+    }
+
+    fun `test remove big nested block with backing field`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+            val prop: Int
+                get() {
+                    run { 
+                        <caret>class Foo { fun bar() = run { (fun(): Int { return field })() } } 
+                    }
+                    
+                    return 0
+                }
+        """.trimIndent()
+        ) as KtFile
+
+        val classOrObject = file.findElementAt(myFixture.caretOffset)?.getNonStrictParentOfType<KtClassOrObject>()!!
+        doTest(
+            actionUnderWriteAction = { classOrObject.delete() },
+            assertion = { before, after ->
+                assertNotEquals(before, after)
+            }
+        )
+    }
+
+    fun `test remove big nested block without backing field`() {
+        val file = myFixture.configureByText(
+            "usage.kt",
+            """
+            val prop: Int
+                get() {
+                    run { 
+                        <caret>class Foo { fun bar() = run { (fun() { return Unit })() } } 
+                    }
+                    
+                    return 0
+                }
+        """.trimIndent()
+        ) as KtFile
+
+        val classOrObject = file.findElementAt(myFixture.caretOffset)?.getNonStrictParentOfType<KtClassOrObject>()!!
+        doTest(
+            actionUnderWriteAction = { classOrObject.delete() },
+            assertion = { before, after ->
+                assertEquals(before, after)
             }
         )
     }

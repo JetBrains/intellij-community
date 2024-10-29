@@ -6,7 +6,10 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.ResourceBundleManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionUpdateThread;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,11 +42,9 @@ public class I18nizeAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     boolean active = getHandler(e) != null;
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    e.getPresentation().setEnabled(active);
+    if (e.isFromContextMenu()) {
       e.getPresentation().setVisible(active);
-    }
-    else {
-      e.getPresentation().setEnabled(active);
     }
   }
 

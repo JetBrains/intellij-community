@@ -9,7 +9,6 @@ import com.intellij.diff.InvalidDiffRequestException
 import com.intellij.diff.merge.MergeRequest
 import com.intellij.diff.merge.MergeResult
 import com.intellij.diff.merge.MergeUtil
-import com.intellij.diff.util.DiffUserDataKeysEx.EDITORS_TITLE_CUSTOMIZER
 import com.intellij.diff.util.DiffUtil
 import com.intellij.ide.DataManager
 import com.intellij.ide.util.treeView.TreeState
@@ -459,7 +458,7 @@ open class MultipleFileMergeDialog(
         break
       }
       conflictData.contentTitleCustomizers.run {
-        request.putUserData(EDITORS_TITLE_CUSTOMIZER, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
+        DiffUtil.addTitleCustomizers(request, listOf(leftTitleCustomizer, centerTitleCustomizer, rightTitleCustomizer))
       }
       DiffManager.getInstance().showMerge(project, request)
     }

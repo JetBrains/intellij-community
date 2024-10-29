@@ -9,11 +9,13 @@ object JavaPluginLayout {
   const val MAIN_FRONTEND_MODULE_NAME = "intellij.java.frontend"
 
   fun javaPlugin(addition: ((PluginLayout.PluginLayoutSpec) -> Unit)? = null): PluginLayout {
-    return PluginLayout.plugin(MAIN_MODULE_NAME, auto = true) { spec ->
+    return PluginLayout.plugin(mainModuleName = MAIN_MODULE_NAME, auto = true) { spec ->
       spec.directoryName = "java"
       spec.mainJarName = "java-impl.jar"
 
       spec.excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
+
+      spec.withProjectLibrary("netty-codec-protobuf", "netty-codec-protobuf.jar")
 
       spec.withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
       spec.withModule("intellij.platform.jps.build", "jps-builders.jar")
@@ -58,6 +60,7 @@ object JavaPluginLayout {
       spec.withModules(listOf(
         "intellij.java.compiler.impl",
         "intellij.java.debugger.impl",
+        "intellij.java.terminal",
         "intellij.java.debugger.memory.agent",
         "intellij.java.execution.impl",
         "intellij.java.ui",

@@ -3,17 +3,16 @@
 
 package com.intellij.ide.ui.laf.darcula
 
-import com.intellij.ide.ui.laf.LookAndFeelThemeAdapter
+import com.intellij.ide.ui.laf.createBaseLaF
 import com.intellij.ide.ui.laf.createRawDarculaTheme
 import com.intellij.ide.ui.laf.initBaseLaF
 import com.intellij.openapi.diagnostic.thisLogger
-import com.intellij.openapi.util.*
-import com.intellij.platform.ide.bootstrap.createBaseLaF
-import kotlinx.coroutines.*
-import org.jetbrains.annotations.ApiStatus
-import java.awt.*
-import java.util.*
-import javax.swing.*
+import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
+import javax.swing.Icon
+import javax.swing.JComponent
+import javax.swing.LookAndFeel
+import javax.swing.UIDefaults
 import javax.swing.plaf.basic.BasicLookAndFeel
 
 /**
@@ -26,16 +25,6 @@ open class DarculaLaf : BasicLookAndFeel() {
 
   companion object {
     const val NAME: @NlsSafe String = "Darcula"
-
-    @Suppress("unused")
-    @JvmStatic
-    @Deprecated("Use LookAndFeelThemeAdapter.isAltPressed", level = DeprecationLevel.ERROR,
-                replaceWith = ReplaceWith("LookAndFeelThemeAdapter.isAltPressed", "com.intellij.ide.ui.laf.LookAndFeelThemeAdapter"))
-    @get:ApiStatus.ScheduledForRemoval
-    @get:Deprecated("Use LookAndFeelThemeAdapter.isAltPressed", level = DeprecationLevel.ERROR,
-                    replaceWith = ReplaceWith("LookAndFeelThemeAdapter.isAltPressed", "com.intellij.ide.ui.laf.LookAndFeelThemeAdapter"))
-    val isAltPressed: Boolean
-      get() = LookAndFeelThemeAdapter.isAltPressed
   }
 
   override fun getDefaults(): UIDefaults {

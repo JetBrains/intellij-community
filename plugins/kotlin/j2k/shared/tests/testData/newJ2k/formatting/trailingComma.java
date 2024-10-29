@@ -1,4 +1,3 @@
-// IGNORE_K2
 class J {
     public static void main(String[] args) {
         // normal case: trailing comma is preserved

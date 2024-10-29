@@ -6,9 +6,9 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.base.psi.dropEnclosingParenthesesIfPossible
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.CleanupFix
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinPsiOnlyQuickFixAction
 import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.PsiElementSuitabilityCheckers
@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 class RemoveUselessCastFix(element: KtBinaryExpressionWithTypeRHS) : KotlinPsiOnlyQuickFixAction<KtBinaryExpressionWithTypeRHS>(element),
                                                                      CleanupFix {
-    override fun getFamilyName() = KotlinBundle.message("remove.useless.cast")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.useless.cast")
 
     override fun getText(): String = familyName
 

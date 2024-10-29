@@ -9,10 +9,6 @@ import org.jetbrains.kotlin.idea.base.psi.replaceSamConstructorCall
 import org.jetbrains.kotlin.idea.base.psi.replaced
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeInContext
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.isRedundantSetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantGetter
-import org.jetbrains.kotlin.idea.codeinsight.utils.removeRedundantSetter
 import org.jetbrains.kotlin.idea.codeinsights.impl.base.inspections.MayBeConstantInspectionBase
 import org.jetbrains.kotlin.idea.core.canMoveLambdaOutsideParentheses
 import org.jetbrains.kotlin.idea.inspections.*
@@ -28,11 +24,11 @@ import org.jetbrains.kotlin.idea.j2k.post.processing.isInspectionEnabledInCurren
 import org.jetbrains.kotlin.idea.quickfix.AddConstModifierFix
 import org.jetbrains.kotlin.idea.refactoring.moveFunctionLiteralOutsideParentheses
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.j2k.ConverterSettings
 import org.jetbrains.kotlin.j2k.InspectionLikeProcessingForElement
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.nj2k.getExplicitLabelComment
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -91,32 +87,6 @@ internal class RemoveJavaStreamsCollectCallTypeArgumentsProcessing :
 
     companion object {
         private val COLLECT_FQ_NAME = FqName("java.util.stream.Stream.collect")
-    }
-}
-
-internal class ReplaceGetterBodyWithSingleReturnStatementWithExpressionBody :
-    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
-
-    private fun KtPropertyAccessor.singleBodyStatementExpression() =
-        bodyBlockExpression?.statements
-            ?.singleOrNull()
-            ?.safeAs<KtReturnExpression>()
-            ?.takeIf { it.labeledExpression == null }
-            ?.returnedExpression
-
-    override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings): Boolean {
-        if (!element.isGetter) return false
-        return element.singleBodyStatementExpression() != null
-    }
-
-    override fun apply(element: KtPropertyAccessor) {
-        val body = element.bodyExpression ?: return
-        val returnedExpression = element.singleBodyStatementExpression() ?: return
-
-        val commentSaver = CommentSaver(body)
-        element.addBefore(KtPsiFactory(element.project).createEQ(), body)
-        val newBody = body.replaced(returnedExpression)
-        commentSaver.restore(newBody)
     }
 }
 
@@ -222,23 +192,6 @@ internal class RemoveRedundantVisibilityModifierProcessing : InspectionLikeProce
     }
 }
 
-/**
- * Handles a local 'var' without an initializer. For other cases, see [org.jetbrains.kotlin.j2k.postProcessings.VarToValProcessing]
- */
-internal class LocalVarToValInspectionBasedProcessing : InspectionLikeProcessingForElement<KtDeclaration>(KtDeclaration::class.java) {
-    private val inspection = CanBeValInspection()
-
-    override fun isApplicableTo(element: KtDeclaration, settings: ConverterSettings): Boolean =
-        isInspectionEnabledInCurrentProfile(inspection, element.project) &&
-                CanBeValInspection.Util.canBeVal(element, ignoreNotUsedVals = false)
-
-    override fun apply(element: KtDeclaration) {
-        val project = element.project
-        if (element !is KtValVarKeywordOwner) return
-        element.valOrVarKeyword?.replace(KtPsiFactory(project).createValKeyword())
-    }
-}
-
 internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessingForElement<KtProperty>(KtProperty::class.java) {
     private val inspection = MayBeConstantInspection()
 
@@ -250,16 +203,6 @@ internal class MayBeConstantInspectionBasedProcessing : InspectionLikeProcessing
 
     override fun apply(element: KtProperty) {
         AddConstModifierFix.addConstModifier(element)
-    }
-}
-
-internal class RemoveExplicitAccessorInspectionBasedProcessing :
-    InspectionLikeProcessingForElement<KtPropertyAccessor>(KtPropertyAccessor::class.java) {
-    override fun isApplicableTo(element: KtPropertyAccessor, settings: ConverterSettings): Boolean =
-        element.isRedundantGetter() || element.isRedundantSetter()
-
-    override fun apply(element: KtPropertyAccessor) {
-        if (element.isGetter) removeRedundantGetter(element) else removeRedundantSetter(element)
     }
 }
 

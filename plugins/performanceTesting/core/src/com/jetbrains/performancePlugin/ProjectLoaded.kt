@@ -18,6 +18,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.components.ComponentManagerEx
 import com.intellij.openapi.components.service
+import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionNotApplicableException
@@ -36,6 +37,7 @@ import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.tools.ide.starter.bus.EventsBus
 import com.intellij.util.Alarm
 import com.intellij.util.SystemProperties
+import com.jetbrains.performancePlugin.commands.CodeAnalysisStateListener
 import com.jetbrains.performancePlugin.commands.OpenProjectCommand.Companion.shouldOpenInSmartMode
 import com.jetbrains.performancePlugin.commands.takeFullScreenshot
 import com.jetbrains.performancePlugin.commands.takeScreenshotOfAllWindows
@@ -49,6 +51,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus.Internal
 import java.io.IOException
 import java.net.ConnectException
 import java.nio.file.Files
@@ -73,9 +76,6 @@ private fun getTestFile(): Path {
 }
 
 private object ProjectLoadedService {
-  val alarm by lazy {
-    Alarm()
-  }
 
   @JvmField
   var scriptStarted = false
@@ -131,7 +131,9 @@ private fun runOnProjectInit(project: Project) {
   LOG.info("Start Execution")
   PerformanceTestSpan.startSpan()
 
-  subscribeToStopProfile()
+  ApplicationManager.getApplication().executeOnPooledThread {
+    subscribeToStopProfile()
+  }
 
   val profilerSettings = initializeProfilerSettingsForIndexing()
   if (profilerSettings != null) {
@@ -143,11 +145,14 @@ private fun runOnProjectInit(project: Project) {
       ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
     }
   }
+
+  fun createAlarm(): Alarm = Alarm(project.service<CodeAnalysisStateListener>().cs, Alarm.ThreadToUse.SWING_THREAD)
+
   if (shouldOpenInSmartMode(project)) {
-    runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+    runScriptWhenInitializedAndIndexed(project, createAlarm())
   }
   else if (SystemProperties.getBooleanProperty("performance.execute.script.after.scanning", false)) {
-    runScriptDuringIndexing(project, ProjectLoadedService.alarm)
+    runScriptDuringIndexing(project, createAlarm())
   }
   else {
     runScriptFromFile(project)
@@ -173,7 +178,7 @@ private fun runScriptWhenInitializedAndIndexed(project: Project, alarm: Alarm) {
           val hasUserVisibleIndicators = statusBar != null && statusBar.backgroundProcesses.isNotEmpty()
           if (isDumb(project) || hasUserVisibleIndicators ||
               !ProjectInitializationDiagnosticService.getInstance(project).isProjectInitializationAndIndexingFinished) {
-            runScriptWhenInitializedAndIndexed(project, ProjectLoadedService.alarm)
+            runScriptWhenInitializedAndIndexed(project, alarm)
           }
           else {
             runScriptFromFile(project)
@@ -207,15 +212,16 @@ private fun runScriptDuringIndexing(project: Project, alarm: Alarm) {
 }
 
 @Suppress("SpellCheckingInspection")
+@Internal
 class ProjectLoaded : ApplicationInitializedListener {
-  override suspend fun execute(asyncScope: CoroutineScope) {
+  override suspend fun execute() {
     if (System.getProperty("com.sun.management.jmxremote") == "true") {
-      service<InvokerService>().register({ PerformanceTestSpan.TRACER },
-                                         { PerformanceTestSpan.getContext() },
-                                         { takeFullScreenshot(it) })
+      serviceAsync<InvokerService>().register({ PerformanceTestSpan.TRACER },
+                                               { PerformanceTestSpan.getContext() },
+                                               { takeFullScreenshot(it) })
     }
     if (AppMode.isLightEdit()) {
-      LightEditService.getInstance().editorManager.addListener(object : LightEditorListener {
+      serviceAsync<LightEditService>().editorManager.addListener(object : LightEditorListener {
         override fun afterSelect(editorInfo: LightEditorInfo?) {
           runWithModalProgressBlocking(ModalTaskOwner.guess(), "") {
             logStats("LightEditor")
@@ -224,7 +230,7 @@ class ProjectLoaded : ApplicationInitializedListener {
         }
       })
     }
-    if (ApplicationManagerEx.isInIntegrationTest() && AppMode.isHeadless() && AppMode.isCommandLine()){
+    if (ApplicationManagerEx.isInIntegrationTest() && AppMode.isHeadless() && AppMode.isCommandLine()) {
       MessagePool.getInstance().addListener { reportErrorsFromMessagePool() }
       LOG.info("Error watcher has started in headless mode")
     }
@@ -306,7 +312,7 @@ private fun initializeProfilerSettingsForIndexing(): Pair<String, List<String>>?
       }
     }
   }
-  catch (ignored: IOException) {
+  catch (_: IOException) {
     System.err.println(PerformanceTestingBundle.message("startup.script.read.error"))
     ApplicationManagerEx.getApplicationEx().exit(true, true, 1)
   }
@@ -330,7 +336,7 @@ private fun reportScriptError(errorMessage: AbstractMessage) {
       causeMessage = if (index == -1) throwableMessage else throwableMessage.substring(0, index)
     }
   }
-  val scriptErrorsDir = Path.of(PathManager.getLogPath(), "script-errors")
+  val scriptErrorsDir = Path.of(PathManager.getLogPath(), "errors")
   Files.createDirectories(scriptErrorsDir)
   Files.walk(scriptErrorsDir).use { stream ->
     val finalCauseMessage = causeMessage

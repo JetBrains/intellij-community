@@ -1,14 +1,9 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots;
 
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 
 public class AnnotationOrderRootType extends PersistentOrderRootType {
@@ -32,55 +27,44 @@ public class AnnotationOrderRootType extends PersistentOrderRootType {
   }
 
   public static VirtualFile @NotNull [] getFiles(@NotNull OrderEntry entry) {
-    List<VirtualFile> result = new ArrayList<>();
-    RootPolicy<List<VirtualFile>> policy = new RootPolicy<>() {
-      @Override
-      public List<VirtualFile> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
-        return value;
+    if (entry instanceof LibraryOrderEntry orderEntry) {
+      return orderEntry.getRootFiles(getInstance());
+    }
+    else if (entry instanceof JdkOrderEntry orderEntry) {
+      return orderEntry.getRootFiles(getInstance());
+    }
+    else if (entry instanceof ModuleSourceOrderEntry orderEntry) {
+      JavaModuleExternalPaths moduleExtension = orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class);
+      if (moduleExtension != null) {
+        return moduleExtension.getExternalAnnotationsRoots();
       }
-
-      @Override
-      public List<VirtualFile> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<VirtualFile> value) {
-        Collections.addAll(value, orderEntry.getRootFiles(getInstance()));
-        return value;
+      else {
+        return VirtualFile.EMPTY_ARRAY;
       }
-
-      @Override
-      public List<VirtualFile> visitModuleSourceOrderEntry(@NotNull ModuleSourceOrderEntry orderEntry, List<VirtualFile> value) {
-        JavaModuleExternalPaths moduleExtension = orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class);
-        if (moduleExtension != null) {
-          Collections.addAll(value, moduleExtension.getExternalAnnotationsRoots());
-        }
-        return value;
-      }
-    };
-    entry.accept(policy, result);
-    return VfsUtilCore.toVirtualFileArray(result);
+    }
+    return VirtualFile.EMPTY_ARRAY;
   }
 
-  public static @NotNull List<String> getUrls(@NotNull OrderEntry entry) {
-    List<String> result = new ArrayList<>();
-    RootPolicy<List<String>> policy = new RootPolicy<>() {
-      @Override
-      public List<String> visitLibraryOrderEntry(@NotNull final LibraryOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
-        return value;
-      }
+  private final static RootPolicy<String[]> GET_ANNOTATION_URL_POLICY = new RootPolicy<>() {
+    @Override
+    public String[] visitLibraryOrderEntry(@NotNull LibraryOrderEntry libraryOrderEntry, String[] value) {
+      return libraryOrderEntry.getRootUrls(getInstance());
+    }
 
-      @Override
-      public List<String> visitJdkOrderEntry(@NotNull final JdkOrderEntry orderEntry, final List<String> value) {
-        Collections.addAll(value, orderEntry.getRootUrls(getInstance()));
-        return value;
-      }
+    @Override
+    public String[] visitJdkOrderEntry(@NotNull JdkOrderEntry jdkOrderEntry, String[] value) {
+      return jdkOrderEntry.getRootUrls(getInstance());
+    }
 
-      @Override
-      public List<String> visitModuleSourceOrderEntry(@NotNull ModuleSourceOrderEntry orderEntry, List<String> value) {
-        Collections.addAll(value, orderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsUrls());
-        return value;
-      }
-    };
-    entry.accept(policy, result);
-    return result;
+    @Override
+    public String[] visitModuleSourceOrderEntry(@NotNull ModuleSourceOrderEntry moduleSourceOrderEntry, String[] value) {
+      return moduleSourceOrderEntry.getRootModel().getModuleExtension(JavaModuleExternalPaths.class).getExternalAnnotationsUrls();
+    }
+  };
+
+  @ApiStatus.Internal
+  public static boolean hasUrls(@NotNull OrderEntry entry) {
+    String[] urls = entry.accept(GET_ANNOTATION_URL_POLICY, null);
+    return urls != null && urls.length != 0;
   }
 }

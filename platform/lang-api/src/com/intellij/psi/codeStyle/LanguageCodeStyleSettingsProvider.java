@@ -169,7 +169,9 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
   public static @NotNull List<Language> getLanguagesWithCodeStyleSettings() {
     final ArrayList<Language> languages = new ArrayList<>();
     for (LanguageCodeStyleSettingsProvider provider : getAllProviders()) {
-      languages.add(provider.getLanguage());
+      if (provider.hasSettingsPage()) {
+        languages.add(provider.getLanguage());
+      }
     }
     languages.sort((l1, l2) -> Comparing.compare(getLanguageName(l1), getLanguageName(l2)));
     return languages;

@@ -57,7 +57,7 @@ public class CleanPycAction extends AnAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     final PsiElement[] elements = e.getData(PlatformCoreDataKeys.PSI_ELEMENT_ARRAY);
-    if (ActionPlaces.isPopupPlace(e.getPlace())) {
+    if (e.isFromContextMenu()) {
       e.getPresentation().setEnabledAndVisible(isAllDirectories(elements));
     }
     else {

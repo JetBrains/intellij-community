@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
 
+@ApiStatus.Internal
 public class DummyChangesViewContentManager implements ChangesViewContentI {
   @Override
   public void attachToolWindow(@NotNull ToolWindow toolWindow) {

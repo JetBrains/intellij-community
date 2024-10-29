@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.VMOptions.MemoryKind
 import com.intellij.diagnostic.opentelemetry.SafepointBean
 import com.intellij.ide.PowerSaveMode
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -90,12 +91,12 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
         lastTimeToSafepoint = totalTimeToSafepointMs
         currentTimeToSafepoint
       } ?: -1
-      val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs() ?.let { totalTimeAtSafepointMs ->
+      val timeAtSafepointMs = SafepointBean.totalTimeAtSafepointMs()?.let { totalTimeAtSafepointMs ->
         val currentTimeAtSafepoint = (totalTimeAtSafepointMs - lastTimeAtSafepoint).toInt()
         lastTimeAtSafepoint = totalTimeAtSafepointMs
         currentTimeAtSafepoint
       } ?: -1
-      val safepointsCount = SafepointBean.safepointCount()?.let {  totalSafepointCount ->
+      val safepointsCount = SafepointBean.safepointCount()?.let { totalSafepointCount ->
         val currentSafepointsCount = (totalSafepointCount - lastSafepointsCount).toInt()
         lastSafepointsCount = totalSafepointCount
         currentSafepointsCount
@@ -123,7 +124,7 @@ private class IdeHeartbeatEventReporterService(cs: CoroutineScope) {
 }
 
 internal object UILatencyLogger : CounterUsagesCollector() {
-  private val GROUP = EventLogGroup("performance", 72)
+  private val GROUP = EventLogGroup("performance", 74)
 
   internal val SYSTEM_CPU_LOAD: IntEventField = Int("system_cpu_load")
   internal val SWAP_LOAD: IntEventField = Int("swap_load")
@@ -171,6 +172,10 @@ internal object UILatencyLogger : CounterUsagesCollector() {
   @JvmField
   val MAIN_MENU_LATENCY: EventId1<Long> = GROUP.registerEvent("mainmenu.latency", EventFields.DurationMs)
 
+  @JvmField
+  val LOW_MEMORY_CONDITION: EventId2<MemoryKind, Int> = GROUP.registerEvent("low.memory",
+                                                                            Enum("type", MemoryKind::class.java),
+                                                                            Int("heap_size_gigabytes"))
 
   // ==== JVMResponsivenessMonitor: overall system run-time-variability sampling
 
@@ -195,6 +200,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     SAMPLES_COUNT
   )
 
+  override fun getGroup(): EventLogGroup = GROUP
+
   @JvmStatic
   fun reportResponsiveness(avg_ns: Double, p50_ns: Long, p99_ns: Long, p999_ns: Long, max_ns: Long, samplesCount: Int) {
     RESPONSIVENESS_EVENT.log(
@@ -209,6 +216,8 @@ internal object UILatencyLogger : CounterUsagesCollector() {
     )
   }
 
-
-  override fun getGroup(): EventLogGroup = GROUP
+  @JvmStatic
+  fun lowMemory(kind: MemoryKind, currentXmxMegabytes: Int) {
+    LOW_MEMORY_CONDITION.log(kind, (currentXmxMegabytes.toDouble() / 1024).roundToInt())
+  }
 }

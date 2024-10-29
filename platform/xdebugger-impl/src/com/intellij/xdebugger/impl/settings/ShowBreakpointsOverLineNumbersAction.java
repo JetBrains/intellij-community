@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ExperimentalUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Konstantin Bulenkov
  */
+@ApiStatus.Internal
 public class ShowBreakpointsOverLineNumbersAction extends ToggleAction implements DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   @Override
   public boolean isSelected(@NotNull AnActionEvent e) {

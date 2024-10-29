@@ -65,7 +65,7 @@ public final class RelativeRectangle {
   /**
    * @deprecated Use the overload that takes a DevicePoint, which handles locations on different screens with different scaling factors
    */
-  @Deprecated
+  @Deprecated(forRemoval = true)
   public boolean contains(final RelativePoint relativePoint) {
     return contains(new DevicePoint(relativePoint));
   }

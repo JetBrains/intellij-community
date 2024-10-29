@@ -5,8 +5,6 @@ package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.Formats
-import com.intellij.platform.diagnostic.telemetry.helpers.use
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithoutActiveScope
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
@@ -17,6 +15,8 @@ import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager
 import org.jetbrains.idea.maven.aether.ProgressConsumer
 import org.jetbrains.intellij.build.io.zipWithCompression
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import org.jetbrains.jps.model.JpsGlobal
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.jarRepository.JpsRemoteRepositoryService
@@ -38,7 +38,7 @@ import kotlin.io.path.walk
  */
 suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, includeLibraries: Boolean, context: BuildContext) {
   context.executeStep(
-    TraceManager.spanBuilder("build module sources archives")
+    spanBuilder("build module sources archives")
       .setAttribute("path", context.paths.buildOutputDir.toString())
       .setAttribute(AttributeKey.stringArrayKey("modules"), modules),
     BuildOptions.SOURCES_ARCHIVE_STEP
@@ -125,7 +125,7 @@ suspend fun zipSourcesOfModules(modules: List<String>, targetFile: Path, include
       }
     }
 
-    TraceManager.spanBuilder("pack")
+    spanBuilder("pack")
       .setAttribute("targetFile", context.paths.buildOutputDir.relativize(targetFile).toString())
       .use {
         zipWithCompression(targetFile = targetFile, dirs = zipFileMap)
@@ -154,10 +154,10 @@ private fun isSourceFile(path: String): Boolean {
          path.endsWith(".form")
 }
 
-private fun downloadMissingLibrarySources(librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>, context: BuildContext) {
-  TraceManager.spanBuilder("download missing sources")
+private suspend fun downloadMissingLibrarySources(librariesWithMissingSources: List<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>>, context: BuildContext) {
+  spanBuilder("download missing sources")
     .setAttribute(AttributeKey.stringArrayKey("librariesWithMissingSources"), librariesWithMissingSources.map { it.name })
-    .useWithoutActiveScope { span ->
+    .use { span ->
       val configuration = JpsRemoteRepositoryService.getInstance().getRemoteRepositoriesConfiguration(context.project)
       val repositories = configuration?.repositories?.map { ArtifactRepositoryManager.createRemoteRepository(it.id, it.url) } ?: emptyList()
       val repositoryManager = ArtifactRepositoryManager(

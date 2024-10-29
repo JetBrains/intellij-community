@@ -2,8 +2,10 @@
 package com.intellij.execution.wsl.ijent.nio.toggle
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.execution.eel.EelApiWithPathsMapping
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslIjentAvailabilityService
+import com.intellij.execution.wsl.WslIjentManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,14 +15,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.platform.core.nio.fs.MultiRoutingFileSystemProvider
-import com.intellij.platform.ijent.IjentId
+import com.intellij.platform.eel.EelApi
+import com.intellij.platform.eel.provider.EelProvider
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
 import java.io.BufferedReader
 import java.nio.file.FileSystems
+import java.nio.file.Path
 import kotlin.io.path.bufferedReader
+import kotlin.io.path.isSameFileAs
 
 /**
  * This service, along with listeners inside it, enables and disables access to WSL drives through IJent.
@@ -47,9 +52,9 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   }
 
   @TestOnly
-  fun switchToIjentFs(distro: WSLDistribution, ijentId: IjentId) {
+  suspend fun switchToIjentFs(distro: WSLDistribution) {
     strategy ?: error("Not available")
-    strategy.switchToIjentFs(distro, ijentId)
+    strategy.switchToIjentFs(distro)
   }
 
   @TestOnly
@@ -62,6 +67,25 @@ class IjentWslNioFsToggler(private val coroutineScope: CoroutineScope) {
   fun unregisterAll() {
     strategy ?: error("Not available")
     strategy.unregisterAll()
+  }
+
+  // TODO Move to ijent.impl?
+  internal class WslEelProvider : EelProvider {
+    override suspend fun getEelApi(path: Path): EelApi? {
+      val enabledDistros = serviceAsync<IjentWslNioFsToggler>().strategy?.enabledInDistros
+
+      return enabledDistros?.firstOrNull { distro -> distro.getUNCRootPath().isSameFileAs(path.root) }?.let { distro ->
+        /**
+         * NOTE: In [IjentWslNioFsToggleStrategy], the [com.intellij.execution.ijent.nio.IjentEphemeralRootAwareFileSystemProvider] is not currently
+         * used because [com.intellij.execution.wsl.ijent.nio.IjentWslNioFileSystem] has its own logic for handling WSL roots (prefixes).
+         * Therefore, in this case, [com.intellij.execution.eel.EelEphemeralRootAwareMapper.getOriginalPath] will return null.
+         */
+        EelApiWithPathsMapping(
+          ephemeralRoot = path.root,
+          original = WslIjentManager.getInstance().getIjentApi(distro, null, rootUser = false)
+        )
+      }
+    }
   }
 
   private val strategy = run {

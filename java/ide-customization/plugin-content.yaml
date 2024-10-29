@@ -1,0 +1,3 @@
+- name: lib/java-ide-customization.jar
+  modules:
+  - name: intellij.java.ide.customization

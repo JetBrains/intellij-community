@@ -1,0 +1,19 @@
+*e:com.intellij.openapi.client.ClientKind
+- java.lang.Enum
+- sf:ALL:com.intellij.openapi.client.ClientKind
+- sf:CONTROLLER:com.intellij.openapi.client.ClientKind
+- sf:GUEST:com.intellij.openapi.client.ClientKind
+- sf:LOCAL:com.intellij.openapi.client.ClientKind
+- sf:OWNER:com.intellij.openapi.client.ClientKind
+- sf:REMOTE:com.intellij.openapi.client.ClientKind
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.client.ClientKind
+- s:values():com.intellij.openapi.client.ClientKind[]
+f:com.intellij.openapi.extensions.ExtensionPointName
+- com.intellij.openapi.extensions.BaseExtensionPointName
+- *f:computeIfAbsent(java.lang.Class,java.util.function.Supplier):java.lang.Object
+com.intellij.openapi.extensions.PluginDescriptor
+- *:getClassLoader():java.lang.ClassLoader
+f:com.intellij.openapi.extensions.ProjectExtensionPointName
+- com.intellij.openapi.extensions.BaseExtensionPointName
+- *f:asSequence(com.intellij.openapi.extensions.AreaInstance):kotlin.sequences.Sequence

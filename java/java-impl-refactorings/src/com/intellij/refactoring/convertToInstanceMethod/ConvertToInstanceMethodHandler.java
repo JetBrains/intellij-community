@@ -1,28 +1,28 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.convertToInstanceMethod;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.actions.BaseRefactoringAction;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ConvertToInstanceMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
@@ -53,58 +53,71 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler,
   @Override
   public void invoke(@NotNull Project project, PsiElement @NotNull [] elements, DataContext dataContext) {
     if (elements.length != 1 || !(elements[0] instanceof PsiMethod method)) return;
-    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
-      String message = JavaRefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName());
-      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, message, getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
-      return;
+    try {
+      new ConvertToInstanceMethodDialog(method, calculatePossibleInstanceQualifiers(method)).show();
     }
+    catch (CommonRefactoringUtil.RefactoringErrorHintException e) {
+      if (ApplicationManager.getApplication().isUnitTestMode()) throw e;
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()),
+                                          getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
+    }
+  }
+
+  private static Object @NotNull [] calculatePossibleInstanceQualifiers(@NotNull PsiMethod method) {
+    if (!method.hasModifierProperty(PsiModifier.STATIC)) {
+      throw new CommonRefactoringUtil.RefactoringErrorHintException(
+        JavaRefactoringBundle.message("convertToInstanceMethod.method.is.not.static", method.getName()));
+    }
+    List<Object> qualifiers = new ArrayList<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    List<Object> targetQualifiers = new ArrayList<>();
     boolean classTypesFound = false;
     boolean resolvableClassesFound = false;
     for (final PsiParameter parameter : parameters) {
-      if (VariableAccessUtils.variableIsAssigned(parameter, parameter.getDeclarationScope())) continue;
       final PsiType type = parameter.getType();
-      if (type instanceof PsiClassType) {
+      if (type instanceof PsiClassType classType) {
         classTypesFound = true;
-        final PsiClass psiClass = ((PsiClassType)type).resolve();
+        final PsiClass psiClass = classType.resolve();
         if (psiClass != null && !(psiClass instanceof PsiTypeParameter)) {
           resolvableClassesFound = true;
           if (method.getManager().isInProject(psiClass)) {
-            targetQualifiers.add(parameter);
+            qualifiers.add(parameter);
           }
         }
       }
     }
     PsiClass containingClass = method.getContainingClass();
-    if (containingClass == null || containingClass.getQualifiedName() == null) return;
-    String className = containingClass.getName();
-    PsiMethod[] constructors = containingClass.getConstructors();
-    boolean noArgConstructor =
-      constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().isEmpty());
-    if (noArgConstructor) {
-      targetQualifiers.add("this / new " + className + "()");
+    boolean canHaveUsableConstructor = containingClass != null && 
+                                       containingClass.getQualifiedName() != null && 
+                                       !containingClass.isEnum() &&
+                                       !PsiUtil.isInnerClass(containingClass) && 
+                                       !(containingClass instanceof PsiImplicitClass);
+    if (canHaveUsableConstructor) {
+      PsiMethod[] constructors = containingClass.getConstructors();
+      boolean noArgConstructor =
+        constructors.length == 0 || ContainerUtil.exists(constructors, constructor -> constructor.getParameterList().isEmpty());
+      if (noArgConstructor) {
+        qualifiers.add("this / new " + containingClass.getName() + "()");
+      }
     }
-
-    if (targetQualifiers.isEmpty()) {
-      String message;
-      if (!classTypesFound) {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
-      }
-      else if (!resolvableClassesFound) {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.have.unknown.types");
-      }
-      else {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
-      }
+    if (!qualifiers.isEmpty()) {
+      return qualifiers.toArray();
+    }
+    
+    String message;
+    if (!classTypesFound) {
+      message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
+    }
+    else if (!resolvableClassesFound) {
+      message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.have.unknown.types");
+    }
+    else {
+      message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
+    }
+    if (canHaveUsableConstructor) {
       message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
-      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
-      return;
     }
-
-    new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
+    throw new CommonRefactoringUtil.RefactoringErrorHintException(message);
   }
 
   @Override

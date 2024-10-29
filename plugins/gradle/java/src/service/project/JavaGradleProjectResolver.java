@@ -184,11 +184,12 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
   }
 
   @Override
-  public void enhanceTaskProcessing(@Nullable Project project,
-                                    @NotNull List<String> taskNames,
-                                    @NotNull Consumer<String> initScriptConsumer,
-                                    @NotNull Map<String, String> parameters) {
-
+  public @NotNull Map<String, String> enhanceTaskProcessing(
+    @Nullable Project project,
+    @NotNull List<String> taskNames,
+    @NotNull Consumer<String> initScriptConsumer,
+    @NotNull Map<String, String> parameters
+  ) {
     var isRunAsTest = Boolean.parseBoolean(parameters.get(IS_RUN_AS_TEST_KEY));
     var isBuiltInTestEventsUsed = Boolean.parseBoolean(parameters.get(IS_BUILT_IN_TEST_EVENTS_USED_KEY));
     var jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
@@ -199,6 +200,7 @@ public final class JavaGradleProjectResolver extends AbstractProjectResolverExte
       initScriptConsumer.consume(initScript);
     }
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
+    return Map.of();
   }
 
   @Override

@@ -55,6 +55,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ClassInExcludedPackage/");
     }
 
+    @TestMetadata("ClassInRootPackage")
+    public void testClassInRootPackage() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ClassInRootPackage/");
+    }
+
     @TestMetadata("CompleteFunctionWithNoSpecifiedType")
     public void testCompleteFunctionWithNoSpecifiedType() throws Exception {
         runTest("../../completion/testData/basic/multifile/CompleteFunctionWithNoSpecifiedType/");
@@ -135,9 +140,24 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ExtensionFunctionOnImportedFunction/");
     }
 
+    @TestMetadata("ExtensionOnIntersectionTypeReceiver")
+    public void testExtensionOnIntersectionTypeReceiver() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExtensionOnIntersectionTypeReceiver/");
+    }
+
     @TestMetadata("ExtensionOnNullable")
     public void testExtensionOnNullable() throws Exception {
         runTest("../../completion/testData/basic/multifile/ExtensionOnNullable/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverType")
+    public void testExtensionOnTypeParameterReceiverType() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExtensionOnTypeParameterReceiverType/");
+    }
+
+    @TestMetadata("ExtensionOnTypeParameterReceiverTypeWithBounds")
+    public void testExtensionOnTypeParameterReceiverTypeWithBounds() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExtensionOnTypeParameterReceiverTypeWithBounds/");
     }
 
     @TestMetadata("ExtensionsAndGetPrefix")
@@ -188,6 +208,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("InImportCompanionObjectMembers")
     public void testInImportCompanionObjectMembers() throws Exception {
         runTest("../../completion/testData/basic/multifile/InImportCompanionObjectMembers/");
+    }
+
+    @TestMetadata("InImportEscaped")
+    public void testInImportEscaped() throws Exception {
+        runTest("../../completion/testData/basic/multifile/InImportEscaped/");
     }
 
     @TestMetadata("InImportExtension")

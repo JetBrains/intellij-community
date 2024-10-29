@@ -1,4 +1,5 @@
 {
+  "exporterVersion": 1,
   "data": [
     {
       "traceID": "b90062207de03dcb363a3e71a1686c1a",
@@ -30,8 +31,10 @@
           "spanID": "809f150acd521f74",
           "operationName": "Attempt: 1",
           "processID": "p1",
-          "startTime": 1700119096816631,
+          "startTime": 1700119096816,
           "duration": 243012,
+          "startTimeNano": 1700119096816631,
+          "durationNano": 243012000,
           "tags": [
             {
               "key": "Attempt status",
@@ -57,8 +60,10 @@
           "spanID": "d904b99697b813b7",
           "operationName": "simple perf test",
           "processID": "p1",
-          "startTime": 1700119096713000,
+          "startTime": 1700119096713,
           "duration": 379215,
+          "startTimeNano": 1700119096713000,
+          "durationNano": 379215000,
           "tags": [
             {
               "key": "warmup",
@@ -72,8 +77,10 @@
           "spanID": "081a305a1f14d933",
           "operationName": "Attempt: 1",
           "processID": "p1",
-          "startTime": 1700119097395956,
+          "startTime": 1700119097395,
           "duration": 486235,
+          "startTimeNano": 1700119097395956,
+          "durationNano": 486235000,
           "tags": [
             {
               "key": "Attempt status",
@@ -94,8 +101,10 @@
           "spanID": "8e69596e1b91aa55",
           "operationName": "Attempt: 2",
           "processID": "p1",
-          "startTime": 1700119098210549,
+          "startTime": 1700119098210,
           "duration": 110988,
+          "startTimeNano": 1700119098210549,
+          "durationNano": 110988000,
           "tags": [
             {
               "key": "Attempt status",
@@ -116,8 +125,10 @@
           "spanID": "23c840e94caf056f",
           "operationName": "Attempt: 3",
           "processID": "p1",
-          "startTime": 1700119098749467,
+          "startTime": 1700119098749,
           "duration": 324189,
+          "startTimeNano": 1700119098749467,
+          "durationNano": 324189000,
           "tags": [
             {
               "key": "Attempt status",
@@ -138,8 +149,10 @@
           "spanID": "c1ccfdfe0001bb6a",
           "operationName": "simple perf test",
           "processID": "p1",
-          "startTime": 1700119097093000,
+          "startTime": 1700119097093,
           "duration": 2004871,
+          "startTimeNano": 1700119097093000,
+          "durationNano": 2004871000,
           "tags": [
             {
               "key": "warmup",

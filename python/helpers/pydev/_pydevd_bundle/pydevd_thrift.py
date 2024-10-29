@@ -541,7 +541,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         r = min(num_rows, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         c = min(num_cols, DATAFRAME_HEADER_LOAD_MAX_SIZE)
         array_chunk.headers = header_data_to_thrift_struct(r, c, [""] * num_cols, [(0, 0)] * num_cols, lambda x: DEFAULT_DF_FORMAT, original_df, dim)
-        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, format)
+
+        array_chunk.data = array_data_to_thrift_struct(rows, cols, None, '%' + format)
         return array_chunk
 
     rows = min(rows, MAXIMUM_ARRAY_SIZE)
@@ -573,7 +574,7 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     elif dim == -1:
         df = df[roffset: roffset + rows]
     else:
-        df.iloc[roffset: roffset + rows]
+        df = df.iloc[roffset: roffset + rows]
 
     rows = df.shape[0]
     cols = df.shape[1] if dim > 1 else 1
@@ -592,7 +593,8 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
         return get_formatted_row_elements(row, iat, dim, cols, format, dtypes)
 
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format)
+    # we already have here formatted_row_elements, so we pass here %s as a default format
+    array_chunk.data = array_data_to_thrift_struct(rows, cols, formatted_row_elements, format='%s')
     return array_chunk
 
 

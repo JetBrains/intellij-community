@@ -1,0 +1,13 @@
+// FILE: build.gradle.kts
+// "EXPECTED-FIND_USAGE-FILE_TEXT": "build.gradle.kts emailNotification"
+val emailNoti<caret>fication by extra { "build@master.org" }
+plugins {
+    id("java")
+}
+repositories {
+    mavenCentral()
+}
+tasks.register("task") {
+    emailNotification
+}
+

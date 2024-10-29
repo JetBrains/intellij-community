@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.usages;
 
-import com.intellij.openapi.progress.Cancellation;
+import com.intellij.util.LazyInitializer;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,9 +11,13 @@ import java.awt.*;
 
 @Internal
 public final class UsageNodePresentation {
-  public static final UsageNodePresentation EMPTY = Cancellation.forceNonCancellableSectionInClassInitializer(
+  private static final @NotNull LazyInitializer.LazyValue<@NotNull UsageNodePresentation> EMPTY = LazyInitializer.create(
     () -> new UsageNodePresentation(null, TextChunk.EMPTY_ARRAY, null)
   );
+
+  public static @NotNull UsageNodePresentation empty() {
+    return EMPTY.get();
+  }
 
   private final @Nullable Icon myIcon;
   private final @Nullable Color myBackgroundColor;

@@ -5,21 +5,17 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.GROUP
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.buildSystemFields
 import com.intellij.ide.projectWizard.NewProjectWizardCollector.logBuildSystemEvent
 import com.intellij.ide.wizard.NewProjectWizardStep
-import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
-import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep.GradleDsl
 import org.jetbrains.plugins.gradle.settings.DistributionType
 
 @ApiStatus.Internal
-internal object GradleNewProjectWizardCollector : CounterUsagesCollector() {
-
-  override fun getGroup(): EventLogGroup = GROUP
+internal object GradleNewProjectWizardCollector {
 
   private val gradleDslField = EventFields.Enum<GradleDsl>("gradle_dsl")
   private val gradleDistributionField = EventFields.Enum<DistributionType>("gradle_distribution")

@@ -3,9 +3,11 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 
+@ApiStatus.Internal
 public interface HandleTypeFactory {
   ExtensionPointName<HandleTypeFactory> EP_NAME = ExtensionPointName.create("com.intellij.handleTypeFactory"); 
 

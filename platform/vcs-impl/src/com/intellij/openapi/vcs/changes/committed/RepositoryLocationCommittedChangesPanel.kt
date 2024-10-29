@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
+import com.intellij.openapi.actionSystem.DataSink
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -47,12 +48,11 @@ internal class RepositoryLocationCommittedChangesPanel<S : ChangeBrowserSettings
 
   override fun refreshChanges() = LoadCommittedChangesTask().queue()
 
-  override fun getData(dataId: String): Any? =
-    when {
-      REMOTE_HISTORY_CHANGED_LISTENER.`is`(dataId) -> Consumer<String> { refreshChanges() }
-      REMOTE_HISTORY_LOCATION.`is`(dataId) -> repositoryLocation
-      else -> super.getData(dataId)
-    }
+  override fun uiDataSnapshot(sink: DataSink) {
+    super.uiDataSnapshot(sink)
+    sink[REMOTE_HISTORY_CHANGED_LISTENER] = Consumer<String> { refreshChanges() }
+    sink[REMOTE_HISTORY_LOCATION] = repositoryLocation
+  }
 
   override fun dispose() {
     isDisposed = true

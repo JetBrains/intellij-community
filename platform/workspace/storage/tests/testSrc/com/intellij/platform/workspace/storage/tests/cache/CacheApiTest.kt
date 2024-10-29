@@ -1,30 +1,44 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.workspace.storage.tests.cache
 
-import com.intellij.platform.workspace.storage.ExternalMappingKey
-import com.intellij.platform.workspace.storage.ImmutableEntityStorage
-import com.intellij.platform.workspace.storage.MutableEntityStorage
+import com.intellij.platform.workspace.storage.*
+import com.intellij.platform.workspace.storage.impl.ImmutableEntityStorageImpl
 import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCache
+import com.intellij.platform.workspace.storage.impl.cache.TracedSnapshotCacheImpl
 import com.intellij.platform.workspace.storage.query.*
 import com.intellij.platform.workspace.storage.testEntities.entities.*
 import com.intellij.platform.workspace.storage.tests.builderFrom
 import com.intellij.platform.workspace.storage.tests.createEmptyBuilder
-import com.intellij.platform.workspace.storage.toBuilder
-import org.junit.jupiter.api.Disabled
-import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertAll
+import com.intellij.testFramework.LeakHunter
+import org.junit.jupiter.api.*
 import kotlin.concurrent.thread
+import kotlin.random.Random
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
-import kotlin.test.fail
 
 class CacheApiTest {
   private val externalMappingKey = ExternalMappingKey.create<Any>("Key")
-  @Test
+  private lateinit var snapshot: ImmutableEntityStorage
+
+  @BeforeEach
+  fun setUp(info: RepetitionInfo) {
+    snapshot = createNamedEntity()
+    // Random returns same result for nextInt(2) for the first 4095 seeds, so we generated random seed
+    ((snapshot as ImmutableEntityStorageImpl).snapshotCache as TracedSnapshotCacheImpl).shuffleEntities = Random(
+      info.currentRepetition.toLong()
+    ).nextLong()
+  }
+
+  @AfterEach
+  fun tearDown() {
+    val snapshotCache = (snapshot as ImmutableEntityStorageImpl).snapshotCache
+    LeakHunter.checkLeak(snapshotCache, EntityStorage::class.java)
+  }
+
+  @RepeatedTest(10)
   fun `double access to cache`() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>()
       .map {
         recalculations += 1
@@ -37,10 +51,9 @@ class CacheApiTest {
     assertEquals(1, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testEntities() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -52,11 +65,11 @@ class CacheApiTest {
     assertEquals(1, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithRemoving() {
     var recalculations = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", MySource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", MySource)
     }
     val query = entities<NamedEntity>().map {
       recalculations += 1
@@ -68,21 +81,20 @@ class CacheApiTest {
     assertContains(res, "MyName")
     assertContains(res, "AnotherEntity")
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("AnotherEntity"))!!
       it.removeEntity(entity)
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "MyName")
     assertEquals(2, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithModification() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -92,29 +104,29 @@ class CacheApiTest {
     assertEquals(1, res.size)
     assertContains(res, "MyName")
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "AnotherName")
     assertEquals(2, recalculations)
 
     // Additional call doesn't cause recalculation
-    val res3 = snapshot2.cached(query)
+    val res3 = snapshot.cached(query)
     assertEquals(1, res3.size)
     assertContains(res3, "AnotherName")
     assertEquals(2, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithModificationCheckRecalculation() {
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", MySource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", MySource)
     }
     var calculationCounter = 0
     val query = entities<NamedEntity>().map {
@@ -127,24 +139,23 @@ class CacheApiTest {
     assertContains(res, "MyName")
     assertEquals(2, calculationCounter)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "DifferentName"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(2, res2.size)
     assertContains(res2, "DifferentName")
 
     assertEquals(3, calculationCounter)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithModificationManyModifications() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -165,25 +176,24 @@ class CacheApiTest {
     builder.modifyNamedEntity(entity) {
       this.myName = "FourthName"
     }
-    val snapshot2 = builder.toSnapshot()
+    snapshot = builder.toSnapshot()
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "FourthName")
     assertEquals(2, recalculations)
 
     // Additional call doesn't cause recalculation
-    val res3 = snapshot2.cached(query)
+    val res3 = snapshot.cached(query)
     assertEquals(1, res3.size)
     assertContains(res3, "FourthName")
     assertEquals(2, recalculations)
   }
 
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithModificationFillChangelog() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -193,41 +203,40 @@ class CacheApiTest {
     assertEquals(1, res.size)
     assertContains(res, "MyName")
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
-    }.toSnapshot()
-    val snapshot3 = snapshot2.toBuilder().also {
+    }
+    snapshot.update {
       val entity = it.resolve(NameId("AnotherName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "ThirdName"
       }
-    }.toSnapshot()
-    val snapshot4 = snapshot3.toBuilder().also {
+    }
+    snapshot.update {
       val entity = it.resolve(NameId("ThirdName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "FourthName"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot4.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "FourthName")
     assertEquals(2, recalculations)
 
     // Additional call doesn't cause recalculation
-    val res3 = snapshot4.cached(query)
+    val res3 = snapshot.cached(query)
     assertEquals(1, res3.size)
     assertContains(res3, "FourthName")
     assertEquals(2, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingWithModificationFillChangelogAndDeleteEntity() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -237,37 +246,37 @@ class CacheApiTest {
     assertEquals(1, res.size)
     assertContains(res, "MyName")
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "AnotherName"
       }
-    }.toSnapshot()
-    val snapshot3 = snapshot2.toBuilder().also {
+    }
+    snapshot.update {
       val entity = it.resolve(NameId("AnotherName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "ThirdName"
       }
-    }.toSnapshot()
-    val snapshot4 = snapshot3.toBuilder().also {
+    }
+    snapshot.update {
       val entity = it.resolve(NameId("ThirdName"))!!
       it.removeEntity(entity)
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot4.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(0, res2.size)
     assertEquals(1, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMapAndGroupBy() {
-    val snapshot = createNamedEntity {
-      val parent = this.resolve(NameId("MyName"))!!
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.resolve(NameId("MyName"))!!
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
-      this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+      it addEntity NamedChildEntity("prop2", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entities<NamedEntity>()
@@ -279,7 +288,7 @@ class CacheApiTest {
     assertEquals(MySource, res["prop1"]!!.single())
     assertEquals(MySource, res["prop2"]!!.single())
 
-    val snapshot2 = snapshot.update {
+    snapshot.update {
       val parent = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(parent) {
         this.myName = "AnotherName"
@@ -289,17 +298,17 @@ class CacheApiTest {
       }
     }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(3, res2.size)
     assertEquals(MySource, res2["prop1"]!!.single())
     assertEquals(MySource, res2["prop2"]!!.single())
     assertEquals(AnotherSource, res2["prop3"]!!.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testGroupBy() {
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().groupBy({ it.myName }, { it.entitySource })
 
@@ -311,19 +320,19 @@ class CacheApiTest {
     assertEquals(AnotherSource, res["AnotherEntity"]!!.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   @Disabled("entitiesByExternalMapping is not supported")
   fun testMapToChildAndAddNewChild() {
     var flatMapRecalc = 0
     var mapRecalc = 0
-    val snapshot = createNamedEntity {
-      val parent = this.resolve(NameId("MyName"))!!
-      this.getMutableExternalMapping(externalMappingKey).addMapping(parent, "externalInfo")
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.resolve(NameId("MyName"))!!
+      it.getMutableExternalMapping(externalMappingKey).addMapping(parent, "externalInfo")
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
-      this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+      it addEntity NamedChildEntity("prop2", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entitiesByExternalMapping("test", "externalInfo").flatMap { entity, _ ->
@@ -341,14 +350,14 @@ class CacheApiTest {
     assertEquals(1, flatMapRecalc)
     assertEquals(2, mapRecalc)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val parent = it.resolve(NameId("MyName"))!!
       it addEntity NamedChildEntity("prop3", MySource) {
         this.parentEntity = parent.builderFrom(it)
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(3, res2.size)
     assertContains(res2, "prop1")
     assertContains(res2, "prop2")
@@ -357,10 +366,9 @@ class CacheApiTest {
     assertEquals(5, mapRecalc)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testModifyUnrelatedField() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -370,30 +378,30 @@ class CacheApiTest {
     val element = res.single()
     assertEquals("MyName", element)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.entitySource = AnotherSource
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "MyName")
     assertEquals(2, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMappingToChildrenRemoveChild() {
     var flatMapRecalc = 0
     var mapRecalc = 0
-    val snapshot = createNamedEntity {
-      val parent = this.resolve(NameId("MyName"))!!
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.resolve(NameId("MyName"))!!
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
-      this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+      it addEntity NamedChildEntity("prop2", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entities<NamedEntity>().flatMap { entity, _ ->
@@ -411,22 +419,21 @@ class CacheApiTest {
     assertEquals(1, flatMapRecalc)
     assertEquals(2, mapRecalc)
 
-    val newSnapshot = snapshot.toBuilder().also { mutableStorage ->
+    snapshot.update { mutableStorage ->
       val child = mutableStorage.entities(NamedChildEntity::class.java).single { it.childProperty == "prop1" }
       mutableStorage.removeEntity(child)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "prop2")
     assertEquals(2, flatMapRecalc)
     assertEquals(3, mapRecalc)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testModifyField() {
     var recalculations = 0
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -436,31 +443,31 @@ class CacheApiTest {
     val element = res.single()
     assertEquals("MyName", element)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it.resolve(NameId("MyName"))!!
       it.modifyNamedEntity(entity) {
         this.myName = "NewName"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "NewName")
     assertEquals(2, recalculations)
   }
 
 
-  @Test
+  @RepeatedTest(10)
   fun testMapToChildAndModifyChild() {
     var flatMapRecalc = 0
     var mapRecalc = 0
-    val snapshot = createNamedEntity {
-      val parent = this.resolve(NameId("MyName"))!!
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.resolve(NameId("MyName"))!!
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
-      this addEntity NamedChildEntity("prop2", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+      it addEntity NamedChildEntity("prop2", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entities<NamedEntity>().flatMap { entity, _ ->
@@ -478,15 +485,15 @@ class CacheApiTest {
     assertEquals(1, flatMapRecalc)
     assertEquals(2, mapRecalc)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val parent = it.resolve(NameId("MyName"))!!
       val child = parent.children.first()
       it.modifyNamedChildEntity(child) {
         this.childProperty = "AnotherProp"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(2, res2.size)
     assertContains(res2, "AnotherProp")
     assertContains(res2, "prop2")
@@ -494,18 +501,18 @@ class CacheApiTest {
     assertEquals(3, mapRecalc)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMapWithSameValues() {
     var mapRecalc = 0
     var mapTwoRecalc = 0
     var mapThreeRecalc = 0
-    val snapshot = createNamedEntity {
-      val parent = this.resolve(NameId("MyName"))!!
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.resolve(NameId("MyName"))!!
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
-      this addEntity NamedChildEntity("prop1", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+      it addEntity NamedChildEntity("prop1", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entities<NamedChildEntity>().map {
@@ -527,13 +534,13 @@ class CacheApiTest {
     assertEquals(2, mapTwoRecalc)
     assertEquals(2, mapThreeRecalc)
 
-    val snapshot2 = snapshot.toBuilder().also {
+    snapshot.update {
       val parent = it.resolve(NameId("MyName"))!!
       val child = parent.children.first()
       it.removeEntity(child)
-    }.toSnapshot()
+    }
 
-    val res2 = snapshot2.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "prop1XYZABC")
     assertEquals(2, mapRecalc)
@@ -541,11 +548,11 @@ class CacheApiTest {
     assertEquals(2, mapThreeRecalc)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testGroupByWithAddingNewValue() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().groupBy({ it.myName }, {
       calculationCounter += 1
@@ -554,11 +561,11 @@ class CacheApiTest {
 
     snapshot.cached(query)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it addEntity NamedEntity("ThirdEntity", MySource)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(3, res2.size)
     assertContains(res2, "MyName")
     assertEquals(MySource, res2["MyName"]!!.single())
@@ -569,11 +576,11 @@ class CacheApiTest {
     assertEquals(3, calculationCounter)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testGroupByWithRemovingValue() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().groupBy({ it.myName }, {
       calculationCounter += 1
@@ -582,21 +589,21 @@ class CacheApiTest {
 
     snapshot.cached(query)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.removeEntity(it.resolve(NameId("AnotherEntity"))!!)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, "MyName")
     assertEquals(MySource, res2["MyName"]!!.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testGroupByWithModifyingValue() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().groupBy({ it.myName }, {
       calculationCounter += 1
@@ -605,13 +612,13 @@ class CacheApiTest {
 
     snapshot.cached(query)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.modifyNamedEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(2, res2.size)
     assertContains(res2, "MyName")
     assertEquals(MySource, res2["MyName"]!!.single())
@@ -619,11 +626,11 @@ class CacheApiTest {
     assertEquals(MySource, res2["AnotherEntity"]!!.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testGroupByJoinValues() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().groupBy({ it.entitySource }, {
       calculationCounter += 1
@@ -632,13 +639,13 @@ class CacheApiTest {
 
     snapshot.cached(query)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.modifyNamedEntity(it.resolve(NameId("AnotherEntity"))!!) {
         this.entitySource = MySource
       }
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
     assertContains(res2, MySource)
     val values = res2[MySource]!!
@@ -646,34 +653,37 @@ class CacheApiTest {
     assertContains(values, "MyName")
   }
 
-  @Test
+  @RepeatedTest(10)
   fun testMapToExternalMapping() {
-    val snapshot = createNamedEntity {
-      val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
+    // Without it, the map function captures the whole class and the snapshot with it what causes leakage check to fail
+    val key = externalMappingKey
+
+    snapshot.update {
+      val entity = it addEntity NamedEntity("AnotherEntity", AnotherSource)
+      it.getMutableExternalMapping(key).addMapping(entity, 1)
     }
     val query = entities<NamedEntity>().mapWithSnapshot { entity, mySnapshot ->
-      mySnapshot.getExternalMapping(externalMappingKey).getDataByEntity(entity)
+      mySnapshot.getExternalMapping(key).getDataByEntity(entity)
     }
 
     val res = snapshot.cached(query)
 
     assertEquals(setOf(null, 1), res.toSet())
 
-    val newSnapshot = snapshot.toBuilder().also {
-      it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("MyName"))!!, 2)
-    }.toSnapshot()
+    snapshot.update {
+      it.getMutableExternalMapping(key).addMapping(it.resolve(NameId("MyName"))!!, 2)
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(setOf(1, 2), res2.toSet())
   }
 
-  @Test
+  @RepeatedTest(10)
   @Disabled("entitiesByExternalMapping is not supported")
   fun testMapToExternalMappingExtract() {
-    val snapshot = createNamedEntity {
-      val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
+    snapshot.update {
+      val entity = it addEntity NamedEntity("AnotherEntity", AnotherSource)
+      it.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
     }
     val query = entitiesByExternalMapping("test", 1).map { (it as NamedEntity).myName }
 
@@ -681,21 +691,21 @@ class CacheApiTest {
 
     assertEquals("AnotherEntity", res.single())
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.getMutableExternalMapping(externalMappingKey).removeMapping(it.resolve(NameId("AnotherEntity"))!!)
       it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("MyName"))!!, 1)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals("MyName", res2.single())
   }
 
-  @Test
+  @RepeatedTest(10)
   @Disabled("entitiesByExternalMapping is not supported")
   fun testReplaceMapping() {
-    val snapshot = createNamedEntity {
-      val entity = this addEntity NamedEntity("AnotherEntity", AnotherSource)
-      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
+    snapshot.update {
+      val entity = it addEntity NamedEntity("AnotherEntity", AnotherSource)
+      it.getMutableExternalMapping(externalMappingKey).addMapping(entity, 1)
     }
     val query = entitiesByExternalMapping("test", 1).map { (it as NamedEntity).myName }
 
@@ -703,19 +713,19 @@ class CacheApiTest {
 
     assertEquals("AnotherEntity", res.single())
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.getMutableExternalMapping(externalMappingKey).addMapping(it.resolve(NameId("AnotherEntity"))!!, 2)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertTrue(res2.isEmpty())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun filter() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", AnotherSource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", AnotherSource)
     }
     val query = entities<NamedEntity>().filter {
       calculationCounter += 1
@@ -727,20 +737,20 @@ class CacheApiTest {
 
     assertEquals("MyName", res.single())
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it addEntity NamedEntity("MySuperEntity", MySource)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertContains(res2, "MyName")
     assertContains(res2, "MySuperEntity")
     assertEquals(3, calculationCounter)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun equalMappings() {
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", MySource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", MySource)
     }
     val query = entities<NamedEntity>().map {
       it.entitySource.toString()
@@ -751,18 +761,18 @@ class CacheApiTest {
 
     assertEquals(2, res.size)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.removeEntity(it.resolve(NameId("AnotherEntity"))!!)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun equalGroupBy() {
-    val snapshot = createNamedEntity {
-      this addEntity NamedEntity("AnotherEntity", MySource)
+    snapshot.update {
+      it addEntity NamedEntity("AnotherEntity", MySource)
     }
     val query = entities<NamedEntity>().map {
       it.entitySource.toString()
@@ -773,20 +783,20 @@ class CacheApiTest {
 
     assertEquals(1, res.size)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       it.removeEntity(it.resolve(NameId("AnotherEntity"))!!)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
   }
 
-  @Test
+  @RepeatedTest(10)
   @Disabled("entitiesByExternalMapping is not supported")
   fun addAndRemoveEntity() {
-    val snapshot = createNamedEntity {
-      val entity = this.entities(NamedEntity::class.java).single()
-      this.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data")
+    snapshot.update {
+      val entity = it.entities(NamedEntity::class.java).single()
+      it.getMutableExternalMapping(externalMappingKey).addMapping(entity, "data")
     }
     val query = entitiesByExternalMapping("test", "data").map {
       it.entitySource
@@ -796,22 +806,22 @@ class CacheApiTest {
 
     assertEquals(1, res.size)
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       val entity = it addEntity NamedEntity("EntityOne", MySource)
       it.removeEntity(entity)
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals(1, res2.size)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `modify field`() {
     var calculationCounter = 0
-    val snapshot = createNamedEntity {
-      val parent = this.entities(NamedEntity::class.java).single()
-      this addEntity NamedChildEntity("Child", MySource) {
-        this.parentEntity = parent.builderFrom(this@createNamedEntity)
+    snapshot.update {
+      val parent = it.entities(NamedEntity::class.java).single()
+      it addEntity NamedChildEntity("Child", MySource) {
+        this.parentEntity = parent.builderFrom(it)
       }
     }
     val query = entities<NamedEntity>()
@@ -827,19 +837,19 @@ class CacheApiTest {
 
     assertEquals("Child", res.single())
 
-    val newSnapshot = snapshot.toBuilder().also {
+    snapshot.update {
       val child = it.entities(NamedChildEntity::class.java).single()
       it.modifyNamedChildEntity(child) {
         this.childProperty = "AnotherValue"
       }
-    }.toSnapshot()
+    }
 
-    val res2 = newSnapshot.cached(query)
+    val res2 = snapshot.cached(query)
     assertEquals("AnotherValue", res2.single())
     assertEquals(2, calculationCounter)
   }
 
-  @Test
+  @RepeatedTest(10)
   @Disabled("entitiesByExternalMapping is not supported")
   fun `request with updates in unrelated entity`() {
     val builder = MutableEntityStorage.create()
@@ -876,7 +886,7 @@ class CacheApiTest {
     assertTrue(res.isEmpty())
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `request with double update`() {
     val builder = MutableEntityStorage.create()
 
@@ -911,10 +921,9 @@ class CacheApiTest {
     assertContains(res, "MyNameXYZ")
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `add many changes but cache is NOT reset`() {
     var recalculations = 0
-    var snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -926,7 +935,7 @@ class CacheApiTest {
     assertEquals(1, recalculations)
 
     repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE - 2) { counter ->
-      snapshot = snapshot.update {
+      snapshot.update {
         if (counter % 2 == 0) {
           it addEntity NamedEntity("X", MySource)
         }
@@ -942,10 +951,9 @@ class CacheApiTest {
     assertEquals(1, recalculations)
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `add many changes and cache is reset`() {
     var recalculations = 0
-    var snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       recalculations += 1
       it.myName
@@ -957,7 +965,7 @@ class CacheApiTest {
     assertEquals(1, recalculations)
 
     repeat(TracedSnapshotCache.LOG_QUEUE_MAX_SIZE + 2) { counter ->
-      snapshot = snapshot.update {
+      snapshot.update {
         if (counter % 2 == 0) {
           it addEntity NamedEntity("X", MySource)
         }
@@ -974,9 +982,8 @@ class CacheApiTest {
   }
 
 
-  @Test
+  @RepeatedTest(10)
   fun testTwoBranchesFromSameBuilder() {
-    val snapshot = createNamedEntity()
     val query = entities<NamedEntity>().map {
       it.myName
     }
@@ -985,62 +992,21 @@ class CacheApiTest {
     val element = res.single()
     assertEquals("MyName", element)
 
-    val builder = snapshot.update {
+    val builder = snapshot.toBuilder().also {
       it addEntity NamedEntity("AnotherName", MySource)
-    }.toBuilder().also {
+    }.toSnapshot().toBuilder().also {
       it.entities(NamedEntity::class.java).forEach { entity -> it.removeEntity(entity) }
     }
 
     builder.toSnapshot() // First snapshot
-    val snapshotTwo = builder.toSnapshot() // Second snapshot
+    snapshot = builder.toSnapshot() // Second snapshot
 
-    val res2 = snapshotTwo.cached(query)
+    val res2 = snapshot.cached(query)
     assertTrue(res2.isEmpty())
   }
 
-  @Test
-  fun `concurrency test create new snapshot with parallel read`() {
-    val builder = MutableEntityStorage.create()
 
-    builder addEntity SampleEntity2("info", false, MySource)
-
-    val snapshot = builder.toSnapshot()
-
-    val query = entities<SampleEntity2>().map { it.data }
-    val res = snapshot.cached(query)
-    assertEquals("info", res.single())
-
-    repeat(10_000) {
-      val builder2 = snapshot.toBuilder()
-      repeat(1000) {
-        builder2 addEntity SampleEntity2("info$it", false, MySource)
-      }
-
-      val snapshot2 = builder2.toSnapshot()
-
-      var exceptionOne: Throwable? = null
-      var exceptionTwo: Throwable? = null
-      val threadOne = thread {
-        exceptionOne = runCatching {
-          val res2 = snapshot2.cached(query)
-          assertEquals(1001, res2.size)
-        }.exceptionOrNull()
-      }
-      val threadTwo = thread {
-        exceptionTwo = runCatching {
-          val snapshot3 = snapshot2.toBuilder().toSnapshot()
-          assertEquals(1001, snapshot3.cached(query).size)
-        }.exceptionOrNull()
-      }
-
-      threadOne.join()
-      threadTwo.join()
-      exceptionOne?.let { fail("Exception in first thread", it) }
-      exceptionTwo?.let { fail("Exception in second thread", it) }
-    }
-  }
-
-  @Test
+  @RepeatedTest(10)
   fun `concurrency smoke test parallel read`() {
     val builder = MutableEntityStorage.create()
 
@@ -1064,7 +1030,7 @@ class CacheApiTest {
     )
   }
 
-  @Test
+  @RepeatedTest(10)
   fun `concurrency smoke test parallel read with existing modificaitons`() {
     val query = entities<SampleEntity2>().map { it.data }
 
@@ -1092,7 +1058,36 @@ class CacheApiTest {
     )
   }
 
-  @Test
+  @RepeatedTest(10)
+  fun `mapping to sub sub child`() {
+    val query = entities<ParentSubEntity>()
+      .map { it.child }
+      .filterNotNull()
+      .map { it.child }
+      .filterNotNull()
+      .map { it.childData }
+
+    snapshot.update {
+      it addEntity ParentSubEntity("ParentData", MySource) {
+        child = ChildSubEntity(MySource) {
+          child = ChildSubSubEntity("ChildData", MySource)
+        }
+      }
+    }
+
+    snapshot.cached(query)
+
+    snapshot.update {
+      val entity = it.entities(ChildSubEntity::class.java).single()
+      it addEntity ParentSubEntity("ParentData2", MySource) {
+        this.child = entity.builderFrom(it)
+      }
+    }
+
+    snapshot.cached(query)
+  }
+
+  @RepeatedTest(10)
   fun `request of cache with removing an entity`() {
     val builder = MutableEntityStorage.create()
     builder addEntity ParentMultipleEntity("data1", MySource) {
@@ -1118,6 +1113,41 @@ class CacheApiTest {
     newSnapshot.cached(childData)
   }
 
+  @RepeatedTest(10)
+  fun subchildren() {
+    snapshot.update {
+      it addEntity ParentSubEntity("ParentData", MySource) {
+        child = ChildSubEntity(MySource) {
+          child = ChildSubSubEntity("ChildData", MySource)
+        }
+      }
+    }
+
+    val subChildQuery = entities<ParentSubEntity>()
+      .map { it.child }
+      .filterNotNull()
+      .map { it.child }
+      .filterNotNull()
+      .map { it.childData }
+
+    val res = snapshot.cached(subChildQuery)
+
+    assertEquals(1, res.size)
+    assertEquals("ChildData", res.single())
+
+    snapshot.update {
+      val entity = it.entities(ChildSubEntity::class.java).single()
+      it addEntity ParentSubEntity("ParentData2", MySource) {
+        this.child = entity.builderFrom(it)
+      }
+    }
+
+    val res2 = snapshot.cached(subChildQuery)
+
+    assertEquals(1, res2.size)
+    assertEquals("ChildData", res2.single())
+  }
+
   private fun createNamedEntity(also: MutableEntityStorage.() -> Unit = {}): ImmutableEntityStorage {
     val builder = createEmptyBuilder()
     builder addEntity NamedEntity("MyName", MySource)
@@ -1125,7 +1155,7 @@ class CacheApiTest {
     return builder.toSnapshot()
   }
 
-  private fun ImmutableEntityStorage.update(fc: (MutableEntityStorage) -> Unit): ImmutableEntityStorage {
-    return this.toBuilder().also(fc).toSnapshot()
+  private fun ImmutableEntityStorage.update(fc: (MutableEntityStorage) -> Unit) {
+    snapshot = this.toBuilder().also(fc).toSnapshot()
   }
 }

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.presentation
 
-import com.intellij.codeInsight.hints.dimension
 import com.intellij.openapi.editor.markup.TextAttributes
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -20,14 +19,15 @@ class VerticalListInlayPresentation(
   val presentations: List<InlayPresentation>
 ) : BasePresentation() {
   override var width: Int = 0
+    get() = presentations.maxByOrNull { it.width }!!.width
     private set
   override var height: Int = 0
+    get() = presentations.sumOf { it.height }
     private set
 
   private var presentationUnderCursor: InlayPresentation? = null
 
   init {
-    calcDimensions()
     for (presentation in presentations) {
       presentation.addListener(InternalListener(presentation))
     }
@@ -63,12 +63,11 @@ class VerticalListInlayPresentation(
     changePresentationUnderCursor(null)
   }
 
+  @Deprecated("No longer needed. Presentation's size remains relevant.")
   fun calcDimensions() {
     width = presentations.maxByOrNull { it.width }!!.width
     height = presentations.sumOf { it.height }
   }
-
-
 
   private fun handleMouse(
     original: Point,
@@ -111,10 +110,7 @@ class VerticalListInlayPresentation(
     }
 
     override fun sizeChanged(previous: Dimension, current: Dimension) {
-      val old = dimension()
-      calcDimensions()
-      val new = dimension()
-      this@VerticalListInlayPresentation.fireSizeChanged(old, new)
+      this@VerticalListInlayPresentation.fireSizeChanged(previous, current)
     }
 
     private fun shiftOfCurrent(): Int {

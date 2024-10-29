@@ -133,7 +133,7 @@ public final class SelectBranchPopup {
     }
 
     @Override
-    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
+    public PopupStep<?> onChosen(Object selectedValue, boolean finalChoice) {
       if (getConfigureMessage().equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }

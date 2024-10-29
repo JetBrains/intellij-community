@@ -7,6 +7,7 @@ import java.awt.Insets
 import java.awt.Rectangle
 import java.awt.Shape
 import javax.swing.text.Element
+import javax.swing.text.Position
 import javax.swing.text.TabExpander
 import javax.swing.text.View
 import javax.swing.text.html.HTML
@@ -45,6 +46,25 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
   @Suppress("ProtectedInFinal")
   @JvmField
   protected var endView: Boolean = false
+
+  private var paintingInTextBounds = false
+
+  override fun viewToModel(x: Float, y: Float, a: Shape, biasReturn: Array<out Position.Bias>): Int {
+    return super.viewToModel(x, y, applyInsets(a), biasReturn)
+  }
+
+  override fun modelToView(pos: Int, a: Shape, b: Position.Bias): Shape {
+    val shape = super.modelToView(pos, a, b)
+    if (paintingInTextBounds) {
+      return shape
+    }
+    // When a caret is painted, we get a shape which was not shrunk to text.
+    // Add insets to paint the caret in the right position:
+    val rect = shape.bounds
+    rect.x += insets.left
+    rect.y += insets.top
+    return rect
+  }
 
   override fun setPropertiesFromAttributes() {
     super.setPropertiesFromAttributes()
@@ -99,13 +119,15 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
       noBorderOnTheLeft = !startView,
     )
 
-    // Shrink by padding and margin
-    a.setBounds(a.x + insets.left, a.y + insets.top,
-                a.width - insets.width,
-                a.height - insets.height)
-    background = null
-    super.paint(g, a)
-    background = bg
+    try {
+      background = null
+      paintingInTextBounds = true
+      super.paint(g, applyInsets(a))
+    }
+    finally {
+      paintingInTextBounds = false
+      background = bg
+    }
   }
 
   override fun getAlignment(axis: Int): Float {
@@ -132,6 +154,16 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
       ?.asSafely<String>()
       ?.takeIf { it.isNotEmpty() }
     ?: super.getToolTipText(x, y, allocation)
+
+  private fun applyInsets(shape: Shape): Rectangle {
+    // Shrink by padding and margin
+    val result = shape.bounds
+    result.x += insets.left
+    result.y += insets.top
+    result.width -= insets.width
+    result.height -= insets.height
+    return result
+  }
 
   private fun getSibling(parentView: View, curIndex: Int, direction: Int): View? {
     var siblingIndex = curIndex + direction
@@ -195,5 +227,7 @@ internal class InlineViewEx(elem: Element) : InlineView(elem) {
       padding.right + margin.right,
     )
   }
+
+
 
 }

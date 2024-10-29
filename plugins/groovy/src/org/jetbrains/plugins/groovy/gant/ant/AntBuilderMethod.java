@@ -29,7 +29,7 @@ final class AntBuilderMethod extends LightMethodBuilder {
     myFile = file;
     myAntClass = antClass;
     setModifiers(PsiModifier.PUBLIC);
-    setBaseIcon(AntIcons.Task);
+    setBaseIcon(AntIcons.AntTask);
     setMethodReturnType(() -> PsiType.getJavaLangObject(getManager(), getResolveScope()));
   }
 

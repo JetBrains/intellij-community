@@ -13,6 +13,7 @@ class K2CreateFromUsageUnresolvedReferenceQuickFixProvider: UnresolvedReferenceQ
                 K2CreateFunctionFromUsageBuilder.generateCreateMethodActions(element).forEach(registrar::register)
                 K2CreateLocalVariableFromUsageBuilder.generateCreateLocalVariableAction(element)?.let(registrar::register)
                 K2CreateParameterFromUsageBuilder.generateCreateParameterAction(element)?.let(registrar::register)
+                K2CreateClassFromUsageBuilder.generateCreateClassActions(element).forEach(registrar::register)
             }
         }
     }

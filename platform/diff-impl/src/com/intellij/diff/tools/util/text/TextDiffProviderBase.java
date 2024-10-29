@@ -9,6 +9,7 @@ import com.intellij.diff.tools.util.base.TextDiffViewerUtil.IgnorePolicySettingA
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Separator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
+@ApiStatus.Internal
 public class TextDiffProviderBase implements TextDiffProvider {
   private final IgnorePolicySettingAction myIgnorePolicySettingAction;
   private final HighlightPolicySettingAction myHighlightPolicySettingAction;

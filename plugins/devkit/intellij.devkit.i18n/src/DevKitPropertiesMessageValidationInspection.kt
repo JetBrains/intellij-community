@@ -9,9 +9,9 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.siyeh.ig.bugs.IncorrectMessageFormatInspection
-import com.siyeh.ig.bugs.message.MessageFormatUtil
-import com.siyeh.ig.bugs.message.MessageFormatUtil.MessageFormatError
-import com.siyeh.ig.bugs.message.MessageFormatUtil.MessageFormatErrorType
+import com.siyeh.ig.format.MessageFormatUtil
+import com.siyeh.ig.format.MessageFormatUtil.MessageFormatError
+import com.siyeh.ig.format.MessageFormatUtil.MessageFormatErrorType
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionUtil
 
 private val SKIPPED_ERROR_TYPES: Set<MessageFormatErrorType> = setOf(MessageFormatErrorType.INDEX_NEGATIVE,

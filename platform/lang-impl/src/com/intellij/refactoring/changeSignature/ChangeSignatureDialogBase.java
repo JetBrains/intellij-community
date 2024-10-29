@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.icons.AllIcons;
@@ -90,8 +90,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   protected VisibilityPanelBase<Visibility> myVisibilityPanel;
 
-  @Nullable
-  protected PsiCodeFragment myReturnTypeCodeFragment;
+  protected @Nullable PsiCodeFragment myReturnTypeCodeFragment;
   private DelegationPanel myDelegationPanel;
   protected AnActionButton myPropagateParamChangesButton;
   protected Set<Method> myMethodsToPropagateParameters = null;
@@ -102,18 +101,15 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   protected abstract LanguageFileType getFileType();
 
-  @NotNull
-  protected abstract ParameterTableModel createParametersInfoModel(@NotNull Descriptor method);
+  protected abstract @NotNull ParameterTableModel createParametersInfoModel(@NotNull Descriptor method);
 
   protected abstract BaseRefactoringProcessor createRefactoringProcessor();
 
   protected abstract PsiCodeFragment createReturnTypeCodeFragment();
 
-  @Nullable
-  protected abstract CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<? super Set<Method>> callback);
+  protected abstract @Nullable CallerChooserBase<Method> createCallerChooser(@Nls String title, Tree treeToReuse, Consumer<? super Set<Method>> callback);
 
-  @Nullable
-  protected abstract @NlsContexts.DialogMessage String validateAndCommitData();
+  protected abstract @Nullable @NlsContexts.DialogMessage String validateAndCommitData();
 
   protected abstract String calculateSignature();
 
@@ -148,8 +144,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
   }
 
-  @Nullable
-  protected Visibility getVisibility() {
+  protected @Nullable Visibility getVisibility() {
     if (myVisibilityPanel != null) {
       return myVisibilityPanel.getVisibility();
     }
@@ -386,8 +381,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
   }
 
 
-  @NotNull
-  protected List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
+  protected @NotNull List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     return Collections.emptyList();
   }
 
@@ -498,9 +492,8 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
         };
       }
 
-      @NotNull
       @Override
-      protected JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item) {
+      protected @NotNull JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item) {
         JBTableRowEditor editor = ChangeSignatureDialogBase.this.getTableEditor(getTable(), item);
         LOG.assertTrue(editor != null);
         return editor;
@@ -517,8 +510,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
    * @deprecated override {@link #createParametersListTable} instead.
    */
   @Deprecated
-  @Nullable
-  protected JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<ParamInfo> item) {
+  protected @Nullable JBTableRowEditor getTableEditor(JTable table, ParameterTableModelItemBase<ParamInfo> item) {
     return null;
   }
 
@@ -526,8 +518,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
    * @deprecated override {@link #createParametersListTable} instead.
    */
   @Deprecated(forRemoval = true)
-  @Nullable
-  protected JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
+  protected @Nullable JComponent getRowPresentation(ParameterTableModelItemBase<ParamInfo> item, boolean selected, boolean focused) {
     return null;
   }
 
@@ -690,8 +681,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       return editor;
     }
 
-    @NotNull
-    protected abstract JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item);
+    protected abstract @NotNull JBTableRowEditor getRowEditor(ParameterTableModelItemBase<ParamInfo> item);
 
     @Override
     protected abstract boolean isRowEmpty(int row);

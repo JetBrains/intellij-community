@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,6 +15,7 @@ import java.awt.*;
 
 import static java.lang.Math.abs;
 
+@ApiStatus.Internal
 public final class MaximizeActiveDialogAction extends WindowAction {
   private static final String NORMAL_BOUNDS = "NORMAL_BOUNDS";
 

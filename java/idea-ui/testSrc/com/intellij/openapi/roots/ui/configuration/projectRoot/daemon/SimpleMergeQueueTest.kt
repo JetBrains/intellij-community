@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase.assertOrderedEquals
+import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.util.Alarm.ThreadToUse
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Assertions
@@ -14,6 +15,7 @@ import org.junit.jupiter.params.provider.EnumSource
 import java.util.concurrent.Semaphore
 
 
+@TestApplication
 class SimpleMergeQueueTest {
   private lateinit var disposable: Disposable
 

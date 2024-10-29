@@ -56,7 +56,7 @@ internal class PartialContext(private val types: Map<VariableDescriptor, DFAType
     }
   }
 
-  override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType>): PsiType {
+  override fun <T : GroovyPsiElement> getExpressionType(element: T, calculator: Function<in T, out PsiType?>): PsiType? {
     return doGetCachedValue(Pair(element, "type")) {
       calculator.apply(element)
     }

@@ -12,6 +12,4 @@ public interface PyFrameworkProjectGenerator {
   @NlsSafe String getFrameworkTitle();
 
   boolean isFrameworkInstalled(@NotNull Sdk sdk);
-
-  boolean supportsPython3();
 }

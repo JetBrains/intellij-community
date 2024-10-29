@@ -12,3 +12,4 @@ typealias Old = OldClass<<caret>B>
 val o: Old = Old()
 val a = A() // Usage of A()
 // FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.replaceWith.DeprecatedSymbolUsageFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.replaceWith.DeprecatedSymbolUsageFix

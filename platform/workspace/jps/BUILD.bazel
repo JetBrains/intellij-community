@@ -1,0 +1,42 @@
+### auto-generated section `build` start
+load("@rules_java//java:defs.bzl", "java_library")
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+load("@community//:build/compiler-options.bzl", "create_kotlinc_options")
+
+java_library(
+  name = "resources",
+  resources = glob(["resources/**/*"])
+)
+
+create_kotlinc_options(
+  name = "custom",
+  jvm_target = "11",
+  x_optin = ["org.jetbrains.kotlin.utils.addToStdlib.UnsafeCastFunction"]
+)
+
+kt_jvm_library(
+  name = "workspace-jps",
+  module_name = "intellij.platform.workspace.jps",
+  visibility = ["//visibility:public"],
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j11",
+  kotlinc_opts = ":custom",
+  deps = [
+    "@libraries//:kotlin-stdlib",
+    "@community//platform/workspace/storage:workspace-storage",
+    "@community//jps/model-api:jps-model",
+    "@community//jps/model-impl:jps-model-impl",
+    "@community//jps/model-serialization:jps-model-serialization",
+    "@community//platform/util",
+    "@libraries//:intellij-deps-fastutil",
+    "@community//platform/util/jdom:util-jdom",
+    "@libraries//:kryo5",
+    "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:opentelemetry-sdk",
+    "@libraries//:opentelemetry-semconv",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+  ],
+  exports = ["@community//platform/workspace/storage:workspace-storage"],
+  runtime_deps = [":resources"]
+)
+### auto-generated section `build` end

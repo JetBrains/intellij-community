@@ -9,8 +9,10 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.IncompleteDependenciesService.DependenciesState
 import com.intellij.openapi.util.text.StringUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 
+@ApiStatus.Internal
 object ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -69,9 +71,6 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
   val DUMB_START: BooleanEventField = EventFields.Boolean("dumb_start")
 
   @JvmField
-  val DUMB: BooleanEventField = EventFields.Boolean("dumb")
-
-  @JvmField
   val INCOMPLETE_DEPENDENCIES_MODE = EventFields.Enum("incomplete_dependencies_mode", DependenciesState::class.java,
                                                       "COMPLETE or INCOMPLETE (see IncompleteDependenciesService)")
 
@@ -114,7 +113,7 @@ object ActionsEventLogGroup : CounterUsagesCollector() {
       EventFields.CurrentFile,
       TOGGLE_ACTION,
       CONTEXT_MENU,
-      DUMB,
+      EventFields.Dumb,
       INCOMPLETE_DEPENDENCIES_MODE,
       ACTION_ID,
       ACTION_CLASS,

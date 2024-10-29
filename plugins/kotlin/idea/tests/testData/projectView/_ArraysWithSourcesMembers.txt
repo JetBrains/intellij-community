@@ -1895,6 +1895,7 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      +PsiDirectory: system
      +PsiDirectory: text
      +PsiDirectory: time
+     +PsiDirectory: uuid
      +_Assertions
      +BuilderInference
      +ConsistentCopyVisibility
@@ -1995,4 +1996,4 @@ Navigation item file #0: kotlin-stdlib-sources.jar!/commonMain/generated/_Arrays
      UShortArrayKt
      UShortKt
     +PsiDirectory: META-INF
-   +PsiDirectory: kotlin-stdlib-common.jar
+   +PsiDirectory: kotlin-stdlib-common.klib

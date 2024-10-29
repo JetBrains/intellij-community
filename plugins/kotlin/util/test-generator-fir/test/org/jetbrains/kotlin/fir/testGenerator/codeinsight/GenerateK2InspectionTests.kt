@@ -18,12 +18,13 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
 
     testGroup("code-insight/inspections-k2/tests", category = INSPECTIONS, testDataPath = "../../..") {
         testClass<AbstractK2LocalInspectionTest>(commonSuite = false) {
-            val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            val pattern = Patterns.forRegex("^([\\w\\-_\\.]+)\\.(kt|kts)$")
             model("${idea}/inspectionsLocal/unusedVariable", pattern = pattern)
             model("${idea}/inspectionsLocal/redundantVisibilityModifier", pattern = pattern)
             model("${idea}/inspectionsLocal/implicitThis")
             model("${idea}/inspectionsLocal/doubleNegation")
             model("${idea}/inspectionsLocal/enumValuesSoftDeprecate")
+            model("${idea}/inspectionsLocal/branched/ifThenToElvis", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/branched/ifThenToSafeAccess", pattern = Patterns.KT_WITHOUT_DOTS)
             model("${idea}/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
             model("${idea}/inspectionsLocal/nullableBooleanElvis")
@@ -48,6 +49,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/moveLambdaOutsideParentheses")
             model("${idea}/inspectionsLocal/foldInitializerAndIfToElvis")
             model("${idea}/inspectionsLocal/redundantElseInIf")
+            model("${idea}/inspectionsLocal/redundantExplicitType")
+            model("${idea}/inspectionsLocal/coroutines/redundantRunCatching")
             model("${idea}/inspectionsLocal/joinDeclarationAndAssignment")
             model("${idea}/inspectionsLocal/replaceArrayOfWithLiteral")
             model("${idea}/inspectionsLocal/selfAssignment")
@@ -57,7 +60,11 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspectionsLocal/branched/introduceWhenSubject")
             model("${idea}/inspectionsLocal/usePropertyAccessSyntax")
             model("${idea}/inspectionsLocal/redundantUnitReturnType")
+            model("${idea}/inspectionsLocal/suspiciousCollectionReassignment")
+            model("${idea}/inspectionsLocal/suspiciousVarProperty")
             model("${idea}/inspectionsLocal/canBeParameter")
+            model("${idea}/inspectionsLocal/arrayInDataClass")
+            model("${idea}/inspectionsLocal/collections/simplifiableCallChain")
             model("code-insight/inspections-k2/tests/testData/inspectionsLocal", pattern = pattern)
         }
         /**
@@ -79,6 +86,8 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/inspections/protectedInFinal", pattern = pattern)
             model("${idea}/intentions/convertToStringTemplate", pattern = pattern)
             model("${idea}/inspections/unusedSymbol", pattern = pattern)
+            model("${idea}/inspections/arrayInDataClass", pattern = pattern)
+            model("${idea}/inspections/publicApiImplicitType", pattern = pattern)
         }
 
         testClass<AbstractK2MultiFileInspectionTest> {
@@ -108,6 +117,7 @@ internal fun MutableTWorkspace.generateK2InspectionTests() {
             model("${idea}/quickfix/redundantModalityModifier", pattern = pattern)
             model("${idea}/quickfix/removeToStringInStringTemplate", pattern = pattern)
             model("${idea}/quickfix/suppress", pattern = pattern)
+            model("${idea}/quickfix/suspiciousCollectionReassignment", pattern = pattern)
             model("${idea}/quickfix/removeAnnotation", pattern = pattern)
             model("${idea}/quickfix/optIn", pattern = pattern)
             model("${idea}/quickfix/removeUseSiteTarget", pattern = pattern)

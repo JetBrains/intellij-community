@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.project.DumbAware
 import com.intellij.ui.ExperimentalUI
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class StatusTextModeAction : ToggleAction(), DumbAware, ActionRemoteBehaviorSpecification.Frontend {
   override fun isSelected(e: AnActionEvent): Boolean {
     return !UISettings.getInstance().showNavigationBarInBottom

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.refactoring.rename;
 
@@ -56,8 +56,7 @@ public class RenameHandlerRegistry {
     return myDefaultElementRenameHandler.isAvailableOnDataContext(dataContext);
   }
 
-  @Nullable
-  public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
+  public @Nullable RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
     List<? extends RenameHandler> availableHandlers = getRenameHandlers(dataContext);
     if (availableHandlers.isEmpty()) {
       return null;

@@ -5,6 +5,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
+import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -32,10 +33,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.sax.SAXTransformerFactory;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.StringReader;
+import javax.xml.transform.stream.StreamSource;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
@@ -658,6 +657,41 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final List<? extends SMTestProxy> tests = suite.getChildren();
     assertEquals(1, tests.size());
     assertEquals("ATe&st", tests.get(0).getName());
+  }
+
+  public void testIntellijExportXslEscaping() throws Exception {
+    String systemOutput = "<span onclick=\"alert(\"Ops!\")\">SYSTEM_OUTPUT\n<span>";
+    String escapedSystemOutput = "&lt;span onclick=\"alert(\"Ops!\")\"&gt;SYSTEM_OUTPUT<br/>&lt;span&gt;<br/>";
+    String normalOutput = "<div onclick=\"alert(\"Ops!!\")\">NORMAL_OUTPUT<span>";
+    String escapedNormalOutput = "&lt;div onclick=\"alert(\"Ops!!\")\"&gt;NORMAL_OUTPUT&lt;span&gt;<br/>";
+    String errorOutput = "<p onclick=\"alert(\"Ops!!!\")\">ERROR_OUTPUT<div>";
+    String escapedErrorOutput = "&lt;p onclick=\"alert(\"Ops!!!\")\"&gt;ERROR_OUTPUT&lt;div&gt;<br/>";
+
+    mySuite.addChild(mySimpleTest);
+    mySimpleTest.addLast(printer -> {
+      printer.print(systemOutput, ConsoleViewContentType.SYSTEM_OUTPUT);
+      printer.print(normalOutput, ConsoleViewContentType.NORMAL_OUTPUT);
+      printer.print(errorOutput, ConsoleViewContentType.ERROR_OUTPUT);
+    });
+    mySimpleTest.setFinished();
+    mySuite.setFinished();
+
+    SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newDefaultInstance();
+
+    try (InputStream bundledXsltUrl = ExportTestResultsAction.class.getResourceAsStream("intellij-export.xsl")) {
+      TransformerHandler handler = transformerFactory.newTransformerHandler(new StreamSource(bundledXsltUrl));
+      File output = FileUtil.createTempFile("output", "");
+      FileUtilRt.createParentDirs(output);
+      try (FileWriter writer = new FileWriter(output, StandardCharsets.UTF_8)) {
+        handler.setResult(new StreamResult(writer));
+        MockRuntimeConfiguration configuration = new MockRuntimeConfiguration(getProject());
+        TestResultsXmlFormatter.execute(mySuite, configuration, new SMTRunnerConsoleProperties(configuration, "framework", new DefaultRunExecutor()), handler);
+        String renderedResult = FileUtil.loadFile(output);
+        assertContains(escapedSystemOutput, renderedResult);
+        assertContains(escapedNormalOutput, renderedResult);
+        assertContains(escapedErrorOutput, renderedResult);
+      }
+    }
   }
 
   public void testPreserveFullOutputAfterImport() throws Exception {

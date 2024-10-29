@@ -16,10 +16,12 @@
 package org.jetbrains.idea.maven.indices
 
 import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.idea.maven.indices.searcher.MavenLuceneIndexer
 import org.jetbrains.idea.maven.model.MavenRepositoryInfo
+import org.junit.Ignore
 import org.junit.Test
 import java.util.*
 
@@ -33,10 +35,14 @@ class MavenSearcherTest : MavenIndicesTestCase() {
 
 
   @Throws(Exception::class)
-  override fun setUp() = runBlocking(Dispatchers.EDT) {
+  override fun setUp()  {
     super.setUp()
-    myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
-    myIndicesFixture.setUp()
+    runBlocking(Dispatchers.EDT) {
+      writeIntentReadAction {
+        myIndicesFixture = MavenIndicesTestFixture(dir.toPath(), project, testRootDisposable)
+        myIndicesFixture.setUp()
+      }
+    }
     runBlocking {
       MavenSystemIndicesManager.getInstance().waitAllGavsUpdatesCompleted()
       myRepo = MavenIndexUtils.getLocalRepository(project)!!

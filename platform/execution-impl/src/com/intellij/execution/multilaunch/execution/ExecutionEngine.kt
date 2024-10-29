@@ -19,7 +19,9 @@ import com.intellij.openapi.rd.util.lifetime
 import com.intellij.util.messages.MessageBusConnection
 import com.jetbrains.rd.util.concurrentMapOf
 import com.jetbrains.rd.util.reactive.AddRemove
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ExecutionEngine(private val project: Project) {
   companion object {

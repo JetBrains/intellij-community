@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.find.editorHeaderActions;
 
 import com.intellij.find.SearchSession;
@@ -39,9 +39,8 @@ public class StatusTextAction extends DumbAwareAction implements CustomComponent
   public void actionPerformed(@NotNull AnActionEvent e) {
   }
 
-  @NotNull
   @Override
-  public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+  public @NotNull JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
     JLabel label = new JLabel();
     //noinspection HardCodedStringLiteral
     label.setText(getTextToCountPreferredSize());

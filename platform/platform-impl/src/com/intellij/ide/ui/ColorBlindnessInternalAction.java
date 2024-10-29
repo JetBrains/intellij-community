@@ -11,6 +11,7 @@ import com.intellij.util.Matrix;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,6 +27,7 @@ import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.io.File;
 
+@ApiStatus.Internal
 public final class ColorBlindnessInternalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent event) {

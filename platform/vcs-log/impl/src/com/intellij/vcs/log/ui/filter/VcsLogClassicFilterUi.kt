@@ -55,6 +55,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   protected val dateFilterModel: DateFilterModel
   protected val structureFilterModel: FileFilterModel
   protected val textFilterModel: TextFilterModel
+  @ApiStatus.Internal
   protected val parentFilterModel: ParentFilterModel
 
   private val textFilterField: VcsLogTextFilterField
@@ -205,7 +206,7 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
   }
 
   private inner class TextFilterField(private val textFilterModel: TextFilterModel, parentDisposable: Disposable) :
-    SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), DataProvider {
+    SearchTextField(VCS_LOG_TEXT_FILTER_HISTORY), UiDataProvider {
 
     init {
       text = textFilterModel.text
@@ -251,11 +252,8 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       return thisText == otherText
     }
 
-    override fun getData(dataId: String): Any? {
-      if (VcsLogInternalDataKeys.LOG_UI_PROPERTIES.`is`(dataId)) {
-        return uiProperties
-      }
-      return null
+    override fun uiDataSnapshot(sink: DataSink) {
+      sink[VcsLogInternalDataKeys.LOG_UI_PROPERTIES] = uiProperties
     }
   }
 
@@ -290,7 +288,6 @@ open class VcsLogClassicFilterUi(private val logData: VcsLogData,
       toolbar.setCustomButtonLook(FieldInplaceActionButtonLook())
       toolbar.isReservePlaceAutoPopupIcon = false
       toolbar.targetComponent = editor
-      toolbar.updateActionsImmediately()
       return toolbar
     }
   }

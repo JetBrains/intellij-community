@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.impl.forward;
 
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -13,14 +13,21 @@ import java.io.IOException;
 
 @Internal
 public interface IntForwardIndexAccessor<Key, Value> extends ForwardIndexAccessor<Key, Value> {
+
   @Override
   default @NotNull InputDataDiffBuilder<Key, Value> getDiffBuilder(int inputId, @Nullable ByteArraySequence sequence) throws IOException {
-    return getDiffBuilderFromInt(inputId, sequence == null ? 0 : AbstractForwardIndexAccessor.deserializeFromByteSeq(sequence, EnumeratorIntegerDescriptor.INSTANCE));
+    int value = sequence != null
+                ? AbstractForwardIndexAccessor.deserializeFromByteSeq(sequence, EnumeratorIntegerDescriptor.INSTANCE)
+                : 0;
+    return getDiffBuilderFromInt(inputId, value);
   }
 
   @Override
   default @Nullable ByteArraySequence serializeIndexedData(@NotNull InputData<Key, Value> data) throws IOException {
-    return AbstractForwardIndexAccessor.serializeValueToByteSeq(serializeIndexedDataToInt(data), EnumeratorIntegerDescriptor.INSTANCE, 8);
+    int serializedData = serializeIndexedDataToInt(data);
+    return AbstractForwardIndexAccessor.serializeValueToByteSeq(serializedData,
+                                                                EnumeratorIntegerDescriptor.INSTANCE,
+                                                                8);
   }
 
   /**

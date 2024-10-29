@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.find.FindManager;
@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +21,7 @@ import java.util.Iterator;
 
 import static com.intellij.openapi.editor.actions.IncrementalFindAction.SEARCH_DISABLED;
 
+@ApiStatus.Internal
 public final class SelectAllOccurrencesAction extends EditorAction implements ActionRemoteBehaviorSpecification.Frontend {
   private SelectAllOccurrencesAction() {
     super(new Handler());
@@ -35,7 +37,7 @@ public final class SelectAllOccurrencesAction extends EditorAction implements Ac
     }
 
     @Override
-    public void doExecute(@NotNull final Editor editor, @Nullable Caret c, DataContext dataContext) {
+    public void doExecute(final @NotNull Editor editor, @Nullable Caret c, DataContext dataContext) {
       Caret caret = c == null ? editor.getCaretModel().getPrimaryCaret() : c;
 
       boolean wholeWordsSearch = false;

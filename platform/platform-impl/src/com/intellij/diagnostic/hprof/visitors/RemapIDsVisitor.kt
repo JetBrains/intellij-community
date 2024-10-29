@@ -15,14 +15,15 @@
  */
 package com.intellij.diagnostic.hprof.visitors
 
-import com.intellij.diagnostic.hprof.classstore.HProfMetadata
 import com.intellij.diagnostic.hprof.parser.*
 import com.intellij.diagnostic.hprof.util.FileBackedHashMap
+import com.intellij.diagnostic.hprof.util.IDMapper
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap
+import org.jetbrains.annotations.ApiStatus
 import java.nio.ByteBuffer
 import java.nio.channels.FileChannel
-import java.util.function.LongUnaryOperator
 
+@ApiStatus.Internal
 abstract class RemapIDsVisitor : HProfVisitor() {
   private var currentID = 0
 
@@ -40,14 +41,16 @@ abstract class RemapIDsVisitor : HProfVisitor() {
     addMapping(arrayObjectId, currentID++)
   }
 
-  override fun visitClassDump(classId: Long,
-                              stackTraceSerialNumber: Long,
-                              superClassId: Long,
-                              classloaderClassId: Long,
-                              instanceSize: Long,
-                              constants: Array<ConstantPoolEntry>,
-                              staticFields: Array<StaticFieldEntry>,
-                              instanceFields: Array<InstanceFieldEntry>) {
+  override fun visitClassDump(
+    classId: Long,
+    stackTraceSerialNumber: Long,
+    superClassId: Long,
+    classloaderClassId: Long,
+    instanceSize: Long,
+    constants: Array<ConstantPoolEntry>,
+    staticFields: Array<StaticFieldEntry>,
+    instanceFields: Array<InstanceFieldEntry>,
+  ) {
     addMapping(classId, currentID++)
   }
 
@@ -61,7 +64,7 @@ abstract class RemapIDsVisitor : HProfVisitor() {
 
   abstract fun addMapping(oldId: Long, newId: Int)
 
-  abstract fun getRemappingFunction(): LongUnaryOperator
+  abstract fun getIDMapper(): IDMapper
 
   companion object {
     fun createMemoryBased(): RemapIDsVisitor {
@@ -69,11 +72,25 @@ abstract class RemapIDsVisitor : HProfVisitor() {
       map.put(0, 0)
       return object : RemapIDsVisitor() {
         override fun addMapping(oldId: Long, newId: Int) {
-          map.put(oldId, newId)
+          if (oldId != 0L) {
+            map.put(oldId, newId)
+          }
         }
 
-        override fun getRemappingFunction(): LongUnaryOperator {
-          return LongUnaryOperator { map.get(it).toLong() }
+        override fun getIDMapper(): IDMapper {
+          return object : IDMapper {
+            override fun getID(id: Long): Long {
+              if (isValidID(id))
+                return map[id].toLong()
+              else {
+                return 0
+              }
+            }
+
+            override fun isValidID(id: Long): Boolean {
+              return map.containsKey(id)
+            }
+          }
         }
       }
     }
@@ -84,22 +101,31 @@ abstract class RemapIDsVisitor : HProfVisitor() {
         maxInstanceCount, KEY_SIZE, VALUE_SIZE)
       return object : RemapIDsVisitor() {
         override fun addMapping(oldId: Long, newId: Int) {
+          if (oldId == 0L) return
           remapIDsMap.put(oldId).putInt(newId)
         }
 
-        override fun getRemappingFunction(): LongUnaryOperator {
-          return LongUnaryOperator { operand ->
-            if (operand == 0L) 0L else
-            {
-              if (remapIDsMap.containsKey(operand))
-                remapIDsMap[operand]!!.int.toLong()
-              else
-                throw HProfMetadata.RemapException()
+        override fun getIDMapper(): IDMapper {
+          return object : IDMapper {
+            override fun getID(id: Long): Long {
+              return if (id == 0L) 0L
+              else {
+                if (remapIDsMap.containsKey(id))
+                  remapIDsMap[id]!!.int.toLong()
+                else {
+                  return 0
+                }
+              }
+            }
+
+            override fun isValidID(id: Long): Boolean {
+              return remapIDsMap.containsKey(id)
             }
           }
         }
       }
     }
+
 
     fun isSupported(instanceCount: Long): Boolean {
       return FileBackedHashMap.isSupported(instanceCount, KEY_SIZE, VALUE_SIZE)

@@ -23,16 +23,13 @@ import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.IconPathPatcher
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.EarlyAccessRegistryManager
-import com.intellij.platform.feedback.newUi.NewUIInfoService
 import com.intellij.ui.ExperimentalUI.Companion.isNewUI
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 
 private val LOG: Logger
   get() = logger<ExperimentalUI>()
 
-/**
- * @author Konstantin Bulenkov
- */
 private class ExperimentalUIImpl : ExperimentalUI() {
   private val epIconMapperSuppressor = ExtensionPointName<Any>("com.intellij.iconMapperSuppressor")
   private var shouldUnsetNewUiSwitchKey: Boolean = true
@@ -63,7 +60,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
       isResetLaf.set(true)
 
       enabled = false
-      NewUIInfoService.getInstance().updateDisableNewUIDate()
 
       LOG.info("=== UI: new -> old ===")
     }
@@ -73,7 +69,6 @@ private class ExperimentalUIImpl : ExperimentalUI() {
 
       enabled = true
       setNewUiUsed()
-      NewUIInfoService.getInstance().updateEnableNewUIDate()
 
       if (!DistractionFreeModeController.shouldMinimizeCustomHeader()) {
         UISettings.getInstance().hideToolStripes = false
@@ -173,6 +168,7 @@ private class ExperimentalUiAppLifecycleListener : AppLifecycleListener {
 }
 
 // TODO: create new impl for RMD or remove
+@ApiStatus.Internal
 interface ExperimentalUIJetBrainsClientDelegate {
   companion object {
     fun getInstance() = service<ExperimentalUIJetBrainsClientDelegate>()

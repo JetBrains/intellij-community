@@ -138,10 +138,12 @@ public class MethodReferenceTest extends LightGroovyTestCase implements TypingTe
     return GroovyProjectDescriptors.GROOVY_3_0;
   }
 
+  @Override
   public final String getBasePath() {
     return TestUtils.getTestDataPath() + "lang/methodReferences/";
   }
 
+  @Override
   public final @NotNull List<Class<? extends LocalInspectionTool>> getInspections() {
     return List.of(GroovyAssignabilityCheckInspection.class);
   }

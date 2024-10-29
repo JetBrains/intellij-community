@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.impl.FileEditorOpenOptions
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.concurrency.annotations.RequiresBlockingContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus
@@ -50,7 +49,6 @@ interface ClientFileEditorManager {
   fun getEditorsWithProviders(file: VirtualFile): List<FileEditorWithProvider>
   fun getEditors(file: VirtualFile): List<FileEditor>
 
-  @RequiresBlockingContext
   fun openFile(file: VirtualFile, options: FileEditorOpenOptions): FileEditorComposite
 
   @Experimental

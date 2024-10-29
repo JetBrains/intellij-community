@@ -13,11 +13,13 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteIntentReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -46,6 +48,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
+import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,6 +127,7 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     myReaderThread = new ReaderThread(reader);
     myBuildInActions = buildInActions;
     TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project, scope);
+    builder.setViewer(true);
     myConsole = builder.getConsole();
     myConsole.attachToProcess(myProcessHandler);
     myDisposed = false;
@@ -435,20 +439,22 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
         @Override
         public void processTerminated(final @NotNull ProcessEvent event) {
           process.removeProcessListener(this);
-          stopRunning(true);
+          WriteIntentReadAction.run((Runnable)() ->stopRunning(true));
         }
       };
       process.addProcessListener(stopListener);
     }
   }
 
-  public StringBuffer getOriginalDocument() {
+  @CalledInAny
+  public @Nullable StringBuffer getOriginalDocument() {
     if (myOriginalDocument == null) {
-      final Editor editor = getEditor();
+      Editor editor = getEditor();
       if (editor != null) {
         myOriginalDocument = new StringBuffer(editor.getDocument().getText());
       }
-    } else {
+    }
+    else {
       if (ConsoleBuffer.useCycleBuffer()) {
         resizeBuffer(myOriginalDocument, ConsoleBuffer.getCycleBufferSize());
       }
@@ -472,9 +478,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
 
   }
 
+  @CalledInAny
   private @Nullable Editor getEditor() {
-    final ConsoleView console = getConsole();
-    return console != null ? CommonDataKeys.EDITOR.getData((DataProvider) console) : null;
+    ConsoleView console = getConsole();
+    if (console == null) return null;
+    // TODO This is a hack to get it working in BGT without a proper BGT-enabled document getter
+    DataContext dataContext = DataManager.getInstance().customizeDataContext(
+      DataContext.EMPTY_CONTEXT, console);
+    return CommonDataKeys.EDITOR.getData(dataContext);
   }
 
   private void filterConsoleOutput() {

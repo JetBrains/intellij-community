@@ -1,24 +1,29 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.refactoring.inline.codeInliner
 
+import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
+import com.intellij.psi.PsiMember
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
-import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
-import org.jetbrains.kotlin.analysis.api.resolution.singleVariableAccessCall
-import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisFromWriteAction
 import org.jetbrains.kotlin.analysis.api.permissions.allowAnalysisOnEdt
+import org.jetbrains.kotlin.analysis.api.projectStructure.KaModuleProvider
+import org.jetbrains.kotlin.analysis.api.resolution.KaCallableMemberCall
+import org.jetbrains.kotlin.analysis.api.resolution.KaImplicitReceiverValue
+import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.singleFunctionCallOrNull
+import org.jetbrains.kotlin.analysis.api.resolution.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.*
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.markers.KaSymbolWithMembers
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KaDeclarationContainerSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
+import org.jetbrains.kotlin.idea.base.psi.kotlinFqName
 import org.jetbrains.kotlin.idea.codeinsight.utils.addTypeArguments
 import org.jetbrains.kotlin.idea.codeinsight.utils.getRenderedTypeArguments
+import org.jetbrains.kotlin.idea.k2.refactoring.getThisQualifier
 import org.jetbrains.kotlin.idea.k2.refactoring.util.ConvertReferenceToLambdaUtil
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.CodeToInline
 import org.jetbrains.kotlin.idea.refactoring.inline.codeInliner.MutableCodeToInline
@@ -189,7 +194,7 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
         val parent = expression.parent
         if (parent is KtValueArgumentName || parent is KtCallableReferenceExpression) return@forEachDescendantOfType
         val resolve = expression.mainReference.resolve()
-        val target = resolve as? KtNamedDeclaration
+        val target = resolve as? KtNamedDeclaration ?: resolve as? PsiMember
 
         if (target is KtParameter) {
             fun getParameterName(): Name = if (isAnonymousFunction && target.ownerFunction == originalDeclaration) {
@@ -205,24 +210,37 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
             expression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
         }
 
-        fun isImportable(t: KtNamedDeclaration): Boolean {
-            analyze(t) {
-                val resolvedSymbol = t.symbol
-                val containingSymbol = resolvedSymbol.containingDeclaration ?: return true
-                if (containingSymbol is KaSymbolWithMembers) {
+        fun isImportable(t: PsiElement): Boolean {
+            val module = KaModuleProvider.getModule(t.project, t, useSiteModule = null)
+            return analyze(module) {
+                val resolvedSymbol = when (t) {
+                    is KtNamedDeclaration -> t.symbol
+                    is PsiMember -> {
+                        if ((t.containingFile as? PsiJavaFile)?.packageName == CommonClassNames.DEFAULT_PACKAGE) {
+                            return@analyze false
+                        }
+                        t.callableSymbol
+                    }
+                    else -> null
+                } ?: return@analyze false
+                val containingSymbol = resolvedSymbol.containingDeclaration ?: return@analyze true
+                if (containingSymbol is KaDeclarationContainerSymbol) {
                     val staticScope = containingSymbol.staticMemberScope
-                    return resolvedSymbol in staticScope.getAllSymbols()
+                    return@analyze resolvedSymbol in staticScope.declarations
                 }
-                return false
+                return@analyze false
             }
         }
 
         val targetParent = target?.parent
-        if (targetParent is KtFile ||
-            (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
-            target != null && isImportable(target)
+        val isLocalInline =
+            originalDeclaration is KtProperty && originalDeclaration.isLocal || originalDeclaration is KtFunction && originalDeclaration.isLocal
+        if (!isLocalInline && (targetParent is KtFile ||
+                    (target as? KtCallableDeclaration)?.receiverTypeReference != null ||
+                    target != null && isImportable(target))
         ) {
-            val importableFqName = target.fqName ?: return@forEachDescendantOfType
+            val importableFqName =
+                (target as? KtNamedDeclaration)?.fqName ?: (target as? PsiMember)?.kotlinFqName ?: return@forEachDescendantOfType
             val shortName = importableFqName.shortName()
             val ktFile = expression.containingKtFile
             val aliasName = if (shortName.asString() != expression.getReferencedName())
@@ -244,28 +262,36 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
 
         val receiverExpression = expression.getReceiverExpression()
         if (receiverExpression == null) {
-            val (receiverValue, isSameReceiverType) = analyze(expression) {
+            val (receiverValue, isSameReceiverType, deleteReceiver) = analyze(expression) {
                 val resolveCall = expression.resolveToCall()
-                val partiallyAppliedSymbol =
-                    (resolveCall?.singleFunctionCallOrNull() ?: resolveCall?.singleVariableAccessCall())?.partiallyAppliedSymbol
+                val partiallyAppliedSymbol = resolveCall?.singleCallOrNull<KaCallableMemberCall<*, *>>()?.partiallyAppliedSymbol
 
                 val value =
                     (partiallyAppliedSymbol?.extensionReceiver ?: partiallyAppliedSymbol?.dispatchReceiver) as? KaImplicitReceiverValue
-                val originalSymbol = originalDeclaration.symbol as? KaCallableSymbol
+                val originalSymbol = ((originalDeclaration as? KtPropertyAccessor)?.property ?: originalDeclaration).symbol as? KaCallableSymbol
                 val originalSymbolReceiverType = originalSymbol?.receiverType
                 val originalSymbolDispatchType = originalSymbol?.dispatchReceiverType
-                if (value != null) {
-                    getThisQualifier(value) to (originalSymbolReceiverType != null && value.type.isEqualTo(originalSymbolReceiverType) ||
-                                                originalSymbolDispatchType != null && value.type.isEqualTo(originalSymbolDispatchType))
+                if (value != null && !(resolve is KtParameter && resolve.ownerFunction == originalDeclaration)) {
+                    require(partiallyAppliedSymbol != null)
+                    val receiverToDelete = originalSymbolReceiverType != null
+                            && (partiallyAppliedSymbol.extensionReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                            && (partiallyAppliedSymbol.dispatchReceiver as? KaImplicitReceiverValue)?.symbol !is KaReceiverParameterSymbol
+                    val isSameReceiverType = originalSymbolReceiverType != null && value.type.semanticallyEquals(originalSymbolReceiverType) ||
+                            originalSymbolDispatchType != null && value.type.semanticallyEquals(originalSymbolDispatchType)
+                    Triple(
+                        getThisQualifier(value),
+                        isSameReceiverType,
+                        receiverToDelete
+                    )
                 } else {
                     val functionalType = (partiallyAppliedSymbol?.symbol as? KaVariableSymbol)?.returnType as? KaFunctionType
                     val receiverType = functionalType?.receiverType
                     if (receiverType == null) {
-                        null to true
+                        Triple(null, true, false)
                     } else {
-                        val isSame = originalSymbolReceiverType != null && receiverType.isEqualTo(originalSymbolReceiverType) ||
-                                originalSymbolDispatchType != null && receiverType.isEqualTo(originalSymbolDispatchType)
-                        "this".takeIf { isSame } to isSame
+                        val isSame = originalSymbolReceiverType != null && receiverType.semanticallyEquals(originalSymbolReceiverType) ||
+                                originalSymbolDispatchType != null && receiverType.semanticallyEquals(originalSymbolDispatchType)
+                        Triple("this".takeIf { isSame }, isSame, false)
                     }
                 }
             }
@@ -283,6 +309,9 @@ internal fun encodeInternalReferences(codeToInline: MutableCodeToInline, origina
                         thisExpression.putCopyableUserData(CodeToInline.PARAMETER_USAGE_KEY, Name.identifier("p1"))
                     } else if (!isSameReceiverType) {
                         thisExpression.putCopyableUserData(CodeToInline.SIDE_RECEIVER_USAGE_KEY, Unit)
+                    }
+                    if (deleteReceiver) {
+                        thisExpression.putCopyableUserData(CodeToInline.DELETE_RECEIVER_USAGE_KEY, Unit)
                     }
                 }
             }
@@ -305,16 +334,5 @@ internal fun specifyNullTypeExplicitly(codeToInline: MutableCodeToInline, origin
         codeToInline.addPreCommitAction(mainExpression) {
             codeToInline.replaceExpression(it, KtPsiFactory.contextual(it).createExpression(nullCast))
         }
-    }
-}
-
-context(KaSession)
-internal fun getThisQualifier(receiverValue: KaImplicitReceiverValue): String {
-    val symbol = receiverValue.symbol
-    return if ((symbol as? KaClassSymbol)?.classKind == KaClassKind.COMPANION_OBJECT) {
-        (symbol.containingDeclaration as KaClassifierSymbol).name!!.asString() + "." + symbol.name!!.asString()
-    }
-    else {
-        "this" + ((((symbol as? KaReceiverParameterSymbol)?.owningCallableSymbol ?: symbol) as? KaNamedSymbol)?.name?.let { "@$it" } ?: "")
     }
 }

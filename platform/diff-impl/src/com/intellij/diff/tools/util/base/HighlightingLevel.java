@@ -2,6 +2,7 @@
 package com.intellij.diff.tools.util.base;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diff.DiffBundle;
@@ -22,7 +23,7 @@ public enum HighlightingLevel {
   ADVANCED("option.highlighting.level.syntax", AllIcons.Ide.HectorSyntax, rangeHighlighter -> {
     if (rangeHighlighter.getLayer() > HighlighterLayer.ADDITIONAL_SYNTAX) return false;
     HighlightInfo info = HighlightInfo.fromRangeHighlighter(rangeHighlighter);
-    return info == null || info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) < 0;
+    return info == null || info.getSeverity().compareTo(HighlightSeverity.GENERIC_SERVER_ERROR_OR_WARNING) < 0 && info.type != HighlightInfoType.TODO;
   }),
 
   SIMPLE("option.highlighting.level.none", AllIcons.Ide.HectorOff, rangeHighlighter ->

@@ -17,6 +17,7 @@ import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerFactory;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +31,7 @@ import java.util.Objects;
 import static com.intellij.ui.hover.TableHoverListener.getHoveredRow;
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
+@ApiStatus.Internal
 public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
   private static final int ROOT_INDICATOR_WHITE_WIDTH = 5;
   private static final int ROOT_INDICATOR_WIDTH = ROOT_INDICATOR_WHITE_WIDTH + 8;

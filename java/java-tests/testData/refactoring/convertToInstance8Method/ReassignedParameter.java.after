@@ -1,0 +1,19 @@
+class X {
+
+    class Node {
+
+        Node skipForward2(Predicate<Node> skipWhile) {
+            Node node = this;
+            while (skipWhile.test(node)) {
+            Node next = node.nextNode();
+            if (next == null) break;
+            node = next;
+          }
+          return node;
+        }
+
+        Node nextNode() {
+      return null;
+    }
+  }
+}

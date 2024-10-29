@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions
 
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NonNls
 sealed class BaseExtensionPointName<T : Any>(val name: @NonNls String) {
   override fun toString(): String = name
 
-  @PublishedApi
   internal fun getPointImpl(areaInstance: AreaInstance?): ExtensionPointImpl<T> {
     val area = requireNotNull(areaInstance?.extensionArea ?: Extensions.getRootArea()) {
       """

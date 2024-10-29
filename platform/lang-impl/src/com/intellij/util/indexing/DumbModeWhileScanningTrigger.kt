@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.concurrent.CountDownLatch
 
+@Internal
 class DumbModeWhileScanningSubscriber : StartupActivity.RequiredForSmartMode {
   override fun runActivity(project: Project) {
     project.service<DumbModeWhileScanningTrigger>().subscribe()

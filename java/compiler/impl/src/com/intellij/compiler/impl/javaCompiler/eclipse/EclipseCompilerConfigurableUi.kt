@@ -2,10 +2,8 @@
 package com.intellij.compiler.impl.javaCompiler.eclipse
 
 import com.intellij.compiler.impl.javaCompiler.CompilerModuleOptionsComponent
-import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.openapi.compiler.JavaCompilerBundle
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -45,12 +43,10 @@ class EclipseCompilerConfigurableUi(project: Project) {
       }
         .bottomGap(BottomGap.SMALL)
       row {
-        pathToEcjField = textFieldWithBrowseButton(
-          JavaCompilerBundle.message("path.to.ecj.compiler.tool"), project,
-          object : FileChooserDescriptor(true, false, true, true, false, false) {}.withFileFilter { file ->
-            FileTypeRegistry.getInstance().isFileOfType(file, ArchiveFileType.INSTANCE)
-          }
-        )
+        val descriptor = FileChooserDescriptor(true, false, true, true, false, false)
+          .withTitle(JavaCompilerBundle.message("path.to.ecj.compiler.tool"))
+          .withExtensionFilter("jar")
+        pathToEcjField = textFieldWithBrowseButton(descriptor, project)
           .align(AlignX.FILL)
           .label(JavaCompilerBundle.message("eclipse.compiler.path.label"), LabelPosition.TOP)
           .comment(JavaCompilerBundle.message("eclipse.compiler.path.comment"))

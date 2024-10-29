@@ -1,0 +1,38 @@
+### auto-generated section `build` start
+load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
+
+kt_jvm_library(
+  name = "ide-bootstrap",
+  module_name = "intellij.platform.ide.bootstrap",
+  visibility = ["//visibility:public"],
+  srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+  javac_opts = "//:j17",
+  kotlinc_opts = "//:k17",
+  deps = [
+    "@community//platform/platform-impl:ide-impl",
+    "@community//platform/statistics",
+    "@community//platform/service-container:serviceContainer",
+    "@community//platform/diagnostic/telemetry-impl:diagnostic-telemetry-impl",
+    "@community//platform/util/zip:util-zip",
+    "@community//platform/util/ui:util-ui",
+    "@community//platform/util-class-loader:util-classLoader",
+    "@community//platform/settings",
+    "@community//platform/util-ex",
+    "@community//platform/ide-core-impl",
+    "@community//platform/core-ui",
+    "@community//platform/platform-util-io:ide-util-io",
+    "@community//platform/projectModel-impl",
+    "@community//platform/util/concurrency",
+    "@community//platform/diagnostic/telemetry:diagnostic-telemetry",
+    "@community//platform/bootstrap/coroutine:bootstrap-coroutine",
+    "@community//platform/lvcs-api:lvcs",
+    "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/indexing-api:indexing",
+    "@libraries//:jna-platform",
+    "@libraries//:hash4j",
+    "@libraries//:jbr-api",
+    "@libraries//:dd-plist",
+    "@libraries//:netty-codec-http2",
+  ]
+)
+### auto-generated section `build` end

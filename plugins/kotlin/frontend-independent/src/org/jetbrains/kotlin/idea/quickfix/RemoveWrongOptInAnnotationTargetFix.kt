@@ -17,9 +17,9 @@ import org.jetbrains.kotlin.resolve.checkers.OptInDescription
 class RemoveWrongOptInAnnotationTargetFix(annotationEntry: KtAnnotationEntry) :
     KotlinPsiOnlyQuickFixAction<KtAnnotationEntry>(annotationEntry) {
 
-    override fun getText() = KotlinBundle.message("fix.opt_in.remove.all.forbidden.targets")
+    override fun getText(): String = KotlinBundle.message("fix.opt_in.remove.all.forbidden.targets")
 
-    override fun getFamilyName() = text
+    override fun getFamilyName(): String = text
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
         val annotationEntry = element ?: return

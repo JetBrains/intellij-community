@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.base.projectStructure.moduleInfo.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.base.projectStructure.toKaModule
+import org.jetbrains.kotlin.load.kotlin.MetadataFinderFactory
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinderFactory
 
-class IdeVirtualFileFinderFactory : VirtualFileFinderFactory {
+class IdeVirtualFileFinderFactory : VirtualFileFinderFactory, MetadataFinderFactory {
     override fun create(scope: GlobalSearchScope): VirtualFileFinder = IdeVirtualFileFinder(scope)
 
     override fun create(project: Project, module: ModuleDescriptor): VirtualFileFinder {

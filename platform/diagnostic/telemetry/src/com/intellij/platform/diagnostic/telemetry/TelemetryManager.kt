@@ -92,17 +92,25 @@ interface TelemetryManager {
   @TestOnly
   suspend fun forceFlushMetrics()
 
-  /**
-   * Blocking forceFlushMetrics function for test purposes.
-   *
-   * @see forceFlushMetrics
-   */
+  /** Blocking [forceFlushMetrics] function for test purposes. */
   @Suppress("unused")
   @TestOnly
   fun forceFlushMetricsBlocking() {
-    runBlocking {
-      forceFlushMetrics()
-    }
+    runBlocking { forceFlushMetrics() }
+  }
+
+  /**
+   * Should reset all registered exporters [com.intellij.platform.diagnostic.telemetry.AsyncSpanExporter.reset].
+   * Meaning that spans and meters should be exported and discarded, so that resulting artifacts will not contain previously collected data.
+   */
+  @TestOnly
+  suspend fun resetExporters()
+
+  /** Blocking [resetExporters] counterpart for test purposes and for simplicity of use from Java. */
+  @Suppress("unused")
+  @TestOnly
+  fun resetExportersBlocking() {
+    runBlocking { resetExporters() }
   }
 }
 
@@ -151,6 +159,10 @@ class NoopTelemetryManager : TelemetryManager {
 
   override suspend fun forceFlushMetrics() {
     logger<NoopTelemetryManager>().info("Cannot force flushing metrics for Noop telemetry manager")
+  }
+
+  override suspend fun resetExporters() {
+    logger<NoopTelemetryManager>().info("Cannot clean exported metrics for Noop telemetry manager")
   }
 }
 

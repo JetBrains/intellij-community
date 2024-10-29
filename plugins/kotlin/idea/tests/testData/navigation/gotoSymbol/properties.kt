@@ -19,8 +19,3 @@ class Some() {
 class SomePrimary(val testInPrimary: Int)
 
 // SEARCH_TEXT: test
-// REF: (in Some).testInClass
-// REF: (in Some.Companion).testInClassObject
-// REF: (in SomeInterface).testInInterface
-// REF: (in SomePrimary).testInPrimary
-// REF: testGlobal

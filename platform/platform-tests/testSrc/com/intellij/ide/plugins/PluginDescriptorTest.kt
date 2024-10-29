@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.io.IoTestUtil
+import com.intellij.platform.ide.bootstrap.ZipFilePoolImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
@@ -521,6 +522,75 @@ class PluginDescriptorTest {
       .build()
     assertThat(result.enabledPlugins).isEmpty()
   }
+  
+  @Test
+  fun `disable plugin if dependency of required content module is not available`() {
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required").dependency("unknown"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).isEmpty()
+    val errors = PluginManagerCore.getAndClearPluginLoadingErrors()
+    assertThat(errors).isNotEmpty
+    assertThat(errors.first().toString()).contains("sample.plugin", "requires plugin", "unknown")
+  }
+  
+  @Test
+  fun `required content module uses same classloader as the main module`() {
+    val samplePluginDir = pluginDirPath.resolve("sample-plugin")
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required"), loadingRule = ModuleLoadingRule.REQUIRED, separateJar = true)
+      .module("optional.module", PluginBuilder().packagePrefix("optional"))
+      .build(samplePluginDir)
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(1)
+    val mainClassLoader = result.enabledPlugins.single().pluginClassLoader
+    val requiredModuleClassLoader = result.findEnabledModule("required.module")!!.pluginClassLoader
+    assertThat(requiredModuleClassLoader).isSameAs(mainClassLoader)
+    assertThat((mainClassLoader as PluginClassLoader).files).containsExactly(
+      samplePluginDir.resolve("lib/sample.plugin.jar"),
+      samplePluginDir.resolve("lib/modules/required.module.jar"),
+    )
+    val optionalModuleClassLoader = result.findEnabledModule("optional.module")!!.pluginClassLoader
+    assertThat(optionalModuleClassLoader).isNotSameAs(mainClassLoader)
+  }
+  
+  @Test
+  fun `dependencies of required content module are added to the main class loader`() {
+    PluginBuilder()
+      .noDepends()
+      .id("dep")
+      .build(pluginDirPath.resolve("dep"))
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("required.module", PluginBuilder().packagePrefix("required").pluginDependency("dep"), loadingRule = ModuleLoadingRule.REQUIRED)
+      .build(pluginDirPath.resolve("sample-plugin"))
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(2)
+    val depPluginDescriptor = result.findEnabledPlugin(PluginId.getId("dep"))!!
+    val mainClassLoader = result.findEnabledPlugin(PluginId.getId("sample.plugin"))!!.pluginClassLoader
+    assertThat((mainClassLoader as PluginClassLoader)._getParents()).contains(depPluginDescriptor)
+  }
+  
+  @Test
+  fun `content module in separate JAR`() {
+    val pluginDir = pluginDirPath.resolve("sample-plugin")
+    PluginBuilder()
+      .noDepends()
+      .id("sample.plugin")
+      .module("dep", PluginBuilder(), separateJar = true)
+      .build(pluginDir)
+    val result = PluginSetTestBuilder(pluginDirPath).build()
+    assertThat(result.enabledPlugins).hasSize(1)
+    assertThat(result.getEnabledModules()).hasSize(2)
+    val depModuleDescriptor = result.findEnabledModule("dep")!!
+    assertThat(depModuleDescriptor.jarFiles).containsExactly(pluginDir.resolve("lib/modules/dep.jar"))
+  }
 
   @Test
   fun testExpiredPluginNotLoaded() {
@@ -593,6 +663,7 @@ fun readDescriptorForTest(path: Path, isBundled: Boolean, input: ByteArray, id: 
     pathResolver = pathResolver,
     dataLoader = dataLoader,
     pluginDir = path,
+    pool = ZipFilePoolImpl(),
   )
   return result
 }
@@ -611,6 +682,6 @@ fun createFromDescriptor(path: Path,
                                  readInto = null,
                                  locationSource = path.toString())
   val result = IdeaPluginDescriptorImpl(raw = raw, path = path, isBundled = isBundled, id = null, moduleName = null)
-  initMainDescriptorByRaw(descriptor = result, raw = raw, pathResolver = pathResolver, context = context, pluginDir = path, dataLoader = dataLoader)
+  initMainDescriptorByRaw(descriptor = result, raw = raw, pathResolver = pathResolver, context = context, dataLoader = dataLoader, pluginDir = path, pool = ZipFilePoolImpl())
   return result
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
@@ -55,8 +55,7 @@ public class AddArrangementRuleAction extends AbstractArrangementRuleAction impl
     scrollRowToVisible(control, rowToEdit);
   }
 
-  @NotNull
-  protected Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
+  protected @NotNull Object createNewRule(@NotNull ArrangementMatchingRulesControl control) {
     return new EmptyArrangementRuleComponent(control.getEmptyRowHeight());
   }
 

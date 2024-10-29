@@ -6,9 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.actions.DebuggerToggleActionHandler;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@ApiStatus.Internal
 public abstract class XDebuggerToggleActionHandler extends DebuggerToggleActionHandler {
   @Override
   public final boolean isEnabled(@NotNull final Project project, final AnActionEvent event) {

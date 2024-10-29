@@ -7,7 +7,7 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginModeProvider
-import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
+import org.jetbrains.kotlin.scripting.definitions.ScriptConfigurationsProvider
 
 interface ScriptDependencyAware {
     fun getAllScriptDependenciesSources(): Collection<VirtualFile>
@@ -25,7 +25,7 @@ interface ScriptDependencyAware {
     companion object {
         fun getInstance(project: Project): ScriptDependencyAware {
             return if (KotlinPluginModeProvider.isK2Mode()) {
-                project.serviceIfCreated<ScriptDependenciesProvider>() as? ScriptDependencyAware ?: EMPTY
+                project.serviceIfCreated<ScriptConfigurationsProvider>() as? ScriptDependencyAware ?: EMPTY
             } else {
                 ScriptConfigurationManager.getInstance(project)
             }

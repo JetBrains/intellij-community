@@ -14,10 +14,12 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
+@ApiStatus.Internal
 public final class ToggleColumnModeAction extends ToggleAction implements DumbAware, LightEditCompatible, ActionRemoteBehaviorSpecification.Frontend {
   public ToggleColumnModeAction() {
     setEnabledInModalContext(true);

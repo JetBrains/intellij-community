@@ -200,9 +200,8 @@ public abstract class BreadcrumbsPanel extends JComponent implements Disposable 
   private void updateCrumbsAsync() {
     if (myEditor == null || myEditor.isDisposed()) return;
 
-    int offset = myEditor.getCaretModel().getOffset();
     ReadAction
-      .nonBlocking(() -> computeCrumbs(offset))
+      .nonBlocking(() -> computeCrumbs(myEditor.getCaretModel().getOffset()))
       .withDocumentsCommitted(myProject)
       .expireWith(this)
       .coalesceBy(this)

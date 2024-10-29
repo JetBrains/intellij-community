@@ -12,6 +12,8 @@ import com.intellij.util.asSafely
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileKind
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSet
 import com.intellij.workspaceModel.core.fileIndex.WorkspaceFileSetWithCustomData
+import com.intellij.workspaceModel.core.fileIndex.impl.WorkspaceFileSetRecognizer.isSourceRoot
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.findLibraryId
 import com.intellij.workspaceModel.ide.legacyBridge.SourceRootTypeRegistry
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -40,7 +42,9 @@ object WorkspaceFileSetRecognizer {
 
     if (getSdk(fileSet) != null) return null
 
-    val globalLibraryId = LibrariesAndSdkContributors.getGlobalLibraryId(fileSetImpl)
+    val globalLibraryId = LibrariesAndSdkContributors.getGlobalLibrary(fileSetImpl)?.let {
+      findLibraryId(library = it)
+    }
     if (globalLibraryId != null) {
       return globalLibraryId
     }

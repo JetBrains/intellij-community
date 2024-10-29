@@ -28,6 +28,9 @@ import java.util.Map;
 import java.util.Set;
 
 public class MavenServerExecutionResult implements Serializable {
+
+  public static final MavenServerExecutionResult EMPTY = new MavenServerExecutionResult(null, Collections.emptyList(), Collections.emptySet());
+
   @Nullable public final ProjectData projectData;
   @NotNull public final Collection<MavenProjectProblem> problems;
   @NotNull public final Set<MavenId> unresolvedArtifacts;
@@ -55,20 +58,17 @@ public class MavenServerExecutionResult implements Serializable {
     public final String dependencyHash;
     public final boolean dependencyResolutionSkipped;
     public final Map<String, String> mavenModelMap;
-    public final NativeMavenProjectHolder nativeMavenProject;
     public final Collection<String> activatedProfiles;
 
     public ProjectData(@NotNull MavenModel mavenModel,
                        @Nullable String dependencyHash,
                        boolean dependencyResolutionSkipped,
                        Map<String, String> mavenModelMap,
-                       NativeMavenProjectHolder nativeMavenProject,
                        Collection<String> activatedProfiles) {
       this.mavenModel = mavenModel;
       this.dependencyHash = dependencyHash;
       this.dependencyResolutionSkipped = dependencyResolutionSkipped;
       this.mavenModelMap = mavenModelMap;
-      this.nativeMavenProject = nativeMavenProject;
       this.activatedProfiles = activatedProfiles;
     }
 

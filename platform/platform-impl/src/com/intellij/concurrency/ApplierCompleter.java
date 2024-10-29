@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.concurrency;
 
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -9,6 +10,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.concurrency.BlockingJob;
+import com.intellij.util.concurrency.ChildContext;
+import com.intellij.util.concurrency.Propagation;
+import kotlin.coroutines.CoroutineContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -58,6 +63,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
 
   // if not empty, the read action has failed and this list contains unfinished subtasks
   private final Collection<? super ApplierCompleter<T>> failedSubTasks;
+  private final ChildContext childContext;
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
@@ -88,6 +94,10 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     this.lo = lo;
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
+    CoroutineContext nonStructuredContext = ThreadContext.currentThreadContext().minusKey(BlockingJob.Companion);
+    try (AccessToken ignored = ThreadContext.installThreadContext(nonStructuredContext, true)) {
+      this.childContext = Propagation.createChildContext("ApplierCompleter");
+    }
   }
 
   @Override
@@ -172,7 +182,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     }
   }
   private void helpAll() {
-    try {
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       helpOthers();
     }
     catch (Throwable e) {
@@ -191,10 +201,12 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   private void processArray() {
     int lo = this.lo;
     int hi = this.hi;
-    for (int i = lo; i < hi && !isFinishedAll(); ++i) {
-      ProgressManager.checkCanceled();
-      if (unqueue(i) && !processArrayItem(i)) {
-        throw new ComputationAbortedException();
+    try (AccessToken ignored = childContext.applyContextActions(true)) {
+      for (int i = lo; i < hi && !isFinishedAll(); ++i) {
+        ProgressManager.checkCanceled();
+        if (unqueue(i) && !processArrayItem(i)) {
+          throw new ComputationAbortedException();
+        }
       }
     }
     // set to true after processed all items, because some other completer could help processing them in the meantime
@@ -227,17 +239,19 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   static boolean completeTaskWhichFailToAcquireReadAction(@NotNull List<? extends ApplierCompleter<?>> tasks) {
     final boolean[] result = {true};
     // these tasks could not be executed in the other thread; do them here
-    for (ApplierCompleter<?> task : tasks) {
-      ProgressManager.checkCanceled();
-      ApplicationManager.getApplication().runReadAction(() ->
-        task.wrapInReadActionAndIndicator(() -> {
-          try {
-            task.processArray();
-          }
-          catch (ComputationAbortedException e) {
-            result[0] = false;
-          }
-        }));
+    try (AccessToken ignored = ThreadContext.resetThreadContext()) {
+      for (ApplierCompleter<?> task : tasks) {
+        ProgressManager.checkCanceled();
+        ApplicationManager.getApplication().runReadAction(() ->
+                                                            task.wrapInReadActionAndIndicator(() -> {
+                                                              try {
+                                                                task.processArray();
+                                                              }
+                                                              catch (ComputationAbortedException e) {
+                                                                result[0] = false;
+                                                              }
+                                                            }));
+      }
     }
     return result[0];
   }

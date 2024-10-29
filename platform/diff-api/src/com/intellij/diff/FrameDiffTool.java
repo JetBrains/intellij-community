@@ -30,6 +30,10 @@ public interface FrameDiffTool extends DiffTool {
   }
 
   interface DiffViewer extends Disposable {
+    /**
+     * The component will be used for {@link com.intellij.openapi.actionSystem.ActionToolbar#setTargetComponent(JComponent)}
+     * and might want to implement {@link com.intellij.openapi.actionSystem.UiDataProvider} for {@link ToolbarComponents#toolbarActions}.
+     */
     @NotNull
     JComponent getComponent();
 

@@ -1,8 +1,8 @@
 package com.michaelbaranov.microba.calendar;
 
-import java.util.Calendar;
-
 import com.michaelbaranov.microba.common.Policy;
+
+import java.util.Calendar;
 
 /**
  * This interface is used by {@link CalendarPane} and {@link DatePicker} to
@@ -24,7 +24,7 @@ public interface VetoPolicy extends Policy {
    * @return <code>true</code> if given <code>date</code> is restricted
    *         <code>false</code> otherwise
    */
-  public boolean isRestricted(Object source, Calendar date);
+  boolean isRestricted(Object source, Calendar date);
 
   /**
    * This method is used to check if no-date (<code>null</code> date) is
@@ -35,6 +35,6 @@ public interface VetoPolicy extends Policy {
    * @return <code>false</code> to allow no-date, <code>true</code>
    *         otherwise
    */
-  public boolean isRestrictNull(Object source);
+  boolean isRestrictNull(Object source);
 
 }

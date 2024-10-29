@@ -1,4 +1,3 @@
-// IGNORE_K2
 public class J {
     public void testField(char c, byte b, short s, int i, long l, float f, double d) {
         char cc = 1;
@@ -94,15 +93,12 @@ public class J {
     }
 
     public void testArrayAccess(char c, byte b, short s, int i, long l, float f, double d) {
-        // in K1 this currently results in a NO_SET_METHOD error (KT-11272), which should be fixed in K2
         char[] charArr = {1};
-        // <KT-11272>
         charArr[0] += c;
         charArr[0] += b;
         charArr[0] += s;
         charArr[0] += i;
         charArr[0] += l;
-        // </KT-11272>
         charArr[0] += f;
         charArr[0] += d;
         charArr[0] -= d;

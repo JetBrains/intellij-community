@@ -3,8 +3,10 @@ package com.intellij.vcs.log.graph.utils.impl;
 
 import com.intellij.vcs.log.graph.utils.Flags;
 import com.intellij.vcs.log.graph.utils.IntToIntMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
+@ApiStatus.Internal
 public final class PermanentListIntToIntMap extends AbstractIntToIntMap implements IntToIntMap {
   public static final int DEFAULT_BLOCK_SIZE = 30;
 

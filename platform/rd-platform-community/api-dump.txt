@@ -38,12 +38,6 @@ f:com.intellij.openapi.rd.util.BackgroundProgressCoroutineUtilKt
 a:com.intellij.openapi.rd.util.ProgressCoroutineScope
 - <init>(com.intellij.openapi.progress.ProgressIndicator):V
 - f:getIndicator():com.intellij.openapi.progress.ProgressIndicator
-f:com.intellij.openapi.rd.util.ProgressCoroutineScopeLegacy
-- com.intellij.openapi.rd.util.ProgressCoroutineScope
-- sf:Companion:com.intellij.openapi.rd.util.ProgressCoroutineScopeLegacy$Companion
-- f:withDetails(java.lang.String,kotlin.jvm.functions.Function1):V
-- f:withText(java.lang.String,kotlin.jvm.functions.Function1):V
-f:com.intellij.openapi.rd.util.ProgressCoroutineScopeLegacy$Companion
 f:com.intellij.openapi.rd.util.RdCoroutinesUtilKt
 - sf:launchBackground(com.jetbrains.rd.util.lifetime.Lifetime,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2):kotlinx.coroutines.Job
 - bs:launchBackground$default(com.jetbrains.rd.util.lifetime.Lifetime,kotlin.coroutines.CoroutineContext,kotlinx.coroutines.CoroutineStart,kotlin.jvm.functions.Function2,I,java.lang.Object):kotlinx.coroutines.Job

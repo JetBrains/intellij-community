@@ -12,7 +12,7 @@ import java.util.List;
 public class ReferenceNode implements DependencyNode, Serializable {
   private final long id;
 
-  @PropertyMapping({"id"})
+  @PropertyMapping("id")
   public ReferenceNode(long id) {this.id = id;}
 
   @Override
@@ -55,6 +55,6 @@ public class ReferenceNode implements DependencyNode, Serializable {
 
   @Override
   public int hashCode() {
-    return (int)(id ^ (id >>> 32));
+    return Long.hashCode(id);
   }
 }

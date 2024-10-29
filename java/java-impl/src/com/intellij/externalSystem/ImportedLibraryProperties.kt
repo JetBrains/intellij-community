@@ -33,7 +33,7 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
   }
 
   override fun loadState(state: MavenCoordinatesState) {
-    this.mavenCoordinates = MavenCoordinates(state.groupId, state.artifactId, state.version, state.packaging, state.classifier)
+    this.mavenCoordinates = MavenCoordinates(state.groupId, state.artifactId, state.version, state.baseVersion, state.packaging, state.classifier)
   }
 
   class MavenCoordinatesState() {
@@ -41,6 +41,7 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
       groupId = coordinates.groupId
       artifactId = coordinates.artifactId
       version = coordinates.version
+      baseVersion = coordinates.baseVersion
       packaging = coordinates.packaging
       classifier = coordinates.classifier
     }
@@ -50,6 +51,8 @@ class ImportedLibraryProperties(override var mavenCoordinates: MavenCoordinates?
     var artifactId: String= ""
     @Attribute
     var version: String = ""
+    @Attribute
+    var baseVersion: String = ""
     @Attribute
     var packaging: String = JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING
     @Attribute

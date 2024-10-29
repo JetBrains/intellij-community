@@ -1,18 +1,18 @@
 <component name="libraryTable">
   <library name="hamcrest" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.hamcrest:hamcrest-library:1.3">
+    <properties include-transitive-deps="false" maven-id="org.hamcrest:hamcrest:2.2">
       <verification>
-        <artifact url="file://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3.jar">
-          <sha256sum>711d64522f9ec410983bd310934296da134be4254a125080a0416ec178dfad1c</sha256sum>
+        <artifact url="file://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar">
+          <sha256sum>5e62846a89f05cd78cd9c1a553f340d002458380c320455dd1f8fc5497a8a1c1</sha256sum>
         </artifact>
       </verification>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest-library/1.3/hamcrest-library-1.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/hamcrest/hamcrest/2.2/hamcrest-2.2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

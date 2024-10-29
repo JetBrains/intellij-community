@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -29,6 +29,7 @@ import com.sun.jdi.ReferenceType;
 import com.sun.jdi.Type;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,14 +105,16 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
   }
 
   @Override
-  public @Nullable XFullValueEvaluator getFullValueEvaluator(EvaluationContextImpl evaluationContext, ValueDescriptorImpl valueDescriptor) {
+  public @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
+                                                             @NotNull ValueDescriptorImpl valueDescriptor) {
     if (myFullValueEvaluatorProvider != null) {
       return myFullValueEvaluatorProvider.getFullValueEvaluator(evaluationContext, valueDescriptor);
     }
     return null;
   }
 
-  void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
+  @ApiStatus.Internal
+  public void setFullValueEvaluator(FullValueEvaluatorProvider fullValueEvaluatorProvider) {
     myFullValueEvaluatorProvider = fullValueEvaluatorProvider;
   }
 

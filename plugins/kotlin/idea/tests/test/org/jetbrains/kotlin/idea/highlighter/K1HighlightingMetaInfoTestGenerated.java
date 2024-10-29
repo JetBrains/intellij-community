@@ -165,9 +165,24 @@ public abstract class K1HighlightingMetaInfoTestGenerated extends AbstractK1High
             runTest("testData/highlighterMetaInfo/jvm/KotlinAnnotationsInJava.kt");
         }
 
+        @TestMetadata("KotlinInfixFunctionInjection.kt")
+        public void testKotlinInfixFunctionInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinInfixFunctionInjection.kt");
+        }
+
         @TestMetadata("KotlinInjection.kt")
         public void testKotlinInjection() throws Exception {
             runTest("testData/highlighterMetaInfo/jvm/KotlinInjection.kt");
+        }
+
+        @TestMetadata("KotlinSimpleInjection.kt")
+        public void testKotlinSimpleInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinSimpleInjection.kt");
+        }
+
+        @TestMetadata("KotlinVarargsParametersInjection.kt")
+        public void testKotlinVarargsParametersInjection() throws Exception {
+            runTest("testData/highlighterMetaInfo/jvm/KotlinVarargsParametersInjection.kt");
         }
 
         @TestMetadata("NonExistingKotlinMethodFromJava.kt")

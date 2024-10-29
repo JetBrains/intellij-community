@@ -2,18 +2,21 @@
 package com.intellij.xml;
 
 import com.intellij.codeInsight.JavaCodeInsightTestCase;
+import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.xml.actions.validate.TestErrorReporter;
 import com.intellij.xml.actions.validate.ValidateXmlActionHandler;
 import com.intellij.xml.util.XmlResourceResolver;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -209,7 +212,12 @@ public class ValidateXmlTest extends JavaCodeInsightTestCase {
 
   public void testXsd11Alternative() throws Throwable {
     perform("Alternative.xsd", "(41:83) cvc-complex-type.2.4.a: Invalid content was found starting with element '{\"http://www.w3.org/2001/XMLSchema\":alternative}'. One of '{\"http://www.w3.org/2001/XMLSchema\":annotation, \"http://www.w3.org/2001/XMLSchema\":simpleType, \"http://www.w3.org/2001/XMLSchema\":complexType, \"http://www.w3.org/2001/XMLSchema\":unique, \"http://www.w3.org/2001/XMLSchema\":key, \"http://www.w3.org/2001/XMLSchema\":keyref}' is expected.");
+    PsiFile location = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.XML_SCHEMA_URI, myFile, null);
+    String standard = ExternalResourceManagerEx.STANDARD_SCHEMAS.replace("/", "");
+    assertEquals(standard, location.getParent().getName());
     ExternalResourceManagerEx.getInstanceEx().setXmlSchemaVersion(ExternalResourceManagerEx.XMLSchemaVersion.XMLSchema_1_1, getProject());
+    location = ExternalResourceManager.getInstance().getResourceLocation(XmlUtil.XML_SCHEMA_URI, myFile, null);
+    assertEquals("XMLSchema-1_1", location.getParent().getName());
     perform("Alternative.xsd", "XMLSchema.xsd:(936:30) rcase-Recurse.2: There is not a complete functional mapping between the particles.\n" +
                                "XMLSchema.xsd:(936:30) derivation-ok-restriction.5.4.2: Error for type 'all'. The particle of the type is not a valid restriction of the particle of the base.");
   }

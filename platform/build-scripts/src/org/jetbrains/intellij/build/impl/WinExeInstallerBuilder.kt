@@ -4,16 +4,16 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.util.io.Decompressor
 import io.opentelemetry.api.trace.Span
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.intellij.build.*
-import org.jetbrains.intellij.build.TraceManager.spanBuilder
 import org.jetbrains.intellij.build.io.copyDir
 import org.jetbrains.intellij.build.io.deleteDir
 import org.jetbrains.intellij.build.io.runProcess
+import org.jetbrains.intellij.build.telemetry.TraceManager.spanBuilder
+import org.jetbrains.intellij.build.telemetry.use
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
@@ -80,7 +80,7 @@ internal suspend fun buildNsisInstaller(winDistPath: Path,
       communityRoot = context.paths.communityHomeDirRoot,
     )
     Decompressor.Zip(nsisZip).withZipExtensions().extract(box)
-    spanBuilder("run NSIS tool to build .exe installer for Windows").useWithScope {
+    spanBuilder("run NSIS tool to build .exe installer for Windows").use {
       val timeout = 2.hours
       if (SystemInfoRt.isWindows) {
         runProcess(

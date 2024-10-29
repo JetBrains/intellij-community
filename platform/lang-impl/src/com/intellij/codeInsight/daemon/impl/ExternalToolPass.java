@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -36,6 +36,7 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+@ApiStatus.Internal
 public final class ExternalToolPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance(ExternalToolPass.class);
 
@@ -144,7 +146,7 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
     }
 
     long modificationStampBefore = myDocument.getModificationStamp();
-    Update update = new Update(myFile) {
+    ExternalAnnotatorManager.getInstance().queue(new Update(myFile) {
       @Override
       public void setRejected() {
         try {
@@ -160,28 +162,30 @@ public final class ExternalToolPass extends ProgressableTextEditorHighlightingPa
 
       @Override
       public void run() {
-        try {if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
-          return;
+        try {
+          if (documentChanged(modificationStampBefore) || myProject.isDisposed()) {
+            return;
+          }
+
+          // have to instantiate new indicator because the old one (progress) might have already been canceled
+          DaemonProgressIndicator indicator = new DaemonProgressIndicator();
+          BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+            // run annotators outside the read action because they could start OSProcessHandler
+            runChangeAware(myDocument, () -> doAnnotate());
+            ReadAction.run(() -> {
+              ProgressManager.checkCanceled();
+              if (!documentChanged(modificationStampBefore)) {
+                doApply();
+                doFinish();
+              }
+            });
+          }, indicator);
         }
-        // have to instantiate new indicator because the old one (progress) might have already been canceled
-        DaemonProgressIndicator indicator = new DaemonProgressIndicator();
-        BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
-          // run annotators outside the read action because they could start OSProcessHandler
-          runChangeAware(myDocument, () -> doAnnotate());
-          ReadAction.run(() -> {
-            ProgressManager.checkCanceled();
-            if (!documentChanged(modificationStampBefore)) {
-              doApply();
-              doFinish();
-            }
-          });
-        }, indicator);}
         finally {
           externalUpdateTaskCompleted = true;
         }
       }
-    };
-    ExternalAnnotatorManager.getInstance().queue(update);
+    });
   }
 
   @Override

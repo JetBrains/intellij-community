@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.DevKitIcons;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.ActionCandidate;
 import org.jetbrains.idea.devkit.util.ComponentCandidate;
@@ -64,35 +65,37 @@ final class LineMarkerInfoHelper {
                                                                             @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      (NullableFunction<Listeners.Listener, String>)listener -> listener.getTopicClassName()
-                                        .getStringValue());
+                                      (NullableFunction<Listeners.Listener, String>)listener ->
+                                        listener.getTopicClassName().getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<PsiElement> createListenerTopicLineMarkerInfo(@NotNull List<? extends ListenerCandidate> targets,
                                                                                  @NotNull PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.listener"),
-                                      (NullableFunction<Listeners.Listener, String>)listener -> listener.getListenerClassName()
-                                        .getStringValue());
+                                      (NullableFunction<Listeners.Listener, String>)listener ->
+                                        listener.getListenerClassName().getStringValue());
   }
 
   static RelatedItemLineMarkerInfo<?> createActionLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action"),
-                                      (NullableFunction<ActionOrGroup, String>)actionOrGroup -> actionOrGroup.getId().getStringValue());
+                                      (NullableFunction<Action, String>)action ->
+                                        ObjectUtils.chooseNotNull(action.getId().getStringValue(), action.getClazz().getStringValue()));
   }
 
   static RelatedItemLineMarkerInfo<?> createActionGroupLineMarkerInfo(List<? extends ActionCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.action.group"),
-                                      (NullableFunction<ActionOrGroup, String>)actionOrGroup -> actionOrGroup.getId().getStringValue());
+                                      (NullableFunction<Group, String>)group ->
+                                        ObjectUtils.chooseNotNull(group.getId().getStringValue(), group.getClazz().getStringValue()));
   }
 
   static RelatedItemLineMarkerInfo<?> createComponentLineMarkerInfo(List<? extends ComponentCandidate> targets, PsiElement element) {
     return createPluginLineMarkerInfo(targets, element,
                                       DevKitBundle.message("gutter.related.navigation.choose.component"),
-                                      (NullableFunction<Component, String>)component -> component.getImplementationClass()
-                                        .getStringValue());
+                                      (NullableFunction<Component, String>)component ->
+                                        component.getImplementationClass().getStringValue());
   }
 
 

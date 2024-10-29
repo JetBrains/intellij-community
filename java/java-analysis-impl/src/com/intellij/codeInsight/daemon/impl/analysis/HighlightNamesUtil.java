@@ -381,4 +381,7 @@ public final class HighlightNamesUtil {
   static HighlightInfo highlightKeyword(@NotNull PsiKeyword keyword) {
     return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD).range(keyword).create();
   }
+  static HighlightInfo highlightClassKeyword(@NotNull PsiKeyword keyword) {
+    return nameBuilder(JavaHighlightInfoTypes.JAVA_KEYWORD_CLASS_FILE).range(keyword).create();
+  }
 }
