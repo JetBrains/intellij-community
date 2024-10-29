@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.wm.ToolWindow
@@ -20,7 +21,7 @@ import java.util.*
 
 internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val enabled = content != null
+    val enabled = content != null && Registry.`is`("toolwindow.open.tab.in.editor")
     e.presentation.isEnabledAndVisible = enabled
     if (!enabled) return
     e.presentation.text = when {
