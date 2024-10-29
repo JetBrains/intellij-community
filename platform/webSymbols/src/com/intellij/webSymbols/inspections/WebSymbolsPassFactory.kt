@@ -8,22 +8,13 @@ import com.intellij.webSymbols.inspections.impl.WebSymbolsHighlightInLanguageEP
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
-class WebSymbolsPassFactory(registrar: TextEditorHighlightingPassRegistrar) : DirtyScopeTrackingHighlightingPassFactory {
-
-  @Internal
-  class Registrar : TextEditorHighlightingPassFactoryRegistrar {
-    override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
-      WebSymbolsPassFactory(registrar)
-    }
+class WebSymbolsPassFactory() : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
+  override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
+    registrar.registerTextEditorHighlightingPass(this, null, intArrayOf(Pass.LOCAL_INSPECTIONS), true, -1)
   }
-
-  private val passId = registrar.registerTextEditorHighlightingPass(this, null, intArrayOf(Pass.LOCAL_INSPECTIONS), true, -1)
 
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
     if (file.viewProvider.allFiles.any { WebSymbolsHighlightInLanguageEP.shouldHighlight(it.language) })
       WebSymbolsInspectionsPass(file, editor.document)
     else null
-
-  override fun getPassId(): Int = passId
-
 }
