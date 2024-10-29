@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.frontend.evaluate.quick
 
+import com.intellij.ide.ui.icons.icon
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -24,8 +25,9 @@ internal class FrontendXValue(private val project: Project, private val xValueId
   override fun computePresentation(node: XValueNode, place: XValuePlace) {
     node.childCoroutineScope("FrontendXValue#computePresentation").launch(Dispatchers.EDT) {
       XDebuggerEvaluatorApi.getInstance().computePresentation(xValueId)?.collect { presentation ->
-        // TODO[IJPL-160146]: pass proper params
-        node.setPresentation(null, null, presentation.value, presentation.hasChildren)
+        // TODO[IJPL-160146]: support fullValueEvaluator
+        // TODO[IJPL-160146]: support passing XValuePresentation
+        node.setPresentation(presentation.icon?.icon(), presentation.type, presentation.value, presentation.hasChildren)
       }
     }
   }

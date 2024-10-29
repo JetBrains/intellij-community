@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.rpc
 
+import com.intellij.ide.ui.icons.IconRpc
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.rpc.RemoteApiProviderService
@@ -64,4 +65,4 @@ data class XDebuggerEvaluatorId(val eid: EID)
 
 @ApiStatus.Internal
 @Serializable
-data class XValuePresentation(val value: String, val hasChildren: Boolean)
+data class XValuePresentation(val icon: IconRpc?, val type: String?, val value: String, val hasChildren: Boolean)

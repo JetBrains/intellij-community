@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.debugger.impl.backend
 
+import com.intellij.ide.ui.icons.toRpc
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -76,8 +77,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
         }
 
         override fun setPresentation(icon: Icon?, type: @NonNls String?, value: @NonNls String, hasChildren: Boolean) {
-          // TODO[IJPL-160146]: pass icon, type and hasChildren too
-          presentations.trySend(XValuePresentation(value, hasChildren))
+          presentations.trySend(XValuePresentation(icon?.toRpc(), type, value, hasChildren))
         }
 
         override fun setPresentation(icon: Icon?, presentation: com.intellij.xdebugger.frame.presentation.XValuePresentation, hasChildren: Boolean) {
