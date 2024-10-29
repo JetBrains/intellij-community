@@ -3,13 +3,11 @@ package org.jetbrains.kotlin.idea.script.k2
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.KotlinScriptEntitySource
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
@@ -30,23 +28,26 @@ import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
+
 class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptConfigurationsSource<BaseScriptModel>(project) {
-    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
-        = project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()
+    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
+        project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()
 
     override fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
-        val sdk = ProjectRootManager.getInstance(project).projectSdk
+        val projectSdk = ProjectJdkTable.getInstance().allJdks.firstOrNull()
+
 
         val configurations = scripts.associate {
             val scriptSource = VirtualFileScriptSource(it.virtualFile)
             val definition = findScriptDefinition(project, scriptSource)
 
-            val providedConfiguration = sdk?.homePath
-                ?.let {
-                    definition.compilationConfiguration.with {
-                        jvm.jdkHome(File(it))
-                    }
+            val javaHome = projectSdk?.homePath
+
+            val providedConfiguration = javaHome?.let {
+                definition.compilationConfiguration.with {
+                    jvm.jdkHome(File(it))
                 }
+            }
 
             it.virtualFile to project.runReadActionInSmartMode {
                 refineScriptCompilationConfiguration(scriptSource, definition, project, providedConfiguration)
@@ -60,7 +61,7 @@ class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptC
         return data.get().compose(
             ScriptConfigurations(
                 configurations,
-                sdks = sdk?.homePath?.let<@NonNls String, Map<Path, Sdk>> { mapOf(Path.of(it) to sdk) } ?: emptyMap()
+                sdks = projectSdk?.homePath?.let { mapOf(Path.of(it) to projectSdk) } ?: emptyMap()
             ))
     }
 
@@ -69,8 +70,7 @@ class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptC
             project, configurationsData
         ) { KotlinCustomScriptModuleEntitySource(it) }
 
-        val scriptFiles =
-            configurationsData.configurations.keys.toSet()
+        val scriptFiles = configurationsData.configurations.keys.toSet()
 
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
             it.replaceBySource(
@@ -78,19 +78,16 @@ class MainKtsScriptConfigurationsSource(override val project: Project) : ScriptC
                     (source as? KotlinCustomScriptModuleEntitySource)?.let {
                         scriptFiles.contains(it.virtualFileUrl?.virtualFile)
                     } == true
-                },
-                updatedStorage
+                }, updatedStorage
             )
         }
     }
 
     companion object {
         fun getInstance(project: Project): MainKtsScriptConfigurationsSource? =
-            SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<MainKtsScriptConfigurationsSource>().firstOrNull()
+            SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project).filterIsInstance<MainKtsScriptConfigurationsSource>().firstOrNull()
                 .safeAs<MainKtsScriptConfigurationsSource>()
     }
 
-    open class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :
-        KotlinScriptEntitySource(virtualFileUrl)
+    open class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) : KotlinScriptEntitySource(virtualFileUrl)
 }

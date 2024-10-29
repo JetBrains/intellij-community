@@ -17,25 +17,29 @@ import org.jetbrains.kotlin.idea.base.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.idea.core.script.*
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinitionsSource
 import org.jetbrains.kotlin.scripting.definitions.findScriptDefinition
+import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.scripting.resolve.refineScriptCompilationConfiguration
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.io.File
 import java.nio.file.Path
+import kotlin.script.experimental.api.ResultWithDiagnostics
 import kotlin.script.experimental.api.with
 import kotlin.script.experimental.jvm.jdkHome
 import kotlin.script.experimental.jvm.jvm
 
-open class CommonScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) : ScriptConfigurationsSource<BaseScriptModel>(project) {
-    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
-        = project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
+open class LazyScriptConfigurationsSource(override val project: Project, val coroutineScope: CoroutineScope) :
+    ScriptConfigurationsSource<BaseScriptModel>(project) {
 
-    override fun getScriptDependencies(virtualFile: VirtualFile): ScriptConfigurations? {
-        val oldData = data.get()
+    override fun getScriptDefinitionsSource(): ScriptDefinitionsSource? =
+        project.scriptDefinitionsSourceOfType<BundledScriptDefinitionSource>()
 
-        if (oldData.configurations.containsKey(virtualFile)) {
-            return oldData
+    override fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? {
+        val currentData = data.get()
+
+        if (currentData.configurations.containsKey(virtualFile)) {
+            return currentData.configurations[virtualFile]
         }
 
         coroutineScope.launch {
@@ -96,10 +100,10 @@ open class CommonScriptConfigurationsSource(override val project: Project, val c
     }
 
     companion object {
-        fun getInstance(project: Project): CommonScriptConfigurationsSource? =
+        fun getInstance(project: Project): LazyScriptConfigurationsSource? =
             SCRIPT_CONFIGURATIONS_SOURCES.getExtensions(project)
-                .filterIsInstance<CommonScriptConfigurationsSource>().firstOrNull()
-                .safeAs<CommonScriptConfigurationsSource>()
+                .filterIsInstance<LazyScriptConfigurationsSource>().firstOrNull()
+                .safeAs<LazyScriptConfigurationsSource>()
     }
 
     open class KotlinCustomScriptModuleEntitySource(override val virtualFileUrl: VirtualFileUrl?) :

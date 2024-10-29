@@ -133,7 +133,8 @@
             implementation="org.jetbrains.kotlin.idea.base.scripting.ScriptingModuleInfoProviderExtension"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptDefinitionSource"/>
-    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource"/>
+    <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.script.k2.MainKtsScriptConfigurationsSource"/>
 
     <scriptDefinitionsSource implementation="org.jetbrains.kotlin.idea.core.script.BundledScriptDefinitionSource"/>
 

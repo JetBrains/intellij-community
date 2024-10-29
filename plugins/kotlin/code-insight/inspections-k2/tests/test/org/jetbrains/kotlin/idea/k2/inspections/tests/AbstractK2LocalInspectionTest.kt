@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.k2FileName
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
 import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.inspections.AbstractLocalInspectionTest
@@ -68,7 +68,7 @@ abstract class AbstractK2LocalInspectionTest : AbstractLocalInspectionTest() {
         val psiFile = myFixture.configureByFiles(*(listOf(mainFile.name) + extraFileNames).toTypedArray()).first()
 
         if ((myFixture.file as? KtFile)?.isScript() == true) {
-            val dependenciesSource = object : CommonScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
+            val dependenciesSource = object : LazyScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
                 override suspend fun updateModules(
                     dependencies: ScriptConfigurations,
                     storage: MutableEntityStorage?

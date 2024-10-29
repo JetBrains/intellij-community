@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.core.script.SCRIPT_CONFIGURATIONS_SOURCES
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
-import org.jetbrains.kotlin.idea.core.script.k2.CommonScriptConfigurationsSource
+import org.jetbrains.kotlin.idea.core.script.k2.LazyScriptConfigurationsSource
 import org.jetbrains.kotlin.idea.core.script.k2.ScriptConfigurations
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingMetaInfoTest
 import org.jetbrains.kotlin.idea.test.Directives
@@ -35,7 +35,7 @@ abstract class AbstractK2HighlightingMetaInfoTest : AbstractHighlightingMetaInfo
     override fun doMultiFileTest(files: List<PsiFile>, globalDirectives: Directives) {
         val psiFile = files.first()
         if (psiFile is KtFile && psiFile.isScript()) {
-            val dependenciesSource = object : CommonScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
+            val dependenciesSource = object : LazyScriptConfigurationsSource(project, CoroutineScope(Dispatchers.IO + SupervisorJob())) {
                 override suspend fun updateModules(
                     dependencies: ScriptConfigurations,
                     storage: MutableEntityStorage?) {

@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightVirtualFileBase
 import com.intellij.ui.EditorNotifications
 import org.jetbrains.kotlin.idea.base.scripting.KotlinBaseScriptingBundle
 import org.jetbrains.kotlin.idea.core.script.k2.BaseScriptModel
+import org.jetbrains.kotlin.idea.core.script.scriptDefinitionsSourceOfType
 import org.jetbrains.kotlin.idea.util.isKotlinFileType
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
@@ -62,7 +63,7 @@ internal class ReloadDependenciesScriptAction : AnAction() {
         val project = editor.project ?: return false
         val file = getKotlinScriptFile(editor) ?: return false
 
-        val mainKts = MainKtsScriptDefinitionSource.getInstance(project)?.definitions?.singleOrNull() ?: return false
+        val mainKts = project.scriptDefinitionsSourceOfType<MainKtsScriptDefinitionSource>()?.definitions?.singleOrNull() ?: return false
 
         if (!mainKts.isScript(VirtualFileScriptSource(file))) return false
 

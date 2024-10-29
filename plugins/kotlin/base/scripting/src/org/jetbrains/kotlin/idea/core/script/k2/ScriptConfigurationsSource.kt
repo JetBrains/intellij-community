@@ -41,7 +41,7 @@ abstract class ScriptConfigurationsSource<T : BaseScriptModel>(open val project:
 
     abstract fun getScriptDefinitionsSource(): ScriptDefinitionsSource?
 
-    open fun getScriptDependencies(virtualFile: VirtualFile): ScriptConfigurations? = data.get()
+    open fun getScriptConfigurations(virtualFile: VirtualFile): ResultWithDiagnostics<ScriptCompilationConfigurationWrapper>? = data.get().configurations[virtualFile]
 
     protected abstract fun resolveDependencies(scripts: Iterable<T>): ScriptConfigurations
 
