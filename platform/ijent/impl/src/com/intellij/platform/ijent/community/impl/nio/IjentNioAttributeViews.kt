@@ -17,16 +17,16 @@ internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, 
   }
 
   override fun setTimes(lastModifiedTime: FileTime?, lastAccessTime: FileTime?, createTime: FileTime?) {
-    val builder = EelFileSystemApi.changeAttributesBuilder()
+    val builder = EelFileSystemApi.ChangeAttributesOptions.Builder()
     if (lastModifiedTime != null) {
-      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::modificationTime, lastModifiedTime)
+      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::modificationTime, lastModifiedTime)
     }
     if (lastAccessTime != null) {
-      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::accessTime, lastAccessTime)
+      builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::accessTime, lastAccessTime)
     }
     try {
       fsBlocking {
-        api.changeAttributes(path, builder)
+        api.changeAttributes(path, builder.build())
       }
     }
     catch (e: EelFileSystemApi.ChangeAttributesException) {

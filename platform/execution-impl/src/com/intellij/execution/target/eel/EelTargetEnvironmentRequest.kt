@@ -170,13 +170,13 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
         val remoteRoot = when (val targetRootPath = targetPathGetter()) {
           is TargetPath.Temporary -> {
             eel.mapper.getOriginalPath(localRootPath)?.toString() ?: runBlockingCancellable {
-              val options = EelFileSystemApi.createTemporaryDirectoryOptions()
+              val options = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder()
 
               targetRootPath.prefix?.let(options::prefix)
               targetRootPath.parentDirectory?.let(eel.fs::getPath)?.let(options::parentDirectory)
               options.deleteOnExit(true)
 
-              eel.fs.createTemporaryDirectory(options).getOrThrow().toString()
+              eel.fs.createTemporaryDirectory(options.build()).getOrThrow().toString()
             }
           }
           is TargetPath.Persistent -> targetRootPath.absolutePath

@@ -161,27 +161,35 @@ interface EelFileSystemApi {
 
   sealed interface WriteOptions {
     val path: EelPath.Absolute
-
-    /**
-     * Whether to append new data to the end of file.
-     * Default: `false`
-     */
-    fun append(v: Boolean): WriteOptions
     val append: Boolean
-
-    /**
-     * Whether to remove contents from the existing file.
-     * Default: `false`
-     */
-    fun truncateExisting(v: Boolean): WriteOptions
     val truncateExisting: Boolean
-
-    /**
-     * Defines the behavior if the written file does not exist
-     * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
-     */
-    fun creationMode(v: FileWriterCreationMode): WriteOptions
     val creationMode: FileWriterCreationMode
+
+    interface Builder {
+      /**
+       * Whether to append new data to the end of file.
+       * Default: `false`
+       */
+      fun append(v: Boolean): Builder
+
+      /**
+       * Whether to remove contents from the existing file.
+       * Default: `false`
+       */
+      fun truncateExisting(v: Boolean): Builder
+
+      /**
+       * Defines the behavior if the written file does not exist
+       * Default: [FileWriterCreationMode.ONLY_OPEN_EXISTING]
+       */
+      fun creationMode(v: FileWriterCreationMode): Builder
+
+      fun build(): WriteOptions
+    }
+
+    companion object {
+      fun Builder(path: EelPath.Absolute): Builder = WriteOptionsImpl(path)
+    }
   }
 
   enum class FileWriterCreationMode {
@@ -229,26 +237,34 @@ interface EelFileSystemApi {
   sealed interface CopyOptions {
     val source: EelPath.Absolute
     val target: EelPath.Absolute
-
-    /**
-     * Relevant for copying directories.
-     * [copyRecursively] indicates whether the directory should be copied recursively.
-     * If `false`, then only the directory itself is copied, resulting in an empty directory located at the target path
-     */
-    fun copyRecursively(v: Boolean): CopyOptions
     val copyRecursively: Boolean
-
-    fun replaceExisting(v: Boolean): CopyOptions
     val replaceExisting: Boolean
-
-    fun preserveAttributes(v: Boolean): CopyOptions
     val preserveAttributes: Boolean
-
-    fun interruptible(v: Boolean): CopyOptions
     val interruptible: Boolean
-
-    fun followLinks(v: Boolean): CopyOptions
     val followLinks: Boolean
+
+    interface Builder {
+      /**
+       * Relevant for copying directories.
+       * [copyRecursively] indicates whether the directory should be copied recursively.
+       * If `false`, then only the directory itself is copied, resulting in an empty directory located at the target path
+       */
+      fun copyRecursively(v: Boolean): Builder
+
+      fun replaceExisting(v: Boolean): Builder
+
+      fun preserveAttributes(v: Boolean): Builder
+
+      fun interruptible(v: Boolean): Builder
+
+      fun followLinks(v: Boolean): Builder
+
+      fun build(): CopyOptions
+    }
+
+    companion object {
+      fun Builder(source: EelPath.Absolute, target: EelPath.Absolute): Builder = CopyOptionsImpl(source, target)
+    }
   }
 
   sealed class CopyException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
@@ -296,12 +312,21 @@ interface EelFileSystemApi {
   }
 
   interface ChangeAttributesOptions {
-    fun accessTime(duration: TimeSinceEpoch): ChangeAttributesOptions
     val accessTime: TimeSinceEpoch?
-    fun modificationTime(duration: TimeSinceEpoch): ChangeAttributesOptions
     val modificationTime: TimeSinceEpoch?
-    fun permissions(permissions: EelFileInfo.Permissions): ChangeAttributesOptions
     val permissions: EelFileInfo.Permissions?
+
+    interface Builder {
+      fun permissions(permissions: EelFileInfo.Permissions): Builder
+      fun modificationTime(duration: TimeSinceEpoch): Builder
+      fun accessTime(duration: TimeSinceEpoch): Builder
+
+      fun build(): ChangeAttributesOptions
+    }
+
+    companion object {
+      fun Builder(): Builder = ChangeAttributesOptionsImpl()
+    }
   }
 
   sealed class ChangeAttributesException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
@@ -319,17 +344,22 @@ interface EelFileSystemApi {
     CreateTemporaryDirectoryError>
 
   interface CreateTemporaryDirectoryOptions {
-    fun prefix(prefix: String): CreateTemporaryDirectoryOptions
     val prefix: String
-
-    fun suffix(suffix: String): CreateTemporaryDirectoryOptions
     val suffix: String
-
-    fun deleteOnExit(deleteOnExit: Boolean): CreateTemporaryDirectoryOptions
     val deleteOnExit: Boolean
-
-    fun parentDirectory(parentDirectory: EelPath.Absolute?): CreateTemporaryDirectoryOptions
     val parentDirectory: EelPath.Absolute?
+
+    interface Builder {
+      fun prefix(prefix: String): Builder
+      fun suffix(suffix: String): Builder
+      fun deleteOnExit(deleteOnExit: Boolean): Builder
+      fun parentDirectory(parentDirectory: EelPath.Absolute?): Builder
+      fun build(): CreateTemporaryDirectoryOptions
+    }
+
+    companion object {
+      fun Builder(): Builder = CreateTemporaryDirectoryOptionsImpl()
+    }
   }
 
   sealed interface CreateTemporaryDirectoryError : EelFsError {
@@ -340,23 +370,7 @@ interface EelFileSystemApi {
 
   companion object Arguments {
     @JvmStatic
-    fun writeOptionsBuilder(path: EelPath.Absolute): WriteOptions =
-      WriteOptionsImpl(path)
-
-    @JvmStatic
-    fun copyOptionsBuilder(source: EelPath.Absolute, target: EelPath.Absolute): CopyOptions =
-      CopyOptionsImpl(source, target)
-
-    @JvmStatic
-    fun changeAttributesBuilder(): ChangeAttributesOptions =
-      ChangeAttributesOptionsImpl()
-
-    @JvmStatic
     fun timeSinceEpoch(seconds: ULong, nanos: UInt): TimeSinceEpoch = TimeSinceEpochImpl(seconds, nanos)
-
-    @JvmStatic
-    fun createTemporaryDirectoryOptions(): CreateTemporaryDirectoryOptions =
-      CreateTemporaryDirectoryOptionsImpl()
   }
 
   /**
@@ -640,22 +654,22 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
     StatError>
 }
 
-suspend fun EelFileSystemApi.changeAttributes(path: EelPath.Absolute, setup: EelFileSystemApi.ChangeAttributesOptions.() -> Unit) {
-  val options = EelFileSystemApi.changeAttributesBuilder().apply(setup)
+suspend fun EelFileSystemApi.changeAttributes(path: EelPath.Absolute, setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit) {
+  val options = EelFileSystemApi.ChangeAttributesOptions.Builder().apply(setup).build()
   return changeAttributes(path, options)
 }
 
-suspend fun EelFileSystemApi.openForWriting(path: EelPath.Absolute, setup: (EelFileSystemApi.WriteOptions).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
-  val options = EelFileSystemApi.writeOptionsBuilder(path).apply(setup)
+suspend fun EelFileSystemApi.openForWriting(path: EelPath.Absolute, setup: (EelFileSystemApi.WriteOptions.Builder).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
+  val options = EelFileSystemApi.WriteOptions.Builder(path).apply(setup).build()
   return openForWriting(options)
 }
 
-suspend fun EelFileSystemApi.copy(source: EelPath.Absolute, target: EelPath.Absolute, setup: (EelFileSystemApi.CopyOptions).() -> Unit) {
-  val options = EelFileSystemApi.copyOptionsBuilder(source, target).apply(setup)
+suspend fun EelFileSystemApi.copy(source: EelPath.Absolute, target: EelPath.Absolute, setup: (EelFileSystemApi.CopyOptions.Builder).() -> Unit) {
+  val options = EelFileSystemApi.CopyOptions.Builder(source, target).apply(setup).build()
   return copy(options)
 }
 
-suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions).() -> Unit): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> {
-  val options = EelFileSystemApi.createTemporaryDirectoryOptions().apply(setup)
+suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder).() -> Unit): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> {
+  val options = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply(setup).build()
   return createTemporaryDirectory(options)
 }

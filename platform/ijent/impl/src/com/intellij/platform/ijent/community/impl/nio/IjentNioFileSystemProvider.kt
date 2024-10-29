@@ -151,7 +151,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       if (DELETE_ON_CLOSE in options) TODO("WRITE + CREATE_NEW")
       if (LinkOption.NOFOLLOW_LINKS in options) TODO("WRITE + NOFOLLOW_LINKS")
 
-      val writeOptions = EelFileSystemApi.writeOptionsBuilder(path.eelPath)
+      val writeOptions = EelFileSystemApi.WriteOptions.Builder(path.eelPath)
         .append(APPEND in options)
         .truncateExisting(TRUNCATE_EXISTING in options)
         .creationMode(when {
@@ -159,6 +159,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
                         CREATE in options -> EelFileSystemApi.FileWriterCreationMode.ALLOW_CREATE
                         else -> EelFileSystemApi.FileWriterCreationMode.ONLY_OPEN_EXISTING
                       })
+        .build()
 
       fsBlocking {
         if (READ in options) {
@@ -291,7 +292,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     val fs = source.nioFs.ijentFs
 
-    val copyOptions = EelFileSystemApi.copyOptionsBuilder(sourcePath, targetPath)
+    val copyOptions = EelFileSystemApi.CopyOptions.Builder(sourcePath, targetPath)
     copyOptions.followLinks(true)
 
     for (option in options) {
@@ -308,7 +309,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 
     fsBlocking {
       try {
-        fs.copy(copyOptions)
+        fs.copy(copyOptions.build())
       }
       catch (e: EelFileSystemApi.CopyException) {
         e.throwFileSystemException()
@@ -519,11 +520,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     val (viewName, requestedAttributes) = parseAttributesParameter(attribute)
     val nioFs = ensureIjentNioPath(path).nioFs
     val eelPath = ensurePathIsAbsolute(path.eelPath)
-    val builder = EelFileSystemApi.changeAttributesBuilder()
+    val builder = EelFileSystemApi.ChangeAttributesOptions.Builder()
     when (viewName) {
       "basic" -> when (requestedAttributes.singleOrNull()) {
-        "lastModifiedTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::modificationTime, value)
-        "lastAccessTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions::accessTime, value)
+        "lastModifiedTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::modificationTime, value)
+        "lastAccessTime" -> builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::accessTime, value)
         "creationTime" -> value as FileTime // intentionally no-op, like in Java; but we need to throw CCE just in case
         else -> throw IllegalArgumentException("Unrecognized attribute: $attribute")
       }
@@ -540,7 +541,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
     try {
       fsBlocking {
-        nioFs.ijentFs.changeAttributes(eelPath, builder)
+        nioFs.ijentFs.changeAttributes(eelPath, builder.build())
       }
     }
     catch (e: EelFileSystemApi.ChangeAttributesException) {
@@ -647,7 +648,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
 }
 
 
-internal fun EelFileSystemApi.ChangeAttributesOptions.updateTime(selector: EelFileSystemApi.ChangeAttributesOptions.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
+internal fun EelFileSystemApi.ChangeAttributesOptions.Builder.updateTime(selector: EelFileSystemApi.ChangeAttributesOptions.Builder.(EelFileSystemApi.TimeSinceEpoch) -> Unit, obj: Any) {
   obj as FileTime // ClassCastException is expected
   val instant = obj.toInstant()
   selector(EelFileSystemApi.timeSinceEpoch(instant.epochSecond.toULong(), instant.nano.toUInt()))
