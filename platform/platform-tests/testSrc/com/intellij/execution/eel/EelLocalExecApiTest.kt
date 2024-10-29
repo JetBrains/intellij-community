@@ -6,9 +6,9 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.platform.eel.EelExecApi.Pty
 import com.intellij.platform.eel.EelProcess
 import com.intellij.platform.eel.EelResult
-import com.intellij.platform.eel.impl.local.EelLocalExecApi
-import com.intellij.platform.tests.eelHelper.*
-import com.intellij.platform.tests.eelHelper.Size
+import com.intellij.platform.eel.provider.localEel
+import com.intellij.platform.tests.eelHelpers.EelHelper
+import com.intellij.platform.tests.eelHelpers.ttyAndExit.*
 import com.intellij.testFramework.common.timeoutRunBlocking
 import com.intellij.testFramework.junit5.TestApplication
 import io.ktor.util.decodeString

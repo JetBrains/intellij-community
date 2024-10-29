@@ -11,7 +11,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
-import com.intellij.platform.eel.getOrThrow
+import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.platform.util.coroutines.channel.ChannelOutputStream
