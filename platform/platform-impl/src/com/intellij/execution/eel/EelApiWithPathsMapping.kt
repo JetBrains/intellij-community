@@ -71,9 +71,9 @@ private class EelEphemeralRootAwareMapper(
 }
 
 private class EelProcessBuilderWithPathsNormalization(
-  private val original: EelExecApi.ExecuteProcessBuilder,
+  private val original: EelExecApi.ExecuteProcessOptions,
   private val normalizeIfPath: (String) -> String,
-) : EelExecApi.ExecuteProcessBuilder by original {
+) : EelExecApi.ExecuteProcessOptions by original {
   override val workingDirectory: String? = original.workingDirectory?.let { normalizeIfPath(it) }
   override val args: List<String> = original.args.map { normalizeIfPath(it) }
   override val env: Map<String, String> = original.env.mapValues { (_, value) -> normalizeIfPath(value) }
@@ -81,9 +81,9 @@ private class EelProcessBuilderWithPathsNormalization(
 
 private class EelExecApiWithNormalization(
   private val original: EelExecApi,
-  private val normalize: (EelExecApi.ExecuteProcessBuilder) -> EelExecApi.ExecuteProcessBuilder,
+  private val normalize: (EelExecApi.ExecuteProcessOptions) -> EelExecApi.ExecuteProcessOptions,
 ) : EelExecApi by original {
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError> {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> {
     return original.execute(normalize(builder))
   }
 }

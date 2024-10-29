@@ -204,13 +204,13 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
     val command = commandLine.collectCommandsSynchronously()
-    val builder = EelExecApi.executeProcessBuilder(command.first())
+    val builder = EelExecApi.ExecuteProcessOptions.Builder(command.first())
 
     builder.args(command.drop(1))
     builder.env(commandLine.environmentVariables)
     builder.workingDirectory(commandLine.workingDirectory)
 
-    return runBlockingCancellable { eel.exec.execute(builder).getOrThrow().convertToJavaProcess() }
+    return runBlockingCancellable { eel.exec.execute(builder.build()).getOrThrow().convertToJavaProcess() }
   }
 
   override val targetPlatform: TargetPlatform = request.targetPlatform

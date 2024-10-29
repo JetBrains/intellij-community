@@ -3,15 +3,16 @@ package com.intellij.platform.eel.impl
 
 import com.intellij.platform.eel.EelExecApi
 
-data class ExecuteProcessBuilderImpl(override val exe: String) : EelExecApi.ExecuteProcessBuilder {
+data class ExecuteProcessBuilderImpl(
+  override val exe: String,
+  override var args: List<String> = listOf(),
+  override var env: Map<String, String> = mapOf(),
+  override var pty: EelExecApi.Pty? = null,
+  override var workingDirectory: String? = null,
+) : EelExecApi.ExecuteProcessOptions, EelExecApi.ExecuteProcessOptions.Builder {
   init {
     require(exe.isNotEmpty()) { "Executable must be specified" }
   }
-
-  override var args: List<String> = listOf()
-  override var env: Map<String, String> = mapOf()
-  override var pty: EelExecApi.Pty? = null
-  override var workingDirectory: String? = null
 
   override fun toString(): String =
     "GrpcExecuteProcessBuilder(" +
@@ -36,5 +37,9 @@ data class ExecuteProcessBuilderImpl(override val exe: String) : EelExecApi.Exec
 
   override fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilderImpl = apply {
     this.workingDirectory = workingDirectory
+  }
+
+  override fun build(): EelExecApi.ExecuteProcessOptions {
+    return copy()
   }
 }

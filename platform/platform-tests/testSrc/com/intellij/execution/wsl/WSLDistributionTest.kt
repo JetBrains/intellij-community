@@ -534,7 +534,7 @@ private class MockIjentApi(private val adapter: GeneralCommandLine, val rootUser
 private class MockIjentExecApi(private val adapter: GeneralCommandLine, private val rootUser: Boolean) : IjentExecApi {
 
 
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError> = executeResultMock.also {
     adapter.exePath = builder.exe
     if (rootUser) {
       adapter.putUserData(TEST_ROOT_USER_SET, true)

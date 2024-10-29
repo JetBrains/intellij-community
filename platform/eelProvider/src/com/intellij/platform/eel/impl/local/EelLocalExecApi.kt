@@ -12,7 +12,7 @@ import java.io.IOException
 
 @ApiStatus.Internal
 class EelLocalExecApi : EelExecApi {
-  override suspend fun execute(builder: EelExecApi.ExecuteProcessBuilder): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
+  override suspend fun execute(builder: EelExecApi.ExecuteProcessOptions): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
     val args = builder.args.toTypedArray()
     val pty = builder.pty
 

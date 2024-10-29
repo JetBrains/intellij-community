@@ -30,7 +30,7 @@ internal class JavaMainClassExecutor(clazz: Class<*>, vararg args: String) {
   /**
    * Execute `main` method
    */
-  fun createBuilderToExecuteMain(): EelExecApi.ExecuteProcessBuilder = EelExecApi.executeProcessBuilder(exe).env(env).args(args)
+  fun createBuilderToExecuteMain(): EelExecApi.ExecuteProcessOptions.Builder = EelExecApi.ExecuteProcessOptions.Builder(exe).env(env).args(args)
 
   private companion object {
     private fun getClassPathForClass(clazz: Class<*>): String {

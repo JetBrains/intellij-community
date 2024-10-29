@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.EelExecApi.Arguments.executeProcessBuilder
 import com.intellij.platform.eel.impl.ExecuteProcessBuilderImpl
 
 /**
@@ -12,51 +11,51 @@ interface EelExecApi {
   /**
    * Executes the process, returning either an [EelProcess] or an error provided by the remote operating system.
    *
-   * The instance of the [ExecuteProcessBuilder] _may_ become invalid after this call.
+   * The instance of the [ExecuteProcessOptions] _may_ become invalid after this call.
    *
    * The method may throw a RuntimeException only in critical cases like connection loss or a bug.
    *
    * See [executeProcessBuilder]
    */
-  suspend fun execute(builder: ExecuteProcessBuilder): EelResult<EelProcess, ExecuteProcessError>
+  suspend fun execute(builder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError>
 
   /** Docs: [executeProcessBuilder] */
-  interface ExecuteProcessBuilder {
-    fun args(args: List<String>): ExecuteProcessBuilder
+  interface ExecuteProcessOptions {
     val args: List<String>
-
-    fun env(env: Map<String, String>): ExecuteProcessBuilder
     val env: Map<String, String>
-
-    fun pty(pty: Pty?): ExecuteProcessBuilder
     val pty: Pty?
-
-    fun workingDirectory(workingDirectory: String?): ExecuteProcessBuilder
     val workingDirectory: String?
 
     // TODO: Use EelPath as soon as it will be merged
     val exe: String
 
-  }
+    interface Builder {
+      fun args(args: List<String>): Builder
+      fun env(env: Map<String, String>): Builder
+      fun pty(pty: Pty?): Builder
+      fun workingDirectory(workingDirectory: String?): Builder
+      fun build(): ExecuteProcessOptions
+    }
 
-  companion object Arguments {
-    /**
-     * Creates builder to start a process on a local or remote machine.
-     * stdin, stdout and stderr of the process are always forwarded, if there are.
-     *
-     * Beware that processes with [ExecuteProcessBuilder.pty] usually don't have stderr.
-     * The [EelProcess.stderr] must be an empty stream in such case.
-     *
-     * By default, environment is always inherited, which may be unwanted. [ExecuteProcessBuilder.env] allows
-     * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
-     * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessBuilder.env].
-     *
-     * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
-     * [ExecuteProcessBuilder.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
-     */
-    @JvmStatic
-    fun executeProcessBuilder(exe: String): ExecuteProcessBuilder =
-      ExecuteProcessBuilderImpl(exe)
+    companion object {
+      /**
+       * Creates builder to start a process on a local or remote machine.
+       * stdin, stdout and stderr of the process are always forwarded, if there are.
+       *
+       * Beware that processes with [ExecuteProcessOptions.pty] usually don't have stderr.
+       * The [EelProcess.stderr] must be an empty stream in such case.
+       *
+       * By default, environment is always inherited, which may be unwanted. [ExecuteProcessOptions.env] allows
+       * to alter some environment variables, it doesn't clear the variables from the parent. When the process should be started in an
+       * environment like in a terminal, the response of [fetchLoginShellEnvVariables] should be put into [ExecuteProcessOptions.env].
+       *
+       * All argument, all paths, should be valid for the remote machine. F.i., if the IDE runs on Windows, but IJent runs on Linux,
+       * [ExecuteProcessOptions.workingDirectory] is the path on the Linux host. There's no automatic path mapping in this interface.
+       */
+      fun Builder(exe: String): Builder = ExecuteProcessBuilderImpl(exe)
+
+      fun Builder(exe: String, arg1: String, vararg args: String): Builder = Builder(exe).args(listOf(arg1, *args))
+    }
   }
 
   /**
@@ -74,18 +73,14 @@ interface EelExecApi {
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
-suspend fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessBuilder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
-  val builder = executeProcessBuilder(exe).apply(setup)
+suspend fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessOptions.Builder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
+  val builder = EelExecApi.ExecuteProcessOptions.Builder(exe).apply(setup).build()
   return execute(builder)
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
 suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
-  execute(executeProcessBuilder(exe).args(listOf(*args)))
+  execute(EelExecApi.ExecuteProcessOptions.Builder(exe).args(listOf(*args)).build())
 
-/** Docs: [EelExecApi.executeProcessBuilder] */
-fun executeProcessBuilder(exe: String, arg1: String, vararg args: String): EelExecApi.ExecuteProcessBuilder =
-  executeProcessBuilder(exe).args(listOf(arg1, *args))
-
-fun EelExecApi.ExecuteProcessBuilder.args(first: String, vararg other: String): EelExecApi.ExecuteProcessBuilder =
+fun EelExecApi.ExecuteProcessOptions.Builder.args(first: String, vararg other: String): EelExecApi.ExecuteProcessOptions.Builder =
   args(listOf(first, *other))
