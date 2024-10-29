@@ -150,7 +150,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  public @NotNull Set<FilePath> getUntrackedFilePaths() {
+  public @NotNull Collection<FilePath> getUntrackedFilePaths() {
     return myUntrackedFiles.toSet();
   }
 
