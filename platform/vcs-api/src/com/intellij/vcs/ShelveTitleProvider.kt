@@ -3,28 +3,33 @@ package com.intellij.vcs
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.LocalChangeList.getAllDefaultNames
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import java.util.function.Consumer
 
 interface ShelveTitleProvider {
 
   /**
    * Create a custom title for shelved changes
    */
-  fun suggestTitle(project: Project, patch: ShelveTitlePatch, rename: Consumer<String>): Boolean
+  suspend fun suggestTitle(project: Project, patch: ShelveTitlePatch): String?
 
   /**
-   * Show tooltip popup if applicable
+   * Show got it tooltip popup if applicable
    */
-  fun showTooltipPopup(project: Project, component: Component): Boolean
+  @ApiStatus.Internal
+  fun showGotItPopup(project: Project, component: Component): Boolean
 
   companion object {
     val EP_NAME: ExtensionPointName<ShelveTitleProvider> = ExtensionPointName<ShelveTitleProvider>("com.intellij.vcs.shelve.name")
 
     @JvmStatic
     fun showGotItTooltip(project: Project, component: Component) {
-      EP_NAME.extensionList.any { it.showTooltipPopup(project, component) }
+      EP_NAME.extensionList.any { it.showGotItPopup(project, component) }
     }
+
+    @JvmStatic
+    fun hasDefaultName(name: String): Boolean = getAllDefaultNames().contains(name)
   }
 }
 
