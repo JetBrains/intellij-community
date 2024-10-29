@@ -17,7 +17,6 @@ import org.jetbrains.annotations.ApiStatus
 enum class VcsLogTabLocation {
   TOOL_WINDOW,
 
-  @Deprecated("Unused")
   @ApiStatus.Experimental
   EDITOR,
 
