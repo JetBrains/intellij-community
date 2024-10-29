@@ -137,7 +137,7 @@ public final class UnresolvedReferenceQuickFixUpdaterImpl implements UnresolvedR
     PsiElement refElement = reference.getElement();
     synchronized (info) {
       Future<?> job = refElement.getUserData(JOB);
-      if (job != null) {
+      if (job != null && !job.isDone()) {
         return;
       }
       if (!info.isUnresolvedReferenceQuickFixesComputed()) {
