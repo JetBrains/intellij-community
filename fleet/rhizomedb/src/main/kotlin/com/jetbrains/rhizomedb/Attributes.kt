@@ -396,7 +396,7 @@ internal fun ChangeScope.registerAttributes(attributes: Attributes<*>): Unit =
         entityAttribute.serializerLazy?.let { serializer ->
           mutate(MapAttribute(entityAttribute.attr) {
             when {
-              it is JsonElement -> DefaultJson.decodeFromJsonElement(serializer.value as KSerializer<Any>, it)
+              it is JsonElement -> DbJson.decodeFromJsonElement(serializer.value as KSerializer<Any>, it)
               else -> it
             }
           })

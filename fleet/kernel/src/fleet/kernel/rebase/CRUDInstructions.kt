@@ -10,58 +10,61 @@ import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 
 @Serializable
-data class SharedCreateEntity(val entityId: UID,
-                              val entityTypeIdent: String,
-                              val attributes: List<AttrValue>,
-                              override val seed: Long) : SharedInstruction {
+data class SharedCreateEntity(
+  val entityId: UID,
+  val entityTypeIdent: String,
+  val attributes: List<AttrValue>,
+  val seed: Long,
+) {
   @Serializable
-  data class AttrValue(val attr: String,
-                       val schema: Int,
-                       val value: DurableDbValue)
+  data class AttrValue(
+    val attr: String,
+    val schema: Int,
+    val value: DurableDbValue,
+  )
 }
 
 @Serializable
-data class SharedRetractEntity(val entityId: UID,
-                               override val seed: Long) : SharedInstruction
+data class SharedRetractEntity(
+  val entityId: UID,
+  val seed: Long, 
+)
 
 @Serializable
-data class SharedAtomicComposite(val instructions: List<SharedInstruction>,
-                                 override val seed: Long): SharedInstruction
+data class SharedAtomicComposite(
+  val instructions: List<SharedInstruction>,
+  val seed: Long, 
+)
 
 @Serializable
-data class SharedAdd(val entityId: UID,
-                     val attribute: String,
-                     val schema: Int,
-                     val value: DurableDbValue,
-                     override val seed: Long) : SharedInstruction
+data class SharedAdd(
+  val entityId: UID,
+  val attribute: String,
+  val schema: Int,
+  val value: DurableDbValue,
+  val seed: Long, 
+)
 
 @Serializable
-data class SharedRetractAttribute(val entityId: UID,
-                                  val attribute: String,
-                                  override val seed: Long) : SharedInstruction
+data class SharedRetractAttribute(
+  val entityId: UID,
+  val attribute: String,
+  val seed: Long, 
+)
 
 @Serializable
-data class SharedRemove(val entityId: UID,
-                        val attribute: String,
-                        val value: DurableDbValue,
-                        override val seed: Long) : SharedInstruction
+data class SharedRemove(
+  val entityId: UID,
+  val attribute: String,
+  val value: DurableDbValue,
+  val seed: Long, 
+)
 
 @Serializable
-data class SharedUpdateListElem(val entityId: UID,
-                                val attribute: String,
-                                val index: Long,
-                                val value: JsonElement,
-                                override val seed: Long) : SharedInstruction
-
-fun SerializersModuleBuilder.registerCRUDInstructions() {
-  polymorphic(SharedInstruction::class) {
-    subclass(SharedCreateEntity.serializer())
-    subclass(SharedRetractEntity.serializer())
-    subclass(SharedAdd.serializer())
-    subclass(SharedAtomicComposite.serializer())
-    subclass(SharedRetractAttribute.serializer())
-    subclass(SharedRemove.serializer())
-    subclass(SharedUpdateListElem.serializer())
-    subclass(SharedValidate.serializer())
-  }
-}
+data class SharedUpdateListElem(
+  val entityId: UID,
+  val attribute: String,
+  val index: Long,
+  val value: JsonElement,
+  val seed: Long, 
+)

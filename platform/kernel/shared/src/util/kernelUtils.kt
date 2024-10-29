@@ -91,7 +91,7 @@ val CommonInstructionSet: InstructionSet =
   ))
 
 val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
-  registerCRUDInstructions()
+  
 }))
 
 suspend fun updateDbInTheEventDispatchThread(): Nothing {

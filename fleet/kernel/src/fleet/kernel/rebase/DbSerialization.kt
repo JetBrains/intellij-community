@@ -44,7 +44,7 @@ internal fun DbContext<Q>.deserialize(
   serialization: ISerialization
 ): Any =
   attributeSerializer(a)?.let { serializer ->
-    requireNotNull(serialization.json.decodeFromJsonElement(serializer, v)) {
+    requireNotNull(DbJson.decodeFromJsonElement(serializer, v)) {
       "got null after deserializing value $v of attribute ${displayAttribute(a)}"
     }
   } ?: v
@@ -78,7 +78,7 @@ private fun DbContext<Q>.serializeScalar(
       val serializer = requireNotNull(attributeSerializer(attribute)) {
         "serializer not found for ${displayAttribute(attribute)}"
       }
-      DurableDbValue.Scalar(lazy { serialization.json.encodeToJsonElement(serializer, value) })
+      DurableDbValue.Scalar(lazy { DbJson.encodeToJsonElement(serializer, value) })
     }
   }
 

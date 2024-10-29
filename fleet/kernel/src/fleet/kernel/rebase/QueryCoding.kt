@@ -11,7 +11,7 @@ import it.unimi.dsi.fastutil.longs.LongArrayList
 internal fun Mut.queryRecording(
   serContext: InstructionEncodingContext,
   recorder: (InstructionsPair) -> Unit,
-  eidToUid: DbContext<Q>.(EID) -> UID?
+  eidToUid: DbContext<Q>.(EID) -> UID?,
 ): Mut = let { mut ->
   object : Mut by mut {
     override fun <T> queryIndex(indexQuery: IndexQuery<T>): T =
@@ -19,18 +19,24 @@ internal fun Mut.queryRecording(
         null -> mut.queryIndex(indexQuery)
         else -> {
           val (result, trace) = mut.traceQuery(indexQuery)
-          recorder(InstructionsPair(localInstruction = Validate(indexQuery, trace),
-                                    sharedInstruction = SharedValidate(sharedQuery, trace),
-                                    sharedNovelty = Novelty.Empty,
-                                    sharedEffects = emptyList()))
+          recorder(
+            InstructionsPair(
+              localInstruction = Validate(indexQuery, trace),
+              sharedInstruction = ValidateCoder.sharedInstruction(SharedValidate(sharedQuery, trace)),
+              sharedNovelty = Novelty.Empty,
+              sharedEffects = emptyList()
+            )
+          )
           result
         }
       }
   }
 }
 
-data class Validate(val indexQuery: IndexQuery<*>?,
-                    val trace: Long) : Instruction {
+data class Validate(
+  val indexQuery: IndexQuery<*>?,
+  val trace: Long,
+) : Instruction {
   override val seed: Long get() = 0
 
   override fun DbContext<Q>.expand(): InstructionExpansion =
@@ -156,7 +162,7 @@ internal fun <T> Q.traceQuery(indexQuery: IndexQuery<T>): Pair<T, Long> =
 internal fun <T> DbContext<Q>.encodeQuery(
   indexQuery: IndexQuery<T>,
   json: ISerialization,
-  eidToUid: DbContext<Q>.(EID) -> UID?
+  eidToUid: DbContext<Q>.(EID) -> UID?,
 ): SharedQuery? =
   when (indexQuery) {
     is IndexQuery.All -> {

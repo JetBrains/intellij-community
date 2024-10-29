@@ -5,16 +5,21 @@ import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.impl.EidGen
 import fleet.kernel.*
 import fleet.util.UID
+import kotlinx.serialization.KSerializer
 import kotlin.reflect.KClass
 
-class LocalInstructionCoder<T: Instruction>(val c: KClass<T>): InstructionCoder<T, SharedInstruction> {
+class LocalInstructionCoder<T : Instruction>(val c: KClass<T>) : InstructionCoder<T, SharedInstruction> {
   override val instructionClass: KClass<T>
     get() = c
-  override val sharedInstructionClass: KClass<SharedInstruction>?
+
+  override val serializer: KSerializer<SharedInstruction>
+    get() = error("should not be called")
+
+  override val instructionName: String?
     get() = null
 
   override fun DbContext<Q>.decode(deserContext: InstructionDecodingContext, sharedInstruction: SharedInstruction): List<Instruction> {
-    TODO("should not be called")
+    error("should not be called")
   }
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: T): SharedInstructionData =
@@ -22,11 +27,17 @@ class LocalInstructionCoder<T: Instruction>(val c: KClass<T>): InstructionCoder<
 }
 
 object CreateEntityCoder : InstructionCoder<CreateEntity, SharedCreateEntity> {
-  override val instructionClass: KClass<CreateEntity> = CreateEntity::class
-  override val sharedInstructionClass: KClass<SharedCreateEntity> = SharedCreateEntity::class
+  override val instructionClass: KClass<CreateEntity>
+    get() = CreateEntity::class
+  override val serializer: KSerializer<SharedCreateEntity>
+    get() = SharedCreateEntity.serializer()
+  override val instructionName: String
+    get() = "CreateEntity"
 
-  private fun uidAndOtherAttributes(uidAttribute: Attribute<*>,
-                                    attributes: List<Pair<Attribute<*>, Any>>): Pair<UID, List<Pair<Attribute<*>, Any>>>? =
+  private fun uidAndOtherAttributes(
+    uidAttribute: Attribute<*>,
+    attributes: List<Pair<Attribute<*>, Any>>,
+  ): Pair<UID, List<Pair<Attribute<*>, Any>>>? =
     attributes.firstOrNull { (attr) -> attr == uidAttribute }?.let {
       it.second as UID to attributes.filter { (attr) -> attr != uidAttribute }
     }
@@ -35,22 +46,24 @@ object CreateEntityCoder : InstructionCoder<CreateEntity, SharedCreateEntity> {
     when (partition(instruction.eid)) {
       SharedPart, SchemaPart -> SharedInstructionData(
         uidAndOtherAttributes(uidAttribute(), instruction.attributes)?.let { (uid, attrs) ->
-          SharedCreateEntity(
-            entityId = uid,
-            entityTypeIdent = entityTypeIdent(instruction.entityTypeEid)!!,
-            attributes = attrs.map { (attr, value) ->
-              val serializedValue = encodeDbValue(
-                uidAttribute = serContext.uidAttribute,
-                json = serContext.json,
-                a = attr,
-                v = value
-              )
-              val attribute = attributeIdent(attr)!!
-              SharedCreateEntity.AttrValue(attr = attribute,
-                                           schema = attr.schema.value,
-                                           value = serializedValue)
-            },
-            seed = instruction.seed
+          sharedInstruction(
+            SharedCreateEntity(
+              entityId = uid,
+              entityTypeIdent = entityTypeIdent(instruction.entityTypeEid)!!,
+              attributes = attrs.map { (attr, value) ->
+                val serializedValue = encodeDbValue(
+                  uidAttribute = serContext.uidAttribute,
+                  json = serContext.json,
+                  a = attr,
+                  v = value
+                )
+                val attribute = attributeIdent(attr)!!
+                SharedCreateEntity.AttrValue(attr = attribute,
+                                             schema = attr.schema.value,
+                                             value = serializedValue)
+              },
+              seed = instruction.seed,
+            )
           )
         })
       else -> null
@@ -91,8 +104,12 @@ object CreateEntityCoder : InstructionCoder<CreateEntity, SharedCreateEntity> {
 object CompositeCoder : InstructionCoder<AtomicComposite, SharedAtomicComposite> {
   override val instructionClass: KClass<AtomicComposite>
     get() = AtomicComposite::class
-  override val sharedInstructionClass: KClass<SharedAtomicComposite>
-    get() = SharedAtomicComposite::class
+
+  override val serializer: KSerializer<SharedAtomicComposite>
+    get() = SharedAtomicComposite.serializer()
+
+  override val instructionName: String
+    get() = "Composite"
 
   override fun DbContext<Q>.decode(deserContext: InstructionDecodingContext, sharedInstruction: SharedAtomicComposite): List<Instruction> =
     listOf(AtomicComposite(
@@ -106,32 +123,43 @@ object CompositeCoder : InstructionCoder<AtomicComposite, SharedAtomicComposite>
       .mapNotNull { serContext.encoder.run { encode(serContext, it) } }
       .takeIf { it.isNotEmpty() }
       ?.let { datas ->
-        SharedInstructionData(SharedAtomicComposite(
-          instructions = datas.mapNotNull { it.sharedInstruction },
-          seed = instruction.seed)
+        SharedInstructionData(
+          sharedInstruction(
+            SharedAtomicComposite(
+              instructions = datas.mapNotNull { it.sharedInstruction },
+              seed = instruction.seed,
+            )
+          )
         )
       }
 }
 
 object AddCoder : InstructionCoder<Add<*>, SharedAdd> {
-  override val instructionClass: KClass<Add<*>> = Add::class
-  override val sharedInstructionClass: KClass<SharedAdd> = SharedAdd::class
+  override val instructionClass: KClass<Add<*>>
+    get() = Add::class
+  override val serializer: KSerializer<SharedAdd>
+    get() = SharedAdd.serializer()
+  override val instructionName: String
+    get() = "Add"
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: Add<*>): SharedInstructionData? =
     when (partition(instruction.eid)) {
       SharedPart, SchemaPart ->
         SharedInstructionData(sharedId(instruction.eid, serContext.uidAttribute)?.let { uid ->
-          SharedAdd(
-            entityId = uid,
-            attribute = attributeIdent(instruction.attribute)!!,
-            schema = instruction.attribute.schema.value,
-            value = encodeDbValue(
-              uidAttribute = serContext.uidAttribute,
-              json = serContext.json,
-              a = instruction.attribute,
-              v = instruction.value
-            ),
-            seed = instruction.seed)
+          sharedInstruction(
+            SharedAdd(
+              entityId = uid,
+              attribute = attributeIdent(instruction.attribute)!!,
+              schema = instruction.attribute.schema.value,
+              value = encodeDbValue(
+                uidAttribute = serContext.uidAttribute,
+                json = serContext.json,
+                a = instruction.attribute,
+                v = instruction.value
+              ),
+              seed = instruction.seed,
+            )
+          )
         })
       else -> null
     }
@@ -158,7 +186,9 @@ object AddCoder : InstructionCoder<Add<*>, SharedAdd> {
 
 object RemoveCoder : InstructionCoder<Remove<*>, SharedRemove> {
   override val instructionClass: KClass<Remove<*>> = Remove::class
-  override val sharedInstructionClass: KClass<SharedRemove> = SharedRemove::class
+  override val serializer: KSerializer<SharedRemove> = SharedRemove.serializer()
+  override val instructionName: String
+    get() = "Remove"
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: Remove<*>): SharedInstructionData? =
     when (partition(instruction.eid)) {
@@ -171,10 +201,14 @@ object RemoveCoder : InstructionCoder<Remove<*>, SharedRemove> {
             a = instruction.attribute,
             v = instruction.value
           )
-          SharedRemove(entityId = uid,
-                       attribute = attribute,
-                       value = value,
-                       seed = instruction.seed)
+          sharedInstruction(
+            SharedRemove(
+              entityId = uid,
+              attribute = attribute,
+              value = value,
+              seed = instruction.seed,
+            )
+          )
         })
       else -> null
     }
@@ -189,9 +223,11 @@ object RemoveCoder : InstructionCoder<Remove<*>, SharedRemove> {
   }
 }
 
-private fun DbContext<Q>.deserializeValue(value: DurableDbValue,
-                                          deserContext: InstructionDecodingContext,
-                                          attribute: Attribute<*>) = when (value) {
+private fun DbContext<Q>.deserializeValue(
+  value: DurableDbValue,
+  deserContext: InstructionDecodingContext,
+  attribute: Attribute<*>,
+) = when (value) {
   is DurableDbValue.EntityRef -> lookupSingle(deserContext.uidAttribute, value.entityId)
   is DurableDbValue.EntityTypeRef -> requireNotNull(entityTypeByIdent(value.ident)) {
     "entity type ${value.ident} not found"
@@ -200,17 +236,25 @@ private fun DbContext<Q>.deserializeValue(value: DurableDbValue,
 }
 
 object RetractAttributeCoder : InstructionCoder<RetractAttribute, SharedRetractAttribute> {
-  override val instructionClass: KClass<RetractAttribute> = RetractAttribute::class
-  override val sharedInstructionClass: KClass<SharedRetractAttribute> = SharedRetractAttribute::class
+  override val instructionClass: KClass<RetractAttribute>
+    get() = RetractAttribute::class
+  override val serializer: KSerializer<SharedRetractAttribute>
+    get() = SharedRetractAttribute.serializer()
+  override val instructionName: String
+    get() = "RetractAttribute"
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: RetractAttribute): SharedInstructionData? =
     when (partition(instruction.eid)) {
       SharedPart, SchemaPart ->
         SharedInstructionData(sharedId(instruction.eid, serContext.uidAttribute)?.let { uid ->
           val attribute = attributeIdent(instruction.attribute)!!
-          SharedRetractAttribute(entityId = uid,
-                                 attribute = attribute,
-                                 seed = instruction.seed)
+          sharedInstruction(
+            SharedRetractAttribute(
+              entityId = uid,
+              attribute = attribute,
+              seed = instruction.seed,
+            )
+          )
         })
       else -> null
     }
@@ -227,15 +271,23 @@ object RetractAttributeCoder : InstructionCoder<RetractAttribute, SharedRetractA
 }
 
 object RetractEntityCoder : InstructionCoder<RetractEntityInPartition, SharedRetractEntity> {
-  override val instructionClass: KClass<RetractEntityInPartition> = RetractEntityInPartition::class
-  override val sharedInstructionClass: KClass<SharedRetractEntity> = SharedRetractEntity::class
+  override val instructionClass: KClass<RetractEntityInPartition>
+    get() = RetractEntityInPartition::class
+  override val serializer: KSerializer<SharedRetractEntity>
+    get() = SharedRetractEntity.serializer()
+  override val instructionName: String
+    get() = "RetractEntity"
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: RetractEntityInPartition): SharedInstructionData? =
     when (partition(instruction.eid)) {
       SharedPart, SchemaPart ->
         SharedInstructionData(getOne(instruction.eid, serContext.uidAttribute)?.let { uid ->
-          SharedRetractEntity(entityId = uid,
-                              seed = instruction.seed)
+          sharedInstruction(
+            SharedRetractEntity(
+              entityId = uid,
+              seed = instruction.seed,
+            )
+          )
         })
       else -> null
     }
@@ -252,8 +304,12 @@ object RetractEntityCoder : InstructionCoder<RetractEntityInPartition, SharedRet
 }
 
 object ValidateCoder : InstructionCoder<Validate, SharedValidate> {
-  override val instructionClass: KClass<Validate> = Validate::class
-  override val sharedInstructionClass: KClass<SharedValidate> = SharedValidate::class
+  override val instructionClass: KClass<Validate>
+    get() = Validate::class
+  override val serializer: KSerializer<SharedValidate>
+    get() = SharedValidate.serializer()
+  override val instructionName: String
+    get() = "Validate"
 
   override fun DbContext<Q>.encode(serContext: InstructionEncodingContext, instruction: Validate): SharedInstructionData? {
     throw IllegalArgumentException("should not be called")
