@@ -46,7 +46,10 @@ abstract class JetBrainsProductProperties : ProductProperties() {
         // FIXME IDEA-356970
         pluginId == "com.intellij.plugins.projectFragments" ||
         // FIXME IJPL-159498
-        pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide"
+        pluginId == "org.jetbrains.plugins.docker.gateway" || pluginId == "com.intellij.java" || pluginId == "com.intellij.java.ide" ||
+        // it's an internal plugin that should be compatible with older IDEA versions as well,
+        // so it's ok to have preloading there
+        pluginId == "com.intellij.monorepo.devkit"
       ) && it.message.contains("Service preloading is deprecated") ||
       (
         // FIXME PY-74322
