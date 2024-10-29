@@ -2,6 +2,7 @@
 
   <dependencies>
     <plugin id="org.jetbrains.plugins.gradle"/>
+    <plugin id="org.toml.lang"/>
     <module name="kotlin.project-wizard.idea"/>
     <module name="kotlin.gradle.code-insight-common"/>
     <module name="kotlin.gradle.gradle-java"/>
