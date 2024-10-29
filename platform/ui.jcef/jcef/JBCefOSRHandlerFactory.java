@@ -2,10 +2,13 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
 import org.cef.handler.CefRenderHandler;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * A factory for creating alternative component/handler/bounds for an off-screen rendering browser.
@@ -27,10 +30,45 @@ public interface JBCefOSRHandlerFactory {
    * @param isMouseWheelEventEnabled If {@code true}, the browser will intercept mouse wheel events. Otherwise, the browser won't react
    *                                 on scrolling, and the parent component will handle scroll events.
    */
-  @NotNull JComponent createComponent(boolean isMouseWheelEventEnabled);
+  default @NotNull JComponent createComponent(boolean isMouseWheelEventEnabled) {
+    return new JBCefOsrComponent(isMouseWheelEventEnabled);
+  }
 
   /**
    * Creates the OSR handler.
    */
-  @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component);
+  default @NotNull CefRenderHandler createCefRenderHandler(@NotNull JComponent component) {
+    assert component instanceof JBCefOsrComponent;
+    JBCefOsrComponent osrComponent = (JBCefOsrComponent)component;
+    var screenBoundsProvider = createScreenBoundsProvider();
+    JBCefOsrHandler handler = JBCefApp.isRemoteEnabled() ?
+                              new JBCefNativeOsrHandler(osrComponent, screenBoundsProvider) :
+                              new JBCefOsrHandler(osrComponent, screenBoundsProvider);
+    osrComponent.setRenderHandler(handler);
+
+    return handler;
+  }
+
+  /**
+   * Creates a screen bounds provider which takes into account the passed component.
+   * Override the method in the headless mode to provide meaningful screen bounds.
+   *
+   * @see GraphicsEnvironment#isHeadless
+   */
+  default @NotNull Function<? super JComponent, ? extends Rectangle> createScreenBoundsProvider() {
+    return component -> {
+      if (component != null && !GraphicsEnvironment.isHeadless()) {
+        try {
+          return component.isShowing() ?
+                 component.getGraphicsConfiguration().getDevice().getDefaultConfiguration().getBounds() :
+                 GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration().getBounds();
+        }
+        catch (Exception e) {
+          Logger.getInstance(JBCefOSRHandlerFactory.class).error(e);
+        }
+      }
+
+      return new Rectangle(0, 0, 0, 0);
+    };
+  }
 }
