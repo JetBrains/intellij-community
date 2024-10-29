@@ -34,6 +34,7 @@ object BlankDiffWindowUtil {
     createBlankDiffRequestChain(createEditableContent(project), createEditableContent(project), project = project)
 
   @JvmStatic
+  @JvmOverloads
   fun createBlankDiffRequestChain(
     content1: DocumentContent,
     content2: DocumentContent,
