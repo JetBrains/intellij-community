@@ -177,7 +177,13 @@ internal class HotSwapFloatingToolbarProvider : FloatingToolbarProvider {
   override val autoHideable: Boolean get() = false
   private val hotSwapAction by lazy { HotSwapWithRebuildAction() }
 
-  override val actionGroup: ActionGroup by lazy { DefaultActionGroup(hotSwapAction, HideAction()) }
+  override val actionGroup: ActionGroup by lazy {
+    val group = DefaultActionGroup(hotSwapAction)
+    if (addHideAction) {
+      group.add(HideAction())
+    }
+    group
+  }
 
   override fun isApplicable(dataContext: DataContext): Boolean =
     isInsideMainEditor(dataContext)
@@ -266,7 +272,6 @@ private class HideAction : AnAction() {
 
   override fun getActionUpdateThread() = ActionUpdateThread.EDT
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = addHideAction
     e.presentation.icon = AllIcons.Actions.Close
     e.presentation.hoveredIcon = AllIcons.Actions.CloseHovered
     e.presentation.text = XDebuggerBundle.message("action.hotswap.hide.text")
