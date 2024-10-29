@@ -1,0 +1,3 @@
+[NotNull Values]
+20 	<bold>val x</bold> = a.foo() (in test(A, B, C, D))
+20 		<bold>val x</bold> = a.foo() (in test(A, B, C, D))

@@ -2,12 +2,16 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.slicer.SliceLanguageSupportProvider
 import com.intellij.slicer.SliceRootNode
+import org.jetbrains.kotlin.analysis.api.permissions.KaAllowAnalysisOnEdt
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractSlicerTreeTest : AbstractSlicerTest() {
-    override fun doTest(path: String, sliceProvider: KotlinSliceProvider, rootNode: SliceRootNode) {
-        KotlinTestUtils.assertEqualsToFile(File(path.replace(".kt", ".results.txt")), buildTreeRepresentation(rootNode))
+    override fun doTest(path: String, sliceProvider: SliceLanguageSupportProvider, rootNode: SliceRootNode) {
+        KotlinTestUtils.assertEqualsToFile(getResultsFile(path), buildTreeRepresentation(rootNode))
     }
+
+    protected open fun getResultsFile(path: String) = File(path.replace(".kt", ".results.txt"))
 }

@@ -59,5 +59,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="kotlin.base.facet" />
     <orderEntry type="module" module-name="kotlin.base.plugin" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

@@ -180,6 +180,11 @@ public class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeafGroupingT
         runTest("testData/slicer/inflow/getterReturnExpression.kt");
     }
 
+    @TestMetadata("getterUsingField.kt")
+    public void testGetterUsingField() throws Exception {
+        runTest("testData/slicer/inflow/getterUsingField.kt");
+    }
+
     @TestMetadata("ifExpression.kt")
     public void testIfExpression() throws Exception {
         runTest("testData/slicer/inflow/ifExpression.kt");
@@ -408,6 +413,11 @@ public class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeafGroupingT
     @TestMetadata("topLevelVar.kt")
     public void testTopLevelVar() throws Exception {
         runTest("testData/slicer/inflow/topLevelVar.kt");
+    }
+
+    @TestMetadata("tryExpr.kt")
+    public void testTryExpr() throws Exception {
+        runTest("testData/slicer/inflow/tryExpr.kt");
     }
 
     @TestMetadata("valParameter.kt")

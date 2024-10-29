@@ -30,6 +30,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
+import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
+import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
@@ -52,7 +54,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 abstract class Slicer(
     protected val element: KtElement,
     protected val processor: Processor<in SliceUsage>,
-    protected val parentUsage: KotlinSliceUsage
+    protected val parentUsage: AbstractKotlinSliceUsage
 ) {
     abstract fun processChildren(forcedExpressionMode: Boolean)
 

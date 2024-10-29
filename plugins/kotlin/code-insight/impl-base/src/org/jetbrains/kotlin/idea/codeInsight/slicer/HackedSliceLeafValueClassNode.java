@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.slicer;
+package org.jetbrains.kotlin.idea.codeInsight.slicer;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.ArrayList;
 
-class HackedSliceLeafValueClassNode extends SliceLeafValueRootNode {
+public class HackedSliceLeafValueClassNode extends SliceLeafValueRootNode {
   @NlsSafe
   private final String myClassName;
 

@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.slicer
 import com.intellij.slicer.SliceUsage
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.idea.codeInsight.slicer.KotlinSliceAnalysisMode
 
 interface SliceProducer {
     fun produce(usage: UsageInfo, mode: KotlinSliceAnalysisMode, parent: SliceUsage): Collection<SliceUsage>?

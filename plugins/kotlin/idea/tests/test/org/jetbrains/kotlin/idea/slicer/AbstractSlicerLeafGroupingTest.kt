@@ -2,14 +2,20 @@
 
 package org.jetbrains.kotlin.idea.slicer
 
+import com.intellij.slicer.SliceLanguageSupportProvider
+import com.intellij.slicer.SliceLeafAnalyzer
 import com.intellij.slicer.SliceRootNode
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
 import java.io.File
 
 abstract class AbstractSlicerLeafGroupingTest : AbstractSlicerTest() {
-    override fun doTest(path: String, sliceProvider: KotlinSliceProvider, rootNode: SliceRootNode) {
+    protected open fun createAnalyzer(sliceProvider: SliceLanguageSupportProvider): SliceLeafAnalyzer {
+        return (sliceProvider as KotlinSliceProvider).leafAnalyzer
+    }
+
+    override fun doTest(path: String, sliceProvider: SliceLanguageSupportProvider, rootNode: SliceRootNode) {
         val treeStructure = TestSliceTreeStructure(rootNode)
-        val analyzer = sliceProvider.leafAnalyzer
+        val analyzer = createAnalyzer(sliceProvider)
         val possibleElementsByNode = analyzer.createMap()
         val leafExpressions = analyzer.calcLeafExpressions(rootNode, treeStructure, possibleElementsByNode)
         val newRootNode = analyzer.createTreeGroupedByValues(leafExpressions, rootNode, possibleElementsByNode)
@@ -19,6 +25,8 @@ abstract class AbstractSlicerLeafGroupingTest : AbstractSlicerTest() {
                 append("\n")
             }
         }
-        KotlinTestUtils.assertEqualsToFile(File(path.replace(".kt", ".leafGroups.txt")), renderedForest)
+        KotlinTestUtils.assertEqualsToFile(getResultFile(path), renderedForest)
     }
+
+    protected open fun getResultFile(path: String): File = File(path.replace(".kt", ".leafGroups.txt"))
 }

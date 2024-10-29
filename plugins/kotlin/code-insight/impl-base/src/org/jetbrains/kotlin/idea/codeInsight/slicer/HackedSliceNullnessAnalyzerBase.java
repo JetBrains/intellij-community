@@ -1,5 +1,5 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.kotlin.idea.slicer;
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.codeInsight.slicer;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -18,7 +18,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.kotlin.idea.completion.KotlinIdeaCompletionBundle;
+import org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightBundle;
 
 import java.util.*;
 
@@ -43,9 +43,9 @@ public abstract class HackedSliceNullnessAnalyzerBase {
         .createToolWindow(true, root,
                   true,
                   SliceManager.getElementDescription(
-                      null,
-                      rootUsage.getElement(),
-                      KotlinIdeaCompletionBundle.message(
+                          null,
+                          rootUsage.getElement(),
+                          KotlinCodeInsightBundle.message(
                           "slice.nullness.tab.title.grouped.by.nullness")));
   }
 
@@ -117,7 +117,7 @@ public abstract class HackedSliceNullnessAnalyzerBase {
 
       ProgressManager.getInstance().run(new Task.Backgroundable(
               root.getProject(),
-              KotlinIdeaCompletionBundle.message("slice.nullness.progress.title.expanding.all.nodes"), true) {
+              KotlinCodeInsightBundle.message("slice.nullness.progress.title.expanding.all.nodes"), true) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
         NullAnalysisResult l = calcNullableLeaves(root, treeStructure, map);
@@ -160,42 +160,39 @@ public abstract class HackedSliceNullnessAnalyzerBase {
           @NotNull AbstractTreeStructure treeStructure,
           @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
-      @Override
-      public void visit(@NotNull final SliceNode element) {
-        element.calculateDupNode();
-        node(element, map).clear();
-        SliceNode duplicate = element.getDuplicate();
-        if (duplicate != null) {
-          node(element, map).add(node(duplicate, map));
-        }
-        else {
-          final PsiElement value = ReadAction.compute(() -> element.getValue().getElement());
-          boolean canBeLeaf = element.getValue().canBeLeaf();
-          Nullability nullability = canBeLeaf ? ReadAction.compute(() -> checkNullability(value)) : Nullability.UNKNOWN;
-          if (nullability == Nullability.NULLABLE) {
-            group(element, map, NullAnalysisResult.NULLS).add(value);
-          }
-          else if (nullability == Nullability.NOT_NULL) {
-            group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
-          }
-          else {
-            Collection<? extends AbstractTreeNode> children = ReadAction.compute(element::getChildren);
-            if (children.isEmpty()) {
-              group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
+        @Override
+        public void visit(@NotNull final SliceNode element) {
+            element.calculateDupNode();
+            node(element, map).clear();
+            SliceNode duplicate = element.getDuplicate();
+            if (duplicate != null) {
+                node(element, map).add(node(duplicate, map));
+            } else {
+                final PsiElement value = ReadAction.compute(() -> element.getValue().getElement());
+                boolean canBeLeaf = ReadAction.compute(() -> element.getValue().canBeLeaf());
+                Nullability nullability = canBeLeaf ? ReadAction.compute(() -> checkNullability(value)) : Nullability.UNKNOWN;
+                if (nullability == Nullability.NULLABLE) {
+                    group(element, map, NullAnalysisResult.NULLS).add(value);
+                } else if (nullability == Nullability.NOT_NULL) {
+                    group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
+                } else {
+                    Collection<? extends AbstractTreeNode> children = ReadAction.compute(element::getChildren);
+                    if (children.isEmpty()) {
+                        group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
+                    }
+                    super.visit(element);
+                }
             }
-            super.visit(element);
-          }
         }
-      }
 
-      @Override
-      public void elementFinished(@NotNull SliceNode element) {
-        SliceNode parent = guide.getParent(element);
-        if (parent != null) {
-          node(parent, map).add(node(element, map));
+        @Override
+        public void elementFinished(@NotNull SliceNode element) {
+            SliceNode parent = guide.getParent(element);
+            if (parent != null) {
+                node(parent, map).add(node(element, map));
+            }
         }
-      }
     };
     walkingState.visit(root);
 

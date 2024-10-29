@@ -1,6 +1,6 @@
-// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.slicer
+package org.jetbrains.kotlin.idea.codeInsight.slicer
 
 import com.intellij.psi.createSmartPointer
 import com.intellij.slicer.SliceUsage
@@ -23,7 +23,7 @@ data class KotlinSliceAnalysisMode(val behaviourStack: List<Behaviour>, val inli
 
     fun popInlineFunctionCall(function: KtNamedFunction): Pair<KotlinSliceAnalysisMode?, KtElement?> {
         val last = inlineCallStack.lastOrNull()
-        if (last?.function != function) return null to null
+        if (last?.function?.navigationElement != function) return null to null
         val newMode = copy(inlineCallStack = inlineCallStack.dropLast(1))
         return newMode to last.callElement
     }
@@ -34,7 +34,7 @@ data class KotlinSliceAnalysisMode(val behaviourStack: List<Behaviour>, val inli
     interface Behaviour {
         fun processUsages(
             element: KtElement,
-            parent: KotlinSliceUsage,
+            parent: AbstractKotlinSliceUsage,
             uniqueProcessor: Processor<in SliceUsage>
         )
 

@@ -1,6 +1,7 @@
 <idea-plugin package="org.jetbrains.kotlin.idea.k2.codeinsight">
   <dependencies>
     <module name="kotlin.refactorings.k2"/>
+    <module name="kotlin.searching.k2"/>
   </dependencies>
   <extensions defaultExtensionNs="org.jetbrains.kotlin">
     <smartEnterProcessorFixer
@@ -244,6 +245,11 @@
     <methodHierarchyProvider
             language="kotlin"
             implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.hierarchy.overrides.KotlinOverrideHierarchyProvider"/>
+
+    <lang.sliceProvider language="kotlin" implementationClass="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinSliceProvider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinUsageContextDataInflowPanel$Provider"/>
+    <usageContextPanelProvider implementation="org.jetbrains.kotlin.idea.k2.codeinsight.slicer.KotlinUsageContextDataOutflowPanel$Provider"/>
+
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinEqualsHashCodeTemplatesManager"/>
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.k2.codeinsight.generate.KotlinToStringTemplatesManager"/>
 
