@@ -327,7 +327,7 @@ public class GitUntrackedFilesHolder implements Disposable {
     }
   }
 
-  private class MyGitRepositoryIgnoredFilesHolder implements GitRepositoryIgnoredFilesHolder {
+  private class MyGitRepositoryIgnoredFilesHolder extends GitRepositoryIgnoredFilesHolder {
     private final @NotNull CopyOnWriteFilePathSet ignoredFiles = new CopyOnWriteFilePathSet(myRoot.isCaseSensitive());
 
     @Override

@@ -2,18 +2,15 @@
 package git4idea.ignore
 
 import com.intellij.openapi.vcs.FilePath
-import git4idea.repo.GitRepository
-import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.TestOnly
 
-interface GitRepositoryIgnoredFilesHolder {
-  val ignoredFilePaths: Set<FilePath>
+abstract class GitRepositoryIgnoredFilesHolder {
+  abstract val ignoredFilePaths: Set<FilePath>
 
-  val initialized: Boolean
+  abstract val initialized: Boolean
 
-  fun isInUpdateMode(): Boolean
+  abstract fun isInUpdateMode(): Boolean
 
-  fun containsFile(file: FilePath): Boolean
+  abstract fun containsFile(file: FilePath): Boolean
 
-  fun removeIgnoredFiles(filePaths: Collection<FilePath>)
+  abstract fun removeIgnoredFiles(filePaths: Collection<FilePath>)
 }
