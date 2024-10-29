@@ -43,14 +43,15 @@ final class FTManager {
   private final Path templateDir;
   private final @Nullable FTManager original;
   private final Map<String, FileTemplateBase> templates;
-  private volatile List<FileTemplateBase> sortedTemplates;
-  private final List<DefaultTemplate> defaultTemplates;
+  private volatile List<? extends FileTemplateBase> sortedTemplates;
+  @NotNull
+  private final List<? extends DefaultTemplate> defaultTemplates;
   private final StreamProvider streamProvider;
 
   FTManager(@NotNull @NonNls String name,
             @NotNull Path defaultTemplatesDirName,
             @NotNull Path templateDir,
-            List<DefaultTemplate> defaultTemplates,
+            @NotNull List<? extends DefaultTemplate> defaultTemplates,
             boolean isInternal,
             StreamProvider streamProvider) {
     this.name = name;
@@ -59,7 +60,7 @@ final class FTManager {
     templatePath = defaultTemplatesDirName;
     this.templateDir = templateDir;
     original = null;
-    this.defaultTemplates = defaultTemplates;
+    this.defaultTemplates = List.copyOf(defaultTemplates);
     templates = new HashMap<>(defaultTemplates.size());
     for (DefaultTemplate template : defaultTemplates) {
       BundledFileTemplate bundled = new BundledFileTemplate(template, this.isInternal);
@@ -92,12 +93,12 @@ final class FTManager {
   }
 
   @NotNull
-  Collection<FileTemplateBase> getAllTemplates(boolean includeDisabled) {
-    List<FileTemplateBase> sorted = sortedTemplates;
+  Collection<? extends FileTemplateBase> getAllTemplates(boolean includeDisabled) {
+    List<? extends FileTemplateBase> sorted = sortedTemplates;
     if (sorted == null) {
       sorted = new ArrayList<>(getTemplates().values());
       sorted.sort((t1, t2) -> t1.getName().compareToIgnoreCase(t2.getName()));
-      sortedTemplates = sorted;
+      sortedTemplates = List.copyOf(sorted);
     }
 
     if (includeDisabled) {
@@ -173,28 +174,28 @@ final class FTManager {
 
   void updateTemplates(@NotNull Collection<? extends FileTemplate> newTemplates) {
     final Set<String> toDisable = new HashSet<>();
-    for (DefaultTemplate template : defaultTemplates) {
-      toDisable.add(template.getQualifiedName());
+    for (DefaultTemplate defaultTemplate : defaultTemplates) {
+      toDisable.add(defaultTemplate.getQualifiedName());
     }
-    for (FileTemplate template : newTemplates) {
-      toDisable.remove(((FileTemplateBase)template).getQualifiedName());
+    for (FileTemplate newTemplate : newTemplates) {
+      toDisable.remove(((FileTemplateBase)newTemplate).getQualifiedName());
     }
     restoreDefaults(toDisable);
     MultiMap<String, FileTemplate> children = new MultiMap<>();
-    for (FileTemplate template : newTemplates) {
-      FileTemplateBase _template = addTemplate(template.getName(), template.getExtension());
-      _template.setText(template.getText());
-      _template.setFileName(template.getFileName());
-      _template.setReformatCode(template.isReformatCode());
-      _template.setLiveTemplateEnabled(template.isLiveTemplateEnabled());
+    for (FileTemplate newTemplate : newTemplates) {
+      FileTemplateBase _template = addTemplate(newTemplate.getName(), newTemplate.getExtension());
+      _template.setText(newTemplate.getText());
+      _template.setFileName(newTemplate.getFileName());
+      _template.setReformatCode(newTemplate.isReformatCode());
+      _template.setLiveTemplateEnabled(newTemplate.isLiveTemplateEnabled());
       if (FileTemplateBase.isChild(_template)) {
         children.putValue(getParentName(_template), _template);
       }
     }
     for (String parentName : children.keySet()) {
-      FileTemplateBase template = getTemplate(parentName);
-      if (template != null) {
-        template.setChildren(children.get(parentName).toArray(FileTemplate.EMPTY_ARRAY));
+      FileTemplateBase parentTemplate = getTemplate(parentName);
+      if (parentTemplate != null) {
+        parentTemplate.setChildren(children.get(parentName).toArray(FileTemplate.EMPTY_ARRAY));
       }
     }
     saveTemplates(true);
