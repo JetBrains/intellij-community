@@ -1,7 +1,10 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui
 
-import com.intellij.collaboration.async.*
+import com.intellij.collaboration.async.cancelledWith
+import com.intellij.collaboration.async.collectScoped
+import com.intellij.collaboration.async.launchNow
+import com.intellij.collaboration.async.mapScoped
 import com.intellij.collaboration.ui.codereview.details.model.CodeReviewChangeListViewModelBase
 import com.intellij.collaboration.ui.codereview.diff.CodeReviewDiffRequestProducer
 import com.intellij.collaboration.util.ChangesSelection
@@ -71,7 +74,7 @@ internal class GHPRViewModelContainerImpl(
   private val reviewVmHelper: GHPRReviewViewModelHelper by lazy { GHPRReviewViewModelHelper(cs, dataProvider) }
 
   override val aiReviewVm: StateFlow<GHPRAIReviewViewModel?> =
-    GHPRAIReviewExtension.EP.singleExtensionFlow()
+    GHPRAIReviewExtension.singleFlow
       .mapScoped { it?.provideReviewVm(project, this, dataContext, dataProvider) }
       .stateIn(cs, SharingStarted.Eagerly, null)
   override val aiSummaryVm: StateFlow<GHPRAISummaryViewModel?> =

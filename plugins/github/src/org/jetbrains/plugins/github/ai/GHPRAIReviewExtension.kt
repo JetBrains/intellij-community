@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.ai
 
+import com.intellij.collaboration.async.singleExtensionFlow
 import com.intellij.collaboration.util.RefComparisonChange
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -17,7 +18,10 @@ import javax.swing.JComponent
 @ApiStatus.Internal
 interface GHPRAIReviewExtension {
   companion object {
-    val EP = ExtensionPointName.Companion.create<GHPRAIReviewExtension>("intellij.vcs.github.aiReviewExtension")
+    private val EP = ExtensionPointName.Companion.create<GHPRAIReviewExtension>("intellij.vcs.github.aiReviewExtension")
+
+    internal val singleFlow: Flow<GHPRAIReviewExtension?>
+      get() = EP.singleExtensionFlow()
   }
 
   fun provideReviewVm(project: Project, parentCs: CoroutineScope, dataContext: GHPRDataContext, dataProvider: GHPRDataProvider): GHPRAIReviewViewModel
