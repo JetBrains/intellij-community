@@ -1211,7 +1211,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       Rectangle bounds = getBounds();
       for (Component component : getComponents()) {
         if (component == mainComponent) {
-          component.setBounds(isLogical ? 12 : 0, 0, bounds.width, bounds.height);
+          component.setBounds(isLogical ? UIUtil.getTreeFont().getSize() : 0, 0, bounds.width, bounds.height);
         }
       }
     }
