@@ -2,15 +2,15 @@
 package com.intellij.openapi.vcs.changes.shelf
 
 import com.intellij.openapi.project.Project
-import com.intellij.vcs.ShelveTitlePatch
-import com.intellij.vcs.ShelveTitleProvider
+import com.intellij.vcs.ShelveNamePatch
+import com.intellij.vcs.ShelveNameProvider
 import kotlinx.coroutines.launch
 import java.util.function.Consumer
 
 object ShelveChangesNameSuggester {
-  fun suggestBetterName(project: Project, patch: ShelveTitlePatch, rename: Consumer<String>) {
+  fun suggestBetterName(project: Project, patch: ShelveNamePatch, rename: Consumer<String>) {
     ShelveChangesManager.getInstance(project).coroutineScope.launch {
-      rename.accept(ShelveTitleProvider.EP_NAME.getIterable().firstNotNullOf { it?.suggestTitle(project, patch) })
+      ShelveNameProvider.generateShelveName(project, patch)?.let { rename.accept(it) }
     }
   }
 }

@@ -57,15 +57,13 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import com.intellij.vcs.ShelveTitlePatch;
-import com.intellij.vcs.ShelveTitleProvider;
+import com.intellij.vcs.ShelveNamePatch;
+import com.intellij.vcs.ShelveNameProvider;
 import com.intellij.vcs.VcsActivity;
 import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Tracer;
-import kotlin.Unit;
-import kotlin.jvm.functions.Function1;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jdom.Parent;
@@ -401,8 +399,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         changeList.markToDelete(markToBeDeleted);
 
         if (Registry.is("llm.vcs.shelve.title.generation")) {
-          if (ShelveTitleProvider.hasDefaultName(commitMessage)) {
-            ShelveChangesNameSuggester.INSTANCE.suggestBetterName(myProject, new ShelveTitlePatch(Files.readString(patchFile), patches.size()),
+          if (ShelveNameProvider.hasDefaultName(commitMessage)) {
+            ShelveChangesNameSuggester.INSTANCE.suggestBetterName(myProject, new ShelveNamePatch(Files.readString(patchFile), patches.size()),
                                                                   name -> renameChangeList(changeList, name));
           }
         }
@@ -852,7 +850,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
   public void showGotItTooltip(@NotNull Project project, @Nullable Component component) {
     if (component != null) {
-      ShelveTitleProvider.showGotItTooltip(project, component);
+      ShelveNameProvider.showGotItTooltip(project, component);
     }
   }
 
