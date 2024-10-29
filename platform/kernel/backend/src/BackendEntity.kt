@@ -19,7 +19,7 @@ private class BackendValueEntityTypesProvider : EntityTypeProvider {
 
 /**
  * Creates a new [BackendValueEntity] which holds given [value] and puts it to the local in memory storage.
- * Multiple calls of [registerValueEntity] with the same [value] will return **different** ids.
+ * Multiple calls of [newValueEntity] with the same [value] will return **different** ids.
  *
  * Returned [BackendValueEntity.id] can be sent through RPC to frontend,
  *   so backend may convert it back later by [findValueEntity].
@@ -41,7 +41,7 @@ private class BackendValueEntityTypesProvider : EntityTypeProvider {
  * // Frontend will call this method to acquire reference to a backend object
  * suspend fun rpcCallGetId(): SomeId {
  *   val backendObject: BackendObjectType = BackendService.getInstance().someObject
- *   val backendEntity = registerValueEntity(backendObject)
+ *   val backendEntity = newValueEntity(backendObject)
  *   // some logic, how backendEntity should be deleted (e.g. on some service dispose)
  *   return SomeId(backendEntity.id)
  * }
@@ -55,7 +55,7 @@ private class BackendValueEntityTypesProvider : EntityTypeProvider {
  * ```
  */
 @ApiStatus.Internal
-suspend fun <T : Any> registerValueEntity(value: T): BackendValueEntity<T> {
+suspend fun <T : Any> newValueEntity(value: T): BackendValueEntity<T> {
   return withKernel {
     val rhizomeEntity = change {
       BackendRhizomeValueEntity.new {
@@ -69,7 +69,7 @@ suspend fun <T : Any> registerValueEntity(value: T): BackendValueEntity<T> {
 
 /**
  * Retrieves a [BackendValueEntity] by the given [EID] and type [T] of the value which is hold by the entity.
- * [BackendValueEntity] will be returned if it was previously registered by [registerValueEntity], and it wasn't deleted.
+ * [BackendValueEntity] will be returned if it was previously created by [newValueEntity], and it wasn't deleted.
  *
  * Example:
  * ```kotlin
@@ -78,7 +78,7 @@ suspend fun <T : Any> registerValueEntity(value: T): BackendValueEntity<T> {
  * // Frontend will call this method to acquire reference to a backend object
  * suspend fun rpcCallGetId(): SomeId {
  *   val backendObject: BackendObjectType = BackendService.getInstance().someObject
- *   val backendEntity = registerValueEntity(backendObject)
+ *   val backendEntity = newValueEntity(backendObject)
  *   // some logic, how backendEntity should be deleted (e.g. on some service dispose)
  *   return SomeId(backendEntity.id)
  * }
@@ -122,9 +122,9 @@ suspend fun <T : Any> BackendValueEntity<T>.delete() {
  *
  * Example:
  * ```kotlin
- * val entity1 = registerValueEntity("a")
- * val entity2 = registerValueEntity("b")
- * val entity3 = registerValueEntity("c").apply {
+ * val entity1 = newValueEntity("a")
+ * val entity2 = newValueEntity("b")
+ * val entity3 = newValueEntity("c").apply {
  *   cascadeDeleteBy(entity1, entity2)
  * }
  * entity1.delete()

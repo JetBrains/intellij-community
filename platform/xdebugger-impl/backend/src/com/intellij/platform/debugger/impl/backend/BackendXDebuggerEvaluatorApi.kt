@@ -9,7 +9,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.platform.kernel.backend.cascadeDeleteBy
 import com.intellij.platform.kernel.backend.delete
 import com.intellij.platform.kernel.backend.findValueEntity
-import com.intellij.platform.kernel.backend.registerValueEntity
+import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
@@ -52,7 +52,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
       catch (e: EvaluationException) {
         return@async XEvaluationResult.EvaluationError(e.errorMessage)
       }
-      val xValueEntity = registerValueEntity(xValue)
+      val xValueEntity = newValueEntity(xValue)
       XEvaluationResult.Evaluated(XValueId(xValueEntity.id))
     }
   }
@@ -126,7 +126,7 @@ internal class BackendXDebuggerEvaluatorApi : XDebuggerEvaluatorApi {
           val childrenXValues = (0 until children.size()).map { children.getValue(it) }
           launch {
             val childrenXValueEntities = childrenXValues.map { childXValue ->
-              registerValueEntity(childXValue).apply {
+              newValueEntity(childXValue).apply {
                 cascadeDeleteBy(xValueEntity)
               }
             }

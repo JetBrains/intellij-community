@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.platform.kernel.backend.delete
 import com.intellij.platform.kernel.backend.findValueEntity
-import com.intellij.platform.kernel.backend.registerValueEntity
+import com.intellij.platform.kernel.backend.newValueEntity
 import com.intellij.platform.project.ProjectId
 import com.intellij.platform.project.findProject
 import com.intellij.psi.PsiDocumentManager
@@ -117,7 +117,7 @@ internal class BackendXDebuggerValueLookupHintsRemoteApi : XDebuggerValueLookupH
         val expressionInfo = getExpressionInfo(evaluator, project, hintType, editor, offset) ?: return@withContext null
         XValueHint(project, editor, point, hintType, expressionInfo, evaluator, session, false)
       }
-      val hintEntity = registerValueEntity(hint)
+      val hintEntity = newValueEntity(hint)
       RemoteValueHintId(hintEntity.id)
     }
   }
