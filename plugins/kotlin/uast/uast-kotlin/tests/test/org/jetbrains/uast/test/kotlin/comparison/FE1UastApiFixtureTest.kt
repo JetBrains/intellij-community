@@ -189,4 +189,8 @@ class FE1UastApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), UastApiFi
     fun testEnumAsAnnotationAttributeValueEvaluation() {
         checkEnumAsAnnotationAttributeValueEvaluation(myFixture)
     }
+
+    fun testJavaConstantEvaluation() {
+        checkJavaConstantEvaluation(myFixture)
+    }
 }

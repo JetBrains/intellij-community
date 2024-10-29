@@ -6,6 +6,7 @@ import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiEnumConstant
+import com.intellij.psi.PsiField
 import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 import com.intellij.psi.PsiParameter
@@ -1710,6 +1711,46 @@ interface UastApiFixtureTestBase {
                     }
 
                     return super.visitClass(node)
+                }
+            }
+        )
+    }
+
+    fun checkJavaConstantEvaluation(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.addClass(
+            """
+                package test.pkg;
+                
+                public class Context {
+                  public static final String CLIPBOARD = "clipboard";
+                }
+            """.trimIndent()
+        )
+        myFixture.configureByText(
+            "test.kt",
+            """
+                import test.pkg.Context
+                import test.pkg.Context.CLIPBOARD
+                
+                fun foo(p: String) {}
+
+                fun test() {
+                  foo(Context.CLIPBOARD)
+                  foo(CLIPBOARD)
+                }
+            """.trimIndent()
+        )
+        val uFile = myFixture.file.toUElementOfType<UFile>()!!
+        uFile.accept(
+            object : AbstractUastVisitor() {
+                override fun visitCallExpression(node: UCallExpression): Boolean {
+                    val arg = node.valueArguments.getOrNull(0) ?: return super.visitCallExpression(node)
+                    val r = (arg as? USimpleNameReferenceExpression)?.resolve()
+                        ?: (arg as? UQualifiedReferenceExpression)?.resolve()
+                    TestCase.assertTrue(node.sourcePsi?.text, r is PsiField)
+                    val e = arg.evaluate()
+                    TestCase.assertEquals(node.sourcePsi?.text, "clipboard", e)
+                    return super.visitCallExpression(node)
                 }
             }
         )
