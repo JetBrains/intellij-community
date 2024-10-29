@@ -1948,6 +1948,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   public class StepOutCommand extends StepCommand {
     private final int myStepSize;
 
+    public StepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
+      this(suspendContext, stepSize, null);
+    }
+
     public StepOutCommand(SuspendContextImpl suspendContext, int stepSize, @Nullable MethodFilter filter) {
       super(suspendContext, filter);
       myStepSize = stepSize;
@@ -2789,7 +2793,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   @NotNull
   public ResumeCommand createStepOutCommand(SuspendContextImpl suspendContext, int stepSize) {
-    return new StepOutCommand(suspendContext, stepSize, null);
+    return new StepOutCommand(suspendContext, stepSize);
   }
 
   @NotNull
