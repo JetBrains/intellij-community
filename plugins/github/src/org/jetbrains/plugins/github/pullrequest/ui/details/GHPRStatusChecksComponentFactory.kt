@@ -1,7 +1,6 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
-import com.intellij.collaboration.async.extensionListFlow
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.VerticalListPanel
 import com.intellij.collaboration.ui.codereview.avatar.CodeReviewAvatarUtils
@@ -78,8 +77,8 @@ internal object GHPRStatusChecksComponentFactory {
           )
         }
       ))
-      bindChildIn(scope, GHPRAIReviewExtension.EP.extensionListFlow()) { extensions ->
-        val extension = extensions.firstOrNull() ?: return@bindChildIn null
+      bindChildIn(scope, GHPRAIReviewExtension.singleFlow) { extension ->
+        if (extension == null) return@bindChildIn null
         extension.createAIReviewAction(project, detailsVm.prId)
       }
     }
