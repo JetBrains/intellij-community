@@ -36,7 +36,7 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
   @Override
   public void update(@NotNull AnActionEvent e) {
     Project project = e.getProject();
-    if (project == null) {
+    if (project == null || Registry.is("toolwindow.open.tab.in.editor")) {
       e.getPresentation().setEnabledAndVisible(false);
       return;
     }
