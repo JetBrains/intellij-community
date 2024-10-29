@@ -1738,6 +1738,8 @@ com.intellij.diff.tools.util.text.TwosideTextDiffProvider$NoIgnore
 f:com.intellij.diff.util.BlankDiffWindowUtil
 - sf:INSTANCE:com.intellij.diff.util.BlankDiffWindowUtil
 - sf:REMEMBER_CONTENT_KEY:com.intellij.openapi.util.Key
+- sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
+- sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - sf:createBlankDiffRequestChain(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.openapi.project.Project):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - sf:createBlankDiffRequestChain(com.intellij.openapi.project.Project):com.intellij.diff.actions.impl.MutableDiffRequestChain
 - bs:createBlankDiffRequestChain$default(com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.diff.contents.DocumentContent,com.intellij.openapi.project.Project,I,java.lang.Object):com.intellij.diff.actions.impl.MutableDiffRequestChain
