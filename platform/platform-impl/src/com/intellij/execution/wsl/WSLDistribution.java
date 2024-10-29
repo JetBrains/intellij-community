@@ -13,6 +13,8 @@ import com.intellij.execution.process.*;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -242,7 +244,9 @@ public class WSLDistribution implements AbstractWslDistribution {
         ptyOptions = null;
       }
       commandLine.setProcessCreator((processBuilder) -> {
-        return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
+        return ProgressManager.getInstance().runProcess(() -> {
+          return WslIjentUtil.runProcessBlocking(WslIjentManager.getInstance(), project, this, processBuilder, options, ptyOptions);
+        }, new EmptyProgressIndicator());
       });
     }
     else {
