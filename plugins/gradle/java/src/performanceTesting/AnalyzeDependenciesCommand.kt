@@ -46,12 +46,12 @@ class AnalyzeDependenciesCommand(text: String, line: Int) : PerformanceCommandCo
       val expected = (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge)
         .storage
         .entities(LibraryEntity::class.java)
-        .apply {
-          println("Expected libraries: $this")
-        }
         // Gradle: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
         // Maven: org.junit.jupiter:junit-jupiter:5.9.1 -> org.junit.jupiter:junit-jupiter:5.9.1
-        .map { it.name.replace("Gradle: ", "").replace("Maven: ", "") }.toList()
+        .map {
+          println("Lib entity $it")
+          it.name.replace("Gradle: ", "").replace("Maven: ", "")
+        }.toList()
       val actual = dependencyAnalyzerView.getDependencies()
         .map { it.data.toString() }
         .toSet()
