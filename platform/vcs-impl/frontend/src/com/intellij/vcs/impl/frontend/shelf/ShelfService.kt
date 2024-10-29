@@ -110,6 +110,15 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
+  fun restoreShelves(deletedChangeLists: Set<ShelvedChangeListEntity>) {
+    cs.launch(Dispatchers.IO) {
+      withKernel {
+        val changelistRefs = deletedChangeLists.map { it.sharedRef() }
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).restoreShelves(project.asEntity().sharedRef(), changelistRefs)
+      }
+    }
+  }
+
   companion object {
     fun getInstance(project: Project): ShelfService = project.getService(ShelfService::class.java)
   }

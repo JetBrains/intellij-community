@@ -19,10 +19,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.*
 
 @Service(Service.Level.PROJECT)
 class ShelfRemoteActionExecutor(private val project: Project, private val cs: CoroutineScope) {
   private val shelfTreeHolder = ShelfTreeHolder.getInstance(project)
+  private val shelveChangesManager = ShelveChangesManager.getInstance(project)
 
   fun createPatchForShelvedChanges(changeListsDto: List<ChangeListDto>, silentClipboard: Boolean) {
     cs.launch(Dispatchers.EDT) {
@@ -131,6 +133,13 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
       .toTypedArray()
     cs.launch(Dispatchers.EDT) {
       OpenSourceUtil.navigate(focusEditor, *navigatables);
+    }
+  }
+
+  fun restoreShelves(selectedLists: List<SharedRef<ShelvedChangeListEntity>>) {
+    val currentDate = Date(System.currentTimeMillis())
+    selectedLists.mapNotNull { shelfTreeHolder.findChangeListNode(it) as? ShelvedListNode }.forEach {
+      shelveChangesManager.restoreList(it.changeList, currentDate)
     }
   }
 

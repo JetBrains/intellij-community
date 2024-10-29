@@ -2,9 +2,13 @@
 package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.platform.kernel.KernelService
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
+import com.jetbrains.rhizomedb.asOf
+import fleet.kernel.rete.Rete
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import java.awt.Color
 import javax.swing.UIManager
 
@@ -33,3 +37,10 @@ private val BACKGROUND_BALANCE
   get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
 
 private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgroundBase", JBColor(Color.BLACK, Color.WHITE))
+
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun <T> withLastKnownDb(body: () -> T): T {
+  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value) {
+    body()
+  }
+}

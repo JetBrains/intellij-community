@@ -33,22 +33,26 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
 
   override fun uiDataSnapshot(sink: DataSink) {
     super.uiDataSnapshot(sink)
-    sink[SHELVED_CHANGES_TREE_KEY] = this
-    sink[SELECTED_CHANGELISTS_KEY] = getSelectedLists()
-    sink[SELECTED_CHANGES_KEY] = getSelectedChanges()
-    val groupedChanges = SelectedData(this).iterateRawNodes()
-      .filter { it.userObject is ShelvedChangeEntity }
-      .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
-      .map { entry ->
-        entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
+    withLastKnownDb {
+      sink[SHELVED_CHANGES_TREE_KEY] = this
+      val selectedLists = getSelectedLists()
+      sink[SELECTED_CHANGELISTS_KEY] = selectedLists
+      sink[SELECTED_DELETED_CHANGELISTS_KEY] = selectedLists.filter { it.isDeleted }.toSet()
+      sink[SELECTED_CHANGES_KEY] = getSelectedChanges()
+      val groupedChanges = SelectedData(this).iterateRawNodes()
+        .filter { it.userObject is ShelvedChangeEntity }
+        .groupBy { it.findParentOfType(ShelvedChangeListNode::class.java) }
+        .map { entry ->
+          entry.key?.userObject as ShelvedChangeListEntity to entry.value.map { it.userObject as ShelvedChangeEntity }
+        }
+      val groupedChangesMap = groupedChanges.toMap()
+      sink[GROUPED_CHANGES_KEY] = groupedChangesMap
+      sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
+      if (!isEditing()) {
+        sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
       }
-    val groupedChangesMap = groupedChanges.toMap()
-    sink[GROUPED_CHANGES_KEY] = groupedChangesMap
-    sink[CHANGE_LISTS_KEY] = groupedChanges.map { ChangeList(it.first, it.second) }
-    if (!isEditing()) {
-      sink[PlatformDataKeys.DELETE_ELEMENT_PROVIDER] = deleteProvider
+      sink[NAVIGATABLE_ARRAY] = arrayOf(FrontendShelfNavigatable(project, groupedChangesMap))
     }
-    sink[NAVIGATABLE_ARRAY] = arrayOf(FrontendShelfNavigatable(project, groupedChangesMap))
   }
 
   private fun ChangesBrowserNode<*>.findParentOfType(clazz: Class<*>): ChangesBrowserNode<*>? {
@@ -79,6 +83,7 @@ class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs,
     val SHELVED_CHANGES_TREE_KEY: DataKey<ShelfTree> = create("ShelveChangesManager.ShelvedChangesTree")
     val SELECTED_CHANGES_KEY: DataKey<Set<ShelvedChangeEntity>> = create("ShelveChangesManager.SelectedChanges")
     val SELECTED_CHANGELISTS_KEY: DataKey<Set<ShelvedChangeListEntity>> = create("ShelveChangesManager.SelectedChangelists")
+    val SELECTED_DELETED_CHANGELISTS_KEY: DataKey<Set<ShelvedChangeListEntity>> = create("ShelveChangesManager.SelectedDeletedChangelists")
     val GROUPED_CHANGES_KEY: DataKey<Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>> = create("ShelveChangesManager.GroupedChanges")
   }
 }
