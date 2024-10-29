@@ -27,8 +27,6 @@ public class LauncherGenerator {
   private ExeReader myReader;
   private VersionInfo myVersionInfo;
 
-  public static final String LAUNCHER_USE_SEEKABLE_STREAM_PROPERTY = "launcher.use.seekable.stream";
-
   public LauncherGenerator(Path template, Path exePath) {
     myTemplate = template;
     myExePath = exePath;
@@ -36,14 +34,8 @@ public class LauncherGenerator {
 
   public void load() throws IOException {
     myReader = new ExeReader(myTemplate.getFileName().toString());
-    if ("true".equals(System.getProperty(LAUNCHER_USE_SEEKABLE_STREAM_PROPERTY))) {  // Android Studio: b/363795669
-      try (var stream = new RandomAccessFile(myTemplate.toFile(), "r")) {
-        myReader.read(stream);
-      }
-    } else {
-      try (var stream = new OffsetTrackingInputStream(new DataInputStream(Files.newInputStream(myTemplate)))) {
-        myReader.read(stream);
-      }
+    try (var stream = new OffsetTrackingInputStream(new DataInputStream(Files.newInputStream(myTemplate)))) {
+      myReader.read(stream);
     }
 
     var resourceSection = (ResourceSectionReader)myReader.getSectionReader(Section.RESOURCES_SECTION_NAME);

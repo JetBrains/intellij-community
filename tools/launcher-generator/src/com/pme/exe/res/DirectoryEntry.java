@@ -18,7 +18,6 @@
 package com.pme.exe.res;
 
 import com.pme.exe.Bin;
-import com.pme.util.StreamUtil;
 
 import java.io.DataInput;
 import java.io.IOException;
@@ -44,7 +43,6 @@ public class DirectoryEntry extends LevelEntry {
   private final ArrayList<DirectoryEntry> mySubDirs = new ArrayList<>();
   private final ArrayList<DataEntry> myData = new ArrayList<>();
   private final long myIdOrName;
-  private final long myStreamOffset;  // Android Studio: b/363795669
 
   public DirectoryEntry(ResourceSectionReader section, EntryDescription entry, long idOrName) {
     super(String.valueOf(idOrName));
@@ -60,9 +58,6 @@ public class DirectoryEntry extends LevelEntry {
       Value flagValue = new DWord("flag").setValue(DIRECTORY_ENTRY_FLAG);
       Bin.Value offset = entry.getOffsetToData();
       addOffsetHolder(new ValuesSub(offset, new ValuesAdd(mySection.getStartOffset(), flagValue)));
-      myStreamOffset = mySection.getStartOffset().getValue() + (offset.getValue() & ~DIRECTORY_ENTRY_FLAG);  // Android Studio: b/363795669
-    } else {
-      myStreamOffset = mySection.getStartOffset().getValue();  // Android Studio: b/363795669
     }
     myNamedEntries = addMember(new ArrayOfBins<>("Named entries", EntryDescription.class, numberOfNamedEntries));
     myNamedEntries.setCountHolder(numberOfNamedEntries);
@@ -120,10 +115,6 @@ public class DirectoryEntry extends LevelEntry {
 
   @Override
   public void read(DataInput stream) throws IOException {
-    if (StreamUtil.getOffset(stream) != myStreamOffset) {  // Android Studio: b/363795669
-      StreamUtil.seek(stream, myStreamOffset);
-    }
-
     super.read(stream);
 
     processEntries(myNamedEntries);
