@@ -2,8 +2,8 @@
 class Foo<U> : Base<U, Int> {
     val x = 1
 
-    <selection><caret></selection>constructor(x: U) : super(x)
-    constructor(x: U, y: Int) : super(x, y)
+    <caret>constructor(x: U?) : super(x)
+    constructor(x: U?, y: Int?) : super(x, y)
 
     fun foo() {
 
