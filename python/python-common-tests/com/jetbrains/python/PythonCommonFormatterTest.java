@@ -1361,4 +1361,9 @@ public abstract class PythonCommonFormatterTest extends PythonCommonTestCase {
   public void testAlignmentInMultilineTypeParameterListInClassDefinition() {
     doTest();
   }
+
+  // PY-77060
+  public void testSpaceAfterStarInTypeParameterList() {
+    doTest();
+  }
 }
