@@ -1,12 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.jcef;
 
+import com.intellij.util.Function;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.jetbrains.JBR;
 import com.jetbrains.cef.SharedMemory;
 import org.cef.browser.CefBrowser;
 import org.cef.handler.CefNativeRenderHandler;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,6 +31,10 @@ class JBCefNativeOsrHandler extends JBCefOsrHandler implements CefNativeRenderHa
   private final Map<String, SharedMemory.WithRaster> mySharedMemCache = new ConcurrentHashMap<>();
   private SharedMemory.WithRaster myCurrentFrame;
   private volatile boolean myIsDisposed = false;
+
+  JBCefNativeOsrHandler(@NotNull JComponent component, @NotNull Function<? super JComponent, ? extends Rectangle> screenBoundsProvider) {
+    super(component, screenBoundsProvider);
+  }
 
   @Override
   synchronized public void disposeNativeResources() {
