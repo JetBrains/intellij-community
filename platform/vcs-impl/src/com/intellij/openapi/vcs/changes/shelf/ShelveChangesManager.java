@@ -64,6 +64,8 @@ import com.intellij.vcsUtil.FilesProgress;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Tracer;
+import kotlin.Unit;
+import kotlin.jvm.functions.Function1;
 import kotlinx.coroutines.CoroutineScope;
 import org.jdom.Element;
 import org.jdom.Parent;
@@ -399,7 +401,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
         changeList.markToDelete(markToBeDeleted);
 
         if (Registry.is("llm.vcs.shelve.title.generation")) {
-          suggestBetterName(new ShelveTitlePatch(Files.readString(patchFile), patches.size()), name -> renameChangeList(changeList, name));
+          if (ShelveTitleProvider.hasDefaultName(commitMessage)) {
+            ShelveChangesNameSuggester.INSTANCE.suggestBetterName(myProject, new ShelveTitlePatch(Files.readString(patchFile), patches.size()),
+                                                                  name -> renameChangeList(changeList, name));
+          }
         }
 
         changeList.setName(schemePatchDir.getFileName().toString());
@@ -413,14 +418,6 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
     catch (Exception e) {
       throw new RuntimeException(e);
-    }
-  }
-
-  private void suggestBetterName(@NotNull ShelveTitlePatch patch, @NotNull Consumer<String> rename) {
-    for (@NotNull ShelveTitleProvider provider : ShelveTitleProvider.Companion.getEP_NAME().getExtensionList()) {
-      if (provider.suggestTitle(myProject, patch, rename)) {
-        return;
-      }
     }
   }
 
