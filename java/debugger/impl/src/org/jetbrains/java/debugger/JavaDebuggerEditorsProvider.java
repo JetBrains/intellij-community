@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,7 @@ public class JavaDebuggerEditorsProvider extends XDebuggerEditorsProviderBase {
   @NotNull
   @Override
   public XExpression createExpression(@NotNull Project project, @NotNull Document document, @Nullable Language language, @NotNull EvaluationMode mode) {
-    PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
+    PsiFile psiFile = ReadAction.compute(() -> PsiDocumentManager.getInstance(project).getPsiFile(document));
     if (psiFile instanceof JavaCodeFragment) {
       return new XExpressionImpl(document.getText(), language, StringUtil.nullize(((JavaCodeFragment)psiFile).importsToString()), mode);
     }
