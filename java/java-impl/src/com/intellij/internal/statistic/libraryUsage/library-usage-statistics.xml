@@ -81,6 +81,7 @@
   <technology name="dokka" root="org.jetbrains.dokka"/>
   <technology name="doobie" root="doobie"/>
   <technology name="doodle" root="io.nacular.doodle"/>
+  <technology name="dozer" root="com.github.dozermapper"/>
   <technology name="drools" root="org.drools"/>
   <technology name="dropwizard" root="io.dropwizard"/>
   <technology name="easymock" root="org.easymock"/>
@@ -239,6 +240,7 @@
   <technology name="mockito" root="org.mockito"/>
   <technology name="mockk" root="io.mockk"/>
   <technology name="mockserver" root="org.mockserver"/>
+  <technology name="moddelmapper" root="org.modelmapper"/>
   <technology name="moko-mvvm" root="dev.icerock.moko"/>
   <technology name="monix" root="monix.reactive"/>
   <technology name="monocle" root="monocle"/>

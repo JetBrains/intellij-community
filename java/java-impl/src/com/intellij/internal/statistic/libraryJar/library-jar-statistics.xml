@@ -39,6 +39,7 @@
   <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
+  <technology name="dozer" class="com.github.dozermapper.DozerBeanMapper"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
   <technology name="easymock" class="org.easymock.Mock"/>
@@ -152,6 +153,7 @@
   <technology name="microprofile" class="org.eclipse.microprofile.config.Config"/>
   <technology name="mockito" class="org.mockito.Mock"/>
   <technology name="mockserver" class="org.mockserver.model.Body"/>
+  <technology name="moddelmapper" class="org.modelmapper.ModelMapper"/>
   <technology name="monix" class="monix.reactive.Observable"/>
   <technology name="munit" class="munit.FunSuite"/>
   <technology name="mybatis" class="org.apache.ibatis.annotations.Select"/>
