@@ -117,7 +117,7 @@ final class PassExecutorService implements Disposable {
         }
       }
     }
-    catch (ProcessCanceledException ignored) {
+    catch (CancellationException ignored) {
     }
     catch (Error | RuntimeException e) {
       throw e;
@@ -344,7 +344,7 @@ final class PassExecutorService implements Disposable {
         }
         catch (ExecutionException e) {
           Throwable cause = e.getCause();
-          if (!(cause instanceof ControlFlowException)) {
+          if (!(cause instanceof ControlFlowException || cause instanceof CancellationException)) {
             LOG.error(cause);
           }
         }
@@ -445,11 +445,11 @@ final class PassExecutorService implements Disposable {
               }
             }
           }
-          catch (ProcessCanceledException e) {
+          catch (CancellationException e) {
             log(myUpdateProgress, myPass, "Canceled ");
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
-              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myFileEditor, myUpdateProgress, 
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myFileEditor, myUpdateProgress,
                                                                                                           ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
                 LOG.debug("PCE was thrown by " + myPass.getClass(), e);
