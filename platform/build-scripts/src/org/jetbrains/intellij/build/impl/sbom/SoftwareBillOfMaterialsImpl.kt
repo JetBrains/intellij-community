@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withContext
@@ -31,7 +32,6 @@ import org.jetbrains.intellij.build.SoftwareBillOfMaterials
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Companion.Suppliers
 import org.jetbrains.intellij.build.SoftwareBillOfMaterials.Options
 import org.jetbrains.intellij.build.downloadAsText
-import org.jetbrains.intellij.build.forEachConcurrent
 import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.Checksums
 import org.jetbrains.intellij.build.impl.DistributionForOsTaskResult
@@ -991,32 +991,29 @@ class SoftwareBillOfMaterialsImpl(
         workingDir = context.paths.communityHomeDir.resolve("platform/build-scripts/resources/sbom/$ntiaChecker"),
       )
     }
-    documents.forEachConcurrent { document ->
-      try {
-        context.runProcess(
-          args = listOf(
-            "docker", "run", "--rm",
-            "--volume=${document.parent}:${document.parent}:ro",
-            ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
-          ),
-          attachStdOutToException = true,
-        )
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Exception) {
-        val message =
-          """
-           Generated SBOM $document is not NTIA-conformant. 
-           Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
-           You may use https://package-search.jetbrains.com/ to search for them.
-          """.trimIndent()
-        if (STRICT_MODE) {
-          throw IllegalStateException(message, e)
-        }
-        else {
-          Span.current().addEvent("$message\n${e.stackTraceToString()}")
+    supervisorScope {
+      for (document in documents) {
+        launch(CoroutineName("NTIA conformance check for ${document.name}")) {
+          try {
+            context.runProcess(
+              args = listOf(
+                "docker", "run", "--rm",
+                "--volume=${document.parent}:${document.parent}:ro",
+                ntiaChecker, "--file", "${document.toAbsolutePath()}", "--verbose"
+              ),
+              attachStdOutToException = true,
+            )
+          }
+          catch (e: CancellationException) {
+            throw e
+          }
+          catch (e: Exception) {
+            context.messages.logErrorAndThrow("""
+             Generated SBOM $document is not NTIA-conformant. 
+             Please look for 'Components missing a supplier' in the suppressed exceptions and specify all missing suppliers.
+             You may use https://package-search.jetbrains.com/ to search for them.
+            """.trimIndent(), e)
+          }
         }
       }
     }
