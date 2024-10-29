@@ -11495,6 +11495,7 @@ a:com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 - f:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:actionPerformed(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.wm.ToolWindow,com.intellij.ui.content.Content):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
+- isDumbAware():Z
 - f:update(com.intellij.openapi.actionSystem.AnActionEvent):V
 - a:update(com.intellij.openapi.actionSystem.AnActionEvent,com.intellij.openapi.wm.ToolWindow,com.intellij.ui.content.Content):V
 c:com.intellij.openapi.wm.ex.AbstractDelegatingToRootTraversalPolicy

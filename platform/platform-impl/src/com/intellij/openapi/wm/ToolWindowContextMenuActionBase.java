@@ -9,6 +9,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ToolWindowContextMenuActionBase extends AnAction {
+
+  @Override
+  public @NotNull ActionUpdateThread getActionUpdateThread() {
+    return ActionUpdateThread.EDT;
+  }
+
+  @Override
+  public boolean isDumbAware() {
+    return true;
+  }
+
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
     ToolWindow toolWindow = e.getDataContext().getData(PlatformDataKeys.TOOL_WINDOW);
@@ -28,11 +39,6 @@ public abstract class ToolWindowContextMenuActionBase extends AnAction {
     }
     Content content = getContextContent(e, toolWindow);
     update(e, toolWindow, content);
-  }
-
-  @Override
-  public @NotNull ActionUpdateThread getActionUpdateThread() {
-    return ActionUpdateThread.EDT;
   }
 
   public abstract void update(@NotNull AnActionEvent e, @NotNull ToolWindow toolWindow, @Nullable Content content);
