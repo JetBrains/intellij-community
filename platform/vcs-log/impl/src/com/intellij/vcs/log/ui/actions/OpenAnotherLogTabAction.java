@@ -1,9 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -108,11 +106,36 @@ public abstract class OpenAnotherLogTabAction extends DumbAwareAction {
       VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
       if (logManager == null) return VcsLogFilterObject.collection();
 
-      Collection<? extends VcsLogUi> uis = ContainerUtil.filterIsInstance(
-        logManager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW),
-        MainVcsLogUi.class);
+      Collection<? extends VcsLogUi> uis = ContainerUtil.filterIsInstance(logManager.getVisibleLogUis(VcsLogTabLocation.TOOL_WINDOW),
+                                                                          MainVcsLogUi.class);
       if (uis.isEmpty()) return VcsLogFilterObject.collection();
       return ContainerUtil.getFirstItem(uis).getFilterUi().getFilters();
+    }
+  }
+
+  @ApiStatus.Internal
+  public static class InEditor extends OpenAnotherLogTabAction {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getData(PlatformDataKeys.TOOL_WINDOW) != null && ActionPlaces.VCS_LOG_TOOLBAR_PLACE.equals(e.getPlace())) {
+        e.getPresentation().setEnabledAndVisible(false);
+      }
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getDescription(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.description.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull @Nls(capitalization = Nls.Capitalization.Title) String getText(@Nls @NotNull String vcsName) {
+      return VcsLogBundle.message("vcs.log.action.open.new.tab.with.log.in.editor", vcsName);
+    }
+
+    @Override
+    protected @NotNull VcsLogTabLocation getLocation(@NotNull AnActionEvent e) {
+      return VcsLogTabLocation.EDITOR;
     }
   }
 }
