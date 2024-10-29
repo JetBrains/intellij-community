@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
-import com.intellij.platform.eel.EelTunnelsApi.Arguments.hostAddressBuilder
 import com.intellij.platform.eel.EelTunnelsApi.Connection
 import com.intellij.platform.eel.impl.HostAddressBuilderImpl
 import kotlinx.coroutines.CoroutineScope
@@ -118,6 +117,19 @@ sealed interface EelTunnelsApi {
        */
       fun build(): HostAddress
     }
+
+    companion object {
+      /**
+       * Creates a builder for address on the remote host.
+       */
+      fun Builder(port: UShort): Builder = HostAddressBuilderImpl(port)
+
+      /**
+       * Creates a builder for address `localhost:0`.
+       * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
+       */
+      fun Builder(): Builder = HostAddressBuilderImpl(0u)
+    }
   }
 
 
@@ -232,19 +244,6 @@ sealed interface EelTunnelsApi {
      * Stops the server from accepting connections.
      */
     suspend fun close()
-  }
-
-  companion object Arguments {
-    /**
-     * Creates a builder for address on the remote host.
-     */
-    fun hostAddressBuilder(port: UShort): HostAddress.Builder = HostAddressBuilderImpl(port)
-
-    /**
-     * Creates a builder for address `localhost:0`.
-     * This can be useful in remote port forwarding, as it allocates a random port on the remote host side.
-     */
-    fun hostAddressBuilder(): HostAddress.Builder = HostAddressBuilderImpl(0u)
   }
 }
 
@@ -364,7 +363,7 @@ suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   host: String, port: UShort,
   errorHandler: suspend (EelConnectionError) -> T,
   action: suspend CoroutineScope.(Connection) -> T,
-): T = withConnectionToRemotePort(hostAddressBuilder(port).hostname(host).build(), errorHandler, action)
+): T = withConnectionToRemotePort(EelTunnelsApi.HostAddress.Builder(port).hostname(host).build(), errorHandler, action)
 
 suspend fun <T> EelTunnelsApi.withConnectionToRemotePort(
   remotePort: UShort,

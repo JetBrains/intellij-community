@@ -8,14 +8,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.platform.eel.EelApi
-import com.intellij.platform.eel.EelExecApi
-import com.intellij.platform.eel.EelPlatform
-import com.intellij.platform.eel.EelTunnelsApi.Arguments.hostAddressBuilder
+import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.getPath
 import com.intellij.platform.eel.getOrThrow
-import com.intellij.platform.eel.provider.utils.EelPathUtils
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import com.intellij.platform.util.coroutines.channel.ChannelInputStream
 import com.intellij.platform.util.coroutines.channel.ChannelOutputStream
@@ -90,7 +86,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     request.targetPortBindings.forEach { targetPortBinding ->
       val localPort = targetPortBinding.local ?: NetUtils.findAvailableSocketPort()
-      val targetAddress = hostAddressBuilder(targetPortBinding.target.toUShort()).build()
+      val targetAddress = EelTunnelsApi.HostAddress.Builder(targetPortBinding.target.toUShort()).build()
 
       forwardingScope.launch {
         forwardLocalPort(eel.tunnels, localPort, targetAddress)
@@ -104,7 +100,7 @@ private class EelTargetEnvironment(override val request: EelTargetEnvironmentReq
 
     request.localPortBindings.forEach { localPortBinding ->
       forwardingScope.launch {
-        val remoteAddress = hostAddressBuilder((localPortBinding.target ?: 0).toUShort()).build()
+        val remoteAddress = EelTunnelsApi.HostAddress.Builder((localPortBinding.target ?: 0).toUShort()).build()
         val acceptor = eel.tunnels.getAcceptorForRemotePort(remoteAddress).getOrThrow()
 
         val socket = Socket()

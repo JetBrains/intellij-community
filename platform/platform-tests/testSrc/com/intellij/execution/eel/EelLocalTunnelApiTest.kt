@@ -31,7 +31,7 @@ class EelLocalTunnelApiTest {
   @Test
   fun testCheckFailureConnection(): Unit = timeoutRunBlocking(5.minutes) {
     when (localEel.tunnels.getConnectionToRemotePort(
-      EelTunnelsApi.hostAddressBuilder(22U).hostname("google.com").connectionTimeout(5.seconds).build())) {
+      EelTunnelsApi.HostAddress.Builder(22U).hostname("google.com").connectionTimeout(5.seconds).build())) {
       is EelResult.Error -> Unit
       is EelResult.Ok -> Assertions.fail("Connection should fail")
     }
@@ -39,11 +39,11 @@ class EelLocalTunnelApiTest {
 
   @Test
   fun testClientSuccessConnection(): Unit = timeoutRunBlocking(1.minutes) {
-    val helper = localEel.exec.execute(executor.createBuilderToExecuteMain()).getOrThrow()
+    val helper = localEel.exec.execute(executor.createBuilderToExecuteMain().build()).getOrThrow()
     try {
       val port = helper.stdout.receive().decodeToString().trim().toInt()
       val address = EelTunnelsApi
-        .hostAddressBuilder(port.toUShort())
+        .HostAddress.Builder(port.toUShort())
         .preferIPv4()
         .build()
       val connection = localEel.tunnels.getConnectionToRemotePort(address).getOrThrow()
