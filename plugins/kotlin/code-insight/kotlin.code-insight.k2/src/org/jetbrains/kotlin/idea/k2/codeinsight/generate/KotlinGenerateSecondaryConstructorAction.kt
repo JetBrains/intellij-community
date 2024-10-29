@@ -69,7 +69,7 @@ class KotlinGenerateSecondaryConstructorAction : KotlinGenerateMemberActionBase<
     context(KaSession)
     private fun getSuperClassSymbolNoAny(classSymbol: KaClassSymbol): KaClassSymbol? =
         classSymbol.superTypes.mapNotNull { it.symbol as? KaClassSymbol }.find { superClassSymbol ->
-            superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any
+            superClassSymbol.classKind == KaClassKind.CLASS && superClassSymbol.classId != StandardClassIds.Any && superClassSymbol.classId != StandardClassIds.Enum
         }
 
     context(KaSession)

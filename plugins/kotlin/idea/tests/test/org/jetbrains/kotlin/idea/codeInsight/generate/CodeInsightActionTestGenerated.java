@@ -40,6 +40,11 @@ public class CodeInsightActionTestGenerated extends AbstractCodeInsightActionTes
         runTest("testData/codeInsight/generate/secondaryConstructors/emptyExists.kt");
     }
 
+    @TestMetadata("enumClass.kt")
+    public void testEnumClass() throws Exception {
+        runTest("testData/codeInsight/generate/secondaryConstructors/enumClass.kt");
+    }
+
     @TestMetadata("javaSupers.kt")
     public void testJavaSupers() throws Exception {
         runTest("testData/codeInsight/generate/secondaryConstructors/javaSupers.kt");
