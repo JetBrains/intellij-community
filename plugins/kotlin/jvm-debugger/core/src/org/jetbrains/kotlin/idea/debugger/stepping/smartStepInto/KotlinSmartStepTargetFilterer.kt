@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.JVMNameUtil
 import com.intellij.debugger.impl.DebuggerUtilsEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.PsiElement
@@ -90,9 +91,8 @@ class KotlinSmartStepTargetFilterer(
     }
 
     private suspend fun KotlinMethodSmartStepTarget.matches(owner: String, name: String, signature: String, currentCount: Int): Boolean {
-        if (ordinal != currentCount) return false
-        val nameMatches = methodNameMatches(methodInfo, name)
-        if (!nameMatches) return false
+        val matchingByNameAndOrdinalTargets = targets.filter { it.ordinal == currentCount && methodNameMatches(it.methodInfo, name) }
+        if (this !in matchingByNameAndOrdinalTargets) return false
         // Declaration may be empty only for invoke functions
         // In this case, there is only one possible signature, so it should match
         val declaration = getDeclaration() ?: return methodInfo.isInvoke
@@ -121,7 +121,8 @@ class KotlinSmartStepTargetFilterer(
                 return true
             }
         }
-        return matchesBySignature(declaration, owner, signature)
+        val hasSimilarTargets = matchingByNameAndOrdinalTargets.size > 1
+        return matchesBySignature(declaration, owner, signature, hasSimilarTargets)
     }
 
     context(KaSession)
@@ -132,13 +133,22 @@ class KotlinSmartStepTargetFilterer(
         return owner == internalClassName
     }
 
-    private suspend fun matchesBySignature(declaration: KtDeclaration, owner: String, signature: String): Boolean =
+    private suspend fun matchesBySignature(
+        declaration: KtDeclaration,
+        owner: String,
+        signature: String,
+        hasSimilarTargets: Boolean
+    ): Boolean =
         readAction {
             analyze(declaration) {
                 val symbol = declaration.symbol as? KaCallableSymbol ?: return@analyze false
-                val declarationSignature = symbol.getJvmSignature()
                 val declarationInternalName = symbol.getJvmInternalClassName()
-                signature == declarationSignature && owner.isSubClassOf(declarationInternalName)
+                if (!owner.isSubClassOf(declarationInternalName)) return@analyze false
+                // Relaxing the check when there are no alternative candidates for the given target.
+                // This reduces the number of error reports.
+                if (!ApplicationManager.getApplication().isUnitTestMode && !hasSimilarTargets) return@analyze true
+                val declarationSignature = symbol.getJvmSignature()
+                signature == declarationSignature
             }
         }
 
