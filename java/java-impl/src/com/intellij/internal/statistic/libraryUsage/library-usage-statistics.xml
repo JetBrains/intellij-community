@@ -215,6 +215,7 @@
   <technology name="kotlinx-io" root="kotlinx.io"/>
   <technology name="kotlinx-jupyter-ktor-client" root="org.jetbrains.kotlinx.jupyter.ktor.client"/>
   <technology name="kotlinx-jupyter-json-generation" root="org.jetbrains.kotlinx.jupyter.json"/>
+  <technology name="kotlin-logging" root="io.github.oshai.kotlinlogging"/>
   <technology name="kotlinx-serialization" root="kotlinx.serialization"/>
   <technology name="ktlint" root="com.pinterest.ktlint"/>
   <technology name="ktor" root="io.ktor"/>
@@ -223,6 +224,7 @@
   <technology name="lagom" root="com.lightbend.lagom"/>
   <technology name="laminar" root="laminar"/>
   <technology name="liquibase" root="liquibase"/>
+  <technology name="log4j1" root="org.apache.log4j"/>
   <technology name="log4j" root="org.apache.logging.log4j"/>
   <technology name="logback" root="ch.qos.logback"/>
   <technology name="lombok" root="lombok"/>
