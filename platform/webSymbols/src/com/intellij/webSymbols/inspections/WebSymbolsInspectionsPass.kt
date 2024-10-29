@@ -3,10 +3,10 @@ package com.intellij.webSymbols.inspections
 import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
+import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
-import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
 import com.intellij.codeInsight.intention.EmptyIntentionAction
 import com.intellij.codeInsight.intention.IntentionAction
@@ -33,7 +33,6 @@ import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil
 import com.intellij.psi.impl.source.tree.injected.changesHandler.innerRange
 import com.intellij.psi.util.startOffset
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.webSymbols.WebSymbolsBundle
 import com.intellij.webSymbols.inspections.impl.WebSymbolsInspectionToolMappingEP
 import com.intellij.webSymbols.references.WebSymbolReference
@@ -42,54 +41,49 @@ import com.intellij.webSymbols.references.WebSymbolReferenceProblem.ProblemKind
 import com.intellij.webSymbols.utils.applyIfNotNull
 import org.jetbrains.annotations.PropertyKey
 
-internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project,
-                                                                                                                     document) {
-
-  private val referencesWithProblems = ContainerUtil.createConcurrentList<Pair<Int, WebSymbolReference>>()
-  private val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
-
-
+internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document: Document) : TextEditorHighlightingPass(psiFile.project, document) {
   override fun doCollectInformation(progress: ProgressIndicator) {
-    if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(file)) return
+    if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiFile)) return
+    val referencesWithProblems: MutableList<Pair<Int, WebSymbolReference>> = mutableListOf()
+    referencesWithProblems.addAll(collectReferencesFromEntireFile(psiFile) { 0 })
 
-    analyseFile(file) { 0 }
-
-    for (injectedDocument in InjectedLanguageManager.getInstance(file.project).getCachedInjectedDocumentsInRange(file, file.textRange)) {
+    for (injectedDocument in InjectedLanguageManager.getInstance(psiFile.project).getCachedInjectedDocumentsInRange(psiFile, psiFile.textRange)) {
       if (!injectedDocument.isValid) {
         continue
       }
-      InjectedLanguageUtil.enumerate(injectedDocument, file) { injectedFile, places ->
+      InjectedLanguageUtil.enumerate(injectedDocument, psiFile) { injectedFile, places ->
         if (!injectedFile.isValid) return@enumerate
-        analyseFile(injectedFile) { offset ->
+        referencesWithProblems.addAll(collectReferencesFromEntireFile(injectedFile) { offset ->
           val place = places.find { it.innerRange.contains(offset) }
-                      ?: return@analyseFile null
+                      ?: return@collectReferencesFromEntireFile null
           val hostOffset = place.rangeInsideHost.startOffset - place.innerRange.startOffset
-          hostOffset + (place.host?.startOffset ?: return@analyseFile null)
-        }
+          hostOffset + (place.host?.startOffset ?: return@collectReferencesFromEntireFile null)
+        })
       }
     }
+    val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, psiFile, id) ?: return
+
+    val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
+    val highlights = referencesWithProblems.flatMap { (offset, ref) -> ref.createProblemAnnotations(offset, myInspectionToolInfos) }
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, dirtyScope.startOffset, dirtyScope.endOffset,
+                                                             highlights, id)
   }
 
   override fun doApplyInformationToEditor() {
-    val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, file, id) ?: return
-
-    UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, dirtyScope.startOffset, dirtyScope.endOffset,
-                                                   referencesWithProblems.flatMap { (offset, ref) -> ref.createProblemAnnotations(offset) },
-                                                   colorsScheme, id)
   }
 
-  private fun analyseFile(file: PsiFile, offsetProvider: (Int) -> Int?) {
-    SyntaxTraverser.psiTraverser(file)
+  private fun collectReferencesFromEntireFile(file: PsiFile, offsetProvider: (Int) -> Int?) : List<Pair<Int, WebSymbolReference>> {
+    return SyntaxTraverser.psiTraverser(file)
       .flatMap { PsiSymbolReferenceService.getService().getReferences(it, WebSymbolReference::class.java) }
       .filter { it.getProblems().isNotEmpty() }
-      .forEach { ref -> offsetProvider(ref.absoluteRange.startOffset)?.let { referencesWithProblems.add(Pair(it, ref)) } }
+      .mapNotNull { ref -> offsetProvider(ref.absoluteRange.startOffset)?.let { (Pair(it, ref)) } }
   }
 
   private val inspectionProfile = InspectionProjectProfileManager.getInstance(myProject).currentProfile
 
-  private fun WebSymbolReference.createProblemAnnotations(offset: Int): List<HighlightInfo> =
+  private fun WebSymbolReference.createProblemAnnotations(offset: Int, map: MutableMap<String, InspectionToolInfo>): List<HighlightInfo> =
     getProblems().mapNotNull { problem ->
-      val inspectionInfos = problem.getInspectionInfo(problem.kind)
+      val inspectionInfos = problem.getInspectionInfo(problem.kind, map)
       if (inspectionInfos.isNotEmpty() && inspectionInfos.any { !it.enabled || it.isSuppressedFor(element) })
         return@mapNotNull null
 
@@ -141,19 +135,19 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
     return builder.create()
   }
 
-  private fun WebSymbolReferenceProblem.getInspectionInfo(problemKind: ProblemKind): List<InspectionToolInfo> =
+  private fun WebSymbolReferenceProblem.getInspectionInfo(problemKind: ProblemKind, map: MutableMap<String, InspectionToolInfo>): List<InspectionToolInfo> =
     symbolKinds
       .mapNotNull { symbolType ->
         WebSymbolsInspectionToolMappingEP.get(symbolType.namespace, symbolType.kind, problemKind)?.toolShortName
       }.map {
-        myInspectionToolInfos.computeIfAbsent(it, ::createToolInfo)
+        map.computeIfAbsent(it, ::createToolInfo)
       }
 
   private fun createToolInfo(toolShortName: String): InspectionToolInfo {
     val profile = inspectionProfile
 
     @Suppress("TestOnlyProblems")
-    val tool = profile.getInspectionTool(toolShortName, file)
+    val tool = profile.getInspectionTool(toolShortName, psiFile)
                ?: run {
                  if (ApplicationManager.getApplication().isUnitTestMode && !InspectionProfileImpl.INIT_INSPECTIONS)
                    return InspectionToolInfo(toolShortName, false, null,
@@ -162,9 +156,9 @@ internal class WebSymbolsInspectionsPass(private val file: PsiFile, document: Do
                }
     val highlightDisplayKey = HighlightDisplayKey.find(toolShortName)
                               ?: throw IllegalStateException("Cannot find HighlightDisplayKey for $toolShortName")
-    val errorLevel = profile.getErrorLevel(highlightDisplayKey, file)
+    val errorLevel = profile.getErrorLevel(highlightDisplayKey, psiFile)
     return InspectionToolInfo(toolShortName,
-                              profile.isToolEnabled(highlightDisplayKey, file) && errorLevel != HighlightDisplayLevel.DO_NOT_SHOW,
+                              profile.isToolEnabled(highlightDisplayKey, psiFile) && errorLevel != HighlightDisplayLevel.DO_NOT_SHOW,
                               highlightDisplayKey, tool, errorLevel.severity)
   }
 
