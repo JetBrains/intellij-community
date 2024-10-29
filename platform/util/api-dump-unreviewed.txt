@@ -4757,7 +4757,7 @@ f:com.intellij.util.io.IOUtil
 - s:toHexString(B[]):java.lang.String
 - s:toHexString(B[],I):java.lang.String
 - s:toString(java.nio.ByteBuffer):java.lang.String
-- s:wrapSafely(java.lang.AutoCloseable,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.AutoCloseable
+- s:wrapSafely(java.lang.AutoCloseable,com.intellij.openapi.util.ThrowableNotNullFunction):java.lang.Object
 - s:writeCharSequence(java.lang.CharSequence,java.io.DataOutput):V
 - s:writeString(java.lang.String,java.io.DataOutput):V
 - s:writeStringList(java.io.DataOutput,java.util.Collection):V

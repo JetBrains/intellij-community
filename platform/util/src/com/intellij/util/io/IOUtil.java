@@ -12,8 +12,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.DataOutputStream;
 import java.io.*;
+import java.io.DataOutputStream;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -504,7 +504,7 @@ public final class IOUtil {
    * If the wrapperer call fails -- close storageToWrap before propagating exception up the callstack.
    * (If the wrapperer call succeeded -- wrapping storage (Out) is now responsible for the closing of wrapped storage)
    */
-  public static <Out extends AutoCloseable, In extends AutoCloseable, E extends Throwable>
+  public static <Out, In extends AutoCloseable, E extends Throwable>
   Out wrapSafely(@NotNull In storageToWrap,
                  @NotNull ThrowableNotNullFunction<In, Out, E> wrapperer) throws E {
     try {
