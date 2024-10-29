@@ -125,7 +125,13 @@ class MPSProperties : JetBrainsProductProperties() {
         val (execPath, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.x64)
         Files.copy(
             execPath,
-            Path.of("$targetDirectory/build/resources/$baseFileName"),
+            Path.of("$targetDirectory/build/resources/$baseFileName-x64"),
+            StandardCopyOption.COPY_ATTRIBUTES)
+
+        val (execPath2, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.aarch64)
+        Files.copy(
+            execPath2,
+            Path.of("$targetDirectory/build/resources/$baseFileName-aarch64"),
             StandardCopyOption.COPY_ATTRIBUTES)
 
         // copy jre version

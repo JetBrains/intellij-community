@@ -426,7 +426,9 @@
         <copy todir="${mps.folder}/bin/win">
             <fileset dir="${community.out}/dist.all/bin/win"/>
         </copy>
-        <copy file="${community.out}/dist.all/build/resources/mps" todir="${mps.folder}/build/resources"/>
+        <copy  todir="${mps.folder}/build/resources">
+            <fileset includes="${community.out}/dist.all/build/resources/mps*"/>
+        </copy>
         <copy file="${community.out}/dist.all/build/dependencies/gradle.properties" todir="${mps.folder}/build/dependencies"/>
 
         <!--Copy plugin libraries to plugin folders-->
