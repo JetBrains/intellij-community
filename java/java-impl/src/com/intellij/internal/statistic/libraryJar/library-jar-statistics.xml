@@ -129,6 +129,7 @@
   <technology name="kotest" class="io.kotest.core.annotation.Tags"/>
   <technology name="kotless" class="io.kotless.HttpMethod"/>
   <technology name="kotlin" class="kotlin.reflect.KClass"/>
+  <technology name="kotlin-logging" class="io.github.oshai.kotlinlogging.KotlinLogging"/>
   <technology name="kotlin-test" root="kotlin.test.Asserter"/>
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
@@ -141,6 +142,9 @@
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
   <technology name="liquibase" class="liquibase.Liquibase"/>
+  <technology name="log4j1" class="org.apache.log4j.Logger"/>
+  <technology name="log4j2" class="org.apache.logging.log4j.Logger"/>
+  <technology name="logback" class="ch.qos.logback.classic.Logger"/>
   <technology name="lombok" class="lombok.Getter"/>
   <technology name="mapstruct" class="org.mapstruct.Mapping"/>
   <technology name="micrometer" class="io.micrometer.core.annotation.Timed"/>
@@ -188,6 +192,7 @@
   <technology name="selenium" class="org.openqa.selenium.WebDriver"/>
   <technology name="serenity" class="net.thucydides.core.annotations.Step"/>
   <technology name="shapeless" class="shapeless.HList"/>
+  <technology name="slf4j" class="org.slf4j.Logger"/>
   <technology name="slick" class="slick.sql.SqlAction"/>
   <technology name="smallrye-mutiny" class="io.smallrye.mutiny.Uni"/>
   <technology name="spark-java" class="spark.Spark"/>
