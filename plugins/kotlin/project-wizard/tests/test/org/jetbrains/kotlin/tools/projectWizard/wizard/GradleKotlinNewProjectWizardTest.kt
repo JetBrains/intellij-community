@@ -134,7 +134,7 @@ class GradleKotlinNewProjectWizardTest : GradleCreateProjectTestCase(), NewKotli
         baseData!!.path = testRoot.toNioPath().getResolvedPath(path).parent.toCanonicalPath()
         kotlinBuildSystemData!!.buildSystem = GRADLE
         kotlinGradleData!!.parentData = parentData
-        kotlinGradleData!!.generateSingleModule = !generateMultipleModules
+        kotlinGradleData!!.generateMultipleModules = generateMultipleModules
         kotlinGradleData!!.gradleDsl = if (useKotlinDsl) GradleDsl.KOTLIN else GradleDsl.GROOVY
         kotlinGradleData!!.groupId = groupId
         kotlinGradleData!!.artifactId = name
