@@ -15,12 +15,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaSymbolModality
 import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -32,9 +30,9 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
 internal class FirSuperMemberCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(visibilityChecker, priority) {
 
     private data class CallableInfo(
         private val _type: KaType,
@@ -51,17 +49,15 @@ internal class FirSuperMemberCompletionContributor(
     override fun complete(
         positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) = with(positionContext) {
         val superReceiver = positionContext.superExpression
-        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KaIntersectionType) {
-                getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters).asIterable() to emptySet()
+                getNonExtensionsMemberSymbols(superType).asIterable() to emptySet()
             } else {
-                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts, visibilityChecker, sessionParameters)
+                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts)
             }
         collectCallToSuperMember(superReceiver, nonExtensionMembers, weighingContext, namesNeedDisambiguation)
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers, namesNeedDisambiguation)
@@ -71,14 +67,12 @@ internal class FirSuperMemberCompletionContributor(
     context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
         superTypes: List<KaType>,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KaCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (callableInfo in getNonExtensionsMemberSymbols(superType, visibilityChecker, sessionParameters)) {
+            for (callableInfo in getNonExtensionsMemberSymbols(superType)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
@@ -108,12 +102,11 @@ internal class FirSuperMemberCompletionContributor(
     context(KaSession)
     private fun getNonExtensionsMemberSymbols(
         receiverType: KaType,
-        visibilityChecker: CompletionVisibilityChecker,
-        sessionParameters: FirCompletionSessionParameters,
-    ): Sequence<CallableInfo> {
-        return collectNonExtensionsForType(receiverType, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter = { true })
-            .map { CallableInfo(receiverType, it.signature, it.scopeKind) }
-    }
+    ): Sequence<CallableInfo> = collectNonExtensionsForType(
+        type = receiverType,
+        visibilityChecker = visibilityChecker,
+        scopeNameFilter = scopeNameFilter,
+    ).map { CallableInfo(receiverType, it.signature, it.scopeKind) }
 
     context(KaSession)
     private fun collectCallToSuperMember(
@@ -174,7 +167,7 @@ internal class FirSuperMemberCompletionContributor(
         // * Callable.call -> <anonymous object>.call
         val superFunctionToContainingFunction = superReceiver
             .parentsOfType<KtNamedFunction>(withSelf = false)
-            .map { getOriginalDeclarationOrSelf(it, basicContext.originalKtFile) }
+            .map { getOriginalDeclarationOrSelf(it, originalKtFile) }
             .flatMap { containingFunction ->
                 containingFunction
                     .symbol

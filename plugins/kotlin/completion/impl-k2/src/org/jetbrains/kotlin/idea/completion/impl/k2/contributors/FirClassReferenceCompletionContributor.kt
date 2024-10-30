@@ -2,23 +2,21 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.platform.jvm.isJvm
 
 internal class FirClassReferenceCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinCallableReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinCallableReferencePositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinCallableReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         if (positionContext.explicitReceiver == null) return
         sink.addElement(createKeywordElement("class"))

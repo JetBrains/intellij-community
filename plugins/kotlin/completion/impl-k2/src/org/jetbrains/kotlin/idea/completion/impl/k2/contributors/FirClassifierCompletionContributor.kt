@@ -4,13 +4,11 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -18,9 +16,9 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositio
 import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -33,26 +31,18 @@ internal open class FirClassifierCompletionContributor(
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
-        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
-
         when (val receiver = positionContext.explicitReceiver) {
-            null -> {
-                completeWithoutReceiver(positionContext, visibilityChecker, weighingContext)
-            }
+            null -> completeWithoutReceiver(positionContext, weighingContext)
 
-            else -> {
-                completeWithReceiver(receiver, visibilityChecker, weighingContext)
-            }
+            else -> completeWithReceiver(receiver, weighingContext)
         }
     }
 
     context(KaSession)
     private fun completeWithReceiver(
         receiver: KtElement,
-        visibilityChecker: CompletionVisibilityChecker,
-        context: WeighingContext
+        context: WeighingContext,
     ) {
         val symbols = receiver.reference()
             ?.resolveToSymbols()
@@ -75,8 +65,7 @@ internal open class FirClassifierCompletionContributor(
     context(KaSession)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
-        visibilityChecker: CompletionVisibilityChecker,
-        context: WeighingContext
+        context: WeighingContext,
     ) {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         getAvailableClassifiersCurrentScope(
@@ -110,9 +99,9 @@ internal open class FirClassifierCompletionContributor(
 }
 
 internal class FirAnnotationCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirClassifierCompletionContributor(basicContext, priority) {
+) : FirClassifierCompletionContributor(visibilityChecker, priority) {
 
     context(KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
@@ -135,9 +124,9 @@ internal class FirAnnotationCompletionContributor(
 }
 
 internal class FirClassifierReferenceCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int
-) : FirClassifierCompletionContributor(basicContext, priority) {
+) : FirClassifierCompletionContributor(visibilityChecker, priority) {
 
     context(KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {

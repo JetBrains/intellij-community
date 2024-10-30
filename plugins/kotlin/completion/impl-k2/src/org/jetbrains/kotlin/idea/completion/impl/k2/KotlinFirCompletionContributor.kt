@@ -10,18 +10,17 @@ import com.intellij.patterns.StandardPatterns
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleParameterPositionContext
 import org.jetbrains.kotlin.kdoc.lexer.KDocTokens
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.psi.KtProperty
 
 class KotlinFirCompletionContributor : CompletionContributor() {
     init {
@@ -164,26 +163,4 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
         return false
     }
-}
-
-internal data class FirCompletionSessionParameters(
-    val basicContext: FirBasicCompletionContext,
-    val positionContext: KotlinRawPositionContext,
-) {
-    private val languageVersionSettings = basicContext.project.languageVersionSettings
-    val excludeEnumEntries: Boolean = !languageVersionSettings.supportsFeature(LanguageFeature.EnumEntries)
-
-    val allowSyntheticJavaProperties: Boolean = positionContext !is KDocNameReferencePositionContext &&
-            (positionContext !is KotlinCallableReferencePositionContext || languageVersionSettings.supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
-
-    val allowJavaGettersAndSetters: Boolean = !allowSyntheticJavaProperties || basicContext.parameters.invocationCount > 1
-
-    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
-        get() {
-            val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)?.typeReference?.parent ?: return true
-            return !(basicContext.parameters.invocationCount == 0
-                    && (declaration is KtNamedFunction || declaration is KtProperty)
-                    && positionContext.explicitReceiver == null
-                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
-        }
 }

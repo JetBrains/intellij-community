@@ -14,9 +14,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.findValueArgument
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -26,18 +25,16 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
-import kotlin.collections.get
 
 internal class FirNamedArgumentCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinExpressionNameReferencePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         if (positionContext.explicitReceiver != null) return
 

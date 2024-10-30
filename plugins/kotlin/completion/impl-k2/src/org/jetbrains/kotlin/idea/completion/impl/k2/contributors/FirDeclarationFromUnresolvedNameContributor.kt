@@ -7,9 +7,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
@@ -29,15 +28,14 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * This contributor would contribute `unresolvedVar` at caret position above.
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val declaration = positionContext.position.getCurrentDeclarationAtCaret() ?: return
         val referenceScope = referenceScope(declaration) ?: return
@@ -64,7 +62,7 @@ internal class FirDeclarationFromUnresolvedNameContributor(
         val name = unresolvedRef.getReferencedName()
         if (!prefixMatcher.prefixMatches(name)) return
 
-        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, basicContext.originalKtFile)
+        val originalCurrentDeclaration = getOriginalDeclarationOrSelf(currentDeclarationInFakeFile, originalKtFile)
         if (!shouldOfferCompletion(unresolvedRef, originalCurrentDeclaration)) return
 
         if (unresolvedRef.reference?.resolve() == null) {

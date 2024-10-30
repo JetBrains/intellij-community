@@ -13,12 +13,10 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.Name
 
@@ -64,7 +62,6 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
     scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
-    sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = sequence {
     val indexedImplicitReceivers = scopeContext.implicitReceivers.associateBy { it.scopeIndexInTower }
@@ -77,15 +74,19 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
         val nonExtensions = if (isImplicitReceiverScope) {
             val implicitReceiver = indexedImplicitReceivers.getValue(kind.indexInTower)
             collectNonExtensionsForType(
-                implicitReceiver.type,
-                visibilityChecker,
-                scopeNameFilter,
-                sessionParameters,
-                implicitReceiver.scopeIndexInTower,
-                symbolFilter,
+                type = implicitReceiver.type,
+                visibilityChecker = visibilityChecker,
+                scopeNameFilter = scopeNameFilter,
+                indexInTower = implicitReceiver.scopeIndexInTower,
+                symbolFilter = symbolFilter,
             )
         } else {
-            collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter).map {
+            collectNonExtensionsFromScope(
+                scope = scopeWithKind.scope,
+                visibilityChecker = visibilityChecker,
+                scopeNameFilter = scopeNameFilter,
+                symbolFilter = symbolFilter,
+            ).map {
                 KtCallableSignatureWithContainingScopeKind(it, kind)
             }
         }
@@ -98,13 +99,16 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
     scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
-    sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
     .filterNot { it.kind is KaScopeKind.LocalScope || it.kind is KaScopeKind.TypeScope }
     .flatMap { scopeWithKind ->
-        collectNonExtensionsFromScope(scopeWithKind.scope, visibilityChecker, scopeNameFilter, sessionParameters, symbolFilter)
-            .map { KtCallableSignatureWithContainingScopeKind(it, scopeWithKind.kind) }
+        collectNonExtensionsFromScope(
+            scope = scopeWithKind.scope,
+            visibilityChecker = visibilityChecker,
+            scopeNameFilter = scopeNameFilter,
+            symbolFilter = symbolFilter,
+        ).map { KtCallableSignatureWithContainingScopeKind(it, scopeWithKind.kind) }
     }
 
 /**
@@ -116,15 +120,15 @@ internal fun collectNonExtensionsForType(
     type: KaType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
-    sessionParameters: FirCompletionSessionParameters,
     indexInTower: Int? = null,
-    symbolFilter: (KaCallableSymbol) -> Boolean,
+    symbolFilter: (KaCallableSymbol) -> Boolean = { true },
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
     val typeScope = type.scope ?: return emptySequence()
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
-        .applyIf(!sessionParameters.allowSyntheticJavaProperties) { filter { it.symbol !is KaSyntheticJavaPropertySymbol } }
-        .applyIf(!sessionParameters.allowJavaGettersAndSetters) {
+        .applyIf(!visibilityChecker.allowSyntheticJavaProperties) {
+            filterNot { it.symbol is KaSyntheticJavaPropertySymbol }
+        }.applyIf(!visibilityChecker.allowJavaGettersAndSetters) {
             filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
         }
 
@@ -137,7 +141,9 @@ internal fun collectNonExtensionsForType(
 
     return nonExtensionsFromType
         .map { KtCallableSignatureWithContainingScopeKind(it, KaScopeKinds.TypeScope(scopeIndex)) }
-        .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.signature.symbol) } }
+        .applyIf(visibilityChecker.excludeEnumEntries) {
+            filterNot { isEnumEntriesProperty(it.signature.symbol) }
+        }
 }
 
 context(KaSession)
@@ -172,12 +178,13 @@ internal fun collectNonExtensionsFromScope(
     scope: KaScope,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
-    sessionParameters: FirCompletionSessionParameters,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KaCallableSignature<*>> = scope.callables(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
-    .applyIf(sessionParameters.excludeEnumEntries) { filterNot { isEnumEntriesProperty(it.symbol) } }
+    .applyIf(visibilityChecker.excludeEnumEntries) {
+        filterNot { isEnumEntriesProperty(it.symbol) }
+    }
 
 context(KaSession)
 private fun Sequence<KaCallableSignature<*>>.filterNonExtensions(

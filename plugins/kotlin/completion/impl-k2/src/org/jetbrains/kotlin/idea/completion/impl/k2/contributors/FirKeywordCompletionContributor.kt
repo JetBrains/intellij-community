@@ -7,13 +7,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ThisKeywordHandler
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.keywords.BreakContinueKeywordHandler
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerProvider
@@ -32,9 +31,9 @@ import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, priority) {
 
     private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
         override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
@@ -58,7 +57,6 @@ internal class FirKeywordCompletionContributor(
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val expression = when (positionContext) {
             is KotlinLabelReferencePositionContext -> positionContext.nameExpression.let { label -> getExpressionWithLabel(label) ?: label }

@@ -2,8 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -29,15 +28,14 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * @see ActualKeywordHandler
  */
 internal class K2ActualDeclarationContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     override fun complete(
         positionContext: KotlinRawPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val declaration = when (positionContext) {
             is KotlinTypeNameReferencePositionContext -> positionContext.typeReference?.getDeclaration()

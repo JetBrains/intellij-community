@@ -3,12 +3,10 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -16,22 +14,20 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(visibilityChecker, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun complete(
         positionContext: KotlinImportDirectivePositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         positionContext.resolveReceiverToSymbols()
             .mapNotNull { it.staticScope }
             .forEach { scopeWithKind ->
                 val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
 
                 val classifiers = scopeWithKind.scope
                     .classifiers(scopeNameFilter)

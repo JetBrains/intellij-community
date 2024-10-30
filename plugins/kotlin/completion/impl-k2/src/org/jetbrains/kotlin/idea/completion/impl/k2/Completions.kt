@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.analysis.api.resolution.KaFunctionCall
 import org.jetbrains.kotlin.analysis.api.resolution.singleCallOrNull
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvider
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.*
@@ -29,127 +29,129 @@ internal object Completions {
             is KotlinNameReferencePositionContext -> WeighingContext.create(basicContext, positionContext)
             else -> WeighingContext.create(basicContext, elementInCompletionFile = positionContext.position)
         }
-        val sessionParameters = FirCompletionSessionParameters(basicContext, positionContext)
+        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
 
         when (positionContext) {
-            is KotlinExpressionNameReferencePositionContext -> if (positionContext.allowsOnlyNamedArguments()) {
-                FirNamedArgumentCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-            } else {
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirNamedArgumentCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirCallableCompletionContributor(basicContext, withTrailingLambda = true)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirClassifierCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirPackageCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+            is KotlinExpressionNameReferencePositionContext -> {
+                if (positionContext.allowsOnlyNamedArguments()) {
+                    FirNamedArgumentCompletionContributor(visibilityChecker)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                } else {
+                    FirKeywordCompletionContributor(visibilityChecker)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                    FirNamedArgumentCompletionContributor(visibilityChecker)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                    FirCallableCompletionContributor(visibilityChecker, withTrailingLambda = true)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                    FirClassifierCompletionContributor(visibilityChecker)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                    FirPackageCompletionContributor(visibilityChecker, priority = 1)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
+                }
             }
 
             is KotlinSuperReceiverNameReferencePositionContext -> {
-                FirSuperMemberCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirSuperMemberCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinTypeNameReferencePositionContext -> {
-                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    FirClassifierCompletionContributor(basicContext)
-                        .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                if (visibilityChecker.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    FirClassifierCompletionContributor(visibilityChecker)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
                 }
-                FirKeywordCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                if (sessionParameters.allowClassifiersAndPackagesForPossibleExtensionCallables) {
-                    FirPackageCompletionContributor(basicContext, priority = 2)
-                        .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                if (visibilityChecker.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                    FirPackageCompletionContributor(visibilityChecker, priority = 2)
+                        .completeWithPolicyController(policyController, positionContext, weighingContext)
                 }
                 // For `val` and `fun` completion. For example, with `val i<caret>`, the fake file contains `val iX.f`. Hence a
                 // FirTypeNameReferencePositionContext is created because `iX` is parsed as a type reference.
-                FirDeclarationFromUnresolvedNameContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirDeclarationFromOverridableMembersContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                K2ActualDeclarationContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirDeclarationFromOverridableMembersContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                K2ActualDeclarationContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinAnnotationTypeNameReferencePositionContext -> {
-                FirAnnotationCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirKeywordCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirPackageCompletionContributor(basicContext, priority = 2)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirAnnotationCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirKeywordCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirPackageCompletionContributor(visibilityChecker, priority = 2)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinSuperTypeCallNameReferencePositionContext -> {
-                FirSuperEntryContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirSuperEntryContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinImportDirectivePositionContext -> {
-                FirPackageCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirImportDirectivePackageMembersCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirImportDirectivePackageMembersCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinPackageDirectivePositionContext -> {
-                FirPackageCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirPackageCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinTypeConstraintNameInWhereClausePositionContext -> {
-                FirTypeParameterConstraintNameInWhereClauseCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirTypeParameterConstraintNameInWhereClauseCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinMemberDeclarationExpectedPositionContext -> {
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinLabelReferencePositionContext -> {
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinUnknownPositionContext -> {
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinClassifierNamePositionContext -> {
-                FirSameAsFileClassifierNameCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirDeclarationFromUnresolvedNameContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirSameAsFileClassifierNameCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirDeclarationFromUnresolvedNameContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinWithSubjectEntryPositionContext -> {
-                FirWhenWithSubjectConditionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirCallableCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirWhenWithSubjectConditionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirCallableCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinCallableReferencePositionContext -> {
-                FirClassReferenceCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirCallableReferenceCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirClassifierReferenceCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirClassReferenceCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirCallableReferenceCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirClassifierReferenceCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinInfixCallPositionContext -> {
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirInfixCallableCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirInfixCallableCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinIncorrectPositionContext -> {
@@ -158,38 +160,38 @@ internal object Completions {
 
             is KotlinSimpleParameterPositionContext -> {
                 // for parameter declaration
-                FirDeclarationFromUnresolvedNameContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KotlinPrimaryConstructorParameterPositionContext -> {
                 // for parameter declaration
-                FirDeclarationFromUnresolvedNameContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirDeclarationFromOverridableMembersContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirKeywordCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirVariableOrParameterNameWithTypeCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirDeclarationFromUnresolvedNameContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirDeclarationFromOverridableMembersContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirKeywordCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirVariableOrParameterNameWithTypeCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KDocParameterNamePositionContext -> {
-                FirKDocParameterNameContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKDocParameterNameContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
 
             is KDocLinkNamePositionContext -> {
-                FirKDocCallableCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirClassifierCompletionContributor(basicContext)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
-                FirPackageCompletionContributor(basicContext, priority = 1)
-                    .completeWithPolicyController(policyController, weighingContext, sessionParameters)
+                FirKDocCallableCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirClassifierCompletionContributor(visibilityChecker)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
+                FirPackageCompletionContributor(visibilityChecker, priority = 1)
+                    .completeWithPolicyController(policyController, positionContext, weighingContext)
             }
         }
     }
@@ -197,15 +199,14 @@ internal object Completions {
     context(KaSession)
     private fun <C : KotlinRawPositionContext> FirCompletionContributor<C>.completeWithPolicyController(
         policyController: PolicyController,
+        positionContext: C,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val policy = AttributedElementsAddingPolicy(contributorClass = this@completeWithPolicyController.javaClass)
         policyController.invokeWithPolicy(policy) {
             complete(
-                positionContext = @Suppress("UNCHECKED_CAST") (sessionParameters.positionContext as C), // TODO address dirty cast
+                positionContext = positionContext,
                 weighingContext = weighingContext,
-                sessionParameters = sessionParameters,
             )
         }
     }

@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
+import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
@@ -41,13 +42,14 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
-    protected val basicContext: FirBasicCompletionContext,
+    protected val visibilityChecker: CompletionVisibilityChecker,
     priority: Int,
 ) : FirCompletionContributor<C> {
 
     protected open val prefixMatcher: PrefixMatcher
         get() = sink.prefixMatcher
 
+    private inline val basicContext: FirBasicCompletionContext get() = visibilityChecker.basicContext
     protected val parameters: CompletionParameters get() = basicContext.parameters
     protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile

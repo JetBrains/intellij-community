@@ -7,23 +7,22 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtCodeFragment
-import org.jetbrains.kotlin.psi.KtDeclaration
-import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
 internal class CompletionVisibilityChecker(
-    private val basicContext: FirBasicCompletionContext,
-    private val positionContext: KotlinRawPositionContext
+    val basicContext: FirBasicCompletionContext, // todo do not expose
+    private val positionContext: KotlinRawPositionContext,
 ) {
     fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
         if (basicContext.parameters.invocationCount >= 2) return false
@@ -77,4 +76,38 @@ internal class CompletionVisibilityChecker(
             positionContext.position
         )
     }
+
+    // todo find a better place if possible or just encapsulate
+    //  moved from the removed FirCompletionSessionParameters
+    //  <begin>
+    val excludeEnumEntries: Boolean
+        get() = !supportsFeature(LanguageFeature.EnumEntries)
+
+    val allowSyntheticJavaProperties: Boolean
+        get() = positionContext !is KDocNameReferencePositionContext &&
+                (positionContext !is KotlinCallableReferencePositionContext || supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
+
+    val allowJavaGettersAndSetters: Boolean
+        get() = !allowSyntheticJavaProperties
+                || basicContext.parameters.invocationCount > 1
+
+    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
+        get() {
+            val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)
+                ?.typeReference
+                ?.parent
+                ?: return true
+
+            return !(basicContext.parameters.invocationCount == 0
+                    && (declaration is KtNamedFunction || declaration is KtProperty)
+                    && positionContext.explicitReceiver == null
+                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
+        }
+
+    private val languageVersionSettings: LanguageVersionSettings =
+        basicContext.project.languageVersionSettings
+
+    private fun supportsFeature(feature: LanguageFeature): Boolean =
+        languageVersionSettings.supportsFeature(feature)
+    // todo <end>
 }

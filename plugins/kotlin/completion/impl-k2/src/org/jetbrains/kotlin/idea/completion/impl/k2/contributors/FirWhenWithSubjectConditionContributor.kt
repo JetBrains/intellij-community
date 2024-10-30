@@ -20,14 +20,12 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.letIf
-import org.jetbrains.kotlin.idea.completion.FirCompletionSessionParameters
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.createKeywordElement
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
@@ -41,9 +39,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
-    basicContext: FirBasicCompletionContext,
+    visibilityChecker: CompletionVisibilityChecker,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(basicContext, priority) {
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(visibilityChecker, priority) {
 
     private val onTypingIsKeyword: Boolean =
         super.prefixMatcher.prefix.let { prefix ->
@@ -59,7 +57,6 @@ internal class FirWhenWithSubjectConditionContributor(
     override fun complete(
         positionContext: KotlinWithSubjectEntryPositionContext,
         weighingContext: WeighingContext,
-        sessionParameters: FirCompletionSessionParameters,
     ) {
         val whenCondition = positionContext.whenCondition
         val whenExpression = whenCondition.parentOfType<KtWhenExpression>() ?: return
@@ -67,25 +64,31 @@ internal class FirWhenWithSubjectConditionContributor(
         val allConditionsExceptCurrent = whenExpression.entries.flatMap { entry -> entry.conditions.filter { it != whenCondition } }
         val subjectType = subject.expressionType ?: return
         val classSymbol = getClassSymbol(subjectType)
-        val visibilityChecker = CompletionVisibilityChecker(basicContext, positionContext)
         val isSingleCondition = whenCondition.isSingleConditionInEntry()
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
-                completeEnumEntries(weighingContext, classSymbol, allConditionsExceptCurrent, visibilityChecker, isSingleCondition)
+                completeEnumEntries(
+                    context = weighingContext,
+                    classSymbol = classSymbol,
+                    conditions = allConditionsExceptCurrent,
+                    isSingleCondition = isSingleCondition,
+                )
             }
             classSymbol?.modality == KaSymbolModality.SEALED -> {
                 completeSubClassesOfSealedClass(
-                    weighingContext,
-                    classSymbol,
-                    allConditionsExceptCurrent,
-                    whenCondition,
-                    visibilityChecker,
-                    isSingleCondition
+                    context = weighingContext,
+                    classSymbol = classSymbol,
+                    conditions = allConditionsExceptCurrent,
+                    whenCondition = whenCondition,
+                    isSingleCondition = isSingleCondition,
                 )
             }
-            else -> {
-                completeAllTypes(weighingContext, whenCondition, visibilityChecker, isSingleCondition)
-            }
+
+            else -> completeAllTypes(
+                context = weighingContext,
+                whenCondition = whenCondition,
+                isSingleCondition = isSingleCondition,
+            )
         }
         addNullIfWhenExpressionCanReturnNull(weighingContext, subjectType)
         addElseBranchIfSingleConditionInEntry(weighingContext, whenCondition)
@@ -110,7 +113,6 @@ internal class FirWhenWithSubjectConditionContributor(
     private fun completeAllTypes(
         context: WeighingContext,
         whenCondition: KtWhenCondition,
-        visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
@@ -167,7 +169,6 @@ internal class FirWhenWithSubjectConditionContributor(
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
         whenCondition: KtWhenCondition,
-        visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
         require(classSymbol.modality == KaSymbolModality.SEALED)
@@ -191,7 +192,11 @@ internal class FirWhenWithSubjectConditionContributor(
             }
 
         if (allInheritors.any { it.modality == KaSymbolModality.ABSTRACT }) {
-            completeAllTypes(context, whenCondition, visibilityChecker, isSingleCondition)
+            completeAllTypes(
+                context = context,
+                whenCondition = whenCondition,
+                isSingleCondition = isSingleCondition,
+            )
         }
     }
 
@@ -241,7 +246,6 @@ internal class FirWhenWithSubjectConditionContributor(
         context: WeighingContext,
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
-        visibilityChecker: CompletionVisibilityChecker,
         isSingleCondition: Boolean,
     ) {
         require(classSymbol.classKind == KaClassKind.ENUM_CLASS)
