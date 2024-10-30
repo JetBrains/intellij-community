@@ -77,6 +77,8 @@
   <technology name="datasphere-studio" root="com.webank.wedatasphere.dss"/>
   <technology name="debezium" root="io.debezium"/>
   <technology name="decompose" root="com.arkivanov.decompose"/>
+  <technology name="deep-java-library" root="ai.jdl"/>
+  <technology name="deeplearning4j" root="org.deeplearning4j"/>
   <technology name="deequ" root="deequ"/>
   <technology name="delta-core" root="delta"/>
   <technology name="documents4j" root="com.documents4j"/>
@@ -378,6 +380,7 @@
   <technology name="swagger-v3" root="io.swagger.v3.oas.annotations"/>
   <technology name="tapestry5" root="org.apache.tapestry5"/>
   <technology name="tapir" root="sttp.tapir"/>
+  <technology name="tensorflow" root="org.tensorflow"/>
   <technology name="testcontainers" root="org.testcontainers"/>
   <technology name="testng" root="org.testng"/>
   <technology name="thymeleaf" root="org.thymeleaf"/>

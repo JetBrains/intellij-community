@@ -43,6 +43,8 @@
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
   <technology name="db2" class="com.ibm.db2.jcc.DB2Driver"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
+  <technology name="deep-java-library" class="ai.jdl.Application"/>
+  <technology name="deeplearning4j" class="org.deeplearning4j.nn.conf.MultiLayerConfiguration"/>
   <technology name="dozer" class="com.github.dozermapper.DozerBeanMapper"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
@@ -266,6 +268,7 @@
   <technology name="swagger-v2" class="io.swagger.annotations.Api"/>
   <technology name="swagger-v3" class="io.swagger.v3.oas.annotations.Operation"/>
   <technology name="tapestry5" class="org.apache.tapestry5.modules.TapestryModule"/>
+  <technology name="tensorflow" class="org.tensorflow.Tensor"/>
   <technology name="testcontainers" class="org.testcontainers.containers.Container"/>
   <technology name="testng" class="org.testng.annotations.Test"/>
   <technology name="thymeleaf" class="org.thymeleaf.dialect.IDialect"/>
