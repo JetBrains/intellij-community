@@ -495,7 +495,7 @@ public class HighlightInfo implements Segment {
       s += "; gutter: " + gutterIconRenderer;
     }
     if (toolId != null) {
-      s += "; toolId: " + toolId;
+      s += "; toolId: " + toolId +" ("+toolId.getClass()+")";
     }
     if (forcedTextAttributesKey != null) {
       s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
