@@ -50,7 +50,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.platform.eel.EelApi;
 import com.intellij.platform.eel.EelPlatform;
 import com.intellij.platform.eel.LocalEelApi;
-import com.intellij.platform.eel.provider.utils.EelPathUtilsKt;
 import com.intellij.platform.eel.provider.utils.EelUtilsKt;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -701,8 +700,8 @@ public class MavenUtil {
       }
     }
 
-    var userHome = EelPathUtilsKt.userHomeBlocking(eel.getFs());
-    if (userHome != null && !isEmptyOrSpaces(userHome.toString())) {
+    var userHome = eel.getFs().getUser().getHome();
+    if (!isEmptyOrSpaces(userHome.toString())) {
       var nioUserHome = eel.getMapper().toNioPath(userHome);
       final Path underUserHome = nioUserHome.resolve(M2_DIR);
       if (isValidMavenHome(underUserHome)) {

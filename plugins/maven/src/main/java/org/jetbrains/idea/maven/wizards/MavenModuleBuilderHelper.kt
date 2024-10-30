@@ -176,13 +176,13 @@ open class MavenModuleBuilderHelper(
     val eel = project.getEelApi()
 
     val workingDir: Path = try {
-      val tmpOptions = EelFileSystemApi.createTemporaryDirectoryOptions().apply {
+      val tmpOptions = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply {
         suffix("tmp")
         prefix("archetype")
         deleteOnExit(true)
       }
 
-      eel.fs.createTemporaryDirectory(tmpOptions).getOrThrow { throw IOException(it.message) }.toNioPath(eel)
+      eel.fs.createTemporaryDirectory(tmpOptions.build()).getOrThrow { throw IOException(it.message) }.toNioPath(eel)
     }
     catch (e: IOException) {
       showError(project, e)

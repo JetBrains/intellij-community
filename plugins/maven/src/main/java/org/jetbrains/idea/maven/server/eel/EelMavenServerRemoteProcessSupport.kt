@@ -5,7 +5,6 @@ import com.intellij.execution.Executor
 import com.intellij.execution.configurations.*
 import com.intellij.execution.process.KillableColoredProcessHandler
 import com.intellij.execution.process.ProcessHandler
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runBlockingMaybeCancellable
@@ -15,12 +14,10 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.pathSeparator
 import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlocking
-import com.intellij.platform.ide.progress.ModalTaskOwner.project
 import com.intellij.platform.ijent.tunnels.forwardLocalPort
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.launch
-import org.jetbrains.idea.maven.MavenCoroutineScopeHolder
 import org.jetbrains.idea.maven.server.AbstractMavenServerRemoteProcessSupport
 import org.jetbrains.idea.maven.server.MavenDistribution
 import org.jetbrains.idea.maven.server.MavenServerCMDState
@@ -51,7 +48,7 @@ class EelMavenServerRemoteProcessSupport(
   @OptIn(DelicateCoroutinesApi::class)
   override fun publishPort(port: Int): Int {
     MavenCoroutineScopeProvider.getCoroutineScope(myProject).launch {
-      forwardLocalPort(eel.tunnels, port, EelTunnelsApi.hostAddressBuilder(port.toUShort()).hostname(remoteHost).build())
+      forwardLocalPort(eel.tunnels, port, EelTunnelsApi.HostAddress.Builder(port.toUShort()).hostname(remoteHost).build())
     }
     return port
   }
@@ -146,12 +143,12 @@ private class EelMavenCmdState(
        * @see [com.intellij.execution.eel.EelApiWithPathsNormalization]
        */
       val exe = eel.mapper.getOriginalPath(Path.of(cmd.exePath)) ?: error("Cannot find exe for ${cmd.exePath}")
-      val builder = EelExecApi.executeProcessBuilder(exe.toString())
+      val builder = EelExecApi.ExecuteProcessOptions.Builder(exe.toString())
         .args(cmd.parametersList.parameters)
         .env(cmd.environment)
         .workingDirectory(workingDirectory)
 
-      eel.exec.execute(builder).getOrThrow()
+      eel.exec.execute(builder.build()).getOrThrow()
     }
 
     return object : KillableColoredProcessHandler(eelProcess.convertToJavaProcess(), cmd) {

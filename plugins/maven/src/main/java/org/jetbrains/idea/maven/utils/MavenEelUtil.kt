@@ -53,7 +53,7 @@ object MavenEelUtil : MavenUtil() {
   @JvmStatic
   suspend fun EelApi?.resolveM2DirAsync(): Path {
     val localUserHome = Path.of(SystemProperties.getUserHome())
-    val userHome = if (this != null) fs.userHome()?.let { mapper.toNioPath(it) } ?: localUserHome else localUserHome
+    val userHome = if (this != null) fs.user.home.let(mapper::toNioPath) else localUserHome
 
     return userHome.resolve(DOT_M2_DIR)
   }
