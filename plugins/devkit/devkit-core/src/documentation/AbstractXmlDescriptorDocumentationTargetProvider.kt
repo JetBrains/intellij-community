@@ -68,7 +68,7 @@ internal abstract class AbstractXmlDescriptorDocumentationTargetProvider : PsiDo
 
 }
 
-private abstract class AbstractPluginDescriptorDocumentationTarget(
+private abstract class AbstractXmlDescriptorDocumentationTarget(
   val project: Project,
   val presentation: String,
   /**
@@ -93,7 +93,7 @@ private abstract class AbstractPluginDescriptorDocumentationTarget(
 }
 
 private class XmlDescriptorElementDocumentationTarget(project: Project, content: DocumentationContent, private val element: Element) :
-  AbstractPluginDescriptorDocumentationTarget(project, element.name!!, content) {
+  AbstractXmlDescriptorDocumentationTarget(project, element.name!!, content) {
   override fun computeDocumentation(): DocumentationResult {
     return DocumentationResult.asyncDocumentation {
       DocumentationResult.documentation(getRenderer().renderElement(element, content.baseUrl))
@@ -102,7 +102,7 @@ private class XmlDescriptorElementDocumentationTarget(project: Project, content:
 }
 
 private class XmlDescriptorAttributeDocumentationTarget(project: Project, content: DocumentationContent, private val attribute: Attribute) :
-  AbstractPluginDescriptorDocumentationTarget(project, attribute.name!!, content) {
+  AbstractXmlDescriptorDocumentationTarget(project, attribute.name!!, content) {
   override fun computeDocumentation(): DocumentationResult {
     return DocumentationResult.asyncDocumentation {
       DocumentationResult.documentation(getRenderer().renderAttribute(attribute, content.baseUrl))
@@ -113,7 +113,7 @@ private class XmlDescriptorAttributeDocumentationTarget(project: Project, conten
 internal class XmlDescriptorDocumentationLinkHandler : DocumentationLinkHandler {
 
   override fun resolveLink(target: DocumentationTarget, url: String): LinkResolveResult? {
-    if (target is AbstractPluginDescriptorDocumentationTarget) {
+    if (target is AbstractXmlDescriptorDocumentationTarget) {
       when {
         url.startsWith(ELEMENT_DOC_LINK_PREFIX) -> {
           val elementPath = urlToPath(url, ELEMENT_DOC_LINK_PREFIX)
