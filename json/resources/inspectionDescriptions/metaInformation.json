@@ -15,6 +15,14 @@
     {
       "id": "JsonSchemaRefReference",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "Json5StandardCompliance",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "JsonDuplicatePropertyKeys",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

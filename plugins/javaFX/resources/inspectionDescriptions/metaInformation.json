@@ -19,6 +19,10 @@
     {
       "id": "JavaFxUnusedImports",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "JavaFxRedundantPropertyValue",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

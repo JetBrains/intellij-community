@@ -19,6 +19,14 @@
     {
       "id": "YAMLRecursiveAlias",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "YAMLSchemaValidation",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "YAMLUnusedAnchor",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }
