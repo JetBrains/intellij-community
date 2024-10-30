@@ -805,8 +805,20 @@ public final class GitUtil {
                                        @NotNull Collection<@NonNls String> absolutePaths,
                                        @NotNull @NlsContexts.DialogTitle String title,
                                        @Nullable @NlsContexts.DialogMessage String description) {
+    showPathsInDialog(project, absolutePaths, title, description, null);
+  }
+
+  public static void showPathsInDialog(@NotNull Project project,
+                                       @NotNull Collection<@NonNls String> absolutePaths,
+                                       @NotNull @NlsContexts.DialogTitle String title,
+                                       @Nullable @NlsContexts.DialogMessage String description,
+                                       @Nullable @NlsContexts.StatusText String emptyText) {
     DialogBuilder builder = new DialogBuilder(project);
-    builder.setCenterPanel(new GitSimplePathsBrowser(project, absolutePaths));
+    GitSimplePathsBrowser browser = new GitSimplePathsBrowser(project, absolutePaths);
+    if (emptyText != null) {
+      browser.setEmptyText(emptyText);
+    }
+    builder.setCenterPanel(browser);
     if (description != null) {
       builder.setNorthPanel(new MultiLineLabel(description));
     }
