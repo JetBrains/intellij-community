@@ -1,7 +1,7 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info">
-  <version major="2024" minor="3" eap="true" suffix="Beta"/>
+  <version major="2024" minor="3.1" suffix="Preview"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
-  <build number="IC-__BUILD__" date="__BUILD_DATE__"/> <!--majorReleaseDate="20170321"-->
+  <build number="IC-__BUILD__" date="__BUILD_DATE__" majorReleaseDate="20241113"/>
   <logo url="/idea_community_logo.png"/>
   <icon svg="/idea-ce.svg" svg-small="/idea-ce_16.svg"/>
   <icon-eap svg="/idea-ce-eap.svg" svg-small="/idea-ce-eap_16.svg"/>
