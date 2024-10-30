@@ -205,7 +205,7 @@ elements:
                   description: |
                     The highest IDE version compatible with the plugin.
                     Undefined value declares compatibility with all the IDEs since the version specified by the [`since-build`](#attribute:idea-plugin__idea-version__since-build)
-                    (also with the future builds what may cause incompatibility errors).
+                    (also with the future builds that may cause incompatibility errors).
             #language=Markdown
             examples:
               - | # code snippets must have 4 spaces indent here
@@ -545,7 +545,7 @@ elements:
                               `interface` or [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) is **required**
                         #language=Markdown
                         description: |
-                          The fully qualified name of the interface to be implemented for extending plugin's functionality.
+                          The fully qualified name of the interface to be implemented for extending the plugin's functionality.
                           Only one of the `interface` and [`beanClass`](#attribute:idea-plugin__extensionPoints__extensionPoint__beanClass) attributes can be specified.
                           See [Extension Points](https://plugins.jetbrains.com/docs/intellij/plugin-extension-points.html) for more
                           information.
