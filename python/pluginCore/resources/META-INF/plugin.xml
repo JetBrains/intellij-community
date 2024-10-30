@@ -1,4 +1,4 @@
-<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://confluence.jetbrains.com/display/PYH/"
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" url="https://www.jetbrains.com/pycharm/"
              package="com.jetbrains.python">
   <!--Python community support for Pycharm, DS and IC.-->
   <!--Include core Python functionality-->
