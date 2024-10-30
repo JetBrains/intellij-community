@@ -43,23 +43,11 @@ abstract class JsonSchemaObjectBackedByJacksonBase(
 
   private var myCompositeObjectsCache = AtomicReference(KeyFMap.EMPTY_MAP)
 
-  protected fun <V : Any> getOrComputeValue(key: Key<V>, idempotentComputation: () -> V): V {
-    var existingMap: KeyFMap
-    var newValue: V?
-
-    do {
-      existingMap = myCompositeObjectsCache.get()
-      newValue = existingMap[key]
-      if (newValue == null) {
-        val mapWithNewValue = existingMap.plus(key, idempotentComputation())
-        if (myCompositeObjectsCache.compareAndSet(existingMap, mapWithNewValue)) {
-          newValue = mapWithNewValue.get(key)
-        }
-      }
-    }
-    while (newValue == null)
-
-    return newValue
+  protected fun <V : Any> getOrComputeValue(key: Key<V>, computation: () -> V): V {
+    return myCompositeObjectsCache.updateAndGet { existingMap ->
+      if (existingMap.get(key) != null) return@updateAndGet existingMap
+      existingMap.plus(key, computation())
+    }.get(key)!!
   }
 
   private fun createResolvableChild(vararg childNodeRelativePointer: String): JsonSchemaObjectBackedByJacksonBase? {
