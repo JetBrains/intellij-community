@@ -1,0 +1,28 @@
+{
+  "language": "Python",
+  "projectPath": "../../ml-eval/Django-Poll-App",
+  "outputDir": "ml-eval-test-generation-python-output",
+  "strategy": {
+    "collectContextOnly": false
+  },
+  "actions": {
+    "evaluationRoots": [
+      "polls/models.py"
+    ]
+  },
+  "interpret": {
+    "saveLogs": true,
+    "sessionProbability": 1.0,
+    "sessionSeed": null,
+    "sessionsLimit": 10,
+    "filesLimit": 5,
+    "order": "LINEAR",
+    "trainTestSplit": 70
+  },
+  "reports": {
+    "evaluationTitle": "Default",
+    "defaultMetrics": null,
+    "sessionsFilters": [],
+    "comparisonFilters": []
+  }
+}

@@ -8,6 +8,7 @@
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.PythonDocGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.PythonCodeGenerationVisitor"/>
     <completionEvaluationVisitor implementation="com.intellij.cce.visitor.PythonRenameVisitor"/>
+    <completionEvaluationVisitor implementation="com.intellij.cce.visitor.PythonTestGenerationVisitor"/>
     <apiCallExtractor implementation="com.intellij.cce.evaluable.chat.PythonApiCallExtractor"/>
   </extensions>
 </idea-plugin>
