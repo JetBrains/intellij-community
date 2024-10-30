@@ -41,7 +41,8 @@ abstract class KotlinGenerateActionBase : CodeInsightAction(), CodeInsightAction
     }
 
     protected open fun getTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {
-        return file.findElementAt(editor.caretModel.offset)?.getNonStrictParentOfType<KtClassOrObject>()
+        val offset = editor.caretModel.offset
+        return (file.findElementAt(offset) ?: if (offset > 0) file.findElementAt(offset - 1) else null)?.getNonStrictParentOfType<KtClassOrObject>()
     }
 
     protected abstract fun isValidForClass(targetClass: KtClassOrObject): Boolean

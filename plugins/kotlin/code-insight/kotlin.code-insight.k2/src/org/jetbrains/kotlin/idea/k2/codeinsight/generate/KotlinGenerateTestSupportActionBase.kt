@@ -164,7 +164,8 @@ abstract class KotlinGenerateTestSupportActionBase(
         }
 
         private fun findTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {
-            val elementAtCaret = file.findElementAt(editor.caretModel.offset) ?: return null
+            val offset = editor.caretModel.offset
+            val elementAtCaret = file.findElementAt(offset) ?: (if (offset > 0) file.findElementAt(offset - 1) else null) ?: return null
             return elementAtCaret.parentsWithSelf.filterIsInstance<KtClassOrObject>().firstOrNull { !it.isLocal }
         }
 
