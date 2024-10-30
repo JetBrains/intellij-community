@@ -100,7 +100,6 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
 
       createHighlightInfo(absoluteRange.shiftRight(offset),
                           ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE),
-                          firstTool?.shortName,
                           attributesKey,
                           descriptor.highlightType,
                           highlightDisplayKey,
@@ -113,7 +112,6 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
 
   private fun createHighlightInfo(range: TextRange,
                                   @InspectionMessage message: String,
-                                  inspectionToolId: String?,
                                   textAttributesKey: TextAttributesKey?,
                                   type: ProblemHighlightType,
                                   displayKey: HighlightDisplayKey?,
@@ -121,7 +119,6 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
                                   fixesToRegister: List<IntentionAction>): HighlightInfo? {
     val builder = HighlightInfo
       .newHighlightInfo(ProblemDescriptorUtil.getHighlightInfoType(type, severity, SeverityRegistrar.getSeverityRegistrar(myProject)))
-      .applyIfNotNull(inspectionToolId) { inspectionToolId(it) }
       .applyIfNotNull(textAttributesKey) { textAttributes(it) }
       .range(range)
       .severity(severity)
