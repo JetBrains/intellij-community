@@ -1,0 +1,6 @@
+// IGNORE_K2
+package test
+
+fun getValue(data: dynamic): dynamic {
+    return data["value"]
+}
