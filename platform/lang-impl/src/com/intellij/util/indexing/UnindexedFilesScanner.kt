@@ -41,6 +41,7 @@ import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter
 import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
+import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
@@ -313,6 +314,26 @@ class UnindexedFilesScanner @JvmOverloads constructor(
       progressReporter.setSubTasksCount(providers.size)
 
       val sharedExplanationLogger = IndexingReasonExplanationLogger()
+      /**
+       * Always scan `ModuleIndexableFilesIteratorImpl` before `GenericContentEntityIteratorImpl`.
+       * The reason is that inside `SingleProviderIterator` we call `FilePropertyPusher`s
+       * only if the provider's `origin` is an instance of `ModuleContentOrigin`.
+       * If we first scan a file via `GenericContentEntityIteratorImpl`, then the pushers will not be applied, and we will have added it
+       * to `indexableFilesDeduplicateFilter` already.
+       * By the time we scan it again via `ModuleIndexableFilesIterator` the file will be ignored
+       * because of `indexableFilesDeduplicateFilter`, and therefore the `FilePropertyPusher`s will not run for that file.
+       */
+      val (genericContentEntityProviders, otherProviders) = providers.partition { provider -> provider.origin is GenericContentEntityOrigin }
+      collectIndexableFilesConcurrently(otherProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+      collectIndexableFilesConcurrently(genericContentEntityProviders, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+    }
+
+    private fun collectIndexableFilesConcurrently(
+      providers: List<IndexableFilesIterator>,
+      sessions: List<ScanSession>,
+      indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter,
+      sharedExplanationLogger: IndexingReasonExplanationLogger,
+    ) {
       val providersToCheck = Channel<IndexableFilesIterator>(capacity = RENDEZVOUS)
 
       runBlockingCancellable {
