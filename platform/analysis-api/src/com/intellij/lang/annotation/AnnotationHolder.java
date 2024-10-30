@@ -3,6 +3,8 @@ package com.intellij.lang.annotation;
 
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
@@ -24,6 +26,40 @@ import org.jetbrains.annotations.Nullable;
  */
 @ApiStatus.NonExtendable
 public interface AnnotationHolder {
+  /**
+   * Begin constructing a new annotation.
+   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
+   * For example: <p>{@code holder.newAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
+   *
+   * @param severity The severity of the annotation.
+   * @param message  The message this annotation will show in the status bar and the tooltip.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
+   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
+   * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
+   * @return builder instance you can use to further customize your annotation
+   */
+  @Contract(pure = true)
+  default @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity, @NotNull @InspectionMessage String message) {
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard one instead");
+  }
+
+  /**
+   * Begin constructing a new annotation with no message and no tooltip.
+   * Such annotations could be useful for coloring a text range with some decorations
+   * (see e.g. {@link AnnotationBuilder#textAttributes(TextAttributesKey)} or {@link AnnotationBuilder#gutterIconRenderer(GutterIconRenderer)} as examples of decorating methods).
+   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
+   * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
+   *
+   * @param severity The severity of the annotation.
+   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
+   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
+   * Please note that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
+   * @return builder instance you can use to further customize your annotation
+   */
+  @Contract(pure = true)
+  default @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
+    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard one instead");
+  }
 
   //<editor-fold desc="Deprecated stuff.">
 
@@ -202,38 +238,4 @@ public interface AnnotationHolder {
    * The difference is in the desired latency level, which may require reducing the power of analysis in the on-the-fly mode to improve responsiveness.
    */
   boolean isBatchMode();
-
-  /**
-   * Begin constructing a new annotation.
-   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
-   * For example: <p>{@code holder.newAnnotation(HighlightSeverity.WARNING, "My warning message").create();}</p>
-   *
-   * @param severity The severity of the annotation.
-   * @param message  The message this annotation will show in the status bar and the tooltip.
-   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
-   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
-   * Please note, that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
-   * @return builder instance you can use to further customize your annotation
-   */
-  @Contract(pure = true)
-  default @NotNull AnnotationBuilder newAnnotation(@NotNull HighlightSeverity severity,
-                                          @NotNull @InspectionMessage String message) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
-  }
-
-  /**
-   * Begin constructing a new annotation with no message and no tooltip.
-   * To finish construction and show the annotation on screen {@link AnnotationBuilder#create()} must be called.
-   * For example: <p>{@code holder.newSilentAnnotation(HighlightSeverity.WARNING).textAttributes(MY_ATTRIBUTES_KEY).create();}</p>
-   *
-   * @param severity The severity of the annotation.
-   * @apiNote The builder created by this method is already initialized by the current element, i.e., the psiElement being visited by the current annotator.
-   * You need to call {@link AnnotationBuilder#range(TextRange)} or similar method explicitly only if target element differs from the current element.
-   * Please note that the range in {@link AnnotationBuilder#range(TextRange)} must be inside the range of the current element.
-   * @return builder instance you can use to further customize your annotation
-   */
-  @Contract(pure = true)
-  default @NotNull AnnotationBuilder newSilentAnnotation(@NotNull HighlightSeverity severity) {
-    throw new IllegalStateException("Please do not override AnnotationHolder, use the standard provided one instead");
-  }
 }
