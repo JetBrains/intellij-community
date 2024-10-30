@@ -40,7 +40,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   protected var table: AbstractDataViewTable? = null
 
-  private var formatTextField: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
+  protected var formatTextField: EditorTextField = createEditorField(TextFieldCommandSource.FORMATTING)
 
   private var colored: Boolean = PyDataView.isColoringEnabled(project)
 
@@ -53,10 +53,14 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
 
   protected var debugValue: PyDebugValue? = null
 
-  val format: String
+  open var format: String = ""
     get() {
       val format = formatTextField.getText()
       return format.ifEmpty { "%" }
+    }
+    protected set(value) {
+      field = value
+      formatTextField.text = value
     }
 
   var isColored: Boolean
@@ -167,13 +171,17 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
         editor.getContentComponent().addKeyListener(object : KeyAdapter() {
           override fun keyPressed(e: KeyEvent) {
             if (e.keyCode == KeyEvent.VK_ENTER) {
-              apply(sliceTextField.getText(), false, commandSource)
+              onKeyPressed(commandSource)
             }
           }
         })
         return editor
       }
     }
+  }
+
+  protected fun onKeyPressed(commandSource: TextFieldCommandSource) {
+    apply(sliceTextField.getText(), false, commandSource)
   }
 
   fun apply(name: String?, modifier: Boolean, commandSource: TextFieldCommandSource? = null) {
@@ -245,7 +253,7 @@ open class PyDataViewerPanel(@JvmField protected val project: Project, val frame
     }
 
     if (chunk != null) {
-      formatTextField.text = chunk.format
+      format = chunk.format
     }
   }
 
