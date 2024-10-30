@@ -82,6 +82,11 @@ public abstract class GenerateTestSupportMethodActionTestGenerated extends Abstr
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("dataMethod.kt")
+        public void testDataMethod() throws Exception {
+            runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/dataMethod.kt");
+        }
+
         @TestMetadata("setUp.kt")
         public void testSetUp() throws Exception {
             runTest("testData/codeInsight/generate/testFrameworkSupport/jUnit5/setUp.kt");
