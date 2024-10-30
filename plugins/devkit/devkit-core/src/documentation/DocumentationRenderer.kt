@@ -256,7 +256,7 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendAttributePath(elementPath: List<String>) {
     val prevElements = elementPath.dropLast(1)
     appendElementPath(prevElements, linkForLast = true)
-    append(" : **`${elementPath.last()}`**")
+    append(" / **`@${elementPath.last()}`**")
   }
 
   private fun StringBuilder.appendAttributeRequirement(requirement: Requirement?) {

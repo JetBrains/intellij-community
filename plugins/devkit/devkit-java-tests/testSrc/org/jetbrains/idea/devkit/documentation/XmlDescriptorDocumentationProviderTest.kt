@@ -82,7 +82,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
           </firstLevelChild2>
         </root>
       """.trimIndent(),
-      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a> : <b><code>child-attribute-1</code></b><hr/>\n" +
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a> / <b><code>@child-attribute-1</code></b><hr/>\n" +
       "A <code>child-attribute</code> description. A link to <a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a>.<blockquote><p>Callout here.</blockquote>" +
       "<p>Required: <b>yes</b>"
     )
