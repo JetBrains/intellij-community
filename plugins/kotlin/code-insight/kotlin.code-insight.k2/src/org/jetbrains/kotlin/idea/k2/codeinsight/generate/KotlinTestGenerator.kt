@@ -162,9 +162,8 @@ class KotlinTestGenerator: TestGenerator {
                 MethodKind.TEST, descriptor,
                 targetClass, sourceClass, null, true, existingNames
             )
-            val elementFactory = JVMElementFactories.getFactory(targetClass.language, targetClass.getProject())
             val prefix = try {
-                elementFactory?.createMethodFromText(template.getTemplateText(), targetClass)?.getName() ?: ""
+                KtPsiFactory.contextual(targetClass).createFunction(template.getTemplateText()).getName() ?: ""
             } catch (_: IncorrectOperationException) {
                 ""
             }
