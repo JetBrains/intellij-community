@@ -2,7 +2,6 @@
 package com.intellij.usageView.impl;
 
 import com.intellij.find.FindBundle;
-import com.intellij.find.FindSettings;
 import com.intellij.find.FindUsagesSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -76,7 +75,7 @@ public final class UsageViewContentManagerImpl extends UsageViewContentManager {
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        FindSettings.getInstance().setShowResultsInSeparateView(state);
+        FindUsagesSettings.getInstance().setShowResultsInSeparateView(state);
       }
     };
 

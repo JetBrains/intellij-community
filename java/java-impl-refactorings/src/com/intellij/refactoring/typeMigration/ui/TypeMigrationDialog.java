@@ -2,7 +2,7 @@
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.java.JavaBundle;
@@ -57,7 +57,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     myRoots = roots;
     myRules = rules;
 
-    myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindSettings.getInstance().getDefaultScopeName());
+    myScopeChooserCombo = new ScopeChooserCombo(project, false, true, FindUsagesSettings.getInstance().getDefaultScopeName());
     Disposer.register(myDisposable, myScopeChooserCombo);
     myScopeChooserCombo.getChildComponent().addActionListener(new ActionListener() {
       @Override
@@ -74,7 +74,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       Messages.showErrorDialog(JavaRefactoringBundle.message("type.migration.no.scope.warning.message"), CommonBundle.getErrorTitle());
       return;
     }
-    FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
+    FindUsagesSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
     if (myRules == null) {
       myRules = new TypeMigrationRules(getProject());
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());

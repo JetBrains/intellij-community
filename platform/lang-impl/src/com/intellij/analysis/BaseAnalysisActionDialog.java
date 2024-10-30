@@ -4,7 +4,7 @@ package com.intellij.analysis;
 import com.intellij.analysis.dialog.ModelScopeItem;
 import com.intellij.analysis.dialog.ModelScopeItemPresenter;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.find.FindSettings;
+import com.intellij.find.FindUsagesSettings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -217,7 +217,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
       scope.setAnalyzeInjectedCode(analyzeInjectedCode);
     }
 
-    FindSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
+    FindUsagesSettings.getInstance().setDefaultScopeName(scope.getDisplayName());
     return scope;
   }
 
