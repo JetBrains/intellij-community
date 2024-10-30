@@ -18,7 +18,10 @@ import java.io.IOException
  * Represents an API request with strictly defined response type
  */
 sealed class GithubApiRequest<out T>(val url: String) {
+  var operation: GithubApiRequestOperation = GithubApiRequestOperation.Unknown
   var operationName: String? = null
+    private set
+
   abstract val acceptMimeType: String?
 
   protected val headers = mutableMapOf<String, String>()
@@ -28,15 +31,24 @@ sealed class GithubApiRequest<out T>(val url: String) {
   @Throws(IOException::class)
   abstract fun extractResult(response: GithubApiResponse): T
 
+  fun withOperation(operation: GithubApiRequestOperation): GithubApiRequest<T> {
+    this.operation = operation
+    return this
+  }
+
   fun withOperationName(name: String): GithubApiRequest<T> {
     operationName = name
     return this
   }
 
-  abstract class Get<T> @JvmOverloads constructor(url: String,
-                                                  override val acceptMimeType: String? = null) : GithubApiRequest<T>(url) {
-    abstract class Optional<T> @JvmOverloads constructor(url: String,
-                                                         acceptMimeType: String? = null) : Get<T?>(url, acceptMimeType) {
+  abstract class Get<T> @JvmOverloads constructor(
+    url: String,
+    override val acceptMimeType: String? = null,
+  ) : GithubApiRequest<T>(url) {
+    abstract class Optional<T> @JvmOverloads constructor(
+      url: String,
+      acceptMimeType: String? = null,
+    ) : Get<T?>(url, acceptMimeType) {
       companion object {
         inline fun <reified T> json(url: String, acceptMimeType: String? = null): Optional<T> =
           Json(url, T::class.java, acceptMimeType)
@@ -66,12 +78,6 @@ sealed class GithubApiRequest<out T>(val url: String) {
       override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    open class JsonList<T>(url: String, private val clazz: Class<T>, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
-      : Get<List<T>>(url, acceptMimeType) {
-
-      override fun extractResult(response: GithubApiResponse): List<T> = parseJsonList(response, clazz)
-    }
-
     open class JsonMap<T, U>(url: String, acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
       : Get<Map<T, U>>(url, acceptMimeType) {
 
@@ -88,9 +94,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
       }
     }
 
-    open class JsonSearchPage<T>(url: String,
-                                 private val clazz: Class<T>,
-                                 acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
+    open class JsonSearchPage<T>(
+      url: String,
+      private val clazz: Class<T>,
+      acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE,
+    )
       : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
@@ -101,25 +109,30 @@ sealed class GithubApiRequest<out T>(val url: String) {
     }
   }
 
-  abstract class Head<T> @JvmOverloads constructor(url: String,
-                                                   override val acceptMimeType: String? = null) : GithubApiRequest<T>(url)
+  abstract class Head<T> @JvmOverloads constructor(
+    url: String,
+    override val acceptMimeType: String? = null,
+  ) : GithubApiRequest<T>(url)
 
   abstract class WithBody<out T>(url: String) : GithubApiRequest<T>(url) {
     abstract val body: String?
     abstract val bodyMimeType: String
   }
 
-  abstract class Post<out T> @JvmOverloads constructor(override val bodyMimeType: String,
-                                                       url: String,
-                                                       override var acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+  abstract class Post<out T> @JvmOverloads constructor(
+    override val bodyMimeType: String,
+    url: String,
+    override var acceptMimeType: String? = null,
+  ) : WithBody<T>(url) {
     companion object {
       inline fun <reified T> json(url: String, body: Any, acceptMimeType: String? = null): Post<T> =
         Json(url, body, T::class.java, acceptMimeType)
     }
 
-    open class Json<T>(url: String, private val bodyObject: Any, private val clazz: Class<T>,
-                       acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE)
-      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, acceptMimeType) {
+    open class Json<T>(
+      url: String, private val bodyObject: Any, private val clazz: Class<T>,
+      acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE,
+    ) : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url, acceptMimeType) {
 
       override val body: String
         get() = GithubApiContentHelper.toJson(bodyObject)
@@ -127,10 +140,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
       override fun extractResult(response: GithubApiResponse): T = parseJsonObject(response, clazz)
     }
 
-    abstract class GQLQuery<out T>(url: String,
-                                   private val queryName: String,
-                                   private val variablesObject: Any)
-      : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
+    abstract class GQLQuery<out T>(
+      url: String,
+      private val queryName: String,
+      private val variablesObject: Any,
+    ) : Post<T>(GithubApiContentHelper.JSON_MIME_TYPE, url) {
 
       override val body: String
         get() {
@@ -147,11 +161,12 @@ sealed class GithubApiRequest<out T>(val url: String) {
         throw GithubConfusingException(errors.toString())
       }
 
-      class Parsed<out T>(url: String,
-                          requestFilePath: String,
-                          variablesObject: Any,
-                          private val clazz: Class<T>)
-        : GQLQuery<T>(url, requestFilePath, variablesObject) {
+      class Parsed<out T>(
+        url: String,
+        requestFilePath: String,
+        variablesObject: Any,
+        private val clazz: Class<T>,
+      ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): T {
           val result: GraphQLResponseDTO<out T, GHGQLError> = parseGQLResponse(response, clazz)
           val data = result.data
@@ -163,12 +178,13 @@ sealed class GithubApiRequest<out T>(val url: String) {
         }
       }
 
-      class TraversedParsed<out T : Any>(url: String,
-                                         requestFilePath: String,
-                                         variablesObject: Any,
-                                         private val clazz: Class<out T>,
-                                         private vararg val pathFromData: String)
-        : GQLQuery<T>(url, requestFilePath, variablesObject) {
+      class TraversedParsed<out T : Any>(
+        url: String,
+        requestFilePath: String,
+        variablesObject: Any,
+        private val clazz: Class<out T>,
+        private vararg val pathFromData: String,
+      ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
 
         override fun extractResult(response: GithubApiResponse): T {
           return parseResponse(response, clazz, pathFromData)
@@ -176,39 +192,45 @@ sealed class GithubApiRequest<out T>(val url: String) {
         }
       }
 
-      class OptionalTraversedParsed<T>(url: String,
-                                       requestFilePath: String,
-                                       variablesObject: Any,
-                                       private val clazz: Class<T>,
-                                       private vararg val pathFromData: String)
-        : GQLQuery<T?>(url, requestFilePath, variablesObject) {
+      class OptionalTraversedParsed<T>(
+        url: String,
+        requestFilePath: String,
+        variablesObject: Any,
+        private val clazz: Class<T>,
+        private vararg val pathFromData: String,
+      ) : GQLQuery<T?>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): T? {
           return parseResponse(response, clazz, pathFromData)
         }
       }
 
-      class OptionalTraversedParsedList<T>(url: String,
-                                           requestFilePath: String,
-                                           variablesObject: Any,
-                                           private val clazz: Class<T>,
-                                           private vararg val pathFromData: String)
-        : GQLQuery<List<T>?>(url, requestFilePath, variablesObject) {
+      class OptionalTraversedParsedList<T>(
+        url: String,
+        requestFilePath: String,
+        variablesObject: Any,
+        private val clazz: Class<T>,
+        private vararg val pathFromData: String,
+      ) : GQLQuery<List<T>?>(url, requestFilePath, variablesObject) {
         override fun extractResult(response: GithubApiResponse): List<T>? =
           parseResponse(response, pathFromData) {
             GithubApiContentHelper.readJsonList(it.toString().reader(), clazz)
           }
       }
 
-      protected fun <T> parseResponse(response: GithubApiResponse,
-                                      clazz: Class<T>,
-                                      pathFromData: Array<out String>): T? =
+      protected fun <T> parseResponse(
+        response: GithubApiResponse,
+        clazz: Class<T>,
+        pathFromData: Array<out String>,
+      ): T? =
         parseResponse(response, pathFromData) {
           GithubApiContentHelper.fromJson(it.toString(), clazz, true)
         }
 
-      protected fun <T> parseResponse(response: GithubApiResponse,
-                                      pathFromData: Array<out String>,
-                                      deserialize: (JsonNode) -> T): T? {
+      protected fun <T> parseResponse(
+        response: GithubApiResponse,
+        pathFromData: Array<out String>,
+        deserialize: (JsonNode) -> T,
+      ): T? {
         val result: GraphQLResponseDTO<out JsonNode, GHGQLError> = parseGQLResponse(response, JsonNode::class.java)
         val data = result.data
         if (data != null && !data.isNull) {
@@ -225,9 +247,11 @@ sealed class GithubApiRequest<out T>(val url: String) {
     }
   }
 
-  abstract class Put<T> @JvmOverloads constructor(override val bodyMimeType: String,
-                                                  url: String,
-                                                  override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+  abstract class Put<T> @JvmOverloads constructor(
+    override val bodyMimeType: String,
+    url: String,
+    override val acceptMimeType: String? = null,
+  ) : WithBody<T>(url) {
     companion object {
       inline fun <reified T> json(url: String, body: Any? = null): Put<T> = Json(url, body, T::class.java)
 
@@ -259,21 +283,26 @@ sealed class GithubApiRequest<out T>(val url: String) {
     }
   }
 
-  abstract class Patch<T> @JvmOverloads constructor(override val bodyMimeType: String,
-                                                    url: String,
-                                                    override var acceptMimeType: String? = null) : Post<T>(bodyMimeType,
-                                                                                                           url,
-                                                                                                           acceptMimeType) {
+  abstract class Patch<T> @JvmOverloads constructor(
+    override val bodyMimeType: String,
+    url: String,
+    override var acceptMimeType: String? = null,
+  ) : Post<T>(bodyMimeType,
+              url,
+              acceptMimeType) {
     companion object {
       inline fun <reified T> json(url: String, body: Any): Post<T> = Json(url, body, T::class.java)
     }
 
+    // TODO: Mark as PATCH, currently this likely sends POSTs?
     open class Json<T>(url: String, bodyObject: Any, clazz: Class<T>) : Post.Json<T>(url, bodyObject, clazz)
   }
 
-  abstract class Delete<T> @JvmOverloads constructor(override val bodyMimeType: String,
-                                                     url: String,
-                                                     override val acceptMimeType: String? = null) : GithubApiRequest.WithBody<T>(url) {
+  abstract class Delete<T> @JvmOverloads constructor(
+    override val bodyMimeType: String,
+    url: String,
+    override val acceptMimeType: String? = null,
+  ) : WithBody<T>(url) {
 
     companion object {
       inline fun <reified T> json(url: String, body: Any? = null): Delete<T> = Json(url, body, T::class.java)

@@ -97,7 +97,10 @@ internal class GHPRDataContextRepository(private val project: Project, parentCs:
       val iconsScope = cs.childScope(Dispatchers.Main)
       val imageLoader = AsyncHtmlImageLoader { _, src ->
         withContext(cs.coroutineContext + IMAGES_DISPATCHER) {
-          val bytes = requestExecutor.executeSuspend(GithubApiRequests.getBytes(src))
+          val request = GithubApiRequests.getBytes(src)
+            .withOperation(GithubApiRequestOperation.RestGetImage)
+            .withOperationName("get image")
+          val bytes = requestExecutor.executeSuspend(request)
           JBImageToolkit.createImage(bytes)
         }
       }

@@ -9,13 +9,14 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.async
 import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequestOperation
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.executeSuspend
 
 @Service
 internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
-  private val cs = serviceCs.childScope()
+  private val cs = serviceCs.childScope(javaClass.name)
 
   private val apiRequestExecutor = GithubApiRequestExecutor.Factory.getInstance().create()
   private val cache = Caffeine.newBuilder()
@@ -26,7 +27,11 @@ internal class GHEnterpriseServerMetadataLoader(serviceCs: CoroutineScope) {
     return cache.get(server) {
       val metaUrl = server.toApiUrl() + "/meta"
       cs.async {
-        apiRequestExecutor.executeSuspend(GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl))
+        apiRequestExecutor.executeSuspend(
+          GithubApiRequest.Get.json<GHEnterpriseServerMeta>(metaUrl)
+            .withOperation(GithubApiRequestOperation.RestGetServerMetadata)
+            .withOperationName("get server metadata")
+        )
       }
     }.await()
   }
