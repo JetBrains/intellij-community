@@ -57,7 +57,7 @@ class MarkedObjectAdditionalContextProvider implements AdditionalContextProvider
       try {
         labelName += CodeFragmentFactoryContextWrapper.DEBUG_LABEL_SUFFIX;
         Type type = objectRef.type();
-        result.add(new AdditionalContextElement(labelName, type.signature(), type.name(), () -> objectRef));
+        result.add(new AdditionalContextElement(labelName, type.signature(), type.name(), __ -> objectRef));
       }
       catch (ObjectCollectedException e) {
         //it.remove();

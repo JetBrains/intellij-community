@@ -294,7 +294,7 @@ class VariableFinder(val context: ExecutionContext) {
         val contextElements = AdditionalContextProvider
             .getAllAdditionalContextElements(codeFragment.project, codeFragment.context)
         val element = contextElements.firstOrNull { it.name == foreignValueName } ?: return null
-        return Result(element.value())
+        return Result(element.value(context.evaluationContext))
     }
 
     private fun findUnlabeledThis(kind: VariableKind.UnlabeledThis): Result? {

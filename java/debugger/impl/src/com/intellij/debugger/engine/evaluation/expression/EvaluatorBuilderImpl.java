@@ -824,7 +824,7 @@ public final class EvaluatorBuilderImpl implements EvaluatorBuilder {
           myResult = new Evaluator() {
             @Override
             public Object evaluate(EvaluationContextImpl context) {
-              return computeSyntheticValue.invoke();
+              return computeSyntheticValue.invoke(context);
             }
           };
           return;

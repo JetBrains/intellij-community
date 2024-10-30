@@ -45,4 +45,4 @@ interface AdditionalContextProvider {
  * @property value A lambda function returning a [Value] used for evaluation.
  */
 @ApiStatus.Internal
-data class AdditionalContextElement(val name: String, val jvmSignature: String, val jvmTypeName: String, val value: () -> Value)
+data class AdditionalContextElement(val name: String, val jvmSignature: String, val jvmTypeName: String, val value: (EvaluationContext) -> Value)

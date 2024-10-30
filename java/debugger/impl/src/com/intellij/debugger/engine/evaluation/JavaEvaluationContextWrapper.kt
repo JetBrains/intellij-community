@@ -14,7 +14,7 @@ import java.util.regex.Pattern
 internal class JavaEvaluationContextWrapper : EvaluationContextWrapper {
   companion object {
     @JvmField
-    val SYNTHETIC_VARIABLE_VALUE_KEY = Key.create<() -> Value>("SYNTHETIC_VARIABLE_VALUE_KEY")
+    val SYNTHETIC_VARIABLE_VALUE_KEY = Key.create<(EvaluationContext) -> Value>("SYNTHETIC_VARIABLE_VALUE_KEY")
   }
 
   override fun wrapContext(project: Project, context: PsiElement?, additionalElements: List<AdditionalContextElement>): PsiElement? {
