@@ -1,6 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.yaml.navigation
 
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,7 +36,7 @@ internal fun findYamlKeysByPattern(searchedKeyParts: List<String>, searchScope: 
 
 private fun findYamlFilesWithWord(keyPart: String, searchScope: GlobalSearchScope, project: Project): Sequence<YAMLFile> {
   return CacheManager.getInstance(project)
-    .getFilesWithWord(keyPart, UsageSearchContext.ANY, searchScope, false)
+    .getFilesWithWord(keyPart, UsageSearchContext.IN_CODE, searchScope, false)
     .asSequence()
     .filterIsInstance<YAMLFile>()
 }
@@ -42,7 +44,7 @@ private fun findYamlFilesWithWord(keyPart: String, searchScope: GlobalSearchScop
 internal class YamlKeyWithFile(val key: String, val offset: Int, val file: VirtualFile)
 
 private fun mapGistData(file: PsiFile): Sequence<YamlKeyWithFile> {
-  return YAML_CONCATENATED_KEYS_GIST.getFileData(file)
+  return YamlGistHolder.getInstance().concatenatedKeysGist.getFileData(file)
     .asSequence()
     .map { keyAndOffset -> YamlKeyWithFile(keyAndOffset.key, keyAndOffset.offset, file.virtualFile) }
 }
@@ -51,11 +53,18 @@ internal typealias YamlConcatenatedKeys = List<YamlConcatenatedKey>
 
 internal data class YamlConcatenatedKey(val key: String, val offset: Int)
 
-private val YAML_CONCATENATED_KEYS_GIST = GistManager.getInstance()
-  .newPsiFileGist("yamlConcatenatedKeysGist",
-                  1,
-                  YamlKeyExternalizer(),
-                  ::computeAllConcatenatedKeys)
+@Service(Service.Level.APP)
+private class YamlGistHolder {
+  companion object {
+    fun getInstance(): YamlGistHolder = service<YamlGistHolder>()
+  }
+
+  val concatenatedKeysGist = GistManager.getInstance()
+    .newPsiFileGist("yamlConcatenatedKeysGist",
+                    1,
+                    YamlKeyExternalizer(),
+                    ::computeAllConcatenatedKeys)
+}
 
 private fun computeAllConcatenatedKeys(file: PsiFile): YamlConcatenatedKeys {
   if (file !is YAMLFile) return emptyList()
