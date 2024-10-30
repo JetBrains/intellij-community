@@ -1,0 +1,6 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaSourceModule_1["KaSourceModule(A)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2["KaSourceModule(A)<br />test<br />JVM (1.8)"]
+  KaSourceModule_2 --> KaSourceModule_1
+  KaSourceModule_2 --friend--> KaSourceModule_1

@@ -1,0 +1,9 @@
+{
+    "modules": [
+        { "name": "common", "platform": "common" },
+        { "name": "jvm", "platform": "jvm", "refinement_dependencies": ["common"] },
+        { "name": "native", "platform": "native", "refinement_dependencies": ["common"] },
+        { "name": "js", "platform": "js", "refinement_dependencies": ["common"] },
+        { "name": "wasm", "platform": "js", "refinement_dependencies": ["common"] }
+    ]
+}

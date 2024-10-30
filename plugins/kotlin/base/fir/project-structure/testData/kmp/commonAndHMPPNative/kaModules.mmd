@@ -1,0 +1,116 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_1(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_2(["KaLibraryModule(NativePrebuiltKmpCoordinates(libraryPart=klib/common/stdlib, version=2.0.20-dev-2651))"])
+  KaLibraryModule_3(["KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)"])
+  KaLibraryModule_4(["KaLibraryModule(org.jetbrains.kotlinx:atomicfu-mingwx64:0.23.1)"])
+  KaLibraryModule_5(["KaLibraryModule(org.jetbrains.kotlinx:atomicfu:commonMain:0.23.1)"])
+  KaLibraryModule_6(["KaLibraryModule(org.jetbrains.kotlinx:atomicfu:nativeMain:0.23.1)"])
+  KaLibraryModule_7(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-mingwx64:1.8.0)"])
+  KaLibraryModule_8(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)"])
+  KaLibraryModule_9(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:concurrentMain:1.8.0)"])
+  KaLibraryModule_10(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeMain:1.8.0)"])
+  KaLibraryModule_11(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:nativeOtherMain:1.8.0)"])
+  KaLibraryModule_12(["KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)"])
+  KaSourceModule_13["KaSourceModule(Common)<br />production<br />JS/JVM (1.8)"]
+  KaSourceModule_14["KaSourceModule(Linux)<br />production<br />Native (linux_arm64)/Native (linux_x64)"]
+  KaSourceModule_15["KaSourceModule(MinGW)<br />production<br />Native (mingw_x64)"]
+  KaSourceModule_16["KaSourceModule(Native)<br />production<br />Native (linux_arm64)/Native (linux_x64)/Native (mingw_x64)"]
+  KaSourceModule_17["KaSourceModule(light_idea_test_case)<br />production<br />JVM (1.8)"]
+  KaLibraryModule_10 --> KaLibraryModule_0
+  KaLibraryModule_10 --> KaLibraryModule_11
+  KaLibraryModule_10 --> KaLibraryModule_3
+  KaLibraryModule_10 --> KaLibraryModule_5
+  KaLibraryModule_10 --> KaLibraryModule_6
+  KaLibraryModule_10 --> KaLibraryModule_8
+  KaLibraryModule_10 --> KaLibraryModule_9
+  KaLibraryModule_11 --> KaLibraryModule_0
+  KaLibraryModule_11 --> KaLibraryModule_10
+  KaLibraryModule_11 --> KaLibraryModule_3
+  KaLibraryModule_11 --> KaLibraryModule_5
+  KaLibraryModule_11 --> KaLibraryModule_6
+  KaLibraryModule_11 --> KaLibraryModule_8
+  KaLibraryModule_11 --> KaLibraryModule_9
+  KaLibraryModule_12 --> KaLibraryModule_1
+  KaLibraryModule_2 --> KaLibraryModule_0
+  KaLibraryModule_2 --> KaLibraryModule_10
+  KaLibraryModule_2 --> KaLibraryModule_11
+  KaLibraryModule_2 --> KaLibraryModule_3
+  KaLibraryModule_2 --> KaLibraryModule_5
+  KaLibraryModule_2 --> KaLibraryModule_6
+  KaLibraryModule_2 --> KaLibraryModule_8
+  KaLibraryModule_2 --> KaLibraryModule_9
+  KaLibraryModule_3 --> KaLibraryModule_0
+  KaLibraryModule_4 --> KaLibraryModule_0
+  KaLibraryModule_4 --> KaLibraryModule_10
+  KaLibraryModule_4 --> KaLibraryModule_2
+  KaLibraryModule_4 --> KaLibraryModule_3
+  KaLibraryModule_4 --> KaLibraryModule_5
+  KaLibraryModule_4 --> KaLibraryModule_6
+  KaLibraryModule_4 --> KaLibraryModule_7
+  KaLibraryModule_4 --> KaLibraryModule_8
+  KaLibraryModule_4 --> KaLibraryModule_9
+  KaLibraryModule_5 --> KaLibraryModule_0
+  KaLibraryModule_5 --> KaLibraryModule_3
+  KaLibraryModule_5 --> KaLibraryModule_8
+  KaLibraryModule_5 --> KaLibraryModule_9
+  KaLibraryModule_6 --> KaLibraryModule_0
+  KaLibraryModule_6 --> KaLibraryModule_10
+  KaLibraryModule_6 --> KaLibraryModule_11
+  KaLibraryModule_6 --> KaLibraryModule_3
+  KaLibraryModule_6 --> KaLibraryModule_5
+  KaLibraryModule_6 --> KaLibraryModule_8
+  KaLibraryModule_6 --> KaLibraryModule_9
+  KaLibraryModule_7 --> KaLibraryModule_0
+  KaLibraryModule_7 --> KaLibraryModule_10
+  KaLibraryModule_7 --> KaLibraryModule_2
+  KaLibraryModule_7 --> KaLibraryModule_3
+  KaLibraryModule_7 --> KaLibraryModule_4
+  KaLibraryModule_7 --> KaLibraryModule_5
+  KaLibraryModule_7 --> KaLibraryModule_6
+  KaLibraryModule_7 --> KaLibraryModule_8
+  KaLibraryModule_7 --> KaLibraryModule_9
+  KaLibraryModule_8 --> KaLibraryModule_0
+  KaLibraryModule_8 --> KaLibraryModule_3
+  KaLibraryModule_8 --> KaLibraryModule_5
+  KaLibraryModule_8 --> KaLibraryModule_9
+  KaLibraryModule_9 --> KaLibraryModule_0
+  KaLibraryModule_9 --> KaLibraryModule_3
+  KaLibraryModule_9 --> KaLibraryModule_5
+  KaLibraryModule_9 --> KaLibraryModule_8
+  KaSourceModule_13 --> KaLibraryModule_0
+  KaSourceModule_13 --> KaLibraryModule_3
+  KaSourceModule_13 --> KaLibraryModule_8
+  KaSourceModule_14 --> KaLibraryModule_0
+  KaSourceModule_14 --> KaLibraryModule_10
+  KaSourceModule_14 --> KaLibraryModule_11
+  KaSourceModule_14 --> KaLibraryModule_2
+  KaSourceModule_14 --> KaLibraryModule_3
+  KaSourceModule_14 --> KaLibraryModule_5
+  KaSourceModule_14 --> KaLibraryModule_6
+  KaSourceModule_14 --> KaLibraryModule_8
+  KaSourceModule_14 --> KaLibraryModule_9
+  KaSourceModule_14 --> KaSourceModule_13
+  KaSourceModule_14 --> KaSourceModule_16
+  KaSourceModule_15 --> KaLibraryModule_0
+  KaSourceModule_15 --> KaLibraryModule_2
+  KaSourceModule_15 --> KaLibraryModule_4
+  KaSourceModule_15 --> KaLibraryModule_7
+  KaSourceModule_15 --> KaSourceModule_13
+  KaSourceModule_15 --> KaSourceModule_16
+  KaSourceModule_16 --> KaLibraryModule_0
+  KaSourceModule_16 --> KaLibraryModule_10
+  KaSourceModule_16 --> KaLibraryModule_2
+  KaSourceModule_16 --> KaLibraryModule_3
+  KaSourceModule_16 --> KaLibraryModule_5
+  KaSourceModule_16 --> KaLibraryModule_6
+  KaSourceModule_16 --> KaLibraryModule_8
+  KaSourceModule_16 --> KaLibraryModule_9
+  KaSourceModule_16 --> KaSourceModule_13
+  KaSourceModule_17 --> KaLibraryModule_1
+  KaSourceModule_17 --> KaLibraryModule_12
+  KaSourceModule_14 --dependsOn--> KaSourceModule_13
+  KaSourceModule_14 --dependsOn--> KaSourceModule_16
+  KaSourceModule_15 --dependsOn--> KaSourceModule_13
+  KaSourceModule_15 --dependsOn--> KaSourceModule_16
+  KaSourceModule_16 --dependsOn--> KaSourceModule_13

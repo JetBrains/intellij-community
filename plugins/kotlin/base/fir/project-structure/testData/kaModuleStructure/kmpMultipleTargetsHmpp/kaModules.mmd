@@ -1,0 +1,19 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaSourceModule_1["KaSourceModule(common)<br />production<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
+  KaSourceModule_2["KaSourceModule(js)<br />production<br />JS"]
+  KaSourceModule_3["KaSourceModule(jvm1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_4["KaSourceModule(jvm2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_5["KaSourceModule(jvmCommon)<br />production<br />JVM (1.8)"]
+  KaSourceModule_2 --> KaSourceModule_1
+  KaSourceModule_3 --> KaSourceModule_1
+  KaSourceModule_3 --> KaSourceModule_5
+  KaSourceModule_4 --> KaSourceModule_1
+  KaSourceModule_4 --> KaSourceModule_5
+  KaSourceModule_5 --> KaSourceModule_1
+  KaSourceModule_2 --dependsOn--> KaSourceModule_1
+  KaSourceModule_3 --dependsOn--> KaSourceModule_1
+  KaSourceModule_3 --dependsOn--> KaSourceModule_5
+  KaSourceModule_4 --dependsOn--> KaSourceModule_1
+  KaSourceModule_4 --dependsOn--> KaSourceModule_5
+  KaSourceModule_5 --dependsOn--> KaSourceModule_1

@@ -166,6 +166,14 @@ fun Library.toKaLibraryModules(project: Project): List<KaLibraryModule> =
     project.ideProjectStructureProvider.getKaLibraryModules(this)
 
 /**
+ * Converts the [OpenapiSdk] to a list of [KaLibraryModule] in the specified [project].
+ *
+ * @return A list of corresponding [KaLibraryModule].
+ */
+fun OpenapiSdk.toKaLibraryModule(project: Project): KaLibraryModule =
+    project.ideProjectStructureProvider.getKaLibraryModule(this)
+
+/**
  * Returns a [KaModule] for a given PsiElement in the context of the [useSiteModule].
  *
  * The use-site module is the [KaModule] from which [getKaModule] is called. This concept is the same as the use-site module accepted by

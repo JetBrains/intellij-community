@@ -271,6 +271,10 @@ internal class ProjectStructureProviderIdeImpl(private val project: Project) : I
         return null
     }
 
+    override fun getKaLibraryModule(sdk: Sdk): KaLibraryModule {
+        val moduleInfo = SdkInfo(project, sdk)
+        return getKtModuleByModuleInfo(moduleInfo) as KaLibraryModule
+    }
 
     override fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule> {
         return ModuleInfoProvider.getInstance(project)

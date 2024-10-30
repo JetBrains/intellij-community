@@ -1,0 +1,76 @@
+KaLibraryModule:
+  description: <SDK>
+  targetPlatform: JVM (1.8)
+  libraryName: <SDK>
+  isSdk: true
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of common
+  targetPlatform: JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)
+  name: common
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <common>
+  regularDependencies:
+    <empty>
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    <empty>
+
+KaSourceModule:
+  description: Sources of js
+  targetPlatform: JS
+  name: js
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <js>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of jvm
+  targetPlatform: JVM (1.8)
+  name: jvm
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <jvm>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of native
+  targetPlatform: Native (general)
+  name: native
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <native>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)
+
+KaSourceModule:
+  description: Sources of wasm
+  targetPlatform: JS
+  name: wasm
+  sourceModuleKind: PRODUCTION
+  stableModuleName: <wasm>
+  regularDependencies:
+    KaSourceModule(common, production)
+  friendDependencies:
+    <empty>
+  dependsOnDependencies:
+    KaSourceModule(common, production)

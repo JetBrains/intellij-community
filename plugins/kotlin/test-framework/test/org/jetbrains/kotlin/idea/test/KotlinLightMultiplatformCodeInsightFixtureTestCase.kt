@@ -2,9 +2,6 @@
 
 package org.jetbrains.kotlin.idea.test
 
-import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.VfsTestUtil
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.test.util.slashedPath
@@ -32,11 +29,11 @@ abstract class KotlinLightMultiplatformCodeInsightFixtureTestCase : KotlinLightC
 
     override fun tearDown() {
         runAll(
-            { KotlinMultiPlatformProjectDescriptor.cleanupSourceRoots() },
+            { projectDescriptor.cleanupSourceRoots() },
             { KotlinSdkType.removeKotlinSdkInTests() },
             { super.tearDown() },
         )
     }
 
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinMultiPlatformProjectDescriptor
+    override fun getProjectDescriptor(): KotlinMultiPlatformProjectDescriptor = KotlinMultiPlatformProjectDescriptor.ALL_PLATFORMS
 }

@@ -1,0 +1,39 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_1(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_2(["KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:2.0.20-dev-2651)"])
+  KaLibraryModule_3(["KaLibraryModule(org.jetbrains.kotlin:kotlin-stdlib:commonMain:2.0.20-dev-2651)"])
+  KaLibraryModule_4(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:1.8.0)"])
+  KaLibraryModule_5(["KaLibraryModule(org.jetbrains.kotlinx:kotlinx-coroutines-core:commonMain:1.8.0)"])
+  KaLibraryModule_6(["KaLibraryModule(org.jetbrains:annotations-java5:24.0.0)"])
+  KaLibraryModule_7(["KaLibraryModule(org.jetbrains:annotations:23.0.0)"])
+  KaSourceModule_8["KaSourceModule(Common)<br />production<br />JS/JVM (1.8)"]
+  KaSourceModule_9["KaSourceModule(Jvm)<br />production<br />JVM (1.8)"]
+  KaSourceModule_10["KaSourceModule(light_idea_test_case)<br />production<br />JVM (1.8)"]
+  KaLibraryModule_2 --> KaLibraryModule_1
+  KaLibraryModule_2 --> KaLibraryModule_3
+  KaLibraryModule_3 --> KaLibraryModule_0
+  KaLibraryModule_4 --> KaLibraryModule_1
+  KaLibraryModule_4 --> KaLibraryModule_2
+  KaLibraryModule_4 --> KaLibraryModule_3
+  KaLibraryModule_4 --> KaLibraryModule_5
+  KaLibraryModule_4 --> KaLibraryModule_7
+  KaLibraryModule_5 --> KaLibraryModule_0
+  KaLibraryModule_5 --> KaLibraryModule_3
+  KaLibraryModule_6 --> KaLibraryModule_1
+  KaLibraryModule_7 --> KaLibraryModule_1
+  KaLibraryModule_7 --> KaLibraryModule_2
+  KaLibraryModule_7 --> KaLibraryModule_3
+  KaLibraryModule_7 --> KaLibraryModule_4
+  KaLibraryModule_7 --> KaLibraryModule_5
+  KaSourceModule_10 --> KaLibraryModule_1
+  KaSourceModule_10 --> KaLibraryModule_6
+  KaSourceModule_8 --> KaLibraryModule_0
+  KaSourceModule_8 --> KaLibraryModule_3
+  KaSourceModule_8 --> KaLibraryModule_5
+  KaSourceModule_9 --> KaLibraryModule_1
+  KaSourceModule_9 --> KaLibraryModule_2
+  KaSourceModule_9 --> KaLibraryModule_4
+  KaSourceModule_9 --> KaLibraryModule_7
+  KaSourceModule_9 --> KaSourceModule_8
+  KaSourceModule_9 --dependsOn--> KaSourceModule_8

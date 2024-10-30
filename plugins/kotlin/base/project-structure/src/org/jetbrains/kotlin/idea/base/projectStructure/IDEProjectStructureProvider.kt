@@ -38,6 +38,8 @@ abstract class IDEProjectStructureProvider : KotlinProjectStructureProviderBase(
 
     abstract fun getOpenapiSdk(module: KaLibraryModule): OpenapiSdk?
 
+    abstract fun getKaLibraryModule(sdk: OpenapiSdk): KaLibraryModule
+
     abstract fun getContainingKaModules(virtualFile: VirtualFile): List<KaModule>
 
     abstract fun getForcedKaModule(file: PsiFile): KaModule?
