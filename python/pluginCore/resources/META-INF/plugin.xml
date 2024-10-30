@@ -460,6 +460,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <registryKey defaultValue="true" description="Use a single port for communication between PyCharm and the debugger"
                  restartRequired="false" key="python.debug.use.single.port"/>
 
+    <registryKey defaultValue="500" description="Timeout between attempts to connect to remote debugger server"
+                 restartRequired="false" key="python.debugger.remote.connect.retry.timeout.ms"/>
+    <registryKey defaultValue="20" description="Max attempts to connect to remote debugger server"
+                 restartRequired="false" key="python.debugger.remote.connect.max.attempts"/>
+
     <!-- typing -->
     <multiHostInjector implementation="com.jetbrains.python.codeInsight.typing.PyTypingAnnotationInjector"/>
 
