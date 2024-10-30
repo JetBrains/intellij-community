@@ -841,6 +841,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
 
     <pySdkProvider implementation="com.jetbrains.python.sdk.poetry.PoetrySdkProvider"/>
     <packageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PyPoetryPackageManagerProvider"/>
+    <pythonPackageManagerProvider implementation="com.jetbrains.python.sdk.poetry.PoetryPackageManagerProvider"/>
 
 
     <pythonPackageManagerProvider implementation="com.jetbrains.python.packaging.pip.PipPackageManagerProvider" order="last"/>

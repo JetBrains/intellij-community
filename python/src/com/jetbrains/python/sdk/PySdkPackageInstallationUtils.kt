@@ -49,7 +49,7 @@ internal class PackageInstallationFilesService {
  * @return A [Result] object that represents the [ProcessOutput] of the installation command.
  */
 @RequiresBackgroundThread
-internal suspend fun installPackageWithPython(url: URL, pythonExecutable: String): Result<ProcessOutput> {
+internal suspend fun installPackageWithPython(url: URL, pythonExecutable: String): Result<String> {
   val installationFile = downloadFile(url).getOrThrow()
   val command = GeneralCommandLine(pythonExecutable, installationFile.absolutePathString())
   return runCommandLine(command)

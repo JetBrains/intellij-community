@@ -143,7 +143,11 @@ class PythonPackageManagementServiceBridge(project: Project,sdk: Sdk) : PyPackag
         manager
           .installedPackages
           .filter { it.name.lowercase() in namesToDelete }
-          .forEach { manager.uninstallPackage(it) }
+          .forEach {
+            runPackagingOperationOrShowErrorDialog(sdk, PyBundle.message("python.packaging.operation.failed.title")) {
+              manager.uninstallPackage(it)
+            }
+          }
 
         listener.operationFinished(namesToDelete.first(), null)
       }

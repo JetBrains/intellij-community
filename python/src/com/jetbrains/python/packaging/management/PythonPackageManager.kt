@@ -17,16 +17,35 @@ import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
-  abstract val installedPackages: List<PythonPackage>
+  abstract var installedPackages: List<PythonPackage>
 
   abstract val repositoryManager: PythonRepositoryManager
 
-  abstract suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>>
+  suspend fun installPackage(specification: PythonPackageSpecification, options: List<String>): Result<List<PythonPackage>> {
+    installPackageCommand(specification, options).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
 
-  abstract suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>>
-  abstract suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>>
+  suspend fun updatePackage(specification: PythonPackageSpecification): Result<List<PythonPackage>> {
+    updatePackageCommand(specification).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
+
+  suspend fun uninstallPackage(pkg: PythonPackage): Result<List<PythonPackage>> {
+    uninstallPackageCommand(pkg).onFailure { return Result.failure(it) }
+    refreshPaths()
+    return reloadPackages()
+  }
 
   abstract suspend fun reloadPackages(): Result<List<PythonPackage>>
+
+
+  protected abstract suspend fun installPackageCommand(specification: PythonPackageSpecification, options: List<String>): Result<String>
+  protected abstract suspend fun updatePackageCommand(specification: PythonPackageSpecification): Result<String>
+  protected abstract suspend fun uninstallPackageCommand(pkg: PythonPackage): Result<String>
+  protected abstract suspend fun reloadPackagesCommand(): Result<List<PythonPackage>>
 
   internal suspend fun refreshPaths() {
     writeAction {
@@ -34,7 +53,6 @@ abstract class PythonPackageManager(val project: Project, val sdk: Sdk) {
       PythonSdkUpdater.scheduleUpdate(sdk, project)
     }
   }
-
 
   companion object {
     fun forSdk(project: Project, sdk: Sdk): PythonPackageManager {
