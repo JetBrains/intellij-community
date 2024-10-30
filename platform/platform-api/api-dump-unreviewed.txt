@@ -4939,6 +4939,7 @@ e:com.intellij.openapi.ui.popup.JBPopupFactory$ActionSelectionAid
 - s:values():com.intellij.openapi.ui.popup.JBPopupFactory$ActionSelectionAid[]
 com.intellij.openapi.ui.popup.ListPopupStepEx
 - com.intellij.openapi.ui.popup.ListPopupStep
+- getSecondaryIconFor(java.lang.Object):javax.swing.Icon
 - getSecondaryTextFor(java.lang.Object):java.lang.String
 - a:getTooltipTextFor(java.lang.Object):java.lang.String
 - onChosen(java.lang.Object,Z,I):com.intellij.openapi.ui.popup.PopupStep
