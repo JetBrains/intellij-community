@@ -172,6 +172,7 @@
   <technology name="javax-websocket" root="javax.websocket"/>
   <technology name="jbehave" root="org.jbehave"/>
   <technology name="jbpm" root="org.kie.api"/>
+  <technology name="jdbc" root="java.sql"/>
   <technology name="jdbi" root="org.jdbi.v3"/>
   <technology name="jdi-light" root="com.epam.jdi.light"/>
   <technology name="jeecg-boot" root="org.jeecg"/>
@@ -376,6 +377,7 @@
   <technology name="testng" root="org.testng"/>
   <technology name="thymeleaf" root="org.thymeleaf"/>
   <technology name="tornadofx" root="tornadofx"/>
+  <technology name="torque" root="org.apache.torque"/>
   <technology name="truth" root="com.google.common.truth"/>
   <technology name="twitter-server" root="com.twitter.server"/>
   <technology name="twitter-util" root="com.twitter.util"/>
