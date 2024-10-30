@@ -45,5 +45,10 @@
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-impl-base" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-java.tests.shared" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Gradle" level="project" />
+    <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
   </component>
 </module>
