@@ -74,10 +74,16 @@ private class DescriptorDocumentationConstructor(loaderOptions: LoaderOptions) :
 
   private fun fillElementPathsRecursively(element: Element, parentPath: List<String>) {
     val elementPath = parentPath + element.name!!
-    element.path = elementPath
+    // If an element is aliased and referenced in YAML, the same instance is shared.
+    // For this reason, set the path only if it is empty, so we get the shortest paths filled.
+    if (element.path.isEmpty()) {
+      element.path = elementPath
+    }
     for (attribute in element.attributes.mapNotNull { it.attribute }) {
-      val attributePath = elementPath + attribute.name!!
-      attribute.path = attributePath
+      if (attribute.path.isEmpty()) {
+        val attributePath = elementPath + attribute.name!!
+        attribute.path = attributePath
+      }
     }
     for (child in element.children) {
       fillElementPathsRecursively(child.element!!, elementPath)
