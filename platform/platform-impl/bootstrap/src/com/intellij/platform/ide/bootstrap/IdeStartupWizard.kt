@@ -23,7 +23,8 @@ private val LOG: Logger
   get() = logger<IdeStartupWizard>()
 
 internal val isIdeStartupDialogEnabled: Boolean
-  get() = !ApplicationManagerEx.isInIntegrationTest() &&
+  get() = (!ApplicationManagerEx.isInIntegrationTest() ||
+           System.getProperty("show.wizard.in.test", "false").toBoolean()) &&
           System.getProperty("intellij.startup.dialog", "true").toBoolean()
 
 @ExperimentalCoroutinesApi
@@ -79,14 +80,16 @@ internal suspend fun runStartupWizard(isInitialStart: Job, app: Application) {
               return@block
             }
           }
-        } finally {
+        }
+        finally {
           startupStatus?.cancel()
         }
 
         if (isIdeStartupWizardEnabled) {
           LOG.info("Passing execution control to $wizard.")
           wizard.run()
-        } else {
+        }
+        else {
           LOG.info("Skipping the actual wizard call.")
         }
       }
