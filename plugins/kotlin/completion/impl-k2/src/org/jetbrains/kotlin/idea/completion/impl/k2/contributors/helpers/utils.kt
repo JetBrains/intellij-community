@@ -126,9 +126,9 @@ internal fun collectNonExtensionsForType(
     val typeScope = type.scope ?: return emptySequence()
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
-        .applyIf(!visibilityChecker.allowSyntheticJavaProperties) {
+        .applyIf(visibilityChecker.excludeSyntheticJavaProperties) {
             filterNot { it.symbol is KaSyntheticJavaPropertySymbol }
-        }.applyIf(!visibilityChecker.allowJavaGettersAndSetters) {
+        }.applyIf(visibilityChecker.excludeJavaGettersAndSetters) {
             filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
         }
 

@@ -56,13 +56,13 @@ internal object Completions {
             }
 
             is KotlinTypeNameReferencePositionContext -> {
-                if (visibilityChecker.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                if (!visibilityChecker.excludeClassifiersAndPackagesForPossibleExtensionCallables) {
                     FirClassifierCompletionContributor(visibilityChecker)
                         .completeWithPolicyController(policyController, positionContext, weighingContext)
                 }
                 FirKeywordCompletionContributor(visibilityChecker, priority = 1)
                     .completeWithPolicyController(policyController, positionContext, weighingContext)
-                if (visibilityChecker.allowClassifiersAndPackagesForPossibleExtensionCallables) {
+                if (!visibilityChecker.excludeClassifiersAndPackagesForPossibleExtensionCallables) {
                     FirPackageCompletionContributor(visibilityChecker, priority = 2)
                         .completeWithPolicyController(policyController, positionContext, weighingContext)
                 }

@@ -83,25 +83,25 @@ internal class CompletionVisibilityChecker(
     val excludeEnumEntries: Boolean
         get() = !supportsFeature(LanguageFeature.EnumEntries)
 
-    val allowSyntheticJavaProperties: Boolean
-        get() = positionContext !is KDocNameReferencePositionContext &&
-                (positionContext !is KotlinCallableReferencePositionContext || supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties))
+    val excludeSyntheticJavaProperties: Boolean
+        get() = positionContext is KDocNameReferencePositionContext
+                || positionContext is KotlinCallableReferencePositionContext && !supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
 
-    val allowJavaGettersAndSetters: Boolean
-        get() = !allowSyntheticJavaProperties
-                || basicContext.parameters.invocationCount > 1
+    val excludeJavaGettersAndSetters: Boolean
+        get() = !excludeSyntheticJavaProperties
+                && basicContext.parameters.invocationCount <= 1
 
-    val allowClassifiersAndPackagesForPossibleExtensionCallables: Boolean
+    val excludeClassifiersAndPackagesForPossibleExtensionCallables: Boolean
         get() {
             val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)
                 ?.typeReference
                 ?.parent
-                ?: return true
+                ?: return false
 
-            return !(basicContext.parameters.invocationCount == 0
+            return basicContext.parameters.invocationCount == 0
                     && (declaration is KtNamedFunction || declaration is KtProperty)
                     && positionContext.explicitReceiver == null
-                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true)
+                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true
         }
 
     private val languageVersionSettings: LanguageVersionSettings =
