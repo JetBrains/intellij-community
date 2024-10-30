@@ -36,6 +36,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
         public void testDefaultJsImports() throws Exception {
             runTest("testData/editor/optimizeImports/js/DefaultJsImports.kt");
         }
+
+        @TestMetadata("DynamicMembersNotImported.kt")
+        public void testDynamicMembersNotImported() throws Exception {
+            runTest("testData/editor/optimizeImports/js/DynamicMembersNotImported.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
