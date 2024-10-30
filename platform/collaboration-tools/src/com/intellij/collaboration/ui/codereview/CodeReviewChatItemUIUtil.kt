@@ -14,6 +14,7 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import net.miginfocom.layout.CC
+import net.miginfocom.layout.HideMode
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
@@ -201,12 +202,12 @@ object CodeReviewChatItemUIUtil {
     fun wrapWithHeader(item: JComponent, title: JComponent, actions: JComponent?): JComponent {
       val headerPanel = JPanel(null).apply {
         layout = MigLayout(LC().gridGap("0", "0").insets("0").height("16")
-                             .hideMode(3).fill())
+                             .hideMode(HideMode.DISREGARD).fill())
         isOpaque = false
 
         add(title, CC().push())
         if (actions != null) {
-          add(actions, CC().push().gapLeft("10:push"))
+          add(actions, CC().push().gapLeft("10:push").hideMode(HideMode.NORMAL.code))
         }
       }
 
