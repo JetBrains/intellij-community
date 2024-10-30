@@ -38,7 +38,7 @@ def get_data(table, use_csv_serialization, start_index=None, end_index=None, for
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> str
 
     def convert_data_to_csv(data):
-        return repr(__convert_to_df(data).to_csv(na_rep = "NaN", float_format=format))
+        return repr(__convert_to_df(data).to_csv(na_rep = "NaN", float_format=format, sep="~"))
 
     def convert_data_to_html(data):
         return repr(__convert_to_df(data).to_html(notebook=True))
@@ -56,7 +56,7 @@ def display_data_csv(table, start_index, end_index):
     # type: (Union[pd.DataFrame, pd.Series], int, int) -> None
     def ipython_display(data):
         try:
-            data = data.to_csv(na_rep = "NaN")
+            data = data.to_csv(na_rep = "NaN", sep="~")
         except AttributeError:
             pass
         print(__convert_to_df(data))
