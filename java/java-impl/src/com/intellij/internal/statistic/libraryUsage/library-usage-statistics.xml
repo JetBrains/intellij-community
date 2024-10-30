@@ -229,6 +229,7 @@
   <technology name="kvision" root="io.kvision"/>
   <technology name="lagom" root="com.lightbend.lagom"/>
   <technology name="laminar" root="laminar"/>
+  <technology name="langchain4j" root="dev.langchain4j.model.chat"/>
   <technology name="liquibase" root="liquibase"/>
   <technology name="log4j1" root="org.apache.log4j"/>
   <technology name="log4j" root="org.apache.logging.log4j"/>

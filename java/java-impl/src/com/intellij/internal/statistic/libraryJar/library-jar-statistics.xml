@@ -151,6 +151,7 @@
   <technology name="ktorm" class="org.ktorm.entity.Entity"/>
   <technology name="lagom-java" class="com.lightbend.lagom.javadsl.api.Service"/>
   <technology name="lagom-scala" class="com.lightbend.lagom.scaladsl.api.Service"/>
+  <technology name="langchain4j" class="dev.langchain4j.model.chat.ChatLanguageModel"/>
   <technology name="liquibase" class="liquibase.Liquibase"/>
   <technology name="log4j1" class="org.apache.log4j.Logger"/>
   <technology name="log4j2" class="org.apache.logging.log4j.Logger"/>
