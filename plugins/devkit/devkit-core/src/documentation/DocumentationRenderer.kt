@@ -88,6 +88,8 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendElement(element: Element): StringBuilder {
     appendElementPath(element.path)
     appendLine("<hr/>")
+    appendDeprecation(element)
+    appendSinceUntil(element)
     element.description?.trim()?.let { appendLine("$it\n") }
     appendRequirement(element.requirement)
     appendDefaultValue(element.defaultValue)
@@ -121,6 +123,40 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun elementLink(text: String, path: List<String>): String {
     val linkPath = path.toPathString()
     return "[`<$text>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)"
+  }
+
+  private fun StringBuilder.appendDeprecation(element: Element) {
+    if (element.deprecatedSince != null) {
+      append("**_")
+      append("Deprecated since ${element.deprecatedSince}")
+      append("_**")
+      val deprecationNote = element.deprecationNote
+      if (deprecationNote != null) {
+        append("<br/>")
+        val italicDeprecationNote = deprecationNote.lines().joinToString(separator = "\n") { if (it.isNotEmpty()) "_${it}_" else it }
+        append(italicDeprecationNote)
+
+      }
+      appendLine().appendLine()
+    }
+  }
+
+  private fun StringBuilder.appendSinceUntil(element: Element) {
+    if (element.since != null || element.until != null) {
+      append('_')
+      append("Available: ")
+      if (element.since != null) {
+        append("since ${element.since}")
+        if (element.until != null) {
+          append(", ")
+        }
+      }
+      if (element.until != null) {
+        append("until ${element.until}")
+      }
+      appendLine('_')
+      appendLine()
+    }
   }
 
   private fun StringBuilder.appendRequirement(requirement: Requirement?) {

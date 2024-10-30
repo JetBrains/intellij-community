@@ -37,7 +37,7 @@ internal data class Element(
   var sdkDocsFixedPath: List<String> = emptyList(),
   var since: String? = null,
   var until: String? = null,
-  var deprecated: Boolean = false,
+  var deprecatedSince: String? = null,
   var deprecationNote: String? = null,
   var description: String? = null,
   var sdkDocsSupportDetails: String? = null,

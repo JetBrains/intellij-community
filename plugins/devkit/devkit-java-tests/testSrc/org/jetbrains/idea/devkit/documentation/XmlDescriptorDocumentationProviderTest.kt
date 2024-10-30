@@ -34,6 +34,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__first-level-child-1\"><code>&lt;first-level-child-1&gt;</code></a></li>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2\"><code>&lt;firstLevelChild2&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__deprecatedElement\"><code>&lt;deprecatedElement&gt;</code></a></li>"+
       "</ul>"
     )
   }
@@ -98,6 +99,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
         </root>
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;firstLevelChild2&gt;</code></b><hr/>\n" +
+      "<i>Available: since 2021.2</i><p>" +
       "The <code>secondLevelChild2</code> description.\n" +
       "A link to <a href=\"psi_element://#attribute:root__first-attribute\"><code>first-attribute</code></a>." +
       "<h5>Requirement</h5>" +
@@ -146,7 +148,8 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
         </root>
       """.trimIndent(),
       "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;firstLevelChild2&gt;</code></b><hr/>\n" +
-      "The <code>secondLevelChild2</code> description.\n" +
+      "<i>Available: since 2021.2</i>" +
+      "<p>The <code>secondLevelChild2</code> description.\n" +
       "A link to <a href=\"psi_element://#attribute:root__first-attribute\"><code>first-attribute</code></a>." +
       "<h5>Requirement</h5>" +
       "<p>Required: no<h5>Default value</h5><p>Value of the <a href=\"psi_element://#element:root__first-level-child\"><code>&lt;first-level-child1&gt;</code></a> element." +
@@ -160,6 +163,25 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "</ul>" +
       "<h5>Example</h5>" +
       "<pre><code><span style=\"\">&lt;</span><span style=\"color:#000080;font-weight:bold;\">first-level-child</span><span style=\"\">&gt;</span><span style=\"\">any</span><span style=\"\">&lt;/</span><span style=\"color:#000080;font-weight:bold;\">first-level-child</span><span style=\"\">&gt;</span></code></pre>"
+    )
+  }
+
+  fun `test deprecated element`() {
+    doTestDocContains(
+      """
+        <root>
+          <first-level-child-1/>
+          <firstLevelChild2/>
+          <deprecated<caret>Element/>
+        </root>
+      """.trimIndent(),
+      "<p><a href=\"psi_element://#element:root\"><code>&lt;root&gt;</code></a> / <b><code>&lt;deprecatedElement&gt;</code></b><hr/>\n" +
+      "<b><i>Deprecated since 2020.1</i></b><br/>" +
+      "<i>Do not use it in new plugins.</i>\n" +
+      "<i>See <a href=\"https://example.com\">Components</a> for the migration guide.</i>" +
+      "<p>The <code>deprecatedElement</code> description." +
+      "<h5>Requirement</h5>" +
+      "<p>Required: no"
     )
   }
 

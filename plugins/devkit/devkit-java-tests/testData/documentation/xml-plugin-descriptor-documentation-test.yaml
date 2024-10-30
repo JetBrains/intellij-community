@@ -70,6 +70,7 @@ elements:
                     required: yes
         - element:
             name: firstLevelChild2
+            since: 2021.2
             #language=Markdown
             description: |
               The `secondLevelChild2` description.
@@ -111,3 +112,14 @@ elements:
                   requirement:
                     required: yes
               - element: *root_firstLevelChild_secondLevelChild
+        - element:
+            name: deprecatedElement
+            deprecatedSince: 2020.1
+            deprecationNote: |
+              Do not use it in new plugins.
+              See [Components](https://example.com) for the migration guide.
+            #language=Markdown
+            description: |
+              The `deprecatedElement` description.
+            requirement:
+              required: no

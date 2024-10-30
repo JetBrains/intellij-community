@@ -1462,10 +1462,8 @@ elements:
             deprecatedSince: &componentsDeprecatedSince 2020.1
             #language=Markdown
             deprecationNote: &componentsDeprecationNote |
-              > Do not use it in new plugins.
-              > See [Components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html) for the migration guide.
-              >
-              {style="warning"}
+              Do not use it in new plugins.
+              See [Components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html) for the migration guide.
             #language=Markdown
             description: Defines a list of application [components](https://plugins.jetbrains.com/docs/intellij/plugin-components.html).
             requirement:
