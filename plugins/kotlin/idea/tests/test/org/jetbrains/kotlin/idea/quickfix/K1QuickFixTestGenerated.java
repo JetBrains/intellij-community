@@ -5758,6 +5758,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/functionalType.kt");
                     }
 
+                    @TestMetadata("functionalTypeFromCallable.kt")
+                    public void testFunctionalTypeFromCallable() throws Exception {
+                        runTest("testData/quickfix/createFromUsage/createFunction/call/simple/functionalTypeFromCallable.kt");
+                    }
+
                     @TestMetadata("inAnonymousFunBlockWithExpectedType.kt")
                     public void testInAnonymousFunBlockWithExpectedType() throws Exception {
                         runTest("testData/quickfix/createFromUsage/createFunction/call/simple/inAnonymousFunBlockWithExpectedType.kt");
