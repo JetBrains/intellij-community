@@ -32,7 +32,7 @@ public final class ShadowBorderPainter {
 
   private static BufferedImage createJava2dShadow(JComponent component, int width, int height) {
     BufferedImage image = component.getGraphicsConfiguration().createCompatibleImage(width, height, Transparency.TRANSLUCENT);
-    ShadowJava2DPainter painter = new ShadowJava2DPainter("Ide", false, Gray.x00.withAlpha(30));
+    ShadowJava2DPainter painter = new ShadowJava2DPainter("Ide", 0, Gray.x00.withAlpha(30));
     Graphics2D g = image.createGraphics();
     painter.paintShadow(g, 0, 0, width, height);
     g.dispose();

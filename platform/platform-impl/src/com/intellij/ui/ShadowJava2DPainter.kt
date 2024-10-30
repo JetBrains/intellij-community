@@ -18,7 +18,7 @@ private val DEF_COLOR = Gray._200.withAlpha(50)
  * @author Alexander Lobas
  */
 @ApiStatus.Internal
-class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCorners: Boolean, private val borderColor: Color? = null) {
+class ShadowJava2DPainter(private val uiKeyGroup: String, private val arc: Int, private val borderColor: Color? = null) {
   private var hideTopCorners = false
   private var hideBottomSide = false
 
@@ -26,6 +26,12 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
     fun enabled(): Boolean = Registry.`is`("ide.java2d.shadowEnabled", true)
 
     fun getInsets(uiKeyGroup: String): Insets = JBUI.insets("${uiKeyGroup}.Shadow.borderInsets", DEF_INSETS)
+  }
+
+  init {
+    if (arc < 0) {
+      throw IllegalArgumentException("Arc cannot be negative, arc = $arc")
+    }
   }
 
   fun hideSide(topCorners: Boolean, bottom: Boolean) {
@@ -44,21 +50,19 @@ class ShadowJava2DPainter(private val uiKeyGroup: String, private val roundedCor
     val widthLR = width - insets.left - insets.right
     val heightTB = height - insets.top - insets.bottom
 
-    if (roundedCorners) {
-      val size = JBUI.scale(6)
-
+    if (arc > 0) {
       g.color = getColor("topLeft", "1")
-      g.fillRect(x + insets.left, y + insets.top, size, size)
+      g.fillRect(x + insets.left, y + insets.top, arc, arc)
 
       g.color = getColor("topRight", "1")
-      g.fillRect(xxRight - size, y + insets.top, size, size)
+      g.fillRect(xxRight - arc, y + insets.top, arc, arc)
 
       if (!hideBottomSide) {
         g.color = getColor("bottomRight", "1")
-        g.fillRect(xxRight - size, yyBottom - size, size, size)
+        g.fillRect(xxRight - arc, yyBottom - arc, arc, arc)
 
         g.color = getColor("bottomLeft", "1")
-        g.fillRect(x + insets.left, yyBottom - size, size, size)
+        g.fillRect(x + insets.left, yyBottom - arc, arc, arc)
       }
     }
 

@@ -2,6 +2,7 @@
 package com.intellij.ui
 
 import com.intellij.icons.AllIcons.Ide.RoundShadow
+import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.JBValue.UIInteger
 import java.awt.*
@@ -28,7 +29,7 @@ class NotificationBalloonRoundShadowBorderProvider(fillColor: Color, borderColor
     val CORNER_RADIUS: JBValue = UIInteger("Notification.arc", 12)
   }
 
-  private val java2DPainter = ShadowJava2DPainter("Notification", true)
+  private val java2DPainter = ShadowJava2DPainter("Notification", JBUI.scale(6))
 
   fun hideSide(top: Boolean, bottom: Boolean) {
     java2DPainter.hideSide(top, bottom)
