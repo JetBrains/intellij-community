@@ -30,7 +30,7 @@ class CanUnescapeDollarLiteralInspection :
         element: KtStringTemplateExpression,
         context: Context,
     ): @InspectionMessage String {
-        return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.display.name")
+        return KotlinBundle.message("inspection.can.unescape.dollar.literal.inspection.problem.description")
     }
 
     override fun createQuickFix(
