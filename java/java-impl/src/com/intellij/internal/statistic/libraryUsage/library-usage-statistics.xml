@@ -42,6 +42,7 @@
   <technology name="arrowkt" root="arrow"/>
   <technology name="asm" root="org.objectweb.asm"/>
   <technology name="aspectj" root="org.aspectj.lang"/>
+  <technology name="assertj" root="org.assertj"/>
   <technology name="async-http-client" root="org.asynchttpclient"/>
   <technology name="atlas" root="io.qameta.atlas"/>
   <technology name="avro" root="org.apache.avro"/>
@@ -126,6 +127,7 @@
   <technology name="guice" root="com.google.inject"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
+  <technology name="hamcrest" root="org.hamcrest"/>
   <technology name="hazelcast" root="com.hazelcast"/>
   <technology name="helidon" root="io.helidon"/>
   <technology name="hexagonkt" root="com.hexagonkt"/>
@@ -374,6 +376,7 @@
   <technology name="testng" root="org.testng"/>
   <technology name="thymeleaf" root="org.thymeleaf"/>
   <technology name="tornadofx" root="tornadofx"/>
+  <technology name="truth" root="com.google.common.truth"/>
   <technology name="twitter-server" root="com.twitter.server"/>
   <technology name="twitter-util" root="com.twitter.util"/>
   <technology name="unfiltered" root="unfiltered"/>
