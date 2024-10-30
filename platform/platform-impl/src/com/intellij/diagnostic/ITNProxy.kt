@@ -54,7 +54,7 @@ internal object ITNProxy {
   private const val DEFAULT_PASS = "guest"
   private const val NEW_THREAD_VIEW_URL = "https://jb-web.exa.aws.intellij.net/report/"
 
-  private val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
+  internal val DEVICE_ID: String = DeviceIdManager.getOrGenerateId(object : DeviceIdManager.DeviceIdToken {}, "EA")
 
   private val TEMPLATE: Map<String, String?> by lazy {
     val template = LinkedHashMap<String, String?>()

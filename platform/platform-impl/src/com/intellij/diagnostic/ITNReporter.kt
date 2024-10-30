@@ -81,6 +81,9 @@ open class ITNReporter(private val postUrl: String = "https://ea-report.jetbrain
    */
   open fun showErrorInRelease(event: IdeaLoggingEvent): Boolean = false
 
+  @ApiStatus.Internal
+  fun hostId(): String = ITNProxy.DEVICE_ID
+
   private fun createReportBean(event: IdeaLoggingEvent, comment: String?, plugin: IdeaPluginDescriptor?): ErrorBean {
     val lastActionId = IdeaLogger.ourLastActionId
     val prevReport = previousReport
