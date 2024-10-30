@@ -41,9 +41,9 @@ class KotlinBeforeResolveHighlightingPass(file: PsiFile, document: Document) : A
     }
 
     class Factory : TextEditorHighlightingPassFactory, DumbAware {
-        override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-            if (file.fileType != KotlinFileType.INSTANCE) return null
-            return KotlinBeforeResolveHighlightingPass(file, editor.document)
+        override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+            if (psiFile.fileType != KotlinFileType.INSTANCE) return null
+            return KotlinBeforeResolveHighlightingPass(psiFile, editor.document)
         }
     }
 }

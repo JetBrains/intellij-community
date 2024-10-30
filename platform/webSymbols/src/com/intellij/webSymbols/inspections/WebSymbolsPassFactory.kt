@@ -13,8 +13,8 @@ class WebSymbolsPassFactory() : TextEditorHighlightingPassFactory, TextEditorHig
     registrar.registerTextEditorHighlightingPass(this, null, intArrayOf(Pass.LOCAL_INSPECTIONS), true, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? =
-    if (file.viewProvider.allFiles.any { WebSymbolsHighlightInLanguageEP.shouldHighlight(it.language) })
-      WebSymbolsInspectionsPass(file, editor.document)
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? =
+    if (psiFile.viewProvider.allFiles.any { WebSymbolsHighlightInLanguageEP.shouldHighlight(it.language) })
+      WebSymbolsInspectionsPass(psiFile, editor.document)
     else null
 }

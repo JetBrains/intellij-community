@@ -25,11 +25,11 @@ final class LineMarkersPassFactory implements TextEditorHighlightingPassFactoryR
   }
 
   @Override
-  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     boolean serializeCodeInsightPasses =
-      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(file.getProject())).isSerializeCodeInsightPasses();
+      ((TextEditorHighlightingPassRegistrarImpl)TextEditorHighlightingPassRegistrar.getInstance(psiFile.getProject())).isSerializeCodeInsightPasses();
     LineMarkersPass.Mode myMode = serializeCodeInsightPasses ? LineMarkersPass.Mode.FAST : LineMarkersPass.Mode.ALL;
-    return createLineMarkersPass(file, editor, myMode, Pass.LINE_MARKERS);
+    return createLineMarkersPass(psiFile, editor, myMode, Pass.LINE_MARKERS);
   }
 
   static @NotNull TextEditorHighlightingPass createLineMarkersPass(@NotNull PsiFile file, @NotNull Editor editor, @NotNull LineMarkersPass.Mode myMode,

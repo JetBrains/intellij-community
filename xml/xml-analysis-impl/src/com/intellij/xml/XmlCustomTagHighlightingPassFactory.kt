@@ -15,10 +15,10 @@ class XmlCustomTagHighlightingPassFactory : TextEditorHighlightingPassFactory, T
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
-    if (!hasXmlViewProvider(file) && !HtmlUtil.supportsXmlTypedHandlers(file)) {
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+    if (!hasXmlViewProvider(psiFile) && !HtmlUtil.supportsXmlTypedHandlers(psiFile)) {
       return null
     }
-    return XmlCustomTagHighlightingPass(file, editor)
+    return XmlCustomTagHighlightingPass(psiFile, editor)
   }
 }

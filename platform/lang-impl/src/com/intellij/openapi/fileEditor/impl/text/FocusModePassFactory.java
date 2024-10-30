@@ -42,9 +42,9 @@ final class FocusModePassFactory implements TextEditorHighlightingPassFactory, T
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     return isEnabled() && (EditorUtil.isRealFileEditor(editor) || ApplicationManager.getApplication().isUnitTestMode()) && editor instanceof EditorImpl
-           ? new FocusModePass(editor, file)
+           ? new FocusModePass(editor, psiFile)
            : null;
   }
 

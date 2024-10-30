@@ -31,20 +31,20 @@ final class InjectedGeneralHighlightingPassFactory implements MainHighlightingPa
   }
 
   @Override
-  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.INJECTED_GENERAL);
-    if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(file.getProject(), editor.getDocument());
-    List<TextRange> adjustedRanges = computeReducedRanges(file, editor);
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    TextRange fileRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.INJECTED_GENERAL);
+    if (fileRange == null) return new ProgressableTextEditorHighlightingPass.EmptyPass(psiFile.getProject(), editor.getDocument());
+    List<TextRange> adjustedRanges = computeReducedRanges(psiFile, editor);
     TextRange restrictRange = computeRestrictRange(adjustedRanges, fileRange);
     boolean updateAll = isUpdatingWholeFile(fileRange, adjustedRanges);
-    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(file).getVisibleRange();
+    ProperTextRange visibleRange = HighlightingSessionImpl.getFromCurrentIndicator(psiFile).getVisibleRange();
 
-    return new InjectedGeneralHighlightingPass(file, editor.getDocument(),
+    return new InjectedGeneralHighlightingPass(psiFile, editor.getDocument(),
                                                // makes sense if more than one
                                                (adjustedRanges != null && adjustedRanges.size() == 1) ? null : adjustedRanges,
                                                restrictRange.getStartOffset(), restrictRange.getEndOffset(),
                                                updateAll, visibleRange, editor,
-                                               true, true, true, HighlightInfoUpdater.getInstance(file.getProject()));
+                                               true, true, true, HighlightInfoUpdater.getInstance(psiFile.getProject()));
   }
 
   private static boolean isUpdatingWholeFile(@NotNull TextRange fileRange, @Nullable List<? extends @NotNull TextRange> ranges) {

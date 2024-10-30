@@ -17,8 +17,8 @@ final class GroovyUnusedImportsPassFactory implements TextEditorHighlightingPass
 
   @Override
   @Nullable
-  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    if (!(file instanceof GroovyFile)) return null;
-    return new GroovyPostHighlightingPass((GroovyFile)file, editor);
+  public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    if (!(psiFile instanceof GroovyFile)) return null;
+    return new GroovyPostHighlightingPass((GroovyFile)psiFile, editor);
   }
 }

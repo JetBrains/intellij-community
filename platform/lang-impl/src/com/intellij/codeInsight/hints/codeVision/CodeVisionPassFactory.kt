@@ -22,16 +22,16 @@ internal class CodeVisionPassFactory : TextEditorHighlightingPassFactory, TextEd
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)
   }
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (!isCodeVisionEnabled) {
       return null
     }
 
     val savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP)
-    val currentStamp = getCurrentModificationStamp(file)
+    val currentStamp = getCurrentModificationStamp(psiFile)
     if (savedStamp != null && savedStamp == currentStamp) return null
 
-    return CodeVisionPass(file, editor)
+    return CodeVisionPass(psiFile, editor)
   }
 }
 

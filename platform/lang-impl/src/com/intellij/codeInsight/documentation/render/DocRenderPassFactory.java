@@ -39,14 +39,14 @@ public final class DocRenderPassFactory implements TextEditorHighlightingPassFac
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    long current = PsiModificationTracker.getInstance(file.getProject()).getModificationCount();
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    long current = PsiModificationTracker.getInstance(psiFile.getProject()).getModificationCount();
     boolean iconsEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     Long existing = editor.getUserData(MODIFICATION_STAMP);
     Boolean iconsWereEnabled = editor.getUserData(ICONS_ENABLED);
     return editor.getProject() == null ||
            existing != null && existing == current && iconsWereEnabled != null && iconsWereEnabled == iconsEnabled
-           ? null : new DocRenderPass(editor, file);
+           ? null : new DocRenderPass(editor, psiFile);
   }
 
   static void forceRefreshOnNextPass(@NotNull Editor editor) {

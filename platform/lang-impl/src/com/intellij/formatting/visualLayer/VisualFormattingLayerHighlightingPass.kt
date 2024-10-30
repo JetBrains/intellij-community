@@ -16,9 +16,9 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 internal class VisualFormattingLayerHighlightingPassFactory : TextEditorHighlightingPassFactory, TextEditorHighlightingPassFactoryRegistrar {
 
-  override fun createHighlightingPass(file: PsiFile, editor: Editor): EditorBoundHighlightingPass? =
+  override fun createHighlightingPass(psiFile: PsiFile, editor: Editor): EditorBoundHighlightingPass? =
     if (editor.vfmtTimestamp == editor.getCurrentVfmtTimestamp()) null
-    else VisualFormattingLayerHighlightingPass(editor, file)
+    else VisualFormattingLayerHighlightingPass(editor, psiFile)
 
   override fun registerHighlightingPassFactory(registrar: TextEditorHighlightingPassRegistrar, project: Project) {
     registrar.registerTextEditorHighlightingPass(this, null, null, false, -1)

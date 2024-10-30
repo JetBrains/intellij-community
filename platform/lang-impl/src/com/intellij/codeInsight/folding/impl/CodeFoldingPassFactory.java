@@ -19,7 +19,7 @@ final class CodeFoldingPassFactory implements TextEditorHighlightingPassFactory,
   }
 
   @Override
-  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-    return new CodeFoldingPass(editor, file);
+  public @NotNull TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+    return new CodeFoldingPass(editor, psiFile);
   }
 }

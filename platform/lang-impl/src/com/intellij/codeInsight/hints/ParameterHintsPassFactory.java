@@ -23,15 +23,15 @@ public class ParameterHintsPassFactory implements TextEditorHighlightingPassFact
   }
 
   @Override
-  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+  public @Nullable TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
-    long currentStamp = getCurrentModificationStamp(file);
+    long currentStamp = getCurrentModificationStamp(psiFile);
     Long savedStamp = editor.getUserData(PSI_MODIFICATION_STAMP);
     if (savedStamp != null && savedStamp == currentStamp) return null;
-    Language language = file.getLanguage();
+    Language language = psiFile.getLanguage();
     InlayParameterHintsProvider provider = InlayParameterHintsExtension.INSTANCE.forLanguage(language);
     if (provider == null) return null;
-    return new ParameterHintsPass(file, editor, MethodInfoExcludeListFilter.forLanguage(language), false);
+    return new ParameterHintsPass(psiFile, editor, MethodInfoExcludeListFilter.forLanguage(language), false);
   }
 
   public static long getCurrentModificationStamp(@NotNull PsiFile file) {

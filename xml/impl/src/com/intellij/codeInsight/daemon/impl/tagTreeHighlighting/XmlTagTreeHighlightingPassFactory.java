@@ -15,12 +15,12 @@ final class XmlTagTreeHighlightingPassFactory implements TextEditorHighlightingP
   }
 
   @Override
-  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile file, final @NotNull Editor editor) {
+  public TextEditorHighlightingPass createHighlightingPass(final @NotNull PsiFile psiFile, final @NotNull Editor editor) {
     if (editor.isOneLineMode()) return null;
 
-    if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(file)) return null;
+    if (!XmlTagTreeHighlightingUtil.isTagTreeHighlightingActive(psiFile)) return null;
     if (!(editor instanceof EditorEx)) return null;
 
-    return new XmlTagTreeHighlightingPass(file, (EditorEx)editor);
+    return new XmlTagTreeHighlightingPass(psiFile, (EditorEx)editor);
   }
 }

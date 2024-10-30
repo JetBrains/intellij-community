@@ -366,8 +366,8 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     }
     class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, file);
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, psiFile);
       }
 
       class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {

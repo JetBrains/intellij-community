@@ -788,8 +788,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     int[] creation = {0};
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), file, Pass.UPDATE_ALL);
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        TextRange textRange = FileStatusMap.getDirtyTextRange(editor.getDocument(), psiFile, Pass.UPDATE_ALL);
         if (textRange == null) return null;
         return new TestFileStatusMapDirtyCachingWorksPass(myProject);
       }
@@ -860,7 +860,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   public void testDefensivelyDirtyFlagDoesNotClearPrematurely() {
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
         return null;
       }
     }
@@ -1401,8 +1401,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   private void registerFakePass(@NotNull Collection<? super Editor> applied, @NotNull Collection<? super Editor> collected) {
     class Fac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-        return new EditorBoundHighlightingPass(editor, file, false) {
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+        return new EditorBoundHighlightingPass(editor, psiFile, false) {
           @Override
           public void doCollectInformation(@NotNull ProgressIndicator progress) {
             collected.add(editor);
@@ -1813,8 +1813,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
       class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
         @Override
-        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-          return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, file);
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+          return new TestDumbAwareHighlightingPassesStartEvenInDumbModePass(editor, psiFile);
         }
 
         class TestDumbAwareHighlightingPassesStartEvenInDumbModePass extends EditorBoundHighlightingPass implements DumbAware {
@@ -1838,8 +1838,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     registrar.registerTextEditorHighlightingPass(dumbFac, null, null, false, -1);
       class SmartFac implements TextEditorHighlightingPassFactory {
         @Override
-        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-          return new EditorBoundHighlightingPass(editor, file, false) {
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+          return new EditorBoundHighlightingPass(editor, psiFile, false) {
             @Override
             public void doCollectInformation(@NotNull ProgressIndicator progress) {
               collected.add(SmartFac.this);
@@ -1920,7 +1920,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     AtomicBoolean applied = new AtomicBoolean();
     class MyCheckingConstructorTraceFac implements TextEditorHighlightingPassFactory {
       @Override
-      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
+      public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
         return new TestHighlightingPassesAreInstantiatedOutsideEDTToImproveResponsivenessPass(myProject);
       }
 
@@ -1954,8 +1954,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   private static class EmptyPassFactory implements TextEditorHighlightingPassFactory {
     @Override
-    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor) {
-      return new EmptyPass(file.getProject(), editor.getDocument());
+    public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor) {
+      return new EmptyPass(psiFile.getProject(), editor.getDocument());
     }
 
     static class EmptyPass extends TextEditorHighlightingPass {

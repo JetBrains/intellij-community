@@ -20,5 +20,5 @@ public interface TextEditorHighlightingPassFactory extends PossiblyDumbAware {
    * For example, read action should be acquired before accessing PSI.
    */
   @Nullable
-  TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull Editor editor);
+  TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile psiFile, @NotNull Editor editor);
 }
