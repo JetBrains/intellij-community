@@ -42,6 +42,7 @@ class SettingsSyncPromotion : SettingsDialogListener {
     // mark it as shown, to not show it again, not depending on the way how it is closed
     Disposer.register(gotItTooltip) { gotItTooltip.gotIt() }
 
+    promotionShownThisSession = true
     val settingsTree = settingsEditor.treeView.tree
     val settingsSyncPath = TreeUtil.treePathTraverser(settingsTree).find { path ->
       val configurable = getConfigurable(path)
@@ -93,5 +94,9 @@ class SettingsSyncPromotion : SettingsDialogListener {
     val filteringNode = lastNode.userObject as? FilteringTreeStructure.FilteringNode ?: return null
     val delegate = filteringNode.delegate as? SimpleNode ?: return null
     return SettingsTreeView.getConfigurable(delegate)
+  }
+
+  companion object {
+    var promotionShownThisSession = false
   }
 }
