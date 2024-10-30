@@ -126,6 +126,7 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
             withSettingsFile(useKotlinDsl = true) {
                 setProjectName("version-catalogs-kotlin-dsl")
                 includeBuild("includedBuild1")
+                includeBuild("includedBuildWithoutSettings")
             }
             withBuildFile(gradleVersion, useKotlinDsl = true) {
                 withKotlinDsl()
@@ -163,6 +164,13 @@ abstract class AbstractGradleCodeInsightTest: AbstractKotlinGradleCodeInsightBas
                 [versions]
                 test_library-version = "1.0"
                 kotlin = "1.9.24"
+                """.trimIndent()
+            )
+            // included build without settings
+            withBuildFile(gradleVersion, relativeModulePath = "includedBuildWithoutSettings", useKotlinDsl = true) {}
+            withFile("includedBuildWithoutSettings/gradle/libs.versions.toml", /* language=TOML */ """
+                [libraries]
+                some_test-library = { module = "org.junit.jupiter:junit-jupiter" }
                 """.trimIndent()
             )
         }
