@@ -7,14 +7,12 @@ import org.jetbrains.kotlin.AbstractImportsTest
 import org.jetbrains.kotlin.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.idea.base.test.IgnoreTests
 import org.jetbrains.kotlin.idea.imports.KotlinFirImportOptimizer
+import org.jetbrains.kotlin.idea.test.KotlinStdJSProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractK2JvmOptimizeImportsTest : AbstractImportsTest() {
-
-    override fun getProjectDescriptor(): LightProjectDescriptor =
-        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
+abstract class AbstractK2OptimizeImportsTest : AbstractImportsTest() {
 
     override val runTestInWriteCommand: Boolean = false
 
@@ -42,4 +40,13 @@ abstract class AbstractK2JvmOptimizeImportsTest : AbstractImportsTest() {
 
     override val nameCountToUseStarImportDefault: Int
         get() = Integer.MAX_VALUE
+}
+
+abstract class AbstractK2JvmOptimizeImportsTest : AbstractK2OptimizeImportsTest() {
+    override fun getProjectDescriptor(): LightProjectDescriptor =
+        KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()
+}
+
+abstract class AbstractK2JsOptimizeImportsTest : AbstractK2OptimizeImportsTest() {
+    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinStdJSProjectDescriptor
 }
