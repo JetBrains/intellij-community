@@ -736,12 +736,20 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     var name: String? = null
-    var loading: String? = null
+    var loadingRule = ModuleLoadingRule.OPTIONAL
     var os: ExtensionDescriptor.Os? = null
     for (i in 0 until reader.attributeCount) {
       when (reader.getAttributeLocalName(i)) {
         "name" -> name = readContext.interner.name(reader.getAttributeValue(i))
-        "loading" -> loading = reader.getAttributeValue(i)
+        "loading" -> {
+          val loading = reader.getAttributeValue(i)
+          loadingRule = when (loading) {
+            "optional" -> ModuleLoadingRule.OPTIONAL
+            "required" -> ModuleLoadingRule.REQUIRED
+            "on-demand" -> ModuleLoadingRule.ON_DEMAND
+            else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
+          }
+        }
         "os" -> os = readOs(reader.getAttributeValue(i))
       }
     }
@@ -761,12 +769,6 @@ private fun readContent(reader: XMLStreamReader2, descriptor: RawPluginDescripto
     }
 
     val isEndElement = reader.next() == XMLStreamConstants.END_ELEMENT
-    val loadingRule = when (loading) {
-      null, "optional" -> ModuleLoadingRule.OPTIONAL
-      "required" -> ModuleLoadingRule.REQUIRED
-      "on-demand" -> ModuleLoadingRule.ON_DEMAND
-      else -> error("Unexpected value '$loading' of 'loading' attribute at ${reader.location}")
-    }
     if (isEndElement) {
       if (os == null || os.isSuitableForOs()) {
         descriptor.contentModules!!.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile, descriptorContent = null, loadingRule = loadingRule))
