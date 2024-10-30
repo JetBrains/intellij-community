@@ -7,20 +7,25 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
+import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.content.Content
 import com.intellij.util.application
+import java.awt.event.KeyEvent
 import java.util.*
+import javax.swing.KeyStroke
 
 internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val enabled = content != null
+    val enabled = content != null && toolWindow.id != ToolWindowId.STRUCTURE_VIEW
     e.presentation.isEnabledAndVisible = enabled
     if (!enabled) return
     e.presentation.text = when {
@@ -39,12 +44,14 @@ internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase
     else {
       // some contents are initialized lazily when selected (Git Stash)
       val prevSelection = toolWindow.contentManager.selectedContent
+      val tabName = content.tabName?.let { StringUtil.stripHtml(it, false).trim() }
       toolWindow.contentManager.setSelectedContentCB(content).doWhenProcessed {
         val fileName =
-          if (content.tabName?.isNotBlank() == true) "${content.tabName} (${toolWindow.stripeTitle})"
-          else toolWindow.stripeTitle
+          if (tabName.isNullOrBlank() || tabName == toolWindow.stripeTitle) toolWindow.stripeTitle
+          else "${content.tabName} (${toolWindow.stripeTitle})"
         val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, content.component)
         content.component = Placeholder(project, content, vFile)
+        content.preferredFocusableComponent = content.component
         toolWindow.hide {
           prevSelection?.let { toolWindow.contentManager.setSelectedContent(it) }
           FileEditorManager.getInstance(project).openFile(vFile, true)
@@ -66,6 +73,10 @@ internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase
       }
       emptyText.appendLine(IdeBundle.message("status.text.tab.open.in.editor.restore"), SimpleTextAttributes.LINK_ATTRIBUTES) {
         moveContentBackToTab(project, content, file)
+      }
+      isFocusable = true
+      addKeyboardAction(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) {
+        FileEditorManager.getInstance(project).openFile(file, true)
       }
     }
 
