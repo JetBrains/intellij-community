@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescrip
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.psi.KtFile
 
-abstract class AbstractFirJvmOptimizeImportsTest : AbstractImportsTest() {
+abstract class AbstractK2JvmOptimizeImportsTest : AbstractImportsTest() {
 
     override fun getProjectDescriptor(): LightProjectDescriptor =
         KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstanceFullJdk()

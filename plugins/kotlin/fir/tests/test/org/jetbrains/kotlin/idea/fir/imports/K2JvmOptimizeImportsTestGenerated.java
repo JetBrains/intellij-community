@@ -18,13 +18,13 @@ import org.junit.runner.RunWith;
 @TestRoot("fir/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmOptimizeImportsTest {
+public abstract class K2JvmOptimizeImportsTestGenerated extends AbstractK2JvmOptimizeImportsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/editor/optimizeImports/jvm")
-    public abstract static class Jvm extends AbstractFirJvmOptimizeImportsTest {
+    public abstract static class Jvm extends AbstractK2JvmOptimizeImportsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/jvm/allUnderImports")
-        public static class AllUnderImports extends AbstractFirJvmOptimizeImportsTest {
+        public static class AllUnderImports extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -148,7 +148,7 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/jvm")
-        public static class Uncategorized extends AbstractFirJvmOptimizeImportsTest {
+        public static class Uncategorized extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -343,10 +343,10 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common")
-    public abstract static class Common extends AbstractFirJvmOptimizeImportsTest {
+    public abstract static class Common extends AbstractK2JvmOptimizeImportsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common/basic")
-        public static class Basic extends AbstractFirJvmOptimizeImportsTest {
+        public static class Basic extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -445,7 +445,7 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common/kDoc")
-        public static class KDoc extends AbstractFirJvmOptimizeImportsTest {
+        public static class KDoc extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -469,7 +469,7 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common/kt21515")
-        public static class Kt21515 extends AbstractFirJvmOptimizeImportsTest {
+        public static class Kt21515 extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
@@ -508,7 +508,7 @@ public abstract class FirJvmOptimizeImportsTestGenerated extends AbstractFirJvmO
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../../idea/tests/testData/editor/optimizeImports/common")
-        public static class Uncategorized extends AbstractFirJvmOptimizeImportsTest {
+        public static class Uncategorized extends AbstractK2JvmOptimizeImportsTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
             public final KotlinPluginMode getPluginMode() {
