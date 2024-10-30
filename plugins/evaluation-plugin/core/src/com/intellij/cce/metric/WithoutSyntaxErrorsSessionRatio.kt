@@ -2,6 +2,7 @@
 package com.intellij.cce.metric
 
 import com.intellij.cce.core.Session
+import com.intellij.cce.evaluable.AIA_HAS_SYNTAX_ERRORS
 import com.intellij.cce.metric.util.Sample
 
 class WithoutSyntaxErrorsSessionRatio : Metric {
@@ -19,7 +20,7 @@ class WithoutSyntaxErrorsSessionRatio : Metric {
     sessions
       .flatMap { session -> session.lookups }
       .forEach {
-        if (it.additionalInfo.getOrDefault("has_syntax_errors", true) as Boolean) {
+        if (it.additionalInfo.getOrDefault(AIA_HAS_SYNTAX_ERRORS, true) as Boolean) {
           sample.add(0.0)
           fileSample.add(0.0)
         }
