@@ -435,7 +435,7 @@ public class IdeaNativeAgentProxyMirror {
       return debugProcess.loadClass(evaluationContext, PROXY_CLASS_NAME, classLoader);
     }
     catch (Exception e) {
-      throw EvaluateExceptionUtil.createEvaluateException("Could not load proxy class", e);
+      throw EvaluateExceptionUtil.createEvaluateException("Could not load proxy class (reason: " + e.getMessage() + ")", e);
     }
   }
 
