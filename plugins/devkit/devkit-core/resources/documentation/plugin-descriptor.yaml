@@ -39,9 +39,8 @@ elements:
               `false`
             #language=Markdown
             description: |
-              The boolean value determining whether the plugin installation, update, or uninstallation requires the IDE restart
+              The boolean value determining whether the plugin installation, update, or uninstallation requires an IDE restart
               (see [Dynamic Plugins](https://plugins.jetbrains.com/docs/intellij/dynamic-plugins.html) for details).
-
       children:
         - element:
             name: id
@@ -103,7 +102,8 @@ elements:
                 [JetBrains Marketplace: Semantic Versioning](https://plugins.jetbrains.com/docs/marketplace/semver.html)
             #language=Markdown
             description: |
-              The plugin version displayed in the <control>Plugins</control> settings dialog and in the JetBrains Marketplace plugin page.
+              The plugin version displayed in the <control>Plugins</control> settings dialog and on the
+              [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
               Plugins uploaded to the JetBrains Marketplace must follow semantic versioning.
             requirement:
               required: yes
@@ -228,8 +228,8 @@ elements:
                 [JetBrains Marketplace: Contacts and Resources](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#contacts-and-resources)
             #language=Markdown
             description: |
-              The vendor name or organization ID (if created) in the <control>Plugins</control> settings dialog and in
-              the JetBrains Marketplace plugin page.
+              The vendor name or organization ID (if created) in the <control>Plugins</control> settings dialog and on
+              the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page.
             requirement:
               required: yes
               details:
@@ -274,9 +274,9 @@ elements:
                 [JetBrains Marketplace: Plugin Description](https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description)
             #language=Markdown
             description: |
-              The plugin description displayed on the JetBrains Marketplace plugin page and in the <control>Plugins</control>
-              settings dialog.
-            
+              The plugin description displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
+              the <control>Plugins</control> settings dialog.
+              
               Simple HTML elements, like text formatting, paragraphs, lists, etc., are allowed and must be wrapped into
               `<![CDATA[` ... `]]>` section.
             requirement:
@@ -309,7 +309,8 @@ elements:
             #language=Markdown
             description: |
               A short summary of new features, bugfixes, and changes provided with the latest plugin version.
-              Change notes are displayed on the JetBrains Marketplace plugin page and in the <control>Plugins</control> settings dialog.
+              Change notes are displayed on the [JetBrains Marketplace](https://plugins.jetbrains.com) plugin page and in
+              the <control>Plugins</control> settings dialog.
               
               Simple HTML elements, like text formatting, paragraphs, lists, etc., are allowed and must be wrapped into
               `<![CDATA[` ... `]]>` section.
@@ -812,7 +813,7 @@ elements:
                         sdkDocsFixedPath: [idea-plugin, actions, action, add-to-group]
                         #language=Markdown
                         description: |
-                          Specifies that the action should be added to an existing group.
+                          Specifies that the action should be added to an existing [`<group>`](#element:idea-plugin__actions__group).
                           A single action can be added to multiple groups.
                         requirement:
                           required: no
@@ -823,7 +824,7 @@ elements:
                                 required: yes
                               #language=Markdown
                               description: |
-                                Specifies the ID of the group to which the action is added.
+                                Specifies the ID of the [`<group>`](#element:idea-plugin__actions__group) to which the action is added.
                                 The group must be an implementation of the
                                 [`DefaultActionGroup`](%gh-ic%/platform/platform-api/src/com/intellij/openapi/actionSystem/DefaultActionGroup.java){fqn="com.intellij.openapi.actionSystem.DefaultActionGroup"}
                                 class.
@@ -833,7 +834,7 @@ elements:
                                 required: no
                               #language=Markdown
                               description: |
-                                Specifies the position of the action in the relative to other actions.
+                                Specifies the position of the action relative to other actions.
                                 Allowed values:
                                   - `first` - the action is placed as the first in the group
                                   - `last` _(default)_ - the action is placed as the last in the group
@@ -1062,8 +1063,8 @@ elements:
                         since: 2020.3
                         #language=Markdown
                         description: |
-                          Defines an alternative text for searching the action in <ui-path>Help | Find Action...</ui-path> or <ui-path>
-                          Navigate | Search Everywhere</ui-path> popups.
+                          Defines an alternative text for searching the action in <ui-path>Help | Find Action...</ui-path> or
+                          <ui-path>Navigate | Search Everywhere</ui-path> popups.
                           A single action can have multiple synonyms.
                         requirement:
                           required: no
@@ -1358,6 +1359,7 @@ elements:
               - element: *reference
         - element:
             name: applicationListeners
+            since: 2019.3
             #language=Markdown
             references:
               - |
@@ -1371,6 +1373,7 @@ elements:
               - element: &listener
                   name: listener
                   sdkDocsFixedPath: [idea-plugin, applicationListeners, listener]
+                  since: 2019.3
                   #language=Markdown
                   references:
                     - |
@@ -1446,6 +1449,7 @@ elements:
                       ```
         - element:
             name: projectListeners
+            since: 2019.3
             #language=Markdown
             references:
               - |
