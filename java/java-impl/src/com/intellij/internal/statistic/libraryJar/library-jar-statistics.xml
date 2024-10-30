@@ -24,6 +24,7 @@
   <technology name="arquillian" class="org.jboss.arquillian.container.test.api.Deployment"/>
   <technology name="arrowkt" class="arrow.core.Either"/>
   <technology name="aspectj" class="org.aspectj.lang.annotation.Aspect"/>
+  <technology name="assertj" class="org.assertj.core.api.Assertions"/>
   <technology name="atlas" class="io.qameta.atlas.core.Atlas"/>
   <technology name="aws-sqs" class="com.amazonaws.services.sqs.AmazonSQS"/>
   <technology name="axonframework" class="org.axonframework.commandhandling.CommandHandler"/>
@@ -69,6 +70,7 @@
   <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
+  <technology name="hamcrest" class="org.hamcrest.Matchers"/>
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
   <technology name="helidon" class="io.helidon.webserver.WebServer"/>
@@ -252,6 +254,7 @@
   <technology name="testng" class="org.testng.annotations.Test"/>
   <technology name="thymeleaf" class="org.thymeleaf.dialect.IDialect"/>
   <technology name="tornadofx" class="tornadofx.App"/>
+  <technology name="truth" class="com.google.common.truth.Truth"/>
   <technology name="twitter-util" class="com.twitter.util.Future"/>
   <technology name="unfiltered" class="unfiltered.response.ResponseString"/>
   <technology name="unirest" class="kong.unirest.Client"/>
