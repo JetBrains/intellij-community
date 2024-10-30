@@ -80,7 +80,6 @@ final class HighlightInfoB implements HighlightInfo.Builder {
   public @NotNull HighlightInfo.Builder inspectionToolId(@NotNull String inspectionToolId) {
     assertNotCreated();
     assert this.toolId == null : "inspectionToolId already set";
-    this.toolId = inspectionToolId;
     return this;
   }
 
