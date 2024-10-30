@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.analysis.api.renderer.declarations.KaDeclarationRend
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.impl.KaDeclarationRendererForSource
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererKeywordFilter
 import org.jetbrains.kotlin.analysis.api.renderer.declarations.modifiers.renderers.KaRendererOtherModifiersProvider
+import org.jetbrains.kotlin.analysis.api.renderer.declarations.renderers.callables.KaPropertyAccessorsRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
@@ -132,6 +133,8 @@ fun generateMember(
             }
 
             modalityProvider = modalityProvider.onlyIf { s -> s != symbol }
+
+            propertyAccessorsRenderer = KaPropertyAccessorsRenderer.NONE
 
             val containingSymbol = targetClass?.symbol as? KaClassSymbol
             otherModifiersProvider = object : KaRendererOtherModifiersProvider {
