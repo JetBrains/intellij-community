@@ -27,6 +27,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.IndexingTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.MavenDependencyUtil;
 import com.intellij.util.lang.JavaVersion;
@@ -291,7 +292,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
     Sdk sdk = PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, getTestRootDisposable()));
     ModuleRootModificationUtil.setModuleSdk(myModule, sdk);
-
+    IndexingTestUtil.Companion.waitUntilIndexesAreReady(getProject());
     PsiClass mapClass = myJavaFacade.findClass(CommonClassNames.JAVA_UTIL_MAP);
     PsiMethod mapPut = mapClass.findMethodsByName("put", false)[0];
 
