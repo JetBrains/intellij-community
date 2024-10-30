@@ -12,6 +12,7 @@ import com.intellij.configurationStore.StoreUtil;
 import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Document;
@@ -31,6 +32,7 @@ import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.util.FileContentUtilCore;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ref.GCWatcher;
 import com.intellij.util.ui.UIUtil;
 import kotlin.Unit;
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * tests general daemon behaviour/interruptibility/restart during highlighting
@@ -371,5 +374,40 @@ public class FileStatusMapTest extends DaemonAnalyzerTestCase {
       findClass("X").getMethods()[0].delete();
       assertEquals(TextRange.from(0, document.getTextLength()), fileStatusMap.getFileDirtyScope(document, documentManager.getPsiFile(document), Pass.UPDATE_ALL));
     });
+  }
+
+  public void testDocumentsMustBeWeaklyReferenced() throws Exception {
+    VirtualFile file = createFile("a.java", "blah blah").getVirtualFile();
+    AtomicReference<Document> document = new AtomicReference<>(getDocument(file));
+    assertNotNull(document.get());
+    AtomicReference<PsiFile> psiFile = new AtomicReference<>(PsiDocumentManager.getInstance(myProject).getPsiFile(document.get()));
+
+    FileStatusMap fileStatusMap = myDaemonCodeAnalyzer.getFileStatusMap();
+    assertNull(fileStatusMap.getFileDirtyScopeForAllPassesCombined(document.get()));
+    fileStatusMap.markWholeFileScopeDirty(document.get(), getTestName(false));
+    assertEquals(psiFile.get().getTextRange(), fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), 0));
+    GCWatcher tracking = GCWatcher.tracking(document.get());
+    document.set(null);
+    psiFile.set(null);
+    tracking.ensureCollected(); // WHOLE_RANGE_MARKER does not retain document
+
+    document.set(getDocument(file));
+    psiFile.set(PsiDocumentManager.getInstance(myProject).getPsiFile(document.get()));
+    for (int pass = 0; pass<=Pass.LAST_PASS; pass++) {
+      fileStatusMap.markFileUpToDate(document.get(), pass);
+    }
+    assertNull(fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));
+    assertTrue(fileStatusMap.allDirtyScopesAreNull(document.get()));
+    TextRange range = new TextRange(1, 2);
+    AppExecutorUtil.getAppExecutorService().submit(() -> ReadAction.run(()->fileStatusMap.markScopeDirty(document.get(), range, getTestName(false)))).get();
+    assertEquals(range, fileStatusMap.getFileDirtyScope(document.get(), psiFile.get(), Pass.EXTERNAL_TOOLS));
+
+    tracking = GCWatcher.tracking(document.get());
+    document.set(null);
+    psiFile.set(null);
+    tracking.ensureCollected(); // fileStatusMap RangeMarker does not retain document
+
+    document.set(getDocument(file));
+    assertNull(fileStatusMap.getFileDirtyScopeForAllPassesCombined(document.get()));
   }
 }
