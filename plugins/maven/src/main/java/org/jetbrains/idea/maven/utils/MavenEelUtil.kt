@@ -1,17 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils
 
+import com.intellij.execution.wsl.WSLDistribution
+import com.intellij.execution.wsl.WslPath
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.writeAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.runBlockingMaybeCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JdkFinder
@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.JdkPredicate
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.LocalEelApi
 import com.intellij.platform.eel.fs.getPath
@@ -32,9 +33,13 @@ import com.intellij.platform.eel.provider.utils.fetchLoginShellEnvVariablesBlock
 import com.intellij.platform.eel.provider.utils.where
 import com.intellij.platform.eel.toNioPath
 import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.progress.withBackgroundProgress
+import com.intellij.platform.util.progress.withProgressText
 import com.intellij.ui.navigation.Place
 import com.intellij.util.SystemProperties
 import com.intellij.util.text.VersionComparatorUtil
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.io.IOException
 import org.jetbrains.idea.maven.config.MavenConfig
 import org.jetbrains.idea.maven.config.MavenConfigSettings
@@ -360,9 +365,17 @@ object MavenEelUtil : MavenUtil() {
     notification: Notification,
     listener: NotificationListener,
   ) {
+    if (Registry.`is`("java.home.finder.use.eel")) {
+      return findOrDownloadNewJdkOverEel(project, notification, listener)
+    }
+
+    val projectWslDistr = tryGetWslDistribution(project)
+
     val jdkTask = object : Task.Backgroundable(null, MavenProjectBundle.message("wsl.jdk.searching"), false) {
       override fun run(indicator: ProgressIndicator) {
-        val sdkPath = service<JdkFinder>().suggestHomePaths().firstOrNull()
+        val sdkPath = service<JdkFinder>().suggestHomePaths().filter {
+          sameDistributions(projectWslDistr, WslPath.getDistributionByWindowsUncPath(it))
+        }.firstOrNull()
         if (sdkPath != null) {
           WriteAction.runAndWait<RuntimeException> {
             val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
@@ -375,7 +388,11 @@ object MavenEelUtil : MavenUtil() {
           return
         }
         val installer = JdkInstaller.getInstance()
-        val model = JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, JdkPredicate.default())
+        val jdkPredicate = when {
+          projectWslDistr != null -> JdkPredicate.forWSL()
+          else -> JdkPredicate.default()
+        }
+        val model = JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
         if (model.isEmpty()) {
           Notification(MAVEN_NOTIFICATION_GROUP,
                        MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
@@ -385,8 +402,7 @@ object MavenEelUtil : MavenUtil() {
         }
         else {
           this.title = MavenProjectBundle.message("wsl.jdk.downloading")
-          // FIXME: really?? wslDistribution in the defaultInstallDir?
-          val homeDir = installer.defaultInstallDir(model[0], null)
+          val homeDir = installer.defaultInstallDir(model[0], null, projectWslDistr)
           val request = installer.prepareJdkInstallation(model[0], homeDir)
           installer.installJdk(request, indicator, project)
           notification.hideBalloon()
@@ -394,5 +410,65 @@ object MavenEelUtil : MavenUtil() {
       }
     }
     ProgressManager.getInstance().run(jdkTask)
+  }
+
+  private fun findOrDownloadNewJdkOverEel(
+    project: Project,
+    notification: Notification,
+    listener: NotificationListener,
+  ) {
+    MavenCoroutineScopeProvider.getCoroutineScope(project).launch(Dispatchers.IO) {
+      withBackgroundProgress(project, MavenProjectBundle.message("wsl.jdk.searching"), cancellable = false) {
+        val eel = project.getEelApi()
+        val sdkPath = service<JdkFinder>().suggestHomePaths(project).firstOrNull()
+        if (sdkPath != null) {
+          writeAction {
+            val jdkName = SdkConfigurationUtil.createUniqueSdkName(JavaSdk.getInstance(), sdkPath,
+                                                                   ProjectJdkTable.getInstance().allJdks.toList())
+            val newJdk = JavaSdk.getInstance().createJdk(jdkName, sdkPath)
+            ProjectJdkTable.getInstance().addJdk(newJdk)
+            ProjectRootManagerEx.getInstance(project).projectSdk = newJdk
+            notification.hideBalloon()
+          }
+          return@withBackgroundProgress
+        }
+        val installer = JdkInstaller.getInstance()
+        val jdkPredicate = JdkPredicate.forEel(eel)
+        val model = coroutineToIndicator {
+          JdkListDownloader.getInstance().downloadModelForJdkInstaller(ProgressManager.getGlobalProgressIndicator(), jdkPredicate)
+        }
+        if (model.isEmpty()) {
+          Notification(
+            MAVEN_NOTIFICATION_GROUP,
+            MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
+            MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
+            NotificationType.ERROR
+          ).setListener(listener).notify(project)
+
+        }
+        else {
+          withProgressText(MavenProjectBundle.message("wsl.jdk.downloading")) {
+            val homeDir = installer.defaultInstallDir(model[0], eel, null)
+            val request = installer.prepareJdkInstallation(model[0], homeDir)
+            coroutineToIndicator {
+              installer.installJdk(request, ProgressManager.getGlobalProgressIndicator(), project)
+            }
+            notification.hideBalloon()
+          }
+        }
+      }
+    }
+  }
+
+  @JvmStatic
+  @Deprecated("Use EEL API")
+  private fun tryGetWslDistribution(project: Project): WSLDistribution? {
+    return project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
+  }
+
+  @JvmStatic
+  @Deprecated("Use EEL API")
+  private fun sameDistributions(first: WSLDistribution?, second: WSLDistribution?): Boolean {
+    return first?.id == second?.id
   }
 }
