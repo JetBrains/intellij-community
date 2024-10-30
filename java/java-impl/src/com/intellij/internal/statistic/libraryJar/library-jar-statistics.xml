@@ -140,10 +140,10 @@
   <technology name="kotless" class="io.kotless.HttpMethod"/>
   <technology name="kotlin" class="kotlin.reflect.KClass"/>
   <technology name="kotlin-logging" class="io.github.oshai.kotlinlogging.KotlinLogging"/>
-  <technology name="kotlin-test" root="kotlin.test.Asserter"/>
+  <technology name="kotlin-test" class="kotlin.test.Asserter"/>
   <technology name="kotlinx-coroutines" class="kotlinx.coroutines.CoroutineDispatcher"/>
   <technology name="kotlinx-datetime" class="kotlinx.datetime.Instant"/>
-  <technology name="kotlinx-io" root="kotlinx.io.Buffer"/>
+  <technology name="kotlinx-io" class="kotlinx.io.Buffer"/>
   <technology name="kotlinx-serialization" class="kotlinx.serialization.KSerializer"/>
   <technology name="ktor-client" class="io.ktor.client.HttpClient"/>
   <technology name="ktor-server" class="io.ktor.application.Application"/>
