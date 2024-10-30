@@ -14,8 +14,7 @@
   <technology name="apache-flink" class="org.apache.flink.util.Collector"/>
   <technology name="apache-http" class="org.apache.http.HttpEntity"/>
   <technology name="apache-ignite" class="org.apache.ignite.Ignite"/>
-  <technology name="apache-pulsar-client" class="org.apache.pulsar.client.api.PulsarClient"/>
-  <technology name="apache-pulsar-admin" class="org.apache.pulsar.client.admin.PulsarAdmin"/>
+  <technology name="apache-pulsar" class="org.apache.pulsar.client.api.PulsarClient"/>
   <technology name="apache-rocketmq" class="org.apache.rocketmq.common.BrokerConfig"/>
   <technology name="apache-shiro" class="org.apache.shiro.authc.AuthenticationInfo"/>
   <technology name="apache-spark" class="org.apache.spark.SparkConf"/>
