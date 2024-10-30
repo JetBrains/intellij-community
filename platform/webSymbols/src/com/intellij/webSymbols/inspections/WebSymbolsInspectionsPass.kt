@@ -4,7 +4,6 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel
 import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
 import com.intellij.codeInsight.daemon.impl.BackgroundUpdateHighlightersUtil
-import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerEx
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager
@@ -61,12 +60,10 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
         })
       }
     }
-    val dirtyScope = DaemonCodeAnalyzerEx.getInstanceEx(myProject).fileStatusMap.getFileDirtyScope(myDocument, psiFile, id) ?: return
 
     val myInspectionToolInfos = mutableMapOf<String, InspectionToolInfo>()
     val highlights = referencesWithProblems.flatMap { (offset, ref) -> ref.createProblemAnnotations(offset, myInspectionToolInfos) }
-    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, dirtyScope.startOffset, dirtyScope.endOffset,
-                                                             highlights, id)
+    BackgroundUpdateHighlightersUtil.setHighlightersToEditor(myProject, psiFile, myDocument, 0, psiFile.textLength, highlights, id)
   }
 
   override fun doApplyInformationToEditor() {
@@ -101,12 +98,12 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
         ?.map { QuickFixWrapper.wrap(descriptor, it) }
         ?.takeIf { it.isNotEmpty() }
 
-      createAnnotation(absoluteRange.shiftRight(offset),
-                       ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE),
-                       firstTool?.shortName,
-                       attributesKey,
-                       descriptor.highlightType,
-                       highlightDisplayKey,
+      createHighlightInfo(absoluteRange.shiftRight(offset),
+                          ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, ProblemDescriptorUtil.NONE),
+                          firstTool?.shortName,
+                          attributesKey,
+                          descriptor.highlightType,
+                          highlightDisplayKey,
                        inspectionInfos.minOfOrNull { it.severity } ?: problem.kind.defaultSeverity,
                        descriptorFixes ?: highlightDisplayKey
                          ?.let { HighlightDisplayKey.getDisplayNameByKey(it) }
@@ -114,14 +111,14 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
                        ?: emptyList())
     }
 
-  private fun createAnnotation(range: TextRange,
-                               @InspectionMessage message: String,
-                               inspectionToolId: String?,
-                               textAttributesKey: TextAttributesKey?,
-                               type: ProblemHighlightType,
-                               displayKey: HighlightDisplayKey?,
-                               severity: HighlightSeverity,
-                               fixesToRegister: List<IntentionAction>): HighlightInfo? {
+  private fun createHighlightInfo(range: TextRange,
+                                  @InspectionMessage message: String,
+                                  inspectionToolId: String?,
+                                  textAttributesKey: TextAttributesKey?,
+                                  type: ProblemHighlightType,
+                                  displayKey: HighlightDisplayKey?,
+                                  severity: HighlightSeverity,
+                                  fixesToRegister: List<IntentionAction>): HighlightInfo? {
     val builder = HighlightInfo
       .newHighlightInfo(ProblemDescriptorUtil.getHighlightInfoType(type, severity, SeverityRegistrar.getSeverityRegistrar(myProject)))
       .applyIfNotNull(inspectionToolId) { inspectionToolId(it) }
@@ -129,6 +126,7 @@ internal class WebSymbolsInspectionsPass(private val psiFile: PsiFile, document:
       .range(range)
       .severity(severity)
       .descriptionAndTooltip(message)
+      .group(id)
     for (fix in fixesToRegister) {
       builder.registerFix(fix, null, HighlightDisplayKey.getDisplayNameByKey(displayKey), range, displayKey)
     }
