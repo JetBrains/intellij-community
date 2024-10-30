@@ -5,9 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.nio.file.FileStore;
-import java.nio.file.FileSystem;
-import java.nio.file.Path;
+import java.io.IOException;
+import java.nio.file.*;
 import java.nio.file.spi.FileSystemProvider;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -196,5 +195,11 @@ public class MultiRoutingFileSystem extends DelegatingFileSystem<MultiRoutingFil
       }
     }
     return myLocalFS;
+  }
+
+  @Override
+  public WatchService newWatchService() throws IOException {
+    // TODO Move it to DelegatingFileSystem.
+    return new MultiRoutingWatchServiceDelegate(super.newWatchService(), myProvider);
   }
 }

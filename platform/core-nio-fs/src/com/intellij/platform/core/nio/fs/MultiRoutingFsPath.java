@@ -148,11 +148,17 @@ public final class MultiRoutingFsPath implements Path, sun.nio.fs.BasicFileAttri
 
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>[] events, WatchEvent.Modifier... modifiers) throws IOException {
+    if (watcher instanceof MultiRoutingWatchServiceDelegate delegated) {
+      return myDelegate.register(delegated.myDelegate, events, modifiers);
+    }
     return myDelegate.register(watcher, events, modifiers);
   }
 
   @Override
   public WatchKey register(WatchService watcher, WatchEvent.Kind<?>... events) throws IOException {
+    if (watcher instanceof MultiRoutingWatchServiceDelegate delegated) {
+      return myDelegate.register(delegated.myDelegate, events);
+    }
     return myDelegate.register(watcher, events);
   }
 
