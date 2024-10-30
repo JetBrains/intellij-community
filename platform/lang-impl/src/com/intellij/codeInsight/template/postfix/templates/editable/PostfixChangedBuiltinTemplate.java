@@ -10,6 +10,7 @@ import java.util.Objects;
  * Represents the template that overrides the builtin one.
  * It's considered as builtin template: cannot be deleted via UI but can be restored to its initial state.
  */
+@SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public final class PostfixChangedBuiltinTemplate extends PostfixTemplateWrapper {
   private final @NotNull PostfixTemplate myBuiltinTemplate;
 

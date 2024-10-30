@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("PostfixTemplateDescriptionNotFound")
 public class NotPostfixTemplate extends PostfixTemplateWithExpressionSelector {
 
   private final @NotNull PostfixTemplatePsiInfo myPsiInfo;
