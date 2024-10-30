@@ -285,7 +285,7 @@ class ClassLoaderConfigurator(
       val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = corePlugin, pluginSet = pluginSet)
       if (resolveScopeManager != null) {
         coreUrlClassLoader.resolveScopeManager = BiFunction { name, force ->
-          resolveScopeManager.isDefinitelyAlienClass(name, "", force)
+          resolveScopeManager.isDefinitelyAlienClass(name = name, packagePrefix = "", force = force)
         }
       }
     }

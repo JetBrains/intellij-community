@@ -4,14 +4,16 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.Java11Shim
 import com.intellij.util.graph.DFSTBuilder
 import com.intellij.util.graph.Graph
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
+import java.util.Collections.emptyList
 
 /**
- * A graph which determines the order in which modules from the platform and the plugins are processed. 
- * The graph has a node for each module, and there is an edge from a module to other modules which depend on it.
+ * A graph which determines the order in which modules from the platform and the plugins are processed.
+ * The graph has a node for each module, and there is an edge from a module to other modules that depend on it.
  */
 @ApiStatus.Internal
 class ModuleGraph internal constructor(
@@ -20,15 +22,13 @@ class ModuleGraph internal constructor(
   private val directDependencies: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
   private val directDependents: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
 ) : Graph<IdeaPluginDescriptorImpl> {
-  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = Collections.unmodifiableCollection(modules)
+  override fun getNodes(): Collection<IdeaPluginDescriptorImpl> = modules
 
-  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
-    return getOrEmpty(directDependencies, descriptor)
-  }
+  fun getDependencies(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependencies.getOrDefault(descriptor, emptyList())
 
   override fun getIn(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependencies(descriptor).iterator()
 
-  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = getOrEmpty(directDependents, descriptor)
+  fun getDependents(descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> = directDependents.getOrDefault(descriptor, emptyList())
 
   override fun getOut(descriptor: IdeaPluginDescriptorImpl): Iterator<IdeaPluginDescriptorImpl> = getDependents(descriptor).iterator()
 
@@ -122,7 +122,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
     }
 
     if (!result.isEmpty()) {
-      directDependencies.put(module, result.toList())
+      directDependencies.put(module, Java11Shim.INSTANCE.copyOfList(result))
       result.clear()
     }
   }
@@ -130,7 +130,7 @@ internal fun createModuleGraph(plugins: Collection<IdeaPluginDescriptorImpl>): M
   val directDependents = IdentityHashMap<IdeaPluginDescriptorImpl, ArrayList<IdeaPluginDescriptorImpl>>(modules.size)
   val edges = HashSet<Map.Entry<IdeaPluginDescriptorImpl, IdeaPluginDescriptorImpl>>()
   for (module in modules) {
-    for (inNode in getOrEmpty(directDependencies, module)) {
+    for (inNode in directDependencies.getOrDefault(module, emptyList())) {
       if (edges.add(AbstractMap.SimpleImmutableEntry(inNode, module))) {
         // not a duplicate edge
         directDependents.computeIfAbsent(inNode) { ArrayList() }.add(module)
@@ -164,13 +164,6 @@ private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImp
   }
 }
 
-private fun getOrEmpty(
-  map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
-  descriptor: IdeaPluginDescriptorImpl,
-): Collection<IdeaPluginDescriptorImpl> {
-  return map.getOrDefault(descriptor, Collections.emptyList())
-}
-
 private fun copySorted(
   map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
   comparator: Comparator<IdeaPluginDescriptorImpl>,
@@ -184,7 +177,7 @@ private fun copySorted(
 
 private val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
   // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
-  // or com.jetbrains.pycharm.ds.customization is a difficult task that can't be done by a single shot.
+  // or com.jetbrains.pycharm.ds.customization is a challenging task that can't be done by a single shot.
   "Pythonid",
   "com.jetbrains.pycharm.ds.customization",
 )
