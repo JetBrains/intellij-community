@@ -16431,6 +16431,7 @@ c:com.intellij.ui.popup.ActionPopupStep
 - getMnemonicString(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getOptions():com.intellij.ui.popup.ActionPopupOptions
 - getPresentationFactory():com.intellij.openapi.actionSystem.impl.PresentationFactory
+- getSecondaryIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
 - getSecondaryTextFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):java.lang.String
 - getSelectedIconFor(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):javax.swing.Icon
 - getSeparatorAbove(com.intellij.ui.popup.PopupFactoryImpl$ActionItem):com.intellij.openapi.ui.popup.ListSeparator
@@ -16799,6 +16800,7 @@ c:com.intellij.ui.popup.list.PopupListElementRenderer
 - p:customizeComponent(javax.swing.JList,java.lang.Object,Z):V
 - p:getBackground():java.awt.Color
 - getPopup():com.intellij.ui.popup.list.ListPopupImpl
+- p:isShowSecondaryIcon():Z
 - p:isShowSecondaryText():Z
 - p:layoutComponent(javax.swing.JComponent):javax.swing.JComponent
 - p:setComponentIcon(javax.swing.Icon,javax.swing.Icon):V
