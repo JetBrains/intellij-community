@@ -31,6 +31,10 @@ internal class ReferencedSymbol(val reference: KtReference, val symbol: KaSymbol
     private val KaSession.definitelyNotImported: Boolean get() = when {
         symbol.isLocal -> true
 
+        // symbols from <dynamic> scope cannot be imported,
+        // they do not have stable identities and FQNs
+        symbol.origin == KaSymbolOrigin.JS_DYNAMIC -> true
+
         symbol is KaPackageSymbol -> true
         symbol is KaReceiverParameterSymbol -> true
         symbol is KaTypeParameterSymbol -> true
