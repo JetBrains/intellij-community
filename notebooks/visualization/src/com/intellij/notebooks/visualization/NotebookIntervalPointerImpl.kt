@@ -113,7 +113,6 @@ class NotebookIntervalPointerFactoryImpl(
   }
 
   override fun getForOrdinalIfExists(ordinal: Int): NotebookIntervalPointer? {
-    ThreadingAssertions.assertReadAccess()
     return pointers.getOrNull(ordinal)
   }
 
