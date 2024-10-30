@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
@@ -15,10 +15,10 @@ import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
@@ -35,14 +35,14 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
                     .classifiers(scopeNameFilter)
                     .toList()
                 classifiers
-                    .filter { visibilityChecker.isVisible(it) }
+                    .filter { visibilityChecker.isVisible(it, positionContext) }
                     .forEach { addClassifierSymbolToCompletion(it, weighingContext, symbolOrigin, ImportStrategy.DoNothing) }
 
                 val callables = scopeWithKind.scope
                     .callables(scopeNameFilter)
                     .toList()
                 callables
-                    .filter { visibilityChecker.isVisible(it) }
+                    .filter { visibilityChecker.isVisible(it, positionContext) }
                     .forEach {
                         addCallableSymbolToCompletion(
                             weighingContext,

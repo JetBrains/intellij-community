@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
@@ -22,19 +23,23 @@ import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 @OptIn(KaExperimentalApi::class)
 internal class CompletionVisibilityChecker(
-    val basicContext: FirBasicCompletionContext, // todo do not expose
-    private val positionContext: KotlinRawPositionContext,
+    private val parameters: KotlinFirCompletionParameters, // should be the only parameter
 ) {
+
     fun isDefinitelyInvisibleByPsi(declaration: KtDeclaration): Boolean = forbidAnalysis("isDefinitelyInvisibleByPsi") {
-        if (basicContext.parameters.invocationCount >= 2) return false
-        if (basicContext.originalKtFile is KtCodeFragment) return false
+        val originalFile = parameters.originalFile
+        if (originalFile is KtCodeFragment) return false
+
+        if (parameters.invocationCount >= 2) return false
 
         val declarationContainingFile = declaration.containingKtFile
-        if (declaration.isPrivate()) {
-            if (declarationContainingFile != basicContext.originalKtFile && declarationContainingFile != basicContext.fakeKtFile) {
-                return true
-            }
+        if (declaration.isPrivate()
+            && declarationContainingFile != originalFile
+            && declarationContainingFile != parameters.completionFile
+        ) {
+            return true
         }
+
         if (declaration.hasModifier(KtTokens.INTERNAL_KEYWORD)) {
             return !canAccessInternalDeclarationsFromFile(declarationContainingFile)
         }
@@ -46,35 +51,39 @@ internal class CompletionVisibilityChecker(
         if (file.isCompiled) {
             return false
         }
-        val useSiteModule = basicContext.useSiteModule
-
-        val declarationModule = file.getKaModule(basicContext.project, useSiteModule)
+        val useSiteModule = parameters.useSiteModule
+        val declarationModule = file.getKaModule(parameters.originalFile.project, useSiteModule)
 
         return declarationModule == useSiteModule ||
                 declarationModule in useSiteModule.directFriendDependencies
     }
 
     context(KaSession)
-    fun isVisible(symbol: KaDeclarationSymbol): Boolean {
+    fun isVisible(
+        symbol: KaDeclarationSymbol,
+        positionContext: KotlinRawPositionContext,
+    ): Boolean {
         if (positionContext is KDocNameReferencePositionContext) return true
 
         // Don't offer any deprecated items that could lead to compile errors.
         if (symbol.deprecationStatus?.deprecationLevel == DeprecationLevelValue.HIDDEN) return false
 
-        if (basicContext.parameters.invocationCount > 1) return true
+        if (parameters.invocationCount > 1) return true
 
-        if (symbol is KaClassLikeSymbol) {
-            val classId = (symbol as? KaClassLikeSymbol)?.classId
-            if (classId?.asSingleFqName()?.isJavaClassNotToBeUsedInKotlin() == true) return false
-        }
+        if ((symbol as? KaClassLikeSymbol)
+                ?.classId
+                ?.asSingleFqName()
+                ?.isJavaClassNotToBeUsedInKotlin() == true
+        ) return false
 
-        if (basicContext.originalKtFile is KtCodeFragment) return true
+        val originalFile = parameters.originalFile
+        if (originalFile is KtCodeFragment) return true
 
         return isVisible(
-            symbol,
-            basicContext.originalKtFile.symbol,
-            (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
-            positionContext.position
+            candidateSymbol = symbol,
+            useSiteFile = originalFile.symbol,
+            receiverExpression = (positionContext as? KotlinSimpleNameReferencePositionContext)?.explicitReceiver,
+            position = positionContext.position,
         )
     }
 }

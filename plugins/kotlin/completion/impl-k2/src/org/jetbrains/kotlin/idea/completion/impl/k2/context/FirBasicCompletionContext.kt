@@ -1,40 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.context
 
-import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
 import org.jetbrains.kotlin.psi.*
-
-internal class FirBasicCompletionContext(
-    val parameters: CompletionParameters,
-    val originalKtFile: KtFile,
-    val fakeKtFile: KtFile,
-) {
-
-    val project: Project
-        get() = originalKtFile.project
-
-    val useSiteModule: KaModule = originalKtFile.getKaModule(project, useSiteModule = null)
-
-    companion object {
-
-        fun createFromParameters(
-            parameters: CompletionParameters,
-        ): FirBasicCompletionContext? {
-            val originalKtFile = parameters.originalFile as? KtFile ?: return null
-            val fakeKtFile = parameters.position.containingFile as? KtFile ?: return null
-
-            return FirBasicCompletionContext(
-                parameters = parameters,
-                originalKtFile = originalKtFile,
-                fakeKtFile = fakeKtFile,
-            )
-        }
-    }
-}
 
 /**
  * Returns the same declaration from the [originalKtFile], or [declaration] if the original declaration is not found.

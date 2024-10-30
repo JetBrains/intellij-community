@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.utils.printer.PrettyPrinter
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.OverridesCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
@@ -48,19 +49,28 @@ internal class OverrideKeywordHandler(
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project,
-    ): Collection<LookupElement> = createOverrideMemberLookups(parameters, declaration = null, project) + lookup
+    ): Collection<LookupElement> {
+        val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return listOf(lookup)
+
+        return createOverrideMemberLookups(
+            parameters = parameters,
+            declaration = null,
+            project = project
+        ) + lookup
+    }
 
     context(KaSession)
     fun createOverrideMemberLookups(
-        parameters: CompletionParameters,
+        parameters: KotlinFirCompletionParameters,
         declaration: KtCallableDeclaration?,
-        project: Project
+        project: Project,
     ): Collection<LookupElement> {
         val result = mutableListOf<LookupElement>()
         val position = parameters.position
         val isConstructorParameter = position.getNonStrictParentOfType<KtPrimaryConstructor>() != null
         val parent = position.getNonStrictParentOfType<KtClassOrObject>() ?: return result
-        val classOrObject = getOriginalDeclarationOrSelf(parent, parameters.originalFile as KtFile)
+        val classOrObject = getOriginalDeclarationOrSelf(parent, parameters.originalFile)
         val members = collectMembers(classOrObject, isConstructorParameter)
 
         for (member in members) {

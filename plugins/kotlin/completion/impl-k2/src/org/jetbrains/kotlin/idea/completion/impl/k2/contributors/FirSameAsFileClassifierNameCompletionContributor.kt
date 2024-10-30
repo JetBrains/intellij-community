@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
@@ -12,10 +12,10 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirSameAsFileClassifierNameCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(

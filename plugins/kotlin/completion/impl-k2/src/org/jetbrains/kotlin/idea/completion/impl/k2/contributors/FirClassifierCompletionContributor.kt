@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
@@ -17,10 +17,10 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositio
 import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -37,12 +37,13 @@ internal open class FirClassifierCompletionContributor(
         when (val receiver = positionContext.explicitReceiver) {
             null -> completeWithoutReceiver(positionContext, weighingContext)
 
-            else -> completeWithReceiver(receiver, weighingContext)
+            else -> completeWithReceiver(positionContext, receiver, weighingContext)
         }
     }
 
     context(KaSession)
     private fun completeWithReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         receiver: KtElement,
         context: WeighingContext,
     ) {
@@ -56,7 +57,7 @@ internal open class FirClassifierCompletionContributor(
                 scopeWithKind.scope
                     .classifiers(scopeNameFilter)
                     .filter { filterClassifiers(it) }
-                    .filter { visibilityChecker.isVisible(it) }
+                    .filter { visibilityChecker.isVisible(it, positionContext) }
                     .forEach {
                         val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
                         addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
@@ -71,12 +72,12 @@ internal open class FirClassifierCompletionContributor(
     ) {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
         getAvailableClassifiersCurrentScope(
-            originalKtFile,
-            positionContext.nameExpression,
-            scopeNameFilter,
-            visibilityChecker
-        )
-            .filter { filterClassifiers(it.symbol) }
+            positionContext = positionContext,
+            originalKtFile = originalKtFile,
+            position = positionContext.nameExpression,
+            scopeNameFilter = scopeNameFilter,
+            visibilityChecker = visibilityChecker,
+        ).filter { filterClassifiers(it.symbol) }
             .forEach { symbolWithScopeKind ->
                 val classifierSymbol = symbolWithScopeKind.symbol
                 val symbolOrigin = CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind)
@@ -86,12 +87,12 @@ internal open class FirClassifierCompletionContributor(
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
-                parameters,
-                symbolFromIndexProvider,
-                scopeNameFilter,
-                visibilityChecker
-            )
-                .filter { it !in availableFromScope && filterClassifiers(it) }
+                positionContext = positionContext,
+                parameters = parameters,
+                symbolProvider = symbolFromIndexProvider,
+                scopeNameFilter = scopeNameFilter,
+                visibilityChecker = visibilityChecker,
+            ).filter { it !in availableFromScope && filterClassifiers(it) }
                 .forEach { classifierSymbol ->
                     val symbolOrigin = CompletionSymbolOrigin.Index
                     addClassifierSymbolToCompletion(classifierSymbol, context, symbolOrigin, getImportingStrategy(classifierSymbol))
@@ -101,10 +102,10 @@ internal open class FirClassifierCompletionContributor(
 }
 
 internal class FirAnnotationCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirClassifierCompletionContributor(visibilityChecker, sink, priority) {
+) : FirClassifierCompletionContributor(parameters, sink, priority) {
 
     context(KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
@@ -127,10 +128,10 @@ internal class FirAnnotationCompletionContributor(
 }
 
 internal class FirClassifierReferenceCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int
-) : FirClassifierCompletionContributor(visibilityChecker, sink, priority) {
+) : FirClassifierCompletionContributor(parameters, sink, priority) {
 
     context(KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {

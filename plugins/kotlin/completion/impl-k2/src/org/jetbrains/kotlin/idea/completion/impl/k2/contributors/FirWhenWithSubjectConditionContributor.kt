@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.base.util.letIf
 import org.jetbrains.kotlin.idea.completion.InsertionHandlerBase
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
@@ -40,10 +40,10 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.renderer.render
 
 internal class FirWhenWithSubjectConditionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinWithSubjectEntryPositionContext>(parameters, sink, priority) {
 
     private val onTypingIsKeyword: Boolean =
         super.prefixMatcher.prefix.let { prefix ->
@@ -70,6 +70,7 @@ internal class FirWhenWithSubjectConditionContributor(
         when {
             classSymbol?.classKind == KaClassKind.ENUM_CLASS -> {
                 completeEnumEntries(
+                    positionContext = positionContext,
                     context = weighingContext,
                     classSymbol = classSymbol,
                     conditions = allConditionsExceptCurrent,
@@ -78,6 +79,7 @@ internal class FirWhenWithSubjectConditionContributor(
             }
             classSymbol?.modality == KaSymbolModality.SEALED -> {
                 completeSubClassesOfSealedClass(
+                    positionContext = positionContext,
                     context = weighingContext,
                     classSymbol = classSymbol,
                     conditions = allConditionsExceptCurrent,
@@ -87,6 +89,7 @@ internal class FirWhenWithSubjectConditionContributor(
             }
 
             else -> completeAllTypes(
+                positionContext = positionContext,
                 context = weighingContext,
                 whenCondition = whenCondition,
                 isSingleCondition = isSingleCondition,
@@ -113,41 +116,52 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KaSession)
     private fun completeAllTypes(
+        positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
         whenCondition: KtWhenCondition,
         isSingleCondition: Boolean,
     ) {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        getAvailableClassifiersCurrentScope(originalKtFile, whenCondition, scopeNameFilter, visibilityChecker)
-            .forEach { classifierWithScopeKind ->
-                val classifier = classifierWithScopeKind.symbol
-                if (classifier !is KaNamedSymbol) return@forEach
-                availableFromScope += classifier
+        getAvailableClassifiersCurrentScope(
+            positionContext = positionContext,
+            originalKtFile = originalKtFile,
+            position = whenCondition,
+            scopeNameFilter = scopeNameFilter,
+            visibilityChecker = visibilityChecker
+        ).forEach { classifierWithScopeKind ->
+            val classifier = classifierWithScopeKind.symbol
+            if (classifier !is KaNamedSymbol) return@forEach
+            availableFromScope += classifier
+
+            addLookupElement(
+                context,
+                classifier.name.asString(),
+                classifier,
+                CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                isSingleCondition,
+            )
+        }
+
+        if (prefixMatcher.prefix.isNotEmpty()) {
+            getAvailableClassifiersFromIndex(
+                positionContext = positionContext,
+                parameters = parameters,
+                symbolProvider = symbolFromIndexProvider,
+                scopeNameFilter = scopeNameFilter,
+                visibilityChecker = visibilityChecker,
+            ).forEach { classifier ->
+                if (classifier !is KaNamedSymbol || classifier in availableFromScope) return@forEach
 
                 addLookupElement(
                     context,
                     classifier.name.asString(),
                     classifier,
-                    CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                    CompletionSymbolOrigin.Index,
                     (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
                     isSingleCondition,
                 )
             }
-
-        if (prefixMatcher.prefix.isNotEmpty()) {
-            getAvailableClassifiersFromIndex(parameters, symbolFromIndexProvider, scopeNameFilter, visibilityChecker)
-                .forEach { classifier ->
-                    if (classifier !is KaNamedSymbol || classifier in availableFromScope) return@forEach
-
-                    addLookupElement(
-                        context,
-                        classifier.name.asString(),
-                        classifier,
-                        CompletionSymbolOrigin.Index,
-                        (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
-                        isSingleCondition,
-                    )
-                }
         }
     }
 
@@ -167,6 +181,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KaSession)
     private fun completeSubClassesOfSealedClass(
+        positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
@@ -180,7 +195,7 @@ internal class FirWhenWithSubjectConditionContributor(
         allInheritors
             .asSequence()
             .filter { it.classId !in handledCasesClassIds }
-            .filter { visibilityChecker.isVisible(it as KaClassifierSymbol) }
+            .filter { visibilityChecker.isVisible(it as KaClassifierSymbol, positionContext) }
             .forEach { inheritor ->
                 val classId = inheritor.classId ?: return@forEach
                 addLookupElement(
@@ -195,6 +210,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
         if (allInheritors.any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(
+                positionContext = positionContext,
                 context = context,
                 whenCondition = whenCondition,
                 isSingleCondition = isSingleCondition,
@@ -245,6 +261,7 @@ internal class FirWhenWithSubjectConditionContributor(
 
     context(KaSession)
     private fun completeEnumEntries(
+        positionContext: KotlinWithSubjectEntryPositionContext,
         context: WeighingContext,
         classSymbol: KaNamedClassSymbol,
         conditions: List<KtWhenCondition>,
@@ -261,7 +278,7 @@ internal class FirWhenWithSubjectConditionContributor(
                 .callables
                 .filterIsInstance<KaEnumEntrySymbol>()
                 .filter { it.name !in handledCasesNames }
-                .filter { visibilityChecker.isVisible(it) }
+                .filter { visibilityChecker.isVisible(it, positionContext) }
                 .forEach { entry ->
                     addLookupElement(
                         context,

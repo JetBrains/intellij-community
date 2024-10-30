@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.keywords.ActualKeywordHandler
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -29,10 +29,10 @@ import org.jetbrains.kotlin.psi.KtTypeReference
  * @see ActualKeywordHandler
  */
 internal class K2ActualDeclarationContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(

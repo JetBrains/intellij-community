@@ -8,7 +8,7 @@ import com.intellij.psi.util.parents
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.KeywordCompletion
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.OverrideKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.ReturnKeywordHandler
 import org.jetbrains.kotlin.idea.completion.contributors.keywords.SuperKeywordHandler
@@ -32,10 +32,10 @@ import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
 
 internal class FirKeywordCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
     private val keywordCompletion = KeywordCompletion(object : KeywordCompletion.LanguageVersionSettingProvider {
         override fun getLanguageVersionSetting(element: PsiElement) = element.languageVersionSettings
@@ -82,12 +82,14 @@ internal class FirKeywordCompletionContributor(
     context(KaSession)
     private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
         complete(position) { lookupElement, keyword ->
+            val parameters = parameters.delegate
+
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)
-                ?: resolveDependentCompletionKeywordHandlers.getHandlerForKeyword(keyword)?.run {
-                    createLookups(parameters, expression, lookupElement, project)
-                }
+                ?: resolveDependentCompletionKeywordHandlers.getHandlerForKeyword(keyword)
+                    ?.createLookups(parameters, expression, lookupElement, project)
                 ?: listOf(lookupElement)
+
             lookups.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
             sink.addAllElements(lookups)
         }

@@ -7,13 +7,9 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
-import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.*
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
-import org.jetbrains.kotlin.idea.completion.priority
-import org.jetbrains.kotlin.idea.completion.referenceScope
-import org.jetbrains.kotlin.idea.completion.suppressAutoInsertion
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.psi.*
@@ -29,10 +25,10 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  * This contributor would contribute `unresolvedVar` at caret position above.
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(

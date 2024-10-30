@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.analysis.api.types.KaUsualClassType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
@@ -32,10 +32,10 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperExpression
 
 internal class FirSuperMemberCompletionContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(parameters, sink, priority) {
 
     private data class CallableInfo(
         private val _type: KaType,
@@ -107,6 +107,7 @@ internal class FirSuperMemberCompletionContributor(
         positionContext: KotlinNameReferencePositionContext,
         receiverType: KaType,
     ): Sequence<CallableInfo> = collectNonExtensionsForType(
+        parameters = parameters,
         positionContext = positionContext,
         receiverType = receiverType,
         visibilityChecker = visibilityChecker,

@@ -18,11 +18,12 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.getDefaultImportPaths
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.ImportableFqNameClassifier
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.useSiteModule
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.impl.k2.weighers.K2SoftDeprecationWeigher
 import org.jetbrains.kotlin.idea.completion.implCommon.weighers.PreferKotlinClassesWeigher
@@ -96,18 +97,18 @@ internal class WeighingContext private constructor(
 
         context(KaSession)
         fun create(
-            basicContext: FirBasicCompletionContext,
+            parameters: KotlinFirCompletionParameters,
             elementInCompletionFile: PsiElement,
             receiver: KtElement? = null,
             expectedType: KaType? = null,
             implicitReceivers: List<KaImplicitReceiver> = emptyList(),
             symbolsToSkip: Set<KaSymbol> = emptySet(),
         ): WeighingContext {
-            val completionFile = basicContext.fakeKtFile
-            val defaultImportPaths = completionFile.getDefaultImportPaths(useSiteModule = basicContext.useSiteModule).toSet()
+            val completionFile = parameters.completionFile
+            val defaultImportPaths = completionFile.getDefaultImportPaths(useSiteModule = parameters.useSiteModule).toSet()
             return WeighingContext(
                 token = token,
-                languageVersionSettings = completionFile.languageVersionSettings,
+                languageVersionSettings = parameters.languageVersionSettings,
                 explicitReceiver = receiver,
                 positionInFakeCompletionFile = elementInCompletionFile,
                 myExpectedType = expectedType,
@@ -115,7 +116,7 @@ internal class WeighingContext private constructor(
                 contextualSymbolsCache = ContextualSymbolsCache(
                     getContextualSymbolsCache(
                         elementInCompletionFile = elementInCompletionFile,
-                        originalFile = basicContext.originalKtFile,
+                        originalFile = parameters.originalFile,
                     )
                 ),
                 importableFqNameClassifier = ImportableFqNameClassifier(completionFile) { defaultImportPaths.hasImport(it) },
@@ -125,7 +126,7 @@ internal class WeighingContext private constructor(
 
         context(KaSession)
         fun create(
-            basicContext: FirBasicCompletionContext,
+            parameters: KotlinFirCompletionParameters,
             positionContext: KotlinNameReferencePositionContext,
         ): WeighingContext {
             val expectedType = when (positionContext) {
@@ -145,7 +146,7 @@ internal class WeighingContext private constructor(
                 }
 
                 else -> {
-                    val scopeContext = basicContext.originalKtFile
+                    val scopeContext = parameters.originalFile
                         .scopeContext(positionContext.nameExpression)
                     positionContext.explicitReceiver to scopeContext.implicitReceivers
                 }
@@ -160,7 +161,7 @@ internal class WeighingContext private constructor(
             }
 
             return create(
-                basicContext = basicContext,
+                parameters = parameters,
                 elementInCompletionFile = positionContext.position,
                 receiver = receiver,
                 expectedType = expectedType,

@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
-import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
@@ -13,12 +13,11 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameRef
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 
-
 internal class FirSuperEntryContributor(
-    visibilityChecker: CompletionVisibilityChecker,
+    parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(visibilityChecker, sink, priority) {
+) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(parameters, sink, priority) {
 
     context(KaSession)
     override fun complete(

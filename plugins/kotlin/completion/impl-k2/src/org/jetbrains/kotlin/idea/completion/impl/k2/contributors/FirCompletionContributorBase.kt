@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
@@ -21,13 +20,13 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRang
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
@@ -42,7 +41,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.types.Variance
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
-    protected val visibilityChecker: CompletionVisibilityChecker,
+    protected val parameters: KotlinFirCompletionParameters,
     sink: LookupElementSink,
     priority: Int,
 ) : FirCompletionContributor<C> {
@@ -50,18 +49,20 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
     protected open val prefixMatcher: PrefixMatcher
         get() = sink.prefixMatcher
 
-    private inline val basicContext: FirBasicCompletionContext get() = visibilityChecker.basicContext
-    protected val parameters: CompletionParameters get() = basicContext.parameters
+    protected val visibilityChecker = CompletionVisibilityChecker(parameters)
 
     protected val sink: LookupElementSink = sink
         .withPriority(priority)
         .withContributorClass(this@FirCompletionContributorBase.javaClass)
 
-    protected val originalKtFile: KtFile get() = basicContext.originalKtFile
-    protected val project: Project get() = basicContext.project
+    protected val originalKtFile: KtFile // todo inline
+        get() = parameters.originalFile
+
+    protected val project: Project // todo remove entirely
+        get() = originalKtFile.project
 
     protected val targetPlatform = originalKtFile.platform
-    protected val symbolFromIndexProvider = KtSymbolFromIndexProvider(basicContext.fakeKtFile)
+    protected val symbolFromIndexProvider = KtSymbolFromIndexProvider(parameters.completionFile)
     protected val importStrategyDetector = ImportStrategyDetector(originalKtFile, project)
 
     protected val scopeNameFilter: (Name) -> Boolean =

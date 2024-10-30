@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.pointers.KaSymbolPointer
 import org.jetbrains.kotlin.idea.KtIconProvider.getBaseIcon
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.util.module
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.implCommon.ActualCompletionLookupElementDecorator
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandler
@@ -51,11 +52,17 @@ internal class ActualKeywordHandler(
         expression: KtExpression?,
         lookup: LookupElement,
         project: Project
-    ): Collection<LookupElement> = createActualLookups(parameters, project) + lookup
+    ): Collection<LookupElement> {
+        val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return listOf(lookup)
+
+        return createActualLookups(parameters, project) +
+                lookup
+    }
 
     context(KaSession)
     fun createActualLookups(
-        parameters: CompletionParameters,
+        parameters: KotlinFirCompletionParameters,
         project: Project
     ): Collection<LookupElement> {
         val position = parameters.position

@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters.Companion.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
@@ -64,6 +65,7 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
 
 context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
+    parameters: KotlinFirCompletionParameters,
     positionContext: KotlinNameReferencePositionContext,
     scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
@@ -80,6 +82,7 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
         val nonExtensions = if (isImplicitReceiverScope) {
             val implicitReceiver = indexedImplicitReceivers.getValue(kind.indexInTower)
             collectNonExtensionsForType(
+                parameters = parameters,
                 positionContext = positionContext,
                 receiverType = implicitReceiver.type,
                 visibilityChecker = visibilityChecker,
@@ -89,6 +92,8 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
             )
         } else {
             collectNonExtensionsFromScope(
+                parameters = parameters,
+                positionContext = positionContext,
                 scope = scopeWithKind.scope,
                 visibilityChecker = visibilityChecker,
                 scopeNameFilter = scopeNameFilter,
@@ -103,14 +108,19 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
 
 context(KaSession)
 internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
+    parameters: KotlinFirCompletionParameters,
+    positionContext: KotlinNameReferencePositionContext,
     scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     symbolFilter: (KaCallableSymbol) -> Boolean,
-): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes.asSequence()
+): Sequence<KtCallableSignatureWithContainingScopeKind> = scopeContext.scopes
+    .asSequence()
     .filterNot { it.kind is KaScopeKind.LocalScope || it.kind is KaScopeKind.TypeScope }
     .flatMap { scopeWithKind ->
         collectNonExtensionsFromScope(
+            parameters = parameters,
+            positionContext = positionContext,
             scope = scopeWithKind.scope,
             visibilityChecker = visibilityChecker,
             scopeNameFilter = scopeNameFilter,
@@ -124,6 +134,7 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
+    parameters: KotlinFirCompletionParameters,
     positionContext: KotlinNameReferencePositionContext,
     receiverType: KaType,
     visibilityChecker: CompletionVisibilityChecker,
@@ -133,21 +144,27 @@ internal fun collectNonExtensionsForType(
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
     val typeScope = receiverType.scope ?: return emptySequence()
 
-    val basicContext = visibilityChecker.basicContext
-    val languageVersionSettings = basicContext.project.languageVersionSettings
+    val languageVersionSettings = parameters.languageVersionSettings // todo is it possible to reuse WeighingContext?
     val excludeSyntheticJavaProperties = languageVersionSettings.excludeSyntheticJavaProperties(positionContext)
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
         .applyIf(excludeSyntheticJavaProperties) {
             filterNot { it.symbol is KaSyntheticJavaPropertySymbol }
-        }.applyIf(!excludeSyntheticJavaProperties && basicContext.parameters.invocationCount <= 1) {
-            filterOutJavaGettersAndSetters(receiverType, visibilityChecker, scopeNameFilter, symbolFilter)
+        }.applyIf(!excludeSyntheticJavaProperties && parameters.invocationCount <= 1) {
+            filterOutJavaGettersAndSetters(
+                positionContext = positionContext,
+                type = receiverType,
+                visibilityChecker = visibilityChecker,
+                scopeNameFilter = scopeNameFilter,
+                symbolFilter = symbolFilter,
+            )
         }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassSymbol>().filter { it.isInner }
     val innerClassesConstructors = innerClasses.flatMap { it.declaredMemberScope.constructors }.map { it.asSignature() }
 
-    val nonExtensionsFromType = (callables + innerClassesConstructors).filterNonExtensions(visibilityChecker, symbolFilter)
+    val nonExtensionsFromType = (callables + innerClassesConstructors)
+        .filterNonExtensions(positionContext, visibilityChecker, symbolFilter)
 
     val scopeIndex = indexInTower ?: CompletionSymbolOrigin.SCOPE_OUTSIDE_TOWER_INDEX
 
@@ -165,6 +182,7 @@ private val KaSyntheticJavaPropertySymbol.getterAndUnitSetter: List<KaCallableSy
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
+    positionContext: KotlinNameReferencePositionContext,
     type: KaType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
@@ -172,7 +190,7 @@ private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
 ): Sequence<KaCallableSignature<*>> {
     val syntheticJavaPropertiesTypeScope = type.syntheticJavaPropertiesScope ?: return this
     val syntheticProperties = syntheticJavaPropertiesTypeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
-        .filterNonExtensions(visibilityChecker, symbolFilter)
+        .filterNonExtensions(positionContext, visibilityChecker, symbolFilter)
         .filterIsInstance<KaCallableSignature<KaSyntheticJavaPropertySymbol>>()
     // non-Unit setters are not filtered out because they are likely to be used in a call chain
     val javaGetterAndUnitSetterSymbols = syntheticProperties.flatMapTo(mutableSetOf()) { it.symbol.getterAndUnitSetter }
@@ -187,25 +205,28 @@ private fun Sequence<KaCallableSignature<*>>.filterOutJavaGettersAndSetters(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsFromScope(
+    parameters: KotlinFirCompletionParameters,
+    positionContext: KotlinNameReferencePositionContext,
     scope: KaScope,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KaCallableSignature<*>> = scope.callables(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
-    .filterNonExtensions(visibilityChecker, symbolFilter)
-    .applyIf(visibilityChecker.basicContext.project.languageVersionSettings.excludeEnumEntries) {
+    .filterNonExtensions(positionContext, visibilityChecker, symbolFilter)
+    .applyIf(parameters.languageVersionSettings.excludeEnumEntries) {
         filterNot { isEnumEntriesProperty(it.symbol) }
     }
 
 context(KaSession)
 private fun Sequence<KaCallableSignature<*>>.filterNonExtensions(
+    positionContext: KotlinNameReferencePositionContext,
     visibilityChecker: CompletionVisibilityChecker,
     symbolFilter: (KaCallableSymbol) -> Boolean,
 ): Sequence<KaCallableSignature<*>> = this
     .filterNot { it.symbol.isExtension }
     .filter { symbolFilter(it.symbol) }
-    .filter { visibilityChecker.isVisible(it.symbol) }
+    .filter { visibilityChecker.isVisible(it.symbol, positionContext) }
 
 /**
  * Returns a filter aware of prefixes. For example, a variable with the name `prop` satisfies the filter for all the following prefixes:

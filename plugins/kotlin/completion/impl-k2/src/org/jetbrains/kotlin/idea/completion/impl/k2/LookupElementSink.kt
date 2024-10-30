@@ -57,8 +57,7 @@ internal class LookupElementSink(
         element.groupPriority = groupPriority
         element.contributorClass = contributorClass
 
-        val actualParameters = parameters.ijParameters
-        if (isAtFunctionLiteralStart(actualParameters.position)) {
+        if (isAtFunctionLiteralStart(parameters.position)) {
             element.suppressItemSelectionByCharsOnTyping = true
         }
 
@@ -69,7 +68,7 @@ internal class LookupElementSink(
 
         return LookupElementDecorator.withDelegateInsertHandler(
             LookupElementDecorator.withDelegateInsertHandler(element, bracesInsertHandler),
-            CompletionCharInsertHandler(actualParameters),
+            CompletionCharInsertHandler(parameters.delegate),
         )
     }
 }

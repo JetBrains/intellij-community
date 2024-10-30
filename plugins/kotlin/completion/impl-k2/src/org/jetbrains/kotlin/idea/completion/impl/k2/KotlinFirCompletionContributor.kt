@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
-import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinPositionContextDetector
@@ -73,22 +72,17 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         context: ProcessingContext,
         result: CompletionResultSet,
     ) {
-        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
+        @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParameters.create(parameters)
+            ?: return
 
-        if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
-        val basicContext = FirBasicCompletionContext.createFromParameters(parameters.ijParameters) ?: return
+        if (shouldSuppressCompletion(parameters, result.prefixMatcher)) return
+        val positionContext = KotlinPositionContextDetector.detect(parameters.position)
 
-        val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
+        val result = result.withRelevanceSorter(parameters, positionContext)
+            .withPrefixMatcher(parameters)
 
-        val result = result.withRelevanceSorter(
-            parameters = parameters.ijParameters,
-            positionContext = positionContext,
-        ).withPrefixMatcher(
-            parameters = parameters.ijParameters,
-        )
-
-        val completionFile = basicContext.fakeKtFile
-        val originalFile = basicContext.originalKtFile
+        val completionFile = parameters.completionFile
+        val originalFile = parameters.originalFile
 
         analyze(completionFile) {
             val completionDeclaration = when (positionContext) {
@@ -113,7 +107,7 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
                 val resultSet = PolicyObeyingResultSet(result, policyController)
 
                 Completions.complete(
-                    basicContext = basicContext,
+                    parameters = parameters,
                     positionContext = positionContext,
                     sink = LookupElementSink(resultSet, parameters),
                 )
@@ -122,10 +116,10 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     private fun CompletionResultSet.withPrefixMatcher(
-        parameters: CompletionParameters,
+        parameters: KotlinFirCompletionParameters,
     ): CompletionResultSet {
         val prefix = CompletionUtil.findIdentifierPrefix(
-            parameters.position.containingFile,
+            parameters.completionFile,
             parameters.offset,
             kotlinIdentifierPartPattern(),
             kotlinIdentifierStartPattern(),
@@ -135,11 +129,11 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
     }
 
     private fun CompletionResultSet.withRelevanceSorter(
-        parameters: CompletionParameters,
+        parameters: KotlinFirCompletionParameters,
         positionContext: KotlinRawPositionContext,
     ): CompletionResultSet {
         val sorter = Weighers.addWeighersToCompletionSorter(
-            sorter = CompletionSorter.defaultSorter(parameters, prefixMatcher),
+            sorter = CompletionSorter.defaultSorter(parameters.delegate, prefixMatcher),
             positionContext = positionContext,
         )
 
@@ -155,7 +149,10 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         PsiJavaPatterns.psiElement().withElementType(PsiJavaPatterns.elementType().oneOf(KtTokens.INTEGER_LITERAL))
     )
 
-    private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
+    private fun shouldSuppressCompletion(
+        parameters: KotlinFirCompletionParameters,
+        prefixMatcher: PrefixMatcher
+    ): Boolean {
         val position = parameters.position
         val invocationCount = parameters.invocationCount
 
