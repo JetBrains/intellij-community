@@ -86,12 +86,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
   }
 
   @Override
-  public void executeTasks(final @NotNull ExternalSystemTaskId id,
-                           final @NotNull List<String> taskNames,
-                           @NotNull String projectPath,
-                           @Nullable GradleExecutionSettings settings,
-                           final @Nullable String jvmParametersSetup,
-                           final @NotNull ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
+  public void executeTasks(
+    @NotNull ExternalSystemTaskId id,
+    @NotNull List<String> taskNames,
+    @NotNull String projectPath,
+    @Nullable GradleExecutionSettings settings,
+    @Nullable String jvmParametersSetup,
+    @NotNull ExternalSystemTaskNotificationListener listener
+  ) throws ExternalSystemException {
     final List<String> tasks = taskNames.stream()
       .flatMap(s -> ParametersListUtil.parse(s, false, true).stream())
       .collect(Collectors.toList());

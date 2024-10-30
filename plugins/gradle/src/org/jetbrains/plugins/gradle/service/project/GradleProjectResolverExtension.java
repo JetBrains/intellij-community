@@ -137,7 +137,11 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @param jvmParametersSetup jvm configuration that will be applied to Gradle jvm
    * @param initScriptConsumer consumer of init script text. Must be called to add script txt
    */
-  void enhanceTaskProcessing(@NotNull List<String> taskNames, @Nullable String jvmParametersSetup, @NotNull Consumer<String> initScriptConsumer);
+  void enhanceTaskProcessing(
+    @NotNull List<String> taskNames,
+    @Nullable String jvmParametersSetup,
+    @NotNull Consumer<String> initScriptConsumer
+  );
 
   // jvm configuration that will be applied to Gradle jvm
   String JVM_PARAMETERS_SETUP_KEY = "JVM_PARAMETERS_SETUP";
@@ -173,10 +177,12 @@ public interface GradleProjectResolverExtension extends ParametersEnhancer {
    * @return map with environment variables to be passed into the execution
    */
   @ApiStatus.Experimental
-  default @NotNull Map<String, String> enhanceTaskProcessing(@Nullable Project project,
-                                                             @NotNull List<String> taskNames,
-                                                             @NotNull Consumer<String> initScriptConsumer,
-                                                             @NotNull Map<String, String> parameters) {
+  default @NotNull Map<String, String> enhanceTaskProcessing(
+    @Nullable Project project,
+    @NotNull List<String> taskNames,
+    @NotNull Consumer<String> initScriptConsumer,
+    @NotNull Map<String, String> parameters
+  ) {
     String jvmParametersSetup = parameters.get(JVM_PARAMETERS_SETUP_KEY);
     enhanceTaskProcessing(taskNames, jvmParametersSetup, initScriptConsumer);
     return Map.of();
