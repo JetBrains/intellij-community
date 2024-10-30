@@ -29,26 +29,18 @@ class NotificationBalloonRoundShadowBorderProvider(fillColor: Color, borderColor
     val CORNER_RADIUS: JBValue = UIInteger("Notification.arc", 12)
   }
 
-  private val java2DPainter = ShadowJava2DPainter("Notification", JBUI.scale(6))
+  private val java2DPainter = ShadowJava2DPainter(ShadowJava2DPainter.Type.NOTIFICATION, JBUI.scale(6))
 
   fun hideSide(top: Boolean, bottom: Boolean) {
     java2DPainter.hideSide(top, bottom)
   }
 
   override fun getInsets(): Insets {
-    if (ShadowJava2DPainter.enabled()) {
-      return java2DPainter.getInsets()
-    }
-    return super.getInsets()
+    return java2DPainter.getInsets()
   }
 
   override fun paintShadow(component: JComponent, g: Graphics) {
-    if (ShadowJava2DPainter.enabled()) {
-      java2DPainter.paintShadow(g as Graphics2D, 0, 0, component.width, component.height)
-    }
-    else {
-      super.paintShadow(component, g)
-    }
+    java2DPainter.paintShadow(g as Graphics2D, 0, 0, component.width, component.height)
   }
 
   override fun paintBorder(bounds: Rectangle, g: Graphics2D) {

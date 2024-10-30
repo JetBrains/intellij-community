@@ -179,14 +179,11 @@ public class WelcomeBalloonLayoutImpl extends BalloonLayoutImpl {
       size.height = fullHeight;
     }
 
-    int locationX = x;
+    int locationX = x - JBUI.scale(10);
     int locationY = fullHeight - size.height;
 
-    if (ShadowJava2DPainter.Companion.enabled()) {
-      locationX -= JBUI.scale(10);
-      if (size.height < fullHeight) {
-        locationY -= JBUI.scale(5);
-      }
+    if (size.height < fullHeight) {
+      locationY -= JBUI.scale(5);
     }
 
     myPopupBalloon.setBounds(new Rectangle(locationX, locationY, size.width, size.height));

@@ -20,7 +20,6 @@ com/intellij/openapi/fileEditor/impl/FileEditorOpenOptions
 com/intellij/openapi/fileEditor/impl/text/TextEditorComponent
 com/intellij/openapi/keymap/impl/ActionProcessor
 com/intellij/openapi/options/newEditor/AbstractEditor
-com/intellij/openapi/ui/impl/ShadowPainter
 com/intellij/openapi/updateSettings/impl/ExternalPluginResults
 com/intellij/openapi/updateSettings/impl/InternalPluginResults
 com/intellij/openapi/updateSettings/impl/PlatformUpdates

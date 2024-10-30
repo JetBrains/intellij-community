@@ -10622,11 +10622,7 @@ c:com.intellij.openapi.ui.impl.DialogWrapperPeerImpl
 - toFront():V
 - validate():V
 f:com.intellij.openapi.ui.impl.ShadowBorderPainter
-- sf:ourShadowPainter:com.intellij.openapi.ui.impl.ShadowPainter
-- s:createPopupShadow(javax.swing.JComponent,I,I):java.awt.image.BufferedImage
 - s:createShadow(java.awt.Image,I,I,Z,I):com.intellij.openapi.ui.impl.ShadowBorderPainter$Shadow
-- s:createShadow(javax.swing.JComponent,I,I):java.awt.image.BufferedImage
-- s:createShadow(javax.swing.JComponent,I,I,Z):java.awt.image.BufferedImage
 f:com.intellij.openapi.ui.impl.ShadowBorderPainter$Shadow
 - <init>(java.awt.Image,I,I):V
 - getImage():java.awt.Image

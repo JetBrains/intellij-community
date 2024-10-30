@@ -12,7 +12,7 @@ import javax.swing.border.Border
 @ApiStatus.Internal
 class ShadowJava2DBorder(private val arc: Int, private val background: Color, private val borderColor: Color?) : Border {
 
-  private val shadowJava2DPainter = ShadowJava2DPainter("Notification", arc)
+  private val shadowJava2DPainter = ShadowJava2DPainter(ShadowJava2DPainter.Type.NOTIFICATION, arc)
 
   override fun paintBorder(c: Component?, g: Graphics?, x: Int, y: Int, width: Int, height: Int) {
     val g2 = g!!.create() as Graphics2D
