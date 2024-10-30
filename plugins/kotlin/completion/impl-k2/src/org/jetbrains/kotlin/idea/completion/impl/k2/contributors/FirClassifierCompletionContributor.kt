@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbo
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -17,8 +18,9 @@ import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     protected open fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = true
@@ -100,8 +102,9 @@ internal open class FirClassifierCompletionContributor(
 
 internal class FirAnnotationCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirClassifierCompletionContributor(visibilityChecker, priority) {
+) : FirClassifierCompletionContributor(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun filterClassifiers(classifierSymbol: KaClassifierSymbol): Boolean = when (classifierSymbol) {
@@ -125,8 +128,9 @@ internal class FirAnnotationCompletionContributor(
 
 internal class FirClassifierReferenceCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int
-) : FirClassifierCompletionContributor(visibilityChecker, priority) {
+) : FirClassifierCompletionContributor(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun getImportingStrategy(classifierSymbol: KaClassifierSymbol): ImportStrategy = when (classifierSymbol) {

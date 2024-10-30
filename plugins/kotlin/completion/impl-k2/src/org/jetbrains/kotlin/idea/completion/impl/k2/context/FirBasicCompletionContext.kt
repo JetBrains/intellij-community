@@ -2,18 +2,14 @@
 package org.jetbrains.kotlin.idea.completion.impl.k2.context
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.openapi.project.Project
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaModule
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
-import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.psi.*
 
 internal class FirBasicCompletionContext(
     val parameters: CompletionParameters,
-    val sink: LookupElementSink,
     val originalKtFile: KtFile,
     val fakeKtFile: KtFile,
 ) {
@@ -26,16 +22,13 @@ internal class FirBasicCompletionContext(
     companion object {
 
         fun createFromParameters(
-            firParameters: KotlinFirCompletionParameters,
-            result: CompletionResultSet,
+            parameters: CompletionParameters,
         ): FirBasicCompletionContext? {
-            val parameters = firParameters.ijParameters
             val originalKtFile = parameters.originalFile as? KtFile ?: return null
             val fakeKtFile = parameters.position.containingFile as? KtFile ?: return null
 
             return FirBasicCompletionContext(
                 parameters = parameters,
-                sink = LookupElementSink(result, firParameters),
                 originalKtFile = originalKtFile,
                 fakeKtFile = fakeKtFile,
             )

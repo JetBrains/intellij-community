@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.idea.codeinsight.utils.canBeUsedAsExtension
 import org.jetbrains.kotlin.idea.completion.checkers.ApplicableExtension
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.*
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -49,9 +50,10 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 
 internal open class FirCallableCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
     private val withTrailingLambda: Boolean = false, // TODO find a better solution
-) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinNameReferencePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     protected open fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy =
@@ -636,8 +638,10 @@ internal open class FirCallableCompletionContributor(
 
 internal class FirCallableReferenceCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
-    priority: Int
-) : FirCallableCompletionContributor(visibilityChecker, priority) {
+    sink: LookupElementSink,
+    priority: Int,
+) : FirCallableCompletionContributor(visibilityChecker, sink, priority) {
+
     context(KaSession)
     override fun getImportStrategy(signature: KaCallableSignature<*>, isImportDefinitelyNotRequired: Boolean): ImportStrategy {
         if (isImportDefinitelyNotRequired) return ImportStrategy.DoNothing
@@ -718,8 +722,9 @@ internal class FirCallableReferenceCompletionContributor(
 
 internal class FirInfixCallableCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCallableCompletionContributor(visibilityChecker, priority) {
+) : FirCallableCompletionContributor(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =
@@ -755,8 +760,9 @@ internal class FirInfixCallableCompletionContributor(
 
 internal class FirKDocCallableCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCallableCompletionContributor(visibilityChecker, priority) {
+) : FirCallableCompletionContributor(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy =

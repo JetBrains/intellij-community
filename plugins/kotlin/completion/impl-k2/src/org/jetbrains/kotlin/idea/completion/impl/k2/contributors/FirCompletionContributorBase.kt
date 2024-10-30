@@ -43,6 +43,7 @@ import org.jetbrains.kotlin.types.Variance
 
 internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContext>(
     protected val visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int,
 ) : FirCompletionContributor<C> {
 
@@ -51,7 +52,11 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     private inline val basicContext: FirBasicCompletionContext get() = visibilityChecker.basicContext
     protected val parameters: CompletionParameters get() = basicContext.parameters
-    protected val sink: LookupElementSink = basicContext.sink.withPriority(priority)
+
+    protected val sink: LookupElementSink = sink
+        .withPriority(priority)
+        .withContributorClass(this@FirCompletionContributorBase.javaClass)
+
     protected val originalKtFile: KtFile get() = basicContext.originalKtFile
     protected val project: Project get() = basicContext.project
 

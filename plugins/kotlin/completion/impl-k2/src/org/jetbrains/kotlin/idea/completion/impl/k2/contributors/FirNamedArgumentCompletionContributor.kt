@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.base.analysis.api.utils.CallParameterInfoProvid
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectCallCandidates
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.findValueArgument
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
@@ -28,8 +29,9 @@ import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class FirNamedArgumentCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinExpressionNameReferencePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun complete(

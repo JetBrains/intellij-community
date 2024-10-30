@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.referenceScope
@@ -29,8 +30,9 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
  */
 internal class FirDeclarationFromUnresolvedNameContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinRawPositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun complete(

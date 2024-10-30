@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
@@ -15,8 +16,9 @@ import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePosit
 
 internal class FirImportDirectivePackageMembersCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinImportDirectivePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

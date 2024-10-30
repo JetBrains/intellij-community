@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.typeParameters
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinIconProvider.getIconFor
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.insertStringAndInvokeCompletion
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeConstraintNameInWhereClausePositionContext
@@ -19,8 +20,9 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FirTypeParameterConstraintNameInWhereClauseCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinTypeConstraintNameInWhereClausePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun complete(

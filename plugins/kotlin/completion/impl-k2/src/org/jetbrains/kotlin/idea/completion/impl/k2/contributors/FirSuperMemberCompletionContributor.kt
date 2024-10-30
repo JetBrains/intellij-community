@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.collectNonExtensionsForType
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
@@ -32,8 +33,9 @@ import org.jetbrains.kotlin.psi.KtSuperExpression
 
 internal class FirSuperMemberCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinSuperReceiverNameReferencePositionContext>(visibilityChecker, sink, priority) {
 
     private data class CallableInfo(
         private val _type: KaType,

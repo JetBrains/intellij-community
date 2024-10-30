@@ -13,9 +13,10 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionCo
 import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
-import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
@@ -76,21 +77,4 @@ internal class CompletionVisibilityChecker(
             positionContext.position
         )
     }
-
-    // todo find a better place if possible or just encapsulate
-    //  moved from the removed FirCompletionSessionParameters
-    //  <begin>
-    val excludeClassifiersAndPackagesForPossibleExtensionCallables: Boolean
-        get() {
-            val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)
-                ?.typeReference
-                ?.parent
-                ?: return false
-
-            return basicContext.parameters.invocationCount == 0
-                    && (declaration is KtNamedFunction || declaration is KtProperty)
-                    && positionContext.explicitReceiver == null
-                    && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true
-        }
-    // todo <end>
 }

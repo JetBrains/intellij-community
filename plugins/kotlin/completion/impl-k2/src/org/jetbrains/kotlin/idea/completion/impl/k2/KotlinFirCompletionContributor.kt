@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.completion.*
+import com.intellij.codeInsight.completion.addingPolicy.PassDirectlyPolicy
 import com.intellij.codeInsight.completion.addingPolicy.PolicyController
 import com.intellij.patterns.PlatformPatterns.psiElement
 import com.intellij.patterns.PsiJavaPatterns
@@ -12,6 +13,7 @@ import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.idea.completion.api.CompletionDummyIdentifierProviderService
 import org.jetbrains.kotlin.idea.completion.impl.k2.Completions
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
@@ -74,6 +76,8 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         @Suppress("NAME_SHADOWING") val parameters = KotlinFirCompletionParametersProvider.provide(parameters)
 
         if (shouldSuppressCompletion(parameters.ijParameters, result.prefixMatcher)) return
+        val basicContext = FirBasicCompletionContext.createFromParameters(parameters.ijParameters) ?: return
+
         val positionContext = KotlinPositionContextDetector.detect(parameters.ijParameters.position)
 
         val result = result.withRelevanceSorter(
@@ -82,11 +86,6 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
         ).withPrefixMatcher(
             parameters = parameters.ijParameters,
         )
-
-        val policyController = PolicyController(result)
-        val resultSet = PolicyObeyingResultSet(result, policyController)
-
-        val basicContext = FirBasicCompletionContext.createFromParameters(parameters, resultSet) ?: return
 
         val completionFile = basicContext.fakeKtFile
         val originalFile = basicContext.originalKtFile
@@ -109,11 +108,16 @@ private object KotlinFirCompletionProvider : CompletionProvider<CompletionParame
 
             completionFile.recordOriginalKtFile(originalFile)
 
-            Completions.complete(
-                basicContext = basicContext,
-                positionContext = positionContext,
-                policyController = policyController,
-            )
+            val policyController = PolicyController(result)
+            policyController.invokeWithPolicy(PassDirectlyPolicy()) {
+                val resultSet = PolicyObeyingResultSet(result, policyController)
+
+                Completions.complete(
+                    basicContext = basicContext,
+                    positionContext = positionContext,
+                    sink = LookupElementSink(resultSet, parameters),
+                )
+            }
         }
     }
 

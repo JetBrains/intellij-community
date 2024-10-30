@@ -7,6 +7,7 @@ import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.name.ClassId
@@ -15,8 +16,9 @@ import org.jetbrains.kotlin.name.Name
 
 internal class FirSuperEntryContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinSuperTypeCallNameReferencePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun complete(

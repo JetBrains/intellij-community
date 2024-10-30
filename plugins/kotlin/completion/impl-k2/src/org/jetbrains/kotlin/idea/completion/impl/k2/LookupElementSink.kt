@@ -8,8 +8,10 @@ import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.patterns.ElementPattern
 import com.intellij.psi.util.elementType
+import org.jetbrains.kotlin.idea.base.codeInsight.contributorClass
 import org.jetbrains.kotlin.idea.base.psi.dropCurlyBracketsIfPossible
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
+import org.jetbrains.kotlin.idea.completion.impl.k2.contributors.FirCompletionContributor
 import org.jetbrains.kotlin.idea.completion.implCommon.handlers.CompletionCharInsertHandler
 import org.jetbrains.kotlin.idea.completion.implCommon.stringTemplates.InsertStringTemplateBracesInsertHandler
 import org.jetbrains.kotlin.idea.completion.isAtFunctionLiteralStart
@@ -25,13 +27,17 @@ internal class LookupElementSink(
     private val resultSet: CompletionResultSet,
     private val parameters: KotlinFirCompletionParameters,
     private val groupPriority: Int = 0,
+    private val contributorClass: Class<FirCompletionContributor<*>>? = null,
 ) {
 
     val prefixMatcher: PrefixMatcher
         get() = resultSet.prefixMatcher
 
-    fun withPriority(priority: Int): LookupElementSink =
-        LookupElementSink(resultSet, parameters, priority)
+    fun withPriority(groupPriority: Int): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
+
+    fun withContributorClass(contributorClass: Class<FirCompletionContributor<*>>): LookupElementSink =
+        LookupElementSink(resultSet, parameters, groupPriority, contributorClass)
 
     fun addElement(element: LookupElement) {
         resultSet.addElement(decorateLookupElement(element))
@@ -49,6 +55,7 @@ internal class LookupElementSink(
         element: LookupElement,
     ): LookupElementDecorator<LookupElement> {
         element.groupPriority = groupPriority
+        element.contributorClass = contributorClass
 
         val actualParameters = parameters.ijParameters
         if (isAtFunctionLiteralStart(actualParameters.position)) {

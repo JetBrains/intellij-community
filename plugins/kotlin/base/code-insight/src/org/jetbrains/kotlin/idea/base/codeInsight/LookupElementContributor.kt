@@ -5,8 +5,4 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.util.Key
 import org.jetbrains.kotlin.psi.UserDataProperty
 
-var LookupElement.contributorClass: Class<*>? by UserDataProperty(Key.create<Class<*>>("LookupElement.LOOKUP_ELEMENT_CONTRIBUTOR"))
-
-fun LookupElement.withContributorClass(contributorClass: Class<*>): LookupElement = apply {
-    this.contributorClass = contributorClass
-}
+var LookupElement.contributorClass: Class<*>? by UserDataProperty(Key.create("LookupElement.LOOKUP_ELEMENT_CONTRIBUTOR"))

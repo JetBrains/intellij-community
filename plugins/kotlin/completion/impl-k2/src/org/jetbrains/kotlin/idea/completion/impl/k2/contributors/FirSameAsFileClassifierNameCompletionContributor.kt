@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
+import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinClassifierNamePositionContext
 import org.jetbrains.kotlin.name.Name
@@ -12,8 +13,9 @@ import org.jetbrains.kotlin.renderer.render
 
 internal class FirSameAsFileClassifierNameCompletionContributor(
     visibilityChecker: CompletionVisibilityChecker,
+    sink: LookupElementSink,
     priority: Int = 0,
-) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(visibilityChecker, priority) {
+) : FirCompletionContributorBase<KotlinClassifierNamePositionContext>(visibilityChecker, sink, priority) {
 
     context(KaSession)
     override fun complete(
