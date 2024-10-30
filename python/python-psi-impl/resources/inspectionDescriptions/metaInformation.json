@@ -279,6 +279,30 @@
     {
       "id": "PyListCreationInspection",
       "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PyDunderSlotsInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyByteLiteralInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyTupleAssignmentBalanceInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyReturnFromInitInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyPandasSeriesToListInspection",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "PyNestedDecoratorsInspection",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

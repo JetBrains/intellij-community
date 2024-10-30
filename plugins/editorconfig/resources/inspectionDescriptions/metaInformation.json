@@ -83,6 +83,38 @@
     {
       "id": "EditorConfigVerifyByCore",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "EditorConfigOptionRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigWildcardRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigValueUniqueness",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigUnexpectedComma",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigShadowingOption",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigCharClassLetterRedundancy",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "EditorConfigMissingRequiredDeclaration",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "EditorConfigPairAcceptability",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

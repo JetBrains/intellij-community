@@ -39,6 +39,22 @@
     {
       "id": "RestRoleInspection",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "PyTestParametrizedInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyTestUnpassedFixtureInspection",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "PyUnresolvedReferencesInspection",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "CythonUsageBeforeDeclarationInspection",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

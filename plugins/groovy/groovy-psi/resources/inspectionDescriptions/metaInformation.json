@@ -475,6 +475,66 @@
     {
       "id": "GroovyReturnFromClosureCanBeImplicit",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyInArgumentCheck",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyIfStatementWithIdenticalBranches",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "SingletonConstructor",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyPublicFieldAccessedInSynchronizedContext",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyUncheckedAssignmentOfMemberOfRawType",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyAccessToStaticFieldLockedOnInstance",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrUnresolvedAccess",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "GroovyOverlyComplexArithmeticExpression",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "GroovyUnconditionalWait",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GrDeprecatedAPIUsage",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyThreadStopSuspendResume",
+      "codeQualityCategory": "Security"
+    },
+    {
+      "id": "GrMethodMayBeStatic",
+      "codeQualityCategory": "Performance"
+    },
+    {
+      "id": "GroovyBreak",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConstantConditional",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "GroovyConstantIfStatement",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

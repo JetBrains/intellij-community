@@ -3,6 +3,10 @@
     {
       "id": "UnresolvedReference",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "UnusedDefine",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

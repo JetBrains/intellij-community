@@ -39,6 +39,10 @@
     {
       "id": "HtmlRequiredLangAttribute",
       "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "HtmlNonExistentInternetResource",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }

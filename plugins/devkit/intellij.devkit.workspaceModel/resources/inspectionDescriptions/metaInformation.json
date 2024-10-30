@@ -7,6 +7,10 @@
     {
       "id": "WorkspaceImplObsolete",
       "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "WorkspaceImplAbsent",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

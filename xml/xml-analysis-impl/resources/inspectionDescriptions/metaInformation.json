@@ -75,6 +75,26 @@
     {
       "id": "HtmlUnknownAnchorTarget",
       "codeQualityCategory": "Security"
+    },
+    {
+      "id": "XmlDuplicatedId",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "XmlUnboundNsPrefix",
+      "codeQualityCategory": "Sanity"
+    },
+    {
+      "id": "XmlDefaultAttributeValue",
+      "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "RequiredAttributes",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "CheckValidXmlInScriptTagBody",
+      "codeQualityCategory": "Reliability"
     }
   ]
 }

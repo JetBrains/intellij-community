@@ -99,6 +99,18 @@
     {
       "id": "UsagesOfObsoleteApi",
       "codeQualityCategory": "Code Style"
+    },
+    {
+      "id": "OverrideOnly",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "UnstableTypeUsedInSignature",
+      "codeQualityCategory": "Reliability"
+    },
+    {
+      "id": "TestOnlyProblems",
+      "codeQualityCategory": "Sanity"
     }
   ]
 }
