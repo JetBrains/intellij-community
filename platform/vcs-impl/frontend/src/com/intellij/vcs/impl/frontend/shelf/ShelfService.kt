@@ -7,16 +7,19 @@ import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.vcs.impl.frontend.changes.ChangeList
+import com.intellij.vcs.impl.shared.rhizome.DiffSplitterEntity
 import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
+import com.jetbrains.rhizomedb.entity
 import fleet.kernel.change
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
 import fleet.kernel.rete.filter
+import fleet.kernel.shared
 import fleet.kernel.sharedRef
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
@@ -119,6 +122,26 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
     }
   }
 
+  fun createPreviewDiffSplitter() {
+    cs.launch(Dispatchers.IO) {
+      withKernel {
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).createPreviewDiffSplitter(project.asEntity().sharedRef())
+      }
+    }
+  }
+
+  fun deleteSplitterPreview() {
+    cs.launch {
+      withKernel {
+        change {
+          shared {
+            entity(DiffSplitterEntity.Project, project.asEntity())?.delete()
+          }
+        }
+      }
+    }
+  }
+
   companion object {
     fun getInstance(project: Project): ShelfService = project.getService(ShelfService::class.java)
   }
@@ -129,6 +152,14 @@ fun subscribeToShelfTreeSelectionChanged(project: Project, cs: CoroutineScope, l
   cs.launch {
     withKernel {
       SelectShelveChangeEntity.each().filter { entity -> entity.project == project.asEntity() }.collectLatest { listener(it) }
+    }
+  }
+}
+
+fun subscribeToDiffPreviewChanged(project: Project, cs: CoroutineScope, listener: (DiffSplitterEntity) -> Unit) {
+  cs.launch {
+    withKernel {
+      DiffSplitterEntity.each().filter { entity -> entity.project == project.asEntity() }.collectLatest { listener(it) }
     }
   }
 }

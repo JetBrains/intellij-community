@@ -3,13 +3,14 @@ package com.intellij.vcs.impl.shared.rhizome
 
 import com.intellij.platform.kernel.EntityTypeProvider
 import com.intellij.platform.project.ProjectEntity
+import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.builtins.serializer
 
 class ShelfEntityTypeProvider : EntityTypeProvider {
-  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity, SelectShelveChangeEntity, GroupingItemsEntity, GroupingItemEntity, ModuleNodeEntity, FilePathNodeEntity, RepositoryNodeEntity)
+  override fun entityTypes(): List<EntityType<*>> = listOf(ShelvesTreeRootEntity, ShelvedChangeListEntity, ShelvedChangeEntity, TagNodeEntity, SelectShelveChangeEntity, GroupingItemsEntity, GroupingItemEntity, ModuleNodeEntity, FilePathNodeEntity, RepositoryNodeEntity, DiffSplitterEntity)
 }
 
 interface NodeEntity : Entity {
@@ -148,5 +149,15 @@ data class GroupingItemEntity(override val eid: EID) : Entity {
 
   companion object : DurableEntityType<GroupingItemEntity>(GroupingItemEntity::class.java.name, "com.intellij", ::GroupingItemEntity) {
     val Name = requiredValue("name", String.serializer(), Indexing.UNIQUE)
+  }
+}
+
+data class DiffSplitterEntity(override val eid: EID) : Entity {
+  val splitter: PreviewDiffSplitterComponent by Splitter
+  val project: ProjectEntity by Project
+
+  companion object : DurableEntityType<DiffSplitterEntity>(DiffSplitterEntity::class.java.name, "com.intellij", ::DiffSplitterEntity) {
+    val Splitter = requiredTransient<PreviewDiffSplitterComponent>("splitter")
+    val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
   }
 }

@@ -143,6 +143,10 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
+  suspend fun createPreviewDiffSplitter() {
+    shelfTreeHolder.createPreviewDiffSplitter()
+  }
+
   companion object {
     fun getInstance(project: Project): ShelfRemoteActionExecutor = project.service<ShelfRemoteActionExecutor>()
   }

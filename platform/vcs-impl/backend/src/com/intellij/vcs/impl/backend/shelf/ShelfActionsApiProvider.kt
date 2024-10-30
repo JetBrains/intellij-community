@@ -47,6 +47,10 @@ class BackendShelfActionsApi : RemoteShelfActionsApi {
     getShelfRemoteActionExecutor(projectRef).restoreShelves(changeLists)
   }
 
+  override suspend fun createPreviewDiffSplitter(projectRef: SharedRef<ProjectEntity>) {
+    getShelfRemoteActionExecutor(projectRef).createPreviewDiffSplitter()
+  }
+
   private suspend fun getShelfRemoteActionExecutor(projectRef: SharedRef<ProjectEntity>): ShelfRemoteActionExecutor {
     val project = projectRef.asProject()
 

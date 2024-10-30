@@ -16,4 +16,5 @@ interface RemoteShelfActionsApi : RemoteApi<Unit> {
   suspend fun importShelvesFromPatches(projectRef: SharedRef<ProjectEntity>)
   suspend fun navigateToSource(projectRef: SharedRef<ProjectEntity>, navigatables: List<ChangeListDto>, focusEditor: Boolean)
   suspend fun restoreShelves(projectRef: SharedRef<ProjectEntity>, changeLists: List<SharedRef<ShelvedChangeListEntity>>)
+  suspend fun createPreviewDiffSplitter(projectRef: SharedRef<ProjectEntity>)
 }

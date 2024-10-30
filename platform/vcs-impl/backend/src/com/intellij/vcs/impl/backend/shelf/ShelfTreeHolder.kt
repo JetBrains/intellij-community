@@ -6,6 +6,7 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManagerListener
@@ -18,14 +19,14 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update.Companion.create
 import com.intellij.vcs.impl.backend.shelf.diff.BackendShelveEditorDiffPreview
+import com.intellij.vcs.impl.backend.shelf.diff.ShelvedPreviewProcessor
 import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
+import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import com.intellij.vcs.impl.shared.rhizome.*
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.jetbrains.rhizomedb.entity
-import fleet.kernel.SharedRef
-import fleet.kernel.change
-import fleet.kernel.shared
-import fleet.kernel.sharedRef
+import fleet.kernel.*
+import fleet.kernel.rete.Rete
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -49,6 +50,20 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   private fun updateTreeModel(afterUpdate: () -> Unit = {}) {
     tree.invalidateDataAndRefresh {
       updateDbModel(afterUpdate)
+    }
+  }
+
+  fun createPreviewDiffSplitter() {
+    cs.launch(Dispatchers.EDT) {
+      val processor = ShelvedPreviewProcessor(project, cs, tree, false)
+      val previewDiffSplitterComponent = PreviewDiffSplitterComponent(processor, SHELVE_PREVIEW_SPLITTER_PROPORTION)
+      withKernel {
+        change {
+          DiffSplitterEntity.upsert(DiffSplitterEntity.Project, project.asEntity()) {
+            it[DiffSplitterEntity.Splitter] = previewDiffSplitterComponent
+          }.onDispose(coroutineContext[Rete]!!) { Disposer.dispose(processor) }
+        }
+      }
     }
   }
 
@@ -190,6 +205,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
   }
 
   companion object {
+    private const val SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"
     val ENTITY_ID_KEY = Key<SharedRef<NodeEntity>>("persistentId")
     const val REPOSITORY_GROUPING_KEY = "repository"
 
