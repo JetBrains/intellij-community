@@ -7,5 +7,5 @@ test_lib<caret>rary-version = "1.0.5"
 val myVersion = libs.versions.test.library.version
 
 // FILE: settings.gradle.kts
-# this is the settings file for the root build of a composite build
+// this is the settings file for the root build of a composite build
 includeBuild("includedBuild1")
