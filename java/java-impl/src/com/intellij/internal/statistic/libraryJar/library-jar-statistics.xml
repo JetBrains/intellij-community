@@ -113,6 +113,7 @@
   <technology name="jbpm" class="org.kie.api.runtime.manager.RuntimeEngine"/>
   <technology name="jdbi" class="org.jdbi.v3.core.Jdbi"/>
   <technology name="jdi-light" class="com.epam.jdi.light.elements.pageobjects.annotations.locators.UI"/>
+  <technology name="jedis" class="redis.clients.jedis.Jedis"/>
   <technology name="jetbrains-annotations" class="org.jetbrains.annotations.Contract"/>
   <technology name="jetbrains-compose" class="androidx.compose.ui.ComposeScene"/>
   <technology name="jhipster" class="io.github.jhipster.config.JHipsterProperties"/>
