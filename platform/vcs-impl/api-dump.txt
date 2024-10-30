@@ -2146,6 +2146,9 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager$State
 - myRemoveFilesFromShelf:Z
 - myShowRecycled:Z
 - <init>():V
+f:com.intellij.openapi.vcs.changes.shelf.ShelveChangesNameSuggester
+- sf:INSTANCE:com.intellij.openapi.vcs.changes.shelf.ShelveChangesNameSuggester
+- f:suggestBetterName(com.intellij.openapi.project.Project,com.intellij.vcs.ShelveNamePatch,java.util.function.Consumer):V
 f:com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch
 - com.intellij.openapi.diff.impl.patch.FilePatch
 - getAfterFileName():java.lang.String
