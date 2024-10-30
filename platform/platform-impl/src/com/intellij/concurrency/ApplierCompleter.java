@@ -8,6 +8,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingJob;
@@ -174,6 +175,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
   void execAll() {
     try {
       processArray();
+    }
+    catch (IndexNotReadyException ignore) {
     }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);

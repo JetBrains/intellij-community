@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbService.Companion.getInstance
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.PossiblyDumbAware
 import com.intellij.psi.PsiFile
 import com.intellij.psi.xml.XmlFile
@@ -31,11 +32,15 @@ abstract class XmlSchemaProvider : PossiblyDumbAware {
           continue
         }
 
-        if (file is XmlFile && !provider.isAvailable(file)) {
-          continue
+        try {
+          if (file is XmlFile && !provider.isAvailable(file)) {
+            continue
+          }
+          provider.getSchema(namespace, module, file)?.let {
+            return it
+          }
         }
-        provider.getSchema(namespace, module, file)?.let {
-          return it
+        catch (_: IndexNotReadyException) {
         }
       }
       return null
