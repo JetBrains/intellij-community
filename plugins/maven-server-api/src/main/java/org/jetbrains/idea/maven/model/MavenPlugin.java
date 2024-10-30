@@ -116,7 +116,8 @@ public final class MavenPlugin implements Serializable {
   }
 
   private static boolean isCompileExecution(Execution each) {
-    return "default-compile".equals(each.getExecutionId()) || (each.getGoals() != null && each.getGoals().contains("compile"));
+    return !Objects.equals(each.getPhase(), "none") && ("default-compile".equals(each.getExecutionId()) ||
+           (each.getGoals() != null && each.getGoals().contains("compile")));
   }
 
   public String getDisplayString() {

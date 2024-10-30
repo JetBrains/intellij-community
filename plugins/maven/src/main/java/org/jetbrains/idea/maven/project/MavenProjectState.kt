@@ -11,7 +11,8 @@ import java.util.*
 @ApiStatus.Experimental
 data class MavenPluginInfo(val plugin: MavenPlugin, val artifact: MavenArtifact?) : Serializable
 
-internal data class MavenProjectState(
+@ApiStatus.Internal
+data class MavenProjectState(
   val lastReadStamp: Long = 0,
   val mavenId: MavenId? = null,
   val parentId: MavenId? = null,

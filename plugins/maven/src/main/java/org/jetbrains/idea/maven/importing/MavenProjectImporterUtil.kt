@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import kotlinx.coroutines.launch
+import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.LegacyExtensionImporter.CountAndTime
 import org.jetbrains.idea.maven.model.MavenArtifact
@@ -282,5 +283,21 @@ object MavenProjectImporterUtil {
         }
       }
     }
+  }
+
+  private const val COMPILER_PLUGIN_GROUP_ID = "org.apache.maven.plugins"
+
+  private const val COMPILER_PLUGIN_ARTIFACT_ID = "maven-compiler-plugin"
+
+  fun MavenProject.getAllCompilerConfigs(): List<Element> {
+    val result = ArrayList<Element>(1)
+    this.getPluginConfiguration(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)?.let(result::add)
+
+    this.findPlugin(COMPILER_PLUGIN_GROUP_ID, COMPILER_PLUGIN_ARTIFACT_ID)
+      ?.executions?.filter { it.goals.contains("compile") }
+      ?.filter { it.phase != "none" }
+      ?.mapNotNull { it.configurationElement }
+      ?.forEach(result::add)
+    return result
   }
 }

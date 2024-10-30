@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.project.importing
 import com.dynatrace.hash4j.hashing.HashSink
 import com.dynatrace.hash4j.hashing.Hashing
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.idea.maven.project.MavenProjectState
 import org.jetbrains.idea.maven.project.MavenProjectsTree
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
@@ -18,10 +19,10 @@ class MavenProjectTreeVersionNumberTest : UsefulTestCase() {
   fun `test do not forget updating STORAGE_VERSION_NUMBER when structure changed`() {
     val hash = Hashing.komihash5_0().hashStream();
     val recursionKeeper = HashSet<String>()
-    hashKType(MavenProjectsTree::class.createType(), recursionKeeper, hash)
+    hashKType(MavenProjectState::class.createType(), recursionKeeper, hash)
 
     hash.putString(MavenProjectsTree.STORAGE_VERSION)
-    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", -4886671964637287348, hash.asLong)
+    assertEquals("UPDATE STORAGE VERSION ALONG WITH THIS HASH!!!", 398250652410341230, hash.asLong)
   }
 
   private fun hashKType(type: KType, recursionKeeper: MutableSet<String>, hash: HashSink) {

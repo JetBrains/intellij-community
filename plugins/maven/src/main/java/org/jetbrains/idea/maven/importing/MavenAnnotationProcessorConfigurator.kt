@@ -21,11 +21,13 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.getAllCompilerConfigs
 import org.jetbrains.idea.maven.importing.MavenWorkspaceConfigurator.*
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectsTree
+import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl
 import org.jetbrains.jps.util.JpsPathUtil
@@ -80,10 +82,14 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
     for (mavenProject in projects) {
       if (!shouldEnableAnnotationProcessors(mavenProject)) continue
 
-      val config = getConfig(mavenProject, "annotationProcessorPaths")
-      if (config == null) continue
+      val infos = ArrayList<MavenArtifactInfo>()
 
-      for (info in getProcessorArtifactInfos(config, mavenProject)) {
+      mavenProject.getAllCompilerConfigs()
+        .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
+        .forEach { infos.addAll(getProcessorArtifactInfos(it, mavenProject)) }
+
+
+      for (info in infos) {
         val mavenId = MavenId(info.groupId, info.artifactId, info.version)
 
         val processorModuleNames = moduleNameByProjectId.apply(mavenId)
@@ -103,6 +109,7 @@ class MavenAnnotationProcessorConfigurator : MavenApplicableConfigurator(PLUGIN_
         nameToModuleCache[module.name] = module
       }
     }
+
     val moduleByName = Function { moduleName: String -> nameToModuleCache[moduleName] }
 
     val perProjectProcessorModuleNames: Map<MavenProject, MutableList<String>> = ANNOTATION_PROCESSOR_MODULE_NAMES[context, java.util.Map.of()]

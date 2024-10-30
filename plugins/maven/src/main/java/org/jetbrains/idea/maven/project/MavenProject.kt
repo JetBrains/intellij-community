@@ -319,6 +319,7 @@ class MavenProject(val file: VirtualFile) {
       return ProcMode.BOTH
     }
 
+
   val annotationProcessorOptions: Map<String, String>
     get() {
       val compilerConfig: Element? = compilerConfig
@@ -335,49 +336,47 @@ class MavenProject(val file: VirtualFile) {
       return emptyMap()
     }
 
-  val declaredAnnotationProcessors: List<String>?
+  val declaredAnnotationProcessors: List<String>
     get() {
-      val compilerConfig: Element? = compilerConfig
-      if (compilerConfig == null) {
-        return null
-      }
+      return compilerConfigs.flatMap { getDeclaredAnnotationProcessors(it) }
+    }
 
-      val result: MutableList<String> = ArrayList()
-      if (procMode != ProcMode.NONE) {
-        val processors: Element? = compilerConfig.getChild("annotationProcessors")
-        if (processors != null) {
-          for (element: Element in processors.getChildren("annotationProcessor")) {
-            val processorClassName: String = element.textTrim
-            if (!processorClassName.isEmpty()) {
-              result.add(processorClassName)
-            }
+  private fun getDeclaredAnnotationProcessors(compilerConfig: Element): MutableList<String> {
+    val result: MutableList<String> = ArrayList()
+    if (procMode != ProcMode.NONE) {
+      val processors: Element? = compilerConfig.getChild("annotationProcessors")
+      if (processors != null) {
+        for (element: Element in processors.getChildren("annotationProcessor")) {
+          val processorClassName: String = element.textTrim
+          if (!processorClassName.isEmpty()) {
+            result.add(processorClassName)
           }
         }
       }
-      else {
-        val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
-        if (bscMavenPlugin != null) {
-          var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
-          if (bscCfg == null) {
-            bscCfg = bscMavenPlugin.configurationElement
-          }
+    }
+    else {
+      val bscMavenPlugin: MavenPlugin? = findPlugin("org.bsc.maven", "maven-processor-plugin")
+      if (bscMavenPlugin != null) {
+        var bscCfg: Element? = bscMavenPlugin.getGoalConfiguration("process")
+        if (bscCfg == null) {
+          bscCfg = bscMavenPlugin.configurationElement
+        }
 
-          if (bscCfg != null) {
-            val bscProcessors: Element? = bscCfg.getChild("processors")
-            if (bscProcessors != null) {
-              for (element: Element in bscProcessors.getChildren("processor")) {
-                val processorClassName: String = element.textTrim
-                if (!processorClassName.isEmpty()) {
-                  result.add(processorClassName)
-                }
+        if (bscCfg != null) {
+          val bscProcessors: Element? = bscCfg.getChild("processors")
+          if (bscProcessors != null) {
+            for (element: Element in bscProcessors.getChildren("processor")) {
+              val processorClassName: String = element.textTrim
+              if (!processorClassName.isEmpty()) {
+                result.add(processorClassName)
               }
             }
           }
         }
       }
-
-      return result
     }
+    return result
+  }
 
   val outputDirectory: @NlsSafe String
     get() = myState.outputDirectory!!

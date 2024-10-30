@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ExceptionUtil
 import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorConfiguratorUtil.getProcessorArtifactInfos
+import org.jetbrains.idea.maven.importing.MavenProjectImporterUtil.getAllCompilerConfigs
 import org.jetbrains.idea.maven.model.MavenArtifactInfo
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
@@ -16,14 +17,10 @@ import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 
 internal class MavenAnnotationProcessorContributor : MavenProjectResolutionContributor {
   override suspend fun onMavenProjectResolved(project: Project, mavenProject: MavenProject, embedder: MavenEmbedderWrapper) {
-    val pluginConfiguration = mavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin")
-    val config = MavenJDOMUtil.findChildByPath(pluginConfiguration, "annotationProcessorPaths")
-    if (config == null) return
+    val artifactsInfo = mavenProject.getAllCompilerConfigs()
+      .mapNotNull { MavenJDOMUtil.findChildByPath(it, "annotationProcessorPaths") }
+      .flatMap { getProcessorArtifactInfos(it, mavenProject) }
 
-    val artifactsInfo = getProcessorArtifactInfos(config, mavenProject)
-    if (artifactsInfo.isEmpty()) {
-      return
-    }
 
     val externalArtifacts: MutableList<MavenArtifactInfo> = ArrayList()
     val mavenProjectsManager = MavenProjectsManager.getInstance(project)
