@@ -240,7 +240,7 @@ public final class FileStatusMap implements Disposable {
           status.markWholeFileDirty(myProject);
           status.defensivelyMarked = false;
         }
-        assertRegisteredPass(passId, status);
+        assertPassIsRegistered(passId, status);
         marker = status.dirtyScopes.get(passId);
       }
     }
@@ -253,8 +253,10 @@ public final class FileStatusMap implements Disposable {
     return marker.isValid() ? marker.getTextRange() : new TextRange(0, document.getTextLength());
   }
 
-  private static void assertRegisteredPass(int passId, @NotNull FileStatus status) {
-    if (!status.dirtyScopes.containsKey(passId)) throw new IllegalStateException("Unknown pass " + passId);
+  private static void assertPassIsRegistered(int passId, @NotNull FileStatus status) {
+    if (!status.dirtyScopes.containsKey(passId)) {
+      throw new IllegalStateException("Unknown pass " + passId);
+    }
   }
 
   void markFileScopeDirtyDefensively(@NotNull Document document, @NotNull @NonNls Object reason) {
