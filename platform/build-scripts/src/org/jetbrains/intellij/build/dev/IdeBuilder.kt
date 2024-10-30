@@ -565,20 +565,21 @@ internal suspend fun createProductProperties(productConfiguration: ProductConfig
   }
 
   return spanBuilder("create product properties").use {
+    val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
+      "org.jetbrains.intellij.build.IjVoidProperties"
+    }
+    else {
+      productConfiguration.className
+    }
     val productPropertiesClass = try {
-      val className = if (System.getProperty("intellij.build.minimal").toBoolean()) {
-        "org.jetbrains.intellij.build.IjVoidProperties"
-      }
-      else {
-        productConfiguration.className
-      }
       classLoader.loadClass(className)
     }
-    catch (_: ClassNotFoundException) {
+    catch (e: ClassNotFoundException) {
       val classPathString = classPathFiles.joinToString(separator = "\n") { file ->
         "$file (" + (if (Files.isDirectory(file)) "dir" else if (Files.exists(file)) "exists" else "doesn't exist") + ")"
       }
-      throw RuntimeException("cannot create product properties (classPath=$classPathString")
+      val projectPropertiesPath = getProductPropertiesPath(request.projectDir)
+      throw RuntimeException("cannot create product properties, className=$className, projectPropertiesPath=$projectPropertiesPath, classPath=$classPathString, ", e)
     }
 
     val lookup = MethodHandles.lookup()

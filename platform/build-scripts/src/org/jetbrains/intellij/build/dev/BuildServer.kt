@@ -94,7 +94,7 @@ private fun createConfiguration(productionClassOutput: Path, homePath: Path): Co
   return Json.decodeFromString(Configuration.serializer(), Files.readString(projectPropertiesPath))
 }
 
-private fun getProductPropertiesPath(homePath: Path): Path {
+internal fun getProductPropertiesPath(homePath: Path): Path {
   // handle a custom product properties path
   val customPath = System.getProperty(CUSTOM_PRODUCT_PROPERTIES_PATH)?.let { homePath.resolve(it) }
   if (customPath != null && Files.exists(customPath)) {
