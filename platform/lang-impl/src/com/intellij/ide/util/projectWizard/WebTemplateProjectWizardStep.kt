@@ -29,14 +29,18 @@ class WebTemplateProjectWizardStep<T>(
 
     //legacy error handling
     builder.row {
-      cell(errorLabel).align(AlignX.FILL).validationOnApply {
-        peer.value.validate()
-      }
-    }
-
-    peer.value.addSettingsListener {
-      val validate = peer.value.validate()
-      errorLabel.text = validate?.message ?: ""
+      cell(errorLabel)
+        .align(AlignX.FILL)
+        .validationRequestor { validate ->
+          peer.value.addSettingsListener {
+            validate()
+          }
+        }
+        .validationInfo {
+          val validation = peer.value.validate()
+          errorLabel.text = validation?.message ?: ""
+          return@validationInfo validation
+        }
     }
   }
 
