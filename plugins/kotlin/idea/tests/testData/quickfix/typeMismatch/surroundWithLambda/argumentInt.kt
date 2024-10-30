@@ -1,4 +1,5 @@
 // "Surround with lambda" "true"
+// PRIORITY: HIGH
 fun int() {
     i(<caret>123)
 }

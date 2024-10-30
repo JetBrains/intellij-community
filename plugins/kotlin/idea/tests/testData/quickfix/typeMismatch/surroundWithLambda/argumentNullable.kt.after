@@ -1,4 +1,5 @@
 // "Surround with lambda" "true"
+// PRIORITY: HIGH
 // ERROR: Type mismatch: inferred type is String? but String was expected
 fun nullableFn() {
     val nullableStr: String? = null
