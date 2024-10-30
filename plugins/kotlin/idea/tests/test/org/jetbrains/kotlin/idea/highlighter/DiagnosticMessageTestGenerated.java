@@ -125,6 +125,11 @@ public class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTes
         runTest("testData/diagnosticMessage/invisibleMember.kt");
     }
 
+    @TestMetadata("k2UnsupportedFeature.kt")
+    public void testK2UnsupportedFeature() throws Exception {
+        runTest("testData/diagnosticMessage/k2UnsupportedFeature.kt");
+    }
+
     @TestMetadata("multipleDefaultsFromSupertypes.kt")
     public void testMultipleDefaultsFromSupertypes() throws Exception {
         runTest("testData/diagnosticMessage/multipleDefaultsFromSupertypes.kt");
