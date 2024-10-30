@@ -5,7 +5,6 @@ import com.intellij.codeWithMe.ClientId
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Side
 import com.intellij.icons.AllIcons
-import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.command.CommandEvent
@@ -21,11 +20,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -40,7 +36,6 @@ import com.intellij.openapi.vcs.ex.commit.CommitChunkService
 import com.intellij.openapi.vcs.impl.ActiveChangeListTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.components.DropDownLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.concurrency.annotations.RequiresReadLock
@@ -670,17 +665,16 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
     }
 
     override fun createAdditionalToolbarActions(editor: Editor, range: Range, mousePosition: Point?, popupDisposable: Disposable): List<AnAction> {
-      return createChangeListActions(editor, range, mousePosition, popupDisposable)
+      return createChangeListActions(editor, range, mousePosition)
     }
 
     private fun createChangeListActions(editor: Editor,
                                         range: Range,
-                                        mousePosition: Point?,
-                                        disposable: Disposable): List<AnAction> {
+                                        mousePosition: Point?): List<AnAction> {
       if (range !is LocalRange) return emptyList()
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
-      val rangeList = changeLists.find { it.id == range.changelistId } ?: return emptyList()
+      changeLists.find { it.id == range.changelistId } ?: return emptyList()
 
       val group = DefaultActionGroup(VcsBundle.message("ex.changelists"), null, AllIcons.Vcs.Changelist)
       group.isPopup = true
@@ -694,29 +688,6 @@ class ChangelistsLocalLineStatusTracker internal constructor(project: Project,
       group.add(MoveToAnotherChangeListAction(editor, range, mousePosition))
 
       return listOf(group)
-
-
-      val link = DropDownLink(rangeList.name) { linkLabel ->
-        val dataContext = DataManager.getInstance().getDataContext(linkLabel)
-        JBPopupFactory.getInstance()
-          .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false)
-      }
-      link.border = JBUI.Borders.emptyLeft(7)
-      link.isOpaque = false
-
-      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
-      object : DumbAwareAction() {
-        override fun actionPerformed(e: AnActionEvent) {
-          link.doClick()
-        }
-      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
-
-      val shortcuts = moveChangesShortcutSet.shortcuts
-      if (shortcuts.isNotEmpty()) {
-        link.toolTipText = VcsBundle.message("ex.move.lines.to.another.changelist.0", KeymapUtil.getShortcutText(shortcuts.first()))
-      }
-
-      //return link
     }
 
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
