@@ -41,7 +41,7 @@
     <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="3600"
                  description="Settings will be automatically synced with the server every N seconds.
                               Settings the value to 0 or less disables syncing by timer."/>
-    <registryKey key="settingsSync.promotion.in.settings" defaultValue="false"
+    <registryKey key="settingsSync.promotion.in.settings" defaultValue="true"
                  description="Whether to show GotIt tooltip with promotion to enable the Backup and Sync
                               on Apply button click in the Settings dialog"/>
 
