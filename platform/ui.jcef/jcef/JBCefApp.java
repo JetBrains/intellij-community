@@ -480,9 +480,7 @@ public final class JBCefApp {
 
   private static class MyCefAppHandler extends CefAppHandlerAdapter {
     private final int myGPUCrashLimit;
-    private final int myTotalCrashLimit;
     private int myGPULaunchCounter = 0;
-    private int myLaunchCounter = 0;
     private boolean myNotificationShown = false;
     private final String myArgs;
 
@@ -491,9 +489,8 @@ public final class JBCefApp {
       myArgs = Arrays.toString(args);
       if (trackGPUCrashes) {
         myGPUCrashLimit = Integer.getInteger("ide.browser.jcef.gpu.infinitecrash.internallimit", 10);
-        myTotalCrashLimit = myGPUCrashLimit*2;
       } else {
-        myGPUCrashLimit = myTotalCrashLimit = -1;
+        myGPUCrashLimit = -1;
       }
     }
 
@@ -527,21 +524,16 @@ public final class JBCefApp {
 
     @Override
     public void onBeforeChildProcessLaunch(String command_line) {
-      ++myLaunchCounter;
-      if (command_line == null)
+      if (command_line == null || !command_line.contains("--type=gpu-process"))
         return;
 
-      if (command_line.contains("--type=gpu-process")) {
-        ++myGPULaunchCounter;
-        if (myGPUCrashLimit >= 0 && myGPULaunchCounter > myGPUCrashLimit && !myNotificationShown) {
+      ++myGPULaunchCounter;
+      if (myGPUCrashLimit >= 0 && myGPULaunchCounter > myGPUCrashLimit) {
+        if (!myNotificationShown) {
           ApplicationManager.getApplication().executeOnPooledThread(() -> SettingsHelper.showNotificationDisableGPU());
           myNotificationShown = true;
         }
-      }
-      if (myTotalCrashLimit >= 0) {
-        if (myLaunchCounter > myTotalCrashLimit) {
-          ApplicationManager.getApplication().executeOnPooledThread(() -> CefApp.getInstance().dispose());
-        }
+        ApplicationManager.getApplication().executeOnPooledThread(() -> CefApp.getInstance().dispose());
       }
     }
   }
