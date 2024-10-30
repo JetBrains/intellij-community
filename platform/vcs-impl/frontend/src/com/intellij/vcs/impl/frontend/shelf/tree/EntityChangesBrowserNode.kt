@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JTree
 
 @Suppress("SSBasedInspection")
-open class EntityChangesBrowserNode<T : NodeEntity>(entity: T) : ChangesBrowserNode<T>(entity) {
+abstract class EntityChangesBrowserNode<T : NodeEntity>(entity: T) : ChangesBrowserNode<T>(entity) {
   override fun render(tree: JTree, renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     withLastKnownDb {
       if (!getUserObject().exists()) return@withLastKnownDb

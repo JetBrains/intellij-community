@@ -2,6 +2,7 @@
   <dependencies>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.impl.backend"/>
+    <module name="intellij.platform.vcs.impl.shared"/>
   </dependencies>
   <extensionPoints>
     <extensionPoint name="pushSupport"

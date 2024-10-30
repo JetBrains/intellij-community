@@ -6,7 +6,7 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
+import com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 import com.intellij.openapi.vcs.changes.shelf.DiffShelvedChangesActionProvider.PatchesPreloader
 import com.intellij.openapi.vcs.changes.shelf.ShelvedWrapperDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerChangesTreeTracker

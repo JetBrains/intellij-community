@@ -68,6 +68,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.*;
+import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent;
 import com.intellij.vcsUtil.VcsUtil;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.Tracer;

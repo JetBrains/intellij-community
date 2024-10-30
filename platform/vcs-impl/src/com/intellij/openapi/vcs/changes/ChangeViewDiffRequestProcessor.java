@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ui.PresentableChange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
