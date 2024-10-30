@@ -57,6 +57,7 @@
   <technology name="bytebuddy" root="net.bytebuddy"/>
   <technology name="caliban" root="caliban"/>
   <technology name="camunda" root="org.camunda.bpm"/>
+  <technology name="cassandra" root="com.datastax.driver.core"/>
   <technology name="cats" root="cats"/>
   <technology name="cats-effect" root="cats.effect"/>
   <technology name="checkerframework" root="org.checkerframework"/>
@@ -91,6 +92,7 @@
   <technology name="eclipselink" root="org.eclipse.persistence"/>
   <technology name="eclipselink-jpa" root="org.eclipse.persistence.jpa"/>
   <technology name="ehcache" root="org.ehcache"/>
+  <technology name="elasticsearch-client" root="co.elastic.clients"/>
   <technology name="elastic4s" root="elastic4s"/>
   <technology name="elasticjob" root="org.apache.shardingsphere.elasticjob"/>
   <technology name="elasticmq" root="elasticmq"/>
@@ -244,6 +246,8 @@
   <technology name="mockk" root="io.mockk"/>
   <technology name="mockserver" root="org.mockserver"/>
   <technology name="moddelmapper" root="org.modelmapper"/>
+  <technology name="mongodb" root="com.mongodb"/>
+  <technology name="mongodb-reactive" root="com.mongodb.reactivestreams"/>
   <technology name="moko-mvvm" root="dev.icerock.moko"/>
   <technology name="monix" root="monix.reactive"/>
   <technology name="monocle" root="monocle"/>
