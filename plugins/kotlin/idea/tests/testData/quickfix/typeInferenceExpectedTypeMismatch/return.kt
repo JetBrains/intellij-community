@@ -1,4 +1,5 @@
 // "Remove '.java'" "true"
+// PRIORITY: HIGH
 // WITH_STDLIB
 fun foo(): kotlin.reflect.KClass<Foo> {
     return Foo::class.java<caret>
