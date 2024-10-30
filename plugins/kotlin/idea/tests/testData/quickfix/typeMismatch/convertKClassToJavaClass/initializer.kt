@@ -1,4 +1,5 @@
 // "Convert 'KClass' to 'Class'" "true"
+// PRIORITY: HIGH
 // WITH_STDLIB
 
 fun foo() {
