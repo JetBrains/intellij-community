@@ -19,7 +19,8 @@ internal class DocumentationRenderer(private val project: Project) {
   private val writersideTagReplacements = listOf(
     "control" to "b",
     "path" to "i",
-    "ui-control" to "b"
+    "ui-control" to "b",
+    "ui-path" to "b"
   ).map { Regex("&lt;${it.first}&gt;(.*?)&lt;/${it.first}&gt;") to it.second }
 
   @NlsSafe

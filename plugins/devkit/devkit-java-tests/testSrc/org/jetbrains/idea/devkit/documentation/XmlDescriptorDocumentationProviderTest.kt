@@ -55,7 +55,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p>Required: no; additional details with an alias<br/>\n" +
       "<b>Additional detail about <code>first-level-child-1</code>.</b>" +
       "<h5>Default value</h5>" +
-      "<p>Value of the <a href=\"psi_element://#element:idea-plugin__name\"><code>&lt;name&gt;</code></a> element. See &lt;ui-path&gt;UI Path&lt;/ui-path&gt;." +
+      "<p>Value of the <a href=\"psi_element://#element:idea-plugin__name\"><code>&lt;name&gt;</code></a> element. See <b>UI Path</b>." +
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child\"><code>&lt;second-level-child&gt;</code></a></li>" +
