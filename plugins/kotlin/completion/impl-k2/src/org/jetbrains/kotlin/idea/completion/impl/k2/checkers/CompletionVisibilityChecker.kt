@@ -7,13 +7,13 @@ import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.permissions.forbidAnalysis
 import org.jetbrains.kotlin.analysis.api.symbols.KaClassLikeSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaDeclarationSymbol
-import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.idea.base.projectStructure.getKaModule
-import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.base.util.isJavaClassNotToBeUsedInKotlin
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.util.positionContext.*
+import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinSimpleNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
@@ -80,17 +80,6 @@ internal class CompletionVisibilityChecker(
     // todo find a better place if possible or just encapsulate
     //  moved from the removed FirCompletionSessionParameters
     //  <begin>
-    val excludeEnumEntries: Boolean
-        get() = !supportsFeature(LanguageFeature.EnumEntries)
-
-    val excludeSyntheticJavaProperties: Boolean
-        get() = positionContext is KDocNameReferencePositionContext
-                || positionContext is KotlinCallableReferencePositionContext && !supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)
-
-    val excludeJavaGettersAndSetters: Boolean
-        get() = !excludeSyntheticJavaProperties
-                && basicContext.parameters.invocationCount <= 1
-
     val excludeClassifiersAndPackagesForPossibleExtensionCallables: Boolean
         get() {
             val declaration = (positionContext as? KotlinTypeNameReferencePositionContext)
@@ -103,11 +92,5 @@ internal class CompletionVisibilityChecker(
                     && positionContext.explicitReceiver == null
                     && basicContext.sink.prefixMatcher.prefix.firstOrNull()?.isLowerCase() == true
         }
-
-    private val languageVersionSettings: LanguageVersionSettings =
-        basicContext.project.languageVersionSettings
-
-    private fun supportsFeature(feature: LanguageFeature): Boolean =
-        languageVersionSettings.supportsFeature(feature)
     // todo <end>
 }

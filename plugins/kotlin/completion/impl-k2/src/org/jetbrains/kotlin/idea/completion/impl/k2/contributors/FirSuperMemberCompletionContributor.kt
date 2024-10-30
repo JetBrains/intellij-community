@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarati
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.StandardClassIds
@@ -49,30 +50,30 @@ internal class FirSuperMemberCompletionContributor(
     override fun complete(
         positionContext: KotlinSuperReceiverNameReferencePositionContext,
         weighingContext: WeighingContext,
-    ) = with(positionContext) {
+    ) {
         val superReceiver = positionContext.superExpression
         val superType = superReceiver.expressionType ?: return
 
         val (nonExtensionMembers: Iterable<CallableInfo>, namesNeedDisambiguation: Set<Name>) =
             if (superType !is KaIntersectionType) {
-                getNonExtensionsMemberSymbols(superType).asIterable() to emptySet()
+                getNonExtensionsMemberSymbols(positionContext, superType).asIterable() to emptySet()
             } else {
-                getSymbolsAndNamesNeedDisambiguation(superType.conjuncts)
+                getSymbolsAndNamesNeedDisambiguation(positionContext, superType.conjuncts)
             }
         collectCallToSuperMember(superReceiver, nonExtensionMembers, weighingContext, namesNeedDisambiguation)
         collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers, namesNeedDisambiguation)
-
     }
 
     context(KaSession)
     private fun getSymbolsAndNamesNeedDisambiguation(
+        positionContext: KotlinNameReferencePositionContext,
         superTypes: List<KaType>,
     ): Pair<List<CallableInfo>, Set<Name>> {
         val allSymbols = mutableListOf<CallableInfo>()
         val symbolsInAny = mutableSetOf<KaCallableSymbol>()
         val symbolCountsByName = mutableMapOf<Name, Int>()
         for (superType in superTypes) {
-            for (callableInfo in getNonExtensionsMemberSymbols(superType)) {
+            for (callableInfo in getNonExtensionsMemberSymbols(positionContext, superType)) {
                 val symbol = callableInfo.signature.symbol
 
                 // Abstract symbol does not participate completion.
@@ -101,9 +102,11 @@ internal class FirSuperMemberCompletionContributor(
 
     context(KaSession)
     private fun getNonExtensionsMemberSymbols(
+        positionContext: KotlinNameReferencePositionContext,
         receiverType: KaType,
     ): Sequence<CallableInfo> = collectNonExtensionsForType(
-        type = receiverType,
+        positionContext = positionContext,
+        receiverType = receiverType,
         visibilityChecker = visibilityChecker,
         scopeNameFilter = scopeNameFilter,
     ).map { CallableInfo(receiverType, it.signature, it.scopeKind) }

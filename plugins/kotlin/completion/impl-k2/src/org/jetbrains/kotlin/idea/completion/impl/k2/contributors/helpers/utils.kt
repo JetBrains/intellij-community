@@ -13,8 +13,13 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
 import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.util.positionContext.KDocNameReferencePositionContext
+import org.jetbrains.kotlin.idea.util.positionContext.KotlinCallableReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.load.java.JvmAbi
@@ -59,6 +64,7 @@ internal fun createStarTypeArgumentsList(typeArgumentsCount: Int): String =
 
 context(KaSession)
 internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
+    positionContext: KotlinNameReferencePositionContext,
     scopeContext: KaScopeContext,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
@@ -74,7 +80,8 @@ internal fun collectLocalAndMemberNonExtensionsFromScopeContext(
         val nonExtensions = if (isImplicitReceiverScope) {
             val implicitReceiver = indexedImplicitReceivers.getValue(kind.indexInTower)
             collectNonExtensionsForType(
-                type = implicitReceiver.type,
+                positionContext = positionContext,
+                receiverType = implicitReceiver.type,
                 visibilityChecker = visibilityChecker,
                 scopeNameFilter = scopeNameFilter,
                 indexInTower = implicitReceiver.scopeIndexInTower,
@@ -117,19 +124,24 @@ internal fun collectStaticAndTopLevelNonExtensionsFromScopeContext(
 context(KaSession)
 @OptIn(KaExperimentalApi::class)
 internal fun collectNonExtensionsForType(
-    type: KaType,
+    positionContext: KotlinNameReferencePositionContext,
+    receiverType: KaType,
     visibilityChecker: CompletionVisibilityChecker,
     scopeNameFilter: (Name) -> Boolean,
     indexInTower: Int? = null,
     symbolFilter: (KaCallableSymbol) -> Boolean = { true },
 ): Sequence<KtCallableSignatureWithContainingScopeKind> {
-    val typeScope = type.scope ?: return emptySequence()
+    val typeScope = receiverType.scope ?: return emptySequence()
+
+    val basicContext = visibilityChecker.basicContext
+    val languageVersionSettings = basicContext.project.languageVersionSettings
+    val excludeSyntheticJavaProperties = languageVersionSettings.excludeSyntheticJavaProperties(positionContext)
 
     val callables = typeScope.getCallableSignatures(scopeNameFilter.getAndSetAware())
-        .applyIf(visibilityChecker.excludeSyntheticJavaProperties) {
+        .applyIf(excludeSyntheticJavaProperties) {
             filterNot { it.symbol is KaSyntheticJavaPropertySymbol }
-        }.applyIf(visibilityChecker.excludeJavaGettersAndSetters) {
-            filterOutJavaGettersAndSetters(type, visibilityChecker, scopeNameFilter, symbolFilter)
+        }.applyIf(!excludeSyntheticJavaProperties && basicContext.parameters.invocationCount <= 1) {
+            filterOutJavaGettersAndSetters(receiverType, visibilityChecker, scopeNameFilter, symbolFilter)
         }
 
     val innerClasses = typeScope.getClassifierSymbols(scopeNameFilter).filterIsInstance<KaNamedClassSymbol>().filter { it.isInner }
@@ -141,7 +153,7 @@ internal fun collectNonExtensionsForType(
 
     return nonExtensionsFromType
         .map { KtCallableSignatureWithContainingScopeKind(it, KaScopeKinds.TypeScope(scopeIndex)) }
-        .applyIf(visibilityChecker.excludeEnumEntries) {
+        .applyIf(languageVersionSettings.excludeEnumEntries) {
             filterNot { isEnumEntriesProperty(it.signature.symbol) }
         }
 }
@@ -182,7 +194,7 @@ internal fun collectNonExtensionsFromScope(
 ): Sequence<KaCallableSignature<*>> = scope.callables(scopeNameFilter.getAndSetAware())
     .map { it.asSignature() }
     .filterNonExtensions(visibilityChecker, symbolFilter)
-    .applyIf(visibilityChecker.excludeEnumEntries) {
+    .applyIf(visibilityChecker.basicContext.project.languageVersionSettings.excludeEnumEntries) {
         filterNot { isEnumEntriesProperty(it.symbol) }
     }
 
@@ -213,3 +225,11 @@ private fun isEnumEntriesProperty(symbol: KaCallableSymbol): Boolean {
             symbol.callableId?.callableName == StandardNames.ENUM_ENTRIES &&
             (symbol.containingDeclaration as? KaClassSymbol)?.classKind == KaClassKind.ENUM_CLASS
 }
+
+private inline val LanguageVersionSettings.excludeEnumEntries: Boolean
+    get() = !supportsFeature(LanguageFeature.EnumEntries)
+
+private fun LanguageVersionSettings.excludeSyntheticJavaProperties(
+    positionContext: KotlinNameReferencePositionContext,
+): Boolean = positionContext is KDocNameReferencePositionContext
+        || positionContext is KotlinCallableReferencePositionContext && !supportsFeature(LanguageFeature.ReferencesToSyntheticJavaProperties)

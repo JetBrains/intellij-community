@@ -123,8 +123,8 @@ internal open class FirCallableCompletionContributor(
     override fun complete(
         positionContext: KotlinNameReferencePositionContext,
         weighingContext: WeighingContext,
-    ): Unit = with(positionContext) {
-        val scopesContext = originalKtFile.scopeContext(nameExpression)
+    ) {
+        val scopesContext = originalKtFile.scopeContext(positionContext.nameExpression)
 
         val extensionChecker = if (positionContext is KotlinSimpleNameReferencePositionContext) {
             CachingKtCompletionExtensionCandidateChecker(
@@ -136,12 +136,10 @@ internal open class FirCallableCompletionContributor(
             )
         } else null
 
-        val receiver = explicitReceiver
+        val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when (val receiver = positionContext.explicitReceiver) {
+            null -> completeWithoutReceiver(positionContext, scopesContext, extensionChecker)
 
-        val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when {
-            receiver != null -> collectDotCompletion(scopesContext, receiver, extensionChecker)
-
-            else -> completeWithoutReceiver(scopesContext, extensionChecker)
+            else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
         }
             .filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
             .filterOutShadowedCallables(weighingContext.expectedType)
@@ -164,6 +162,7 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     private fun completeWithoutReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
@@ -171,6 +170,7 @@ internal open class FirCallableCompletionContributor(
         val implicitReceiversTypes = implicitReceivers.map { it.type }
 
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
+            positionContext = positionContext,
             scopeContext = scopeContext,
             visibilityChecker = visibilityChecker,
             scopeNameFilter = scopeNameFilter,
@@ -250,15 +250,15 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     protected open fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> {
         explicitReceiver as KtExpression
 
-        val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()
-        return when {
-            symbol is KaPackageSymbol -> collectDotCompletionForPackageReceiver(symbol)
+        return when (val symbol = explicitReceiver.reference()?.resolveToExpandedSymbol()) {
+            is KaPackageSymbol -> collectDotCompletionForPackageReceiver(symbol)
 
             else -> sequence {
                 if (symbol is KaNamedClassSymbol && symbol.hasImportantStaticMemberScope) {
@@ -273,6 +273,7 @@ internal open class FirCallableCompletionContributor(
                 if (symbol !is KaNamedClassSymbol || symbol.canBeUsedAsReceiver) {
                     yieldAll(
                         collectDotCompletionForCallableReceiver(
+                            positionContext = positionContext,
                             scopeContext = scopeContext,
                             explicitReceiver = explicitReceiver,
                             extensionChecker = extensionChecker,
@@ -313,13 +314,15 @@ internal open class FirCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     protected fun collectDotCompletionForCallableReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtExpression,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val receiverType = explicitReceiver.expressionType.takeUnless { it is KaErrorType } ?: return@sequence
         val callablesWithMetadata = collectDotCompletionForCallableReceiver(
-            listOf(element = receiverType),
+            positionContext = positionContext,
+            typesOfPossibleReceiver = listOf(receiverType),
             scopeContext = scopeContext,
             extensionChecker = extensionChecker,
         )
@@ -329,6 +332,7 @@ internal open class FirCallableCompletionContributor(
         if (smartCastInfo?.isStable == false) {
             // Collect members available from unstable smartcast as well.
             val callablesWithMetadataFromUnstableSmartCast = collectDotCompletionForCallableReceiver(
+                positionContext = positionContext,
                 typesOfPossibleReceiver = listOf(smartCastInfo.smartCastType),
                 scopeContext = scopeContext,
                 extensionChecker = extensionChecker,
@@ -341,6 +345,7 @@ internal open class FirCallableCompletionContributor(
 
     context(KaSession)
     protected fun collectDotCompletionForCallableReceiver(
+        positionContext: KotlinNameReferencePositionContext,
         typesOfPossibleReceiver: List<KaType>,
         scopeContext: KaScopeContext,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
@@ -348,7 +353,8 @@ internal open class FirCallableCompletionContributor(
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val nonExtensionMembers = typesOfPossibleReceiver.flatMap { typeOfPossibleReceiver ->
             collectNonExtensionsForType(
-                type = typeOfPossibleReceiver,
+                positionContext = positionContext,
+                receiverType = typeOfPossibleReceiver,
                 visibilityChecker = visibilityChecker,
                 scopeNameFilter = scopeNameFilter,
             ) { filter(it) }
@@ -671,6 +677,7 @@ internal class FirCallableReferenceCompletionContributor(
 
     context(KaSession)
     override fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
@@ -691,6 +698,7 @@ internal class FirCallableReferenceCompletionContributor(
                 val types = collectReceiverTypesForExplicitReceiverExpression(explicitReceiver)
                 yieldAll(
                     collectDotCompletionForCallableReceiver(
+                        positionContext = positionContext,
                         typesOfPossibleReceiver = types,
                         scopeContext = scopeContext,
                         extensionChecker = extensionChecker,
@@ -699,6 +707,7 @@ internal class FirCallableReferenceCompletionContributor(
             }
 
             else -> collectDotCompletionForCallableReceiver(
+                positionContext = positionContext,
                 scopeContext = scopeContext,
                 explicitReceiver = explicitReceiver,
                 extensionChecker = extensionChecker,
@@ -763,6 +772,7 @@ internal class FirKDocCallableCompletionContributor(
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
     override fun collectDotCompletion(
+        positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
         explicitReceiver: KtElement,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
