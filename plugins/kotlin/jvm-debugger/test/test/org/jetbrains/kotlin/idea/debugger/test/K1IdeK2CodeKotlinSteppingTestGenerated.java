@@ -1718,6 +1718,11 @@ public abstract class K1IdeK2CodeKotlinSteppingTestGenerated extends AbstractK1I
             runTest("testData/stepping/custom/smartStepIntoDeferredSamLambdas.kt");
         }
 
+        @TestMetadata("smartStepIntoEmptyConstructor.kt")
+        public void testSmartStepIntoEmptyConstructor() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoEmptyConstructor.kt");
+        }
+
         @TestMetadata("smartStepIntoFunWithContext.kt")
         public void testSmartStepIntoFunWithContext() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoFunWithContext.kt");

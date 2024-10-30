@@ -349,13 +349,6 @@ class SmartStepTargetVisitor(
 
             if (declaration !is KtDeclaration?) return
 
-            if (symbol is KaConstructorSymbol && symbol.isPrimary) {
-                if (declaration is KtClass && declaration.getAnonymousInitializers().isEmpty()) {
-                    // There is no constructor or init block, so do not show it in smart step into
-                    return
-                }
-            }
-
             // We can't step into @InlineOnly callables as there is no LVT, so skip them
             if (declaration is KtCallableDeclaration && declaration.isInlineOnly()) {
                 return
