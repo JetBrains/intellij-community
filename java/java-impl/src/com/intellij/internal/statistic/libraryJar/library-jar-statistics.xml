@@ -254,6 +254,7 @@
   <technology name="testng" class="org.testng.annotations.Test"/>
   <technology name="thymeleaf" class="org.thymeleaf.dialect.IDialect"/>
   <technology name="tornadofx" class="tornadofx.App"/>
+  <technology name="torque" class="org.apache.torque"/>
   <technology name="truth" class="com.google.common.truth.Truth"/>
   <technology name="twitter-util" class="com.twitter.util.Future"/>
   <technology name="unfiltered" class="unfiltered.response.ResponseString"/>
