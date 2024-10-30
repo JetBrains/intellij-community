@@ -116,13 +116,14 @@ class KotlinIntroduceParameterMethodUsageProcessor : IntroduceParameterMethodUsa
                 .withDefaultValue(data.parameterInitializer.text)
         )
 
+        val returnType = psiMethod.returnType
         val javaChangeInfo = JavaChangeInfoImpl.generateChangeInfo(
             /* method = */ psiMethod,
             /* generateDelegate = */ false,
             /* fixFieldConflicts = */ true,
             /* newVisibility = */ null,
             /* newName = */ psiMethod.name,
-            /* newType = */ CanonicalTypes.createTypeWrapper(psiMethod.returnType!!),
+            /* newType = */ if (returnType != null) CanonicalTypes.createTypeWrapper(returnType) else null,
             /* parameterInfo = */ params.toTypedArray(),
             /* thrownExceptions = */ emptyArray(),
             /* propagateParametersMethods = */ emptySet(),

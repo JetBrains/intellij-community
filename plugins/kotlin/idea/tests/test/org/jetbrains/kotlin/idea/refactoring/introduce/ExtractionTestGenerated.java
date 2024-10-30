@@ -4683,6 +4683,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             KotlinTestUtils.runTest(this::doIntroduceJavaParameterTest, this, testDataFilePath);
         }
 
+        @TestMetadata("javaConstructor.java")
+        public void testJavaConstructor() throws Exception {
+            runTest("testData/refactoring/introduceJavaParameter/javaConstructor.java");
+        }
+
         @TestMetadata("javaMethod.java")
         public void testJavaMethod() throws Exception {
             runTest("testData/refactoring/introduceJavaParameter/javaMethod.java");
