@@ -9,26 +9,38 @@ import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Analyze overwritten fields based on DFA-CFG (unlike usual CFG, it includes method calls, so we can know when field value may leak)
  */
-final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
+final class OverwrittenFieldAnalyzer {
+  private final Instruction[] myInstructions;
+  private final MultiMap<Instruction, Instruction> myForwardMap;
+  private final MultiMap<Instruction, Instruction> myBackwardMap;
+  private final DfaValueFactory myFactory;
+
   OverwrittenFieldAnalyzer(ControlFlow flow) {
-    super(flow);
+    myFactory = flow.getFactory();
+    myInstructions = flow.getInstructions();
+    myForwardMap = calcForwardMap();
+    myBackwardMap = calcBackwardMap();
   }
 
   @NotNull
@@ -47,8 +59,7 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
     return StreamEx.empty();
   }
 
-  @Override
-  protected boolean isInterestingInstruction(Instruction instruction) {
+  private boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
     if (!instruction.isLinear()) return true;
 
@@ -67,62 +78,130 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
     Set<AssignInstruction> overwrites = StreamEx.of(myInstructions).select(AssignInstruction.class).toSet();
     if (overwrites.isEmpty()) return Collections.emptySet();
     Set<AssignInstruction> visited = new HashSet<>();
-    boolean ok = runDfa(false, (instruction, beforeVars) -> {
-      // beforeVars: IDs of variables that were written but not read yet
-      if (beforeVars.isEmpty() && !(instruction instanceof AssignInstruction)) return beforeVars;
-      if (instruction instanceof FlushFieldsInstruction) {
+    List<Instruction> entryPoints = StreamEx.of(myInstructions).select(ControlTransferInstruction.class)
+      .filter(cti -> cti.getTransfer().getTarget().getPossibleTargets().length == 0)
+      .collect(Collectors.toList());
+
+    Deque<InstructionState> queue = new ArrayDeque<>(10);
+    for (Instruction i : entryPoints) {
+      queue.addLast(new InstructionState(i, new BitSet()));
+    }
+
+    int limit = myForwardMap.size() * 100;
+    Map<BitSet, IntSet> processed = new HashMap<>();
+    int steps = 0;
+    while (!queue.isEmpty()) {
+      if (steps > limit) {
+        return Set.of();
+      }
+      if (steps % 1024 == 0) {
+        ProgressManager.checkCanceled();
+      }
+      InstructionState state = queue.removeFirst();
+      Collection<Instruction> nextInstructions = myBackwardMap.get(state.instruction);
+      BitSet nextVars = handleState(state.instruction, state.nextVars, visited, overwrites);
+      for (Instruction next : nextInstructions) {
+        IntSet instructionSet = processed.computeIfAbsent(nextVars, k -> new IntOpenHashSet());
+        int index = next.getIndex() + 1;
+        if (!instructionSet.contains(index)) {
+          instructionSet.add(index);
+          queue.addLast(new InstructionState(next, nextVars));
+          steps++;
+        }
+      }
+    }
+    overwrites.retainAll(visited);
+    return overwrites;
+  }
+  
+  private BitSet handleState(Instruction instruction, BitSet beforeVars, Set<AssignInstruction> visited, Set<AssignInstruction> overwrites) {
+    // beforeVars: IDs of variables that were written but not read yet
+    if (beforeVars.isEmpty() && !(instruction instanceof AssignInstruction)) return beforeVars;
+    if (instruction instanceof FlushFieldsInstruction) {
+      return new BitSet();
+    }
+    BitSet afterVars = (BitSet)beforeVars.clone();
+    boolean skipDependent = false;
+    StreamEx<DfaVariableValue> readVariables;
+    if (instruction instanceof AssignInstruction assignInstruction) {
+      visited.add(assignInstruction);
+      DfaValue value = assignInstruction.getAssignedValue();
+      if (value instanceof DfaVariableValue var) {
+        int id = value.getID();
+        readVariables = StreamEx.of(var.getDependentVariables());
+        if (!beforeVars.get(id)) {
+          overwrites.remove(instruction);
+          afterVars.set(id);
+        }
+      } else {
+        readVariables = StreamEx.empty();
+      }
+      skipDependent = true;
+    }
+    else if (instruction instanceof MethodCallInstruction callInstruction) {
+      if (!callInstruction.getMutationSignature().isPure()) {
         return new BitSet();
       }
-      BitSet afterVars = (BitSet)beforeVars.clone();
-      boolean skipDependent = false;
-      StreamEx<DfaVariableValue> readVariables;
-      if (instruction instanceof AssignInstruction) {
-        visited.add((AssignInstruction)instruction);
-        DfaValue value = ((AssignInstruction)instruction).getAssignedValue();
-        if (value instanceof DfaVariableValue) {
-          int id = value.getID();
-          readVariables = StreamEx.of(((DfaVariableValue)value).getDependentVariables());
-          if (!beforeVars.get(id)) {
-            overwrites.remove(instruction);
-            afterVars.set(id);
+      // We assume that pure methods may read only static fields and fields which are passed as parameters (directly or by qualifier).
+      // This might be incorrect in rare cases but allows finding many useful bugs.
+      readVariables = StreamEx.of(myFactory.getValues())
+        .select(DfaVariableValue.class)
+        .filter(value -> value.getPsiVariable() instanceof PsiField field &&
+                         field.hasModifierProperty(PsiModifier.STATIC));
+    }
+    else if (instruction instanceof FinishElementInstruction finishElementInstruction) {
+      readVariables = StreamEx.of(finishElementInstruction.getVarsToFlush());
+    }
+    else {
+      readVariables = getReadVariables(instruction);
+    }
+    if (instruction instanceof PushInstruction pushInstruction) {
+      // Avoid forgetting about qualifier.field on qualifier.field = x;
+      DfaAnchor anchor = pushInstruction.getDfaAnchor();
+      PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
+      skipDependent = expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
+                    && ExpressionUtils.getCallForQualifier(expression) == null;
+    }
+    if (!skipDependent) {
+      readVariables = readVariables.flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
+    }
+    readVariables.forEach(v -> afterVars.clear(v.getID()));
+    return afterVars;
+  }
+
+  private List<Instruction> getSuccessors(Instruction ins) {
+    return IntStreamEx.of(ins.getSuccessorIndexes()).elements(myInstructions).toList();
+  }
+
+  private MultiMap<Instruction, Instruction> calcBackwardMap() {
+    MultiMap<Instruction, Instruction> result = MultiMap.create();
+    for (Instruction instruction : myInstructions) {
+      for (Instruction next : myForwardMap.get(instruction)) {
+        result.putValue(next, instruction);
+      }
+    }
+    return result;
+  }
+
+  private MultiMap<Instruction, Instruction> calcForwardMap() {
+    MultiMap<Instruction, Instruction> result = MultiMap.create();
+    for (Instruction instruction : myInstructions) {
+      if (isInterestingInstruction(instruction)) {
+        for (Instruction next : getSuccessors(instruction)) {
+          while (true) {
+            if (isInterestingInstruction(next)) {
+              result.putValue(instruction, next);
+              break;
+            }
+            if (next.getIndex() + 1 >= myInstructions.length) {
+              break;
+            }
+            next = myInstructions[next.getIndex() + 1];
           }
-        } else {
-          readVariables = StreamEx.empty();
         }
-        skipDependent = true;
       }
-      else if (instruction instanceof MethodCallInstruction) {
-        if (!((MethodCallInstruction)instruction).getMutationSignature().isPure()) {
-          return new BitSet();
-        }
-        // We assume that pure methods may read only static fields and fields which are passed as parameters (directly or by qualifier).
-        // This might be incorrect in rare cases but allows finding many useful bugs.
-        readVariables = StreamEx.of(myFactory.getValues())
-          .select(DfaVariableValue.class)
-          .filter(value -> value.getPsiVariable() instanceof PsiField &&
-                           ((PsiField)value.getPsiVariable()).hasModifierProperty(PsiModifier.STATIC));
-      }
-      else if (instruction instanceof FinishElementInstruction) {
-        readVariables = StreamEx.of(((FinishElementInstruction)instruction).getVarsToFlush());
-      }
-      else {
-        readVariables = getReadVariables(instruction);
-      }
-      if (instruction instanceof PushInstruction) {
-        // Avoid forgetting about qualifier.field on qualifier.field = x;
-        DfaAnchor anchor = ((PushInstruction)instruction).getDfaAnchor();
-        PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
-        skipDependent = expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
-                      && ExpressionUtils.getCallForQualifier(expression) == null;
-      }
-      if (!skipDependent) {
-        readVariables = readVariables.flatMap(v -> StreamEx.of(v.getDependentVariables()).prepend(v)).distinct();
-      }
-      readVariables.forEach(v -> afterVars.clear(v.getID()));
-      return afterVars;
-    });
-    overwrites.retainAll(visited);
-    return ok ? overwrites : Collections.emptySet();
+    }
+    return result;
   }
 
   static @NotNull Set<AssignInstruction> getOverwrittenFields(@Nullable ControlFlow flow) {
@@ -133,6 +212,9 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
       return Set.of();
     }
     return new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();
+  }
+
+  private record InstructionState(Instruction instruction, BitSet nextVars) {
   }
 }
 
