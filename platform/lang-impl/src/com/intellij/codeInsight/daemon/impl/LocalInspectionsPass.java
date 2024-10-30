@@ -217,7 +217,9 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
       .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
       .description(message)
-      .severity(severity);
+      .severity(severity)
+      .group(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP)
+      ;
     if (toolTip != null) b.escapedToolTip(toolTip);
     if (HighlightSeverity.INFORMATION.equals(severity) && attributes == null && toolTip == null && !quickFixes.isEmpty()) {
       // Hack to avoid filtering this info out in HighlightInfoFilterImpl even though its attributes are empty.
@@ -328,6 +330,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
       return;
     }
     info.toolId = toolWrapper.getShortName();
+    info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
     if (isInInjected) {
       Document documentRange = documentManager.getDocument(file);
       if (documentRange != null) {
@@ -377,6 +380,7 @@ final class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass 
         HighlightInfo patched = builder.createUnconditionally();
         patched.markFromInjection();
         patched.toolId = info.toolId;
+        patched.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
         outInfos.accept(patched);
       }
     }

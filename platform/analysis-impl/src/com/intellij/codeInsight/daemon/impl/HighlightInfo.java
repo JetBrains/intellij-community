@@ -1,7 +1,6 @@
 /* Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license. */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.actions.DisableHighlightingIntentionAction;
@@ -47,8 +46,8 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.BiFunction;
 
 import static com.intellij.openapi.util.NlsContexts.DetailedDescription;
@@ -497,6 +496,9 @@ public class HighlightInfo implements Segment {
     if (toolId != null) {
       s += "; toolId: " + toolId +" ("+toolId.getClass()+")";
     }
+    if (group != HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP) {
+      s += "; group: " + group;
+    }
     if (forcedTextAttributesKey != null) {
       s += "; forcedTextAttributesKey: " + forcedTextAttributesKey;
     }
@@ -621,7 +623,7 @@ public class HighlightInfo implements Segment {
       forcedAttributes, forcedAttributesKey, convertType(annotation), annotation.getStartOffset(), annotation.getEndOffset(),
       annotation.getMessage(), annotation.getTooltip(), annotation.getSeverity(), annotation.isAfterEndOfLine(),
       annotation.needsUpdateOnTyping(),
-      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), Pass.UPDATE_ALL,
+      annotation.isFileLevelAnnotation(), 0, annotation.getProblemGroup(), annotatorClass, annotation.getGutterIconRenderer(), HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP,
       annotation.getUnresolvedReference());
 
     List<? extends Annotation.QuickFixInfo> fixes = batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes();

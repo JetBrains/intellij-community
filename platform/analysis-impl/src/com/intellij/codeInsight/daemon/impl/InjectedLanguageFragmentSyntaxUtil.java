@@ -27,7 +27,9 @@ class InjectedLanguageFragmentSyntaxUtil {
       .textAttributes(TextAttributes.ERASE_MARKER)
       .createUnconditionally();
     eraseInfo.toolId = toolId;
-
+    if (toolId != null) {
+      eraseInfo.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
+    }
     LayeredTextAttributes injectedAttributes = LayeredTextAttributes.create(scheme, keys);
     if (injectedAttributes.isEmpty() || keys.length == 1 && keys[0] == HighlighterColors.TEXT) {
       // nothing to add
@@ -39,6 +41,9 @@ class InjectedLanguageFragmentSyntaxUtil {
       .textAttributes(injectedAttributes)
       .createUnconditionally();
     injectedInfo.toolId = toolId;
+    if (toolId != null) {
+      injectedInfo.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
+    }
     return List.of(eraseInfo, injectedInfo);
   }
 }

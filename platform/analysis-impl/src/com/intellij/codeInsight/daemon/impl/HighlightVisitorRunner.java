@@ -159,6 +159,7 @@ class HighlightVisitorRunner {
         HighlightInfo info = holder.get(i);
         newInfos.add(info);
         info.toolId = toolId;
+        info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
       }
     }
     else {
@@ -215,6 +216,7 @@ class HighlightVisitorRunner {
             //myErrorFound = true;
           }
           info.toolId = toolId;
+          info.setGroup(HighlightInfoUpdaterImpl.MANAGED_HIGHLIGHT_INFO_GROUP);
           infos.add(info);
         }
       }

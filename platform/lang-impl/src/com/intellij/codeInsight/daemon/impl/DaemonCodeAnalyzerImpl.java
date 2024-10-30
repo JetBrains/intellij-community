@@ -347,7 +347,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           Document document = textEditor.getEditor().getDocument();
           MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myProject, true);
           RangeHighlighter highlighter = toReuse != null && toReuse.isValid() ? toReuse
-                                         : markupModel.addRangeHighlighter(0, document.getTextLength(), ANY_GROUP, null, HighlighterTargetArea.EXACT_RANGE);
+                                         : markupModel.addRangeHighlighter(0, document.getTextLength(), FILE_LEVEL_FAKE_LAYER, null, HighlighterTargetArea.EXACT_RANGE);
           highlighter.setGreedyToLeft(true);
           highlighter.setGreedyToRight(true);
           highlighter.setErrorStripeTooltip(info);
