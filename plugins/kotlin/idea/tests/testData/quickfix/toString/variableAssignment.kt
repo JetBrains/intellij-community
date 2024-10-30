@@ -1,4 +1,5 @@
 // "Add 'toString()' call" "true"
+// PRIORITY: LOW
 
 fun test() {
     var s: String = ""

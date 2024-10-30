@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.Presentation
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -19,14 +20,15 @@ import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.Variance
 
 internal class SplitPropertyDeclarationIntention :
-    KotlinApplicableModCommandAction<KtProperty, SplitPropertyDeclarationIntention.Context>(KtProperty::class),
-    LowPriorityAction {
+    KotlinApplicableModCommandAction<KtProperty, SplitPropertyDeclarationIntention.Context>(KtProperty::class) {
 
     data class Context(
         val propertyType: String?,
     )
 
     override fun getFamilyName(): String = KotlinBundle.message("split.property.declaration")
+    override fun getPresentation(context: ActionContext, element: KtProperty): Presentation =
+        Presentation.of(familyName).withPriority(PriorityAction.Priority.LOW)
 
     override fun getApplicableRanges(element: KtProperty): List<TextRange> =
         listOf(TextRange(0, element.initializer!!.startOffsetInParent))

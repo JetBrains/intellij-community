@@ -9,7 +9,6 @@ import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModCommand
 import com.intellij.modcommand.ModCommandAction
 import com.intellij.modcommand.ModCommandExecutor
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -40,6 +39,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.junit.Assert
 import java.io.File
 import java.util.concurrent.ExecutionException
+import kotlin.Throws
 
 abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase() {
     protected open fun intentionFileName(): String = ".intention"
@@ -214,6 +214,8 @@ abstract class AbstractIntentionTestBase : KotlinLightCodeInsightFixtureTestCase
                 isApplicableExpected == isApplicableOnEdt
             )
         }
+
+        DirectiveBasedActionUtils.checkPriority(fileText, intentionAction)
 
         val intentionTextString = InTextDirectivesUtils.findStringWithPrefixes(fileText, "// " + intentionTextDirectiveName() + ": ")
 

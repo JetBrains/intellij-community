@@ -1,3 +1,4 @@
+// PRIORITY: HIGH
 // INTENTION_TEXT: "Add import for 'kotlin.LazyThreadSafetyMode.NONE'"
 // WITH_STDLIB
 

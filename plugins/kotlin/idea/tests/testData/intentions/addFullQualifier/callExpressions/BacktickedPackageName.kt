@@ -1,4 +1,5 @@
 // IGNORE_K1
+// PRIORITY: LOW
 package foo.`b ar`
 
 object Clazz {

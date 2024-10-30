@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 fun test(n: Int): String {
     var s = "test"
     if (n == 0) s = "zero"

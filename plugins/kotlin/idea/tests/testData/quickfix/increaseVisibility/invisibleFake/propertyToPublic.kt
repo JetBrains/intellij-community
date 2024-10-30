@@ -1,4 +1,5 @@
 // "Make 'foo' public" "true"
+// PRIORITY: HIGH
 
 open class A {
     private val foo = 1

@@ -1,4 +1,5 @@
 // "Make 'doSth' public" "true"
+// PRIORITY: HIGH
 
 open class A {
     private fun doSth() {

@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.daemon.quickFix.ActionHint
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
-import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings
 import com.intellij.codeInspection.SuppressableProblemGroup
@@ -51,7 +50,6 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
         const val FIXTURE_CLASS_DIRECTIVE = "FIXTURE_CLASS"
         const val SHOULD_FAIL_WITH_DIRECTIVE = "SHOULD_FAIL_WITH"
         const val FORCE_PACKAGE_FOLDER_DIRECTIVE = "FORCE_PACKAGE_FOLDER"
-        const val PRIORITY_DIRECTIVE = "PRIORITY"
         const val K1_TOOL_DIRECTIVE = "K1_TOOL:"
         const val K2_TOOL_DIRECTIVE = "K2_TOOL:"
 
@@ -314,15 +312,8 @@ abstract class AbstractQuickFixTest : KotlinLightCodeInsightFixtureTestCase(), Q
 
     private fun applyAction(contents: String, hint: ActionHint, intention: IntentionAction, fileName: String) {
         val unwrappedIntention = unwrapIntention(intention)
-        val priorityName = InTextDirectivesUtils.findStringWithPrefixes(contents, "// $PRIORITY_DIRECTIVE: ")
-        if (priorityName != null) {
-            val expectedPriority = enumValueOf<PriorityAction.Priority>(priorityName)
-            val actualPriority = (unwrappedIntention as? PriorityAction)?.priority
-            assertTrue(
-                "Expected action priority: $expectedPriority\nActual priority: $actualPriority",
-                expectedPriority == actualPriority
-            )
-        }
+
+        DirectiveBasedActionUtils.checkPriority(contents, unwrappedIntention)
 
         val writeActionResolveHandler: () -> Unit = {
             val intentionClassName = unwrappedIntention.javaClass.name

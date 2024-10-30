@@ -1,4 +1,5 @@
 // "Make 'x' public explicitly" "true"
+// PRIORITY: HIGH
 
 open class Base {
     protected open fun x() {}

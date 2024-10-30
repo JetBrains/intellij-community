@@ -1,4 +1,5 @@
 // "Make '<set-attribute>' public" "true"
+// PRIORITY: HIGH
 // ACTION: Converts the assignment statement to an expression
 // ACTION: Make '<set-attribute>' internal
 // ACTION: Make '<set-attribute>' public

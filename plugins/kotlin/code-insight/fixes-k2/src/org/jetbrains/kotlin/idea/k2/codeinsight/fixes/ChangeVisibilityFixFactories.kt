@@ -1,7 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.fixes
 
-import com.intellij.codeInsight.intention.HighPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -86,8 +86,11 @@ object ChangeVisibilityFixFactories {
         }
     }
 
-    private class ChangeToPrivateModCommandAction(element: KtDeclaration, elementName: String):
-        ChangeVisibilityModCommandAction(element, ElementContext(elementName), false, KtTokens.PRIVATE_KEYWORD), HighPriorityAction
+    private class ChangeToPrivateModCommandAction(element: KtDeclaration, elementName: String) :
+        ChangeVisibilityModCommandAction(element, ElementContext(elementName), false, KtTokens.PRIVATE_KEYWORD) {
+            override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation =
+                super.getPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
+        }
 
     private class ChangeToInternalModCommandAction(element: KtDeclaration, elementName: String):
         ChangeVisibilityModCommandAction(element, ElementContext(elementName), false, KtTokens.INTERNAL_KEYWORD)
@@ -95,8 +98,11 @@ object ChangeVisibilityFixFactories {
     private class ChangeToProtectedModCommandAction(element: KtDeclaration, elementName: String):
         ChangeVisibilityModCommandAction(element, ElementContext(elementName), false, KtTokens.PROTECTED_KEYWORD)
 
-    private class ChangeToPublicModCommandAction(element: KtDeclaration, elementName: String, forceUsingExplicitModifier: Boolean = true):
-        ChangeVisibilityModCommandAction(element, ElementContext(elementName), forceUsingExplicitModifier, KtTokens.PUBLIC_KEYWORD), HighPriorityAction
+    private class ChangeToPublicModCommandAction(element: KtDeclaration, elementName: String, forceUsingExplicitModifier: Boolean = true) :
+        ChangeVisibilityModCommandAction(element, ElementContext(elementName), forceUsingExplicitModifier, KtTokens.PUBLIC_KEYWORD) {
+            override fun getPresentation(context: ActionContext, element: KtDeclaration): Presentation =
+                super.getPresentation(context, element).withPriority(PriorityAction.Priority.HIGH)
+        }
 
     val noExplicitVisibilityInApiMode =
         KotlinQuickFixFactory.ModCommandBased { diagnostic: KaFirDiagnostic.NoExplicitVisibilityInApiMode ->

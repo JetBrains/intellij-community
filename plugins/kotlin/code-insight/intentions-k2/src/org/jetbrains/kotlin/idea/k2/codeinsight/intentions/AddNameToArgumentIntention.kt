@@ -1,7 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.k2.codeinsight.intentions
 
-import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInsight.intention.PriorityAction
 import com.intellij.modcommand.ActionContext
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.modcommand.Presentation
@@ -22,8 +22,7 @@ import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.KtValueArgumentList
 
 internal class AddNameToArgumentIntention :
-    KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class),
-    LowPriorityAction {
+    KotlinApplicableModCommandAction<KtValueArgument, AddNameToArgumentIntention.Context>(KtValueArgument::class) {
 
     data class Context(
         val argumentName: Name,
@@ -39,6 +38,7 @@ internal class AddNameToArgumentIntention :
         val (argumentName) = getElementContext(context, element)
             ?: return null
         return Presentation.of(KotlinBundle.message("add.0.to.argument", argumentName))
+            .withPriority(PriorityAction.Priority.LOW)
     }
 
     override fun getApplicableRanges(element: KtValueArgument): List<TextRange> =

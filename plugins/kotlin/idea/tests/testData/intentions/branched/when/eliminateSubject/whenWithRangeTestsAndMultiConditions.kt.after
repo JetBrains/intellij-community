@@ -1,3 +1,4 @@
+// PRIORITY: LOW
 fun test(n: Int): String {
     return when {
         n in 0..5 || n in 5..10 -> "small"

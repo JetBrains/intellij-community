@@ -1,4 +1,5 @@
 // INTENTION_TEXT: "Add 'a =' to argument"
+// PRIORITY: LOW
 // AFTER-WARNING: Parameter 'a' is never used
 // AFTER-WARNING: Parameter 'b' is never used
 

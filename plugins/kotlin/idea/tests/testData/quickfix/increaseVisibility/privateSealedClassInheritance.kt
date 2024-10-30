@@ -1,4 +1,5 @@
 // "Make 'SealedClass' public" "true"
+// PRIORITY: HIGH
 // ACTION: Create test
 // ACTION: Introduce import alias
 // ACTION: Make 'SealedClass' public

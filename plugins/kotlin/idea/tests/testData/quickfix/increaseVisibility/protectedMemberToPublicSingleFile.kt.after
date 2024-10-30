@@ -1,4 +1,5 @@
 // "Make 'x' public" "true"
+// PRIORITY: HIGH
 class First(val x: Int)
 
 class Second(f: First) {

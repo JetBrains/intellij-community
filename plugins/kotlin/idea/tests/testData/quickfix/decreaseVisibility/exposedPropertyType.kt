@@ -1,4 +1,5 @@
 // "Make 'foo' private" "true"
+// PRIORITY: HIGH
 // ACTION: Add getter
 // ACTION: Convert property initializer to getter
 // ACTION: Convert property to function

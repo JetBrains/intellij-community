@@ -1,4 +1,5 @@
 // "Make 'foo' private" "true"
+// PRIORITY: HIGH
 internal class A
 
 fun <caret>A.foo() {}
