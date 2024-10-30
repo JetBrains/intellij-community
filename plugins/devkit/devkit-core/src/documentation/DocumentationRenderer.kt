@@ -90,7 +90,7 @@ internal class DocumentationRenderer(private val project: Project) {
     appendElementPath(element.path)
     appendLine("<hr/>")
     appendDeprecation(element)
-    appendSinceUntil(element)
+    appendSinceUntil(element.since, element.until)
     element.description?.trim()?.let { appendLine("$it\n") }
     appendRequirement(element.requirement)
     appendDefaultValue(element.defaultValue)
@@ -142,18 +142,18 @@ internal class DocumentationRenderer(private val project: Project) {
     }
   }
 
-  private fun StringBuilder.appendSinceUntil(element: Element) {
-    if (element.since != null || element.until != null) {
+  private fun StringBuilder.appendSinceUntil(since: String?, until: String?) {
+    if (since != null || until != null) {
       append('_')
       append("Available: ")
-      if (element.since != null) {
-        append("since ${element.since}")
-        if (element.until != null) {
+      if (since != null) {
+        append("since ${since}")
+        if (until != null) {
           append(", ")
         }
       }
-      if (element.until != null) {
-        append("until ${element.until}")
+      if (until != null) {
+        append("until ${until}")
       }
       appendLine('_')
       appendLine()
@@ -243,6 +243,7 @@ internal class DocumentationRenderer(private val project: Project) {
   private fun StringBuilder.appendAttribute(attribute: Attribute): StringBuilder {
     appendAttributePath(attribute.path)
     appendLine("<hr/>")
+    appendSinceUntil(attribute.since, attribute.until)
     attribute.description?.trim()?.let { append(it) }
     appendParagraphSeparator()
     appendAttributeRequirement(attribute.requirement)

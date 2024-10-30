@@ -697,9 +697,6 @@ elements:
                   since: 2020.1
                   requirement:
                     required: no
-                    #language=Markdown
-                    details:
-                      - supported since 2020.1
                   #language=Markdown
                   description: |
                     Defines the dedicated actions resource bundle.
@@ -1207,11 +1204,9 @@ elements:
                           The ID of the action whose keyboard shortcut this group will use.
                     - attribute:
                         name: searchable
+                        since: 2020.3
                         requirement:
                           required: no
-                          #language=Markdown
-                          details:
-                            - supported since 2020.3
                         #language=Markdown
                         description: |
                           Boolean flag defining whether the group is displayed in <ui-path>Help&nbsp;|&nbsp;Find Action...</ui-path>
@@ -1405,9 +1400,6 @@ elements:
                         since: 2020.1
                         requirement:
                           required: no
-                          #language=Markdown
-                          details:
-                            - supported since 2020.1
                         #language=Markdown
                         description: |
                           Restricts listener instantiation to a specific operating system.
