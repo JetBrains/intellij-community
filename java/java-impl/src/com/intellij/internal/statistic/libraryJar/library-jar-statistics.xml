@@ -31,6 +31,7 @@
   <technology name="blade" class="com.blade.Blade"/>
   <technology name="breeze" class="breeze.linalg.DenseVector"/>
   <technology name="camunda-bpm" class="org.camunda.bpm.model.bpmn.Bpmn"/>
+  <technology name="cassandra" class="com.datastax.driver.core.Session"/>
   <technology name="cats" class="cats.Functor"/>
   <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
   <technology name="citrus" class="com.consol.citrus.Citrus"/>
@@ -39,12 +40,14 @@
   <technology name="cucumber" class="io.cucumber.java.Before"/>
   <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
+  <technology name="db2" class="com.ibm.db2.jcc.DB2Driver"/>
   <technology name="debezium" class="io.debezium.engine.ChangeEvent"/>
   <technology name="dozer" class="com.github.dozermapper.DozerBeanMapper"/>
   <technology name="drools" class="org.drools.core.spi.KnowledgeHelper"/>
   <technology name="dropwizard" class="io.dropwizard.Application"/>
   <technology name="easymock" class="org.easymock.Mock"/>
   <technology name="eclipselink-jpa" class="org.eclipse.persistence.jpa.PersistenceProvider"/>
+  <technology name="elasticsearch" class="co.elastic.clients.elasticsearch.ElasticsearchClient"/>
   <technology name="errorprone" class="com.google.errorprone.annotations.Immutable"/>
   <technology name="eureka" class="com.netflix.discovery.EurekaClient"/>
   <technology name="exposed" class="org.jetbrains.exposed.sql.Query"/>
@@ -70,6 +73,7 @@
   <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
+  <technology name="h2" class="org.h2.Driver"/>
   <technology name="hamcrest" class="org.hamcrest.Matchers"/>
   <technology name="hazelcast" class="com.hazelcast.config.Config"/>
   <technology name="hazelcast-jet" class="com.hazelcast.jet.pipeline.Pipeline"/>
@@ -151,15 +155,20 @@
   <technology name="logback" class="ch.qos.logback.classic.Logger"/>
   <technology name="lombok" class="lombok.Getter"/>
   <technology name="mapstruct" class="org.mapstruct.Mapping"/>
+  <technology name="mariadb" class="org.mariadb.jdbc.Driver"/>
   <technology name="micrometer" class="io.micrometer.core.annotation.Timed"/>
   <technology name="micronaut" class="io.micronaut.http.server.HttpServerConfiguration"/>
   <technology name="microprofile" class="org.eclipse.microprofile.config.Config"/>
+  <technology name="microsoftsql" class="com.microsoft.sqlserver.jdbc.SQLServerDriver"/>
   <technology name="mockito" class="org.mockito.Mock"/>
   <technology name="mockserver" class="org.mockserver.model.Body"/>
   <technology name="moddelmapper" class="org.modelmapper.ModelMapper"/>
+  <technology name="mongodb" class="com.mongodb.client.MongoClient"/>
+  <technology name="mongodb-reactive" class="com.mongodb.reactivestreams.client.MongoClient"/>
   <technology name="monix" class="monix.reactive.Observable"/>
   <technology name="munit" class="munit.FunSuite"/>
   <technology name="mybatis" class="org.apache.ibatis.annotations.Select"/>
+  <technology name="mysql" class="com.mysql.jdbc.Driver"/>
   <technology name="netty" class="io.netty.channel.AbstractChannel"/>
   <technology name="okhttp3" class="okhttp3.Request"/>
   <technology name="openfeign" class="feign.RequestLine"/>
@@ -168,8 +177,10 @@
   <technology name="opentelemetry" class="io.opentelemetry.api.OpenTelemetry"/>
   <technology name="opentracing" class="io.opentracing.Tracer"/>
   <technology name="optaplanner" class="org.optaplanner.core.api.solver.Solver"/>
+  <technology name="oracle" class="oracle.jdbc.driver.OracleDriver"/>
   <technology name="osgi" class="org.osgi.framework.BundleActivator"/>
   <technology name="play2" class="play.api.mvc.AbstractController"/>
+  <technology name="postgresql" class="org.postgresql.Driver"/>
   <technology name="playwright-java" class="com.microsoft.playwright.Playwright"/>
   <technology name="protobuf" class="com.google.protobuf.Message"/>
   <technology name="quarkus" class="io.quarkus.runtime.Application"/>
@@ -200,6 +211,7 @@
   <technology name="slf4j" class="org.slf4j.Logger"/>
   <technology name="slick" class="slick.sql.SqlAction"/>
   <technology name="smallrye-mutiny" class="io.smallrye.mutiny.Uni"/>
+  <technology name="snowflake" class="net.snowflake.client.jdbc.SnowflakeDriver"/>
   <technology name="spark-java" class="spark.Spark"/>
   <technology name="specs2" class="org.specs2.Specification"/>
   <technology name="spek" class="org.jetbrains.spek.api.Spek"/>
@@ -245,6 +257,7 @@
   <technology name="spring-ws" class="org.springframework.ws.WebServiceException"/>
   <technology name="springOldJavaConfig" class="org.springframework.config.java.annotation.Bean"/>
   <technology name="springfox" class="springfox.documentation.oas.annotations.EnableOpenApi"/>
+  <technology name="sqlite" class="org.sqlite.JDBC"/>
   <technology name="streamex" class="one.util.streamex.StreamEx"/>
   <technology name="struts2" class="org.apache.struts2.StrutsConstants"/>
   <technology name="sttp" class="sttp.client3.Response"/>
