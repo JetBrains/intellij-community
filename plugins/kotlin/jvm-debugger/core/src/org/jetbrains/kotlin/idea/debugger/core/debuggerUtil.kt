@@ -208,7 +208,8 @@ fun StackFrameProxyImpl.isOnSuspensionPoint(): Boolean {
 
     if (isInSuspendMethod(location)) {
         val firstLocation = getFirstMethodLocation(location) ?: return false
-        return firstLocation.safeLineNumber() == location.safeLineNumber() && firstLocation.codeIndex() != location.codeIndex()
+        return firstLocation.codeIndex() != location.codeIndex()
+                && isOnSuspendReturnOrReenter(location)
     }
 
     return false

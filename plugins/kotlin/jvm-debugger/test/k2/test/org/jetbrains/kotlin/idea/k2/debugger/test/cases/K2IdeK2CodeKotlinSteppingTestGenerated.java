@@ -1913,6 +1913,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/smartStepIntoSubClass.kt");
         }
 
+        @TestMetadata("smartStepIntoSuspendCallWithoutSuspension.kt")
+        public void testSmartStepIntoSuspendCallWithoutSuspension() throws Exception {
+            runTest("../testData/stepping/custom/smartStepIntoSuspendCallWithoutSuspension.kt");
+        }
+
         @TestMetadata("smartStepIntoSuspendFunInterface.kt")
         public void testSmartStepIntoSuspendFunInterface() throws Exception {
             runTest("../testData/stepping/custom/smartStepIntoSuspendFunInterface.kt");
