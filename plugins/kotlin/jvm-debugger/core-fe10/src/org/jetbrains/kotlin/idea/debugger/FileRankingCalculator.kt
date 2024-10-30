@@ -2,18 +2,19 @@
 
 package org.jetbrains.kotlin.idea.debugger
 
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.application.smartReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.blockingContext
 import com.intellij.psi.PsiElement
 import com.sun.jdi.*
+import kotlinx.coroutines.CancellationException
 import org.jetbrains.kotlin.codegen.ClassBuilderMode
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.base.psi.getLineStartOffset
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.LOW
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MAJOR
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator.Ranking.Companion.MINOR
@@ -28,7 +29,6 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.varargParameterPosition
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-import org.jetbrains.kotlin.utils.keysToMap
 import kotlin.jvm.internal.FunctionBase
 
 object FileRankingCalculatorForIde : FileRankingCalculator() {
@@ -39,16 +39,14 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
     abstract fun analyze(element: KtElement): BindingContext
 
     override suspend fun chooseMostApplicableFile(files: List<KtFile>, location: Location): KtFile {
-        val fileWithRankings = blockingContext {
-            runReadAction { rankFiles(files, location) }
-        }
+        val fileWithRankings = rankFiles(files, location)
         val fileWithMaxScore = fileWithRankings.maxByOrNull { it.value }!!
         return fileWithMaxScore.key
     }
 
-    fun rankFiles(files: Collection<KtFile>, location: Location): Map<KtFile, Int> {
+    suspend fun rankFiles(files: Collection<KtFile>, location: Location): Map<KtFile, Int> {
         assert(files.isNotEmpty())
-        return files.keysToMap { fileRankingSafe(it, location).value }
+        return files.associateWith { fileRankingSafe(it, location).value }
     }
 
     private class Ranking(val value: Int) : Comparable<Ranking> {
@@ -80,27 +78,27 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             }.fold(ZERO) { sum, r -> sum + r }
     }
 
-    private fun rankingForClass(clazz: KtClassOrObject, fqName: String, virtualMachine: VirtualMachine): Ranking {
-        val bindingContext = analyze(clazz)
+    private suspend fun rankingForClass(clazz: KtClassOrObject, fqName: String, virtualMachine: VirtualMachine): Ranking {
+        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         val jdiType = virtualMachine.classesByName(fqName).firstOrNull() ?: run {
             // Check at least the class name if not found
-            return rankingForClassName(fqName, descriptor, bindingContext)
+            return readAction { rankingForClassName(fqName, descriptor, bindingContext) }
         }
 
         return rankingForClass(clazz, jdiType)
     }
 
-    private fun rankingForClass(clazz: KtClassOrObject, type: ReferenceType): Ranking {
-        val bindingContext = analyze(clazz)
+    private suspend fun rankingForClass(clazz: KtClassOrObject, type: ReferenceType): Ranking {
+        val bindingContext = smartReadAction(clazz.project) { analyze(clazz) }
         val descriptor = bindingContext[BindingContext.CLASS, clazz] ?: return ZERO
 
         return collect(
-            rankingForClassName(type.name(), descriptor, bindingContext),
-            Ranking.minor(type.isAbstract && descriptor.modality == Modality.ABSTRACT),
-            Ranking.minor(type.isFinal && descriptor.modality == Modality.FINAL),
-            Ranking.minor(type.isStatic && !descriptor.isInner),
+            readAction { rankingForClassName(type.name(), descriptor, bindingContext) },
+            Ranking.minor(type.isAbstract && readAction { descriptor.modality } == Modality.ABSTRACT),
+            Ranking.minor(type.isFinal && readAction { descriptor.modality } == Modality.FINAL),
+            Ranking.minor(type.isStatic && readAction { !descriptor.isInner }),
             rankingForVisibility(descriptor, type)
         )
     }
@@ -115,8 +113,8 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         }
     }
 
-    private fun rankingForMethod(function: KtFunction, method: Method): Ranking {
-        val bindingContext = analyze(function)
+    private suspend fun rankingForMethod(function: KtFunction, method: Method): Ranking {
+        val bindingContext = smartReadAction(function.project) { analyze(function) }
         val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, function] as? CallableMemberDescriptor ?: return ZERO
 
         if (function !is KtConstructor<*> && method.name() != descriptor.name.asString())
@@ -124,17 +122,17 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
 
         return collect(
             method.isConstructor && function is KtConstructor<*>,
-            method.isAbstract && descriptor.modality == Modality.ABSTRACT,
-            method.isFinal && descriptor.modality == Modality.FINAL,
-            method.isVarArgs && descriptor.varargParameterPosition() >= 0,
+            method.isAbstract && readAction { descriptor.modality } == Modality.ABSTRACT,
+            method.isFinal && readAction { descriptor.modality } == Modality.FINAL,
+            method.isVarArgs && readAction { descriptor.varargParameterPosition() } >= 0,
             rankingForVisibility(descriptor, method),
-            descriptor.valueParameters.size == (method.safeArguments()?.size ?: 0)
+            readAction { descriptor.valueParameters.size } == (method.safeArguments()?.size ?: 0)
         )
     }
 
-    private fun rankingForAccessor(accessor: KtPropertyAccessor, method: Method): Ranking {
+    private suspend fun rankingForAccessor(accessor: KtPropertyAccessor, method: Method): Ranking {
         val methodName = method.name()
-        val expectedPropertyName = accessor.property.name ?: return ZERO
+        val expectedPropertyName = readAction { accessor.property.name } ?: return ZERO
 
         if (accessor.isSetter) {
             if (!methodName.startsWith("set") || method.returnType() !is VoidType || method.argumentTypes().size != 1)
@@ -160,11 +158,11 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         return accessorMethodName.drop(if (accessorMethodName.startsWith("is")) 2 else 3)
     }
 
-    private fun rankingForProperty(property: KtProperty, method: Method): Ranking {
+    private suspend fun rankingForProperty(property: KtProperty, method: Method): Ranking {
         val methodName = method.name()
-        val propertyName = property.name ?: return ZERO
+        val propertyName = readAction { property.name } ?: return ZERO
 
-        if (property.isTopLevel && method.name() == "<clinit>") {
+        if (readAction { property.isTopLevel } && method.name() == "<clinit>") {
             // For top-level property initializers
             return MINOR
         }
@@ -176,27 +174,30 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         return if (methodName.drop(3) == propertyName.capitalizeAsciiOnly()) MAJOR else -NORMAL
     }
 
-    private fun rankingForVisibility(descriptor: DeclarationDescriptorWithVisibility, accessible: Accessible): Ranking {
+    private suspend fun rankingForVisibility(descriptor: DeclarationDescriptorWithVisibility, accessible: Accessible): Ranking {
+        val visibility = readAction { descriptor.visibility }
         return collect(
-            accessible.isPublic && descriptor.visibility == DescriptorVisibilities.PUBLIC,
-            accessible.isProtected && descriptor.visibility == DescriptorVisibilities.PROTECTED,
-            accessible.isPrivate && descriptor.visibility == DescriptorVisibilities.PRIVATE
+            accessible.isPublic && visibility == DescriptorVisibilities.PUBLIC,
+            accessible.isProtected && visibility == DescriptorVisibilities.PROTECTED,
+            accessible.isPrivate && visibility == DescriptorVisibilities.PRIVATE
         )
     }
 
-    private fun fileRankingSafe(file: KtFile, location: Location): Ranking {
+    private suspend fun fileRankingSafe(file: KtFile, location: Location): Ranking {
         return try {
             fileRanking(file, location)
         } catch (e: ClassNotLoadedException) {
             LOG.error("ClassNotLoadedException should never happen in FileRankingCalculator", e)
             ZERO
-        } catch (e: AbsentInformationException) {
+        } catch (_: AbsentInformationException) {
             ZERO
-        } catch (e: InternalException) {
+        } catch (_: InternalException) {
             ZERO
         } catch (e: VMDisconnectedException) {
             throw e
         } catch (e: ProcessCanceledException) {
+            throw e
+        } catch (e: CancellationException) {
             throw e
         } catch (e: RuntimeException) {
             LOG.error("Exception during Kotlin sources ranking", e)
@@ -204,10 +205,10 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
         }
     }
 
-    private fun fileRanking(file: KtFile, location: Location): Ranking {
+    private suspend fun fileRanking(file: KtFile, location: Location): Ranking {
         val locationLineNumber = location.lineNumber() - 1
-        val lineStartOffset = file.getLineStartOffset(locationLineNumber) ?: return LOW
-        val elementAt = file.findElementAt(lineStartOffset) ?: return ZERO
+        val lineStartOffset = readAction { file.getLineStartOffset(locationLineNumber) } ?: return LOW
+        val elementAt = readAction { file.findElementAt(lineStartOffset) } ?: return ZERO
 
         var overallRanking = ZERO
         val method = location.method()
@@ -216,22 +217,22 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             val (className, methodName) = method.getContainingClassAndMethodNameForLambda() ?: return ZERO
             if (method.isBridge && method.isSynthetic) {
                 // It might be a static lambda field accessor
-                val containingClass = elementAt.getParentOfType<KtClassOrObject>(false) ?: return LOW
+                val containingClass = readAction { elementAt.getParentOfType<KtClassOrObject>(false) } ?: return LOW
                 return rankingForClass(containingClass, className, location.virtualMachine())
             } else {
                 val containingFunctionLiteral =
-                    findFunctionLiteralOnLine(elementAt)
-                        ?: findAnonymousFunctionInParent(elementAt)
+                    readAction { findFunctionLiteralOnLine(elementAt) }
+                        ?: readAction { findAnonymousFunctionInParent(elementAt) }
                         ?: return LOW
 
-                val containingCallable = findNonLocalCallableParent(containingFunctionLiteral) ?: return LOW
+                val containingCallable = readAction { findNonLocalCallableParent(containingFunctionLiteral) } ?: return LOW
                 when (containingCallable) {
-                    is KtFunction -> if (containingCallable.name == methodName) overallRanking += MAJOR
-                    is KtProperty -> if (containingCallable.name == methodName) overallRanking += MAJOR
-                    is KtPropertyAccessor -> if (containingCallable.property.name == methodName) overallRanking += MAJOR
+                    is KtFunction -> if (readAction { containingCallable.name } == methodName) overallRanking += MAJOR
+                    is KtProperty -> if (readAction { containingCallable.name } == methodName) overallRanking += MAJOR
+                    is KtPropertyAccessor -> if (readAction { containingCallable.property.name } == methodName) overallRanking += MAJOR
                 }
 
-                val containingClass = containingCallable.getParentOfType<KtClassOrObject>(false)
+                val containingClass = readAction { containingCallable.getParentOfType<KtClassOrObject>(false) }
                 if (containingClass != null) {
                     overallRanking += rankingForClass(containingClass, className, location.virtualMachine())
                 }
@@ -242,14 +243,14 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
 
         // TODO support <clinit>
         if (method.name() == "<init>") {
-            val containingClass = elementAt.getParentOfType<KtClassOrObject>(false) ?: return LOW
-            val constructorOrInitializer =
+            val containingClass = readAction { elementAt.getParentOfType<KtClassOrObject>(false) } ?: return LOW
+            val constructorOrInitializer = readAction {
                 elementAt.getParentOfTypes2<KtConstructor<*>, KtClassInitializer>()?.takeIf { containingClass.isAncestor(it) }
                     ?: containingClass.primaryConstructor?.takeIf { it.getLine() == containingClass.getLine() }
-
+            }
             if (constructorOrInitializer == null
-                && locationLineNumber < containingClass.getLine()
-                && locationLineNumber > containingClass.lastChild.getLine()
+                && locationLineNumber < readAction { containingClass.getLine() }
+                && locationLineNumber > readAction { containingClass.lastChild.getLine() }
             ) {
                 return LOW
             }
@@ -259,7 +260,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             if (constructorOrInitializer is KtConstructor<*>)
                 overallRanking += rankingForMethod(constructorOrInitializer, method)
         } else {
-            val callable = findNonLocalCallableParent(elementAt) ?: return LOW
+            val callable = readAction { findNonLocalCallableParent(elementAt) } ?: return LOW
             overallRanking += when (callable) {
                 is KtFunction -> rankingForMethod(callable, method)
                 is KtPropertyAccessor -> rankingForAccessor(callable, method)
@@ -267,7 +268,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
                 else -> return LOW
             }
 
-            val containingClass = elementAt.getParentOfType<KtClassOrObject>(false)
+            val containingClass = readAction { elementAt.getParentOfType<KtClassOrObject>(false) }
             if (containingClass != null)
                 overallRanking += rankingForClass(containingClass, location.declaringType())
         }
@@ -351,7 +352,7 @@ abstract class FileRankingCalculator(private val checkClassFqName: Boolean = tru
             return superClass.isLambdaClass()
         }
 
-        return declaringClass.superclass()?.isLambdaClass() ?: false
+        return declaringClass.superclass()?.isLambdaClass() == true
     }
 
     private fun Method.isIndyLambda(): Boolean {

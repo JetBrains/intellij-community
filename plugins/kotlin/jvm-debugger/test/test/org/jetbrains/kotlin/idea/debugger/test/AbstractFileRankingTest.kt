@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.debugger.test
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.openapi.application.runReadAction
 import com.sun.jdi.ThreadReference
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.kotlin.config.JvmClosureGenerationScheme
 import org.jetbrains.kotlin.idea.debugger.FileRankingCalculator
 import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
@@ -78,7 +79,7 @@ abstract class AbstractFileRankingTest : LowLevelDebuggerTestBase() {
             for (location in locations) {
                 if (location.method().isBridge || location.method().isSynthetic) continue
 
-                val fileWithRankings: Map<KtFile, Int> = runReadAction {
+                val fileWithRankings: Map<KtFile, Int> = runBlocking {
                     calculator.rankFiles(allFilesWithSameName, location)
                 }
 
