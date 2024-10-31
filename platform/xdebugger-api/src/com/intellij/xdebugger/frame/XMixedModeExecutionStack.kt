@@ -7,6 +7,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlin.time.measureTimedValue
+
+private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeSuspendContext>()
 
 class XMixedModeExecutionStack(
   val session: XDebugSession,
@@ -25,13 +28,13 @@ class XMixedModeExecutionStack(
     coroutineScope.launch(Dispatchers.EDT) {
       val lowLevelAcc = MyAccumulatingContainer()
       lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
-      val lowLevelFrames = lowLevelAcc.frames.await()
+      val lowLevelFrames = measureTimedValue { lowLevelAcc.frames.await() }.also { logger.info("Low level frames loaded in ${it.duration}") }.value
 
       val highLevelAcc = MyAccumulatingContainer()
       requireNotNull(highLevelExecutionStack).computeStackFrames(firstFrameIndex, highLevelAcc)
-      val highLevelFrames = highLevelAcc.frames.await()
+      val highLevelFrames = measureTimedValue { highLevelAcc.frames.await() }.also { logger.info("High level frames loaded in ${it.duration}") }.value
 
-      val combinedFrames = framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames)
+      val combinedFrames = measureTimedValue { framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames) }.also { logger.info("Mixed stack built in ${it.duration}") }.value
       container.addStackFrames(combinedFrames, true)
     }
   }

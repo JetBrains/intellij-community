@@ -10,6 +10,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
+
+private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeSuspendContext>()
 
 class XMixedModeSuspendContext(
   val session: XDebugSession,
@@ -47,8 +51,7 @@ class XMixedModeSuspendContext(
         highLevelDebugSuspendContext.computeExecutionStacks(acc)
       }
 
-      val highLevelStacks = acc.frames.await()
-
+      val highLevelStacks = measureTimedValue { acc.frames.await() }.also { logger.info("High level stacks loaded in ${it.duration}") }.value
       val threadIdToHighLevelStackMap = highLevelStacks.associateBy { (it as XExecutionStackWithNativeThreadId).getNativeThreadId() }
 
       val combinedContainer = MyMixedModeCombinedContainer(
