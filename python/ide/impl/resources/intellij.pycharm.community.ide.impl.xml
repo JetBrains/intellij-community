@@ -12,14 +12,14 @@
   </projectListeners>
 
   <extensionPoints>
-    <extensionPoint interface="com.intellij.pycharm.community.ide.impl.scratchProject.ScratchFileType"
-                    qualifiedName="Pythonid.scratchFileType" dynamic="true"/>
+    <extensionPoint interface="com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType"
+                    qualifiedName="Pythonid.miscFileType" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <registryKey defaultValue="5" description="Number of primary buttons on welcome screen (other go to 'more actions')"
                  key="welcome.screen.primaryButtonsCount" restartRequired="true" overrides="true"/>
-    <registryKey defaultValue="false" description="Scratch project enable" key="pycharm.scratchProject"/>
+    <registryKey defaultValue="false" description="Misc project enable" key="pycharm.miscProject"/>
     <applicationInitializedListener implementation="com.intellij.pycharm.community.ide.impl.PyCharmCorePluginConfigurator"/>
     <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
                         serviceImplementation="com.intellij.pycharm.community.ide.impl.PyCharmPythonIdeLanguageCustomization"
@@ -113,7 +113,7 @@
 
     <group id="WelcomeScreen.Platform.NewProject">
       <group id="WelcomeScreen.PyScratchFileActionGroup"
-             class="com.intellij.pycharm.community.ide.impl.scratchProject.impl.PyScratchFileActionGroup" compact="true"/>
+             class="com.intellij.pycharm.community.ide.impl.miscProject.impl.PyMiscFileActionGroup" compact="true"/>
       <group id="WelcomeScreen.CreateDirectoryProject"
              class="com.intellij.pycharm.community.ide.impl.newProjectWizard.impl.PyV3NewProjectStepAction"/>
       <reference ref="WelcomeScreen.OpenDirectoryProject"/>

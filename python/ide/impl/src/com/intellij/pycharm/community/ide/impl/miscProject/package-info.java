@@ -3,6 +3,6 @@
  * See `PY-75549`
  */
 @ApiStatus.Internal
-package com.intellij.pycharm.community.ide.impl.scratchProject;
+package com.intellij.pycharm.community.ide.impl.miscProject;
 
 import org.jetbrains.annotations.ApiStatus;
