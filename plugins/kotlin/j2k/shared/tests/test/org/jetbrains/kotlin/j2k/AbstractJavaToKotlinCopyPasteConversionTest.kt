@@ -21,7 +21,7 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTe
     override val testDataDirectory: File
         get() = IDEA_TEST_DATA_DIR.resolve("copyPaste/conversion")
 
-    override fun getProjectDescriptor() = KotlinWithJdkAndRuntimeLightProjectDescriptor.getInstance()
+    override fun getProjectDescriptor(): KotlinWithJdkAndRuntimeLightProjectDescriptor = J2K_PROJECT_DESCRIPTOR
 
     override fun setUp() {
         super.setUp()
