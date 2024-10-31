@@ -9,8 +9,10 @@ import com.intellij.lang.jvm.actions.AnnotationRequest
 import com.intellij.lang.jvm.actions.CreateFieldRequest
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiErrorElement
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiReferenceExpression
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.createSmartPointer
 
 internal class CreateFieldFromJavaUsageRequest(
@@ -22,7 +24,10 @@ internal class CreateFieldFromJavaUsageRequest(
 
   private val myReferencePointer = reference.createSmartPointer()
 
-  override fun isValid(): Boolean = reference?.referenceName != null
+  override fun isValid(): Boolean {
+    val reference = reference ?: return false
+    return PsiTreeUtil.skipWhitespacesForward(reference.parent) !is PsiErrorElement && reference.referenceName != null
+  }
 
   internal val reference: PsiReferenceExpression? get() = myReferencePointer.element
 
