@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.ide.impl.ProjectUtilKt;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -23,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcher;
 import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSystemProjectsWatcherImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsView;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
@@ -33,6 +35,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.task.ProjectTaskContext;
+import com.intellij.task.ProjectTaskManager;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import kotlinx.coroutines.CoroutineScope;
@@ -274,6 +278,28 @@ public final class ExternalProjectsManagerImpl implements ExternalProjectsManage
   public void forgetExternalProjectData(@NotNull ProjectSystemId projectSystemId, @NotNull String linkedProjectPath) {
     ExternalProjectsDataStorage.getInstance(myProject).remove(projectSystemId, linkedProjectPath);
     ExternalSystemUtil.scheduleExternalViewStructureUpdate(myProject, projectSystemId);
+  }
+
+  @ApiStatus.Internal
+  public void projectTasksBeforeRun(@NotNull ProjectTaskContext context) throws ExecutionException {
+    if (isInitializationFinished.get()) {
+      if (!myTaskActivator.doExecuteBuildPhaseTriggers(true, context)) {
+        throw new ExecutionException(ExternalSystemBundle.message("dialog.message.before.build.triggering.task.failed"));
+      }
+    } else {
+      LOG.error("projectTasksBeforeRun called before external system initialization finished");
+    }
+  }
+
+  @ApiStatus.Internal
+  public void projectTasksAfterRun(@NotNull ProjectTaskManager.Result result) throws ExecutionException {
+    if (isInitializationFinished.get()) {
+      if (!myTaskActivator.doExecuteBuildPhaseTriggers(false, result.getContext())) {
+        throw new ExecutionException(ExternalSystemBundle.message("dialog.message.after.build.triggering.task.failed"));
+      }
+    } else {
+      LOG.error("projectTasksAfterRun called before external system initialization finished");
+    }
   }
 
   @ApiStatus.Internal

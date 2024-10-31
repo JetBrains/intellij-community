@@ -61,6 +61,8 @@
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
 
+    <projectTaskManagerListener implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectTaskManagerListener" />
+
     <projectService serviceInterface="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager"
                     serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl"/>
     <externalSystemSettingsListener

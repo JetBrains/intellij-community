@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
@@ -27,14 +26,12 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.task.ModuleBuildTask;
 import com.intellij.task.ProjectTaskContext;
-import com.intellij.task.ProjectTaskManager;
-import com.intellij.task.impl.ProjectTaskManagerImpl;
-import com.intellij.task.impl.ProjectTaskManagerListener;
 import com.intellij.task.impl.ProjectTaskScope;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DisposableWrapperList;
 import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -61,23 +58,6 @@ public class ExternalSystemTaskActivator {
   }
 
   public void init() {
-    ProjectTaskManagerImpl projectTaskManager = (ProjectTaskManagerImpl)ProjectTaskManager.getInstance(myProject);
-    projectTaskManager.addListener(new ProjectTaskManagerListener() {
-      @Override
-      public void beforeRun(@NotNull ProjectTaskContext context) throws ExecutionException {
-        if (!doExecuteBuildPhaseTriggers(true, context)) {
-          throw new ExecutionException(ExternalSystemBundle.message("dialog.message.before.build.triggering.task.failed"));
-        }
-      }
-
-      @Override
-      public void afterRun(@NotNull ProjectTaskManager.Result result) throws ExecutionException {
-        if (!doExecuteBuildPhaseTriggers(false, result.getContext())) {
-          throw new ExecutionException(ExternalSystemBundle.message("dialog.message.after.build.triggering.task.failed"));
-        }
-      }
-    });
-
     fireTasksChanged();
   }
 
@@ -98,7 +78,8 @@ public class ExternalSystemTaskActivator {
     return StringUtil.join(result, ", ");
   }
 
-  private boolean doExecuteBuildPhaseTriggers(boolean myBefore, @NotNull ProjectTaskContext context) {
+  @ApiStatus.Internal
+  public boolean doExecuteBuildPhaseTriggers(boolean myBefore, @NotNull ProjectTaskContext context) {
     ProjectTaskScope taskScope = context.getUserData(ProjectTaskScope.KEY);
     if (taskScope == null) {
       return true;
