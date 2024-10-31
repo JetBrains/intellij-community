@@ -35,9 +35,11 @@
   <technology name="cassandra" class="com.datastax.driver.core.Session"/>
   <technology name="cats" class="cats.Functor"/>
   <technology name="checkerframework" class="org.checkerframework.checker.nullness.qual.Nullable"/>
+  <technology name="choco-solver" class="org.chocosolver.solver.Model"/>
   <technology name="citrus" class="com.consol.citrus.Citrus"/>
   <technology name="coherence" class="com.oracle.coherence.persistence.PersistentStore"/>
   <technology name="consul" class="com.ecwid.consul.v1.ConsulClient"/>
+  <technology name="cplex" class="ilog.cplex.IloCplex"/>
   <technology name="cucumber" class="io.cucumber.java.Before"/>
   <technology name="dagger" class="dagger.Provides"/>
   <technology name="datanucleus-jpa" class="org.datanucleus.api.jpa.PersistenceProviderImpl"/>
@@ -75,6 +77,7 @@
   <technology name="gson" class="com.google.gson.Gson"/>
   <technology name="guava" class="com.google.common.base.Optional"/>
   <technology name="guice" class="com.google.inject.Provider"/>
+  <technology name="gurobi" class="com.gurobi.gurobi.GRBEnv"/>
   <technology name="gwt" class="com.google.gwt.core.client.EntryPoint"/>
   <technology name="h2" class="org.h2.Driver"/>
   <technology name="hamcrest" class="org.hamcrest.Matchers"/>
@@ -181,6 +184,7 @@
   <technology name="opentelemetry" class="io.opentelemetry.api.OpenTelemetry"/>
   <technology name="opentracing" class="io.opentracing.Tracer"/>
   <technology name="optaplanner" class="org.optaplanner.core.api.solver.Solver"/>
+  <technology name="or-tools" class="com.google.ortools.init.OrToolsVersion"/>
   <technology name="oracle" class="oracle.jdbc.driver.OracleDriver"/>
   <technology name="osgi" class="org.osgi.framework.BundleActivator"/>
   <technology name="play2" class="play.api.mvc.AbstractController"/>
@@ -272,6 +276,7 @@
   <technology name="testcontainers" class="org.testcontainers.containers.Container"/>
   <technology name="testng" class="org.testng.annotations.Test"/>
   <technology name="thymeleaf" class="org.thymeleaf.dialect.IDialect"/>
+  <technology name="timefold" class="ai.timefold.solver.core.api.score.stream.Constraint"/>
   <technology name="tornadofx" class="tornadofx.App"/>
   <technology name="torque" class="org.apache.torque"/>
   <technology name="truth" class="com.google.common.truth.Truth"/>
