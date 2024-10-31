@@ -591,6 +591,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
                 excludedDirectories = listOf(
                     "unusedVariable", // In FE1.0, this is a quickfix rather than a local inspection
                     "canSimplifyDollarLiteral", // K2-only
+                    "canConvertToMultiDollarString", // K2-only
                 )
             )
         }

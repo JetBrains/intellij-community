@@ -8253,6 +8253,140 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString")
+    public static class CanConvertToMultiDollarString extends AbstractK2LocalInspectionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("blockDollarWithChar.kt")
+        public void testBlockDollarWithChar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/blockDollarWithChar.kt");
+        }
+
+        @TestMetadata("blockDollarWithString.kt")
+        public void testBlockDollarWithString() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/blockDollarWithString.kt");
+        }
+
+        @TestMetadata("escapedDollar.kt")
+        public void testEscapedDollar() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/escapedDollar.kt");
+        }
+
+        @TestMetadata("escapedDollarCaretInsideBlockExpression.kt")
+        public void testEscapedDollarCaretInsideBlockExpression() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/escapedDollarCaretInsideBlockExpression.kt");
+        }
+
+        @TestMetadata("multipleSimplifiableDollars.kt")
+        public void testMultipleSimplifiableDollars() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/multipleSimplifiableDollars.kt");
+        }
+
+        @TestMetadata("notReplaceableAlreadyPrefixed.kt")
+        public void testNotReplaceableAlreadyPrefixed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableAlreadyPrefixed.kt");
+        }
+
+        @TestMetadata("notReplaceableFirstIsTooLong.kt")
+        public void testNotReplaceableFirstIsTooLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableFirstIsTooLong.kt");
+        }
+
+        @TestMetadata("notReplaceableNothingToChange.kt")
+        public void testNotReplaceableNothingToChange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableNothingToChange.kt");
+        }
+
+        @TestMetadata("notReplaceableNothingToChangeTripleQuoted.kt")
+        public void testNotReplaceableNothingToChangeTripleQuoted() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableNothingToChangeTripleQuoted.kt");
+        }
+
+        @TestMetadata("notReplaceableNothingToChangeTripleQuotedMultiline.kt")
+        public void testNotReplaceableNothingToChangeTripleQuotedMultiline() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableNothingToChangeTripleQuotedMultiline.kt");
+        }
+
+        @TestMetadata("notReplaceableSecondIsTooLong.kt")
+        public void testNotReplaceableSecondIsTooLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableSecondIsTooLong.kt");
+        }
+
+        @TestMetadata("notReplaceableTooManyDollars.kt")
+        public void testNotReplaceableTooManyDollars() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTooManyDollars.kt");
+        }
+
+        @TestMetadata("notReplaceableTooManyDollarsBacktickIdentifier.kt")
+        public void testNotReplaceableTooManyDollarsBacktickIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTooManyDollarsBacktickIdentifier.kt");
+        }
+
+        @TestMetadata("notReplaceableTooManyDollarsBlock.kt")
+        public void testNotReplaceableTooManyDollarsBlock() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTooManyDollarsBlock.kt");
+        }
+
+        @TestMetadata("notReplaceableTooManyDollarsUnderscoreIdentifier.kt")
+        public void testNotReplaceableTooManyDollarsUnderscoreIdentifier() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTooManyDollarsUnderscoreIdentifier.kt");
+        }
+
+        @TestMetadata("notReplaceableTripleQuotedMultiLine.kt")
+        public void testNotReplaceableTripleQuotedMultiLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTripleQuotedMultiLine.kt");
+        }
+
+        @TestMetadata("notReplaceableTripleQuotedPrefixed.kt")
+        public void testNotReplaceableTripleQuotedPrefixed() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTripleQuotedPrefixed.kt");
+        }
+
+        @TestMetadata("notReplaceableTripleQuotedSingleLine.kt")
+        public void testNotReplaceableTripleQuotedSingleLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/notReplaceableTripleQuotedSingleLine.kt");
+        }
+
+        @TestMetadata("replaceableManyDollars.kt")
+        public void testReplaceableManyDollars() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/replaceableManyDollars.kt");
+        }
+
+        @TestMetadata("replaceableManyDollarsTwoSeqences.kt")
+        public void testReplaceableManyDollarsTwoSeqences() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/replaceableManyDollarsTwoSeqences.kt");
+        }
+
+        @TestMetadata("tripleQuotedReplaceableMultiLine.kt")
+        public void testTripleQuotedReplaceableMultiLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/tripleQuotedReplaceableMultiLine.kt");
+        }
+
+        @TestMetadata("tripleQuotedReplaceableMultiLineLong.kt")
+        public void testTripleQuotedReplaceableMultiLineLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/tripleQuotedReplaceableMultiLineLong.kt");
+        }
+
+        @TestMetadata("tripleQuotedReplaceableSingleLine.kt")
+        public void testTripleQuotedReplaceableSingleLine() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/tripleQuotedReplaceableSingleLine.kt");
+        }
+
+        @TestMetadata("tripleQuotedReplaceableSingleLineLong.kt")
+        public void testTripleQuotedReplaceableSingleLineLong() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/tripleQuotedReplaceableSingleLineLong.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal")
     public abstract static class InspectionsLocal extends AbstractK2LocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)

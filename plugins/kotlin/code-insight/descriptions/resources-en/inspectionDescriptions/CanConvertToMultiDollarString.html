@@ -1,0 +1,23 @@
+<html>
+<body>
+Reports that a string can benefit from a conversion to a version with an interpolation prefix.
+<p>
+An interpolation prefix may make a string easier to comprehend, since prefixed strings can use dollar literals without additional escaping.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
+val jsonSchema: String = """
+{
+  "${'$'}id": "https://example.com/product.schema.json",
+}"""
+</code></pre>
+The quick fix converts all safely replaceable escaped dollar characters to regular dollar characters:
+<pre><code>
+val jsonSchema: String = $$"""
+{
+  "$id": "https://example.com/product.schema.json",
+}"""
+</code></pre>
+<!-- tooltip end -->
+</body>
+</html>
