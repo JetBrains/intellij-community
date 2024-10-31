@@ -4575,12 +4575,6 @@ f:com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData
 - getDescriptionDirectoryName():java.lang.String
 - getFamily():java.lang.String
 - getPluginId():com.intellij.openapi.extensions.PluginId
-f:com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel
-- <init>():V
-- dispose():V
-- getComponent():javax.swing.JPanel
-- reset(com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData,java.lang.String):V
-- reset(java.lang.String):V
 f:com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl
 - com.intellij.codeInsight.intention.IntentionManager
 - com.intellij.openapi.Disposable
