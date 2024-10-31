@@ -107,14 +107,14 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun setCaretPosition(line: Int, column: Int) {
     click()
-    driver.withContext(OnDispatcher.EDT) {
-      editor.getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
+    interact {
+      getCaretModel().moveToLogicalPosition(driver.logicalPosition(line - 1, column - 1))
     }
   }
 
   fun moveCaretToOffset(offset: Int) {
-    driver.withContext(OnDispatcher.EDT) {
-      editor.getCaretModel().moveToOffset(offset)
+    interact {
+      getCaretModel().moveToOffset(offset)
     }
   }
 
@@ -126,9 +126,7 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
     })
   }
 
-  fun getLineText(line: Int) = editor.getDocument().getText().split("\n").let {
-    if (it.size < line) "" else it[line - 1]
-  }
+  fun getLineText(line: Int) = text.lines().getOrElse(line - 1) { "" }
 
   fun <T> interact(block: Editor.() -> T): T {
     return driver.withContext(OnDispatcher.EDT) {
