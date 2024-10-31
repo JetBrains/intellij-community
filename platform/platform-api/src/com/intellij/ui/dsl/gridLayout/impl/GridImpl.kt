@@ -210,13 +210,13 @@ internal class GridImpl : Grid {
       val layoutCellData: LayoutCellData
       with(cell.constraints) {
         layoutCellData = LayoutCellData(cell = cell,
-          preferredSize = preferredSize,
-          columnGaps = HorizontalGaps(
-            left = JBUIScale.scale(columnsGaps.getOrNull(x)?.left ?: 0),
-            right = JBUIScale.scale(columnsGaps.getOrNull(x + width - 1)?.right ?: 0)),
-          rowGaps = VerticalGaps(
-            top = JBUIScale.scale(rowsGaps.getOrNull(y)?.top ?: 0),
-            bottom = JBUIScale.scale(rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0))
+                                        preferredSize = preferredSize,
+                                        unscaledColumnGaps = UnscaledGapsX(
+                                          left = columnsGaps.getOrNull(x)?.left ?: 0,
+                                          right = columnsGaps.getOrNull(x + width - 1)?.right ?: 0),
+                                        unscaledRowGaps = UnscaledGapsY(
+                                          top = rowsGaps.getOrNull(y)?.top ?: 0,
+                                          bottom = rowsGaps.getOrNull(y + height - 1)?.bottom ?: 0)
         )
 
         columnsCount = max(columnsCount, x + width)
@@ -419,7 +419,7 @@ internal class GridImpl : Grid {
     val visualPaddings = layoutCellData.scaledVisualPaddings
     val paddedWidth = layoutData.getPaddedWidth(layoutCellData)
     val fullPaddedWidth = layoutData.getFullPaddedWidth(layoutCellData)
-    val x = layoutData.columnsCoord[constraints.x] + gaps.left + layoutCellData.columnGaps.left - visualPaddings.left +
+    val x = layoutData.columnsCoord[constraints.x] + gaps.left + JBUIScale.scale(layoutCellData.unscaledColumnGaps.left) - visualPaddings.left +
             when (constraints.horizontalAlign) {
               HorizontalAlign.LEFT -> 0
               HorizontalAlign.CENTER -> (fullPaddedWidth - paddedWidth) / 2
@@ -435,7 +435,7 @@ internal class GridImpl : Grid {
     val y: Int
     val baseline = layoutCellData.baseline
     if (baseline == null) {
-      y = layoutData.rowsCoord[constraints.y] + layoutCellData.rowGaps.top + gaps.top - visualPaddings.top +
+      y = layoutData.rowsCoord[constraints.y] + JBUIScale.scale(layoutCellData.unscaledRowGaps.top) + gaps.top - visualPaddings.top +
           when (constraints.verticalAlign) {
             VerticalAlign.TOP -> 0
             VerticalAlign.CENTER -> (fullPaddedHeight - paddedHeight) / 2
@@ -568,17 +568,17 @@ private class LayoutData {
  * For sub-grids height of [preferredSize] calculated on late steps of [LayoutData] calculations
  */
 private data class LayoutCellData(val cell: Cell, val preferredSize: Dimension,
-                                  val columnGaps: HorizontalGaps, val rowGaps: VerticalGaps) {
+                                  val unscaledColumnGaps: UnscaledGapsX, val unscaledRowGaps: UnscaledGapsY) {
   /**
    * Calculated on step 3
    */
   var baseline: Int? = null
 
   val gapWidth: Int
-    get() = scaledGaps.width + columnGaps.left + columnGaps.right
+    get() = scaledGaps.width + JBUIScale.scale(unscaledColumnGaps.left) + JBUIScale.scale(unscaledColumnGaps.right)
 
   val gapHeight: Int
-    get() = scaledGaps.height + rowGaps.top + rowGaps.bottom
+    get() = scaledGaps.height + JBUIScale.scale(unscaledRowGaps.top) + JBUIScale.scale(unscaledRowGaps.bottom)
 
   /**
    * Cell width including gaps and excluding visualPaddings
@@ -623,9 +623,9 @@ private class BaselineData {
     val rowBaselineData = getOrCreate(layoutCellData)
 
     rowBaselineData.maxAboveBaseline = max(rowBaselineData.maxAboveBaseline,
-      baseline + layoutCellData.rowGaps.top + constraintsGaps.top - constraintsVisualPaddings.top)
+                                           baseline + JBUIScale.scale(layoutCellData.unscaledRowGaps.top) + constraintsGaps.top - constraintsVisualPaddings.top)
     rowBaselineData.maxBelowBaseline = max(rowBaselineData.maxBelowBaseline,
-      layoutCellData.preferredSize.height - baseline + layoutCellData.rowGaps.bottom + constraintsGaps.bottom - constraintsVisualPaddings.bottom)
+                                           layoutCellData.preferredSize.height - baseline + JBUIScale.scale(layoutCellData.unscaledRowGaps.bottom) + constraintsGaps.bottom - constraintsVisualPaddings.bottom)
   }
 
   /**
