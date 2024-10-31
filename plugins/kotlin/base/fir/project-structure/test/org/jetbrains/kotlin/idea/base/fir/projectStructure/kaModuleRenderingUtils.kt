@@ -45,7 +45,7 @@ internal fun TargetPlatform.getTargetPlatformDescriptionForRendering(): String =
 internal fun KaLibraryModule.getModuleLibraryNameForRendering(): String {
     return if (isSdk) {
         // do not use real sdk description here because sdk name may be different on different machines
-        "<SDK>"
+        "SDK"
     } else {
         libraryName
     }

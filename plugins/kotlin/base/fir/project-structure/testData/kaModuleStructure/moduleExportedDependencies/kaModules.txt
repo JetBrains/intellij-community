@@ -1,7 +1,7 @@
 KaLibraryModule:
-  description: <SDK>
+  description: SDK
   targetPlatform: JVM (1.8)
-  libraryName: <SDK>
+  libraryName: SDK
   isSdk: true
   regularDependencies:
     <empty>

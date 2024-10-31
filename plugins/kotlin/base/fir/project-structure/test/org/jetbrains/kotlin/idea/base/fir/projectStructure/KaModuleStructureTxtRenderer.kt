@@ -27,7 +27,7 @@ object KaModuleStructureTxtRenderer {
     private fun PrettyPrinter.renderCommonModuleData(module: KaModule) {
         if (module is KaLibraryModule && module.isSdk) {
             // do not use real sdk name here because it may be different on different machines
-            appendLine("description: <SDK>")
+            appendLine("description: SDK")
         } else {
             appendLine("description: ${module.moduleDescription}")
         }

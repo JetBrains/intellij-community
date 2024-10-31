@@ -2,7 +2,7 @@ KaScriptModule:
   description: Script build.gradle.kts
   targetPlatform: JVM (1.8)
   regularDependencies:
-    KaLibraryModule(<SDK>)
+    KaLibraryModule(SDK)
     KaLibraryModule(annotations-13.0.jar, scriptDependency)
     KaLibraryModule(classes.2, scriptDependency)
     KaLibraryModule(classes.3, scriptDependency)
@@ -698,9 +698,9 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: <SDK>
+  description: SDK
   targetPlatform: JVM (1.8)
-  libraryName: <SDK>
+  libraryName: SDK
   isSdk: true
   regularDependencies:
     <empty>
@@ -713,7 +713,7 @@ KaScriptModule:
   description: Script settings.gradle.kts
   targetPlatform: JVM (1.8)
   regularDependencies:
-    KaLibraryModule(<SDK>)
+    KaLibraryModule(SDK)
     KaLibraryModule(classes, scriptDependency)
     KaLibraryModule(gradle-api-8.11-rc-1.jar, scriptDependency)
     KaLibraryModule(gradle-core-8.11.jar, scriptDependency)

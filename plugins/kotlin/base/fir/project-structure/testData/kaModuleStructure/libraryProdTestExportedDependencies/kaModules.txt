@@ -1,8 +1,8 @@
 KaLibraryModule:
-  description: <SDK>
+  description: Library L
   targetPlatform: JVM (1.8)
-  libraryName: <SDK>
-  isSdk: true
+  libraryName: L
+  isSdk: false
   regularDependencies:
     <empty>
   friendDependencies:
@@ -11,10 +11,10 @@ KaLibraryModule:
     <empty>
 
 KaLibraryModule:
-  description: Library L
+  description: SDK
   targetPlatform: JVM (1.8)
-  libraryName: L
-  isSdk: false
+  libraryName: SDK
+  isSdk: true
   regularDependencies:
     <empty>
   friendDependencies:

@@ -33,16 +33,53 @@ object KaModuleStructureMermaidRenderer {
                     appendLine("${module.nodeId()}${module.getModuleDescriptionForRendering()}")
                 }
 
-                regularDependencies.map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
-                    .forEach { appendLine(it) }
+                modules.forEach { module ->
+                    val color = when (module) {
+                        is KaSourceModule -> when (module.sourceModuleKind) {
+                            KaSourceModuleKind.PRODUCTION -> "#608BC1" // blue
+                            KaSourceModuleKind.TEST -> "#31511E" // green
+                            null -> null
+                        }
 
-                friendDependencies.map { (from, to) -> "${from.nodeId()} --friend--> ${to.nodeId()}" }.sorted()
-                    .forEach { appendLine(it) }
+                        is KaLibraryModule -> {
+                            if (module.isSdk) "#CC2B52" // red
+                            else "#CB6040" // orange
+                        }
+                        else -> null
+                    }
+                    if (color != null) {
+                        appendLine("style ${module.nodeId()} fill:${color}")
+                    }
+                }
 
-                dependsOnDependencies.map { (from, to) -> "${from.nodeId()} --dependsOn--> ${to.nodeId()}" }.sorted()
-                    .forEach { appendLine(it) }
+                val dependencies = buildList {
+                    regularDependencies.map { (from, to) -> "${from.nodeId()} --> ${to.nodeId()}" }.sorted()
+                        .mapTo(this) { it to DependencyKind.Regular }
+                    friendDependencies.map { (from, to) -> "${from.nodeId()} --friend--> ${to.nodeId()}" }.sorted()
+                        .mapTo(this) { it to DependencyKind.Friend }
+                    dependsOnDependencies.map { (from, to) -> "${from.nodeId()} --dependsOn--> ${to.nodeId()}" }.sorted()
+                        .mapTo(this) { it to DependencyKind.DependsOn }
+                }
+
+                dependencies.forEach { (dependency, _) ->
+                    appendLine(dependency)
+                }
+
+                dependencies
+                    .forEachIndexed { i, (_, kind) ->
+                        val color = when (kind) {
+                            DependencyKind.Regular -> "black"
+                            DependencyKind.Friend -> "#E6C767" // yellow
+                            DependencyKind.DependsOn -> "#8967B3" // purple
+                        }
+                        appendLine("linkStyle $i stroke:${color}")
+                    }
             }
         }
+    }
+
+    enum class DependencyKind {
+        Regular, Friend, DependsOn
     }
 
     private fun KaModule.getModuleDescriptionForRendering(): String {

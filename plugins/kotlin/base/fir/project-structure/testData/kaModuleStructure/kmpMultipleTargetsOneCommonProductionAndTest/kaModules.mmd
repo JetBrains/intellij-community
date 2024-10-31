@@ -1,11 +1,18 @@
 graph TD
-  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_0(["KaLibraryModule(SDK)"])
   KaSourceModule_1["KaSourceModule(common)<br />production<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
   KaSourceModule_2["KaSourceModule(common)<br />test<br />JS/JVM (1.8)/Native (general)/wasm-js (JS)/wasm-wasi (WASI)"]
   KaSourceModule_3["KaSourceModule(jvm)<br />production<br />JVM (1.8)"]
   KaSourceModule_4["KaSourceModule(jvm)<br />test<br />JVM (1.8)"]
   KaSourceModule_5["KaSourceModule(native)<br />production<br />JVM (1.8)"]
   KaSourceModule_6["KaSourceModule(native)<br />test<br />JVM (1.8)"]
+  style KaLibraryModule_0 fill:#CC2B52
+  style KaSourceModule_1 fill:#608BC1
+  style KaSourceModule_2 fill:#31511E
+  style KaSourceModule_3 fill:#608BC1
+  style KaSourceModule_4 fill:#31511E
+  style KaSourceModule_5 fill:#608BC1
+  style KaSourceModule_6 fill:#31511E
   KaSourceModule_2 --> KaSourceModule_1
   KaSourceModule_3 --> KaSourceModule_1
   KaSourceModule_4 --> KaSourceModule_1
@@ -24,3 +31,21 @@ graph TD
   KaSourceModule_4 --dependsOn--> KaSourceModule_2
   KaSourceModule_5 --dependsOn--> KaSourceModule_1
   KaSourceModule_6 --dependsOn--> KaSourceModule_2
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:black
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
+  linkStyle 6 stroke:black
+  linkStyle 7 stroke:black
+  linkStyle 8 stroke:black
+  linkStyle 9 stroke:#E6C767
+  linkStyle 10 stroke:#E6C767
+  linkStyle 11 stroke:#E6C767
+  linkStyle 12 stroke:#E6C767
+  linkStyle 13 stroke:#E6C767
+  linkStyle 14 stroke:#8967B3
+  linkStyle 15 stroke:#8967B3
+  linkStyle 16 stroke:#8967B3
+  linkStyle 17 stroke:#8967B3

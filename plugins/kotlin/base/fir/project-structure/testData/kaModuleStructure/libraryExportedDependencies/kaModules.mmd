@@ -1,13 +1,25 @@
 graph TD
-  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
-  KaLibraryModule_1(["KaLibraryModule(L)"])
+  KaLibraryModule_0(["KaLibraryModule(L)"])
+  KaLibraryModule_1(["KaLibraryModule(SDK)"])
   KaSourceModule_2["KaSourceModule(A1)<br />production<br />JVM (1.8)"]
   KaSourceModule_3["KaSourceModule(A2)<br />production<br />JVM (1.8)"]
   KaSourceModule_4["KaSourceModule(B1)<br />production<br />JVM (1.8)"]
   KaSourceModule_5["KaSourceModule(B2)<br />production<br />JVM (1.8)"]
-  KaSourceModule_2 --> KaLibraryModule_1
+  style KaLibraryModule_0 fill:#CB6040
+  style KaLibraryModule_1 fill:#CC2B52
+  style KaSourceModule_2 fill:#608BC1
+  style KaSourceModule_3 fill:#608BC1
+  style KaSourceModule_4 fill:#608BC1
+  style KaSourceModule_5 fill:#608BC1
+  KaSourceModule_2 --> KaLibraryModule_0
   KaSourceModule_2 --> KaSourceModule_4
-  KaSourceModule_3 --> KaLibraryModule_1
+  KaSourceModule_3 --> KaLibraryModule_0
   KaSourceModule_3 --> KaSourceModule_5
-  KaSourceModule_4 --> KaLibraryModule_1
-  KaSourceModule_5 --> KaLibraryModule_1
+  KaSourceModule_4 --> KaLibraryModule_0
+  KaSourceModule_5 --> KaLibraryModule_0
+  linkStyle 0 stroke:black
+  linkStyle 1 stroke:black
+  linkStyle 2 stroke:black
+  linkStyle 3 stroke:black
+  linkStyle 4 stroke:black
+  linkStyle 5 stroke:black
