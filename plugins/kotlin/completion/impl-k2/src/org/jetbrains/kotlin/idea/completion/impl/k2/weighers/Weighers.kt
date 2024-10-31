@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.analysis.api.components.KaImplicitReceiver
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeOwner
 import org.jetbrains.kotlin.analysis.api.lifetime.KaLifetimeToken
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
@@ -220,18 +219,6 @@ internal object Weighers {
 
         PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
         PreferFewerParametersWeigher. addWeight(lookupElement, symbol)
-    }
-
-    context(KaSession)
-    fun applyWeighsToLookupElementForCallable(
-        context: WeighingContext,
-        lookupElement: LookupElement,
-        signature: KaCallableSignature<*>,
-        symbolOrigin: CompletionSymbolOrigin,
-    ) {
-        CallableWeigher.addWeight(context, lookupElement, signature, symbolOrigin)
-
-        applyWeighsToLookupElement(context, lookupElement, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
     }
 
     fun addWeighersToCompletionSorter(sorter: CompletionSorter, positionContext: KotlinRawPositionContext): CompletionSorter =

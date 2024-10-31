@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
+import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
@@ -138,7 +138,8 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             }
         }.forEach { lookup ->
             lookup.priority = priority
-            Weighers.applyWeighsToLookupElementForCallable(context, lookup, signature, symbolOrigin)
+            CallableWeigher.addWeight(context, lookup, signature, symbolOrigin)
+            applyWeighsToLookupElement(context, lookup, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
             sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
         }
     }
