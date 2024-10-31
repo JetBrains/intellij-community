@@ -1,0 +1,11 @@
+{
+    "modules": [
+        { "name": "A1", "sourceSets": ["production", "test"], "dependencies": ["B1"]},
+        { "name": "B1", "sourceSets": ["production", "test"], "dependencies": [{"name": "L", "exported": true}]},
+        { "name": "A2", "sourceSets": ["production", "test"], "dependencies": ["B2"]},
+        { "name": "B2", "sourceSets": ["production", "test"], "dependencies": [{"name": "L", "exported": true}]}
+    ],
+    "libraries": [
+        { "name": "L" }
+    ]
+}

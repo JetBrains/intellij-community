@@ -1,0 +1,33 @@
+graph TD
+  KaLibraryModule_0(["KaLibraryModule(<SDK>)"])
+  KaLibraryModule_1(["KaLibraryModule(L)"])
+  KaSourceModule_2["KaSourceModule(A1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_3["KaSourceModule(A1)<br />test<br />JVM (1.8)"]
+  KaSourceModule_4["KaSourceModule(A2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_5["KaSourceModule(A2)<br />test<br />JVM (1.8)"]
+  KaSourceModule_6["KaSourceModule(B1)<br />production<br />JVM (1.8)"]
+  KaSourceModule_7["KaSourceModule(B1)<br />test<br />JVM (1.8)"]
+  KaSourceModule_8["KaSourceModule(B2)<br />production<br />JVM (1.8)"]
+  KaSourceModule_9["KaSourceModule(B2)<br />test<br />JVM (1.8)"]
+  KaSourceModule_2 --> KaLibraryModule_1
+  KaSourceModule_2 --> KaSourceModule_6
+  KaSourceModule_3 --> KaLibraryModule_1
+  KaSourceModule_3 --> KaSourceModule_2
+  KaSourceModule_3 --> KaSourceModule_6
+  KaSourceModule_3 --> KaSourceModule_7
+  KaSourceModule_4 --> KaLibraryModule_1
+  KaSourceModule_4 --> KaSourceModule_8
+  KaSourceModule_5 --> KaLibraryModule_1
+  KaSourceModule_5 --> KaSourceModule_4
+  KaSourceModule_5 --> KaSourceModule_8
+  KaSourceModule_5 --> KaSourceModule_9
+  KaSourceModule_6 --> KaLibraryModule_1
+  KaSourceModule_7 --> KaLibraryModule_1
+  KaSourceModule_7 --> KaSourceModule_6
+  KaSourceModule_8 --> KaLibraryModule_1
+  KaSourceModule_9 --> KaLibraryModule_1
+  KaSourceModule_9 --> KaSourceModule_8
+  KaSourceModule_3 --friend--> KaSourceModule_2
+  KaSourceModule_5 --friend--> KaSourceModule_4
+  KaSourceModule_7 --friend--> KaSourceModule_6
+  KaSourceModule_9 --friend--> KaSourceModule_8

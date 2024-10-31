@@ -2,7 +2,8 @@
 package org.jetbrains.kotlin.idea.test.projectStructureTest
 
 import com.google.gson.JsonElement
-import com.google.gson.JsonObject
+import com.google.gson.*
+import org.jetbrains.kotlin.idea.base.util.getAsJsonObjectList
 import org.jetbrains.kotlin.idea.base.util.getAsStringList
 import org.jetbrains.kotlin.idea.base.util.getNullableString
 import org.jetbrains.kotlin.idea.base.util.getString
@@ -77,7 +78,7 @@ data class TestProjectModule(
     val sourceSets: List<SourceSet>?,
 )
 
-data class Dependency(val name: String, val kind: DependencyKind)
+data class Dependency(val name: String, val kind: DependencyKind, val isExported: Boolean)
 
 enum class DependencyKind {
     REGULAR,
@@ -151,10 +152,18 @@ object TestProjectModuleParser {
     }
 
     /**
-     * Parses a list of dependencies from [json]; an array of name strings is expected.
+     * Parses a list of dependencies from [json];
+     * an array of name strings or objects of kind `{name: string, isExported: boolean}` is expected.
      */
     private fun parseDependencies(json: JsonObject, jsonField: String, dependencyKind: DependencyKind): List<Dependency> =
-        json.getAsStringList(jsonField).orEmpty().map { name -> Dependency(name, dependencyKind) }
+        json.getAsJsonArray(jsonField)?.toList().orEmpty().map { dependency ->
+            when (dependency) {
+                is JsonPrimitive -> Dependency(dependency.asString, dependencyKind, isExported = false)
+                is JsonObject ->
+                    Dependency(dependency.getString("name"), dependencyKind, isExported = dependency.get("exported")?.asBoolean == true)
+                else -> error("Unexpected json element type: ${dependency::class.java}")
+            }
+        }
 }
 
 

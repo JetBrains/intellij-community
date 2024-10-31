@@ -192,8 +192,8 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
         dependencies.forEach { dependency ->
             check(dependency.kind == DependencyKind.REGULAR)
             librariesByName[dependency.name]
-                ?.let { library -> module.addDependency(library) }
-                ?: module.addDependency(modulesByName.getValue(dependency.name))
+                ?.let { library -> module.addDependency(library, exported = dependency.isExported) }
+                ?: module.addDependency(modulesByName.getValue(dependency.name), exported = dependency.isExported)
         }
     }
 

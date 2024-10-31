@@ -50,6 +50,26 @@ public class KaModuleStructureTestGenerated extends AbstractKaModuleStructureTes
         runTest("testData/kaModuleStructure/kmpWithLibraries/");
     }
 
+    @TestMetadata("libraryExportedDependencies")
+    public void testLibraryExportedDependencies() throws Exception {
+        runTest("testData/kaModuleStructure/libraryExportedDependencies/");
+    }
+
+    @TestMetadata("libraryProdTestExportedDependencies")
+    public void testLibraryProdTestExportedDependencies() throws Exception {
+        runTest("testData/kaModuleStructure/libraryProdTestExportedDependencies/");
+    }
+
+    @TestMetadata("moduleExportedDependencies")
+    public void testModuleExportedDependencies() throws Exception {
+        runTest("testData/kaModuleStructure/moduleExportedDependencies/");
+    }
+
+    @TestMetadata("moduleProdTestExportedDependencies")
+    public void testModuleProdTestExportedDependencies() throws Exception {
+        runTest("testData/kaModuleStructure/moduleProdTestExportedDependencies/");
+    }
+
     @TestMetadata("productionAndTest")
     public void testProductionAndTest() throws Exception {
         runTest("testData/kaModuleStructure/productionAndTest/");
