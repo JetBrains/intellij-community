@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.base.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.idea.editor.KotlinEditorOptions
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.j2k.copyPaste.ConvertJavaCopyPasteProcessor
-import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
 import kotlin.test.assertEquals
 
@@ -71,7 +70,7 @@ abstract class AbstractJavaToKotlinCopyPasteConversionTest : AbstractCopyPasteTe
         )
 
         val expectedFile = getExpectedFile(testFile, isCopyPaste = true, pluginMode)
-        val actualText = (myFixture.file as KtFile).getFileTextWithErrors(pluginMode)
+        val actualText = myFixture.file.text
         KotlinTestUtils.assertEqualsToFile(expectedFile, actualText)
     }
 }
