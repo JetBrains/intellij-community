@@ -22,6 +22,8 @@ import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileSystemUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.ide.progress.ModalTaskOwner
+import com.intellij.platform.ide.progress.runWithModalProgressBlocking
 import com.intellij.platform.util.progress.withProgressText
 import com.intellij.remoteDev.RemoteDevSystemSettings
 import com.intellij.remoteDev.RemoteDevUtilBundle
@@ -248,14 +250,22 @@ object CodeWithMeClientDownloader {
 
   private fun getLatestBuild(hostBuildNumber: BuildNumber): BuildNumber {
     val latestBuildTxtFileName = "${hostBuildNumber.baselineVersion}-LAST-BUILD.txt"
-    val latestBuildTxtUri = "${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName"
+    val latestBuildTxtUri = URI("${config.clientDownloadUrl.toASCIIString().trimEnd('/')}/$latestBuildTxtFileName")
 
     val tempFile = Files.createTempFile(latestBuildTxtFileName, "")
     return try {
-      downloadWithRetries(URI(latestBuildTxtUri), tempFile, EmptyProgressIndicator()).let {
-        val buildNumberString = tempFile.readText().trim()
-        BuildNumber.fromStringOrNull(buildNumberString) ?: error("Invalid build number: $buildNumberString")
+      if (application.isDispatchThread) {
+        runWithModalProgressBlocking(ModalTaskOwner.guess(), RemoteDevUtilBundle.getMessage("launcher.get.client.info")) {
+          coroutineToIndicator {
+            downloadWithRetries(latestBuildTxtUri, tempFile, ProgressManager.getInstance().progressIndicator)
+          }
+        }
       }
+      else {
+        downloadWithRetries(latestBuildTxtUri, tempFile, EmptyProgressIndicator())
+      }
+      val buildNumberString = tempFile.readText().trim()
+      BuildNumber.fromStringOrNull(buildNumberString) ?: error("Invalid build number: $buildNumberString")
     }
     finally {
       Files.deleteIfExists(tempFile)
