@@ -697,6 +697,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/outflow/namedArgumentForConstructorParameter.kt");
         }
 
+        @TestMetadata("namedParameters.kt")
+        public void testNamedParameters() throws Exception {
+            runTest("testData/slicer/outflow/namedParameters.kt");
+        }
+
         @TestMetadata("nonInlineLetResult.kt")
         public void testNonInlineLetResult() throws Exception {
             runTest("testData/slicer/outflow/nonInlineLetResult.kt");

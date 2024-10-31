@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KaCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KaNamedFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaFunctionType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.idea.base.psi.safeDeparenthesize
 import org.jetbrains.kotlin.idea.codeInsight.slicer.AbstractKotlinSliceUsage
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport
 import org.jetbrains.kotlin.idea.references.mainReference
@@ -153,26 +154,6 @@ class OutflowSlicer(
             is KtFunctionLiteral -> expression.parent as KtLambdaExpression
             else -> expression
         }
-        val callExpression = expressionWithValue.parentOfType<KtCallExpression>(false)
-        if (callExpression != null) {
-            val idx =
-                callExpression.valueArguments.indexOfFirst { valueArgument -> valueArgument.getArgumentExpression() == expressionWithValue }
-            analyze(callExpression) {
-                val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull()
-                if ((functionCall?.partiallyAppliedSymbol?.symbol as? KaNamedFunctionSymbol)?.isBuiltinFunctionInvoke == true) {
-                    if (idx >= 0) {
-                        processImplicitInvokeCall(functionCall, idx)
-                    } else if ((functionCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue) {
-                        if (mode.currentBehaviour is LambdaCallsBehaviour) {
-                            callExpression.calleeExpression?.passToProcessor(mode)
-                        }
-                    }
-                } else if (idx >= 0) {
-                    val parameterSymbol = functionCall?.partiallyAppliedSymbol?.signature?.valueParameters?.getOrNull(idx)
-                    parameterSymbol?.symbol?.psi?.passToProcessorInCallMode(callExpression)
-                }
-            }
-        }
         if (expressionWithValue is KtCallableReferenceExpression) {
             val callExpression = (expressionWithValue.parent as? KtParenthesizedExpression)?.parent as? KtCallExpression
             if (mode.currentBehaviour is LambdaCallsBehaviour) {
@@ -191,36 +172,25 @@ class OutflowSlicer(
             }
         }
         val parent = expressionWithValue.parent
-        when {
-            parent is KtWhenEntry -> {
-                (parent.parent as? KtWhenExpression)?.let { processExpression(it) }
-            }
+        when (parent) {
 
-            parent is KtContainerNodeForControlStructureBody -> {
-                val gParent = parent.parent
-                if (gParent is KtIfExpression) {
-                    processExpression(gParent)
-                }
-            }
-
-            parent is KtUnaryExpression -> {
+            is KtUnaryExpression -> {
                 val elementType = parent.operationReference.getReferencedNameElementType()
                 if (elementType == KtTokens.EXCLEXCL) {
                     parent.passToProcessorAsValue()
-                }
-                else {
+                } else {
                     (parent.operationReference.mainReference.resolve() as? KtCallableDeclaration)?.receiverTypeReference?.passToProcessor()
                 }
             }
 
-            parent is KtBinaryExpressionWithTypeRHS -> {
+            is KtBinaryExpressionWithTypeRHS -> {
                 val operationToken = parent.operationReference.getReferencedNameElementType()
                 if (operationToken == KtTokens.AS_SAFE || operationToken == KtTokens.AS_KEYWORD || operationToken == KtTokens.IS_KEYWORD) {
                     parent.passToProcessorAsValue()
                 }
             }
 
-            parent is KtSafeQualifiedExpression -> {
+            is KtSafeQualifiedExpression -> {
                 if (parent.receiverExpression == expressionWithValue) {
                     val selectorExpression = parent.selectorExpression ?: return
                     processSelectorExpression(selectorExpression, expressionWithValue)
@@ -229,7 +199,7 @@ class OutflowSlicer(
                 }
             }
 
-            parent is KtDotQualifiedExpression -> {
+            is KtDotQualifiedExpression -> {
                 if (parent.receiverExpression == expressionWithValue) {
                     val selectorExpression = parent.selectorExpression ?: return
                     processSelectorExpression(selectorExpression, expressionWithValue)
@@ -238,15 +208,38 @@ class OutflowSlicer(
                 }
             }
 
-            parent is KtParenthesizedExpression -> {
+            is KtCallExpression -> {
+                processSelectorExpression(parent, expressionWithValue)
+            }
+
+            is KtValueArgument -> {
+                val callExpression = parent.parentOfType<KtCallExpression>() ?: return
+                analyze(callExpression) {
+                    val functionCall = callExpression.resolveToCall()?.successfulFunctionCallOrNull() ?: return
+                    val parameterSymbol =
+                        functionCall.argumentMapping.filter { entry -> entry.key == expressionWithValue }.values.firstOrNull()?.symbol
+                    val functionSymbol = functionCall.symbol as? KaNamedFunctionSymbol
+                    if (functionSymbol?.isBuiltinFunctionInvoke == true) {
+                        processImplicitInvokeCall(
+                            functionCall,
+                            parameterSymbol?.let { functionSymbol.valueParameters.indexOf(parameterSymbol) } ?: 0)
+                    } else {
+                        parameterSymbol?.psi?.passToProcessorInCallMode(callExpression)
+                    }
+                }
+            }
+
+            is KtParenthesizedExpression -> {
                 processExpression(parent)
             }
 
-            parent is KtProperty && parent.initializer == expressionWithValue -> {
-                parent.passToProcessor()
+            is KtProperty -> {
+                if (parent.initializer == expressionWithValue) {
+                    parent.passToProcessor()
+                }
             }
 
-            parent is KtBinaryExpression -> {
+            is KtBinaryExpression -> {
                 if (parent.right == expressionWithValue) {
                     parent.left?.mainReference?.resolve()?.passToProcessor()
                 } else {
@@ -254,7 +247,7 @@ class OutflowSlicer(
                 }
             }
 
-            parent is KtReturnExpression -> {
+            is KtReturnExpression -> {
                 analyze(parent) {
                     val target = parent.targetSymbol?.psi
                     if (target is KtNamedFunction) {
@@ -269,19 +262,24 @@ class OutflowSlicer(
                 }
             }
 
-            parent is KtArrayAccessExpression -> {
+            is KtArrayAccessExpression -> {
                 (parent.mainReference.resolve() as? KtCallableDeclaration)?.receiverTypeReference?.passToProcessor()
             }
 
-            parent is KtFunction || parent is KtPropertyAccessor -> {
+            is KtFunction, is KtPropertyAccessor -> {
                 parent.passToProcessor()
             }
 
-            parent is KtBlockExpression -> {
-                val gParent = parent.parent
-                if (gParent is KtFunctionLiteral) {
-                    gParent.passToProcessor()
-                }
+            is KtBlockExpression -> {
+                (parent.parent as? KtFunctionLiteral)?.passToProcessor()
+            }
+
+            is KtWhenEntry -> {
+                (parent.parent as? KtWhenExpression)?.let { processExpression(it) }
+            }
+
+            is KtContainerNodeForControlStructureBody -> {
+                (parent.parent as? KtIfExpression)?.let { processExpression(it) }
             }
         }
     }
@@ -291,11 +289,11 @@ class OutflowSlicer(
             val functionalCall = selectorExpression.resolveToCall()?.singleCallOrNull<KaCallableMemberCall<*, *>>()
             val symbol = functionalCall?.partiallyAppliedSymbol?.symbol
             if (symbol is KaNamedFunctionSymbol && symbol.isBuiltinFunctionInvoke) {
-                if ((functionalCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue) {
+                if ((functionalCall.partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue.safeDeparenthesize()) {
                     if (mode.currentBehaviour is LambdaCallsBehaviour) {
                         selectorExpression.passToProcessor(mode)
                     }
-                } else if ((functionalCall.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue) {
+                } else if ((functionalCall.partiallyAppliedSymbol.extensionReceiver as? KaExplicitReceiverValue)?.expression == expressionWithValue.safeDeparenthesize()) {
                     val successfulVariableAccessCall =
                         (selectorExpression as? KtCallExpression)?.calleeExpression?.resolveToCall()
                             ?.successfulVariableAccessCall()
@@ -341,7 +339,7 @@ class OutflowSlicer(
                     is KaCompoundVariableAccessCall, is KaCompoundArrayAccessCall -> call.compoundOperation.operationPartiallyAppliedSymbol
                 }
                 val expression = (partiallyAppliedSymbol.dispatchReceiver as? KaExplicitReceiverValue)?.expression
-                if (expression == this@processDereferences) {
+                if (expression == (this@processDereferences).safeDeparenthesize()) {
                     processor.process(KotlinSliceDereferenceUsage(this@processDereferences, parentUsage, mode))
                 }
             }

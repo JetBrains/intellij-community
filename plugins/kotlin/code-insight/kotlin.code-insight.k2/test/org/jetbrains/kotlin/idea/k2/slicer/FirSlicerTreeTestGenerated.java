@@ -697,6 +697,11 @@ public abstract class FirSlicerTreeTestGenerated extends AbstractFirSlicerTreeTe
             runTest("../../idea/tests/testData/slicer/outflow/namedArgumentForConstructorParameter.kt");
         }
 
+        @TestMetadata("namedParameters.kt")
+        public void testNamedParameters() throws Exception {
+            runTest("../../idea/tests/testData/slicer/outflow/namedParameters.kt");
+        }
+
         @TestMetadata("nonInlineLetResult.kt")
         public void testNonInlineLetResult() throws Exception {
             runTest("../../idea/tests/testData/slicer/outflow/nonInlineLetResult.kt");
