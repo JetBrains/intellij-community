@@ -758,6 +758,16 @@ public class Py3CompletionTest extends PyTestCase {
     doMultiFileTest();
   }
 
+  // PY-74116
+  public void testParenthesesAreNotInsertedAfterNamesDefinedAsFunctionsInTypingPy() {
+    runWithAdditionalFileInLibDir("typing.py", """
+      def TypedDict(typename, fields=None, /, *, total=True, **kwargs):
+          ...
+      """, ignored -> {
+      doMultiFileTest();
+    });
+  }
+
   private void doTestVariants(String @NotNull ... expected) {
     final String testName = getTestName(true);
     myFixture.configureByFile(testName + ".py");

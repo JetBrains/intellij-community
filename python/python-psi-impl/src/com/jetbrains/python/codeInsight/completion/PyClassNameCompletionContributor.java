@@ -32,6 +32,7 @@ import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PySearchUtilBase;
 import com.jetbrains.python.psi.stubs.PyExportedModuleAttributeIndex;
@@ -256,7 +257,18 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     return PySearchUtilBase.defaultSuggestionScope(originalFile)
       .intersectWith(GlobalSearchScope.notScope(pyiStubsScope))
       .intersectWith(GlobalSearchScope.notScope(GlobalSearchScope.fileScope(originalFile)))
+      // Some types in typing.py are defined as functions, causing inserting them with parentheses. It's better to rely on typing.pyi.
+      .intersectWith(GlobalSearchScope.notScope(fileScope("typing", originalFile, false)))
+      .uniteWith(fileScope("typing", originalFile, true))
       .intersectWith(new HavingLegalImportPathScope(project));
+  }
+
+  private static @NotNull GlobalSearchScope fileScope(@NotNull String fqn, @NotNull PsiFile anchor, boolean pyiStub) {
+    var context = pyiStub ? PyResolveImportUtil.fromFoothold(anchor) : PyResolveImportUtil.fromFoothold(anchor).copyWithoutStubs();
+    var files = ContainerUtil.filterIsInstance(PyResolveImportUtil.resolveQualifiedName(QualifiedName.fromDottedString(fqn), context),
+                                               PsiFile.class);
+    if (files.isEmpty()) return GlobalSearchScope.EMPTY_SCOPE;
+    return GlobalSearchScope.filesWithLibrariesScope(anchor.getProject(), ContainerUtil.map(files, PsiFile::getVirtualFile));
   }
 
   private @NotNull InsertHandler<LookupElement> getInsertHandler(@NotNull PyElement exported,
