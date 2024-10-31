@@ -38,6 +38,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     ExecutionBundle.message("service.view.empty.selection.text"));
   private final Set<JComponent> myDetailsComponents = ContainerUtil.createWeakSet();
   private ActionToolbar myServiceActionToolbar;
+  private JComponent myServiceActionToolbarPlaceholder;
   private JComponent myServiceActionToolbarWrapper;
   private ActionToolbar myMasterActionToolbar;
   private NavBarWrapper myNavBarWrapper;
@@ -60,10 +61,15 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     mySplitter.setFirstComponent(myMasterPanelWrapper);
 
     myDetailsPanel = new JPanel(new BorderLayout());
+    myDetailsPanel.putClientProperty("Name", "myDetailsPanel");
     myContentComponentPanel = new JPanel(new BorderLayout());
     myMessagePanel.setFocusable(true);
     myContentComponentPanel.add(myMessagePanel, BorderLayout.CENTER);
     myDetailsPanel.add(myContentComponentPanel, BorderLayout.CENTER);
+    if (ServiceViewUIUtils.isNewServicesUIEnabled()) {
+      myServiceActionToolbarPlaceholder = new JPanel(new BorderLayout());
+      myDetailsPanel.add(myServiceActionToolbarPlaceholder, BorderLayout.NORTH);
+    }
     mySplitter.setSecondComponent(myDetailsPanel);
 
     if (state.showServicesTree) {
@@ -96,7 +102,7 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     if (inDetails) {
       JComponent wrapper = ServiceViewUIUtils.wrapServicesAligned(myServiceActionToolbar);
       myServiceActionToolbarWrapper = actionProvider.wrapServiceToolbar(wrapper, inDetails);
-      myDetailsPanel.add(myServiceActionToolbarWrapper, BorderLayout.NORTH);
+      myServiceActionToolbarPlaceholder.add(myServiceActionToolbarWrapper, BorderLayout.CENTER);
     }
     else {
       myContentPanel.setToolbar(actionProvider.wrapServiceToolbar(myServiceActionToolbar.getComponent(), inDetails));
