@@ -64,57 +64,57 @@ private class YamlGistHolder {
                     1,
                     YamlKeyExternalizer(),
                     ::computeAllConcatenatedKeys)
-}
 
-private fun computeAllConcatenatedKeys(file: PsiFile): YamlConcatenatedKeys {
-  if (file !is YAMLFile) return emptyList()
-  val allKeys = mutableListOf<YamlConcatenatedKey>()
+  private fun computeAllConcatenatedKeys(file: PsiFile): YamlConcatenatedKeys {
+    if (file !is YAMLFile) return emptyList()
+    val allKeys = mutableListOf<YamlConcatenatedKey>()
 
-  file.accept(object : YamlRecursivePsiElementVisitor() {
-    override fun visitKeyValue(keyValue: YAMLKeyValue) {
-      val key = keyValue.key
-      if (key != null) {
-        val concatenatedKey = YAMLUtil.getConfigFullName(keyValue)
-        allKeys.add(YamlConcatenatedKey(concatenatedKey, key.textOffset))
+    file.accept(object : YamlRecursivePsiElementVisitor() {
+      override fun visitKeyValue(keyValue: YAMLKeyValue) {
+        val key = keyValue.key
+        if (key != null) {
+          val concatenatedKey = YAMLUtil.getConfigFullName(keyValue)
+          allKeys.add(YamlConcatenatedKey(concatenatedKey, key.textOffset))
+        }
+        super.visitKeyValue(keyValue)
       }
-      super.visitKeyValue(keyValue)
-    }
 
-    override fun visitSequence(sequence: YAMLSequence) {
-      // Do not visit children
-    }
-  })
-  return allKeys
-}
-
-internal class YamlKeyExternalizer : DataExternalizer<YamlConcatenatedKeys> {
-  override fun save(dataOutput: DataOutput, value: YamlConcatenatedKeys) {
-    writeListOfObjects(dataOutput, value) {
-      EnumeratorStringDescriptor.INSTANCE.save(dataOutput, it.key)
-      DataInputOutputUtil.writeINT(dataOutput, it.offset)
-    }
+      override fun visitSequence(sequence: YAMLSequence) {
+        // Do not visit children
+      }
+    })
+    return allKeys
   }
 
-  override fun read(dataInput: DataInput): YamlConcatenatedKeys {
-    return readListOfObjects(dataInput) {
-      YamlConcatenatedKey(EnumeratorStringDescriptor.INSTANCE.read(dataInput), DataInputOutputUtil.readINT(dataInput))
+  private inner class YamlKeyExternalizer : DataExternalizer<YamlConcatenatedKeys> {
+    override fun save(dataOutput: DataOutput, value: YamlConcatenatedKeys) {
+      writeListOfObjects(dataOutput, value) {
+        EnumeratorStringDescriptor.INSTANCE.save(dataOutput, it.key)
+        DataInputOutputUtil.writeINT(dataOutput, it.offset)
+      }
     }
-  }
 
-  private fun <T> writeListOfObjects(dataOutput: DataOutput, objects: List<T>, objectWriter: (T) -> Unit) {
-    DataInputOutputUtil.writeINT(dataOutput, objects.size)
-    for (singleObject in objects) {
-      objectWriter(singleObject)
+    override fun read(dataInput: DataInput): YamlConcatenatedKeys {
+      return readListOfObjects(dataInput) {
+        YamlConcatenatedKey(EnumeratorStringDescriptor.INSTANCE.read(dataInput), DataInputOutputUtil.readINT(dataInput))
+      }
     }
-  }
 
-  private fun <T> readListOfObjects(dataInput: DataInput, objectReader: () -> T): List<T> {
-    val size = DataInputOutputUtil.readINT(dataInput)
-
-    val objects = ArrayList<T>(size)
-    for (i in 0 until size) {
-      objects.add(objectReader())
+    private fun <T> writeListOfObjects(dataOutput: DataOutput, objects: List<T>, objectWriter: (T) -> Unit) {
+      DataInputOutputUtil.writeINT(dataOutput, objects.size)
+      for (singleObject in objects) {
+        objectWriter(singleObject)
+      }
     }
-    return objects
+
+    private fun <T> readListOfObjects(dataInput: DataInput, objectReader: () -> T): List<T> {
+      val size = DataInputOutputUtil.readINT(dataInput)
+
+      val objects = ArrayList<T>(size)
+      for (i in 0 until size) {
+        objects.add(objectReader())
+      }
+      return objects
+    }
   }
 }
