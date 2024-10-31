@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.analysis.api.KaSession
@@ -62,8 +63,22 @@ internal class FirSuperMemberCompletionContributor(
             } else {
                 getSymbolsAndNamesNeedDisambiguation(positionContext, superType.conjuncts)
             }
-        collectCallToSuperMember(superReceiver, nonExtensionMembers, weighingContext, namesNeedDisambiguation)
-        collectDelegateCallToSuperMember(weighingContext, superReceiver, nonExtensionMembers, namesNeedDisambiguation)
+
+        nonExtensionMembers.flatMap {
+            collectCallToSuperMember(
+                superReceiver = superReceiver,
+                callableInfo = it,
+                context = weighingContext,
+                namesNeedDisambiguation = namesNeedDisambiguation,
+            )
+        }.forEach(sink::addElement)
+
+        collectDelegateCallToSuperMember(
+            context = weighingContext,
+            superReceiver = superReceiver,
+            nonExtensionMembers = nonExtensionMembers,
+            namesNeedDisambiguation = namesNeedDisambiguation,
+        ).forEach(sink::addElement)
     }
 
     context(KaSession)
@@ -117,29 +132,25 @@ internal class FirSuperMemberCompletionContributor(
     context(KaSession)
     private fun collectCallToSuperMember(
         superReceiver: KtSuperExpression,
-        nonExtensionMembers: Iterable<CallableInfo>,
+        callableInfo: CallableInfo,
         context: WeighingContext,
         namesNeedDisambiguation: Set<Name>
-    ) {
-        nonExtensionMembers.forEach { callableInfo ->
-            addCallableSymbolToCompletion(
-                context = context,
-                signature = callableInfo.signature,
-                options = CallableInsertionOptions(
-                    importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
-                    wrapWithDisambiguationIfNeeded(
-                        getInsertionStrategy(callableInfo.signature),
-                        callableInfo.type,
-                        callableInfo.signature,
-                        namesNeedDisambiguation,
-                        superReceiver
-                    )
-                ),
-                symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
-                withTrailingLambda = true,
+    ): Sequence<LookupElement> = createCallableLookupElements(
+        context = context,
+        signature = callableInfo.signature,
+        options = CallableInsertionOptions(
+            importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
+            wrapWithDisambiguationIfNeeded(
+                getInsertionStrategy(callableInfo.signature),
+                callableInfo.type,
+                callableInfo.signature,
+                namesNeedDisambiguation,
+                superReceiver
             )
-        }
-    }
+        ),
+        symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
+        withTrailingLambda = true,
+    )
 
     context(KaSession)
     private fun getInsertionStrategy(signature: KaCallableSignature<*>): CallableInsertionStrategy = when (signature) {
@@ -153,7 +164,7 @@ internal class FirSuperMemberCompletionContributor(
         superReceiver: KtSuperExpression,
         nonExtensionMembers: Iterable<CallableInfo>,
         namesNeedDisambiguation: Set<Name>
-    ) {
+    ): Sequence<LookupElement> {
         // A map that contains all containing functions as values, each of which is indexed by symbols it overrides. For example, consider
         // the following code
         // ```
@@ -183,38 +194,43 @@ internal class FirSuperMemberCompletionContributor(
                     }
             }.toMap()
 
-        if (superFunctionToContainingFunction.isEmpty()) return
+        if (superFunctionToContainingFunction.isEmpty()) return emptySequence()
 
-        for (callableInfo in nonExtensionMembers) {
-            val signature = callableInfo.signature
-            val matchedContainingFunction = superFunctionToContainingFunction[callableInfo.signature.symbol] ?: continue
-            if (signature !is KaFunctionSignature<*>) continue
-            if (signature.valueParameters.isEmpty()) continue
-            val args = matchedContainingFunction.valueParameters.mapNotNull {
-                val name = it.name ?: return@mapNotNull null
-                if (it.isVarArg) {
-                    "*$name"
-                } else {
-                    name
+        return sequence {
+            for (callableInfo in nonExtensionMembers) {
+                val signature = callableInfo.signature
+                val matchedContainingFunction = superFunctionToContainingFunction[callableInfo.signature.symbol] ?: continue
+                if (signature !is KaFunctionSignature<*>) continue
+                if (signature.valueParameters.isEmpty()) continue
+                val args = matchedContainingFunction.valueParameters.mapNotNull {
+                    val name = it.name ?: return@mapNotNull null
+                    if (it.isVarArg) {
+                        "*$name"
+                    } else {
+                        name
+                    }
                 }
+                if (args.size < matchedContainingFunction.valueParameters.size) continue
+
+                val elements = createCallableLookupElements(
+                    context = context,
+                    signature = signature,
+                    options = CallableInsertionOptions(
+                        importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
+                        wrapWithDisambiguationIfNeeded(
+                            CallableInsertionStrategy.WithCallArgs(args),
+                            callableInfo.type,
+                            callableInfo.signature,
+                            namesNeedDisambiguation,
+                            superReceiver
+                        )
+                    ),
+                    symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
+                    priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS,
+                )
+
+                yieldAll(elements)
             }
-            if (args.size < matchedContainingFunction.valueParameters.size) continue
-            addCallableSymbolToCompletion(
-                context,
-                signature,
-                CallableInsertionOptions(
-                    importStrategyDetector.detectImportStrategyForCallableSymbol(callableInfo.signature.symbol),
-                    wrapWithDisambiguationIfNeeded(
-                        CallableInsertionStrategy.WithCallArgs(args),
-                        callableInfo.type,
-                        callableInfo.signature,
-                        namesNeedDisambiguation,
-                        superReceiver
-                    )
-                ),
-                CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
-                priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
-            )
         }
     }
 

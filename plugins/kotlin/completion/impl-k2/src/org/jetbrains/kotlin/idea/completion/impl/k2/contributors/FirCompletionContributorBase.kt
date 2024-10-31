@@ -70,7 +70,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    protected fun addCallableSymbolToCompletion(
+    protected fun createCallableLookupElements(
         context: WeighingContext,
         signature: KaCallableSignature<*>,
         options: CallableInsertionOptions,
@@ -79,16 +79,16 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         priority: ItemPriority? = null,
         explicitReceiverTypeHint: KaType? = null,
         withTrailingLambda: Boolean = false, // TODO find a better solution
-    ) {
+    ): Sequence<LookupElement> {
         val namedSymbol = when (val symbol = signature.symbol) {
             is KaNamedSymbol -> symbol
             is KaConstructorSymbol -> symbol.containingDeclaration as? KaNamedClassSymbol
             else -> null
-        } ?: return
+        } ?: return emptySequence()
 
         val shortName = namedSymbol.name
 
-        sequence {
+        return sequence {
             KotlinFirLookupElementFactory.createCallableLookupElement(
                 name = shortName,
                 signature = signature,
@@ -121,7 +121,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             lookup.addCallableWeight(context, signature, symbolOrigin)
             lookup.applyWeighs(context, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
             lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT))
-        }.forEach(sink::addElement)
+        }
     }
 
     private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {

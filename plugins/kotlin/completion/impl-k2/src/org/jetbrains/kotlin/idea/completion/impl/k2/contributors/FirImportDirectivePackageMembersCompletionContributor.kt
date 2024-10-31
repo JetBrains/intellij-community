@@ -31,31 +31,28 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
     ) {
         positionContext.resolveReceiverToSymbols()
             .mapNotNull { it.staticScope }
-            .forEach { scopeWithKind ->
+            .flatMap { scopeWithKind ->
+                val scope = scopeWithKind.scope
                 val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
 
-                scopeWithKind.scope
-                    .classifiers(scopeNameFilter)
+                scope.classifiers(scopeNameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
                     .mapNotNull { symbol ->
                         KotlinFirLookupElementFactory.createClassifierLookupElement(symbol)?.applyWeighs(
                             context = weighingContext,
                             symbolWithOrigin = KtSymbolWithOrigin(symbol, symbolOrigin)
                         )
-                    }.forEach(sink::addElement)
-
-                scopeWithKind.scope
-                    .callables(scopeNameFilter)
+                    } + scope.callables(scopeNameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
                     .map { it.asSignature() }
-                    .forEach {
-                        addCallableSymbolToCompletion(
+                    .flatMap {
+                        createCallableLookupElements(
                             context = weighingContext,
                             signature = it,
                             options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
                             symbolOrigin = symbolOrigin,
                         )
                     }
-            }
+            }.forEach(sink::addElement)
     }
 }

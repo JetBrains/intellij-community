@@ -1,6 +1,7 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.components.KaScopeKinds
@@ -39,28 +40,31 @@ internal open class FirKDocParameterNameContributor(
 
         getParametersForKDoc(ownerDeclarationSymbol)
             .filter { (it.symbol as KaNamedSymbol).name.asString() !in alreadyDocumentedParameters }
-            .forEach { addSymbolToCompletion(weighingContext, it) }
+            .flatMap { createLookupElements(weighingContext, it) }
+            .forEach(sink::addElement)
     }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun addSymbolToCompletion(
+    private fun createLookupElements(
         weighingContext: WeighingContext,
         symbolWithOrigin: KtSymbolWithOrigin,
-    ) {
+    ): Sequence<LookupElement> {
         val origin = symbolWithOrigin.origin
-        when (val symbol = symbolWithOrigin.symbol) {
+        return when (val symbol = symbolWithOrigin.symbol) {
             is KaTypeParameterSymbol ->
                 TypeParameterLookupElementFactory.createLookup(symbol)
                     .applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, origin))
-                    .let(sink::addElement)
+                    .let { sequenceOf(it) }
 
-            is KaValueParameterSymbol -> addCallableSymbolToCompletion(
-                weighingContext,
-                symbol.asSignature(),
-                CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                origin
+            is KaValueParameterSymbol -> createCallableLookupElements(
+                context = weighingContext,
+                signature = symbol.asSignature(),
+                options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+                symbolOrigin = origin,
             )
+
+            else -> emptySequence()
         }
     }
 

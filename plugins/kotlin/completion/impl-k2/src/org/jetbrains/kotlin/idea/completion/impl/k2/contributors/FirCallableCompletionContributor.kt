@@ -138,27 +138,25 @@ internal open class FirCallableCompletionContributor(
             )
         } else null
 
-        val callablesWithMetadata: Sequence<CallableWithMetadataForCompletion> = when (val receiver = positionContext.explicitReceiver) {
+        when (val receiver = positionContext.explicitReceiver) {
             null -> completeWithoutReceiver(positionContext, scopesContext, extensionChecker)
 
             else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
-        }
-            .filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
+        }.filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
             .filterOutShadowedCallables(weighingContext.expectedType)
             .filterNot(isUninitializedCallable(positionContext.position))
-
-        for (callableWithMetadata in callablesWithMetadata) {
-            addCallableSymbolToCompletion(
-                context = weighingContext,
-                signature = callableWithMetadata.signature,
-                options = callableWithMetadata.options,
-                symbolOrigin = callableWithMetadata.symbolOrigin,
-                lookupString = callableWithMetadata.lookupString,
-                priority = null,
-                explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
-                withTrailingLambda = withTrailingLambda,
-            )
-        }
+            .flatMap { callableWithMetadata ->
+                createCallableLookupElements(
+                    context = weighingContext,
+                    signature = callableWithMetadata.signature,
+                    options = callableWithMetadata.options,
+                    symbolOrigin = callableWithMetadata.symbolOrigin,
+                    lookupString = callableWithMetadata.lookupString,
+                    priority = null,
+                    explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
+                    withTrailingLambda = withTrailingLambda,
+                )
+            }.forEach(sink::addElement)
     }
 
     context(KaSession)
