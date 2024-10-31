@@ -45,7 +45,6 @@ private data class OngoingRequest(val request: OutgoingRequest, val span: Span)
 @OptIn(ExperimentalCoroutinesApi::class, DelicateCoroutinesApi::class)
 suspend fun<T> rpcClient(
   transport: Transport<TransportMessage>,
-  serialization: () -> Serialization,
   origin: UID,
   requestInterceptor: RpcInterceptor = RpcInterceptor,
   body: suspend CoroutineScope.(RpcClient) -> T,
@@ -54,7 +53,6 @@ suspend fun<T> rpcClient(
     withSupervisor { supervisor ->
       val client = RpcClient(coroutineScope = supervisor + supervisor.coroutineNameAppended("RpcClient"),
                              transport = transport,
-                             serialization = serialization,
                              origin = origin,
                              requestInterceptor = requestInterceptor)
       launch(start = CoroutineStart.ATOMIC, context = executor) { client.work() }
@@ -67,7 +65,6 @@ suspend fun<T> rpcClient(
 class RpcClient internal constructor(
   private val coroutineScope: CoroutineScope,
   private val transport: Transport<TransportMessage>,
-  private val serialization: () -> Serialization,
   private val origin: UID,
   private val requestInterceptor: RpcInterceptor,
 ) : IRpcClient {
@@ -276,9 +273,8 @@ class RpcClient internal constructor(
                 return@run remoteObject(remoteApiDescriptor, path, rpc.route) to emptyList()
               }
               val (de, streamDescriptors) = withSerializationContext(rpc.call.displayName, rpc.token, this) {
-                val ser = serialization()
                 val kser = rpc.returnType.serializer(rpc.call.classMethodDisplayName())
-                val json = rpcJsonImplementationDetail(ser)
+                val json = rpcJsonImplementationDetail()
                 json.decodeFromJsonElement(kser, message.result)
               }
               val internalDescriptors = registerStreams(streamDescriptors, rpc.route, rpc.prefetchStrategy)
@@ -315,7 +311,7 @@ class RpcClient internal constructor(
           when (stream) {
             is InternalStreamDescriptor.FromRemote -> {
               val (element, streamDescriptors) = withSerializationContext(stream.displayName, stream.token, this) {
-                rpcJsonImplementationDetail(serialization()).decodeFromJsonElement(stream.elementSerializer, message.data)
+                rpcJsonImplementationDetail().decodeFromJsonElement(stream.elementSerializer, message.data)
               }
               for (internalDescriptor in registerStreams(streamDescriptors, stream.route, stream.prefetchStrategy)) {
                 serveStream(internalDescriptor, stream.prefetchStrategy)
@@ -504,8 +500,7 @@ class RpcClient internal constructor(
     logger.trace { "executing call ${call.display()} with id $requestId" }
     val token = coroutineContext[RpcToken]
     val (serializedArguments, streamParameters) = run {
-      val serialization = serialization()
-      val json = rpcJsonImplementationDetail(serialization)
+      val json = rpcJsonImplementationDetail()
       val triples = (call.arguments zip call.signature.parameters).map { (arg, parameterDescriptor) ->
         val parameterName = parameterDescriptor.parameterName
         val displayName = methodParamDisplayName(classMethodDisplayName(call.service.id, call.signature.methodName), parameterName)
@@ -636,7 +631,6 @@ class RpcClient internal constructor(
     serveStream(origin = origin,
                 coroutineScope = coroutineScope,
                 descriptor = descriptor,
-                serialization = serialization,
                 prefetchStrategy = prefetchStrategy,
                 registerStream = { stream -> registerStream(stream, route, prefetchStrategy) },
                 unregisterStream = { streamId -> streams.remove(streamId) },

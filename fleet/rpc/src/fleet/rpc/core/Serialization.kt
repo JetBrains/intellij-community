@@ -3,11 +3,12 @@
 
 package fleet.rpc.core
 
-import fleet.util.*
+import fleet.rpc.core.Blob.Companion.serializer
+import fleet.util.Base64WithOptionalPadding
+import fleet.util.UID
+import fleet.util.UIDSerializer
 import fleet.util.channels.channels
 import fleet.util.serialization.DataSerializer
-import fleet.util.serialization.ISerialization
-import kotlinx.collections.immutable.PersistentList
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.ReceiveChannel
@@ -20,15 +21,9 @@ import kotlinx.serialization.UseSerializers
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.serializer
-import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.CoroutineContext
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.reflect.KClass
-import kotlin.reflect.KClassifier
-import kotlin.reflect.KType
-import kotlin.reflect.jvm.jvmErasure
 
 private class SerializationContext(val streamDescriptors: MutableList<StreamDescriptor>,
                                    val callJob: Job?,
@@ -234,25 +229,6 @@ internal object CoroutineScopeSerializer : DataSerializer<CoroutineScope, Scope>
   }
 }
 
-class Serialization(internal val serializersModule: Lazy<SerializersModule> = lazyOf(SerializersModule {  })) : CoroutineContext.Element, ISerialization {
-  companion object : CoroutineContext.Key<Serialization>
-
-  override val key: CoroutineContext.Key<*> get() = Serialization
-
-  //@fleet.kernel.plugins.InternalInPluginModules(where = ["fleet.kernel", "fleet.common"])
-  override val json by lazy {
-    Json {
-      this.allowStructuredMapKeys = true
-      this.ignoreUnknownKeys = true
-      this.serializersModule = this@Serialization.serializersModule.value
-      this.encodeDefaults = true
-    }
-  }
-
-  fun cleanup() {
-  }
-}
-
 fun KClass<*>.fasterIsSubclassOf(c: KClass<*>): Boolean =
   c.java.isAssignableFrom(this.java)
 
@@ -263,15 +239,17 @@ private fun <T : Any> KSerializer<T>.nullable(shouldBeNullable: Boolean): KSeria
     else -> this as KSerializer<T?>
   }
 
-fun rpcJsonImplementationDetail(ser: Serialization): Json {
-  return Json {
+private val RpcJson: Json by lazy {
+  Json {
     this.classDiscriminator = "type"
     this.allowStructuredMapKeys = true
     this.ignoreUnknownKeys = false
-    this.serializersModule = ser.serializersModule.value
     this.encodeDefaults = true
   }
 }
+
+fun rpcJsonImplementationDetail(): Json = 
+  RpcJson
 
 /**
  * when resolving ktype to kserializer kotlinx.serialization will unconditionally use built in serializers before contextual ones

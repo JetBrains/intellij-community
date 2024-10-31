@@ -5,7 +5,6 @@ import com.jetbrains.rhizomedb.Attribute
 import com.jetbrains.rhizomedb.DbContext
 import com.jetbrains.rhizomedb.Instruction
 import com.jetbrains.rhizomedb.Q
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
 import fleet.util.associateByUnique
 import fleet.util.openmap.SerializedValue
@@ -23,13 +22,11 @@ fun interface InstructionDecoder {
 data class SharedInstructionData(val sharedInstruction: SharedInstruction?)
 
 data class InstructionEncodingContext(
-  val json: ISerialization,
   val encoder: InstructionEncoder,
   val uidAttribute: Attribute<UID>,
 )
 
 data class InstructionDecodingContext(
-  val serialization: ISerialization,
   val decoder: InstructionDecoder,
   val uidAttribute: Attribute<UID>,
 )

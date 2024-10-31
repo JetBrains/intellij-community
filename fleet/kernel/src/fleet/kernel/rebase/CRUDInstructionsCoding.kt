@@ -53,7 +53,6 @@ object CreateEntityCoder : InstructionCoder<CreateEntity, SharedCreateEntity> {
               attributes = attrs.map { (attr, value) ->
                 val serializedValue = encodeDbValue(
                   uidAttribute = serContext.uidAttribute,
-                  json = serContext.json,
                   a = attr,
                   v = value
                 )
@@ -153,7 +152,6 @@ object AddCoder : InstructionCoder<Add<*>, SharedAdd> {
               schema = instruction.attribute.schema.value,
               value = encodeDbValue(
                 uidAttribute = serContext.uidAttribute,
-                json = serContext.json,
                 a = instruction.attribute,
                 v = instruction.value
               ),
@@ -197,7 +195,6 @@ object RemoveCoder : InstructionCoder<Remove<*>, SharedRemove> {
           val attribute = attributeIdent(instruction.attribute)!!
           val value = encodeDbValue(
             uidAttribute = serContext.uidAttribute,
-            json = serContext.json,
             a = instruction.attribute,
             v = instruction.value
           )
@@ -232,7 +229,7 @@ private fun DbContext<Q>.deserializeValue(
   is DurableDbValue.EntityTypeRef -> requireNotNull(entityTypeByIdent(value.ident)) {
     "entity type ${value.ident} not found"
   }
-  is DurableDbValue.Scalar -> deserialize(attribute, value.json, deserContext.serialization)
+  is DurableDbValue.Scalar -> deserialize(attribute, value.json)
 }
 
 object RetractAttributeCoder : InstructionCoder<RetractAttribute, SharedRetractAttribute> {
@@ -317,7 +314,6 @@ object ValidateCoder : InstructionCoder<Validate, SharedValidate> {
 
   override fun DbContext<Q>.decode(deserContext: InstructionDecodingContext, sharedInstruction: SharedValidate): List<Validate> =
     listOf(Validate(indexQuery = decodeQuery(query = sharedInstruction.q,
-                                             json = deserContext.serialization,
                                              uidAttribute = deserContext.uidAttribute),
                     trace = sharedInstruction.trace))
 }

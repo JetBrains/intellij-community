@@ -4,7 +4,6 @@ package fleet.kernel.rebase
 import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
 import it.unimi.dsi.fastutil.longs.LongArrayList
 
@@ -15,7 +14,7 @@ internal fun Mut.queryRecording(
 ): Mut = let { mut ->
   object : Mut by mut {
     override fun <T> queryIndex(indexQuery: IndexQuery<T>): T =
-      when (val sharedQuery = asOf(mut) { encodeQuery(indexQuery, serContext.json, eidToUid) }) {
+      when (val sharedQuery = asOf(mut) { encodeQuery(indexQuery, eidToUid) }) {
         null -> mut.queryIndex(indexQuery)
         else -> {
           val (result, trace) = mut.traceQuery(indexQuery)
@@ -161,7 +160,6 @@ internal fun <T> Q.traceQuery(indexQuery: IndexQuery<T>): Pair<T, Long> =
 */
 internal fun <T> DbContext<Q>.encodeQuery(
   indexQuery: IndexQuery<T>,
-  json: ISerialization,
   eidToUid: DbContext<Q>.(EID) -> UID?,
 ): SharedQuery? =
   when (indexQuery) {
@@ -176,7 +174,7 @@ internal fun <T> DbContext<Q>.encodeQuery(
     is IndexQuery.Contains<*> -> {
       attributeIdent(indexQuery.attribute)?.let { attribute ->
         eidToUid(indexQuery.eid)?.let { uid ->
-          serialize1(json, eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
+          serialize1(eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
             SharedQuery.Contains(uid, attribute, dbValue)
           }
         }
@@ -206,14 +204,14 @@ internal fun <T> DbContext<Q>.encodeQuery(
     }
     is IndexQuery.LookupMany<*> -> {
       attributeIdent(indexQuery.attribute)?.let { attribute ->
-        serialize1(json, eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
+        serialize1(eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
           SharedQuery.LookupMany(attribute, dbValue)
         }
       }
     }
     is IndexQuery.LookupUnique<*> -> {
       attributeIdent(indexQuery.attribute)?.let { attribute ->
-        serialize1(json, eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
+        serialize1(eidToUid, indexQuery.attribute, indexQuery.value)?.let { dbValue ->
           SharedQuery.LookupMany(attribute, dbValue)
         }
       }
@@ -229,7 +227,7 @@ internal fun <T> DbContext<Q>.encodeQuery(
 * null means, that the query is referring to a dead entity, the result of such query is considered to be empty even without running it
 * */
 @Suppress("UNCHECKED_CAST")
-internal fun DbContext<Q>.decodeQuery(query: SharedQuery, json: ISerialization, uidAttribute: Attribute<UID>): IndexQuery<*>? =
+internal fun DbContext<Q>.decodeQuery(query: SharedQuery, uidAttribute: Attribute<UID>): IndexQuery<*>? =
   when (query) {
     is SharedQuery.Column ->
       attributeByIdent(query.attribute)?.let { attribute ->
@@ -256,7 +254,7 @@ internal fun DbContext<Q>.decodeQuery(query: SharedQuery, json: ISerialization, 
               }
             }
             is DurableDbValue.Scalar -> {
-              IndexQuery.Contains(eid, attribute as Attribute<Any>, deserialize(attribute, query.value.json, json))
+              IndexQuery.Contains(eid, attribute as Attribute<Any>, deserialize(attribute, query.value.json))
             }
           }
         }
@@ -300,7 +298,7 @@ internal fun DbContext<Q>.decodeQuery(query: SharedQuery, json: ISerialization, 
             require(attribute.schema.indexed || attribute.schema.unique) {
               "db value used in lookup is scalar but ${query.attribute} is not indexed in schema!"
             }
-            IndexQuery.LookupMany(attribute as Attribute<Any>, deserialize(attribute, query.value.json, json))
+            IndexQuery.LookupMany(attribute as Attribute<Any>, deserialize(attribute, query.value.json))
           }
         }
       }
@@ -327,7 +325,7 @@ internal fun DbContext<Q>.decodeQuery(query: SharedQuery, json: ISerialization, 
             }
           }
           is DurableDbValue.Scalar -> {
-            IndexQuery.LookupUnique(attribute as Attribute<Any>, deserialize(attribute, query.value.json, json))
+            IndexQuery.LookupUnique(attribute as Attribute<Any>, deserialize(attribute, query.value.json))
           }
         }
       }

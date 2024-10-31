@@ -50,7 +50,6 @@ class FleetClient private constructor(
     fun create(scope: CoroutineScope,
                clientId: ClientId,
                transportFactory: FleetTransportFactory,
-               serialization: () -> Serialization,
                delayStrategy: DelayStrategy = Exponential,
                requestInterceptor: RpcInterceptor = RpcInterceptor): FleetClient {
       val stats = MutableStateFlow(TransportStats())
@@ -60,7 +59,7 @@ class FleetClient private constructor(
         val parentScope = this
         launch {
           transportFactory.connect(stats) { transport ->
-            rpcClient(transport, serialization, clientId.uid, requestInterceptor) { rpcClient ->
+            rpcClient(transport, clientId.uid, requestInterceptor) { rpcClient ->
               connected.complete(rpcClient)
               awaitCancellation()
             }
@@ -92,7 +91,6 @@ fun <A : RemoteApi<*>> FleetClient.proxy(remoteApiDescriptor: RemoteApiDescripto
 
 suspend fun withFleetClient(clientId: ClientId,
                             transportFactory: FleetTransportFactory,
-                            json: () -> Serialization,
                             delayStrategy: DelayStrategy = Exponential,
                             requestInterceptor: RpcInterceptor = RpcInterceptor,
                             body: suspend CoroutineScope.(FleetClient) -> Unit) {
@@ -101,7 +99,6 @@ suspend fun withFleetClient(clientId: ClientId,
     val fleetClient = FleetClient.create(this,
                                          clientId = clientId,
                                          transportFactory = transportFactory,
-                                         serialization = json,
                                          delayStrategy = delayStrategy,
                                          requestInterceptor = requestInterceptor)
     try {

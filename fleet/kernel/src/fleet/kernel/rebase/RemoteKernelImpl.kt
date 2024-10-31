@@ -5,7 +5,6 @@ import com.jetbrains.rhizomedb.*
 import fleet.kernel.*
 import fleet.rpc.client.RpcClientDisconnectedException
 import fleet.rpc.core.AssumptionsViolatedException
-import fleet.util.serialization.ISerialization
 import fleet.rpc.core.toRpc
 import fleet.util.UID
 import fleet.util.async.takeUntilInclusive
@@ -34,8 +33,7 @@ fun <T> CoroutineScope.waitForCompletion(flow: Flow<T>): Flow<T> {
 
 class RemoteKernelImpl(val transactor: Transactor,
                        val coroutineScope: CoroutineScope,
-                       val instructionDecoder: InstructionDecoder,
-                       val serialization: ISerialization) : RemoteKernel {
+                       val instructionDecoder: InstructionDecoder) : RemoteKernel {
 
   companion object {
     val log = KLoggers.logger(RemoteKernelImpl::class)
@@ -55,7 +53,7 @@ class RemoteKernelImpl(val transactor: Transactor,
               "no uids in shared datoms: ${problematicDatoms.joinToString { displayDatom(it) }}"
             }
           }
-          buildDurableSnapshot(sharedDatoms, serialization, emptySet())
+          buildDurableSnapshot(sharedDatoms, emptySet())
         }
 
         val broadcastFlow = changes.consumeAsFlow()
@@ -69,7 +67,7 @@ class RemoteKernelImpl(val transactor: Transactor,
 
                   else ->
                     RemoteKernel.Broadcast.Tx(transactionResult.tx.let { tx ->
-                      tx.copy(instructions = tx.instructions.filter { instruction -> instruction !is SharedValidate })
+                      tx.copy(instructions = tx.instructions.filter { instruction -> instruction.name != ValidateCoder.instructionName })
                     })
                 }
 
@@ -125,8 +123,7 @@ class RemoteKernelImpl(val transactor: Transactor,
                   if (index + 1 == transaction.index) {
                     try {
                       val uidAttribute = uidAttribute()
-                      val deserContext = InstructionDecodingContext(serialization = serialization,
-                                                                    uidAttribute = uidAttribute,
+                      val deserContext = InstructionDecodingContext(uidAttribute = uidAttribute,
                                                                     decoder = instructionDecoder)
                       val mutableNovelty = meta[MutableNoveltyKey]!!
                       val effects = ArrayList<InstructionEffect>()

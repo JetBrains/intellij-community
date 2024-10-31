@@ -5,11 +5,9 @@ import com.jetbrains.rhizomedb.*
 import com.jetbrains.rhizomedb.ChangeScope
 import com.jetbrains.rhizomedb.get
 import fleet.kernel.*
-import fleet.util.serialization.ISerialization
 import fleet.util.UID
 
 class FollowerTransactorMiddleware(
-  private val serialization: ISerialization,
   private val instructionEncoder: InstructionEncoder
 ) : TransactorMiddleware {
 
@@ -39,7 +37,6 @@ class FollowerTransactorMiddleware(
           f = f,
           idMappings = idMappings,
           instructionEncoder = instructionEncoder,
-          json = serialization
         )
 
         sharedBlocks.add(
@@ -54,13 +51,11 @@ class FollowerTransactorMiddleware(
         t
       }
     }
-    meta[SerializationKey] = serialization
 
     context.alter(
       context.impl
         .instructionsRecording(
           serContext = InstructionEncodingContext(
-            json = serialization,
             uidAttribute = uidAttribute,
             encoder = instructionEncoder
           ),

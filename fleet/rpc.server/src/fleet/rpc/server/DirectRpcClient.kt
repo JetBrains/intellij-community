@@ -5,7 +5,6 @@ import fleet.rpc.client.IRpcClient
 import fleet.rpc.client.RpcInterceptor
 import fleet.rpc.client.promisingRpcClient
 import fleet.rpc.client.rpcClient
-import fleet.rpc.core.Serialization
 import fleet.rpc.core.Transport
 import fleet.rpc.core.TransportMessage
 import fleet.util.UID
@@ -16,7 +15,6 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 fun RequestDispatcher.directRpcClient(
-  serialization: () -> Serialization,
   interceptor: RpcInterceptor,
 ): Resource<IRpcClient> =
   resource { cc ->
@@ -31,7 +29,6 @@ fun RequestDispatcher.directRpcClient(
                        presentableName = "directRpcClient")
     }.use {
       rpcClient(transport = Transport(outgoing = clientSend, incoming = clientReceive),
-                serialization = serialization,
                 origin = origin,
                 requestInterceptor = interceptor) { rpcClient ->
         cc(rpcClient)
@@ -40,11 +37,10 @@ fun RequestDispatcher.directRpcClient(
   }.span("directRpcClient")
 
 suspend fun RequestDispatcher.withDirectRpcClient(
-  serialization: () -> Serialization,
   interceptor: RpcInterceptor,
   body: suspend CoroutineScope.(IRpcClient) -> Unit,
 ) {
-  directRpcClient(serialization, interceptor)
+  directRpcClient(interceptor)
     .async()
     .use { rpcClientDeferred ->
       body(promisingRpcClient(rpcClientDeferred))

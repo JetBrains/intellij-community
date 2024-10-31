@@ -201,7 +201,6 @@ interface PrefetchStrategy {
 fun serveStream(origin: UID,
                 coroutineScope: CoroutineScope,
                 descriptor: InternalStreamDescriptor,
-                serialization: () -> Serialization,
                 prefetchStrategy: PrefetchStrategy,
                 registerStream: (StreamDescriptor) -> InternalStreamDescriptor,
                 unregisterStream: (UID) -> InternalStreamDescriptor?,
@@ -223,8 +222,7 @@ fun serveStream(origin: UID,
         try {
           sendMessage(RpcMessage.StreamInit(streamId = descriptor.uid))
           for (item in descriptor.channel) {
-            val serialiation = serialization()
-            val json = rpcJsonImplementationDetail(serialiation)
+            val json = rpcJsonImplementationDetail()
             val (jsonElement, streamDescriptors) = withSerializationContext("Sub-channel of ${descriptor.uid}", token = descriptor.token,
                                                                             rpcScope = coroutineScope) {
               json.encodeToJsonElement(serializer = descriptor.elementSerializer,
@@ -240,8 +238,7 @@ fun serveStream(origin: UID,
               serveStream(origin = origin,
                           coroutineScope = coroutineScope,
                           descriptor = internalStream,
-                          serialization = serialization,
-                          prefetchStrategy = prefetchStrategy,
+                            prefetchStrategy = prefetchStrategy,
                           registerStream = registerStream,
                           unregisterStream = unregisterStream,
                           sendAsync = sendAsync)

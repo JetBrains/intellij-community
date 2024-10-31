@@ -10,7 +10,6 @@ import fleet.util.async.catching
 import fleet.util.async.use
 import fleet.util.logging.KLogger
 import fleet.util.logging.logger
-import fleet.util.serialization.ISerialization
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import kotlinx.coroutines.*
@@ -33,7 +32,6 @@ suspend fun <T> withStorage(
   loadSnapshot: suspend CoroutineScope.() -> DurableSnapshotWithPartitions, // reads snapshot from file
   saveSnapshot: suspend CoroutineScope.(DurableSnapshotWithPartitions) -> Unit, // writes snapshot to file
   serializationRestrictions: Set<KClass<*>> = emptySet(),
-  serialization: ISerialization,
   body: suspend CoroutineScope.() -> T,
 ): T =
   coroutineScope {
@@ -46,7 +44,7 @@ suspend fun <T> withStorage(
           hackyNonBlockingChange {
             span("apply snapshot") {
               DbContext.threadBound.ensureMutable {
-                applyDurableSnapshotWithPartitions(serialization, snapshot)
+                applyDurableSnapshotWithPartitions(snapshot)
               }
             }
           }
@@ -98,7 +96,7 @@ suspend fun <T> withStorage(
           Storage.logger.debug { "saving snapshot $storageKey" }
           val (snapshot, snapshotBuildDuration) = measureTimedValue {
             asOf(db) {
-              durableSnapshotWithPartitions(serialization, storageKey, serializationRestrictions)
+              durableSnapshotWithPartitions(storageKey, serializationRestrictions)
             }
           }
           val entitiesCount = snapshot.snapshot.entities.size
@@ -113,7 +111,7 @@ suspend fun <T> withStorage(
     }.also {
       Storage.logger.info { "last save for $storageKey " }
       saveSnapshot(asOf(transactor().lastKnownDb) {
-        durableSnapshotWithPartitions(serialization, storageKey, serializationRestrictions)
+        durableSnapshotWithPartitions(storageKey, serializationRestrictions)
       })
     }
   }
@@ -133,10 +131,10 @@ data class DurableSnapshotWithPartitions(
   }
 }
 
-private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(serialization: ISerialization, snapshotWithPartitions: DurableSnapshotWithPartitions) {
+private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(snapshotWithPartitions: DurableSnapshotWithPartitions) {
   span("applyDurableSnapshotWithPartitions") {
     val memoizedEIDs = HashMap<UID, EID>()
-    applySnapshot(snapshotWithPartitions.snapshot, serialization) { uid ->
+    applySnapshot(snapshotWithPartitions.snapshot) { uid ->
       val partition = snapshotWithPartitions.partitions[uid]!!
       memoizedEIDs.computeIfAbsent(uid) { EidGen.freshEID(partition) }
     }
@@ -166,7 +164,6 @@ private fun DbContext<Mut>.applyDurableSnapshotWithPartitions(serialization: ISe
 }
 
 private fun durableSnapshotWithPartitions(
-  serialization: ISerialization,
   storageKey: StorageKey,
   serializationRestrictions: Set<KClass<*>>,
 ): DurableSnapshotWithPartitions {
@@ -210,7 +207,7 @@ private fun durableSnapshotWithPartitions(
 
     queryIndex(IndexQuery.LookupMany(storageKeyAttr, storageKey)).forEach { datom -> dfs(datom.eid) }
     val datoms = datomsToStore.values.flatten()
-    val snapshot = buildDurableSnapshot(datoms.asSequence(), serialization, serializationRestrictions)
+    val snapshot = buildDurableSnapshot(datoms.asSequence(), serializationRestrictions)
     DurableSnapshotWithPartitions(snapshot = snapshot,
                                   partitions = datoms.mapNotNull { (e, a, v) ->
                                     when (a) {

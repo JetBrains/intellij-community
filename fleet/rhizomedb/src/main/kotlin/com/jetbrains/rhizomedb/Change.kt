@@ -2,7 +2,6 @@
 package com.jetbrains.rhizomedb
 
 import fleet.util.openmap.OpenMap
-import fleet.util.serialization.ISerialization
 
 /**
  * The result of applying fn to a [DB] value
@@ -52,4 +51,3 @@ fun DB.change(defaultPart: Part = 1, f: ChangeScope.() -> Unit): Change = let { 
 }
 
 object MutableNoveltyKey : ChangeScopeKey<MutableNovelty>
-object SerializationKey: ChangeScopeKey<ISerialization>

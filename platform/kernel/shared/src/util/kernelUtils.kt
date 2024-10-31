@@ -13,12 +13,10 @@ import fleet.kernel.*
 import fleet.kernel.rebase.*
 import fleet.kernel.rete.Rete
 import fleet.kernel.rete.withRete
-import fleet.rpc.core.Serialization
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.modules.SerializersModule
 import org.jetbrains.annotations.ApiStatus
 import kotlin.coroutines.CoroutineContext
 
@@ -89,10 +87,6 @@ val CommonInstructionSet: InstructionSet =
     ValidateCoder,
     CreateEntityCoder,
   ))
-
-val KernelRpcSerialization = Serialization(lazyOf(SerializersModule {
-  
-}))
 
 suspend fun updateDbInTheEventDispatchThread(): Nothing {
   withContext(Dispatchers.EDT + ModalityState.any().asContextElement()) {
