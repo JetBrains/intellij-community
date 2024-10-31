@@ -642,6 +642,7 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
+    <statistics.validation.customValidationRule implementation="com.jetbrains.python.statistics.feedback.TrueValidationRule"/>
   </extensions>
 
   <extensionPoints>
