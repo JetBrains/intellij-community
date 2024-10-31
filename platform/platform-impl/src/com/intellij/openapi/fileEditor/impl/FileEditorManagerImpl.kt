@@ -854,15 +854,21 @@ open class FileEditorManagerImpl(
         if (forbidSplitFor(file)) {
           closeFile(file)
         }
-        return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
-          file = file,
-          fileEditorManager = this,
-          isSingletonEditorInWindow = options.isSingletonEditorInWindow,
-        ) { editorWindow ->
-          if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
-            closeFile(file = file)
+
+        // Don't create a new window on backend for OpenMode.NEW_WINDOW,
+        // it will lead to creating two windows -- one from backend (Lux-ed),
+        // and another from frontend
+        if (ClientId.isCurrentlyUnderLocalId) {
+          return (DockManager.getInstance(project) as DockManagerImpl).createNewDockContainerFor(
+            file = file,
+            fileEditorManager = this,
+            isSingletonEditorInWindow = options.isSingletonEditorInWindow,
+          ) { editorWindow ->
+            if (forbidSplitFor(file = file) && !editorWindow.isFileOpen(file = file)) {
+              closeFile(file = file)
+            }
+            doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
           }
-          doOpenFile(file = file, windowToOpenIn = editorWindow, options = options)
         }
       }
       else if (mode == OpenMode.RIGHT_SPLIT) {
