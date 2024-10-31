@@ -18,7 +18,6 @@ import org.jetbrains.idea.maven.project.MavenWrapper
 class MavenImportWizardTest : MavenProjectWizardTestCase() {
   override fun setUp() {
     super.setUp()
-    MavenTestCase.assumeTestCanBeReusedForPreimport(this::class.java, name)
   }
 
   fun testImportModule() = runBlocking {

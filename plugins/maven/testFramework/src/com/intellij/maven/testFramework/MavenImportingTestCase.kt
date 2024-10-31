@@ -7,7 +7,6 @@ import com.intellij.java.library.LibraryWithMavenCoordinatesProperties
 import com.intellij.openapi.application.*
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.AutoImportProjectTracker
-import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleWithNameAlreadyExists
@@ -32,7 +31,10 @@ import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.platform.backend.observation.Observation
 import com.intellij.psi.codeStyle.CodeStyleSchemes
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.testFramework.*
+import com.intellij.testFramework.CodeStyleSettingsTracker
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.IndexingTestUtil
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.RunAll.Companion.runAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -47,14 +49,11 @@ import org.jetbrains.idea.maven.execution.MavenRunnerParameters
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.project.*
-import org.jetbrains.idea.maven.project.preimport.MavenProjectStaticImporter
-import org.jetbrains.idea.maven.project.preimport.SimpleStructureProjectVisitor
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import java.io.File
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -70,7 +69,6 @@ abstract class MavenImportingTestCase : MavenTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    assumeThisTestCanBeReusedForPreimport()
     isAutoReloadEnabled = false
     VfsRootAccess.allowRootAccess(getTestRootDisposable(), PathManager.getConfigPath())
     super.setUp()
@@ -113,8 +111,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @Suppress("unused")
-  protected fun mn(parent: String /* can be used to prepend module name depending on the importing settings*/,
-                   moduleName: String): String {
+  protected fun mn(
+    parent: String, /* can be used to prepend module name depending on the importing settings*/
+    moduleName: String,
+  ): String {
     return moduleName
   }
 
@@ -156,22 +156,26 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   @JvmOverloads
-  protected fun assertModuleLibDep(moduleName: String,
-                                   depName: String,
-                                   classesPath: String? = null,
-                                   sourcePath: String? = null,
-                                   javadocPath: String? = null) {
+  protected fun assertModuleLibDep(
+    moduleName: String,
+    depName: String,
+    classesPath: String? = null,
+    sourcePath: String? = null,
+    javadocPath: String? = null,
+  ) {
     val lib = getModuleLibDep(moduleName, depName)
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, if (classesPath == null) null else listOf(classesPath))
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, if (sourcePath == null) null else listOf(sourcePath))
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), if (javadocPath == null) null else listOf(javadocPath))
   }
 
-  protected fun assertModuleLibDep(moduleName: String,
-                                   depName: String,
-                                   classesPaths: List<String>,
-                                   sourcePaths: List<String>,
-                                   javadocPaths: List<String>) {
+  protected fun assertModuleLibDep(
+    moduleName: String,
+    depName: String,
+    classesPaths: List<String>,
+    sourcePaths: List<String>,
+    javadocPaths: List<String>,
+  ) {
     val lib = getModuleLibDep(moduleName, depName)
     assertModuleLibDepPath(lib, OrderRootType.CLASSES, classesPaths)
     assertModuleLibDepPath(lib, OrderRootType.SOURCES, sourcePaths)
@@ -259,19 +263,23 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     assertUnorderedElementsAreEqual(actualNames, *expectedNames)
   }
 
-  fun assertProjectLibraryCoordinates(libraryName: String,
-                                      groupId: String?,
-                                      artifactId: String?,
-                                      version: String?) {
+  fun assertProjectLibraryCoordinates(
+    libraryName: String,
+    groupId: String?,
+    artifactId: String?,
+    version: String?,
+  ) {
     assertProjectLibraryCoordinates(libraryName, groupId, artifactId, null, JpsMavenRepositoryLibraryDescriptor.DEFAULT_PACKAGING, version)
   }
 
-  fun assertProjectLibraryCoordinates(libraryName: String,
-                                      groupId: String?,
-                                      artifactId: String?,
-                                      classifier: String?,
-                                      packaging: String?,
-                                      version: String?) {
+  fun assertProjectLibraryCoordinates(
+    libraryName: String,
+    groupId: String?,
+    artifactId: String?,
+    classifier: String?,
+    packaging: String?,
+    version: String?,
+  ) {
     val lib = LibraryTablesRegistrar.getInstance().getLibraryTable(project).getLibraryByName(libraryName)
     assertNotNull("Library [$libraryName] not found", lib)
     val libraryProperties = (lib as LibraryEx?)!!.getProperties()
@@ -338,22 +346,9 @@ abstract class MavenImportingTestCase : MavenTestCase() {
   }
 
   protected open suspend fun importProjectsAsync(files: List<VirtualFile>) {
-    if (preimportTestMode) {
-      val activity = ProjectImportCollector.IMPORT_ACTIVITY.started(project)
-      try {
-        MavenProjectStaticImporter.getInstance(project)
-          .syncStatic(files, null, mavenImporterSettings, mavenGeneralSettings, true, SimpleStructureProjectVisitor(), activity, true)
-      }
-      finally {
-        activity.finished()
-      }
 
-
-    }
-    else {
-      initProjectsManager(false)
-      projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
-    }
+    initProjectsManager(false)
+    projectsManager.addManagedFilesWithProfiles(files, MavenExplicitProfiles.NONE, null, null, true)
 
     IndexingTestUtil.suspendUntilIndexesAreReady(project)
   }
@@ -397,8 +392,10 @@ abstract class MavenImportingTestCase : MavenTestCase() {
     return doImportProjectsAsync(files, failOnReadingError, emptyList(), *profiles)
   }
 
-  protected suspend fun doImportProjectsAsync(files: List<VirtualFile>, failOnReadingError: Boolean,
-                                              disabledProfiles: List<String>, vararg profiles: String) {
+  protected suspend fun doImportProjectsAsync(
+    files: List<VirtualFile>, failOnReadingError: Boolean,
+    disabledProfiles: List<String>, vararg profiles: String,
+  ) {
     assertFalse(ApplicationManager.getApplication().isWriteAccessAllowed())
     initProjectsManager(false)
     projectsManager.projectsTree.resetManagedFilesAndProfiles(files, MavenExplicitProfiles(profiles.toList(), disabledProfiles))

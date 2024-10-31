@@ -116,7 +116,6 @@ abstract class MavenTestCase : UsefulTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    assumeThisTestCanBeReusedForPreimport()
     super.setUp()
 
     setUpFixtures()
@@ -158,11 +157,6 @@ abstract class MavenTestCase : UsefulTestCase() {
       }
     }
   }
-
-  protected fun assumeThisTestCanBeReusedForPreimport() {
-    assumeTestCanBeReusedForPreimport(this.javaClass, name)
-  }
-
 
   private fun setupWsl() {
     val wslMsId = System.getProperty("wsl.distribution.name")
@@ -776,23 +770,5 @@ abstract class MavenTestCase : UsefulTestCase() {
              
              """.trimIndent() + xml + "</project>"
     }
-
-    fun assumeTestCanBeReusedForPreimport(aClass: Class<*>, testName: String) {
-      if (!preimportTestMode) return
-      try {
-        var annotation = aClass.getDeclaredAnnotation(InstantImportCompatible::class.java)
-        if (annotation == null) {
-          val testMethod = aClass.getMethod(testName)
-          annotation = testMethod.getDeclaredAnnotation(InstantImportCompatible::class.java)
-          if (annotation == null) {
-            throw AssumptionViolatedException(
-              "No InstantImportCompatible annotation present on class and method in pre-import testing mode, skipping test")
-          }
-        }
-      }
-      catch (ignore: NoSuchMethodException) {
-      }
-    }
-
   }
 }
