@@ -398,6 +398,7 @@
     <notificationGroup id="Infer Nullity" displayType="TOOL_WINDOW" toolWindowId="Infer Nullity" bundle="messages.JavaBundle"
                        key="dialog.title.infer.nullity"/>
     <notificationGroup id="JDK Arch Check" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.arch.checker"/>
+    <notificationGroup id="Unsupported JDK" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.unsupported.jdk"/>
 
     <registryKey key="index.ids.from.java.sources.in.jar" defaultValue="true"
                  description="Index ids from class files instead of source files in JARs" restartRequired="false"/>
@@ -757,6 +758,8 @@
 
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <java.programPatcher implementation="com.intellij.execution.ClasspathModificationPatcher" order="last"/>
+
+    <runConfigurationExtension implementation="com.intellij.execution.JavaVersionChecker"/>
 
     <checkinHandlerFactory implementation="com.intellij.compiler.impl.vcs.UnloadedModulesCompilationCheckinHandler$Factory"/>
 
