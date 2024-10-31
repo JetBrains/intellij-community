@@ -115,7 +115,7 @@ public final class ExcludedEntriesConfigurable implements UnnamedConfigurable, N
 
     ExcludedEntriesPanel() {
       initPanel();
-      putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+      putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
     }
 
     @Override

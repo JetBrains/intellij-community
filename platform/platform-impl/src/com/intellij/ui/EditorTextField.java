@@ -163,7 +163,7 @@ public class EditorTextField extends NonOpaquePanel implements EditorTextCompone
       }
     });
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, UnscaledGapsKt.UnscaledGaps(3));
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   private @Nullable Project getProjectIfValid() {

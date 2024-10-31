@@ -38,7 +38,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
     putClientProperty(DslComponentProperty.INTERACTIVE_COMPONENT, myEnvVars.getChildComponent());
-    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, new VerticalComponentGap(true, true));
+    putClientProperty(DslComponentProperty.VERTICAL_COMPONENT_GAP, VerticalComponentGap.BOTH);
   }
 
   protected @NotNull EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {

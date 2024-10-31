@@ -8771,6 +8771,9 @@ f:com.intellij.ui.dsl.builder.UtilsKt
 - sf:cleanupHtml(java.lang.String):java.lang.String
 - sf:listCellRenderer(kotlin.jvm.functions.Function2):com.intellij.ui.SimpleListCellRenderer
 f:com.intellij.ui.dsl.builder.VerticalComponentGap
+- sf:BOTH:com.intellij.ui.dsl.builder.VerticalComponentGap
+- sf:Companion:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
+- sf:NONE:com.intellij.ui.dsl.builder.VerticalComponentGap
 - <init>():V
 - <init>(java.lang.Boolean,java.lang.Boolean):V
 - b:<init>(java.lang.Boolean,java.lang.Boolean,I,kotlin.jvm.internal.DefaultConstructorMarker):V
@@ -8782,6 +8785,7 @@ f:com.intellij.ui.dsl.builder.VerticalComponentGap
 - f:getBottom():java.lang.Boolean
 - f:getTop():java.lang.Boolean
 - hashCode():I
+f:com.intellij.ui.dsl.builder.VerticalComponentGap$Companion
 f:com.intellij.ui.dsl.gridLayout.Gaps
 - sf:Companion:com.intellij.ui.dsl.gridLayout.Gaps$Companion
 - sf:EMPTY:com.intellij.ui.dsl.gridLayout.Gaps
