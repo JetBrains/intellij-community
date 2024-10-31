@@ -65,7 +65,12 @@ internal data class Attribute(
   var description: String? = null,
   var defaultValue: String? = null,
   var path: List<String> = emptyList(),
-)
+) {
+  fun getPresentableName(): String {
+    val elementName = path[path.lastIndex - 1]
+    return "$elementName@$name"
+  }
+}
 
 internal data class Requirement(
   var required: Required = Required.UNKNOWN,

@@ -103,7 +103,7 @@ private class XmlDescriptorElementDocumentationTarget(project: Project, content:
 }
 
 private class XmlDescriptorAttributeDocumentationTarget(project: Project, content: DocumentationContent, private val attribute: Attribute) :
-  AbstractXmlDescriptorDocumentationTarget(project, attribute.name!!, content) {
+  AbstractXmlDescriptorDocumentationTarget(project, attribute.getPresentableName(), content) {
   override fun computeDocumentation(): DocumentationResult {
     return DocumentationResult.asyncDocumentation {
       DocumentationResult.documentation(getRenderer().renderAttribute(attribute, content.baseUrl))
