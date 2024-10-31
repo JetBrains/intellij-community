@@ -195,14 +195,22 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             append(codeFragment.text)
         }
 
-        return cache.get(key) {
-            compileCodeFragment(context)
+        val result = cache.get(key) {
+            try {
+                compileCodeFragment(context)
+            } catch (e: EvaluateException) {
+                FailedCompilationCodeFragment(e)
+            }
+        }
+        when (result) {
+            is CompiledCodeFragmentData -> return result
+            is FailedCompilationCodeFragment -> throw result.evaluateException
         }
     }
 
-    private class OnRefreshCachedValueProvider(private val project: Project) : CachedValueProvider<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
-        override fun compute(): CachedValueProvider.Result<ConcurrentFactoryCache<String, CompiledCodeFragmentData>> {
-            val storage = ConcurrentHashMap<String, CompiledCodeFragmentData>()
+    private class OnRefreshCachedValueProvider(private val project: Project) : CachedValueProvider<ConcurrentFactoryCache<String, CompilationCodeFragmentResult>> {
+        override fun compute(): CachedValueProvider.Result<ConcurrentFactoryCache<String, CompilationCodeFragmentResult>> {
+            val storage = ConcurrentHashMap<String, CompilationCodeFragmentResult>()
             return CachedValueProvider.Result(ConcurrentFactoryCache(storage), KotlinDebuggerSessionRefreshTracker.getInstance(project))
         }
     }
