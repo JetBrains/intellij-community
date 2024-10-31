@@ -1043,4 +1043,22 @@ class JavaAssertEqualsBetweenInconvertibleTypesInspectionTest : AssertEqualsBetw
 
     myFixture.testHighlighting(JvmLanguage.JAVA, code)
   }
+
+  @Test
+  fun `additional smoke test for comparing with Void type`() {
+    @Language("JAVA") val code = """
+      import org.junit.Test;
+      import org.junit.Assert;
+      
+      class MySampleTest {
+        private void func() { return null; }
+        @Test
+        public void myTest() {
+          Integer actual = Integer.valueOf(1);
+          Void expected = func();
+          Assert.<warning descr="'isEqualTo()' between objects of inconvertible types 'Integer' and 'Void'">assertEquals</warning>(expected, actual);
+          Assert.<warning descr="'isEqualTo()' between objects of inconvertible types 'Void' and 'Integer'">assertEquals</warning>(actual, expected);
+        }
+      }""".trimIndent()
+  }
 }

@@ -5,6 +5,7 @@ import com.intellij.analysis.JvmAnalysisBundle
 import com.intellij.codeInspection.AbstractBaseUastLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
@@ -65,6 +66,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     if (firstArgument.isNullLiteral() || secondArgument.isNullLiteral()) return
     val type1 = firstArgument.getExpressionType() ?: return
     val type2 = secondArgument.getExpressionType() ?: return
+
+    // Workaround for Kotlin's Nothing type becoming Void in UAST and causing false positives. See IDEA-361908.
+    val isKotlin = expression.lang == Language.findLanguageByID("kotlin")
+    if (isKotlin && (type1.isVoid() || type2.isVoid())) return
+
     checkMismatch(expression, type1, type2)
   }
 
@@ -168,4 +174,11 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
       "org.assertj.core.api.Assertions", "assertThat"
     ).parameterCount(1)
   }
+}
+
+private fun PsiType.isVoid(): Boolean {
+  if (this !is PsiClassType) return false
+  if (this.name != "Void") return false
+  if (this.parameters.isNotEmpty()) return false // We know that void doesn't have any type params
+  return resolve()?.qualifiedName == CommonClassNames.JAVA_LANG_VOID
 }
