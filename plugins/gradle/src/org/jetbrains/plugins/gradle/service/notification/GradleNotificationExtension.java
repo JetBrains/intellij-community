@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.ObjectStreamException;
+import java.util.Objects;
 
 /**
  * @author Vladislav.Soroka
@@ -44,7 +45,8 @@ public class GradleNotificationExtension implements ExternalSystemNotificationEx
   public boolean isInternalError(@NotNull Throwable error) {
     Throwable unwrapped = RemoteUtil.unwrap(error);
     String message = unwrapped.getMessage();
-    if ("Compilation failed; see the compiler error output for details.".equals(message)) {
+    if ("Compilation failed; see the compiler error output for details.".equals(message)
+        || Objects.requireNonNull(message, "").contains("Compilation failed; see the compiler output below")) {
       // compiler errors should be handled by BuildOutputParsers
       return true;
     }

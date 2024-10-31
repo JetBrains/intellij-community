@@ -96,6 +96,8 @@ class GradleBuildOutputTest : GradleExecutionTestCase() {
             assertNode("App2.java", skipIf = !isPerTaskOutputSupported()) {
               assertNode("';' expected")
               assertNode("invalid method declaration; return type required")
+              assertNode("';' expected", skipIf = !isBuildCompilationReportSupported())
+              assertNode("invalid method declaration; return type required", skipIf = !isBuildCompilationReportSupported())
             }
           }
           assertNode("App2.java", skipIf = isPerTaskOutputSupported(), isUnordered = true) {

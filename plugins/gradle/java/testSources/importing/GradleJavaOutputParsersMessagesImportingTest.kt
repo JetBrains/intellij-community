@@ -76,15 +76,9 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
     compileModules("project.impl.main")
     assertBuildViewTreeSame(expectedExecutionTree)
 
-    val cause = when {
-      isGradleAtLeast("8.11") -> """
-      
-          ';' expected
-      $projectPath/brokenProject/src/main/java/my/pack/App2.java:4: error: invalid method declaration; return type required
-      public int metho d() { return 1; }}
-      ^
-      2 errors
-      """.trimIndent()
+    val compilationReportErrors = when {
+      isGradleAtLeast("8.11") -> "\n    ';' expected" +
+                                 "\n    invalid method declaration; return type required"
       else -> ""
     }
 
@@ -95,7 +89,7 @@ class GradleJavaOutputParsersMessagesImportingTest : GradleOutputParsersMessages
         "  -:brokenProject:compileJava\n" +
         "   -App2.java\n" +
         "    ';' expected\n" +
-        "    invalid method declaration; return type required$cause"
+        "    invalid method declaration; return type required$compilationReportErrors"
       else -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
