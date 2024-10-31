@@ -7,8 +7,10 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.PREFERRED_FOCUSED_COMPONENT
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
@@ -22,7 +24,11 @@ import com.intellij.ui.content.Content
 import com.intellij.util.application
 import java.awt.event.KeyEvent
 import java.util.*
+import javax.swing.JComponent
 import javax.swing.KeyStroke
+
+private val ORIGINAL_PREFERRED_FOCUSABLE_KEY: Key<JComponent?> =
+  Key.create<JComponent>("component.preferredFocusableComponent")
 
 internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
@@ -56,6 +62,7 @@ internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase
           else "${content.tabName} (${toolWindow.stripeTitle})"
         val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, content.component)
         content.component = Placeholder(project, content, vFile)
+        content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, content.preferredFocusableComponent)
         content.preferredFocusableComponent = content.component
         toolWindow.hide {
           prevSelection?.let { toolWindow.contentManager.setSelectedContent(it) }
@@ -106,4 +113,6 @@ private fun moveContentBackToTab(project: Project, content: Content, file: ToolW
     }
   }
   content.component = file.component
+  content.preferredFocusableComponent = content.getUserData(PREFERRED_FOCUSED_COMPONENT)
+  content.putUserData(PREFERRED_FOCUSED_COMPONENT, null)
 }
