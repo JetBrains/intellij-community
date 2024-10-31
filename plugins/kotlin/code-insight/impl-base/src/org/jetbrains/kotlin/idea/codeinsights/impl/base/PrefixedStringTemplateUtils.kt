@@ -3,21 +3,12 @@
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
 import com.intellij.openapi.util.text.StringUtil
-import org.jetbrains.kotlin.psi.KtBlockStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtEscapeStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.KtSimpleNameStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtStringTemplateEntry
-import org.jetbrains.kotlin.psi.KtStringTemplateEntryWithExpression
-import org.jetbrains.kotlin.psi.KtStringTemplateExpression
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
 import org.jetbrains.kotlin.psi.psiUtil.plainContent
 
 private const val DEFAULT_INTERPOLATION_PREFIX_LENGTH: Int = 2
 private const val INTERPOLATION_PREFIX_LENGTH_THRESHOLD: Int = 5
-
-private const val DOLLAR: String = "$"
 
 val dollarLiteralExpressions: Array<String> = arrayOf(
     "'$'", "\"$\""
@@ -103,11 +94,11 @@ class EntryUpdateDiff(
     }
 }
 
-internal fun KtStringTemplateEntry.asOneToOneDiff(newText: String): EntryUpdateDiff {
+private fun KtStringTemplateEntry.asOneToOneDiff(newText: String): EntryUpdateDiff {
     return EntryUpdateDiff(0..<textLength, text, newText)
 }
 
-fun KtStringTemplateEntryWithExpression.changePrefixLength(prefixLength: Int): KtStringTemplateEntryWithExpression {
+private fun KtStringTemplateEntryWithExpression.changePrefixLength(prefixLength: Int): KtStringTemplateEntryWithExpression {
     require(prefixLength > 0) { "Unexpected string template prefix length: $prefixLength" }
 
     val replacement = when (this) {
@@ -119,7 +110,7 @@ fun KtStringTemplateEntryWithExpression.changePrefixLength(prefixLength: Int): K
     return replacement
 }
 
-fun KtBlockStringTemplateEntry.changePrefixLength(prefixLength: Int): KtStringTemplateEntryWithExpression {
+private fun KtBlockStringTemplateEntry.changePrefixLength(prefixLength: Int): KtStringTemplateEntryWithExpression {
     require(prefixLength > 0) { "Unexpected string template entry prefix length: $prefixLength" }
     val ktPsiFactory = KtPsiFactory(project)
     val expression = this.expression
@@ -138,7 +129,7 @@ fun KtBlockStringTemplateEntry.changePrefixLength(prefixLength: Int): KtStringTe
     return replacement
 }
 
-fun KtSimpleNameStringTemplateEntry.changePrefixLength(prefixLength: Int): KtSimpleNameStringTemplateEntry {
+private fun KtSimpleNameStringTemplateEntry.changePrefixLength(prefixLength: Int): KtSimpleNameStringTemplateEntry {
     require(prefixLength > 0) { "Unexpected string template entry prefix length: $prefixLength" }
     val ktPsiFactory = KtPsiFactory(project)
     return ktPsiFactory.createMultiDollarSimpleNameStringTemplateEntry(
@@ -147,7 +138,7 @@ fun KtSimpleNameStringTemplateEntry.changePrefixLength(prefixLength: Int): KtSim
     )
 }
 
-fun KtLiteralStringTemplateEntry.escapeIfNecessary(
+private fun KtLiteralStringTemplateEntry.escapeIfNecessary(
     newPrefixLength: Int,
     isSourceSingleQuoted: Boolean,
     isDestinationSingleQuoted: Boolean,
@@ -183,7 +174,7 @@ private fun KtLiteralStringTemplateEntry.escapeDollarIfNecessary(
     )
 }
 
-fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUpdateDiff> {
+private fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUpdateDiff> {
     val escaper = StringUtil.escaper(true, "\"")
     var from = 0
     var to = 0
@@ -216,7 +207,7 @@ fun KtLiteralStringTemplateEntry.escapeSpecialCharacters(): List<EntryUpdateDiff
     return diffs
 }
 
-fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemplateEntry {
+private fun KtStringTemplateEntry.unescapeIfPossible(newPrefixLength: Int): KtStringTemplateEntry {
     fun previousDollarsCount(): Int {
         if (this.prevSibling !is KtLiteralStringTemplateEntry) return 0
         return this.prevSibling.text.takeLastWhile { it == '$' }.length
@@ -263,38 +254,47 @@ fun Char.canBeStartOfIdentifierOrBlock(): Boolean {
     return isLetter() || this == '_' || this == '{' || this == '`'
 }
 
-fun KtStringTemplateEntry.isEscapedDollar(): Boolean {
-    return when (this) {
-        is KtEscapeStringTemplateEntry -> {
-            return unescapedValue == "$"
-        }
-
-        is KtBlockStringTemplateEntry -> {
-            expression?.text in dollarLiteralExpressions
-        }
-
-        else -> false
-    }
+fun KtStringTemplateEntry.isEscapedDollar(): Boolean = when (this) {
+    is KtEscapeStringTemplateEntry -> this.isEscapedDollar()
+    is KtBlockStringTemplateEntry -> this.isInterpolatedDollarLiteralExpression()
+    else -> false
 }
 
 /**
- * Convert a string to a multi-dollar string, choosing an appropriate prefix length based on the string's content.
- * The function searches for the shortest possible prefix that doesn't exceed [INTERPOLATION_PREFIX_LENGTH_THRESHOLD].
- * If no such prefix exists, the [DEFAULT_INTERPOLATION_PREFIX_LENGTH] is used.
+ * Context for the multi-dollar conversion inspection and intention.
  */
-internal fun convertToMultiDollarString(element: KtStringTemplateExpression): KtStringTemplateExpression {
+class MultiDollarConversionInfo(
+    val prefixLength: Int,
+)
+
+fun prepareMultiDollarConversionInfo(element: KtStringTemplateExpression, useFallbackPrefix: Boolean): MultiDollarConversionInfo? {
+    val suitablePrefixLength = findSuitablePrefixLength(element, useFallbackPrefix) ?: return null
+    return MultiDollarConversionInfo(suitablePrefixLength)
+}
+
+/**
+ * Search for the shortest possible prefix that doesn't exceed [INTERPOLATION_PREFIX_LENGTH_THRESHOLD].
+ * If no such prefix exists, the [DEFAULT_INTERPOLATION_PREFIX_LENGTH] if [useFallbackPrefix] is `true`, or `null` otherwise.
+ */
+private fun findSuitablePrefixLength(element: KtStringTemplateExpression, useFallbackPrefix: Boolean): Int? {
+    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLength(element, INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
+    if (longestUnsafeDollarSequence >= INTERPOLATION_PREFIX_LENGTH_THRESHOLD) {
+        return if (useFallbackPrefix) DEFAULT_INTERPOLATION_PREFIX_LENGTH else null
+    }
+    return maxOf(longestUnsafeDollarSequence + 1, DEFAULT_INTERPOLATION_PREFIX_LENGTH)
+}
+
+/**
+ * Convert a plain string to a multi-dollar string with the specified prefix length
+ */
+fun convertToMultiDollarString(element: KtStringTemplateExpression, contextInfo: MultiDollarConversionInfo): KtStringTemplateExpression {
     require(element.interpolationPrefix == null) { "Can't convert the string which already has a prefix to multi-dollar string" }
-
-    val longestUnsafeDollarSequence = longestUnsafeDollarSequenceLength(element, threshold = INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
-    val prefixLength = if (longestUnsafeDollarSequence in DEFAULT_INTERPOLATION_PREFIX_LENGTH..< INTERPOLATION_PREFIX_LENGTH_THRESHOLD)
-        longestUnsafeDollarSequence + 1 else DEFAULT_INTERPOLATION_PREFIX_LENGTH
-
-    replaceExpressionEntries(element, prefixLength)
+    replaceExpressionEntries(element, contextInfo.prefixLength)
 
     val replaced = element.replace(
         KtPsiFactory(element.project).createMultiDollarStringTemplate(
             content = element.plainContent,
-            prefixLength = prefixLength,
+            prefixLength = contextInfo.prefixLength,
             forceMultiQuoted = !element.isSingleQuoted(),
         )
     ) as KtStringTemplateExpression
@@ -306,7 +306,7 @@ internal fun convertToMultiDollarString(element: KtStringTemplateExpression): Kt
  * Replace dollar escape sequences in a string template if it's safe, i.e., if replacement won't turn a literal part into interpolation.
  * Both `\$` and `${'$'}` sequences are replaced if possible.
  */
-internal fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplateExpression {
+fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStringTemplateExpression {
     val ktPsiFactory = KtPsiFactory(element.project)
     val prefixLength = element.interpolationPrefix?.textLength?.takeIf { it > 1 } ?: return element
 
@@ -314,12 +314,12 @@ internal fun simplifyDollarEntries(element: KtStringTemplateExpression): KtStrin
         when (entry) {
             is KtEscapeStringTemplateEntry -> {
                 if (entry.isEscapedDollar() && entry.isSafeToReplaceWithDollar(prefixLength))
-                    entry.replace(ktPsiFactory.createLiteralStringTemplateEntry(DOLLAR))
+                    entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
 
             is KtBlockStringTemplateEntry -> {
                 if (entry.expression?.text in dollarLiteralExpressions && entry.isSafeToReplaceWithDollar(prefixLength))
-                    entry.replace(ktPsiFactory.createLiteralStringTemplateEntry(DOLLAR))
+                    entry.replace(ktPsiFactory.createLiteralStringTemplateEntry("$"))
             }
         }
     }
@@ -352,7 +352,7 @@ internal fun longestUnsafeDollarSequenceLength(
 
             is KtBlockStringTemplateEntry -> {
                 when {
-                    entry.isSimplifiableInterpolatedDollar() -> current++
+                    entry.isInterpolatedDollarLiteralExpression() -> current++
                     else -> {
                         current = 0
                     }
@@ -384,7 +384,7 @@ internal fun longestUnsafeDollarSequenceLength(
     return longest
 }
 
-private fun KtBlockStringTemplateEntry.isSimplifiableInterpolatedDollar(): Boolean {
+private fun KtBlockStringTemplateEntry.isInterpolatedDollarLiteralExpression(): Boolean {
     return this.expression?.text in dollarLiteralExpressions
 }
 
@@ -396,7 +396,7 @@ private fun replaceExpressionEntries(stringTemplate: KtStringTemplateExpression,
     }
 }
 
-private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedValue == DOLLAR
+private fun KtEscapeStringTemplateEntry.isEscapedDollar(): Boolean = unescapedValue == "$"
 
 /**
  * It's unsafe to replace with a `$` if the part before the entry ends with a `$`, and the part after can be considered identifier/block.
@@ -406,6 +406,6 @@ private fun KtStringTemplateEntry.isSafeToReplaceWithDollar(prefixLength: Int): 
     if (prevSibling !is KtLiteralStringTemplateEntry) return true
     val nextSiblingStringLiteral = nextSibling as? KtLiteralStringTemplateEntry ?: return true
     if (!nextSiblingStringLiteral.canBeConsideredIdentifierOrBlock()) return true
-    val trailingDollarsLength = prevSibling.text.takeLastWhile { it.toString() == DOLLAR }.length
+    val trailingDollarsLength = prevSibling.text.takeLastWhile { it.toString() == "$" }.length
     return trailingDollarsLength + 1 < prefixLength
 }
