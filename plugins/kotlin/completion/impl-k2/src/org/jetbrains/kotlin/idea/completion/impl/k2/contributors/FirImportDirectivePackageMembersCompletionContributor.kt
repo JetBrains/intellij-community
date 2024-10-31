@@ -5,12 +5,15 @@ import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinImportDirectivePositionContext
 
@@ -34,12 +37,10 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
                 scopeWithKind.scope
                     .classifiers(scopeNameFilter)
                     .filter { visibilityChecker.isVisible(it, positionContext) }
-                    .mapNotNull {
-                        createClassifierLookupElement(
-                            symbol = it,
+                    .mapNotNull { symbol ->
+                        KotlinFirLookupElementFactory.createClassifierLookupElement(symbol)?.applyWeighs(
                             context = weighingContext,
-                            symbolOrigin = symbolOrigin,
-                            importingStrategy = ImportStrategy.DoNothing,
+                            symbolWithOrigin = KtSymbolWithOrigin(symbol, symbolOrigin)
                         )
                     }.forEach(sink::addElement)
 

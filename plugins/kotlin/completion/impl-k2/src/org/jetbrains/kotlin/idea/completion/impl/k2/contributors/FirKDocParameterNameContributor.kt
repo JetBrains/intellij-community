@@ -13,6 +13,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.TypeParameterLookupElementFactory
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KDocParameterNamePositionContext
 
@@ -48,12 +50,10 @@ internal open class FirKDocParameterNameContributor(
     ) {
         val origin = symbolWithOrigin.origin
         when (val symbol = symbolWithOrigin.symbol) {
-            is KaTypeParameterSymbol -> createClassifierLookupElement(
-                symbol = symbol,
-                context = weighingContext,
-                symbolOrigin = origin,
-                importingStrategy = ImportStrategy.DoNothing,
-            )?.let(sink::addElement)
+            is KaTypeParameterSymbol ->
+                TypeParameterLookupElementFactory.createLookup(symbol)
+                    .applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, origin))
+                    .let(sink::addElement)
 
             is KaValueParameterSymbol -> addCallableSymbolToCompletion(
                 weighingContext,

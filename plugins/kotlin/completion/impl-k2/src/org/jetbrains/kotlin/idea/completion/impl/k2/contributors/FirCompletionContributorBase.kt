@@ -12,7 +12,8 @@ import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
-import org.jetbrains.kotlin.analysis.api.symbols.*
+import org.jetbrains.kotlin.analysis.api.symbols.KaConstructorSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KaNamedClassSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KaNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
@@ -28,8 +29,6 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
-import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.addCallableWeight
@@ -68,22 +67,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
 
     protected val scopeNameFilter: (Name) -> Boolean =
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
-
-    context(KaSession)
-    protected fun createClassifierLookupElement(
-        symbol: KaClassifierSymbol,
-        context: WeighingContext,
-        symbolOrigin: CompletionSymbolOrigin,
-        importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
-    ): LookupElement? {
-        if (symbol !is KaNamedSymbol) return null
-
-        return when (symbol) {
-            is KaClassLikeSymbol -> ClassLookupElementFactory.createLookup(symbol, importingStrategy)
-
-            is KaTypeParameterSymbol -> KotlinFirLookupElementFactory.createLookupElement(symbol, importStrategyDetector)
-        }.applyWeighs(context, KtSymbolWithOrigin(symbol, symbolOrigin))
-    }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)

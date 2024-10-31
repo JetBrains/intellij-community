@@ -9,10 +9,13 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.CompletionSymbolOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersFromIndex
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOrigin
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.staticScope
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.reference
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
@@ -60,12 +63,10 @@ internal open class FirClassifierCompletionContributor(
                 .classifiers(scopeNameFilter)
                 .filter { filterClassifiers(it) }
                 .filter { visibilityChecker.isVisible(it, positionContext) }
-                .mapNotNull {
-                    createClassifierLookupElement(
-                        symbol = it,
+                .mapNotNull { symbol ->
+                    KotlinFirLookupElementFactory.createClassifierLookupElement(symbol)?.applyWeighs(
                         context = context,
-                        symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind),
-                        importingStrategy = ImportStrategy.DoNothing,
+                        symbolWithOrigin = KtSymbolWithOrigin(symbol, CompletionSymbolOrigin.Scope(scopeWithKind.kind))
                     )
                 }
         }
@@ -87,11 +88,12 @@ internal open class FirClassifierCompletionContributor(
                 val classifierSymbol = symbolWithScopeKind.symbol
                 availableFromScope += classifierSymbol
 
-                createClassifierLookupElement(
+                KotlinFirLookupElementFactory.createClassifierLookupElement(
                     symbol = classifierSymbol,
-                    context = context,
-                    symbolOrigin = CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind),
                     importingStrategy = getImportingStrategy(classifierSymbol),
+                )?.applyWeighs(
+                    context = context,
+                    symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol, CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind)),
                 )
             }
 
@@ -104,11 +106,12 @@ internal open class FirClassifierCompletionContributor(
                 visibilityChecker = visibilityChecker,
             ).filter { it !in availableFromScope && filterClassifiers(it) }
                 .mapNotNull { classifierSymbol ->
-                    createClassifierLookupElement(
+                    KotlinFirLookupElementFactory.createClassifierLookupElement(
                         symbol = classifierSymbol,
+                        importingStrategy = getImportingStrategy(classifierSymbol),
+                    )?.applyWeighs(
                         context = context,
-                        symbolOrigin = CompletionSymbolOrigin.Index,
-                        importingStrategy = getImportingStrategy(classifierSymbol)
+                        symbolWithOrigin = KtSymbolWithOrigin(classifierSymbol, CompletionSymbolOrigin.Index),
                     )
                 }
         } else {

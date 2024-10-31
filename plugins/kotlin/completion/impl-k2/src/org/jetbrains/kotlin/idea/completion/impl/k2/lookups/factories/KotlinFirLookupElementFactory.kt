@@ -20,12 +20,25 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 
 @ApiStatus.Internal
 object KotlinFirLookupElementFactory {
+
+    context(KaSession)
+    fun createClassifierLookupElement(
+        symbol: KaClassifierSymbol,
+        importingStrategy: ImportStrategy = ImportStrategy.DoNothing,
+    ): LookupElement? = when (symbol) {
+        is KaClassLikeSymbol ->
+            if (symbol is KaNamedSymbol) ClassLookupElementFactory.createLookup(symbol, importingStrategy)
+            else null
+
+        is KaTypeParameterSymbol -> TypeParameterLookupElementFactory.createLookup(symbol)
+    }
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
