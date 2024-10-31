@@ -54,4 +54,9 @@ public class KtParameterHintsProviderTestGenerated extends AbstractKtParameterHi
     public void testSimple() throws Exception {
         runTest("../../idea/tests/testData/codeInsight/hints/arguments/simple.kt");
     }
+
+    @TestMetadata("varargs.kt")
+    public void testVarargs() throws Exception {
+        runTest("../../idea/tests/testData/codeInsight/hints/arguments/varargs.kt");
+    }
 }
