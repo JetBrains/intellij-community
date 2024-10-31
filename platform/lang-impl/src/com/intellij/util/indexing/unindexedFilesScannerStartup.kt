@@ -301,7 +301,7 @@ private enum class ReusingPersistentFilterCondition(val reason: FullScanningReas
   },
   IS_SCANNING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
-      return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningCompleted()
+      return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningAndIndexingCompleted()
     }
   },
   FILTER_IS_NOT_INVALIDATED(FilterIncompatibleAsFilterIsInvalidated) {

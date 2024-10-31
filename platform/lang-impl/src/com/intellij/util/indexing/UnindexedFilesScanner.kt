@@ -30,7 +30,7 @@ import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilter
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-import com.intellij.util.indexing.dependencies.ScanningRequestToken
+import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.diagnostic.*
@@ -215,7 +215,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
       val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount)
-      else projectIndexingDependenciesService.newScanningToken()
+      else projectIndexingDependenciesService.newScanningOrIndexingToken()
 
       try {
         ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)
@@ -298,7 +298,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
                                  private val filterHandler: FilesFilterScanningHandler,
                                  private val indicator: CheckPauseOnlyProgressIndicator,
                                  private val progressReporter: IndexingProgressReporter,
-                                 private val scanningRequest: ScanningRequestToken) {
+                                 private val scanningRequest: ScanningOrIndexingRequestToken) {
 
     fun collectIndexableFilesConcurrently(providers: List<IndexableFilesIterator>) {
       if (providers.isEmpty()) {

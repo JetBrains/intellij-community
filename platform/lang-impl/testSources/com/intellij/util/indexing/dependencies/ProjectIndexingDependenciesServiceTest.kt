@@ -105,7 +105,7 @@ class ProjectIndexingDependenciesServiceTest {
     val inst = factory.newProjectIndexingDependenciesService(file)
 
     val oldStamp = inst.newScanningTokenOnProjectOpen(true)
-    assertTrue(oldStamp.toString(), oldStamp is ReadWriteScanningRequestTokenImpl)
+    assertTrue(oldStamp.toString(), oldStamp is ReadWriteScanningOrIndexingRequestTokenImpl)
 
     inst.requestHeavyScanningOnProjectOpen("test requestHeavyScanningOnProjectOpen in project")
 
