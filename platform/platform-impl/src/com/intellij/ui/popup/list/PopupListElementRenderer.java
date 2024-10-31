@@ -137,7 +137,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     secondary.add(mySecondaryTextLabel, BorderLayout.EAST);
 
     mySecondaryIconLabel = new JLabel();
-    JBEmptyBorder secondaryIconBorder = JBUI.Borders.emptyLeft(JBUI.CurrentTheme.ActionsList.elementIconGap() + 1);
+    JBEmptyBorder secondaryIconBorder = JBUI.Borders.empty(0, JBUI.CurrentTheme.ActionsList.elementIconGap() + 1, 0, 1);
     mySecondaryIconLabel.setBorder(secondaryIconBorder);
     mySecondaryIconLabel.setVisible(false);
     secondary.add(mySecondaryIconLabel, BorderLayout.WEST);
