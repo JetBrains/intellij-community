@@ -38,11 +38,8 @@ public class CreateFieldFix {
     if (field == null) return;
 
     Editor newEditor = IntentionUtils.positionCursor(project, myTargetClass.getContainingFile(), field);
-    if (newEditor == null) return;
 
     Template template = CreateFieldFromUsageHelper.setupTemplate(field, typeConstraints, myTargetClass, newEditor, context, false);
-    if (template == null) return;
-
     TemplateManager manager = TemplateManager.getInstance(project);
     manager.startTemplate(newEditor, template);
   }

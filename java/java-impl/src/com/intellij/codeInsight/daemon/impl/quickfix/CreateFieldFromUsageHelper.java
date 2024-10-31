@@ -32,7 +32,7 @@ public abstract class CreateFieldFromUsageHelper {
   private static final LanguageExtension<CreateFieldFromUsageHelper> EP_NAME =
     new LanguageExtension<>("com.intellij.codeInsight.createFieldFromUsageHelper");
 
-  public static @Nullable Template setupTemplate(@NotNull PsiField field,
+  public static Template setupTemplate(PsiField field,
                                        Object expectedTypes,
                                        PsiClass targetClass,
                                        Editor editor,
@@ -41,7 +41,7 @@ public abstract class CreateFieldFromUsageHelper {
     return setupTemplate(field, expectedTypes, targetClass, editor, context, createConstantField, true);
   }
 
-  public static @Nullable Template setupTemplate(@NotNull PsiField field,
+  public static Template setupTemplate(PsiField field,
                                        Object expectedTypes,
                                        PsiClass targetClass,
                                        Editor editor,
@@ -62,7 +62,7 @@ public abstract class CreateFieldFromUsageHelper {
 
   public abstract PsiField insertFieldImpl(@NotNull PsiClass targetClass, @NotNull PsiField field, @NotNull PsiElement place);
 
-  public abstract @Nullable Template setupTemplateImpl(@NotNull PsiField field,
+  public abstract Template setupTemplateImpl(PsiField field,
                                              Object expectedTypes,
                                              PsiClass targetClass,
                                              Editor editor,

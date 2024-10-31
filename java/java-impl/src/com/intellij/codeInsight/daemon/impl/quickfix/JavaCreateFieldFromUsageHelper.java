@@ -15,15 +15,13 @@ import com.intellij.util.CommonJavaRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
-
 /**
  * @author Max Medvedev
  */
 public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHelper {
 
   @Override
-  public @Nullable Template setupTemplateImpl(@NotNull PsiField field,
+  public Template setupTemplateImpl(PsiField field,
                                     Object expectedTypes,
                                     PsiClass targetClass,
                                     Editor editor,
@@ -35,26 +33,23 @@ public final class JavaCreateFieldFromUsageHelper extends CreateFieldFromUsageHe
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
 
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
-    if (field == null) return null;
-
     TemplateBuilderImpl builder = new TemplateBuilderImpl(field);
     builder.setScrollToTemplate(isScrollToTemplate);
     if (!(expectedTypes instanceof ExpectedTypeInfo[])) {
       expectedTypes = ExpectedTypeInfo.EMPTY_ARRAY;
     }
     new GuessTypeParameters(project, factory, builder, substitutor).setupTypeElement(
-      Objects.requireNonNull(field.getTypeElement()), (ExpectedTypeInfo[])expectedTypes, context, targetClass
+      field.getTypeElement(), (ExpectedTypeInfo[])expectedTypes, context, targetClass
     );
 
     if (createConstantField && !field.hasInitializer()) {
       field.setInitializer(factory.createExpressionFromText("0", null));
-      builder.replaceElement(Objects.requireNonNull(field.getInitializer()), new EmptyExpression());
+      builder.replaceElement(field.getInitializer(), new EmptyExpression());
       PsiIdentifier identifier = field.getNameIdentifier();
       builder.setEndVariableAfter(identifier);
     }
 
     field = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(field);
-    if (field == null) return null;
 
     editor.getCaretModel().moveToOffset(field.getTextRange().getStartOffset());
     Template template = builder.buildInlineTemplate();

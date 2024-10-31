@@ -31,7 +31,7 @@ internal abstract class CreateFieldActionBase(
     val javaFieldRenderer = JavaFieldRenderer(project, isConstant(), copyClass, request)
     var field = javaFieldRenderer.renderField()
     field = javaFieldRenderer.insertField(field, PsiTreeUtil.findSameElementInCopy((request as? CreateFieldFromJavaUsageRequest)?.anchor, file))
-    javaFieldRenderer.tryStartTemplate(field)
+    javaFieldRenderer.startTemplate(field)
     return IntentionPreviewInfo.DIFF
   }
 
