@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.module.Module
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parents
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.KtContainerNode
-import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.util.match
@@ -73,17 +71,15 @@ internal class FirKeywordCompletionContributor(
             is KDocNameReferencePositionContext,
             is KotlinUnknownPositionContext -> null
         }
-        completeWithResolve(expression ?: positionContext.position, expression, weighingContext)
-    }
 
-    private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
-        label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
+        keywordCompletion.complete(
+            position = expression ?: positionContext.position,
+            prefixMatcher = prefixMatcher,
+            isJvmModule = targetPlatform.isJvm(),
+        ) { lookupElement ->
+            val keyword = lookupElement.lookupString
 
-    context(KaSession)
-    private fun completeWithResolve(position: PsiElement, expression: KtExpression?, weighingContext: WeighingContext) {
-        complete(position) { lookupElement, keyword ->
             val parameters = parameters.delegate
-
             val lookups = DefaultCompletionKeywordHandlerProvider.getHandlerForKeyword(keyword)
                 ?.createLookups(parameters, expression, lookupElement, project)
                 ?: resolveDependentCompletionKeywordHandlers.getHandlerForKeyword(keyword)
@@ -95,10 +91,6 @@ internal class FirKeywordCompletionContributor(
         }
     }
 
-    private inline fun complete(position: PsiElement, crossinline complete: (LookupElement, String) -> Unit) {
-        keywordCompletion.complete(position, prefixMatcher, targetPlatform.isJvm()) { lookupElement ->
-            val keyword = lookupElement.lookupString
-            complete(lookupElement, keyword)
-        }
-    }
+    private fun getExpressionWithLabel(label: KtLabelReferenceExpression): KtExpressionWithLabel? =
+        label.parents(withSelf = false).match(KtContainerNode::class, last = KtExpressionWithLabel::class)
 }
