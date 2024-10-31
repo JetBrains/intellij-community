@@ -58,7 +58,12 @@ class KotlinOutOfCodeBlockModificationTrackerTest : KotlinLightCodeInsightFixtur
 
         doTestChangeComments(
             foo,
-            changeExpected = { PsiManagerEx.getInstanceEx(project).fileManager.findCachedViewProvider(foo) == null })
+            changeExpected = {
+                val viewProvider = PsiManagerEx.getInstanceEx(project).fileManager.findCachedViewProvider(foo)
+                assertNull("ViewProvider after content change: $viewProvider", viewProvider)
+                true
+            }
+        )
     }
 
     fun `test file rename fires OOBM`() {
