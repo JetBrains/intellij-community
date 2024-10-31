@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaClassType
@@ -13,8 +14,8 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
+import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
-import org.jetbrains.kotlin.psi.KtElement
 
 internal open class FirClassifierCompletionContributor(
     parameters: KotlinFirCompletionParameters,
@@ -37,55 +38,64 @@ internal open class FirClassifierCompletionContributor(
         when (val receiver = positionContext.explicitReceiver) {
             null -> completeWithoutReceiver(positionContext, weighingContext)
 
-            else -> completeWithReceiver(positionContext, receiver, weighingContext)
-        }
+            else -> {
+                receiver.reference()?.let {
+                    completeWithReceiver(positionContext, weighingContext, it)
+                } ?: emptySequence<LookupElement>()
+            }
+        }.forEach(sink::addElement)
     }
 
     context(KaSession)
     private fun completeWithReceiver(
         positionContext: KotlinNameReferencePositionContext,
-        receiver: KtElement,
         context: WeighingContext,
-    ) {
-        val symbols = receiver.reference()
-            ?.resolveToSymbols()
-            ?: return
-
-        symbols.asSequence()
-            .mapNotNull { it.staticScope }
-            .forEach { scopeWithKind ->
-                scopeWithKind.scope
-                    .classifiers(scopeNameFilter)
-                    .filter { filterClassifiers(it) }
-                    .filter { visibilityChecker.isVisible(it, positionContext) }
-                    .forEach {
-                        val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
-                        addClassifierSymbolToCompletion(it, context, symbolOrigin, ImportStrategy.DoNothing)
-                    }
-            }
-    }
+        reference: KtReference,
+    ): Sequence<LookupElement> = reference
+        .resolveToSymbols()
+        .asSequence()
+        .mapNotNull { it.staticScope }
+        .flatMap { scopeWithKind ->
+            scopeWithKind.scope
+                .classifiers(scopeNameFilter)
+                .filter { filterClassifiers(it) }
+                .filter { visibilityChecker.isVisible(it, positionContext) }
+                .mapNotNull {
+                    createClassifierLookupElement(
+                        symbol = it,
+                        context = context,
+                        symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind),
+                        importingStrategy = ImportStrategy.DoNothing,
+                    )
+                }
+        }
 
     context(KaSession)
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
         context: WeighingContext,
-    ) {
+    ): Sequence<LookupElement> {
         val availableFromScope = mutableSetOf<KaClassifierSymbol>()
-        getAvailableClassifiersCurrentScope(
+        val scopeClassifiers = getAvailableClassifiersCurrentScope(
             positionContext = positionContext,
             originalKtFile = originalKtFile,
             position = positionContext.nameExpression,
             scopeNameFilter = scopeNameFilter,
             visibilityChecker = visibilityChecker,
         ).filter { filterClassifiers(it.symbol) }
-            .forEach { symbolWithScopeKind ->
+            .mapNotNull { symbolWithScopeKind ->
                 val classifierSymbol = symbolWithScopeKind.symbol
-                val symbolOrigin = CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind)
                 availableFromScope += classifierSymbol
-                addClassifierSymbolToCompletion(classifierSymbol, context, symbolOrigin, getImportingStrategy(classifierSymbol))
+
+                createClassifierLookupElement(
+                    symbol = classifierSymbol,
+                    context = context,
+                    symbolOrigin = CompletionSymbolOrigin.Scope(symbolWithScopeKind.scopeKind),
+                    importingStrategy = getImportingStrategy(classifierSymbol),
+                )
             }
 
-        if (prefixMatcher.prefix.isNotEmpty()) {
+        val indexClassifiers = if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
                 positionContext = positionContext,
                 parameters = parameters,
@@ -93,11 +103,20 @@ internal open class FirClassifierCompletionContributor(
                 scopeNameFilter = scopeNameFilter,
                 visibilityChecker = visibilityChecker,
             ).filter { it !in availableFromScope && filterClassifiers(it) }
-                .forEach { classifierSymbol ->
-                    val symbolOrigin = CompletionSymbolOrigin.Index
-                    addClassifierSymbolToCompletion(classifierSymbol, context, symbolOrigin, getImportingStrategy(classifierSymbol))
+                .mapNotNull { classifierSymbol ->
+                    createClassifierLookupElement(
+                        symbol = classifierSymbol,
+                        context = context,
+                        symbolOrigin = CompletionSymbolOrigin.Index,
+                        importingStrategy = getImportingStrategy(classifierSymbol)
+                    )
                 }
+        } else {
+            emptySequence()
         }
+
+        return scopeClassifiers +
+                indexClassifiers
     }
 }
 

@@ -42,11 +42,19 @@ internal open class FirKDocParameterNameContributor(
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
-    private fun addSymbolToCompletion(weighingContext: WeighingContext, symbolWithOrigin: KtSymbolWithOrigin) {
-        val symbol = symbolWithOrigin.symbol
+    private fun addSymbolToCompletion(
+        weighingContext: WeighingContext,
+        symbolWithOrigin: KtSymbolWithOrigin,
+    ) {
         val origin = symbolWithOrigin.origin
-        when (symbol) {
-            is KaTypeParameterSymbol -> addClassifierSymbolToCompletion(symbol, weighingContext, origin, ImportStrategy.DoNothing)
+        when (val symbol = symbolWithOrigin.symbol) {
+            is KaTypeParameterSymbol -> createClassifierLookupElement(
+                symbol = symbol,
+                context = weighingContext,
+                symbolOrigin = origin,
+                importingStrategy = ImportStrategy.DoNothing,
+            )?.let(sink::addElement)
+
             is KaValueParameterSymbol -> addCallableSymbolToCompletion(
                 weighingContext,
                 symbol.asSignature(),

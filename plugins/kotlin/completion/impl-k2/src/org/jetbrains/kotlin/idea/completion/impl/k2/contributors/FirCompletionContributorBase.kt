@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.factories.ClassLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.addCallableWeight
@@ -69,23 +70,19 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         { name -> !name.isSpecial && prefixMatcher.prefixMatches(name.identifier) }
 
     context(KaSession)
-    protected fun addClassifierSymbolToCompletion(
+    protected fun createClassifierLookupElement(
         symbol: KaClassifierSymbol,
         context: WeighingContext,
         symbolOrigin: CompletionSymbolOrigin,
         importingStrategy: ImportStrategy = importStrategyDetector.detectImportStrategyForClassifierSymbol(symbol),
-    ) {
-        if (symbol !is KaNamedSymbol) return
+    ): LookupElement? {
+        if (symbol !is KaNamedSymbol) return null
 
-        val lookup = with(KotlinFirLookupElementFactory) {
-            when (symbol) {
-                is KaClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
-                is KaTypeParameterSymbol -> createLookupElement(symbol, importStrategyDetector)
-            }
-        } ?: return
+        return when (symbol) {
+            is KaClassLikeSymbol -> ClassLookupElementFactory.createLookup(symbol, importingStrategy)
 
-        lookup.applyWeighs(context, KtSymbolWithOrigin(symbol, symbolOrigin))
-        sink.addElement(lookup)
+            is KaTypeParameterSymbol -> KotlinFirLookupElementFactory.createLookupElement(symbol, importStrategyDetector)
+        }.applyWeighs(context, KtSymbolWithOrigin(symbol, symbolOrigin))
     }
 
     context(KaSession)

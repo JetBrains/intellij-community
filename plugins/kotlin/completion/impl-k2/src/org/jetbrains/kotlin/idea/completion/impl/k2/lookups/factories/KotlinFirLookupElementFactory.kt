@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.NamedArgumentLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
-import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectCallableOptions
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -86,13 +85,4 @@ object KotlinFirLookupElementFactory {
     context(KaSession)
     fun createTypeLookupElement(classSymbol: KaClassifierSymbol): LookupElement? =
         TypeLookupElementFactory.createLookup(classSymbol)
-
-    context(KaSession)
-    fun createLookupElementForClassLikeSymbol(
-        symbol: KaClassLikeSymbol,
-        importingStrategy: ImportStrategy,
-    ): LookupElement? {
-        if (symbol !is KaNamedSymbol) return null
-        return ClassLookupElementFactory.createLookup(symbol, importingStrategy)
-    }
 }

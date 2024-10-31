@@ -31,24 +31,28 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
             .forEach { scopeWithKind ->
                 val symbolOrigin = CompletionSymbolOrigin.Scope(scopeWithKind.kind)
 
-                val classifiers = scopeWithKind.scope
+                scopeWithKind.scope
                     .classifiers(scopeNameFilter)
-                    .toList()
-                classifiers
                     .filter { visibilityChecker.isVisible(it, positionContext) }
-                    .forEach { addClassifierSymbolToCompletion(it, weighingContext, symbolOrigin, ImportStrategy.DoNothing) }
+                    .mapNotNull {
+                        createClassifierLookupElement(
+                            symbol = it,
+                            context = weighingContext,
+                            symbolOrigin = symbolOrigin,
+                            importingStrategy = ImportStrategy.DoNothing,
+                        )
+                    }.forEach(sink::addElement)
 
-                val callables = scopeWithKind.scope
+                scopeWithKind.scope
                     .callables(scopeNameFilter)
-                    .toList()
-                callables
                     .filter { visibilityChecker.isVisible(it, positionContext) }
+                    .map { it.asSignature() }
                     .forEach {
                         addCallableSymbolToCompletion(
-                            weighingContext,
-                            it.asSignature(),
-                            CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
-                            symbolOrigin,
+                            context = weighingContext,
+                            signature = it,
+                            options = CallableInsertionOptions(ImportStrategy.DoNothing, CallableInsertionStrategy.AsIdentifier),
+                            symbolOrigin = symbolOrigin,
                         )
                     }
             }
