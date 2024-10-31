@@ -4,6 +4,7 @@
  */
 package org.jetbrains.kotlin.idea.completion.impl.k2.contributors
 
+import com.intellij.codeInsight.lookup.LookupElement
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.analysis.api.analyzeCopy
 import org.jetbrains.kotlin.analysis.api.projectStructure.KaDanglingFileResolutionMode
@@ -18,7 +19,7 @@ import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.findValueArgument
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinExpressionNameReferencePositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -53,7 +54,7 @@ internal class FirNamedArgumentCompletionContributor(
         // if a function has `private` modifier then collected call candidate hav INVISIBLE_REFERENCE diagnostic, which leads to KTIJ-29748;
         // TODO: when KT-68929 is implemented, rewrite `KotlinFirCompletionProvider` so that it uses `analyzeCopy` with `IGNORE_ORIGIN`
         // as a temporary workaround, use `analyzeCopy` while collecting call candidate for named argument completion
-        val lookupElements = analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
+        analyzeCopy(callElement, resolutionMode = KaDanglingFileResolutionMode.PREFER_SELF) {
             val candidates = collectCallCandidates(callElement)
                 .mapNotNull { it.candidate as? KaFunctionCall<*> }
                 .filter { it.partiallyAppliedSymbol.symbol.hasStableParameterNames }
@@ -70,7 +71,7 @@ internal class FirNamedArgumentCompletionContributor(
                 }
             }
 
-            val elements = buildList {
+            buildList<LookupElement> {
                 for ((name, indexedTypes) in namedArgumentInfos) {
                     with(KotlinFirLookupElementFactory) {
                         add(createNamedArgumentLookupElement(name, indexedTypes.map { it.value }))
@@ -87,13 +88,8 @@ internal class FirNamedArgumentCompletionContributor(
                     }
                 }
             }
-
-            elements
-        }
-
-        lookupElements.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
-
-        sink.addAllElements(lookupElements)
+        }.map { it.applyWeighs(weighingContext) }
+            .forEach(sink::addElement)
     }
 
     /**

@@ -194,16 +194,16 @@ internal class WeighingContext private constructor(
 }
 
 internal object Weighers {
+
     context(KaSession)
-    fun applyWeighsToLookupElement(
+    fun LookupElement.applyWeighs(
         context: WeighingContext,
-        lookupElement: LookupElement,
-        symbolWithOrigin: KtSymbolWithOrigin?,
-    ) {
+        symbolWithOrigin: KtSymbolWithOrigin? = null,
+    ) = also { lookupElement -> // todo replace everything with apply
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
         KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)
 
-        if (symbolWithOrigin == null) return
+        if (symbolWithOrigin == null) return@also
         val symbol = symbolWithOrigin.symbol
 
         val availableWithoutImport = symbolWithOrigin.origin is CompletionSymbolOrigin.Scope
@@ -215,7 +215,7 @@ internal object Weighers {
         VariableOrFunctionWeigher.addWeight(lookupElement, symbol)
         K2SoftDeprecationWeigher.addWeight(lookupElement, symbol, context.languageVersionSettings)
 
-        if (symbol !is KaCallableSymbol) return
+        if (symbol !is KaCallableSymbol) return@also
 
         PreferContextualCallablesWeigher.addWeight(lookupElement, symbol, context.contextualSymbolsCache)
         PreferFewerParametersWeigher. addWeight(lookupElement, symbol)

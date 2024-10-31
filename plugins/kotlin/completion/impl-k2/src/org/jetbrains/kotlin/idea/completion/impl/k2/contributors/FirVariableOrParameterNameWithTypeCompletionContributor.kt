@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalElementOf
 import org.jetbrains.kotlin.idea.completion.impl.k2.lookups.factories.TypeLookupObject
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.VariableOrParameterNameWithTypeWeigher.nameWithTypePriority
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinTypeNameReferencePositionContext
@@ -210,14 +210,13 @@ internal class FirVariableOrParameterNameWithTypeCompletionContributor(
 
             if (!prefixMatcher.isStartMatch(name)) continue
 
-            if (!shouldInsertType(variableOrParameter) && lookupNamesAdded.contains(name)) continue
+            if (!shouldInsertType(variableOrParameter) && !lookupNamesAdded.add(name)) continue
 
             val lookupElement = createLookupElement(variableOrParameter, name, typeLookupElement)
             lookupElement.nameWithTypePriority = userPrefix.length // suggestions with longer user prefix get lower priority
-            applyWeighsToLookupElement(weighingContext, lookupElement, KtSymbolWithOrigin(symbol, symbolOrigin))
+            lookupElement.applyWeighs(weighingContext, KtSymbolWithOrigin(symbol, symbolOrigin))
 
             sink.addElement(lookupElement)
-            lookupNamesAdded.add(name)
         }
     }
 

@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.idea.completion.contributors.helpers.KtSymbolWithOri
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.resolveReceiverToSymbols
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 
@@ -38,10 +38,9 @@ internal class FirPackageCompletionContributor(
         rootSymbol.packageScope
             .getPackageSymbols(scopeNameFilter)
             .filterNot { it.fqName.isExcludedFromAutoImport(project, originalKtFile) }
-            .forEach { packageSymbol ->
-                val element = KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
-                Weighers.applyWeighsToLookupElement(weighingContext, element, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
-                sink.addElement(element)
-            }
+            .map { packageSymbol ->
+                KotlinFirLookupElementFactory.createPackagePartLookupElement(packageSymbol.fqName)
+                    .applyWeighs(weighingContext, KtSymbolWithOrigin(packageSymbol, symbolOrigin))
+            }.forEach(sink::addElement)
     }
 }

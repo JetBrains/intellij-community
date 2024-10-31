@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.idea.completion.createKeywordElement
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.KotlinLookupObject
 import org.jetbrains.kotlin.idea.completion.reference
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinWithSubjectEntryPositionContext
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -77,6 +77,7 @@ internal class FirWhenWithSubjectConditionContributor(
                     isSingleCondition = isSingleCondition,
                 )
             }
+
             classSymbol?.modality == KaSymbolModality.SEALED -> {
                 completeSubClassesOfSealedClass(
                     positionContext = positionContext,
@@ -95,8 +96,10 @@ internal class FirWhenWithSubjectConditionContributor(
                 isSingleCondition = isSingleCondition,
             )
         }
-        addNullIfWhenExpressionCanReturnNull(weighingContext, subjectType)
-        addElseBranchIfSingleConditionInEntry(weighingContext, whenCondition)
+        createNullBranchLookupElement(weighingContext, subjectType)
+            ?.let(sink::addElement)
+        createElseBranchLookupElement(weighingContext, whenCondition)
+            ?.let(sink::addElement)
     }
 
     context(KaSession)
@@ -105,13 +108,15 @@ internal class FirWhenWithSubjectConditionContributor(
         return classType?.symbol as? KaNamedClassSymbol
     }
 
-
     context(KaSession)
-    private fun addNullIfWhenExpressionCanReturnNull(context: WeighingContext, type: KaType?) {
-        if (type?.canBeNull == true) {
-            val lookupElement = createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
-            applyWeighsAndAddElementToSink(context, lookupElement, symbolWithOrigin = null)
-        }
+    private fun createNullBranchLookupElement(
+        context: WeighingContext,
+        type: KaType?,
+    ): LookupElement? {
+        if (type?.canBeNull != true) return null
+
+        return createKeywordElement(keyword = KtTokens.NULL_KEYWORD.value)
+            .applyWeighs(context)
     }
 
     context(KaSession)
@@ -128,20 +133,20 @@ internal class FirWhenWithSubjectConditionContributor(
             position = whenCondition,
             scopeNameFilter = scopeNameFilter,
             visibilityChecker = visibilityChecker
-        ).forEach { classifierWithScopeKind ->
+        ).mapNotNull { classifierWithScopeKind ->
             val classifier = classifierWithScopeKind.symbol
-            if (classifier !is KaNamedSymbol) return@forEach
+            if (classifier !is KaNamedSymbol) return@mapNotNull null
             availableFromScope += classifier
 
-            addLookupElement(
-                context,
-                classifier.name.asString(),
-                classifier,
-                CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
-                (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
-                isSingleCondition,
+            createLookupElement(
+                context = context,
+                lookupString = classifier.name.asString(),
+                symbol = classifier,
+                origin = CompletionSymbolOrigin.Scope(classifierWithScopeKind.scopeKind),
+                fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                isSingleCondition = isSingleCondition,
             )
-        }
+        }.forEach(sink::addElement)
 
         if (prefixMatcher.prefix.isNotEmpty()) {
             getAvailableClassifiersFromIndex(
@@ -150,18 +155,18 @@ internal class FirWhenWithSubjectConditionContributor(
                 symbolProvider = symbolFromIndexProvider,
                 scopeNameFilter = scopeNameFilter,
                 visibilityChecker = visibilityChecker,
-            ).forEach { classifier ->
-                if (classifier !is KaNamedSymbol || classifier in availableFromScope) return@forEach
-
-                addLookupElement(
-                    context,
-                    classifier.name.asString(),
-                    classifier,
-                    CompletionSymbolOrigin.Index,
-                    (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
-                    isSingleCondition,
-                )
-            }
+            ).filterNot { it in availableFromScope }
+                .filterIsInstance<KaNamedSymbol>()
+                .map { classifier ->
+                    createLookupElement(
+                        context = context,
+                        lookupString = classifier.name.asString(),
+                        symbol = classifier,
+                        origin = CompletionSymbolOrigin.Index,
+                        fqName = (classifier as? KaNamedClassSymbol)?.classId?.asSingleFqName(),
+                        isSingleCondition = isSingleCondition,
+                    )
+                }.forEach(sink::addElement)
         }
     }
 
@@ -190,25 +195,26 @@ internal class FirWhenWithSubjectConditionContributor(
     ) {
         require(classSymbol.modality == KaSymbolModality.SEALED)
         val handledCasesClassIds = getHandledClassIds(conditions)
-        val allInheritors = getAllSealedInheritors(classSymbol)
 
-        allInheritors
+        getAllSealedInheritors(classSymbol)
             .asSequence()
             .filter { it.classId !in handledCasesClassIds }
             .filter { visibilityChecker.isVisible(it as KaClassifierSymbol, positionContext) }
-            .forEach { inheritor ->
-                val classId = inheritor.classId ?: return@forEach
-                addLookupElement(
-                    context,
-                    classId.relativeClassName.asString(),
-                    inheritor,
-                    CompletionSymbolOrigin.Index,
-                    classId.asSingleFqName(),
-                    isSingleCondition,
-                )
-            }
+            .mapNotNull { inheritor ->
+                val classId = inheritor.classId
+                    ?: return@mapNotNull null
 
-        if (allInheritors.any { it.modality == KaSymbolModality.ABSTRACT }) {
+                createLookupElement(
+                    context = context,
+                    lookupString = classId.relativeClassName.asString(),
+                    symbol = inheritor,
+                    origin = CompletionSymbolOrigin.Index,
+                    fqName = classId.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
+                )
+            }.forEach(sink::addElement)
+
+        if (getAllSealedInheritors(classSymbol).any { it.modality == KaSymbolModality.ABSTRACT }) {
             completeAllTypes(
                 positionContext = positionContext,
                 context = context,
@@ -250,12 +256,18 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KaSession)
-    private fun addElseBranchIfSingleConditionInEntry(context: WeighingContext, whenCondition: KtWhenCondition) {
-        val whenEntry = whenCondition.parent as? KtWhenEntry ?: return
-        if (whenEntry.conditions.size > 1) return
-        val lookupElement = createKeywordElement(keyword = KtTokens.ELSE_KEYWORD.value, tail = " -> ")
+    private fun createElseBranchLookupElement(
+        context: WeighingContext,
+        whenCondition: KtWhenCondition,
+    ): LookupElement? {
+        val whenEntry = whenCondition.parent as? KtWhenEntry
+            ?: return null
+        if (whenEntry.conditions.size > 1) return null
 
-        applyWeighsAndAddElementToSink(context, lookupElement, symbolWithOrigin = null)
+        return createKeywordElement(
+            keyword = KtTokens.ELSE_KEYWORD.value,
+            tail = " -> ",
+        ).applyWeighs(context)
     }
 
 
@@ -273,22 +285,21 @@ internal class FirWhenWithSubjectConditionContributor(
             val resolvesTo = conditionWithExpression?.expression?.reference()?.resolveToSymbol() as? KaEnumEntrySymbol
             resolvesTo?.name
         }
-            classSymbol
-                .staticDeclaredMemberScope
-                .callables
-                .filterIsInstance<KaEnumEntrySymbol>()
-                .filter { it.name !in handledCasesNames }
-                .filter { visibilityChecker.isVisible(it, positionContext) }
-                .forEach { entry ->
-                    addLookupElement(
-                        context,
-                        "${classSymbol.name.asString()}.${entry.name.asString()}",
-                        entry,
-                        CompletionSymbolOrigin.Index,
-                        entry.callableId?.asSingleFqName(),
-                        isSingleCondition,
-                    )
-                }
+        classSymbol.staticDeclaredMemberScope
+            .callables
+            .filterIsInstance<KaEnumEntrySymbol>()
+            .filter { it.name !in handledCasesNames }
+            .filter { visibilityChecker.isVisible(it, positionContext) }
+            .map { entry ->
+                createLookupElement(
+                    context = context,
+                    lookupString = "${classSymbol.name.asString()}.${entry.name.asString()}",
+                    symbol = entry,
+                    origin = CompletionSymbolOrigin.Index,
+                    fqName = entry.callableId?.asSingleFqName(),
+                    isSingleCondition = isSingleCondition,
+                )
+            }.forEach(sink::addElement)
     }
 
     private fun KtWhenCondition.isSingleConditionInEntry(): Boolean {
@@ -297,33 +308,27 @@ internal class FirWhenWithSubjectConditionContributor(
     }
 
     context(KaSession)
-    private fun addLookupElement(
+    private fun createLookupElement(
         context: WeighingContext,
         lookupString: String,
         symbol: KaNamedSymbol,
         origin: CompletionSymbolOrigin,
         fqName: FqName?,
         isSingleCondition: Boolean,
-    ) {
+    ): LookupElement {
         val isPrefixNeeded = isPrefixNeeded(symbol)
 
         @OptIn(KaExperimentalApi::class)
         val typeArgumentsCount = (symbol as? KaDeclarationSymbol)?.typeParameters?.size ?: 0
         val lookupObject = WhenConditionLookupObject(symbol.name, fqName, isPrefixNeeded, isSingleCondition, typeArgumentsCount)
 
-        LookupElementBuilder.create(lookupObject, getIsPrefix(isPrefixNeeded) + lookupString)
+        return LookupElementBuilder.create(lookupObject, getIsPrefix(isPrefixNeeded) + lookupString)
             .withIcon(getIconFor(symbol))
             .withPsiElement(symbol.psi)
             .withInsertHandler(WhenConditionInsertionHandler)
             .withTailText(createStarTypeArgumentsList(typeArgumentsCount), /*grayed*/true)
             .letIf(isSingleCondition) { it.appendTailText(" -> ",  /*grayed*/true) }
-            .let { applyWeighsAndAddElementToSink(context, it, KtSymbolWithOrigin(symbol, origin)) }
-    }
-
-    context(KaSession)
-    private fun applyWeighsAndAddElementToSink(context: WeighingContext, element: LookupElement, symbolWithOrigin: KtSymbolWithOrigin?) {
-        applyWeighsToLookupElement(context, element, symbolWithOrigin)
-        sink.addElement(element)
+            .applyWeighs(context, KtSymbolWithOrigin(symbol, origin))
     }
 }
 

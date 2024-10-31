@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupEle
 import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.addCallableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighsToLookupElement
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinRawPositionContext
 import org.jetbrains.kotlin.name.Name
@@ -84,7 +84,7 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
             }
         } ?: return
 
-        applyWeighsToLookupElement(context, lookup, KtSymbolWithOrigin(symbol, symbolOrigin))
+        lookup.applyWeighs(context, KtSymbolWithOrigin(symbol, symbolOrigin))
         sink.addElement(lookup)
     }
 
@@ -136,12 +136,12 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                     }
                 })
             }
-        }.forEach { lookup ->
+        }.map { lookup ->
             lookup.priority = priority
             lookup.addCallableWeight(context, signature, symbolOrigin)
-            applyWeighsToLookupElement(context, lookup, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
-            sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT)))
-        }
+            lookup.applyWeighs(context, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
+            lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT))
+        }.forEach(sink::addElement)
     }
 
     private fun LookupElement.adaptToReceiver(weigherContext: WeighingContext, explicitReceiverTypeHint: String?): LookupElement {

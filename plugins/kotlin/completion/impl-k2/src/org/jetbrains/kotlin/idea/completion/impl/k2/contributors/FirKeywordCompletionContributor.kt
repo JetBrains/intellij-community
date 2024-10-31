@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlerPro
 import org.jetbrains.kotlin.idea.completion.keywords.CompletionKeywordHandlers
 import org.jetbrains.kotlin.idea.completion.keywords.DefaultCompletionKeywordHandlerProvider
 import org.jetbrains.kotlin.idea.completion.keywords.createLookups
-import org.jetbrains.kotlin.idea.completion.weighers.Weighers
+import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.*
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -90,8 +90,8 @@ internal class FirKeywordCompletionContributor(
                     ?.createLookups(parameters, expression, lookupElement, project)
                 ?: listOf(lookupElement)
 
-            lookups.forEach { Weighers.applyWeighsToLookupElement(weighingContext, it, symbolWithOrigin = null) }
-            sink.addAllElements(lookups)
+            lookups.map { it.applyWeighs(weighingContext) }
+                .forEach(sink::addElement)
         }
     }
 
