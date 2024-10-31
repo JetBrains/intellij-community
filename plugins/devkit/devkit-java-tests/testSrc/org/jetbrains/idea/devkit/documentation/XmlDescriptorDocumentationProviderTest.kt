@@ -58,7 +58,7 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p>Value of the <a href=\"psi_element://#element:idea-plugin__name\"><code>&lt;name&gt;</code></a> element. See <b>UI Path</b>." +
       "<h5>Children</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
       "</ul>" +
       "<h5>Examples</h5>" +
       "<ul><li>An example description 2:</li></ul>" +
@@ -107,13 +107,13 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p>Value of the <a href=\"psi_element://#element:root__first-level-child\"><code>&lt;first-level-child1&gt;</code></a> element." +
       "<h5>Attributes</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-1\"><code>child-attribute-1</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-1\"><code>child-attribute-1</code></a> <i>required</i></li>" +
       "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-2\"><code>child-attribute-2</code></a></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child-1\"><code>&lt;second-level-child-1&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
       "<li><code>&lt;firstLevelChild2&gt;</code></li>" +
       "</ul>" +
       "<h5>Example</h5>" +
@@ -155,13 +155,13 @@ class XmlDescriptorDocumentationProviderTest : CodeInsightFixtureTestCase<Module
       "<p>Value of the <a href=\"psi_element://#element:root__first-level-child\"><code>&lt;first-level-child1&gt;</code></a> element." +
       "<h5>Attributes</h5>" +
       "<ul>" +
-      "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-1\"><code>child-attribute-1</code></a></li>" +
+      "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-1\"><code>child-attribute-1</code></a> <i>required</i></li>" +
       "<li><a href=\"psi_element://#attribute:root__firstLevelChild2__child-attribute-2\"><code>child-attribute-2</code></a></li>" +
       "</ul>" +
       "<h5>Children</h5>" +
       "<ul>" +
       "<li><a href=\"psi_element://#element:root__firstLevelChild2__second-level-child-1\"><code>&lt;second-level-child-1&gt;</code></a></li>" +
-      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a></li>" +
+      "<li><a href=\"psi_element://#element:root__first-level-child-1__second-level-child\"><code>&lt;second-level-child&gt;</code></a> <i>required</i></li>" +
       "<li><code>&lt;firstLevelChild2&gt;</code></li>" +
       "</ul>" +
       "<h5>Example</h5>" +

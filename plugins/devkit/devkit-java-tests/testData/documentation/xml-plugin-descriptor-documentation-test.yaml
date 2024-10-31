@@ -94,7 +94,7 @@ elements:
               - attribute:
                   name: child-attribute-2
                   requirement:
-                    required: yes
+                    required: no
                   #language=Markdown
                   description: *testAttributeAnchor
             #language=Markdown
@@ -110,7 +110,7 @@ elements:
                   #language=Markdown
                   description: any
                   requirement:
-                    required: yes
+                    required: no
               - element: *root_firstLevelChild_secondLevelChild
         - element:
             name: deprecatedElement

@@ -192,7 +192,7 @@ internal class DocumentationRenderer(private val project: Project) {
     if (attributes.isNotEmpty()) {
       appendLine("$HEADER_LEVEL Attributes")
       for (attribute in attributes.mapNotNull { it.attribute }) {
-        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}")
+        appendLine("- ${attributeLink(attribute.name!!, attribute.path)}${getRequirementSimpleText(attribute.requirement)}")
       }
     }
   }
@@ -202,6 +202,15 @@ internal class DocumentationRenderer(private val project: Project) {
     return "[`$text`]($ATTRIBUTE_DOC_LINK_PREFIX$linkPath)"
   }
 
+  private fun getRequirementSimpleText(requirement: Requirement?): String {
+    requirement ?: return ""
+    return when (requirement.required) {
+      Required.YES -> " _required_"
+      Required.YES_FOR_PAID -> " _required for paid/freemium_"
+      else -> ""
+    }
+  }
+
   private fun StringBuilder.appendChildren(children: List<ElementWrapper>) {
     if (children.isEmpty()) return
     appendLine("\n$HEADER_LEVEL Children")
@@ -209,7 +218,7 @@ internal class DocumentationRenderer(private val project: Project) {
       val childElement = child.element ?: continue
       val linkText = childElement.name
       val linkPath = childElement.path.toPathString()
-      appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)")
+      appendLine("- [`<$linkText>`]($ELEMENT_DOC_LINK_PREFIX$linkPath)${getRequirementSimpleText(child.element?.requirement)}")
     }
     appendParagraphSeparator()
   }
