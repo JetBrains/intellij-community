@@ -766,7 +766,8 @@
           <action id="HideActiveWindow" class="com.intellij.ide.actions.HideToolWindowAction"/>
           <action id="HideSideWindows" class="com.intellij.ide.actions.HideSideWindowsAction"/>
           <action id="HideAllWindows" class="com.intellij.ide.actions.HideAllToolWindowsAction"/>
-          <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.MoveToolWindowTabToEditorAction"/>
+          <action id="MoveToolWindowTabToEditorAction" class="com.intellij.openapi.wm.impl.MoveToolWindowTabToEditorAction"
+            icon="AllIcons.Actions.OpenNewTab"/>
           <action id="PinToolwindowTab" class="com.intellij.ui.content.tabs.PinToolwindowTabAction" use-shortcut-of="PinActiveTab"/>
           <action id="CloseActiveTab" class="com.intellij.ide.actions.CloseActiveTabAction"/>
           <action id="JumpToLastWindow" class="com.intellij.ide.actions.JumpToLastWindowAction"/>

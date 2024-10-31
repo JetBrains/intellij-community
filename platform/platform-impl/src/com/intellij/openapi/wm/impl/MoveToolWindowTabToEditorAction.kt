@@ -26,9 +26,13 @@ import javax.swing.KeyStroke
 
 internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val enabled = content != null && toolWindow.id != ToolWindowId.STRUCTURE_VIEW && Registry.`is`("toolwindow.open.tab.in.editor")
+    val enabled = content != null
+                  && toolWindow.id != ToolWindowId.STRUCTURE_VIEW
+                  && Registry.`is`("toolwindow.open.tab.in.editor")
+
     e.presentation.isEnabledAndVisible = enabled
     if (!enabled) return
+
     e.presentation.text = when {
       content.component !is Placeholder -> templateText
       else -> ActionsBundle.message("action.MoveToolWindowTabToEditorAction.reverse.text")

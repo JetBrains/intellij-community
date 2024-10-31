@@ -761,7 +761,6 @@ internal class ToolWindowImpl(
 
     override fun getChildren(e: AnActionEvent?): Array<out AnAction?> {
       val group = DefaultActionGroup()
-      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       val additionalGearActions = additionalGearActions
       if (additionalGearActions != null) {
         if (additionalGearActions.isPopup && !additionalGearActions.templatePresentation.text.isNullOrEmpty()) {
@@ -772,6 +771,7 @@ internal class ToolWindowImpl(
         }
         group.addSeparator()
       }
+      group.addAction(ActionManager.getInstance().getAction("MoveToolWindowTabToEditorAction"))
       group.add(ActionManager.getInstance().getAction(SpeedSearchAction.ID))
       group.addSeparator()
       contentManager.valueIfInitialized?.let {
