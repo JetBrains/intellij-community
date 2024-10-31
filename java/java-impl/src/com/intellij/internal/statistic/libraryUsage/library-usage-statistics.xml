@@ -63,11 +63,13 @@
   <technology name="checkerframework" root="org.checkerframework"/>
   <technology name="chimney" root="chimney"/>
   <technology name="chisel3" root="chisel3"/>
+  <technology name="choco-solver" root="org.chocosolver"/>
   <technology name="circe" root="io.circe"/>
   <technology name="citrus" root="com.consol.citrus"/>
   <technology name="clikt" root="com.github.ajalt.clikt"/>
   <technology name="coherence" root="com.oracle.coherence"/>
   <technology name="consul" root="com.ecwid.consul"/>
+  <technology name="cplex" root="ilog.cplex"/>
   <technology name="corda" root="net.corda"/>
   <technology name="coroutineworker" root="com.autodesk.coroutineworker"/>
   <technology name="crashkios" root="co.touchlab.crashkios"/>
@@ -129,6 +131,7 @@
   <technology name="gson" root="com.google.gson"/>
   <technology name="guava" root="com.google.common.base"/>
   <technology name="guice" root="com.google.inject"/>
+  <technology name="gurobi" root="com.gurobi"/>
   <technology name="gwt" root="com.google.gwt"/>
   <technology name="h2" root="org.h2"/>
   <technology name="hamcrest" root="org.hamcrest"/>
@@ -274,6 +277,7 @@
   <technology name="opentelemetry" root="io.opentelemetry"/>
   <technology name="opentracing" root="io.opentracing"/>
   <technology name="optaplanner" root="org.optaplanner"/>
+  <technology name="or-tools" root="com.google.ortools"/>
   <technology name="osgi" root="org.osgi"/>
   <technology name="play" root="play"/>
   <technology name="play-json" root="play.api.libs.json"/>
@@ -384,6 +388,7 @@
   <technology name="testcontainers" root="org.testcontainers"/>
   <technology name="testng" root="org.testng"/>
   <technology name="thymeleaf" root="org.thymeleaf"/>
+  <technology name="timefold" root="ai.timefold.solver"/>
   <technology name="tornadofx" root="tornadofx"/>
   <technology name="torque" root="org.apache.torque"/>
   <technology name="truth" root="com.google.common.truth"/>
