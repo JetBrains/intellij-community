@@ -196,10 +196,10 @@ internal class WeighingContext private constructor(
 internal object Weighers {
 
     context(KaSession)
-    fun LookupElement.applyWeighs(
+    fun <E : LookupElement> E.applyWeighs(
         context: WeighingContext,
         symbolWithOrigin: KtSymbolWithOrigin? = null,
-    ) = also { lookupElement -> // todo replace everything with apply
+    ): E = also { lookupElement -> // todo replace everything with apply
         ExpectedTypeWeigher.addWeight(context, lookupElement, symbolWithOrigin?.symbol)
         KindWeigher.addWeight(lookupElement, symbolWithOrigin?.symbol, context)
 
