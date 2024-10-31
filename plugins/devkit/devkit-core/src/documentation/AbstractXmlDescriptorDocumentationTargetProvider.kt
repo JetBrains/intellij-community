@@ -24,8 +24,9 @@ const val ATTRIBUTE_DOC_LINK_PREFIX = "$PSI_ELEMENT_PROTOCOL$ATTRIBUTE_PATH_PREF
 /**
  * Base class for XML descriptors (for example, plugin.xml) documentation providers.
  * It parses and renders content from a documentation YAML file
- * (for example, `/documentation/plugin-descriptor.xml`), which is used to render
- * documentation in the IDE and [SDK docs](https://plugins.jetbrains.com/docs/intellij).
+ * (for example, `/documentation/plugin-descriptor.yaml`), which is used to render
+ * documentation in the IDE and optionally also in
+ * [SDK docs](https://plugins.jetbrains.com/docs/intellij).
  *
  * To implement a new documentation provider:
  * 1. Create a documentation YAML containing the descriptor content.
