@@ -43,6 +43,9 @@ public interface XDebugSession extends AbstractDebuggerSession {
   @NotNull
   XDebugProcess getDebugProcess();
 
+  @NotNull
+  XDebugProcess getDebugProcess(boolean lowLevel);
+
   boolean isSuspended();
 
   @Nullable

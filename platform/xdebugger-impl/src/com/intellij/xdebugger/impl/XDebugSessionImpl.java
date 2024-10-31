@@ -265,6 +265,15 @@ public final class XDebugSessionImpl implements XDebugSession {
   }
 
   @Override
+  public @NotNull XDebugProcess getDebugProcess(boolean lowLevel) {
+    Objects.requireNonNull(myMixedModeExtension);
+    if (lowLevel) {
+      return myMixedModeLowLevelDebugProcess;
+    }
+    return getDebugProcess();
+  }
+
+  @Override
   public boolean isSuspended() {
     return myPaused.get() && mySuspendContext != null;
   }

@@ -2,40 +2,36 @@ package com.intellij.xdebugger.frame
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.xdebugger.XDebugSession
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-
-interface MixedModeFramesMatcher {
-  fun matchWithHighLevelFrame(lowLevelFrame: XStackFrame): XStackFrame?
-}
 
 class XMixedModeExecutionStack(
-  val lowLevelExecutionStack: XExecutionStack?,
+  val session: XDebugSession,
+  val lowLevelExecutionStack: XExecutionStack,
   val highLevelExecutionStack: XExecutionStack?,
-  val framesMatcher: MixedModeFramesMatcher,
+  val framesMatcher: MixedModeFramesBuilder,
   val coroutineScope: CoroutineScope,
-) : XExecutionStack(lowLevelExecutionStack?.displayName ?: "<empty>") {
+) : XExecutionStack(lowLevelExecutionStack.displayName) {
 
   override fun getTopFrame(): XStackFrame? {
-    return lowLevelExecutionStack?.topFrame?.let { framesMatcher.matchWithHighLevelFrame(it) }
+    // when we are stopped the top frame is always from a low-level debugger, so no need to look for a corresponding high level frame
+    return lowLevelExecutionStack.topFrame
   }
 
-  override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer?) {
-    container ?: return
-    lowLevelExecutionStack ?: return
+  override fun computeStackFrames(firstFrameIndex: Int, container: XStackFrameContainer) {
+    coroutineScope.launch(Dispatchers.EDT) {
+      val lowLevelAcc = MyAccumulatingContainer()
+      lowLevelExecutionStack.computeStackFrames(firstFrameIndex, lowLevelAcc)
+      val lowLevelFrames = lowLevelAcc.frames.await()
 
-    coroutineScope.launch(Dispatchers.Default) {
-      val acc = MyAccumulatingContainer()
-      withContext(Dispatchers.EDT) {
-        lowLevelExecutionStack.computeStackFrames(firstFrameIndex, acc)
-      }
+      val highLevelAcc = MyAccumulatingContainer()
+      requireNotNull(highLevelExecutionStack).computeStackFrames(firstFrameIndex, highLevelAcc)
+      val highLevelFrames = highLevelAcc.frames.await()
 
-      val lowLevelFrames = acc.frames.await()
-
-      val combinedFrames = lowLevelFrames.map { framesMatcher.matchWithHighLevelFrame(it) ?: it }
+      val combinedFrames = framesMatcher.buildMixedStack(session, lowLevelFrames, highLevelFrames)
       container.addStackFrames(combinedFrames, true)
     }
   }
