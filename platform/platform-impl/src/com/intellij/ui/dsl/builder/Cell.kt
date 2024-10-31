@@ -28,11 +28,11 @@ enum class LabelPosition {
 @JvmDefaultWithCompatibility
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
-  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead")
+  @Deprecated("Use align(AlignX.LEFT/CENTER/RIGHT/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>
 
-  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead")
+  @Deprecated("Use align(AlignY.TOP/CENTER/BOTTOM/FILL) method instead", level = DeprecationLevel.ERROR)
   @ApiStatus.ScheduledForRemoval
   override fun verticalAlign(verticalAlign: VerticalAlign): Cell<T>
 
