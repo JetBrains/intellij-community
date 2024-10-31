@@ -67,10 +67,6 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
     result.restartCompletionWhenNothingMatches();
     var remainingResults = result.runRemainingContributors(parameters, true);
 
-    for (var completionResult : remainingResults) {
-      result.passResult(completionResult);
-    }
-
     if (parameters.isExtendedCompletion() || remainingResults.isEmpty() || containsOnlyElementUnderTheCaret(remainingResults, parameters)) {
       fillCompletionVariantsImpl(parameters, result);
     }
@@ -80,7 +76,7 @@ public final class PyClassNameCompletionContributor extends PyImportableNameComp
                                                           @NotNull CompletionParameters parameters) {
     PsiElement position = parameters.getOriginalPosition();
     if (remainingResults.size() == 1 && position != null) {
-      var lookup = remainingResults.iterator().next();
+      var lookup = ContainerUtil.getFirstItem(remainingResults);
       return lookup.getLookupElement().getLookupString().equals(position.getText());
     }
     return false;
