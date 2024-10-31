@@ -405,11 +405,12 @@ class StructureViewWrapperImpl(private val project: Project,
         val structureViewBuilder = if (editor != null && editor.isValid)
           readAction { editor.structureViewBuilder } else createStructureViewBuilder(file)
         if (structureViewBuilder != null) {
+          val structureView = readAction {
+            structureViewBuilder.createStructureView(editor, project)
+          }
           withContext(Dispatchers.EDT) {
             writeIntentReadAction {
-              val structureView = structureViewBuilder.createStructureView(editor, project)
               myStructureView = structureView
-
               myFileEditor = editor
               Disposer.register(this@StructureViewWrapperImpl, structureView)
               if (structureView is StructureViewComposite) {
