@@ -1,0 +1,11 @@
+// SIBLING:
+fun foo(a: Int) {
+    if (a > 0) {
+        __dummyTestFun__()
+        return
+    }
+}
+
+private fun __dummyTestFun__() {
+    return
+}

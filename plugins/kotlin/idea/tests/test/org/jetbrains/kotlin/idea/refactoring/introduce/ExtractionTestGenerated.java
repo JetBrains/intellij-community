@@ -2085,6 +2085,11 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
                 }
 
+                @TestMetadata("singleOutputValueBracesRequired.kt")
+                public void testSingleOutputValueBracesRequired() throws Exception {
+                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueBracesRequired.kt");
+                }
+
                 @TestMetadata("singleOutputValueWithIf.kt")
                 public void testSingleOutputValueWithIf() throws Exception {
                     runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
