@@ -4,7 +4,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -13,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkUtil;
@@ -51,7 +49,6 @@ public final class PySearchScopeBuilder {
   private static final Set<String> THIRD_PARTY_PACKAGE_ROOT_NAMES = Set.of(PyNames.SITE_PACKAGES, PyNames.DIST_PACKAGES);
 
   private boolean myExcludeStdlibTests = false;
-  private boolean myExcludeThirdPartyTypeShedStubs = false;
   private boolean myExcludePythonSkeletonsStubs = false;
   private boolean myExcludeThirdPartyBundledDeps = false;
   private boolean myExcludeThirdPartyTests = false;
@@ -88,14 +85,6 @@ public final class PySearchScopeBuilder {
   }
 
   /**
-   * Excludes .pyi stubs for third-party packages included in Typeshed from the resulting scope.
-   */
-  public @NotNull PySearchScopeBuilder excludeThirdPartyPackageTypeShedStubs() {
-    myExcludeThirdPartyTypeShedStubs = true;
-    return this;
-  }
-
-  /**
    * Excludes the legacy <a href="https://github.com/JetBrains/python-skeletons">python-skeletons</a> (aka "user skeletons")
    * stubs from the resulting scope.
    */
@@ -127,9 +116,6 @@ public final class PySearchScopeBuilder {
     GlobalSearchScope scope = GlobalSearchScope.allScope(myProject);
     if (myExcludeStdlibTests) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(buildStdlibTestsScope()));
-    }
-    if (myExcludeThirdPartyTypeShedStubs) {
-      scope = scope.intersectWith(GlobalSearchScope.notScope(buildThirdPartyTypeShedStubsScope()));
     }
     if (myExcludePythonSkeletonsStubs) {
       scope = scope.intersectWith(GlobalSearchScope.notScope(buildPythonSkeletonsStubsScope()));
@@ -164,16 +150,6 @@ public final class PySearchScopeBuilder {
           .map(dir -> GlobalSearchScopesCore.directoryScope(myProject, dir, true))
           .reduce(GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope::union);
       }
-    }
-    return GlobalSearchScope.EMPTY_SCOPE;
-  }
-
-  private @NotNull GlobalSearchScope buildThirdPartyTypeShedStubsScope() {
-    if (mySdk != null) {
-      return StreamEx.of(mySdk.getRootProvider().getFiles(OrderRootType.CLASSES))
-        .filter(root -> PyTypeShed.INSTANCE.isInside(root) && PyTypeShed.INSTANCE.isInThirdPartyLibraries(root))
-        .map(dir -> GlobalSearchScopesCore.directoryScope(myProject, dir, true))
-        .reduce(GlobalSearchScope.EMPTY_SCOPE, GlobalSearchScope::union);
     }
     return GlobalSearchScope.EMPTY_SCOPE;
   }

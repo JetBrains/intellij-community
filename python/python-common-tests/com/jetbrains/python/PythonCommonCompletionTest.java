@@ -13,6 +13,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.codeInsight.completion.PyModuleNameCompletionContributor;
+import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixture.PythonCommonTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -1401,7 +1402,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject1Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(
@@ -1418,7 +1419,7 @@ public abstract class PythonCommonCompletionTest extends PythonCommonTestCase {
   public void testMockPatchObject2Py2() {
     final String testName = getTestName(true);
 
-    final VirtualFile libDir = StandardFileSystems.local().findFileByPath(getTestDataPath() + "/" + testName + "/lib");
+    final VirtualFile libDir = PyTypeShed.INSTANCE.getStubRootForPackage("mock");
     assertNotNull(libDir);
 
     runWithAdditionalClassEntryInSdkRoots(

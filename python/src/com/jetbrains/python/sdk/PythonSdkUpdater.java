@@ -37,18 +37,21 @@ import com.intellij.remote.RemoteSdkProperties;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
 import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
+import com.jetbrains.python.packaging.common.PythonPackage;
 import com.jetbrains.python.packaging.management.PythonPackageManager;
 import com.jetbrains.python.packaging.management.PythonPackageManagerExt;
 import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.remote.UnsupportedPythonSdkTypeException;
 import com.jetbrains.python.sdk.headless.PythonActivityKey;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -151,6 +154,7 @@ public final class PythonSdkUpdater {
         // This step also includes setting mapped interpreter paths
         generateSkeletons(mySdk, indicator);
         refreshPackages(mySdk, indicator);
+        addBundledPyiStubsToInterpreterPaths(mySdk);
       }
       catch (ExecutionException e) {
         LOG.warn("Update for SDK " + mySdk.getName() + " failed", e);
@@ -162,6 +166,35 @@ public final class PythonSdkUpdater {
           DaemonCodeAnalyzer.getInstance(myProject).restart();
         }, myProject.getDisposed());
       }
+    }
+
+    private void addBundledPyiStubsToInterpreterPaths(@NotNull Sdk sdk) {
+      List<VirtualFile> allStubRoots = new ArrayList<>();
+      ContainerUtil.addIfNotNull(allStubRoots, PyTypeShed.INSTANCE.getThirdPartyStubRoot());
+      ContainerUtil.addIfNotNull(allStubRoots, PyBundledStubs.INSTANCE.getRoot());
+      PythonPackageManager packageManager = PythonPackageManager.Companion.forSdk(myProject, sdk);
+      Set<String> installedPackageNames = ContainerUtil.map2Set(packageManager.getInstalledPackages(), PythonPackage::getName);
+      List<VirtualFile> bundledStubRoots = StreamEx.of(allStubRoots)
+        .flatArray(root -> root.getChildren())
+        .filter(VirtualFile::isDirectory)
+        .filter(stubPkgRoot -> installedPackageNames.contains(stubPkgRoot.getName()))
+        .filter(stubPkgRoot -> {
+          String pypiStubPkgName = stubPkgRoot.getName().toLowerCase(Locale.ROOT) + "-stubs";
+          String typeshedStubPkgName = "types-" + stubPkgRoot.getName();
+          return !(installedPackageNames.contains(pypiStubPkgName) ||
+                   installedPackageNames.contains(typeshedStubPkgName));
+        })
+        .toList();
+
+      LOG.info("Bundled .pyi stub roots for SDK " + sdk + ":" + bundledStubRoots);
+      changeSdkModificator(sdk, effectiveModificator -> {
+        VirtualFile[] currentRoots = effectiveModificator.getRoots(OrderRootType.CLASSES);
+        effectiveModificator.removeAllRoots();
+        for (VirtualFile sdkPath : ContainerUtil.concat(List.of(currentRoots), bundledStubRoots)) {
+          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
+        }
+        return true;
+      });
     }
 
     private @NotNull Disposable getIndicatorDisposable(@NotNull ProgressIndicator indicator) {
@@ -503,7 +536,6 @@ public final class PythonSdkUpdater {
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
       .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
-      .addAll(PyBundledStubs.INSTANCE.getRoots())
       .build();
   }
 

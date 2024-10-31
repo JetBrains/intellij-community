@@ -31,7 +31,6 @@ public class PySearchUtilBase {
    * <ul>
    *   <li>Standard library tests</li>
    *   <li>Stubs for third-party packages in Typeshed</li>
-   *   <li>Stubs in python-skeletons</li>
    *   <li>Bundled tests of third-party packages</li>
    *   <li>Bundled dependencies of third-party packages</li>
    * </ul>
@@ -42,7 +41,6 @@ public class PySearchUtilBase {
   public static @NotNull GlobalSearchScope defaultSuggestionScope(@NotNull PsiElement anchor) {
     return PySearchScopeBuilder.forPythonSdkOf(anchor)
       .excludeStandardLibraryTests()
-      .excludeThirdPartyPackageTypeShedStubs()
       .excludePythonSkeletonsStubs()
       .excludeThirdPartyPackageTests()
       .excludeThirdPartyPackageBundledDependencies()
@@ -68,7 +66,6 @@ public class PySearchUtilBase {
     if (sdk != null && PythonSdkUtil.isPythonSdk(sdk)) {
       return scope.intersectWith(PySearchScopeBuilder.forPythonSdk(project, sdk)
                                    .excludeStandardLibraryTests()
-                                   .excludeThirdPartyPackageTypeShedStubs()
                                    .build());
     }
     return scope;
