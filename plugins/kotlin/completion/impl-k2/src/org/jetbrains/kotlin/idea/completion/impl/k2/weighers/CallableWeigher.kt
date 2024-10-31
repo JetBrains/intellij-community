@@ -65,16 +65,16 @@ internal object CallableWeigher {
     }
 
     context(KaSession)
-    fun addWeight(
+    fun LookupElement.addCallableWeight(
         context: WeighingContext,
-        lookupElement: LookupElement,
         signature: KaCallableSignature<*>,
         symbolOrigin: CompletionSymbolOrigin,
     ) {
         if (context.isPositionInsideImportOrPackageDirective) return
 
-        val isFunctionalVariableCall = signature.symbol is KaVariableSymbol && lookupElement.`object` is FunctionCallLookupObject
-        lookupElement.callableWeight = getCallableMetadata(context, signature, symbolOrigin, isFunctionalVariableCall)
+        val isFunctionalVariableCall = signature.symbol is KaVariableSymbol
+                && `object` is FunctionCallLookupObject
+        callableWeight = getCallableMetadata(context, signature, symbolOrigin, isFunctionalVariableCall)
     }
 
     internal var LookupElement.callableWeight: CallableMetadataProvider.CallableMetadata? by UserDataProperty(
