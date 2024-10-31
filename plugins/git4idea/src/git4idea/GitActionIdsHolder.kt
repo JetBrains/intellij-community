@@ -11,7 +11,8 @@ class GitActionIdsHolder : ActionIdsHolder {
     ABORT("git4idea.rebase.abort"),
     CONTINUE("git4idea.rebase.continue"),
     RETRY("git4idea.rebase.retry"),
-    RESOLVE("git4idea.rebase.resolve")
+    RESOLVE("git4idea.rebase.resolve"),
+    STAGE_AND_RETRY("git4idea.rebase.stage.and.retry"),
   }
 
   override fun getActionsIds(): List<String> = Id.entries.map(Id::id).toList()

@@ -20,7 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 final class KeymapChangesCollector extends ApplicationUsagesCollector {
-  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 3);
+  private static final EventLogGroup GROUP = new EventLogGroup("keymap.changes", 4);
 
   private static final BooleanEventField IMPORTED = EventFields.Boolean("imported");
 

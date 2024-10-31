@@ -11,7 +11,7 @@ import com.intellij.openapi.project.Project
 internal object XDebuggerPerformanceCollector : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
-  private val GROUP = EventLogGroup("debugger.performance", 4)
+  private val GROUP = EventLogGroup("debugger.performance", 5)
 
   private val EXECUTION_POINT_REACHED = GROUP.registerEvent(
     "execution.point.reached",

@@ -202,15 +202,10 @@ abstract class GitRebaseBaseTest : GitPlatformTest() {
         """)
   }
 
-  protected fun `assert error about unstaged file before continue rebase`(file : String) {
-    val fileLine = if (vcs.version.isLaterOrEqual(GitVersion(1, 7, 3, 0)) &&
-                       vcs.version.isOlderOrEqual(GitVersion(2, 19, 2, 0))) "$file: needs update" else ""
+  protected fun `assert error about unstaged file before continue rebase`() {
     assertErrorNotification("Continue rebase failed",
-          """
-          $fileLine
-          You must edit all merge conflicts
-          and then mark them as resolved using git add
-          """)
+                            "There are unstaged changes in tracked files preventing rebase from continuing",
+                            actions = listOf("Stage and Retry", "Show Files", "Abort"))
   }
 
   protected fun keepCommitMessageAfterConflict() {
