@@ -162,6 +162,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   private fun registerIssuedToken(token: Any) {
     synchronized(issuedScanningTokens) {
       if (issuedScanningTokens.isEmpty() && storage.isOpen) {
+        thisLogger().info("Register issued token: ${token}")
         storage.writeIncompleteScanningMark(true)
       }
       issuedScanningTokens.add(token)
@@ -187,6 +188,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       // ignore repeated "complete" calls
       val removed = issuedScanningTokens.remove(token)
       if (removed && issuedScanningTokens.isEmpty() && storage.isOpen) {
+        thisLogger().info("Complete token: ${token}")
         storage.writeIncompleteScanningMark(false)
       }
       if (lastAppIndexingRequestId != null && storage.isOpen) {
