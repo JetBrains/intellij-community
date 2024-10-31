@@ -83,6 +83,11 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
             runTest("testData/slicer/inflow/delegateToJavaGetter.kt");
         }
 
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("testData/slicer/inflow/delegation.kt");
+        }
+
         @TestMetadata("diamondHierarchyJKMiddleClassFun.kt")
         public void testDiamondHierarchyJKMiddleClassFun() throws Exception {
             runTest("testData/slicer/inflow/diamondHierarchyJKMiddleClassFun.kt");

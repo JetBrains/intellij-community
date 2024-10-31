@@ -83,6 +83,11 @@ public abstract class FirSlicerTreeTestGenerated extends AbstractFirSlicerTreeTe
             runTest("../../idea/tests/testData/slicer/inflow/delegateToJavaGetter.kt");
         }
 
+        @TestMetadata("delegation.kt")
+        public void testDelegation() throws Exception {
+            runTest("../../idea/tests/testData/slicer/inflow/delegation.kt");
+        }
+
         @TestMetadata("diamondHierarchyJKMiddleClassFun.kt")
         public void testDiamondHierarchyJKMiddleClassFun() throws Exception {
             runTest("../../idea/tests/testData/slicer/inflow/diamondHierarchyJKMiddleClassFun.kt");
