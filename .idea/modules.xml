@@ -330,6 +330,7 @@
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/intellij.cidr.workspaceModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/ide/intellij.cidr.workspaceModel.ide.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cidr-workspaceModel/ide/intellij.cidr.workspaceModel.ide.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/cmake-psi/intellij.cmake.psi.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/nativeDebug/intellij.nativeDebug.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/nativeDebug/intellij.nativeDebug.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/impl/intellij.rml.dfa.impl.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/impl/intellij.rml.dfa.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/intellij.rml.dfa.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/intellij.rml.dfa.iml" />
       <module fileurl="file://$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/plugin/intellij.rml.dfa.plugin.iml" filepath="$PROJECT_DIR$/../vendor/intellij/cidr/rml-dfa/plugin/intellij.rml.dfa.plugin.iml" />

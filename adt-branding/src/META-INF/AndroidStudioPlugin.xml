@@ -6,6 +6,8 @@ optional dependency on the module 'com.intellij.modules.androidstudio' declared 
 <idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
   <module value="com.intellij.modules.androidstudio"/>
   <module value="com.intellij.modules.cidr.ide"/>
+  <!-- We bundle 'com.intellij.modules.nativeDebug' instead of its commercial variant 'com.intellij.nativeDebug' (CPP-33729). -->
+  <incompatible-with>com.intellij.nativeDebug</incompatible-with>
   <!-- The following content is loosely based on IdeaPlugin.xml. -->
   <xi:include href="/META-INF/JavaIdePlugin.xml"/>
   <module value="com.intellij.modules.java-capable"/>

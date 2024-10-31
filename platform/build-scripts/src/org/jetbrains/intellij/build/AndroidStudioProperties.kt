@@ -155,11 +155,13 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       JavaPluginLayout.javaPlugin(),
       CommunityRepositoryModules.groovyPlugin(),
       plugin("intellij.cidr.debugger.plugin") { spec ->
+        spec.withModule("intellij.nativeDebug", spec.mainJarName)
         spec.withModule("intellij.cidr.debugger", spec.mainJarName)
         spec.withModule("intellij.cidr.debugger.backend", spec.mainJarName)
         spec.withModule("intellij.cidr.debugger.commandInterpreterLang", spec.mainJarName)
         spec.withModule("intellij.cidr.core", spec.mainJarName)
         spec.withModule("intellij.cidr.util.execution", spec.mainJarName)
+        spec.withModule("intellij.cidr.runner", spec.mainJarName)
       },
       plugin("intellij.cidr.base.plugin") { spec ->
         spec.withModule("intellij.cidr.base", spec.mainJarName)
@@ -182,7 +184,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
         // this base plugin so that they will still be shipped.
         spec.withModule("intellij.cidr.psi.base", spec.mainJarName)
         spec.withModule("intellij.cidr.common", spec.mainJarName)
-        spec.withModule("intellij.cidr.runner", spec.mainJarName)
         spec.withModule("intellij.cmake.psi", spec.mainJarName)
       },
       plugin("intellij.c.plugin") { spec ->
