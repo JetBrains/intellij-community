@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.analysis.api.types.KaType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.KtSymbolFromIndexProvider
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.shortenReferencesInRange
 import org.jetbrains.kotlin.idea.base.facet.platform.platform
-import org.jetbrains.kotlin.idea.completion.ItemPriority
 import org.jetbrains.kotlin.idea.completion.KOTLIN_CAST_REQUIRED_COLOR
 import org.jetbrains.kotlin.idea.completion.KotlinFirCompletionParameters
 import org.jetbrains.kotlin.idea.completion.checkers.CompletionVisibilityChecker
@@ -30,7 +29,6 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.ImportStrategyDetector
 import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
-import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.addCallableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers.applyWeighs
@@ -76,7 +74,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
         options: CallableInsertionOptions,
         symbolOrigin: CompletionSymbolOrigin,
         lookupString: String? = null, // todo extract; too many arguments already, is used only for objects/enums
-        priority: ItemPriority? = null,
         explicitReceiverTypeHint: KaType? = null,
         withTrailingLambda: Boolean = false, // TODO find a better solution
     ): Sequence<LookupElement> {
@@ -117,7 +114,6 @@ internal abstract class FirCompletionContributorBase<C : KotlinRawPositionContex
                 })
             }
         }.map { lookup ->
-            lookup.priority = priority
             lookup.addCallableWeight(context, signature, symbolOrigin)
             lookup.applyWeighs(context, KtSymbolWithOrigin(signature.symbol, symbolOrigin))
             lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render(position = Variance.INVARIANT))

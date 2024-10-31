@@ -152,7 +152,6 @@ internal open class FirCallableCompletionContributor(
                     options = callableWithMetadata.options,
                     symbolOrigin = callableWithMetadata.symbolOrigin,
                     lookupString = callableWithMetadata.lookupString,
-                    priority = null,
                     explicitReceiverTypeHint = callableWithMetadata.explicitReceiverTypeHint,
                     withTrailingLambda = withTrailingLambda,
                 )

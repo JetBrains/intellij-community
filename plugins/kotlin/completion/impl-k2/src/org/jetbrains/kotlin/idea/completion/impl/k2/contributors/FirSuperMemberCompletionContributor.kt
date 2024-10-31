@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.idea.completion.impl.k2.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.impl.k2.context.getOriginalDeclarationOrSelf
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.priority
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinNameReferencePositionContext
 import org.jetbrains.kotlin.idea.util.positionContext.KotlinSuperReceiverNameReferencePositionContext
@@ -226,10 +227,12 @@ internal class FirSuperMemberCompletionContributor(
                         )
                     ),
                     symbolOrigin = CompletionSymbolOrigin.Scope(callableInfo.scopeKind),
-                    priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS,
                 )
 
-                yieldAll(elements)
+                for (element in elements) {
+                    element.priority = ItemPriority.SUPER_METHOD_WITH_ARGUMENTS
+                    yield(element)
+                }
             }
         }
     }
