@@ -1,13 +1,16 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui.update
 
-import com.intellij.concurrency.ContextAwareRunnable
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
+import com.intellij.util.concurrency.createChildContext
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
+import com.intellij.util.ui.update.UiNotifyConnector.ContextActivatable.Companion.wrapIfNeeded
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import java.awt.event.HierarchyEvent
@@ -27,7 +30,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
   @Suppress("UNUSED_PARAMETER")
   protected constructor(component: Component, target: Activatable, isDeferred: Boolean, ignored: Any?) {
     this.component = WeakReference(component)
-    this.target = target
+    this.target = target.wrapIfNeeded()
     this.isDeferred = isDeferred
   }
 
@@ -40,7 +43,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     method""")
   constructor(component: Component, target: Activatable) {
     this.component = WeakReference(component)
-    this.target = target
+    this.target = target.wrapIfNeeded()
     isDeferred = true
     setupListeners(component)
   }
@@ -54,9 +57,29 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
     method""")
   constructor(component: Component, target: Activatable, deferred: Boolean) {
     this.component = WeakReference(component)
-    this.target = target
+    this.target = target.wrapIfNeeded()
     isDeferred = deferred
     setupListeners(component)
+  }
+
+  private class ContextActivatable(private val target: Activatable) : Activatable {
+    companion object {
+      fun Activatable.wrapIfNeeded(): ContextActivatable = this as? ContextActivatable ?: ContextActivatable(this)
+    }
+
+    private val childContext = createChildContext(ContextActivatable::class.qualifiedName ?: "<unknown>")
+
+    override fun showNotify() {
+      resetThreadContext().use {
+        childContext.runInChildContext { target.showNotify() }
+      }
+    }
+
+    override fun hideNotify() {
+      resetThreadContext().use {
+        childContext.runInChildContext { target.hideNotify() }
+      }
+    }
   }
 
   companion object {
