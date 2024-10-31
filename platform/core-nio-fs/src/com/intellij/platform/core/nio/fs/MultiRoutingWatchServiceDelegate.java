@@ -25,16 +25,21 @@ class MultiRoutingWatchServiceDelegate implements WatchService {
   @Override
   public WatchKey poll() {
     WatchKey watchKey = myDelegate.poll();
+    if (watchKey == null) return null;
     return new MultiRoutingWatchKeyDelegate(watchKey, myProvider);
   }
 
   @Override
   public WatchKey poll(long timeout, TimeUnit unit) throws InterruptedException {
-    return null;
+    WatchKey watchKey = myDelegate.poll(timeout, unit);
+    if (watchKey == null) return null;
+    return new MultiRoutingWatchKeyDelegate(watchKey, myProvider);
   }
 
   @Override
   public WatchKey take() throws InterruptedException {
-    return null;
+    WatchKey watchKey = myDelegate.take();
+    if (watchKey == null) return null;
+    return new MultiRoutingWatchKeyDelegate(watchKey, myProvider);
   }
 }
