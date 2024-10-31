@@ -200,6 +200,11 @@ public class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessG
         runTest("testData/slicer/inflow/inlineFunctionManyCalls.kt");
     }
 
+    @TestMetadata("javaSyntheticGetter.kt")
+    public void testJavaSyntheticGetter() throws Exception {
+        runTest("testData/slicer/inflow/javaSyntheticGetter.kt");
+    }
+
     @TestMetadata("lambdaImplicitParameter.kt")
     public void testLambdaImplicitParameter() throws Exception {
         runTest("testData/slicer/inflow/lambdaImplicitParameter.kt");

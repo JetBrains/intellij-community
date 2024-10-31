@@ -200,6 +200,11 @@ public class FirSlicerNullnessGroupingTestGenerated extends AbstractFirSlicerNul
         runTest("../../idea/tests/testData/slicer/inflow/inlineFunctionManyCalls.kt");
     }
 
+    @TestMetadata("javaSyntheticGetter.kt")
+    public void testJavaSyntheticGetter() throws Exception {
+        runTest("../../idea/tests/testData/slicer/inflow/javaSyntheticGetter.kt");
+    }
+
     @TestMetadata("lambdaImplicitParameter.kt")
     public void testLambdaImplicitParameter() throws Exception {
         runTest("../../idea/tests/testData/slicer/inflow/lambdaImplicitParameter.kt");
