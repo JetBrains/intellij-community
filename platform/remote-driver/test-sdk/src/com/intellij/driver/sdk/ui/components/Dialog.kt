@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.QueryBuilder
 import com.intellij.driver.sdk.ui.remote.Window
+import com.intellij.driver.sdk.ui.shouldBe
 import com.intellij.driver.sdk.wait
 import com.intellij.driver.sdk.waitFor
 import com.intellij.driver.sdk.withRetries
@@ -71,6 +72,9 @@ class FileChooserDialogUi(data: ComponentData) : DialogUiComponent(data) {
       refreshActionButton.click()
       waitFor("$absolutePath is selected in file chooser tree", timeout = 3.seconds) {
         fileTree.collectSelectedPaths().singleOrNull()?.path?.last() == path.name
+      }
+      shouldBe {
+        okButton.isEnabled()
       }
     }
     okButton.click()
