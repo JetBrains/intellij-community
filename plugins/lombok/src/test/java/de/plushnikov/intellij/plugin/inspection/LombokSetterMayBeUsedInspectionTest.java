@@ -48,4 +48,8 @@ public class LombokSetterMayBeUsedInspectionTest extends LightDaemonAnalyzerTest
   public void testSetterAlreadyUsedTolerate() {
     doTest();
   }
+
+  public void testSetterOnBooleanIsPrefixedField() {
+    doTest();
+  }
 }

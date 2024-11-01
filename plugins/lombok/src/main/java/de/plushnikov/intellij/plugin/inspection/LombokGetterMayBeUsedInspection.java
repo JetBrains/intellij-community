@@ -8,6 +8,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
+import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,15 +82,11 @@ public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterM
       return false;
     }
 
-    final String fieldName = StringUtil.getPropertyName(methodName);
-    if (StringUtil.isEmpty(fieldName)) {
-      return false;
-    }
-
     if (method.getBody() == null) {
       return false;
     }
-    final PsiStatement @NotNull [] methodStatements = Arrays.stream(method.getBody().getStatements()).filter(e -> !(e instanceof PsiEmptyStatement)).toArray(PsiStatement[]::new);
+    final PsiStatement @NotNull [] methodStatements =
+      Arrays.stream(method.getBody().getStatements()).filter(e -> !(e instanceof PsiEmptyStatement)).toArray(PsiStatement[]::new);
     if (methodStatements.length != 1) {
       return false;
     }
@@ -110,14 +108,15 @@ public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterM
     if (qualifier != null) {
       if (thisExpression == null) {
         return false;
-      } else if (thisExpression.getQualifier() != null) {
+      }
+      else if (thisExpression.getQualifier() != null) {
         if (!thisExpression.getQualifier().isReferenceTo(psiClass)) {
           return false;
         }
       }
     }
     final @Nullable String fieldIdentifier = targetRef.getReferenceName();
-    if (!fieldName.equals(fieldIdentifier) && !StringUtil.capitalize(fieldName).equals(fieldIdentifier)) {
+    if (fieldIdentifier == null) {
       return false;
     }
 
@@ -129,9 +128,18 @@ public final class LombokGetterMayBeUsedInspection extends LombokGetterOrSetterM
         || !field.getType().equals(returnType)) {
       return false;
     }
+
+    //Check lombok would generate same method name (e.g. for boolean methods prefixed with "is")
+    final AccessorsInfo accessorsInfo = AccessorsInfo.buildFor(field);
+    final String lombokMethodName = LombokUtils.getGetterName(field, accessorsInfo);
+    if (!methodName.equals(lombokMethodName)) {
+      return false;
+    }
+
     if (isMethodStatic) {
       staticCandidates.add(Pair.pair(field, method));
-    } else {
+    }
+    else {
       instanceCandidates.add(Pair.pair(field, method));
     }
     return true;
