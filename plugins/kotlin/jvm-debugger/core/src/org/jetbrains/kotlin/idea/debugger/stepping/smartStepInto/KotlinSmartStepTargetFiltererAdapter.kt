@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.getInlineFunctionAndArgumentVariablesToBordersMap
 import org.jetbrains.kotlin.idea.debugger.core.isInlineFunctionMarkerVariableName
 import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.org.objectweb.asm.Opcodes
 
 internal class KotlinSmartStepTargetFiltererAdapter(
     lines: ClosedRange<Int>,
@@ -53,7 +54,7 @@ internal class KotlinSmartStepTargetFiltererAdapter(
 
     override fun visitMethodInsn(opcode: Int, owner: String, name: String, descriptor: String, isInterface: Boolean) {
         if (lineMatches) {
-            add(BytecodeTraceElement.MethodCall(owner, name, descriptor))
+            add(BytecodeTraceElement.MethodCall(owner, name, descriptor, opcode == Opcodes.INVOKESTATIC))
         }
     }
 
@@ -88,7 +89,7 @@ internal class KotlinSmartStepTargetFiltererAdapter(
             }
 
             is BytecodeTraceElement.MethodCall -> {
-                targetFilterer.visitOrdinaryFunction(element.owner, element.name, element.descriptor)
+                targetFilterer.visitOrdinaryFunction(element.owner, element.name, element.descriptor, element.isStatic)
             }
         }
     }
@@ -102,7 +103,7 @@ private sealed class BytecodeTraceElement {
      * @see [KotlinMethodSmartStepTarget.equals]
      */
     class InlineInvoke : BytecodeTraceElement()
-    data class MethodCall(val owner: String, val name: String, val descriptor: String) : BytecodeTraceElement()
+    data class MethodCall(val owner: String, val name: String, val descriptor: String, val isStatic: Boolean) : BytecodeTraceElement()
 }
 
 internal data class InlineCallInfo(val isInlineFun: Boolean, val bciRange: LongRange, val startLocation: Location)

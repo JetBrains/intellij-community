@@ -1813,6 +1813,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/smartStepIntoLabeledLambda.kt");
         }
 
+        @TestMetadata("smartStepIntoLambdaWithDefaultArgsFun.kt")
+        public void testSmartStepIntoLambdaWithDefaultArgsFun() throws Exception {
+            runTest("testData/stepping/custom/smartStepIntoLambdaWithDefaultArgsFun.kt");
+        }
+
         @TestMetadata("smartStepIntoLambdaWithparametersDestructuring.kt")
         public void testSmartStepIntoLambdaWithparametersDestructuring() throws Exception {
             runTest("testData/stepping/custom/smartStepIntoLambdaWithparametersDestructuring.kt");

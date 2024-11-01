@@ -80,8 +80,11 @@ internal fun matchesDefaultMethodSignature(defaultType: Type, actualType: Type, 
  */
 internal fun isSyntheticDefaultMethodPossiblyConvertedToStatic(location: Location): Boolean {
     val method = location.safeMethod() ?: return false
-    return method.isStatic && method.signature().startsWith("(${location.declaringType().signature()}")
+    return isSyntheticDefaultMethodPossiblyConvertedToStatic(method.isStatic, method.signature(), location.declaringType().signature())
 }
+
+internal fun isSyntheticDefaultMethodPossiblyConvertedToStatic(isStatic: Boolean, signature: String, typeSignature: String): Boolean =
+    isStatic && signature.startsWith("($typeSignature")
 
 // The default method should have more parameters than the implementation
 // because of flags

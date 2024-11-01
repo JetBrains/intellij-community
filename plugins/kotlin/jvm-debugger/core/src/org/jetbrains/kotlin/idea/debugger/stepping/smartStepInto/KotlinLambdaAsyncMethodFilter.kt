@@ -27,8 +27,9 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeAllLineLocations
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeThisObject
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
-import org.jetbrains.kotlin.idea.debugger.core.isInSuspendMethod
 import org.jetbrains.kotlin.idea.debugger.core.isInvokeSuspendMethod
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.isSyntheticDefaultMethodPossiblyConvertedToStatic
+import org.jetbrains.kotlin.idea.debugger.core.stepping.isSyntheticMethodForDefaultParameters
 
 class KotlinLambdaAsyncMethodFilter(
     element: PsiElement?,
@@ -131,6 +132,12 @@ class KotlinLambdaAsyncMethodFilter(
     }
 
     private fun StackFrameProxyImpl.getLambdaReference(): ObjectReference? {
+        var index = lambdaInfo.parameterIndex
+        val location = location()
+        if (location.safeMethod()?.isSyntheticMethodForDefaultParameters() == true
+            && isSyntheticDefaultMethodPossiblyConvertedToStatic(location)) {
+            index += 1
+        }
         if (DexDebugFacility.isDex(virtualMachine.virtualMachine)) {
             // We could fetch the lambda reference from the caller function arguments
             // using `argumentValues.getOrNull(lambdaInfo.parameterIndex)`. However, this call
@@ -139,10 +146,10 @@ class KotlinLambdaAsyncMethodFilter(
             // should be located on the first available line number of a function that calls the
             // lambda we are looking for. It means that the only visible variables are arguments
             // of this function.
-            val lambdaArgumentVariable = visibleVariables().getOrNull(lambdaInfo.parameterIndex) ?: return null
+            val lambdaArgumentVariable = visibleVariables().getOrNull(index) ?: return null
             return getValue(lambdaArgumentVariable) as? ObjectReference
         }
-        return argumentValues.getOrNull(lambdaInfo.parameterIndex) as? ObjectReference
+        return argumentValues.getOrNull(index) as? ObjectReference
     }
 
     private inner class AsyncSuspendLambdaBreakpoint(
