@@ -8,5 +8,5 @@ interface XValueInterpreter {
   data class Result(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val evaluationContext: EvaluationContextWrapper)
 
   fun tryExtractResult(result: XValue): Result?
-  fun tryExtractErrorDescription(result: XValue): @Nls String?
+  fun tryExtractError(result: XValue): @Nls String?
 }

@@ -30,7 +30,7 @@ class JavaValueInterpreter : XValueInterpreter {
     return false
   }
 
-  override fun tryExtractErrorDescription(result: XValue): String? {
+  override fun tryExtractError(result: XValue): String? {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ObjectReference) {

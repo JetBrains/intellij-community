@@ -54,7 +54,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
             }
             callback.evaluated(interpretedResult, result.getEvaluationContext());
           } else {
-            @Nullable String errorDescription = myXValueInterpreter.tryExtractErrorDescription(evaluationResult);
+            @Nullable String errorDescription = myXValueInterpreter.tryExtractError(evaluationResult);
             if (errorDescription != null) {
               callback.evaluationFailed(streamTraceExpression, errorDescription);
             } else {
