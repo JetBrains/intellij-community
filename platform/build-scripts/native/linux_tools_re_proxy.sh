@@ -33,14 +33,14 @@ declare -r re_client="${top}/prebuilts/remoteexecution-client/latest"
 
   (
     rm -rf re_files && mkdir re_files && cd re_files
-    cp ${script_dir}/linux_tools.sh .
+    mkdir -p ./tools/idea/platform/build-scripts/native/ && cp ${top}/tools/idea/platform/build-scripts/native/linux_tools.sh ./tools/idea/platform/build-scripts/native/
     mkdir -p ./tools/idea/native/ && cp -r ${top}/tools/idea/native/. ./tools/idea/native/
 
     ${re_client}/rewrapper  --labels=type=tool --exec_strategy=remote \
     --cfg=$cfg \
     --inputs=. \
-    --output_files=dist/fsnotifier,dist/wslhash,dist/ttyfix,dist/wslproxy,dist/restarter,dist/launcher \
-    -- ./linux_tools.sh out dist $build_number
+    --output_files=dist/fsnotifier,dist/wslhash,dist/ttyfix,dist/wslproxy,dist/restarter,dist/restarter.exe,dist/launcher,dist/launcher.exe \
+    -- ./tools/idea/platform/build-scripts/native/linux_tools.sh out dist $build_number
   )
 )
 

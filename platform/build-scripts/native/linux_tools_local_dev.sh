@@ -18,15 +18,24 @@ trap cleanup EXIT
 script_dir=$(realpath $(dirname "$0"))
 top=$(realpath "$(dirname "$0")/../../../../..")
 
+# Build docker image
+# same as in ./build-docker.sh
 cp $script_dir/Dockerfile $work_dir/.
-cp $top/tools/idea/native/XPlatLauncher/Cargo.toml $work_dir/.
-cp $top/tools/idea/native/XPlatLauncher/Cargo.lock $work_dir/.
+mkdir -p $work_dir/cargo/XPlatLauncher
+cp $top/tools/idea/native/XPlatLauncher/Cargo.toml $work_dir/cargo/XPlatLauncher/
+cp $top/tools/idea/native/XPlatLauncher/Cargo.lock $work_dir/cargo/XPlatLauncher/
+
+mkdir -p $work_dir/cargo/restarter
+cp $top/tools/idea/native/restarter/Cargo.toml $work_dir/cargo/restarter/
+cp $top/tools/idea/native/restarter/Cargo.lock $work_dir/cargo/restarter/
 
 cd $work_dir
+sudo docker build -t linux_tools:dev .
+
+
+# Build Rust binaries in docker
 mkdir out && chmod 777 out
 mkdir dist && chmod 777 dist
-
-sudo docker build -t linux_tools:dev .
 sudo docker run -it --rm \
   -v $top/tools/idea/native:/home/builder/tools/idea/native \
   -v $script_dir:/home/builder/tools/idea/platform/build-scripts/native \

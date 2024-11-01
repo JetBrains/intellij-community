@@ -4,27 +4,23 @@ pub struct CefScopedSandboxInfo {
     pub ptr: *mut std::os::raw::c_void,
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 extern "C" {
-    /* Android Studio: no cef
     pub fn cef_sandbox_info_create() -> *mut std::os::raw::c_void;
     pub fn cef_sandbox_info_destroy(sandbox_info: *mut std::os::raw::c_void);
-    Android Studio: no cef */
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 impl CefScopedSandboxInfo {
     #[allow(clippy::new_without_default)]
     pub fn new() -> CefScopedSandboxInfo {
-        CefScopedSandboxInfo { ptr: std::ptr::null_mut() /* unsafe { cef_sandbox_info_create() } */ }
+        CefScopedSandboxInfo { ptr: unsafe { cef_sandbox_info_create() } }
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 impl Drop for CefScopedSandboxInfo {
     fn drop(&mut self) {
-        /* Android Studio: no cef
         unsafe { cef_sandbox_info_destroy(self.ptr); }
-        Android Studio: no cef */
     }
 }

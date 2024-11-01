@@ -1,6 +1,7 @@
-FROM ubuntu:14.04
+FROM ubuntu:20.04
 
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
     make \
     cmake \
     xz-utils \
@@ -10,7 +11,9 @@ RUN apt-get update && apt-get install -y \
     musl musl-tools \
     curl \
     pkg-config \
-    libssl-dev
+    libssl-dev \
+    mingw-w64 \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN useradd -ms /bin/bash builder
 USER builder
@@ -22,20 +25,25 @@ RUN chmod 644 /home/builder/musl-1.2.2.tar.gz
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y -v --default-toolchain stable --default-host x86_64-unknown-linux-gnu --profile minimal; \
     . "$HOME/.cargo/env"; \
     rustup target add x86_64-unknown-linux-musl; \
+    rustup target add x86_64-pc-windows-gnu; \
     rustup show;
 
-# Copy over the Cargo.toml files to the shell project
-COPY Cargo.toml Cargo.lock /home/builder/
 
-# Build and cache the dependencies
+# Pre-fetch dependencies for Rust projects
+
+# create empty project
+RUN mkdir -p /home/builder/prefetch/src && echo "fn main() {}" > /home/builder/prefetch/src/main.rs && echo "fn main() {}" > /home/builder/prefetch/build.rs
+WORKDIR /home/builder/prefetch
+
+# fetch dependencies for XPlatLauncher
+COPY cargo/XPlatLauncher/Cargo.toml cargo/XPlatLauncher/Cargo.lock /home/builder/prefetch/
+RUN . "$HOME/.cargo/env"; cargo fetch
+
+# fetch dependencies for restarter
+COPY cargo/restarter/Cargo.toml cargo/restarter/Cargo.lock /home/builder/prefetch/
+RUN . "$HOME/.cargo/env"; cargo fetch
+
+# some crates (fnv-1.0.7) have busted permissions. Make cargo cache readable for everyone
+RUN chmod -R a+r "$HOME/.cargo"
+
 WORKDIR /home/builder
-
-RUN mkdir /home/builder/src && echo "fn main() {}" > /home/builder/src/main.rs && echo "fn main() {}" > /home/builder/build.rs
-RUN . "$HOME/.cargo/env"; cargo fetch --target x86_64-unknown-linux-gnu
-
-# ToDo: use `cargo fetch` for restarter libs as well, as it move preciese and could handle yanked packages
-RUN . "$HOME/.cargo/env"; \
-    cargo install cargo-prefetch; \
-    cargo prefetch; \
-    cargo prefetch autocfg@=1.1.0 chrono@=0.4.38 num-traits@=0.2.16 winresource@=0.1.17 windows@=0.58.0 libc@=0.2.155
-

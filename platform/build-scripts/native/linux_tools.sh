@@ -38,8 +38,16 @@ function verify_glibc() {
 }
 
 function verify_statically_linked() {
-  if [[ $(ldd $1) != *"not a dynamic executable"* ]]; then
+  ldd_output=$(ldd "$1" 2>&1)
+
+  if [[ $ldd_output == *"No such file"* ]]; then
+  echo "ERROR: $1 Not found. Abort."
+  exit 4
+  fi
+
+  if [[ $ldd_output != *"statically linked"* ]] && [[ $ldd_output != *"not a dynamic executable"* ]]; then
     echo "ERROR: $1 have dynamically linked libraries. Abort."
+    echo $ldd_output
     exit 3
   fi
 }
@@ -112,14 +120,16 @@ declare failed_builds=""
   export RUSTUP_HOME=/home/builder/.rustup
 
   cargo build ${verbose:+-v} --release --target x86_64-unknown-linux-musl --offline --target-dir "$out_dir/restarter"
+  cargo build ${verbose:+-v} --release --target x86_64-pc-windows-gnu --offline --target-dir "$out_dir/restarter"
 
   verify_statically_linked  "$out_dir/restarter/x86_64-unknown-linux-musl/release/restarter"
 
   cp "$out_dir/restarter/x86_64-unknown-linux-musl/release/restarter" $dist_dir/.
+  cp "$out_dir/restarter/x86_64-pc-windows-gnu/release/restarter.exe" $dist_dir/.
   chmod +x $dist_dir/restarter
   ls -lha $dist_dir/restarter
+  ls -lha $dist_dir/restarter.exe
 ) || { failed_builds+=" restarter" ;  failed_count="$((failed_count+1))" ; }
-
 
 (
   echo "---------------------------"
@@ -134,17 +144,19 @@ declare failed_builds=""
   export RUSTUP_HOME=/home/builder/.rustup
 
   cargo build ${verbose:+-v} --release --target x86_64-unknown-linux-gnu --target-dir "$out_dir/launcher"
+  cargo build ${verbose:+-v} --no-default-features --release --target x86_64-pc-windows-gnu --target-dir "$out_dir/launcher"
 
   verify_glibc "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher"
   cp "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher" $dist_dir/launcher
+  cp "$out_dir/launcher/x86_64-pc-windows-gnu/release/xplat-launcher.exe" $dist_dir/launcher.exe
   chmod +x $dist_dir/launcher
   ls -lha $dist_dir/launcher
+  ls -lha $dist_dir/launcher.exe
 ) || { failed_builds+=" launcher" ;  failed_count="$((failed_count+1))" ; }
 
 echo "=========================="
 ls -lha $dist_dir
 echo "=========================="
-
 
 if [ $failed_count -gt 0 ]; then
   echo "Failed to build: $failed_builds"

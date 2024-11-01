@@ -313,8 +313,7 @@ fn get_configuration(is_remote_dev: bool, exe_path: &Path, started_via_remote_de
     }
 }
 
-/* Android Studio: no cef
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", feature = "cef"))]
 fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     debug!("** Initializing CEF sandbox");
     let cef_sandbox = CefScopedSandboxInfo::new();
@@ -339,8 +338,7 @@ fn init_cef_sandbox(jre_home: &Path, sandbox_subprocess: bool) -> Result<Option<
     Ok(Some(cef_sandbox))
 }
 
-#[cfg(not(target_os = "windows"))]
-Android Studio: no cef */
+#[cfg(not(all(target_os = "windows", feature = "cef")))]
 fn init_cef_sandbox(_jre_home: &Path, _sandbox_subprocess: bool) -> Result<Option<CefScopedSandboxInfo>> {
     Ok(None)
 }
@@ -361,15 +359,13 @@ fn get_full_vm_options(configuration: &dyn LaunchConfiguration, _cef_sandbox: &O
     let class_path = configuration.get_class_path()?.join(CLASS_PATH_SEPARATOR);
     vm_options.push(jvm_property!("java.class.path", class_path));
 
-    /* Android Studio: no cef
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", feature = "cef"))]
     {
         if let Some(cef_sandbox) = _cef_sandbox {
             vm_options.push(jvm_property!("jcef.sandbox.ptr", format!("{:016X}", cef_sandbox.ptr as usize)));
             vm_options.push(jvm_property!("jcef.sandbox.cefVersion", env!("CEF_VERSION")));
         }
     }
-    Android Studio: no cef */
 
     Ok(vm_options)
 }
@@ -387,7 +383,7 @@ pub fn get_caches_home() -> Result<PathBuf> {
 #[cfg(target_os = "windows")]
 fn get_known_folder_path(rfid: &GUID, rfid_debug_name: &str) -> Result<PathBuf> {
     debug!("Calling SHGetKnownFolderPath({})", rfid_debug_name);
-    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, Foundation::HANDLE::default()) }?;
+    let result: PWSTR = unsafe { Shell::SHGetKnownFolderPath(rfid, Shell::KF_FLAG_CREATE, HANDLE::default()) }?;
     let result_str = unsafe { result.to_string() }?;
     debug!("  result: {}", result_str);
     Ok(PathBuf::from(result_str))
@@ -436,7 +432,7 @@ fn get_user_home() -> Result<PathBuf> {
 
 #[cfg(target_family = "windows")]
 fn win_user_profile_dir() -> Result<String> {
-    let token = Foundation::HANDLE(-4isize as *mut std::ffi::c_void);  // as defined in `GetCurrentProcessToken()`
+    let token = HANDLE(-4isize as *mut std::ffi::c_void);  // as defined in `GetCurrentProcessToken()`
     let mut buf = [0u16; Foundation::MAX_PATH as usize];
     let mut size = buf.len() as u32;
     debug!("Calling GetUserProfileDirectoryW({:?})", token);
