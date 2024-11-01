@@ -379,18 +379,17 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         //a class from "jdk" which belongs to 2 order entries
         val stringClass = JavaPsiFacade.getInstance(project).findClass("java.lang.String", GlobalSearchScope.allScope(project))!!
 
-        val infoProvider = ModuleInfoProvider.getInstance(project)
-        val contextualModuleBInfo = moduleB.productionSourceInfo!!
-        val info1 = infoProvider
-            .firstOrNull(stringClass, ModuleInfoProvider.Configuration(contextualModuleInfo = contextualModuleBInfo))
-        assertNotNull("IdeaModuleInfo not found for module B", info1)
+        val contextualModuleB = moduleB.toKaSourceModuleForProduction()!!
+        val module1 = stringClass.getKaModuleOfTypeSafe<KaLibraryModule>(project, contextualModuleB)
 
-        val contextualModuleAInfo = moduleA.productionSourceInfo!!
-        val info2 = infoProvider
-            .firstOrNull(stringClass, ModuleInfoProvider.Configuration(contextualModuleInfo = contextualModuleAInfo))
-        assertNotNull("IdeaModuleInfo not found for module A", info2)
+        assertNotNull("KaLibraryModule not found for module B", module1)
 
-        assertNotSame("Different jdks are attached to modules, but one jdk is found by search", info1!!.sdk(), info2!!.sdk())
+        val contextualModuleA = moduleA.toKaSourceModuleForProduction()!!
+        val module2 = stringClass.getKaModuleOfTypeSafe<KaLibraryModule>(project, contextualModuleA)
+
+        assertNotNull("KaLibraryModule not found for module A", module2)
+
+        assertNotSame("Different jdks are attached to modules, but one jdk is found by search", module1!!.openapiSdk, module2!!.openapiSdk)
     }
 
     fun `test that buildSrc sources belong to KaSourceModule`() {
