@@ -675,7 +675,7 @@ public final class FindPopupPanel extends JBPanel<FindPopupPanel> implements Fin
 
       String selectedFile = file;
 
-      UsageAdaptersKt.getUsageInfo(adapters, myProject).thenAccept(selectedUsages -> {
+      UsageAdaptersKt.getUsageInfoAsFuture(adapters, myProject).thenAccept(selectedUsages -> {
         ReadAction.nonBlocking(() -> UsagePreviewPanel.isOneAndOnlyOnePsiFileInUsages(selectedUsages))
           .finishOnUiThread(ModalityState.nonModal(), isOneAndOnlyOnePsiFileInUsages -> {
             myReplaceSelectedButton.setText(FindBundle.message("find.popup.replace.selected.button", selectedUsages.size()));

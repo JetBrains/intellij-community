@@ -4,5 +4,5 @@ package com.intellij.ide.actions.searcheverywhere
 import com.intellij.openapi.components.Service
 import kotlinx.coroutines.CoroutineScope
 
-@Service(Service.Level.APP)
+@Service(Service.Level.PROJECT)
 internal class SearchEverywhereCoroutineScopeService(val coroutineScope: CoroutineScope)

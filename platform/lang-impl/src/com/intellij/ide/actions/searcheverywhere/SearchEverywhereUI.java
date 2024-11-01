@@ -254,7 +254,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements UiDataProvid
     if (project != null) {
       myPreviewGenerator = new SearchEverywherePreviewGenerator(project, (List<UsageInfo> usageInfos) -> {
         myUsagePreviewPanel.updateLayout(project, usageInfos);
-      }, () -> myResultsList.getSelectedValue());
+      });
     }
 
     mySearchPerformanceTracker = new SearchPerformanceTracker(startMoment, () -> myHeader.getSelectedTab().getID());
