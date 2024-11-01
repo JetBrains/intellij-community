@@ -160,6 +160,9 @@ public abstract class LombokGetterOrSetterMayBeUsedInspection extends LombokJava
       if (null == containingClass || field.hasModifierProperty(PsiModifier.STATIC) ||
           (!containingClass.hasAnnotation(LombokClassNames.DATA) && !containingClass.hasAnnotation(LombokClassNames.VALUE) &&
            !containingClass.hasAnnotation(getAnnotationName()) )) {
+
+        field.normalizeDeclaration();
+
         if (!addLombokAnnotation(field)) return;
       }
 
