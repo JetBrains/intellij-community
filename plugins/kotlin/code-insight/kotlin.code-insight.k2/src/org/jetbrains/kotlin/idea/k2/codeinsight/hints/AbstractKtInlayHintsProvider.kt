@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.declarative.SharedBypassCollector
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.psi.KtFile
@@ -32,6 +33,8 @@ abstract class AbstractKtInlayHintsProvider: InlayHintsProvider {
                 try {
                     this@AbstractKtInlayHintsProvider.collectFromElement(element, sink)
                 } catch (e: ProcessCanceledException) {
+                    throw e
+                } catch (e: IndexNotReadyException) {
                     throw e
                 } catch (e: Exception) {
                     log.error(KotlinExceptionWithAttachments("Unable to provide inlay hint for $element", e)

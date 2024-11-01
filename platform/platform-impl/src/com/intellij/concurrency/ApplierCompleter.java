@@ -188,6 +188,8 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     try (AccessToken ignored = ThreadContext.resetThreadContext()) {
       helpOthers();
     }
+    catch (IndexNotReadyException ignore) {
+    }
     catch (Throwable e) {
       e = accumulateException(myThrown, e);
       cancelProgress();

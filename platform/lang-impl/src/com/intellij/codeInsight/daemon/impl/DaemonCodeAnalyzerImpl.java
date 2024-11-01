@@ -53,11 +53,9 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
@@ -1389,7 +1387,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
             }
             // wait for heavy processing to stop, re-schedule daemon but not too soon
             if (heavyProcessIsRunning()) {
-              r = ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o));
+              //noinspection SSBasedInspection
+              r = Registry.is("ide.dumb.mode.check.awareness") ? ContainerUtil.findAllAsArray(r, o -> DumbService.isDumbAware(o)) :
+                  ContainerUtil.findAllAsArray(r, o -> o.isDumbAware() || o instanceof DumbAware);
               if (LOG.isDebugEnabled()) {
                 LOG.debug("submitInBackground: heavyProcessIsRunning=true, so only these passes are created: " + Arrays.toString(r));
               }
