@@ -10,7 +10,12 @@ interface CollectionTreeBuilder {
 
   fun createXNamedValue(value: Value?, evaluationContext: EvaluationContextWrapper): XNamedValue
 
+  /**
+   * Will be called on a debugger evaluation thread.
+   * Will become suspend function in the future
+   */
   fun getKey(container: XValueContainer, nullMarker: Any): Any
+
   fun getKey(traceElement: TraceElement, nullMarker: Any): Any
 
   fun getEditorsProvider() : XDebuggerEditorsProvider
