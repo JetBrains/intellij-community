@@ -61,7 +61,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     this(contentUI, canCloseContents, project, project);
   }
 
-  public ContentManagerImpl(@NotNull ContentUI contentUI, boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable) {
+  public ContentManagerImpl(@NotNull ContentUI contentUI,
+                            boolean canCloseContents,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable) {
     this(canCloseContents, project, parentDisposable, (contentManager, componentGetter) -> {
       // if some contentUI expects that myUI will be set before setManager (as it was before introducing ContentUiProducer)
       ((ContentManagerImpl)contentManager).myUI = contentUI;
@@ -75,7 +78,10 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @ApiStatus.Experimental
-  public ContentManagerImpl(boolean canCloseContents, @NotNull Project project, @NotNull Disposable parentDisposable, @NotNull ContentUiProducer contentUiProducer) {
+  public ContentManagerImpl(boolean canCloseContents,
+                            @NotNull Project project,
+                            @NotNull Disposable parentDisposable,
+                            @NotNull ContentUiProducer contentUiProducer) {
     myProject = project;
     myCanCloseContents = canCloseContents;
     ContentUI ui = contentUiProducer.createContent(this, () -> {
@@ -172,10 +178,8 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     ThreadingAssertions.assertEventDispatchThread();
     String tabName = content.getTabName();
     if (tabName != null && myUI instanceof ToolWindowContentUi toolWindowContentUi) {
-      String toolWindowId = toolWindowContentUi.getToolWindowId();
-      ToolWindowContentPostProcessor contentReplacer = ContainerUtil
-        .find(ToolWindowContentPostProcessor.EP_NAME.getExtensionList(),
-              provider -> provider.getContentId().isSame(toolWindowId, tabName) && provider.isEnabled(myProject));
+      ToolWindowContentPostProcessor contentReplacer = ToolWindowContentPostProcessor.EP_NAME
+        .findFirstSafe(ep -> ep.isEnabled(myProject, content, toolWindowContentUi.getWindow()));
       if (contentReplacer != null) {
         contentReplacer.postprocessContent(myProject, content, toolWindowContentUi.getWindow());
       }
@@ -510,12 +514,17 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
   }
 
   @Override
-  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus) {
+  public @NotNull ActionCallback setSelectedContentCB(final @NotNull Content content,
+                                                      final boolean requestFocus,
+                                                      final boolean forcedFocus) {
     return setSelectedContent(content, requestFocus, forcedFocus, false);
   }
 
   @Override
-  public @NotNull ActionCallback setSelectedContent(final @NotNull Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
+  public @NotNull ActionCallback setSelectedContent(final @NotNull Content content,
+                                                    final boolean requestFocus,
+                                                    final boolean forcedFocus,
+                                                    boolean implicit) {
     mySelectionHistory.remove(content);
     mySelectionHistory.add(0, content);
     if (isSelected(content) && requestFocus) {
@@ -654,7 +663,9 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     if (toSelect == null) return ActionCallback.REJECTED;
     assert contents.contains(toSelect);
     JComponent preferredFocusableComponent = toSelect.getPreferredFocusableComponent();
-    return preferredFocusableComponent != null ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject) : ActionCallback.REJECTED;
+    return preferredFocusableComponent != null
+           ? getFocusManager().requestFocusInProject(preferredFocusableComponent, myProject)
+           : ActionCallback.REJECTED;
   }
 
   /**

@@ -5,23 +5,16 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.content.Content
-import org.jetbrains.annotations.ApiStatus.Internal
-import javax.swing.JComponent
+import org.jetbrains.annotations.ApiStatus
 
-@Internal
+@ApiStatus.Internal
+@Deprecated("Don't use this extension point. For RD purposes only.")
 interface ToolWindowContentPostProcessor {
-  fun getContentId(): ContentId
-  fun isEnabled(project: Project): Boolean
+  fun isEnabled(project: Project, content: Content, toolWindow: ToolWindow): Boolean
   fun postprocessContent(project: Project, content: Content, toolWindow: ToolWindow)
 
   companion object {
     @JvmField
-    val EP_NAME: ExtensionPointName<ToolWindowContentPostProcessor> = ExtensionPointName<ToolWindowContentPostProcessor>("com.intellij.ui.content.impl.toolWindowContentPostprocessor")
+    val EP_NAME: ExtensionPointName<ToolWindowContentPostProcessor> = ExtensionPointName("com.intellij.ui.content.impl.toolWindowContentPostprocessor")
   }
-}
-
-@Internal
-class ContentId(val toolWindowName: String, val contentName: String) {
-  fun isSame(toolWindowName: String, contentName: String): Boolean =
-    this.toolWindowName == toolWindowName && this.contentName == contentName
 }
