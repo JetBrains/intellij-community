@@ -8,6 +8,7 @@ import com.intellij.xdebugger.frame.XStackFrame
 import com.intellij.xdebugger.frame.XSuspendContext
 import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothRunning
 import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothStopped
+import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.StepType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.future.future
@@ -59,8 +60,9 @@ abstract class XDebugSessionMixedModeExtension(
     if (isLowSuspendContext(suspendContext)) {
       this.low.startStepInto(suspendContext)
     }
-    else
-      TODO("not yet supported")
+    else {
+      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Into))
+    }
   }
 
   fun stepOver(suspendContext: XSuspendContext) {
@@ -68,7 +70,7 @@ abstract class XDebugSessionMixedModeExtension(
       this.low.startStepOver(suspendContext)
     }
     else {
-      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepOverRequested(suspendContext))
+      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Over))
     }
   }
 
@@ -76,8 +78,9 @@ abstract class XDebugSessionMixedModeExtension(
     if (isLowSuspendContext(suspendContext)) {
       this.low.startStepOut(suspendContext)
     }
-    else
-      TODO("not yet supported")
+    else {
+      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepRequested(suspendContext, StepType.Out))
+    }
   }
 
   fun onResumed(isLowLevel: Boolean) {

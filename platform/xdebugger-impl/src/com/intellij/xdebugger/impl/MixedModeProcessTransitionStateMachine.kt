@@ -38,7 +38,12 @@ class MixedModeProcessTransitionStateMachine(
   object HighRun : Event
   object LowRun : Event
   class HighStop(val highSuspendContext: XSuspendContext?) : Event
-  class HighLevelDebuggerStepOverRequested(val highSuspendContext: XSuspendContext) : Event
+
+  enum class StepType {
+    Over, Into, Out
+  }
+
+  class HighLevelDebuggerStepRequested(val highSuspendContext: XSuspendContext, val stepType: StepType) : Event
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
 
@@ -178,13 +183,17 @@ class MixedModeProcessTransitionStateMachine(
         }
       }
 
-      is HighLevelDebuggerStepOverRequested -> {
+      is HighLevelDebuggerStepRequested -> {
         when (currentState) {
           is BothStopped -> {
             (low as XMixedModeLowLevelDebugProcess).continueAllThreads(exceptEventThread = false)
-            (high as XDebugProcess).startStepOver(event.highSuspendContext)
-            state = ManagedStepStarted(currentState.low)
+            when (event.stepType) {
+              StepType.Over -> (high as XDebugProcess).startStepOver(event.highSuspendContext)
+              StepType.Into -> (high as XDebugProcess).startStepInto(event.highSuspendContext)
+              StepType.Out -> (high as XDebugProcess).startStepOut(event.highSuspendContext)
+            }
 
+            state = ManagedStepStarted(currentState.low)
           }
         }
       }
