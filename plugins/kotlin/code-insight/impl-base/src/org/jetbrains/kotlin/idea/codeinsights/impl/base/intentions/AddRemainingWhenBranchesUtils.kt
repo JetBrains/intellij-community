@@ -10,10 +10,9 @@ import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.KtWhenExpression
-import org.jetbrains.kotlin.renderer.render
 
 object AddRemainingWhenBranchesUtils {
-    class Context(
+    class ElementContext(
         val whenMissingCases: List<WhenMissingCase>,
         val enumToStarImport: ClassId?,
     )
@@ -24,13 +23,13 @@ object AddRemainingWhenBranchesUtils {
 
     fun addRemainingWhenBranches(
         whenExpression: KtWhenExpression,
-        context: Context,
+        elementContext: ElementContext,
     ) {
-        generateWhenBranches(whenExpression, context.whenMissingCases)
+        generateWhenBranches(whenExpression, elementContext.whenMissingCases)
         shortenReferences(
             whenExpression,
             callableShortenStrategy = {
-                if (it.callableId?.classId == context.enumToStarImport) {
+                if (it.callableId?.classId == elementContext.enumToStarImport) {
                     ShortenStrategy.SHORTEN_AND_STAR_IMPORT
                 } else {
                     ShortenStrategy.DO_NOT_SHORTEN

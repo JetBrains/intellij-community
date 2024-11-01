@@ -12,25 +12,25 @@ import org.jetbrains.kotlin.idea.codeinsights.impl.base.intentions.AddRemainingW
 import org.jetbrains.kotlin.psi.KtWhenExpression
 
 internal class AddWhenRemainingBranchesIntention :
-    KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.Context>(KtWhenExpression::class) {
+    KotlinApplicableModCommandAction<KtWhenExpression, AddRemainingWhenBranchesUtils.ElementContext>(KtWhenExpression::class) {
 
     override fun getFamilyName(): String = AddRemainingWhenBranchesUtils.familyAndActionName(false)
 
     override fun isApplicableByPsi(element: KtWhenExpression): Boolean = true
 
     context(KaSession)
-    override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.Context? {
+    override fun prepareContext(element: KtWhenExpression): AddRemainingWhenBranchesUtils.ElementContext? {
         val whenMissingCases = element.computeMissingCases().takeIf {
             it.isNotEmpty() && it.singleOrNull() != WhenMissingCase.Unknown
         } ?: return null
-        return AddRemainingWhenBranchesUtils.Context(whenMissingCases, enumToStarImport = null)
+        return AddRemainingWhenBranchesUtils.ElementContext(whenMissingCases, enumToStarImport = null)
     }
 
     override fun invoke(
-      actionContext: ActionContext,
-      element: KtWhenExpression,
-      elementContext: AddRemainingWhenBranchesUtils.Context,
-      updater: ModPsiUpdater,
+        actionContext: ActionContext,
+        element: KtWhenExpression,
+        elementContext: AddRemainingWhenBranchesUtils.ElementContext,
+        updater: ModPsiUpdater,
     ) {
         addRemainingWhenBranches(element, elementContext)
     }
