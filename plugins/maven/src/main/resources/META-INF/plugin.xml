@@ -107,9 +107,9 @@
       serviceImplementation="org.jetbrains.idea.maven.server.MavenServerResultTransformerImpl"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenArchetypeManager"/>
     <projectService serviceInterface="org.jetbrains.idea.maven.project.MavenProjectsManager"
-                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator" preload="true"/>
-    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager" preload="true"/>
+                    serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManagerEx"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.navigator.MavenProjectsNavigator"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.tasks.MavenShortcutsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider"
                         serviceImplementation="org.jetbrains.idea.maven.project.actions.MavenModuleDeleteProvider" overrides="true"/>
