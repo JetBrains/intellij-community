@@ -124,8 +124,7 @@ fun projectWizardJdkComboBox(
     if (path.isEmpty()) {
       return@afterPropagation
     }
-    val key = guardEelKey { Path(locationProperty.get()).getEelApiKey() }
-    combo.eelKeyChanged(key, locationProperty.get())
+    combo.projectLocationChanged(locationProperty.get())
   }
 
   combo.filterItems { sdkFilter(it) }
@@ -248,7 +247,7 @@ private inline fun guardEelKey(producer: () -> EelApiKey): EelApiKey? {
 
 class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
-  projectLocation: String,
+  var projectLocation: String,
   disposable: Disposable,
 ): ComboBox<ProjectWizardJdkIntent>() {
 
@@ -275,7 +274,7 @@ class ProjectWizardJdkComboBox(
 
     disposable.whenDisposed { coroutineScope.cancel() }
 
-    reloadJdks(guardEelKey { LocalEelKey }, projectLocation)
+    reloadJdks(guardEelKey { LocalEelKey })
 
     isSwingPopup = false
     ClientProperty.put(this, ANIMATION_IN_RENDERER_ALLOWED, true)
@@ -361,14 +360,16 @@ class ProjectWizardJdkComboBox(
   }
 
 
-  fun eelKeyChanged(key: EelApiKey?, projectLocation: String) {
+  fun projectLocationChanged(newLocation: String) {
+    projectLocation = newLocation
+    val key = guardEelKey { Path(newLocation).getEelApiKey() }
     if (key != currentEelKey) {
       currentEelKey = key
-      reloadJdks(key, projectLocation)
+      reloadJdks(key)
     }
   }
 
-  private fun reloadJdks(key: EelApiKey?, projectLocation: String) {
+  private fun reloadJdks(key: EelApiKey?) {
     for (item in jdkItems) {
       removeItem(item)
     }
@@ -475,7 +476,7 @@ class ProjectWizardJdkComboBox(
 
 private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {
   combo.popup?.hide()
-  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance()) { path: String ->
+  SdkConfigurationUtil.selectSdkHome(JavaSdk.getInstance(), null, Path(combo.projectLocation)) { path: String ->
     val version = JavaSdk.getInstance().getVersionString(path)
     val comboItem = DetectedJdk(version ?: "", path)
     combo.detectedJDKs.add(comboItem)
@@ -554,7 +555,6 @@ private fun CoroutineScope.getDownloadOpenJdkIntent(comboBox: ProjectWizardJdkCo
 // Searches for JDKs located on the computer, but not added to the IDE
 private fun CoroutineScope.findExistingJdks(location: String?, comboBox: ProjectWizardJdkComboBox): Job = launch {
   val javaSdk = JavaSdk.getInstance()
-  val key = LocalEelKey
   val homePaths = if (Registry.`is`("java.home.finder.use.eel")) {
     val eel = location?.takeIf { it.isNotEmpty() }?.let { Path(it).getEelApi() } ?: localEel
     JavaHomeFinder.suggestHomePaths(eel, false)
