@@ -1650,6 +1650,18 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-75759
+  public void testParamSpecDefaultScoping() {
+    doTestByText("""
+                   from typing import ParamSpec, Generic
+                   
+                   P1 = ParamSpec("P1")
+                   P2 = ParamSpec("P2", default=P1)
+                   
+                   class Clazz(Generic[P2, P1]): ...
+                   """);
+  }
+
+  // PY-75759
   public void testTypeVarAllowedDefaultValues() {
     doTestByText("""
                    from typing import TypeVar, Generic
@@ -1679,8 +1691,8 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    class Clazz[T = <warning descr="Default type must be a type expression">1</warning>]: ...
                    class Clazz[T = <warning descr="Default type must be a type expression">True</warning>]: ...
                    class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">T1</warning>]: ...
-                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">Ts1</warning>]: ...
-                   class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">P1</warning>]: ...
+                   class Clazz[T = <warning descr="'TypeVarTuple' cannot be used in default type of TypeVar"><warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">Ts1</warning></warning>]: ...
+                   class Clazz[T = <warning descr="'ParamSpec' cannot be used in default type of TypeVar"><warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">P1</warning></warning>]: ...
                    class Clazz[T = <warning descr="Default type of type parameter 'T' refers to a type variable that is out of scope">list[T1]</warning>]: ...
                    """);
   }

@@ -404,7 +404,7 @@ class PyTypeHintsInspection : PyInspection() {
                         ProblemHighlightType.GENERIC_ERROR)
       }
 
-      default?.let { checkIsNotLiteral(it) }
+      default?.let { checkTypeVarDefaultType(it, typeParameter = null) }
 
       // TODO match bounds and constraints
 
@@ -425,6 +425,17 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypeVarDefaultType(defaultExpression: PyExpression, typeParameter: PyTypeParameter?) {
+      val referencesInDefault =
+        PsiTreeUtil.findChildrenOfAnyType(defaultExpression, false, PyReferenceExpression::class.java, PyStringLiteralExpression::class.java)
+
+      referencesInDefault.forEach {
+        val type = Ref.deref(PyTypingTypeProvider.getType(it, myTypeEvalContext))
+        when (type) {
+          is PyParamSpecType -> registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "ParamSpec"))
+          is PyTypeVarTupleType -> registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.be.used.in.default.type.of.type.var", "TypeVarTuple"))
+        }
+      }
+
       checkIsNotLiteral(defaultExpression)
       checkDefaultIsInScope(defaultExpression, typeParameter)
     }
