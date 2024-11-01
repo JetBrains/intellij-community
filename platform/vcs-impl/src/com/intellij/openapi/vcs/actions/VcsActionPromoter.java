@@ -33,9 +33,11 @@ public final class VcsActionPromoter implements ActionPromoter {
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "Diff.ShowDiff");
 
     Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
-      action instanceof ShowMessageHistoryAction || action instanceof CommitActionsPanel.DefaultCommitAction ||
+      action instanceof CommitActionsPanel.DefaultCommitAction ||
       isCommitMessageEditor(context) && (
-        action instanceof PreviousWordWithSelectionAction || action instanceof NextWordWithSelectionAction
+        action instanceof ShowMessageHistoryAction ||
+        action instanceof PreviousWordWithSelectionAction ||
+        action instanceof NextWordWithSelectionAction
       )
     ));
 
