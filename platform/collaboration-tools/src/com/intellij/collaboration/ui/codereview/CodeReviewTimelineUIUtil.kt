@@ -46,7 +46,7 @@ object CodeReviewTimelineUIUtil {
   }
 
   private fun getTitleHtml(authorName: @Nls String, authorUrl: String?, date: Date?): @NlsSafe String {
-    val userNameLink = HtmlChunk.link(authorUrl.orEmpty(), authorName)
+    val userNameLink = (authorUrl?.let { HtmlChunk.link(it, authorName) } ?: HtmlChunk.text(authorName))
       .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(UIUtil.getLabelForeground())))
       .bold()
     val builder = HtmlBuilder()
