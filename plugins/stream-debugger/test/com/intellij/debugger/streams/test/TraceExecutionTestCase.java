@@ -208,7 +208,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
   }
 
   protected XValueInterpreter getXValueInterpreter() {
-    return getLibrarySupportProvider().getXValueInterpreter();
+    return getLibrarySupportProvider().getXValueInterpreter(getProject());
   }
 
   @SuppressWarnings("WeakerAccess")

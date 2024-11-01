@@ -9,5 +9,10 @@ import com.intellij.openapi.project.Project
 class JavaEvaluationContext(val context: EvaluationContextImpl) : EvaluationContextWrapper {
   override val project: Project
     get() = context.project
-  override fun scheduleDebuggerCommand(command: DebuggerCommandImpl) = context.debugProcess.managerThread.invoke(command)
+
+  override fun scheduleDebuggerCommand(command: Runnable) {
+    context.debugProcess.managerThread.invoke(object : DebuggerCommandImpl() {
+      override fun action() = command.run()
+    })
+  }
 }

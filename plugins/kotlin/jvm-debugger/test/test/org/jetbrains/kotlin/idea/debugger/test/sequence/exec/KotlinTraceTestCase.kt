@@ -141,7 +141,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
     }
 
     private fun getXValueInterpreter(): XValueInterpreter {
-        return librarySupportProvider.xValueInterpreter
+        return librarySupportProvider.getXValueInterpreter(project)
     }
 
     private fun getChainBuilder(): StreamChainBuilder {

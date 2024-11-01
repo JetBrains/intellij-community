@@ -1,12 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace
 
-import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.openapi.project.Project
 
 interface EvaluationContextWrapper {
   val project : Project
-  fun scheduleDebuggerCommand(command: DebuggerCommandImpl)
+  fun scheduleDebuggerCommand(command: Runnable)
 }
 
 interface Value {

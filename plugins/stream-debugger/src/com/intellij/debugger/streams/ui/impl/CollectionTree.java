@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContext;
-import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.streams.trace.CollectionTreeBuilder;
 import com.intellij.debugger.streams.trace.EvaluationContextWrapper;
 import com.intellij.debugger.streams.trace.TraceElement;
@@ -10,12 +8,7 @@ import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.ui.PaintingListener;
 import com.intellij.debugger.streams.ui.TraceContainer;
 import com.intellij.debugger.streams.ui.ValuesSelectionListener;
-import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeImpl;
-import com.intellij.debugger.ui.impl.watch.MessageDescriptor;
-import com.intellij.debugger.ui.impl.watch.NodeManagerImpl;
-import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
@@ -48,8 +41,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
   private static final Object NULL_MARKER = ObjectUtils.sentinel("CollectionTree.NULL_MARKER");
 
-  private final NodeManagerImpl myNodeManager;
-  private final Project myProject;
   private final CollectionTreeBuilder myBuilder;
   private final Map<TraceElement, TreePath> myValue2Path = new HashMap<>();
   private final Map<TreePath, TraceElement> myPath2Value = new HashMap<>();
@@ -67,9 +58,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
                  @NotNull CollectionTreeBuilder collectionTreeBuilder) {
     super(evaluationContextWrapper.getProject(), collectionTreeBuilder.getEditorsProvider(), null, XDebuggerActions.INSPECT_TREE_POPUP_GROUP, null);
 
-    myProject = evaluationContextWrapper.getProject();
     myBuilder = collectionTreeBuilder;
-    myNodeManager = new MyNodeManager(myProject);
     myItemsCount = values.size();
     final XValueNodeImpl root = new XValueNodeImpl(this, null, "root", new MyRootValue(values, evaluationContextWrapper));
     setRoot(root, false);
@@ -86,26 +75,23 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
         if (node instanceof XValueContainerNode) {
           final XValueContainer container = ((XValueContainerNode<?>)node).getValueContainer();
           if (myBuilder.isSupported(container)) {
-            evaluationContextWrapper.scheduleDebuggerCommand(new DebuggerCommandImpl() {
-              @Override
-              protected void action() {
-                final Object key = myBuilder.getKey(container, NULL_MARKER);
-                ApplicationManager.getApplication().invokeLater(() -> {
-                  List<TraceElement> elements = key2TraceElements.get(key);
-                  final int nextIndex = key2Index.getOrDefault(key, -1) + 1;
-                  if (elements != null && nextIndex < elements.size()) {
-                    final TraceElement element = elements.get(nextIndex);
-                    myValue2Path.put(element, node.getPath());
-                    myPath2Value.put(node.getPath(), element);
-                    key2Index.put(key, nextIndex);
-                  }
+            evaluationContextWrapper.scheduleDebuggerCommand(() -> {
+              final Object key = myBuilder.getKey(container, NULL_MARKER);
+              ApplicationManager.getApplication().invokeLater(() -> {
+                List<TraceElement> elements = key2TraceElements.get(key);
+                final int nextIndex = key2Index.getOrDefault(key, -1) + 1;
+                if (elements != null && nextIndex < elements.size()) {
+                  final TraceElement element = elements.get(nextIndex);
+                  myValue2Path.put(element, node.getPath());
+                  myPath2Value.put(node.getPath(), element);
+                  key2Index.put(key, nextIndex);
+                }
 
-                  if (myPath2Value.size() == traceElements.size()) {
-                    CollectionTree.this.removeTreeListener(listener);
-                    ApplicationManager.getApplication().invokeLater(CollectionTree.this::repaint);
-                  }
-                });
-              }
+                if (myPath2Value.size() == traceElements.size()) {
+                  CollectionTree.this.removeTreeListener(listener);
+                  ApplicationManager.getApplication().invokeLater(CollectionTree.this::repaint);
+                }
+              });
             });
           }
         }
@@ -330,7 +316,7 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     public void computeChildren(@NotNull XCompositeNode node) {
       final XValueChildrenList children = new XValueChildrenList();
       for (final Value value : myValues) {
-        children.add(myBuilder.createXNamedValue(myProject, value, myEvaluationContext, myNodeManager));
+        children.add(myBuilder.createXNamedValue(value, myEvaluationContext));
       }
 
       node.addChildren(children, true);
@@ -342,28 +328,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
   }
 
-  private static final class MyNodeManager extends NodeManagerImpl {
-    MyNodeManager(Project project) {
-      super(project, null);
-    }
-
-    @Override
-    public DebuggerTreeNodeImpl createNode(final NodeDescriptor descriptor, EvaluationContext evaluationContext) {
-      return new DebuggerTreeNodeImpl(null, descriptor);
-    }
-
-    @Override
-    public DebuggerTreeNodeImpl createMessageNode(MessageDescriptor descriptor) {
-      return new DebuggerTreeNodeImpl(null, descriptor);
-    }
-
-    @Override
-    public DebuggerTreeNodeImpl createMessageNode(String message) {
-      return new DebuggerTreeNodeImpl(null, new MessageDescriptor(message));
-    }
-  }
-
-  private @NotNull TreePath getTopPath(@NotNull TreePath path) {
+  @NotNull
+  private TreePath getTopPath(@NotNull TreePath path) {
     TreePath current = path;
     while (current != null && !myPath2Value.containsKey(current)) {
       current = current.getParentPath();

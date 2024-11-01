@@ -32,10 +32,10 @@ public interface LibrarySupportProvider {
   TraceExpressionBuilder getExpressionBuilder(@NotNull Project project);
 
   @NotNull
-  XValueInterpreter getXValueInterpreter();
+  XValueInterpreter getXValueInterpreter(@NotNull Project project);
 
   @NotNull
-  CollectionTreeBuilder getCollectionTreeBuilder();
+  CollectionTreeBuilder getCollectionTreeBuilder(@NotNull Project project);
 
   @NotNull
   LibrarySupport getLibrarySupport();

@@ -111,14 +111,14 @@ public final class TraceStreamAction extends AnAction {
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
     final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(provider.getLibrarySupport().getInterpreterFactory());
-    final XValueInterpreter xValueInterpreter = provider.getXValueInterpreter();
+    final XValueInterpreter xValueInterpreter = provider.getXValueInterpreter(project);
     final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter);
     tracer.trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextWrapper context) {
         final ResolvedTracingResult resolvedTrace = result.resolve(provider.getLibrarySupport().getResolverFactory());
         ApplicationManager.getApplication()
-          .invokeLater(() -> window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder()));
+          .invokeLater(() -> window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder(context.getProject())));
       }
 
       @Override
