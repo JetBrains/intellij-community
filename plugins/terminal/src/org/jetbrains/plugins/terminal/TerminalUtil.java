@@ -15,8 +15,6 @@ import com.jediterm.core.input.KeyEvent;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.TerminalStarter;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.TerminalModelListener;
-import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.pty4j.unix.UnixPtyProcess;
 import com.pty4j.windows.conpty.WinConPtyProcess;
 import com.pty4j.windows.winpty.WinPtyProcess;
@@ -122,13 +120,6 @@ public final class TerminalUtil {
       LOG.debug("Sending " + shellCommand);
     }
     terminalStarter.sendString(result.toString(), false);
-  }
-
-  public static void addModelListener(@NotNull TerminalTextBuffer textBuffer,
-                                      @NotNull Disposable parentDisposable,
-                                      @NotNull TerminalModelListener listener) {
-    textBuffer.addModelListener(listener);
-    Disposer.register(parentDisposable, () -> textBuffer.removeModelListener(listener));
   }
 
   /**
