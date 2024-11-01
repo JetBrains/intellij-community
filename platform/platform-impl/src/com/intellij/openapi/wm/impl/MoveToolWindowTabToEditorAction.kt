@@ -4,10 +4,12 @@ package com.intellij.openapi.wm.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.PREFERRED_FOCUSED_COMPONENT
 import com.intellij.openapi.ui.addKeyboardAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
@@ -18,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.content.Content
@@ -30,44 +33,82 @@ import javax.swing.KeyStroke
 private val ORIGINAL_PREFERRED_FOCUSABLE_KEY: Key<JComponent?> =
   Key.create<JComponent>("component.preferredFocusableComponent")
 
-internal class MoveToolWindowTabToEditorAction : ToolWindowContextMenuActionBase() {
-  override fun update(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val enabled = content != null
-                  && toolWindow.id != ToolWindowId.STRUCTURE_VIEW
-                  && Registry.`is`("toolwindow.open.tab.in.editor")
+internal class MoveToolWindowTabToEditorAction : DumbAwareAction() {
+
+  override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
+
+  override fun update(e: AnActionEvent) {
+    if (!Registry.`is`("toolwindow.open.tab.in.editor")) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
+    val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
+    val content = toolWindow?.let { ToolWindowContextMenuActionBase.getContextContent(e, it) }
+    val enabled = content != null && toolWindow.id != ToolWindowId.STRUCTURE_VIEW ||
+                  fileEditor?.file is ToolWindowTabFileImpl
 
     e.presentation.isEnabledAndVisible = enabled
     if (!enabled) return
 
     e.presentation.text = when {
-      content.component !is Placeholder -> templateText
+      content != null && content.component !is Placeholder -> templateText
       else -> ActionsBundle.message("action.MoveToolWindowTabToEditorAction.reverse.text")
     }
   }
 
-  override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    content ?: return
+  override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val component = content.component
-    if (component is Placeholder) {
-      moveContentBackToTab(project, content, component.file)
+    val fileEditor = e.getData(PlatformDataKeys.FILE_EDITOR)
+    val vFile = fileEditor?.file
+
+    if (vFile is ToolWindowTabFileImpl) {
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(vFile.toolWindowId)
+      toolWindow ?: return
+
+      val content = toolWindow.contentManager.contents.find { (it.component as? Placeholder)?.file == vFile }
+      content ?: return
+
+      toolWindow.activate {
+        toolWindow.contentManager.setSelectedContent(content, true)
+        moveContentBackToTab(project, content, vFile)
+      }
     }
     else {
-      // some contents are initialized lazily when selected (Git Stash)
-      val prevSelection = toolWindow.contentManager.selectedContent
-      val tabName = content.tabName?.let { StringUtil.stripHtml(it, false).trim() }
-      toolWindow.contentManager.setSelectedContentCB(content).doWhenProcessed {
-        val fileName =
-          if (tabName.isNullOrBlank() || tabName == toolWindow.stripeTitle) toolWindow.stripeTitle
-          else "${content.tabName} (${toolWindow.stripeTitle})"
-        val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, content.component)
-        content.component = Placeholder(project, content, vFile)
-        content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, content.preferredFocusableComponent)
-        content.preferredFocusableComponent = content.component
-        toolWindow.hide {
-          prevSelection?.let { toolWindow.contentManager.setSelectedContent(it) }
-          FileEditorManager.getInstance(project).openFile(vFile, true)
-        }
+      val toolWindow = e.getData(PlatformDataKeys.TOOL_WINDOW)
+      val content = toolWindow?.let { ToolWindowContextMenuActionBase.getContextContent(e, it) }
+
+      content ?: return
+
+      val contentComponent = content.component
+      if (contentComponent is Placeholder) {
+        moveContentBackToTab(project, content, contentComponent.file)
+      }
+      else {
+        moveContentToEditor(toolWindow, content, project)
+      }
+    }
+  }
+
+  private fun moveContentToEditor(
+    toolWindow: ToolWindow,
+    content: Content,
+    project: Project,
+  ) {
+    // some contents are initialized lazily when selected (Git Stash)
+    val prevSelection = toolWindow.contentManager.selectedContent
+    val tabName = content.tabName?.let { StringUtil.stripHtml(it, false).trim() }
+    toolWindow.contentManager.setSelectedContentCB(content).doWhenProcessed {
+      val fileName =
+        if (tabName.isNullOrBlank() || tabName == toolWindow.stripeTitle) toolWindow.stripeTitle
+        else "${content.tabName} (${toolWindow.stripeTitle})"
+      val vFile = ToolWindowTabFileImpl(fileName, content.icon ?: toolWindow.icon, toolWindow.id, content.component)
+      content.component = Placeholder(project, content, vFile)
+      content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, content.preferredFocusableComponent)
+      content.preferredFocusableComponent = content.component
+      toolWindow.hide {
+        prevSelection?.let { toolWindow.contentManager.setSelectedContent(it) }
+        FileEditorManager.getInstance(project).openFile(vFile, true)
       }
     }
   }
@@ -113,6 +154,9 @@ private fun moveContentBackToTab(project: Project, content: Content, file: ToolW
     }
   }
   content.component = file.component
-  content.preferredFocusableComponent = content.getUserData(PREFERRED_FOCUSED_COMPONENT)
-  content.putUserData(PREFERRED_FOCUSED_COMPONENT, null)
+  content.preferredFocusableComponent = content.getUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY)
+  content.putUserData(ORIGINAL_PREFERRED_FOCUSABLE_KEY, null)
+
+  content.component.focusCycleRootAncestor?.focusTraversalPolicy
+    ?.getDefaultComponent(content.component)?.requestFocus()
 }
