@@ -20,12 +20,13 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
+import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.function.Consumer
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal class SearchEverywherePreviewGenerator(val project: Project,
                                                 private val updatePreviewPanel: Consumer<List<UsageInfo>?>): Disposable {
-  private val usagePreviewDisposableList: MutableList<Disposable> = mutableListOf()
+  private val usagePreviewDisposableList = ConcurrentLinkedQueue<Disposable>()
   private val requestSharedFlow = MutableSharedFlow<Any>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
   private val previewFetchingScope: CoroutineScope?
 
