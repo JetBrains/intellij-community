@@ -6,14 +6,19 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.MethodFilter
 import com.intellij.util.Range
 import com.sun.jdi.Location
+import com.sun.jdi.Method
+import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
+import org.jetbrains.kotlin.idea.debugger.base.util.KotlinDebuggerConstants
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
+import org.jetbrains.org.objectweb.asm.Type.getMethodType
 
 class KotlinStepOverParamDefaultImplsMethodFilter(
     private val name: String,
     private val defaultSignature: String,
     private val containingTypeName: String,
+    private val possiblyConvertedToStatic: Boolean,
     private val expressionLines: Range<Int>
 ) : MethodFilter {
     companion object {
@@ -33,7 +38,11 @@ class KotlinStepOverParamDefaultImplsMethodFilter(
             }
             val signature = method.signature()
             val containingTypeName = location.declaringType().name()
-            return KotlinStepOverParamDefaultImplsMethodFilter(originalName, signature, containingTypeName, expressionLines)
+            val possiblyConvertedToStatic = isSyntheticDefaultMethodPossiblyConvertedToStatic(location)
+            return KotlinStepOverParamDefaultImplsMethodFilter(
+                originalName, signature, containingTypeName,
+                possiblyConvertedToStatic, expressionLines
+            )
         }
     }
 
@@ -43,30 +52,44 @@ class KotlinStepOverParamDefaultImplsMethodFilter(
 
         return method.name() == name
                 && containingTypeName == this.containingTypeName
-                && signatureMatches(defaultSignature, method.signature())
+                && matchesDefaultMethod(method)
     }
 
-    private fun signatureMatches(default: String, actual: String): Boolean {
-        val defaultType = Type.getMethodType(default)
-        val actualType = Type.getMethodType(actual)
-
-        val defaultArgTypes = defaultType.argumentTypes
-        val actualArgTypes = actualType.argumentTypes
-
-        if (defaultArgTypes.size <= actualArgTypes.size) {
-            // Default method should have more parameters than the implementation
-            // because of flags
-            return false
-        }
-
-        for ((index, type) in actualArgTypes.withIndex()) {
-            if (defaultArgTypes[index] != type) {
-                return false
-            }
-        }
-
-        return true
-    }
+    private fun matchesDefaultMethod(method: Method): Boolean =
+        matchesDefaultMethodSignature(
+            getMethodType(defaultSignature),
+            getMethodType(method.signature()),
+            possiblyConvertedToStatic,
+            isConstructor = name == "<init>",
+        )
 
     override fun getCallingExpressionLines(): Range<Int> = expressionLines
+}
+
+internal fun matchesDefaultMethodSignature(defaultType: Type, actualType: Type, possiblyConvertedToStatic: Boolean, isConstructor: Boolean): Boolean {
+    val defaultArgTypes = defaultType.argumentTypes
+    val actualArgTypes = actualType.argumentTypes
+
+    return actualArgTypes.matchesDefaultSignature(defaultArgTypes, isConstructor)
+            || possiblyConvertedToStatic && actualArgTypes.matchesDefaultSignature(defaultArgTypes.drop(1).toTypedArray(), isConstructor)
+}
+
+/**
+ * Default synthetic method may be converted to a static method with this parameter passes as the first argument.
+ * It happens, for example, when a method has generic type parameters, see IDEA-356332.
+ */
+internal fun isSyntheticDefaultMethodPossiblyConvertedToStatic(location: Location): Boolean {
+    val method = location.safeMethod() ?: return false
+    return method.isStatic && method.signature().startsWith("(${location.declaringType().signature()}")
+}
+
+// The default method should have more parameters than the implementation
+// because of flags
+private fun Array<Type>.matchesDefaultSignature(defaultArgTypes: Array<Type>, isConstructor: Boolean): Boolean {
+    val lastArgumentType = if (isConstructor)
+        KotlinDebuggerConstants.DEFAULT_CONSTRUCTOR_MARKER_FQ_NAME.internalNameWithoutInnerClasses else "java/lang/Object"
+    return (size < defaultArgTypes.size
+            && defaultArgTypes.last().internalName == lastArgumentType
+            && zip(defaultArgTypes).all { (actualType, defaultType) -> actualType == defaultType }
+            && defaultArgTypes.slice(size until defaultArgTypes.size - 1).all { it.sort == Type.INT })
 }

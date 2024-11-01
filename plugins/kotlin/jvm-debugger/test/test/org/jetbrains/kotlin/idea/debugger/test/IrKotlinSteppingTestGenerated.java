@@ -2023,6 +2023,11 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/stepThroughDefaultArgsConstructor.kt");
         }
 
+        @TestMetadata("stepThroughDefaultArgsStatic.kt")
+        public void testStepThroughDefaultArgsStatic() throws Exception {
+            runTest("testData/stepping/custom/stepThroughDefaultArgsStatic.kt");
+        }
+
         @TestMetadata("syntheticProvider.kt")
         public void testSyntheticProvider() throws Exception {
             runTest("testData/stepping/custom/syntheticProvider.kt");

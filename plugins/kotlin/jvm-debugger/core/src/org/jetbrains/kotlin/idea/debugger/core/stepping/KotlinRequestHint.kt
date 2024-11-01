@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.core.*
 import org.jetbrains.kotlin.idea.debugger.core.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.isSyntheticDefaultMethodPossiblyConvertedToStatic
+import org.jetbrains.kotlin.idea.debugger.core.stepping.filter.matchesDefaultMethodSignature
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.org.objectweb.asm.Type
 
@@ -159,7 +161,7 @@ class KotlinStepOverRequestHint(
                 return if (lineNumber >= 0) STOP else StepRequest.STEP_OVER
             }
             return StepRequest.STEP_OUT
-        } catch (ignored: VMDisconnectedException) {
+        } catch (_: VMDisconnectedException) {
         } catch (e: EvaluateException) {
             LOG.error(e)
         }
@@ -179,27 +181,11 @@ class KotlinStepOverRequestHint(
             return false
         }
 
-        val startArgs = startLocation.signature.argumentTypes
-        val endArgs = endLocation.signature.argumentTypes
-
-        if (startArgs.size >= endArgs.size) {
-            // Default params function should always have at least one additional flag parameter
-            return false
-        }
-
-        for ((index, type) in startArgs.withIndex()) {
-            if (endArgs[index] != type) {
-                return false
-            }
-        }
-
-        for (index in startArgs.size until (endArgs.size - 1)) {
-            if (endArgs[index].sort != Type.INT) {
-                return false
-            }
-        }
-
-        return endArgs[endArgs.size - 1].descriptor == "Ljava/lang/Object;"
+        return matchesDefaultMethodSignature(
+            endLocation.signature, startLocation.signature,
+            isSyntheticDefaultMethodPossiblyConvertedToStatic(location),
+            isConstructor = startLocation.method == "<init>"
+        )
     }
 }
 

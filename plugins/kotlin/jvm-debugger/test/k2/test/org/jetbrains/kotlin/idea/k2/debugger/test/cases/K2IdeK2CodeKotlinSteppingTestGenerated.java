@@ -2023,6 +2023,11 @@ public abstract class K2IdeK2CodeKotlinSteppingTestGenerated extends AbstractK2I
             runTest("../testData/stepping/custom/stepThroughDefaultArgsConstructor.kt");
         }
 
+        @TestMetadata("stepThroughDefaultArgsStatic.kt")
+        public void testStepThroughDefaultArgsStatic() throws Exception {
+            runTest("../testData/stepping/custom/stepThroughDefaultArgsStatic.kt");
+        }
+
         @TestMetadata("syntheticProvider.kt")
         public void testSyntheticProvider() throws Exception {
             runTest("../testData/stepping/custom/syntheticProvider.kt");
