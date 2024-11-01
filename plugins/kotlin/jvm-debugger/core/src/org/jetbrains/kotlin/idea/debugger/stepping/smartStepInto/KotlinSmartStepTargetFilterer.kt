@@ -178,15 +178,15 @@ private fun BytecodeSignature.handleValueClassMethods(methodInfo: CallableMember
 /**
  * Find the number of parameters in the source method.
  * <p>
- * If there are k params in the source method then in the modified method there are
- * z = f(k) = k + 1 + ceil(k / 32) parameters as several int flags and one Object are added as parameters.
+ * If there are k params in the source method, then in the modified method there are
+ * z = f(k) = k + 1 + ceil(k / 32) parameters as several int flags, and one Object param are added as parameters.
  * This is the inverse function of f.
  *
  * @param z the number of parameters in the modified method
  * @return the number of parameters in the source method
  */
 private fun sourceParametersCount(z: Int): Int {
-    return z - 1 - (z - 1 + 32) / 33;
+    return z - 1 - (z - 1 + 32) / 33
 }
 
 private fun BytecodeSignature.handleDefaultArgs(): BytecodeSignature {
