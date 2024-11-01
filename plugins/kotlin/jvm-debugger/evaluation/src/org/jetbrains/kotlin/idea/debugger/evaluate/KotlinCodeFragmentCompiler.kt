@@ -3,8 +3,11 @@ package org.jetbrains.kotlin.idea.debugger.evaluate
 
 import com.intellij.debugger.engine.evaluation.EvaluateException
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.kotlin.analysis.api.KaExperimentalApi
 import org.jetbrains.kotlin.analysis.api.analyze
 import org.jetbrains.kotlin.analysis.api.compile.CodeFragmentCapturedValue
@@ -22,11 +25,11 @@ import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.ClassToLoad
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_FUNCTION_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.NameUtils
 import org.jetbrains.kotlin.psi.KtCodeFragment
+import org.jetbrains.kotlin.psi.KtOperationReferenceExpression
 import java.util.concurrent.ExecutionException
-
-private class IncorrectCodeFragmentException(message: String) : EvaluateException(message)
 
 interface KotlinCodeFragmentCompiler {
     fun compileCodeFragment(context: ExecutionContext, codeFragment: KtCodeFragment): CompiledCodeFragmentData
@@ -61,7 +64,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
 
             stats.compilerFailExceptionClass = extractExceptionCauseClass(e)
 
-            onFinish(if (cause is IncorrectCodeFragmentException) EvaluationCompilerResult.COMPILATION_FAILURE
+            val isJustInvalidUserCode = cause is IncorrectCodeFragmentException
+            onFinish(if (isJustInvalidUserCode) EvaluationCompilerResult.COMPILATION_FAILURE
                      else EvaluationCompilerResult.COMPILER_INTERNAL_ERROR)
             throw e
         }
@@ -172,3 +176,17 @@ fun isCodeFragmentClassPath(path: String): Boolean {
 @KaExperimentalApi
 val KaCompiledFile.isCodeFragmentClassFile: Boolean
     get() = isCodeFragmentClassPath(path)
+
+fun hasCastOperator(codeFragment: KtCodeFragment): Boolean {
+    var result = false
+    runReadAction {
+        codeFragment.accept(object : PsiRecursiveElementVisitor() {
+            override fun visitElement(element: PsiElement) {
+                if (result) return
+                result = element is KtOperationReferenceExpression && element.operationSignTokenType == KtTokens.AS_KEYWORD
+                super.visitElement(element)
+            }
+        })
+    }
+    return result
+}

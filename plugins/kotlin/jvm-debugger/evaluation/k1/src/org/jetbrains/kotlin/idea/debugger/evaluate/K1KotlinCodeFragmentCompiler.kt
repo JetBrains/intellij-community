@@ -118,7 +118,7 @@ class K1KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
                     EvaluationCompilerResult.COMPILATION_FAILURE,
                     stats
                 )
-                evaluationException(DefaultErrorMessages.render(it))
+                throw IncorrectCodeFragmentException(DefaultErrorMessages.render(it))
             }
     }
 

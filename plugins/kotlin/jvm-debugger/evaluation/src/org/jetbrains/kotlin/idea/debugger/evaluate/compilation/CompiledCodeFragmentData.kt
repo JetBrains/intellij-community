@@ -10,12 +10,13 @@ internal sealed interface CompilationCodeFragmentResult
 
 internal class FailedCompilationCodeFragment(val evaluateException: EvaluateException): CompilationCodeFragmentResult
 
-data class CompiledCodeFragmentData(
+class CompiledCodeFragmentData(
     val classes: List<ClassToLoad>,
     val parameters: List<CodeFragmentParameter.Dumb>,
     val crossingBounds: Set<CodeFragmentParameter.Dumb>,
     val mainMethodSignature: MethodSignature,
-    val compilerType: CompilerType
+    val compilerType: CompilerType,
+    var statisticReported: Boolean = false,
 ): CompilationCodeFragmentResult {
     data class MethodSignature(val parameterTypes: List<Type>, val returnType: Type)
 }
