@@ -31,18 +31,11 @@ object PyPackagesUiComponents {
   val SELECTED_PACKAGE_DATA_CONTEXT = DataKey.create<DisplayablePackage>("SELECTED_PACKAGE_DATA_CONTEXT")
   val SELECTED_PACKAGES_DATA_CONTEXT = DataKey.create<List<DisplayablePackage>>("SELECTED_PACKAGES_DATA_CONTEXT")
 
-  private val DataContext.selectedPackage: DisplayablePackage?
+  internal val AnActionEvent.selectedPackage: DisplayablePackage?
     get() = getData(SELECTED_PACKAGE_DATA_CONTEXT)
 
-  internal val AnActionEvent.selectedPackage: DisplayablePackage?
-    get() = dataContext.selectedPackage
-
-
-  private val DataContext.selectedPackages: List<DisplayablePackage>
-    get() = getData(SELECTED_PACKAGES_DATA_CONTEXT) ?: emptyList()
-
   internal val AnActionEvent.selectedPackages: List<DisplayablePackage>
-    get() = dataContext.selectedPackages
+    get() = getData(SELECTED_PACKAGES_DATA_CONTEXT) ?: emptyList()
 
   fun createAvailableVersionsPopup(selectedPackage: DisplayablePackage, details: PythonPackageDetails, project: Project): ListPopup {
     return JBPopupFactory.getInstance().createListPopup(object : BaseListPopupStep<String>(null, details.availableVersions) {
@@ -56,7 +49,6 @@ object PyPackagesUiComponents {
       }
     }, 8)
   }
-
 
   fun boxPanel(init: JPanel.() -> Unit) = object : JPanel() {
     init {

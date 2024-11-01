@@ -66,17 +66,16 @@ class PyPackageDescriptionController(val project: Project) : Disposable {
 
   private val installAction = wrapAction(message("action.PyInstallPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
-    val specification = details.repository.createPackageSpecification(details.name, details.availableVersions.first())
+    val version = versionSelector.text.takeIf { it != latestText } ?: details.availableVersions.first()
+    val specification = details.repository.createPackageSpecification(details.name, version)
     project.service<PyPackagingToolWindowService>().installPackage(specification)
-
   }
 
   private val installWithOptionAction: Action = wrapAction(message("action.PyInstallWithOptionPackage.text"), message("progress.text.installing")) {
     val details = selectedPackageDetails.get() ?: return@wrapAction
-    val version = versionSelector.text.takeIf { it != latestText }
-    InstallWithOptionsPackageAction.installWithOptions(project, details,version)
+    val version = versionSelector.text.takeIf { it != latestText } ?: details.availableVersions.first()
+    InstallWithOptionsPackageAction.installWithOptions(project, details, version)
   }
-
 
   private val versionSelector = JBComboBoxLabel()
 
