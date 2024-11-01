@@ -1,16 +1,11 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceInterpreter;
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueTypeException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.IntegerValue;
-import com.sun.jdi.Value;
 import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +22,7 @@ public class CollectIdentityTraceInterpreter implements CallTraceInterpreter {
   @Override
   public @NotNull TraceInfo resolve(@NotNull StreamCall call, @NotNull Value value) {
     if (!(value instanceof ArrayReference array)) {
-      throw new UnexpectedValueTypeException("Array reference expected. But " + value.type().name() + " received");
+      throw new UnexpectedValueTypeException("Array reference expected. But " + value.typeName() + " received");
     }
 
     final TraceInfo resolved = myPeekResolver.resolve(call, array.getValue(0));

@@ -3,8 +3,8 @@ package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.PrevAwareState;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.Value;
 import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;

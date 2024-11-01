@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.debugger.test.sequence.exec
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.impl.OutputChecker
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.psi.DebuggerPositionResolver
@@ -83,7 +82,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                 }
 
                 EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, object : TracingCallback {
-                    override fun evaluated(result: TracingResult, context: EvaluationContextImpl) {
+                    override fun evaluated(result: TracingResult, context: EvaluationContextWrapper) {
                         complete(chain, result, null, null)
                     }
 

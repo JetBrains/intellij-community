@@ -2,10 +2,11 @@
 package com.intellij.debugger.streams.trace
 
 import com.intellij.xdebugger.frame.XValue
-import com.sun.jdi.ArrayReference
 import org.jetbrains.annotations.Nls
 
 interface XValueInterpreter {
-  fun tryExtractArrayReference(result: XValue): ArrayReference?
+  data class Result(val arrayReference: ArrayReference, val hasInnerExceptions: Boolean, val evaluationContext: EvaluationContextWrapper)
+
+  fun tryExtractResult(result: XValue): Result?
   fun tryExtractErrorDescription(result: XValue): @Nls String?
 }

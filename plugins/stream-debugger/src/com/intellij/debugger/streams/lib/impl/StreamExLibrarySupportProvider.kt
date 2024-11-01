@@ -2,26 +2,22 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.lib.LibrarySupport
-import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
 import com.intellij.debugger.streams.psi.impl.PackageChainDetector
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
-import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
-import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 
 /**
  * @author Vitaliy.Bibaev
  */
-internal class StreamExLibrarySupportProvider : LibrarySupportProvider {
+internal class StreamExLibrarySupportProvider : JvmLibrarySupportProvider() {
   private val librarySupport = StreamExLibrarySupport()
   private val javaDsl = DslImpl(JavaStatementFactory())
-  private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
 
   override fun getLanguageId(): String = "JAVA"
 
@@ -32,6 +28,4 @@ internal class StreamExLibrarySupportProvider : LibrarySupportProvider {
 
   override fun getChainBuilder(): StreamChainBuilder =
     JavaStreamChainBuilder(JavaChainTransformerImpl(), PackageChainDetector.forJavaStreams("one.util.streamex"))
-
-  override fun getXValueInterpreter(): XValueInterpreter = interpreter
 }

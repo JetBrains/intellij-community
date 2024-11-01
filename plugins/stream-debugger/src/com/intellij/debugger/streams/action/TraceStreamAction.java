@@ -1,7 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.action;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.diagnostic.ex.TraceCompilationException;
 import com.intellij.debugger.streams.diagnostic.ex.TraceEvaluationException;
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
@@ -116,10 +115,10 @@ public final class TraceStreamAction extends AnAction {
     final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter);
     tracer.trace(chain, new TracingCallback() {
       @Override
-      public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+      public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextWrapper context) {
         final ResolvedTracingResult resolvedTrace = result.resolve(provider.getLibrarySupport().getResolverFactory());
         ApplicationManager.getApplication()
-          .invokeLater(() -> window.setTrace(resolvedTrace, context));
+          .invokeLater(() -> window.setTrace(resolvedTrace, context, provider.getCollectionTreeBuilder()));
       }
 
       @Override

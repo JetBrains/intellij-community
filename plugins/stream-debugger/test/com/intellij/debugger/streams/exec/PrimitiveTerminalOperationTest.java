@@ -2,9 +2,9 @@
 package com.intellij.debugger.streams.exec;
 
 import com.intellij.debugger.streams.test.TraceExecutionTestCase;
+import com.intellij.debugger.streams.trace.PrimitiveValue;
+import com.intellij.debugger.streams.trace.Value;
 import com.intellij.execution.process.ProcessOutputTypes;
-import com.sun.jdi.PrimitiveValue;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,7 +32,7 @@ public class PrimitiveTerminalOperationTest extends TraceExecutionTestCase {
     assertFalse(mustBeNull);
     assertNotNull(result);
     assertInstanceOf(result, PrimitiveValue.class);
-    println("Result type:" + result.type().name(), ProcessOutputTypes.SYSTEM);
+    println("Result type:" + result.typeName(), ProcessOutputTypes.SYSTEM);
     println("value = " + result.toString(), ProcessOutputTypes.SYSTEM);
   }
 }

@@ -1,8 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace;
 
-import com.intellij.debugger.engine.JavaValue;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.xdebugger.XDebugSession;
@@ -12,7 +10,6 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
-import com.sun.jdi.ArrayReference;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -43,22 +40,21 @@ public class EvaluateExpressionTracer implements StreamTracer {
     if (stackFrame != null && evaluator != null) {
       evaluator.evaluate(XExpressionImpl.fromText(streamTraceExpression, EvaluationMode.CODE_FRAGMENT), new XEvaluationCallbackBase() {
         @Override
-        public void evaluated(@NotNull XValue result) {
-          ArrayReference arrayReference = myXValueInterpreter.tryExtractArrayReference(result);
-          if (arrayReference != null) {
+        public void evaluated(@NotNull XValue evaluationResult) {
+          var result = myXValueInterpreter.tryExtractResult(evaluationResult);
+          if (result != null) {
             final TracingResult interpretedResult;
             try {
-              interpretedResult = myResultInterpreter.interpret(chain, arrayReference);
+              interpretedResult = myResultInterpreter.interpret(chain, result.getArrayReference(), result.getHasInnerExceptions());
             }
             catch (Throwable t) {
               callback.evaluationFailed(streamTraceExpression,
                                         StreamDebuggerBundle.message("evaluation.failed.cannot.interpret.result", t.getMessage()));
               throw t;
             }
-            final EvaluationContextImpl context = ((JavaValue)result).getEvaluationContext();
-            callback.evaluated(interpretedResult, context);
+            callback.evaluated(interpretedResult, result.getEvaluationContext());
           } else {
-            @Nullable String errorDescription = myXValueInterpreter.tryExtractErrorDescription(result);
+            @Nullable String errorDescription = myXValueInterpreter.tryExtractErrorDescription(evaluationResult);
             if (errorDescription != null) {
               callback.evaluationFailed(streamTraceExpression, errorDescription);
             } else {

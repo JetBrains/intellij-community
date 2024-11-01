@@ -1,20 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.trace.impl.interpret;
 
-import com.intellij.debugger.streams.trace.CallTraceInterpreter;
-import com.intellij.debugger.streams.trace.TraceElement;
-import com.intellij.debugger.streams.trace.TraceInfo;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.TraceElementImpl;
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueException;
 import com.intellij.debugger.streams.wrapper.StreamCall;
-import com.sun.jdi.ArrayReference;
-import com.sun.jdi.IntegerValue;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -48,11 +42,9 @@ public class SimplePeekCallTraceInterpreter implements CallTraceInterpreter {
 
   private static @NotNull Map<Integer, TraceElement> resolveTrace(@NotNull ArrayReference keysArray, @NotNull ArrayReference valuesArray) {
     final LinkedHashMap<Integer, TraceElement> result = new LinkedHashMap<>();
-    final List<Value> keyMirrors = keysArray.getValues();
-    final List<Value> valueMirrors = valuesArray.getValues();
-    if (keyMirrors.size() == valueMirrors.size()) {
-      for (int i = 0, size = keyMirrors.size(); i < size; i++) {
-        final TraceElement element = resolveTraceElement(keyMirrors.get(i), valueMirrors.get(i));
+    if (keysArray.length() == valuesArray.length()) {
+      for (int i = 0, size = keysArray.length(); i < size; i++) {
+        final TraceElement element = resolveTraceElement(keysArray.getValue(i), valuesArray.getValue(i));
         result.put(element.getTime(), element);
       }
 

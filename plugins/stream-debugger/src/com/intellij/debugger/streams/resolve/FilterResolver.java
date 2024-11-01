@@ -3,7 +3,7 @@ package com.intellij.debugger.streams.resolve;
 
 import com.intellij.debugger.streams.trace.TraceElement;
 import com.intellij.debugger.streams.trace.TraceInfo;
-import com.sun.jdi.Value;
+import com.intellij.debugger.streams.trace.Value;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;

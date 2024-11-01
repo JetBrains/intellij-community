@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.ui.impl;
 
 import com.intellij.CommonBundle;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
@@ -100,7 +99,8 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     return "#com.intellij.debugger.streams.ui.EvaluationAwareTraceWindow";
   }
 
-  public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextImpl context) {
+  public void setTrace(@NotNull ResolvedTracingResult resolvedTrace, @NotNull EvaluationContextWrapper context,
+                       @NotNull CollectionTreeBuilder builder) {
     if (Disposer.isDisposed(myDisposable)) {
       return;
     }
@@ -112,7 +112,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     if (controllers.isEmpty()) return;
     final List<TraceElement> trace = controllers.get(0).getTrace();
-    final CollectionTree tree = new CollectionTree(trace, context);
+    final CollectionTree tree = new CollectionTree(trace, context, builder);
     final CollectionView sourceView = new CollectionView(tree);
     controllers.get(0).register(sourceView);
     myTabContents.get(0).setContent(sourceView, BorderLayout.CENTER);
@@ -128,7 +128,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       final TraceController previous = controllers.get(i - 1);
       final TraceController current = controllers.get(i);
 
-      final StreamTracesMappingView view = new StreamTracesMappingView(context, previous, current);
+      final StreamTracesMappingView view = new StreamTracesMappingView(context, previous, current, builder);
       tab.setContent(view, BorderLayout.CENTER);
     }
 
@@ -139,7 +139,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       JBLabel label = new JBLabel(StreamDebuggerBundle.message("tab.content.exception.thrown"), SwingConstants.CENTER);
       resultTab.setContent(label, BorderLayout.CENTER);
       setTitle(StreamDebuggerBundle.message("stream.debugger.dialog.with.exception.title"));
-      final ExceptionView exceptionView = new ExceptionView(context, result);
+      final ExceptionView exceptionView = new ExceptionView(context, result, builder);
       Disposer.register(myDisposable, exceptionView);
       myTabsPane.insertTab(StreamDebuggerBundle.message("exception.tab.name"), AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
       myTabsPane.setSelectedIndex(0);
@@ -149,7 +149,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       resultTab.setContent(label, BorderLayout.CENTER);
     }
 
-    final FlatView flatView = new FlatView(controllers, context);
+    final FlatView flatView = new FlatView(controllers, context, builder);
     myFlatContent.setContent(flatView, BorderLayout.CENTER);
     myCenterPane.revalidate();
     myCenterPane.repaint();

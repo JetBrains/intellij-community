@@ -1,7 +1,8 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
+import com.intellij.debugger.streams.trace.CollectionTreeBuilder
+import com.intellij.debugger.streams.trace.EvaluationContextWrapper
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.debugger.streams.ui.LinkedValuesMapping
 import com.intellij.debugger.streams.ui.TraceController
@@ -16,7 +17,7 @@ import javax.swing.JPanel
 /**
  * @author Vitaliy.Bibaev
  */
-open class FlatView(controllers: List<TraceController>, evaluationContext: EvaluationContextImpl)
+open class FlatView(controllers: List<TraceController>, evaluationContext: EvaluationContextWrapper, builder: CollectionTreeBuilder)
   : JPanel(GridLayout(1, 2 * controllers.size - 1)) {
   private val myPool = mutableMapOf<TraceElement, ValueWithPositionImpl>()
 
@@ -29,7 +30,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val nextCall = controller.nextCall ?: error("intermediate state should know about next call")
       val mappingPane = MappingPane(nextCall.name, TraceUtil.formatWithArguments(nextCall), valuesBefore, mapping, controller)
 
-      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext)
+      val tree = CollectionTree(controller.values, valuesBefore.map { it.traceElement }, evaluationContext, builder)
       val view = PositionsAwareCollectionView(tree, valuesBefore)
       controller.register(view)
       view.addValuesPositionsListener(object : ValuesPositionsListener {
@@ -64,10 +65,10 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
       val prevCall = lastController.prevCall
       val tree = if (prevCall != null && prevCall is TerminatorStreamCall) {
         val values = lastController.values
-        SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext)
+        SingleElementTree(values.first(), it.map { it.traceElement }, evaluationContext, builder)
       }
       else {
-        CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext)
+        CollectionTree(lastController.values, it.map { it.traceElement }, evaluationContext, builder)
       }
       val view = PositionsAwareCollectionView(tree, it)
       lastController.register(view)
@@ -84,7 +85,7 @@ open class FlatView(controllers: List<TraceController>, evaluationContext: Evalu
 
     if (controllers.size == 1) {
       val controller = controllers[0]
-      val tree = CollectionTree(controller.values, controller.trace, evaluationContext)
+      val tree = CollectionTree(controller.values, controller.trace, evaluationContext, builder)
       val view = CollectionView(tree)
       add(view)
       controller.register(view)

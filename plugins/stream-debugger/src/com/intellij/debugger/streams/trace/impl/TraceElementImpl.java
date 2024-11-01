@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.trace.TraceElement;
-import com.sun.jdi.Value;
+import com.intellij.debugger.streams.trace.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

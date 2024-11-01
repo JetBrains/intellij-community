@@ -1,10 +1,9 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.wrapper;
 
-import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.sun.jdi.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,8 +33,9 @@ public final class TraceUtil {
     if (value instanceof ByteValue) return ((ByteValue)value).value();
     if (value instanceof CharValue) return ((CharValue)value).value();
     if (value instanceof FloatValue) return ((FloatValue)value).value();
+    if (value instanceof ShortValue) return ((ShortValue)value).value();
 
-    throw new RuntimeException("unknown primitive value: " + value.type().name());
+    throw new RuntimeException("unknown primitive value: " + value.typeName());
   }
 
   public static @NotNull @NlsSafe String formatWithArguments(@NotNull MethodCall call) {

@@ -2,15 +2,11 @@
 package com.intellij.debugger.streams.trace.impl;
 
 import com.intellij.debugger.streams.lib.InterpreterFactory;
-import com.intellij.debugger.streams.trace.CallTraceInterpreter;
-import com.intellij.debugger.streams.trace.TraceInfo;
-import com.intellij.debugger.streams.trace.TraceResultInterpreter;
-import com.intellij.debugger.streams.trace.TracingResult;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.trace.impl.interpret.ValuesOrderInfo;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.openapi.diagnostic.Logger;
-import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,14 +25,14 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
   }
 
   @Override
-  public @NotNull TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray) {
+  public @NotNull TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference resultArray, boolean isException) {
     final ArrayReference info = (ArrayReference)resultArray.getValue(0);
     final ArrayReference result = (ArrayReference)resultArray.getValue(1);
     final Value streamResult = result.getValue(0);
     final Value time = resultArray.getValue(2);
     logTime(time);
     final List<TraceInfo> trace = getTrace(chain, info);
-    return new TracingResultImpl(chain, TraceElementImpl.ofResultValue(streamResult), trace, isException(result));
+    return new TracingResultImpl(chain, TraceElementImpl.ofResultValue(streamResult), trace, isException);
   }
 
   private @NotNull List<TraceInfo> getTrace(@NotNull StreamChain chain, @NotNull ArrayReference info) {
@@ -60,16 +56,5 @@ public class TraceResultInterpreterImpl implements TraceResultInterpreter {
     final long elapsedNanoseconds = ((LongValue)elapsedTime).value();
     final long elapsedMillis = TimeUnit.NANOSECONDS.toMillis(elapsedNanoseconds);
     LOG.info("evaluation completed in " + elapsedMillis + "ms");
-  }
-
-  private static boolean isException(@NotNull ArrayReference result) {
-    final ReferenceType type = result.referenceType();
-    if (type instanceof ArrayType) {
-      if (((ArrayType)type).componentTypeName().contains("Throwable")) {
-        return true;
-      }
-    }
-
-    return false;
   }
 }

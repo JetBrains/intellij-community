@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.ui.impl;
 
-import com.intellij.debugger.streams.trace.IntermediateState;
-import com.intellij.debugger.streams.trace.NextAwareState;
-import com.intellij.debugger.streams.trace.PrevAwareState;
-import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.*;
 import com.intellij.debugger.streams.ui.PropagationDirection;
 import com.intellij.debugger.streams.ui.TraceContainer;
 import com.intellij.debugger.streams.ui.TraceController;
@@ -12,7 +9,6 @@ import com.intellij.debugger.streams.ui.ValuesSelectionListener;
 import com.intellij.debugger.streams.wrapper.StreamCall;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -61,7 +57,7 @@ public class TraceControllerImpl implements TraceController, Disposable {
   }
 
   @Override
-  public @NotNull @Unmodifiable List<Value> getValues() {
+  public @NotNull @Unmodifiable List<@Nullable Value> getValues() {
     return myState.getRawValues();
   }
 

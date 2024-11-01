@@ -3,11 +3,9 @@
 package org.jetbrains.kotlin.idea.debugger.sequence.lib.sequence
 
 import com.intellij.debugger.streams.lib.LibrarySupport
-import com.intellij.debugger.streams.lib.LibrarySupportProvider
+import com.intellij.debugger.streams.lib.impl.JvmLibrarySupportProvider
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
-import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
-import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -20,7 +18,7 @@ import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinCollectionsPe
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.dsl.KotlinStatementFactory
 import org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.KotlinTraceExpressionBuilder
 
-class KotlinSequenceSupportProvider : LibrarySupportProvider {
+class KotlinSequenceSupportProvider : JvmLibrarySupportProvider() {
     override fun getLanguageId(): String = KotlinLanguage.INSTANCE.id
 
     private val builder: StreamChainBuilder = TerminatedChainBuilder(
@@ -29,7 +27,6 @@ class KotlinSequenceSupportProvider : LibrarySupportProvider {
     )
     private val support: LibrarySupport by lazy { KotlinSequencesSupport() }
     private val dsl: DslImpl by lazy { DslImpl(KotlinStatementFactory(KotlinCollectionsPeekCallFactory())) }
-    private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
 
     override fun getChainBuilder(): StreamChainBuilder = builder
 
@@ -37,6 +34,4 @@ class KotlinSequenceSupportProvider : LibrarySupportProvider {
 
     override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
         KotlinTraceExpressionBuilder(dsl, support.createHandlerFactory(dsl))
-
-    override fun getXValueInterpreter(): XValueInterpreter = interpreter
 }

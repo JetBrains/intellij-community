@@ -2,10 +2,10 @@
 
 package org.jetbrains.kotlin.idea.debugger.sequence.trace.impl.interpret
 
+import com.intellij.debugger.streams.trace.ArrayReference
 import com.intellij.debugger.streams.trace.TraceElement
+import com.intellij.debugger.streams.trace.Value
 import com.intellij.debugger.streams.trace.impl.interpret.ex.UnexpectedValueException
-import com.sun.jdi.ArrayReference
-import com.sun.jdi.Value
 
 object InterpreterUtil {
 

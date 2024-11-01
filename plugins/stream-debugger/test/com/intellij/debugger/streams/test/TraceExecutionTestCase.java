@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.test;
 
 import com.intellij.debugger.DebuggerTestCase;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.OutputChecker;
 import com.intellij.debugger.streams.lib.LibrarySupportProvider;
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupportProvider;
@@ -25,7 +24,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionListener;
-import com.sun.jdi.Value;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -153,7 +151,7 @@ public abstract class TraceExecutionTestCase extends DebuggerTestCase {
 
         new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, new TracingCallback() {
           @Override
-          public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {
+          public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextWrapper context) {
             complete(chain, result, null, null);
           }
 

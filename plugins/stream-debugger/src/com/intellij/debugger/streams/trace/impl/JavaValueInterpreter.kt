@@ -5,30 +5,42 @@ import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.frame.XValue
-import com.sun.jdi.*
 
 
 class JavaValueInterpreter : XValueInterpreter {
-  override fun tryExtractArrayReference(result: XValue): ArrayReference? {
+  override fun tryExtractResult(result: XValue): XValueInterpreter.Result? {
     if (result is JavaValue) {
-      val reference: Value = result.descriptor.getValue()
-      if (reference is ArrayReference) {
-        return reference
+      val reference = result.descriptor.getValue()
+      if (reference is com.sun.jdi.ArrayReference) {
+        return XValueInterpreter.Result(JvmArrayReference(reference), hasInnerExceptions(reference), JavaEvaluationContext(result.evaluationContext))
       }
     }
     return null
   }
 
+  private fun hasInnerExceptions(resultArray: com.sun.jdi.ArrayReference): Boolean {
+    val result = resultArray.getValue(1) as com.sun.jdi.ArrayReference
+    val type: com.sun.jdi.ReferenceType = result.referenceType()
+    if (type is com.sun.jdi.ArrayType) {
+      if (type.componentTypeName().contains("Throwable")) {
+        return true
+      }
+    }
+
+    return false
+  }
+
   override fun tryExtractErrorDescription(result: XValue): String? {
     if (result is JavaValue) {
-      val reference: Value = result.descriptor.getValue()
-      if (reference is ObjectReference) {
-        var type = reference.referenceType() as? ClassType
-        if (type != null) {
-          while (type != null && CommonClassNames.JAVA_LANG_THROWABLE != type.name()) {
-            type = type.superclass()
+      val reference = result.descriptor.getValue()
+      if (reference is com.sun.jdi.ObjectReference) {
+        val type = reference.referenceType()
+        var classType = type as? com.sun.jdi.ClassType
+        if (classType != null) {
+          while (classType != null && CommonClassNames.JAVA_LANG_THROWABLE != classType.name()) {
+            classType = classType.superclass()
           }
-          if (type != null) {
+          if (classType != null) {
             val exceptionMessage: String? = tryExtractExceptionMessage(reference)
             val description = ("Evaluation failed: " + type.name()) + " exception thrown"
             val descriptionWithReason = if (exceptionMessage == null) description else "$description: $exceptionMessage"
@@ -40,12 +52,12 @@ class JavaValueInterpreter : XValueInterpreter {
     return null
   }
 
-  private fun tryExtractExceptionMessage(exception: ObjectReference): String? {
+  private fun tryExtractExceptionMessage(exception: com.sun.jdi.ObjectReference): String? {
     val type = exception.referenceType()
     val messageField = DebuggerUtils.findField(type, "detailMessage");
     if (messageField == null) return null
     val message = exception.getValue(messageField)
-    if (message is StringReference) {
+    if (message is com.sun.jdi.StringReference) {
       return message.value()
     }
     return null

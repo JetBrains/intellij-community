@@ -2,7 +2,6 @@
 package com.intellij.debugger.streams.trace;
 
 import com.intellij.debugger.streams.wrapper.StreamChain;
-import com.sun.jdi.ArrayReference;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -10,5 +9,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface TraceResultInterpreter {
   @NotNull
-  TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference evaluationResult);
+  TracingResult interpret(@NotNull StreamChain chain, @NotNull ArrayReference evaluationResult, boolean isException);
 }

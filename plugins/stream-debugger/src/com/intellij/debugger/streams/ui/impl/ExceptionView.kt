@@ -1,8 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl
 import com.intellij.debugger.streams.StreamDebuggerBundle
+import com.intellij.debugger.streams.trace.CollectionTreeBuilder
+import com.intellij.debugger.streams.trace.EvaluationContextWrapper
 import com.intellij.debugger.streams.trace.TraceElement
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBLabel
@@ -11,8 +12,8 @@ import javax.swing.JTree
 /**
  * @author Vitaliy.Bibaev
  */
-class ExceptionView(context: EvaluationContextImpl, ex: TraceElement)
-  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), SingleElementTree(ex.value!!, listOf(ex), context)) {
+class ExceptionView(context: EvaluationContextWrapper, ex: TraceElement, builder: CollectionTreeBuilder)
+  : CollectionView(JBLabel(StreamDebuggerBundle.message("exception.label")), SingleElementTree(ex.value!!, listOf(ex), context, builder)) {
   init {
     instancesTree.cellRenderer = object : TraceTreeCellRenderer() {
       override fun customizeCellRenderer(tree: JTree,

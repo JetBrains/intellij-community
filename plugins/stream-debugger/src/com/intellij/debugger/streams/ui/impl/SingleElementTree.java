@@ -1,12 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.ui.impl;
 
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
+import com.intellij.debugger.streams.trace.CollectionTreeBuilder;
+import com.intellij.debugger.streams.trace.EvaluationContextWrapper;
 import com.intellij.debugger.streams.trace.TraceElement;
+import com.intellij.debugger.streams.trace.Value;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
-import com.sun.jdi.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,8 +21,9 @@ import java.util.List;
 public class SingleElementTree extends CollectionTree {
   SingleElementTree(@Nullable Value value,
                     @NotNull List<TraceElement> traceElements,
-                    @NotNull EvaluationContextImpl evaluationContext) {
-    super(Collections.singletonList(value), traceElements, evaluationContext);
+                    @NotNull EvaluationContextWrapper evaluationContext,
+                    @NotNull CollectionTreeBuilder collectionTreeBuilder) {
+    super(Collections.singletonList(value), traceElements, evaluationContext, collectionTreeBuilder);
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, @NotNull String name) {

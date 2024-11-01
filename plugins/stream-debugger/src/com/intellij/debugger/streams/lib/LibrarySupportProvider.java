@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.streams.lib;
 
+import com.intellij.debugger.streams.trace.CollectionTreeBuilder;
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder;
 import com.intellij.debugger.streams.trace.XValueInterpreter;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
@@ -32,6 +33,9 @@ public interface LibrarySupportProvider {
 
   @NotNull
   XValueInterpreter getXValueInterpreter();
+
+  @NotNull
+  CollectionTreeBuilder getCollectionTreeBuilder();
 
   @NotNull
   LibrarySupport getLibrarySupport();
