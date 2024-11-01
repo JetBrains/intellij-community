@@ -19,7 +19,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
 
     override fun getGroup(): EventLogGroup = GROUP
 
-    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 8)
+    private val GROUP = EventLogGroup("kotlin.debugger.evaluator", 9)
 
     // fields
     private val compilerField = EventFields.Enum<CompilerType>("compiler")
@@ -39,7 +39,7 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
         wrapTimeMsField, analysisTimeMsField, compilationTimeMsField, wholeTimeField, interruptionsField, compilerExceptionField
     )
     // no need to record evaluation time, as it reflects what user evaluates, not how effective our evaluation is
-    private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField, compilerField)
+    private val evaluationEvent = GROUP.registerEvent("evaluation.result", resultField, compilerField, originField)
 
     @JvmStatic
     fun logAnalysisAndCompilationResult(
@@ -60,8 +60,8 @@ object KotlinDebuggerEvaluatorStatisticsCollector : CounterUsagesCollector() {
     }
 
     @JvmStatic
-    internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult, compilerType: CompilerType) {
-        evaluationEvent.log(project, evaluationResult, compilerType)
+    internal fun logEvaluationResult(project: Project?, evaluationResult: StatisticsEvaluationResult, compilerType: CompilerType, origin: XEvaluationOrigin) {
+        evaluationEvent.log(project, evaluationResult, compilerType, origin)
     }
 }
 
@@ -70,7 +70,18 @@ enum class EvaluationCompilerResult {
 }
 
 enum class StatisticsEvaluationResult {
-    SUCCESS, FAILURE
+    SUCCESS,
+    USER_EXCEPTION,
+
+    COMPILATION_FAILURE,
+    COMPILER_INTERNAL_ERROR,
+    UNCLASSIFIED_COMPILATION_PROBLEM,
+
+    UNCLASSIFIED_EVALUATION_PROBLEM,
+    MISCOMPILED,
+    ERROR_DURING_PARSING_EXCEPTION,
+    WRONG_JVM_STATE,
+    UNRELATED_EXCEPTION,
 }
 
 @ApiStatus.Internal

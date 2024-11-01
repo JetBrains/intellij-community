@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.evaluation.expression.*
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Attachment
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.IndexNotReadyException
@@ -35,6 +36,7 @@ import org.jetbrains.kotlin.idea.debugger.base.util.safeLocation
 import org.jetbrains.kotlin.idea.debugger.base.util.safeMethod
 import org.jetbrains.kotlin.idea.debugger.base.util.safeVisibleVariableByName
 import org.jetbrains.kotlin.idea.debugger.coroutine.proxy.CoroutineStackFrameProxyImpl
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.isSubTypeOrSame
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.GENERATED_CLASS_NAME
 import org.jetbrains.kotlin.idea.debugger.evaluate.classLoading.isEvaluationEntryPoint
 import org.jetbrains.kotlin.idea.debugger.evaluate.compilation.*
@@ -125,21 +127,58 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
     }
 
     private fun evaluateSafe(context: ExecutionContext, codeFragment: KtCodeFragment): Any? {
-        val compiledData = getCompiledCodeFragment(context)
+        val hasCast = hasCastOperator(codeFragment)
+        val compiledData = try {
+            getCompiledCodeFragment(context)
+        } catch (e: Throwable) {
+            if (e !is ProcessCanceledException) {
+                val evaluationResultValue = when (e) {
+                    is IncorrectCodeFragmentException -> StatisticsEvaluationResult.COMPILATION_FAILURE
+                    is EvaluateException -> StatisticsEvaluationResult.COMPILER_INTERNAL_ERROR
+                    else -> StatisticsEvaluationResult.UNCLASSIFIED_COMPILATION_PROBLEM
+                }
+                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, evaluationResultValue, CompilerType.K2, context.evaluationContext.origin)
+            }
+            throw e
+        }
 
         return try {
             runEvaluation(context, compiledData).also {
-                KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(codeFragment.project, StatisticsEvaluationResult.SUCCESS, compiledData.compilerType)
+                if (!compiledData.statisticReported) {
+                    compiledData.statisticReported = true
+                    KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
+                        codeFragment.project,
+                        StatisticsEvaluationResult.SUCCESS,
+                        compiledData.compilerType,
+                        context.evaluationContext.origin
+                    )
+                }
             }
         } catch (e: Throwable) {
             if (!isUnitTestMode()) {
-                if (e !is EvaluateException && e !is Eval4JInterpretingException) {
+                val cause = e.cause
+                val errorType = when {
+                    e is ControlFlowException || e is IndexNotReadyException -> StatisticsEvaluationResult.UNRELATED_EXCEPTION
+                    e is Eval4JInterpretingException ->
+                        if (!hasCast && e.cause is ClassCastException) StatisticsEvaluationResult.MISCOMPILED
+                        else StatisticsEvaluationResult.USER_EXCEPTION
+                    e is EvaluateException && cause != null -> checkCauseOfEvaluateException(cause, hasCast)
+                    isSpecialException(e) -> StatisticsEvaluationResult.WRONG_JVM_STATE
+                    else -> StatisticsEvaluationResult.UNCLASSIFIED_EVALUATION_PROBLEM
+                }
+
+                if (!compiledData.statisticReported) {
+                    if (errorType != StatisticsEvaluationResult.UNRELATED_EXCEPTION && errorType != StatisticsEvaluationResult.WRONG_JVM_STATE) {
+                        compiledData.statisticReported = true
+                    }
                     KotlinDebuggerEvaluatorStatisticsCollector.logEvaluationResult(
                         codeFragment.project,
-                        StatisticsEvaluationResult.FAILURE,
-                        compiledData.compilerType
+                        errorType,
+                        compiledData.compilerType,
+                        context.evaluationContext.origin
                     )
                 }
+
                 if (isApplicationInternalMode()) {
                     reportErrorWithAttachments(context, codeFragment, e,
                                                prepareBytecodes(compiledData),
@@ -148,6 +187,32 @@ class KotlinEvaluator(val codeFragment: KtCodeFragment, private val sourcePositi
             }
             throw e
         }
+    }
+
+    private fun checkCauseOfEvaluateException(cause: Throwable, hasCast: Boolean): StatisticsEvaluationResult {
+        if (cause is InvocationException) {
+            try {
+                val exceptionFromCodeFragment = cause.exception()
+                val type = exceptionFromCodeFragment.type()
+                if (type.signature().startsWith("Ljava/lang/invoke/") || type.isSubTypeOrSame("java.lang.ReflectiveOperationException")) {
+                    return StatisticsEvaluationResult.MISCOMPILED
+                }
+                if (type.isSubTypeOrSame("java.lang.ClassCastException")) {
+                    return if (hasCast) StatisticsEvaluationResult.USER_EXCEPTION else StatisticsEvaluationResult.MISCOMPILED
+                }
+            }
+            catch (e: Throwable) {
+                LOG.error("Can't extract error type from InvocationException", e)
+                return StatisticsEvaluationResult.ERROR_DURING_PARSING_EXCEPTION
+            }
+            return StatisticsEvaluationResult.USER_EXCEPTION
+        }
+
+        if (isSpecialException(cause)) {
+            return StatisticsEvaluationResult.WRONG_JVM_STATE
+        }
+
+        return StatisticsEvaluationResult.MISCOMPILED
     }
 
     private fun prepareBytecodes(compiledData: CompiledCodeFragmentData): List<Pair<String, String>> {
@@ -497,6 +562,10 @@ fun createCompiledDataDescriptor(result: CompilationResult): CompiledCodeFragmen
 
 fun evaluationException(msg: String): Nothing = throw EvaluateExceptionUtil.createEvaluateException(msg)
 fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.createEvaluateException(e)
+
+
+@ApiStatus.Internal
+class IncorrectCodeFragmentException(message: String) : EvaluateException(message)
 
 enum class CompilerType {
     OLD, IR, K2
