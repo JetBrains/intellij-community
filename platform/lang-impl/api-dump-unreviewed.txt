@@ -13933,9 +13933,10 @@ f:com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 - s:findByPath(com.intellij.openapi.projectRoots.SdkType,com.intellij.openapi.projectRoots.Sdk[],java.lang.String):com.intellij.openapi.projectRoots.Sdk
 - s:findOrCreateSdk(java.util.Comparator,com.intellij.openapi.projectRoots.SdkType[]):com.intellij.openapi.projectRoots.Sdk
 - s:getSuggestedSdkRoot(com.intellij.openapi.projectRoots.SdkType):com.intellij.openapi.vfs.VirtualFile
+- s:getSuggestedSdkRoot(com.intellij.openapi.projectRoots.SdkType,java.nio.file.Path):com.intellij.openapi.vfs.VirtualFile
 - s:removeSdk(com.intellij.openapi.projectRoots.Sdk):V
 - s:selectSdkHome(com.intellij.openapi.projectRoots.SdkType,com.intellij.util.Consumer):V
-- s:selectSdkHome(com.intellij.openapi.projectRoots.SdkType,java.awt.Component,com.intellij.util.Consumer):V
+- s:selectSdkHome(com.intellij.openapi.projectRoots.SdkType,java.awt.Component,java.nio.file.Path,com.intellij.util.Consumer):V
 - s:selectSdkHomeForTests(com.intellij.openapi.projectRoots.SdkType,com.intellij.util.Consumer):Z
 - s:setDirectoryProjectSdk(com.intellij.openapi.project.Project,com.intellij.openapi.projectRoots.Sdk):V
 - s:setupSdk(com.intellij.openapi.projectRoots.Sdk[],com.intellij.openapi.vfs.VirtualFile,com.intellij.openapi.projectRoots.SdkType,Z,com.intellij.openapi.projectRoots.SdkAdditionalData,java.lang.String):com.intellij.openapi.projectRoots.Sdk
