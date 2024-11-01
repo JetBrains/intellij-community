@@ -14,7 +14,7 @@
       <property name="baseUrl" value="@{fromUrl}" />
       <exec executable="bash" outputproperty="etag">
         <arg value="-c"/>
-        <arg line='"curl -sI ${baseUrl} | grep ETag | cut -f 2,3 -d ":" | xargs"'/>
+        <arg line='"curl -sI ${baseUrl} | grep -i etag | cut -f 2,3 -d ":" | xargs"'/>
       </exec>
       <echo message="&quot;${etag}&quot;" file="@{toFile}.ETAG" />
     </sequential>
@@ -35,34 +35,34 @@
 
   <target name="webpack4">
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/WebpackOptions.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpack-schema4.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpack-schema4.json" />
   </target>
 
   <target name="webpack4plugins">
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/BannerPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/BannerPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/BannerPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/DllPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/DllReferencePlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/DllReferencePlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/DllReferencePlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/HashedModuleIdsPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/HashedModuleIdsPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/HashedModuleIdsPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/LoaderOptionsPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/LoaderOptionsPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/LoaderOptionsPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/SourceMapDevToolPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/SourceMapDevToolPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/SourceMapDevToolPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/WatchIgnorePlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/WatchIgnorePlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/WatchIgnorePlugin.json" />
 
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/debug/ProfilingPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/debug/ProfilingPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/debug/ProfilingPlugin.json" />
 
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/AggressiveSplittingPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/AggressiveSplittingPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/optimize/AggressiveSplittingPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/LimitChunkCountPlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/LimitChunkCountPlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/optimize/LimitChunkCountPlugin.json" />
     <get_schema fromUrl="https://raw.githubusercontent.com/webpack/webpack/master/schemas/plugins/optimize/MinChunkSizePlugin.json"
-                toFile="${idea.project.home}/plugins/JavaScriptLanguage/src/jsonSchemas/webpackPlugins/optimize/MinChunkSizePlugin.json" />
+                toFile="${idea.project.home}/plugins/webpack/resources/jsonSchemas/webpackPlugins/optimize/MinChunkSizePlugin.json" />
 
   </target>
 
