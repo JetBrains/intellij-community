@@ -14,11 +14,13 @@ import com.intellij.psi.PsiFile
 
 class PhysicalAndLogicalStructureViewBuilder(
   private val physicalBuilder: TreeBasedStructureViewBuilder,
-  private val psiFile: PsiFile,
+  psiFile: PsiFile,
 ): TreeBasedStructureViewBuilder() {
+  // Builders are created on a BGT, but createStructureView() is called on the EDT.
+  // Therefore, all slow ops must be in the constructor, and all UI creation must be in that method.
+  private val logicalBuilder = getInstance(psiFile.project).getLogicalStructureBuilder(psiFile)
 
   override fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView {
-    val logicalBuilder = getInstance(project).getLogicalStructureBuilder(psiFile)
     if (logicalBuilder == null) return createPhysicalStructureView(fileEditor, project)
 
     return StructureViewComposite(
