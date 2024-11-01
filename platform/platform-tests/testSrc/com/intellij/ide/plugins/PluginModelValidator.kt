@@ -401,9 +401,19 @@ class PluginModelValidator(sourceModules: List<Module>) {
         ))
         continue
       }
-      if (child.attributes.size > 1) {
+
+      val moduleLoadingRule = child.getAttributeValue("loading")
+      if (moduleLoadingRule != null && moduleLoadingRule !in arrayOf("required", "optional", "on-demand")) {
         _errors.add(PluginValidationError(
-          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" }}",
+          "Unknown value for 'loading' attribute: $moduleLoadingRule. Supported values are 'required', 'optional' and 'on-demand'.",
+          getErrorInfo(),
+        ))
+        continue
+      }
+
+      if (child.attributes.size > 2) {
+        _errors.add(PluginValidationError(
+          "Unknown attributes: ${child.attributes.entries.filter { it.key != "name" || it.key != "loading" }}",
           getErrorInfo(),
         ))
         continue
