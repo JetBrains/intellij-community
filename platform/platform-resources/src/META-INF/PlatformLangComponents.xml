@@ -108,6 +108,11 @@
       description="If enabled, hide all auto-hide tool windows on any focus change, otherwise hide only the one that lost focus"
       defaultValue="false"
     />
+    <registryKey
+      key="auto.hide.all.tool.windows.on.any.action"
+      description="If enabled, any action will cause auto-hide tool windows to be hidden"
+      defaultValue="false"
+    />
 
     <projectService serviceInterface="com.intellij.toolWindow.ToolWindowStripeManager"
                     serviceImplementation="com.intellij.toolWindow.ToolWindowStripeManagerImpl"/>

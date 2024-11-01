@@ -347,6 +347,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
             }
+            if (Registry.`is`("auto.hide.all.tool.windows.on.any.action", false)) {
+              val focusedComponent = IdeFocusManager.getInstance(manager.project).focusOwner
+              if (focusedComponent != null) {
+                hideAllUnfocusedAutoHideToolWindows(manager, focusedComponent)
+              }
+            }
           }
 
           if (ExperimentalUI.isNewUI()) {
