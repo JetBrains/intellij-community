@@ -1,9 +1,14 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.inspection;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.CommonQuickFixBundle;
+import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.project.Project;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -12,6 +17,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_1_7;
 
@@ -66,14 +72,31 @@ public abstract class SSBasedInspectionTestCase extends UsefulTestCase {
       configuration.getReplaceOptions().setReplacement(replacement);
     }
 
-    StructuralSearchProfileActionProvider.createNewInspection(configuration, myFixture.getProject());
-    myFixture.testHighlighting(true, false, false, getTestName(false) + getExtension());
-    if (replacement != null) {
-      final IntentionAction intention = myFixture.getAvailableIntention(CommonQuickFixBundle.message("fix.replace.with.x", replacement));
-      assertNotNull(intention);
-      myFixture.checkPreviewAndLaunchAction(intention);
-      myFixture.checkResultByFile(getTestName(false) + ".after" + getExtension());
+    inspectionTest(configuration, null);
+  }
+
+  protected void inspectionTest(Configuration configuration, @Nullable HighlightDisplayLevel level) {
+    Project project = myFixture.getProject();
+    InspectionProfileImpl profile = InspectionProfileManager.getInstance(project).getCurrentProfile();
+    StructuralSearchProfileActionProvider.createNewInspection(configuration, project, profile);
+    if (level != null) {
+      final String shortName = configuration.getUuid();
+      HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
+      profile.setErrorLevel(key, level, project);
     }
+    myFixture.testHighlighting(true, false, false, getTestName(false) + getExtension());
+    if (configuration instanceof ReplaceConfiguration rc) {
+      final String replacement = rc.getReplaceOptions().getReplacement();
+      String intentionName = CommonQuickFixBundle.message("fix.replace.with.x", replacement);
+      quickFixTest(intentionName);
+    }
+  }
+
+  protected void quickFixTest(String intentionName) {
+    final IntentionAction intention = myFixture.getAvailableIntention(intentionName);
+    assertNotNull(intention);
+    myFixture.checkPreviewAndLaunchAction(intention);
+    myFixture.checkResultByFile(getTestName(false) + ".after" + getExtension());
   }
 
   @NotNull

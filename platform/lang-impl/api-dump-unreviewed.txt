@@ -2379,7 +2379,7 @@ f:com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager
 f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName
 - com.intellij.codeInspection.ProblemDescriptorBase
 - <init>(com.intellij.codeInspection.ProblemDescriptorBase,java.lang.String):V
-- getReportingToolName():java.lang.String
+- getReportingToolShortName():java.lang.String
 f:com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithUserDataKt
 - sf:getPROBLEM_DESCRIPTOR_TAG():com.intellij.openapi.util.Key
 - sf:getRELATED_LOCATIONS():com.intellij.openapi.util.Key

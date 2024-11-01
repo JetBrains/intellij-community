@@ -546,7 +546,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
             final ProblemDescriptor firstDescriptor = descriptors.get(0);
             LocalInspectionToolWrapper toolWrapper =
               firstDescriptor instanceof ProblemDescriptorWithReporterName descriptor
-              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolName()).getTool()
+              ? (LocalInspectionToolWrapper)getTools().get(descriptor.getReportingToolShortName()).getTool()
               : entry.getKey();
             InspectionToolPresentation toolPresentation = getPresentation(toolWrapper);
             BatchModeDescriptorsUtil.addProblemDescriptors(descriptors, toolPresentation, true, this, toolWrapper.getTool());

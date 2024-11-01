@@ -4,7 +4,8 @@ class Scratch {
 
   void foo() {
     s = "1";
-    <error descr="silly null check"><caret>s = "2";</error>
+      //noinspection SillyNullCheck
+      s = "2";
     if (s == null) {
       throw new IllegalStateException("drunk");
     }

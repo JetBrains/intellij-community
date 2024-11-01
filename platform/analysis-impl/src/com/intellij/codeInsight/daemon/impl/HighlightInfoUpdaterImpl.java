@@ -1052,7 +1052,6 @@ final class HighlightInfoUpdaterImpl extends HighlightInfoUpdater implements Dis
     List<? extends HighlightInfo> sorted = ContainerUtil.sorted(newInfos, Segment.BY_START_OFFSET_THEN_END_OFFSET);
     for (int i = 0; i < sorted.size(); i++) {
       HighlightInfo newInfo = sorted.get(i);
-      assert Objects.equals(newInfo.toolId, toolId) : "Expected toolId=" + toolId + " but got " + newInfo;
       boolean isFileLevel = newInfo.isFileLevelAnnotation();
       long finalInfoRange = isFileLevel
                             ? TextRangeScalarUtil.toScalarRange(0, psiFile.getTextLength())
