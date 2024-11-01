@@ -4,15 +4,19 @@ package com.intellij.openapi.vfs.newvfs.persistent.indexes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
+import com.intellij.util.indexing.FileBasedIndexExtension;
+import com.intellij.util.indexing.IdFilter;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.Input;
+import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.InputDataGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyEntriesPerFileInputGenerator;
 import com.intellij.util.indexing.IndexStorageLayoutProviderTestBase.ManyKeysIntegerToIntegerIndexExtension;
+import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProvider;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
+import com.intellij.util.indexing.storage.sharding.ShardableIndexExtension;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.openjdk.jmh.annotations.*;
@@ -36,6 +40,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 @Measurement(iterations = 2, time = 15, timeUnit = SECONDS)
 @Fork(1)
 public class IndexStorageLayoutBenchmark {
+
+
   @State(Scope.Benchmark)
   public static class InputContext {
 
@@ -108,7 +114,7 @@ public class IndexStorageLayoutBenchmark {
     public void setupBenchmark() throws Exception {
       IndexDebugProperties.IS_IN_STRESS_TESTS = true;
 
-      extension = new ManyKeysIntegerToIntegerIndexExtension(cacheSize);
+      extension = new SampleIndexExtension(cacheSize);
 
       @SuppressWarnings("unchecked")
       Class<FileBasedIndexLayoutProvider> providerClass = (Class)Class.forName(storageLayoutProviderClassName);
@@ -137,6 +143,18 @@ public class IndexStorageLayoutBenchmark {
       }
       if (storageLayout != null) {
         storageLayout.clearIndexData();
+      }
+    }
+
+    public static class SampleIndexExtension extends ManyKeysIntegerToIntegerIndexExtension implements ShardableIndexExtension {
+
+      public SampleIndexExtension(int cacheSize) {
+        super(cacheSize);
+      }
+
+      @Override
+      public int shardsCount() {
+        return 2;
       }
     }
   }
