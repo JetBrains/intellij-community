@@ -9,15 +9,11 @@ import com.intellij.platform.uast.testFramework.env.findElementByTextFromPsi
 import com.intellij.platform.uast.testFramework.env.findUElementByTextFromPsi
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiClassReferenceType
-import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertInstanceOf
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
-import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
 import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.base.test.JUnit4Assertions.assertSameElements
@@ -25,7 +21,6 @@ import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
 import org.jetbrains.kotlin.idea.test.MockLibraryFacility
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
@@ -281,17 +276,6 @@ interface UastResolveApiFixtureTestBase {
     }
 
     fun checkResolveToFacade(myFixture: JavaCodeInsightTestFixture) {
-
-        myFixture.project.replaceService(
-            KotlinAsJavaSupport::class.java,
-            object : MockKotlinAsJavaSupport(getInstance(myFixture.project)) {
-                override fun getFacadeClasses(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtLightClassForFacade> =
-                    // emulating facade classes from different modules
-                    super.getFacadeClasses(facadeFqName, scope).let { it + it }
-            },
-            myFixture.testRootDisposable
-        )
-
         myFixture.addFileToProject(
             "pkg/MyFacade.java", """
                 package pkg;

@@ -42,13 +42,6 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
         private fun isReplLine(file: VirtualFile): Boolean = file.getUserData(KOTLIN_CONSOLE_KEY) == true
 
-        private fun incFileModificationCount(file: KtFile) {
-            val tracker = file.getUserData(PER_FILE_MODIFICATION_TRACKER)
-                ?: file.putUserDataIfAbsent(PER_FILE_MODIFICATION_TRACKER, SimpleModificationTracker())
-
-            tracker.incModificationCount()
-        }
-
         private fun inBlockModifications(elements: Array<ASTNode>): List<KtElement> {
             if (elements.any { !it.psi.isValid }) return emptyList()
 
@@ -267,8 +260,6 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
                     val changeSet = event.getChangeSet(treeAspect) as TreeChangeEvent? ?: return
                     val ktFile = changeSet.rootElement.psi.containingFile as? KtFile ?: return
 
-                    incFileModificationCount(ktFile)
-
                     val changedElements = changeSet.changedElements
 
                     // skip change if it contains only virtual/fake change
@@ -313,11 +304,6 @@ class PureKotlinCodeBlockModificationListener(val project: Project) : Disposable
 
     override fun dispose() = Unit
 }
-
-private val PER_FILE_MODIFICATION_TRACKER = Key<SimpleModificationTracker>("FILE_OUT_OF_BLOCK_MODIFICATION_COUNT")
-
-val KtFile.perFileModificationTracker: ModificationTracker
-    get() = putUserDataIfAbsent(PER_FILE_MODIFICATION_TRACKER, SimpleModificationTracker())
 
 private val FILE_OUT_OF_BLOCK_MODIFICATION_COUNT = Key<Long>("FILE_OUT_OF_BLOCK_MODIFICATION_COUNT")
 

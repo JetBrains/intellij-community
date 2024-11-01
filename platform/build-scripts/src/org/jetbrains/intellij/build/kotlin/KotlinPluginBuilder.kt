@@ -155,7 +155,6 @@ object KotlinPluginBuilder {
     "kotlin.base.fir.analysis-api-platform",
     "kotlin.base.fir.code-insight",
     "kotlin.base.fir.project-structure",
-    "kotlin.base.fir.analysis",
     "kotlin.code-insight.api",
     "kotlin.code-insight.utils",
     "kotlin.code-insight.intentions.shared",

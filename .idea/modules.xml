@@ -1022,7 +1022,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/obsolete-compat/kotlin.base.fe10.obsolete-compat.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/plugin/kotlin.base.fe10.plugin.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/plugin/kotlin.base.fe10.plugin.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fe10/project-structure/kotlin.base.fe10.project-structure.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fe10/project-structure/kotlin.base.fe10.project-structure.iml" />
-      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/analysis/kotlin.base.fir.analysis.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/analysis/kotlin.base.fir.analysis.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/analysis-api-platform/kotlin.base.fir.analysis-api-platform.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/analysis-api-platform/kotlin.base.fir.analysis-api-platform.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/kotlin.base.fir.code-insight.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/code-insight/kotlin.base.fir.code-insight.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/base/fir/project-structure/kotlin.base.fir.project-structure.iml" filepath="$PROJECT_DIR$/plugins/kotlin/base/fir/project-structure/kotlin.base.fir.project-structure.iml" />
