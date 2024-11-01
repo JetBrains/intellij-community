@@ -67,16 +67,6 @@ public interface DebuggerBackendExtension {
                                                             @NotNull String processParameters);
 
   default HashMap<String, String> splitParameters(@NotNull String processParameters) {
-    HashMap<String, String> result = new HashMap<>();
-
-    final String[] envVars = processParameters.split(ForkedDebuggerHelper.PARAMETERS_SEPARATOR);
-    for (String envVar : envVars) {
-      final int idx = envVar.indexOf('=');
-      if (idx > -1) {
-        result.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
-      }
-    }
-
-    return result;
+    return ForkedDebuggerHelper.splitParameters(processParameters);
   }
 }

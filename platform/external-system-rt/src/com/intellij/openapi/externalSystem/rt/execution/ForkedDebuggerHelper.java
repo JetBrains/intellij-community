@@ -2,11 +2,13 @@
 package com.intellij.openapi.externalSystem.rt.execution;
 
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 
 /**
  * @author Vladislav.Soroka
@@ -43,6 +45,20 @@ public final class ForkedDebuggerHelper {
       e.printStackTrace();
     }
     return port;
+  }
+
+  public static HashMap<String, String> splitParameters(@NotNull String processParameters) {
+    HashMap<String, String> result = new HashMap<>();
+
+    final String[] envVars = processParameters.split(PARAMETERS_SEPARATOR);
+    for (String envVar : envVars) {
+      final int idx = envVar.indexOf('=');
+      if (idx > -1) {
+        result.put(envVar.substring(0, idx), idx < envVar.length() - 1 ? envVar.substring(idx + 1) : "");
+      }
+    }
+
+    return result;
   }
 
   public static void signalizeFinish(String debuggerId, String processName) {
