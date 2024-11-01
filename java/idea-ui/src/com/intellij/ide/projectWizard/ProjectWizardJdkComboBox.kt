@@ -10,6 +10,8 @@ import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.ide.wizard.NewProjectWizardBaseStep
 import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataSink
+import com.intellij.openapi.actionSystem.UiDataProvider
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
@@ -36,9 +38,11 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo.isWindows
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.platform.eel.EelApi
 import com.intellij.platform.eel.provider.EelApiKey
 import com.intellij.platform.eel.provider.LocalEelKey
 import com.intellij.platform.eel.provider.getEelApi
+import com.intellij.platform.eel.provider.getEelApiBlocking
 import com.intellij.platform.eel.provider.getEelApiKey
 import com.intellij.platform.eel.provider.localEel
 import com.intellij.platform.util.coroutines.childScope
@@ -57,13 +61,13 @@ import com.intellij.util.ui.EmptyIcon
 import kotlinx.coroutines.*
 import java.awt.BorderLayout
 import java.awt.Component
+import java.nio.file.Path
 import java.util.*
 import javax.accessibility.AccessibleContext
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JList
 import kotlin.io.path.Path
-import kotlin.text.get
 import kotlin.text.isNotEmpty
 
 /**
@@ -249,7 +253,7 @@ class ProjectWizardJdkComboBox(
   val projectJdk: Sdk? = null,
   var projectLocation: String,
   disposable: Disposable,
-): ComboBox<ProjectWizardJdkIntent>() {
+) : ComboBox<ProjectWizardJdkIntent>(), UiDataProvider {
 
   // used in third-party plugin
   @Suppress("unused")
@@ -472,6 +476,17 @@ class ProjectWizardJdkComboBox(
       }
       else -> null
     }
+
+  override fun uiDataSnapshot(sink: DataSink) {
+    if (!Registry.`is`("java.home.finder.use.eel")) {
+      return
+    }
+    sink[JDK_DOWNLOADER_EXT] = object : JdkDownloaderDialogHostExtension {
+      override fun getEel(): EelApi {
+        return Path.of(projectLocation).getEelApiBlocking()
+      }
+    }
+  }
 }
 
 private fun selectAndAddJdk(combo: ProjectWizardJdkComboBox) {

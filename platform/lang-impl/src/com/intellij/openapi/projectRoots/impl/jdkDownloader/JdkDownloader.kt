@@ -35,12 +35,14 @@ import javax.swing.JComponent
 
 private val LOG = logger<JdkDownloader>()
 
-internal val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
+@Internal
+val JDK_DOWNLOADER_EXT: DataKey<JdkDownloaderDialogHostExtension> = DataKey.create("jdk-downloader-extension")
 
-internal interface JdkDownloaderDialogHostExtension {
+@Internal
+interface JdkDownloaderDialogHostExtension {
   fun allowWsl() : Boolean = true
 
-  fun allowEel() : Boolean = Registry.`is`("java.home.finder.use.eel")
+  fun getEel(): EelApi? = null
 
   fun createMainPredicate() : JdkPredicate? = null
 
@@ -126,7 +128,16 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
     okActionText: @NlsContexts.Button String,
   ): Pair<JdkItem, Path>? {
     val items = try {
-      val extension = extension ?: object : JdkDownloaderDialogHostExtension {}
+      val extension = extension ?: object : JdkDownloaderDialogHostExtension {
+        override fun getEel(): EelApi? {
+          if (!Registry.`is`("java.home.finder.use.eel")) {
+            return null
+          }
+          else {
+            return project.getEelApiBlocking()
+          }
+        }
+      }
       computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
 
         val buildModel = { predicate: JdkPredicate ->
@@ -144,10 +155,10 @@ class JdkDownloader : SdkDownload, JdkDownloaderBase {
         val mainModel = buildModel(extension.createMainPredicate() ?: JdkPredicate.default()) ?: return@computeInBackground null
         val wslModel = if (allowWsl && wslDistributions.isNotEmpty()) buildModel(extension.createWslPredicate() ?: JdkPredicate.forWSL()) else null
 
+        val eelApi = extension.getEel()
         val eelPair: Pair<EelApi, JdkDownloaderModel>? =
-          if (extension.allowEel()) {
-            val eel = project.getEelApiBlocking()
-            buildModel(extension.createEelPredicate(eel) ?: JdkPredicate.forEel(eel))?.let { eel to it}
+          if (eelApi != null) {
+            buildModel(extension.createEelPredicate(eelApi) ?: JdkPredicate.forEel(eelApi))?.let { eelApi to it }
           }
           else null
 

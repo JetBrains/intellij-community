@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreVal
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
 import com.intellij.openapi.ui.Messages
+import com.intellij.platform.eel.EelApi
 import java.nio.file.Path
 import javax.swing.JComponent
 
@@ -48,7 +49,7 @@ internal object RuntimeChooserCustom {
 
   private val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
     override fun allowWsl(): Boolean = false
-    override fun allowEel(): Boolean = false
+    override fun getEel(): EelApi? = null
 
     override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
       return sdkType == this@RuntimeChooserCustom.sdkType && isSupportedSdkItem(item)
