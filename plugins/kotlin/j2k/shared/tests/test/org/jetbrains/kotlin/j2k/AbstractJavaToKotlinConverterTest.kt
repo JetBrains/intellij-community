@@ -91,6 +91,23 @@ abstract class AbstractJavaToKotlinConverterTest : KotlinLightCodeInsightFixture
         )
     }
 
+    protected fun addJunitTestAnnotations() {
+        myFixture.addClass(
+            """
+            package org.junit;
+            
+            public @interface Test {}
+            """.trimIndent()
+        )
+        myFixture.addClass(
+            """
+            package org.junit.jupiter.api;
+            
+            public @interface Test {}
+            """.trimIndent()
+        )
+    }
+
     // A hack to workaround KTIJ-26751 bug in K2 import optimizer
     // that leads to trivial test failures.
     // TODO remove this hack once the optimizer is fixed

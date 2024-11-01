@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.nj2k.*
 import org.jetbrains.kotlin.nj2k.externalCodeProcessing.JKFakeFieldData
@@ -389,16 +390,18 @@ private class PropertiesDataFilter(
         }
 
         // If a real accessor is annotated with an annotation with the "FUNCTION" target only,
-        // we can't change it into a property accessor
+        // we can't change it into a property accessor.
+        // Also, don't touch JUnit test methods.
         fun accessorsAreAnnotatedWithFunctionOnlyAnnotations(): Boolean {
-            fun KaDeclarationSymbol.getExistingAnnotationTargets(): Set<String> {
+            fun KaNamedClassSymbol.getExistingAnnotationTargets(): Set<String> {
                 val targetAnnotation = annotations.firstOrNull { it.classId == StandardNames.FqNames.targetClassId } ?: return emptySet()
                 val targets = (targetAnnotation.arguments.firstOrNull()?.expression as? ArrayValue)?.values ?: return emptySet()
                 return targets.mapNotNull { (it as? EnumEntryValue)?.callableId?.callableName?.asString() }.toSet()
             }
 
             fun KaAnnotation.isInapplicable(requiredTarget: String): Boolean {
-                val annotationSymbol = constructorSymbol?.containingDeclaration ?: return false
+                val annotationSymbol = constructorSymbol?.containingDeclaration as? KaNamedClassSymbol ?: return false
+                if (junitTestAnnotations.contains(annotationSymbol.classId)) return true
                 val existingTargets = annotationSymbol.getExistingAnnotationTargets()
                 return existingTargets.contains("FUNCTION") && !existingTargets.contains(requiredTarget)
             }
@@ -519,6 +522,11 @@ private class PropertiesDataFilter(
             outsideElements.none { it.isAncestor(reference.element) }
         }
 }
+
+private val junitTestAnnotations: Set<ClassId> = setOf(
+    ClassId.fromString("org/junit/Test"),
+    ClassId.fromString("org/junit/jupiter/api/Test")
+)
 
 private val redundantSetterModifiers: Set<KtModifierKeywordToken> = setOf(
     OVERRIDE_KEYWORD, FINAL_KEYWORD, OPEN_KEYWORD

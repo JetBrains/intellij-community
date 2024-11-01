@@ -26,6 +26,7 @@ private val testHeaderPattern: Pattern = Pattern.compile("//(expression|statemen
 private const val JPA_ANNOTATIONS_DIRECTIVE = "ADD_JPA_ANNOTATIONS"
 private const val KOTLIN_API_DIRECTIVE = "ADD_KOTLIN_API"
 private const val JAVA_API_DIRECTIVE = "ADD_JAVA_API"
+private const val JUNIT_ANNOTATIONS_DIRECTIVE = "ADD_JUNIT_TEST_ANNOTATIONS"
 private const val PREPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_PREPROCESSOR_EXTENSIONS"
 private const val POSTPROCESSOR_EXTENSIONS_DIRECTIVE = "INCLUDE_J2K_POSTPROCESSOR_EXTENSIONS"
 
@@ -117,6 +118,7 @@ abstract class AbstractJavaToKotlinConverterSingleFileTest : AbstractJavaToKotli
         if (directives.contains(JPA_ANNOTATIONS_DIRECTIVE)) addJpaColumnAnnotations()
         if (directives.contains(KOTLIN_API_DIRECTIVE)) addFile("KotlinApi.kt", "kotlinApi")
         if (directives.contains(JAVA_API_DIRECTIVE)) addFile("JavaApi.java", "javaApi")
+        if (directives.contains(JUNIT_ANNOTATIONS_DIRECTIVE)) addJunitTestAnnotations()
     }
 
     private fun addExternalFiles(javaFile: File) {
