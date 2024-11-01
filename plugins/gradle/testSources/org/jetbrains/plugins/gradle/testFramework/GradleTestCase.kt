@@ -5,6 +5,8 @@ package org.jetbrains.plugins.gradle.testFramework
 
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.writeAction
+import com.intellij.openapi.components.service
+import com.intellij.openapi.externalSystem.settings.ProjectBuildClasspathManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
@@ -18,7 +20,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.plugins.gradle.frameworkSupport.buildscript.GradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.frameworkSupport.settingsScript.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.settings.TestRunner
 import org.jetbrains.plugins.gradle.testFramework.util.ModuleInfo
@@ -67,7 +68,7 @@ abstract class GradleTestCase : GradleBaseTestCase() {
   open fun assertProjectState(project: Project, vararg projectsInfo: ProjectInfo) {
     assertNotificationIsVisible(project, false)
     assertProjectStructure(project, *projectsInfo)
-    assertDefaultProjectLocalSettings(project)
+    assertProjectClasspathSaved(project)
     for (projectInfo in projectsInfo) {
       assertDefaultProjectSettings(project, projectInfo)
     }
@@ -84,9 +85,9 @@ abstract class GradleTestCase : GradleBaseTestCase() {
     )
   }
 
-  fun assertDefaultProjectLocalSettings(project: Project) {
-    val localSettings = GradleLocalSettings.getInstance(project)
-    Assertions.assertFalse(localSettings.projectBuildClasspath.isEmpty()) {
+  fun assertProjectClasspathSaved(project: Project) {
+    val cp = project.service<ProjectBuildClasspathManager>()
+    Assertions.assertFalse(cp.getProjectBuildClasspath().isEmpty()) {
       "Assert classpath entity is saved to the workspace model"
     }
   }
