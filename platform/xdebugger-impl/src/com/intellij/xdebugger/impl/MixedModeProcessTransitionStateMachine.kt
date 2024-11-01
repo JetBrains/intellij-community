@@ -26,6 +26,8 @@ class MixedModeProcessTransitionStateMachine(
   object OnlyLowStopped : State
   object WaitForHighProcessPositionReachLowProcessResumedExceptEventThread : State
   class BothStopped(val low: XSuspendContext, val high: XSuspendContext) : State
+  class ManagedStepStarted(val low: XSuspendContext) : State
+  class HighLevelDebuggerResumedForStepOnlyLowStopped(val low: XSuspendContext) : State
 
   interface Event
   object StopRequested : Event
@@ -36,6 +38,7 @@ class MixedModeProcessTransitionStateMachine(
   object HighRun : Event
   object LowRun : Event
   class HighStop(val highSuspendContext: XSuspendContext?) : Event
+  class HighLevelDebuggerStepOverRequested(val highSuspendContext: XSuspendContext) : Event
 
   private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Mixed mode state machine", 1)
 
@@ -114,6 +117,10 @@ class MixedModeProcessTransitionStateMachine(
             state = HighStoppedWaitingForLowProcessToStop(event.suspendContext)
             //.await().also { logger.info("Low level process has been stopped") }
           }
+          is HighLevelDebuggerResumedForStepOnlyLowStopped -> {
+            (low as XMixedModeLowLevelDebugProcess).suspendAllExceptServiceThreads()
+            state = BothStopped(currentState.low, event.suspendContext)
+          }
           else -> throwTransitionIsNotImplemented(event)
         }
       }
@@ -127,7 +134,7 @@ class MixedModeProcessTransitionStateMachine(
           }
           is BothRunning -> {
             withContext(Dispatchers.EDT) {
-              (low as XMixedModeLowLevelDebugProcess).resumeAllExceptEventThread()
+              (low as XMixedModeLowLevelDebugProcess).continueAllThreads(exceptEventThread = true)
 
               high.pauseMixedModeSession()
 
@@ -170,6 +177,25 @@ class MixedModeProcessTransitionStateMachine(
           else -> throwTransitionIsNotImplemented(event)
         }
       }
+
+      is HighLevelDebuggerStepOverRequested -> {
+        when (currentState) {
+          is BothStopped -> {
+            (low as XMixedModeLowLevelDebugProcess).continueAllThreads(exceptEventThread = false)
+            (high as XDebugProcess).startStepOver(event.highSuspendContext)
+            state = ManagedStepStarted(currentState.low)
+
+          }
+        }
+      }
+
+      is HighRun -> {
+        when (currentState) {
+          is ManagedStepStarted -> {
+            state = HighLevelDebuggerResumedForStepOnlyLowStopped(currentState.low)
+          }
+        }
+      }
     }
   }
 
@@ -201,7 +227,7 @@ class MixedModeProcessTransitionStateMachine(
 
   fun get(): State = state
 
-  fun throwTransitionIsNotImplemented(event : Event) {
+  fun throwTransitionIsNotImplemented(event: Event) {
     TODO("Transition from ${get()} by event $event is not implemented");
   }
 }

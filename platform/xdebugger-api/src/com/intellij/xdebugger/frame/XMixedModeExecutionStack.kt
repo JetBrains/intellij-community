@@ -9,7 +9,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.time.measureTimedValue
 
-private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeSuspendContext>()
+private val logger = com.intellij.openapi.diagnostic.logger<XMixedModeExecutionStack>()
 
 class XMixedModeExecutionStack(
   val session: XDebugSession,

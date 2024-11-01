@@ -10,21 +10,12 @@ import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothRu
 import com.intellij.xdebugger.impl.MixedModeProcessTransitionStateMachine.BothStopped
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.future.asCompletableFuture
 import kotlinx.coroutines.future.future
 import kotlinx.coroutines.launch
-import kotlinx.serialization.builtins.PairSerializer
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.Future
-import java.util.function.Consumer
 import kotlin.jvm.javaClass
 
 private val logger = com.intellij.openapi.diagnostic.logger<XDebugProcessDebuggeeInForeground>()
-
-interface XMixedModeDebugProcess {
-  fun pauseMixedModeSession(): Future<Void>
-  suspend fun resumeAndWait(): Boolean
-}
 
 abstract class XDebugSessionMixedModeExtension(
   private val coroutineScope: CoroutineScope,
@@ -76,8 +67,9 @@ abstract class XDebugSessionMixedModeExtension(
     if (isLowSuspendContext(suspendContext)) {
       this.low.startStepOver(suspendContext)
     }
-    else
-      TODO("not yet supported")
+    else {
+      this.stateMachine.set(MixedModeProcessTransitionStateMachine.HighLevelDebuggerStepOverRequested(suspendContext))
+    }
   }
 
   fun stepOut(suspendContext: XSuspendContext) {
