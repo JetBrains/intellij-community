@@ -81,7 +81,7 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K2) {
     generateK2CodeInsightTests()
     generateK2NavigationTests()
     generateK2DebuggerTests()
-    generateK2ComposeDebuggerTests()
+    generateK2DebuggerTestsWithCompilerPlugins()
     generateK2HighlighterTests()
     generateK2GradleBuildScriptHighlighterTests()
     generateK2RefactoringsTests()

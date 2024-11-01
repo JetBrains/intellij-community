@@ -1191,6 +1191,7 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/sequence/kotlin.jvm-debugger.sequence.k1.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/sequence/kotlin.jvm-debugger.sequence.k1.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/kotlin.jvm-debugger.test.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/compose/kotlin.jvm-debugger.test.compose.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/compose/kotlin.jvm-debugger.test.compose.k2.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/parcelize/kotlin.jvm-debugger.test.parcelize.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/parcelize/kotlin.jvm-debugger.test.parcelize.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/kotlin.jvm-debugger.test.k2.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-debugger/test/k2/kotlin.jvm-debugger.test.k2.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" filepath="$PROJECT_DIR$/plugins/kotlin/jvm-decompiler/kotlin.jvm-decompiler.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" filepath="$PROJECT_DIR$/plugins/kotlin/kotlin.lombok.tests/kotlin.k2.lombok.tests.iml" />

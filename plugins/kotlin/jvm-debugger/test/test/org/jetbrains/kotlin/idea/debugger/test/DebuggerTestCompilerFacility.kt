@@ -193,6 +193,8 @@ open class DebuggerTestCompilerFacility(
         ).compile()
     }
 
+    fun getCompilerPlugins(): List<String> = compilerPlugins
+
     protected open fun getCompileOptionsForMainSources(jvmSrcDir: File, commonSrcDir: File): List<String> {
         return getCompilerOptionsCommonForLibAndSource()
     }
