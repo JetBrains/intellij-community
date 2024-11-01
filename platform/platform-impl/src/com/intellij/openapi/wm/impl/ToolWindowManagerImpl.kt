@@ -222,8 +222,13 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
 
           toolWindowManager.revalidateStripeButtons()
 
-          val toolWindowId = getToolWindowIdForComponent(event.component) ?: return
-          hideIfAutoHideToolWindowLostFocus(toolWindowManager, toolWindowId, event.oppositeComponent)
+          if (Registry.`is`("auto.hide.all.tool.windows.on.focus.change", false)) {
+            hideAllUnfocusedAutoHideToolWindows(toolWindowManager, event.oppositeComponent)
+          }
+          else {
+            val toolWindowId = getToolWindowIdForComponent(event.component) ?: return
+            hideIfAutoHideToolWindowLostFocus(toolWindowManager, toolWindowId, event.oppositeComponent)
+          }
 
         }
         else if (event.id == FocusEvent.FOCUS_GAINED) {
@@ -235,6 +240,12 @@ open class ToolWindowManagerImpl @NonInjectable @TestOnly internal constructor(
               }
             }
           }
+        }
+      }
+
+      private fun hideAllUnfocusedAutoHideToolWindows(toolWindowManager: ToolWindowManagerImpl, focusedComponent: Component) {
+        for (id in toolWindowManager.idToEntry.keys) {
+          hideIfAutoHideToolWindowLostFocus(toolWindowManager, id, focusedComponent)
         }
       }
 
