@@ -170,10 +170,7 @@ public final class PyCallExpressionHelper {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
 
     final var results = forEveryScopeTakeOverloadsOtherwiseImplementations(
-      // Remove the artificial latest overloads from results so as not to spoil their original order
-      ContainerUtil.filter(subscription.getReference(resolveContext).multiResolve(false), result ->
-        !(result instanceof RatedResolveResult rrr) || rrr.getRate() != RatedResolveResult.RATE_LIFTED_PY_FILE_OVERLOAD
-      ),
+      List.of(subscription.getReference(resolveContext).multiResolve(false)),
       context
     );
 
