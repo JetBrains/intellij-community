@@ -5,13 +5,17 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.idea.compose.k2.test.K2ComposeTestProperties.COMPOSE_RUNTIME_MAVEN_COORDINATES
 import org.jetbrains.kotlin.idea.debugger.test.DebuggerTestCompilerFacility
-import org.jetbrains.kotlin.idea.debugger.test.KotlinDescriptorTestCaseWithStepping
 import org.jetbrains.kotlin.idea.debugger.test.TestCompileConfiguration
 import org.jetbrains.kotlin.idea.debugger.test.TestFiles
-import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
+import org.jetbrains.kotlin.idea.k2.debugger.test.cases.AbstractK2IdeK2CodeKotlinEvaluateExpressionTest
 
-abstract class AbstractK2ComposeSteppingTest : KotlinDescriptorTestCaseWithStepping() {
-
+/**
+ * This test checks whether K2 CodeGen API uses `IrGenerationExtension`s of compose compiler plugins loading by IDE or not.
+ * For example, if K2 CodeGen API internally loads `IrGenerationExtension`s from project extension area, the compiler plugins
+ * loaded by `KotlinCompilerPluginsProvider` on IDE will not be used by K2 CodeGen API. In that case, this test must have
+ * failures.
+ */
+abstract class AbstractK2ComposeDebuggerEvaluationTest : AbstractK2IdeK2CodeKotlinEvaluateExpressionTest() {
     override fun createDebuggerTestCompilerFacility(
         testFiles: TestFiles,
         jvmTarget: JvmTarget,
@@ -26,12 +30,4 @@ abstract class AbstractK2ComposeSteppingTest : KotlinDescriptorTestCaseWithStepp
     }
 
     override fun jarRepositories(): List<RemoteRepositoryDescription> = jarRepositoriesForCompose()
-
-    override fun doMultiFileTest(files: TestFiles, preferences: DebuggerPreferences) {
-        repeat(countBreakpointsNumber(files.wholeFile)) {
-            doOnBreakpoint {
-                resume(this)
-            }
-        }
-    }
 }

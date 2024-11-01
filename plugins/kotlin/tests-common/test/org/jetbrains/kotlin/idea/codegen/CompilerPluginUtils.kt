@@ -1,26 +1,14 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.compose.k2.test
+package org.jetbrains.kotlin.idea.codegen
 
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.application.PathManager
 import com.intellij.project.IntelliJProjectConfiguration
-import org.jetbrains.jps.model.JpsSimpleElement
+import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsLibraryCollection
-import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
-import org.jetbrains.jps.model.library.JpsTypedLibrary
 import java.io.File
-import java.nio.file.Path
-
-/**
- * We're looking up the 'compose compiler' from the IntelliJ dependencies provided by kotlinc
- */
-val composeCompilerJars: List<Path> by lazy {
-    intelliJProjectConfiguration.libraryCollection.getLibrary("kotlinc.compose-compiler-plugin").getFiles(JpsOrderRootType.COMPILED)
-        .ifEmpty { error("Missing compose compiler plugin binaries") }
-        .map(File::toPath)
-}
 
 /**
  * The 'google()' maven repository as seen in
@@ -39,11 +27,19 @@ val googleMavenRepository = RemoteRepositoryDescription(
     "https://cache-redirector.jetbrains.com/dl.google.com.android.maven2"
 )
 
+/**
+ * This function looks up the [compilerPlugin] from the IntelliJ dependencies provided by kotlinc.
+ */
+fun findCompilerPluginJars(compilerPlugin: String) =
+    intelliJProjectConfiguration.libraryCollection.getLibrary(compilerPlugin).getFiles(JpsOrderRootType.COMPILED)
+        .ifEmpty { error("Missing compose compiler plugin binaries") }.map(File::toPath)
+
 private val intelliJProjectConfiguration by lazy {
     IntelliJProjectConfiguration.loadIntelliJProject(PathManager.getHomePath())
 }
 
-private fun JpsLibraryCollection.getLibrary(name: String): JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
+private fun JpsLibraryCollection.getLibrary(name: String): JpsLibrary {
     return findLibrary(name, JpsRepositoryLibraryType.INSTANCE)
+        ?: getLibraries().firstOrNull { it.name.contains(name) }
         ?: error("Could not find '$name' library")
 }
