@@ -3329,8 +3329,9 @@ a:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction
 - p:<init>(Z):V
 - getActionUpdateThread():com.intellij.openapi.actionSystem.ActionUpdateThread
 - getChildren(com.intellij.openapi.actionSystem.AnActionEvent):com.intellij.openapi.actionSystem.AnAction[]
+- s:hasLocalBrowser():Z
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
-f:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction
+c:com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction$OpenInBrowserEditorContextBarGroupAction
 - com.intellij.ide.browsers.actions.OpenInBrowserBaseGroupAction
 - <init>():V
 - update(com.intellij.openapi.actionSystem.AnActionEvent):V
