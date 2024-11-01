@@ -12,7 +12,7 @@ interface EelPathError {
   val reason: String
 }
 
-class EelPathException(override val raw: String, override val reason: String) : Exception("`$raw`: $reason"), EelPathError
+class EelPathException(override val raw: String, override val reason: String) : RuntimeException("`$raw`: $reason"), EelPathError
 
 /**
  * This interface deliberately mimics API of [java.nio.file.Path].

@@ -1,11 +1,17 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.platform.eel
 
+import com.intellij.platform.eel.path.EelPath
+
 sealed interface EelPlatform {
-  sealed interface Posix : EelPlatform
+  sealed interface Posix : EelPlatform {
+    override fun pathOs(): EelPath.Absolute.OS = EelPath.Absolute.OS.UNIX
+  }
   sealed interface Linux : Posix
   sealed interface Darwin : Posix
-  sealed interface Windows : EelPlatform
+  sealed interface Windows : EelPlatform {
+    override fun pathOs(): EelPath.Absolute.OS = EelPath.Absolute.OS.WINDOWS
+  }
 
   data object Arm64Darwin : Darwin
   data object Aarch64Linux : Linux
@@ -35,4 +41,6 @@ sealed interface EelPlatform {
         else -> null
       }
   }
+
+  fun pathOs(): EelPath.Absolute.OS
 }
