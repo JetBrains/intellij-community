@@ -9,12 +9,9 @@ import com.intellij.platform.eel.fs.EelFsError
 import com.intellij.platform.eel.fs.EelOpenedFile
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.util.text.nullize
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import java.io.IOException
 import java.nio.file.*
-import kotlin.coroutines.Continuation
-import kotlin.coroutines.CoroutineContext
-import kotlin.coroutines.startCoroutine
 
 @Throws(FileSystemException::class)
 internal fun <T, E : EelFsError> EelResult<T, E>.getOrThrowFileSystemException(): T =
@@ -57,51 +54,20 @@ internal fun Path.toEelPath(): EelPath =
     else -> EelPath.Relative.parse(toString())
   }
 
-internal fun <T> fsBlocking(body: suspend () -> T): T = invokeSuspending(body)
-
 /**
- * Runs a suspending IO operation [block] in non-suspending code.
- * Normally, [kotlinx.coroutines.runBlocking] should be used in such cases,
- * but it has significant performance overhead: creation and installation of an [kotlinx.coroutines.EventLoop].
+ * We need to use a plain `runBlocking` here.
+ * The IO call is supposed to be fast (several milliseconds in the worst case),
+ * so the cost of spawning and destroying an additional thread in Dispatchers.Default would be too big.
+ * Also, IJent does not require any outer lock in its implementation, so a deadlock is not possible.
  *
- * Unfortunately, the execution of [block] may still launch coroutines, although they are very primitive.
- * To mitigate this, we use [Dispatchers.Unconfined] as an elementary event loop.
- * It does not change the final thread of execution,
- * as we are waiting for a monitor on the same thread where [invokeSuspending] was called.
- *
- * We manage to save up to 30% (300 microseconds) of performance cost in comparison with [kotlinx.coroutines.runBlocking],
- * which is important in case of many short IO operations.
- *
- * The invoked operation is non-cancellable, as one can expect from regular native-based IO calls.
- *
- * @see com.intellij.openapi.application.impl.runSuspend
+ * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
  */
-private fun <T> invokeSuspending(block: suspend () -> T): T {
-  val run = RunSuspend<T>()
-  block.startCoroutine(run)
-  return run.await()
+@Suppress("SSBasedInspection")
+internal fun <T> fsBlocking(body: suspend () -> T): T = runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
+  body()
 }
 
-private class RunSuspend<T> : Continuation<T> {
-  override val context: CoroutineContext = Dispatchers.Unconfined
-
-  var result: Result<T>? = null
-
-  override fun resumeWith(result: Result<T>) = synchronized(this) {
-    this.result = result
-    @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).notifyAll()
-  }
-
-  fun await(): T {
-    synchronized(this) {
-      while (true) {
-        when (val result = this.result) {
-          null -> @Suppress("PLATFORM_CLASS_MAPPED_TO_KOTLIN") (this as Object).wait()
-          else -> {
-            return result.getOrThrow() // throw up failure
-          }
-        }
-      }
-    }
-  }
+@Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")
+private class NestedBlockingEventLoop(override val thread: Thread) : kotlinx.coroutines.EventLoopImplBase() {
+  override fun shouldBeProcessedFromContext(): Boolean = true
 }
