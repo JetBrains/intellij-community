@@ -13,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.path.exists
 import kotlin.text.RegexOption.IGNORE_CASE
 import kotlin.text.RegexOption.MULTILINE
@@ -118,6 +119,9 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       return scanAll(folders, true)
     }
     catch (ie: InterruptedException) {
+      return emptySet()
+    }
+    catch (e: CancellationException) {
       return emptySet()
     }
     catch (e: Exception) {

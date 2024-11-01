@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.CancellationException;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -250,6 +251,9 @@ public class JavaHomeFinderBasic {
       //noinspection UnnecessaryLocalVariable
       var homes = listJavaHomeDirsInstalledBySdkMan(javasDir);
       return homes;
+    }
+    catch (CancellationException e) {
+      throw e;
     }
     catch (Exception e) {
       log.warn("Unexpected exception while looking for Sdkman directory: " + e.getClass().getSimpleName() + ": " + e.getMessage(), e);
