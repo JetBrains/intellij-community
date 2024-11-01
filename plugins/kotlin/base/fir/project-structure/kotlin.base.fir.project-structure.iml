@@ -50,5 +50,6 @@
     <orderEntry type="module" module-name="intellij.gradle.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.scripting" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
   </component>
 </module>

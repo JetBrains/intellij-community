@@ -1,5 +1,5 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.kotlin.idea.base.fir.analysisApiPlatform.modules
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.kotlin.idea.base.fir.projectStructure
 
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.components.service
@@ -12,11 +12,18 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.testFramework.*
-import com.intellij.util.CommonProcessors.FindProcessor
+import com.intellij.testFramework.ExtensionTestUtil
+import com.intellij.testFramework.IdeaTestUtil
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.requireIs
+import com.intellij.util.CommonProcessors
 import com.intellij.util.io.DirectoryContentSpec
 import com.intellij.util.io.directoryContent
 import com.intellij.util.io.generateInVirtualTempDir
@@ -32,7 +39,13 @@ import org.jetbrains.kotlin.analysis.api.projectStructure.KaSourceModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.base.plugin.KotlinPluginMode
 import org.jetbrains.kotlin.idea.base.plugin.artifacts.TestKotlinArtifacts
-import org.jetbrains.kotlin.idea.base.projectStructure.*
+import org.jetbrains.kotlin.idea.base.projectStructure.ProjectStructureInsightsProvider
+import org.jetbrains.kotlin.idea.base.projectStructure.RootKindFilter
+import org.jetbrains.kotlin.idea.base.projectStructure.getKaModuleOfTypeSafe
+import org.jetbrains.kotlin.idea.base.projectStructure.matches
+import org.jetbrains.kotlin.idea.base.projectStructure.openapiSdk
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaLibraryModules
+import org.jetbrains.kotlin.idea.base.projectStructure.toKaSourceModuleForProduction
 import org.jetbrains.kotlin.idea.base.util.K1ModeProjectStructureApi
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
@@ -43,7 +56,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.util.jarRoot
 import org.jetbrains.kotlin.test.util.moduleLibrary
 import org.jetbrains.kotlin.test.util.projectLibrary
-import org.junit.Assert.assertNotEquals
+import org.junit.Assert
 import java.io.File
 
 class KotlinProjectStructureTest : AbstractMultiModuleTest() {
@@ -60,7 +73,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val testProjectStructureInsightsProvider = object : ProjectStructureInsightsProvider {
             override fun isInSpecialSrcDirectory(psiElement: PsiElement): Boolean {
-                if (!RootKindFilter.projectSources.matches(psiElement)) return false
+                if (!RootKindFilter.Companion.projectSources.matches(psiElement)) return false
                 val containingFile = psiElement.containingFile as? KtFile ?: return false
                 val virtualFile = containingFile.virtualFile
                 val index = ProjectFileIndex.getInstance(psiElement.project)
@@ -70,10 +83,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         }
 
         ExtensionTestUtil.maskExtensions(
-            ProjectStructureInsightsProvider.EP_NAME,
-            ProjectStructureInsightsProvider.EP_NAME.extensionList +
-                    listOf(testProjectStructureInsightsProvider),
-            testRootDisposable
+          ProjectStructureInsightsProvider.Companion.EP_NAME,
+          ProjectStructureInsightsProvider.Companion.EP_NAME.extensionList +
+          listOf(testProjectStructureInsightsProvider),
+          testRootDisposable
         )
     }
 
@@ -81,26 +94,26 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleWithLibrary = createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("A.kt", "class A")
-                }
+              dir("one") {
+                file("A.kt", "class A")
+              }
             }
         )
 
         val libraryName = "lib"
         moduleLibrary(
-            moduleWithLibrary,
-            libraryName = libraryName,
-            classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
-            sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
+          moduleWithLibrary,
+          libraryName = libraryName,
+          classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
+          sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
         )
 
         createModule(
             moduleName = "b",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("Main.kt", "class Main")
-                }
+              dir("one") {
+                file("Main.kt", "class Main")
+              }
             }
         )
 
@@ -127,9 +140,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleA = createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("A.kt", "class A")
-                }
+              dir("one") {
+                file("A.kt", "class A")
+              }
             }
         )
 
@@ -138,9 +151,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleB = createModule(
             moduleName = "b",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("B.kt", "class B")
-                }
+              dir("one") {
+                file("B.kt", "class B")
+              }
             }
         )
 
@@ -164,28 +177,28 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleA = createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    dir("two") {
-                        file("Main.kt", "class Main")
-                    }
+              dir("one") {
+                dir("two") {
+                  file("Main.kt", "class Main")
                 }
+              }
             }
         )
 
         val libraryName = "module_library"
         val library = moduleLibrary(
-            moduleA,
-            libraryName = libraryName,
-            classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
-            sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
+          moduleA,
+          libraryName = libraryName,
+          classesRoot = TestKotlinArtifacts.kotlinDaemon.jarRoot,
+          sourcesRoot = TestKotlinArtifacts.kotlinStdlibSources.jarRoot,
         )
 
         val kotlinReflectLibraryName = "kotlin reflect"
         val kotlinReflectLibrary = moduleLibrary(
-            moduleA,
-            libraryName = kotlinReflectLibraryName,
-            classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
-            sourcesRoot = TestKotlinArtifacts.kotlinReflectSources.jarRoot,
+          moduleA,
+          libraryName = kotlinReflectLibraryName,
+          classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
+          sourcesRoot = TestKotlinArtifacts.kotlinReflectSources.jarRoot,
         )
 
         val sourceFile = getFile("Main.kt")
@@ -222,9 +235,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleA = createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("A.kt", "class A")
-                }
+              dir("one") {
+                file("A.kt", "class A")
+              }
             }
         )
 
@@ -238,9 +251,9 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val moduleB = createModule(
             moduleName = "b",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    file("B.kt", "class B")
-                }
+              dir("one") {
+                file("B.kt", "class B")
+              }
             }
         )
 
@@ -255,10 +268,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
         val libraryCName = "module_library_c"
         moduleLibrary(
-            moduleA,
-            libraryName = libraryCName,
-            classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
-            sourcesRoot = sharedLibrarySourceContentRoot,
+          moduleA,
+          libraryName = libraryCName,
+          classesRoot = TestKotlinArtifacts.kotlinReflect.jarRoot,
+          sourcesRoot = sharedLibrarySourceContentRoot,
         )
 
         val sourceAFile = getFile("A.kt")
@@ -296,11 +309,11 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             libraryBModuleWithContext.libraryName,
         )
 
-        assertNotEquals(
-            "The library module must be from the corresponding module if a context passed",
-            libraryBModuleWithoutContext,
-            libraryBModuleWithContext,
-        )
+      Assert.assertNotEquals(
+        "The library module must be from the corresponding module if a context passed",
+        libraryBModuleWithoutContext,
+        libraryBModuleWithContext,
+      )
 
         assertTrue("The library module must be in dependencies", libraryBModuleWithContext in sourceBModule.directRegularDependencies)
 
@@ -324,30 +337,30 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         )
 
         val sharedLibrarySourceModuleWithBContext = kaModuleWithAssertion<KaLibrarySourceModule>(sharedLibrarySourceFile, sourceBModule)
-        assertNotEquals(
-            "The library source module must be from the corresponding module if a context passed",
-            sharedLibrarySourceModuleWithoutContext,
-            sharedLibrarySourceModuleWithBContext,
-        )
+      Assert.assertNotEquals(
+        "The library source module must be from the corresponding module if a context passed",
+        sharedLibrarySourceModuleWithoutContext,
+        sharedLibrarySourceModuleWithBContext,
+      )
 
         assertEquals(libraryBModuleWithContext.librarySources, sharedLibrarySourceModuleWithBContext)
     }
 
     fun `test source module`() {
         createModule(
-            moduleName = "a",
-            srcContentSpec = directoryContent {
-                dir("one") {
-                    dir("two") {
-                        file("Main.kt", "class Main")
-                    }
-                }
-            },
-            testContentSpec = directoryContent {
-                dir("three") {
-                    file("Test.kt", "class Test")
-                }
-            },
+          moduleName = "a",
+          srcContentSpec = directoryContent {
+            dir("one") {
+              dir("two") {
+                file("Main.kt", "class Main")
+              }
+            }
+          },
+          testContentSpec = directoryContent {
+            dir("three") {
+              file("Test.kt", "class Test")
+            }
+          },
         )
 
         assertKaModuleType<KaSourceModule>("Main.kt")
@@ -359,10 +372,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         val mockJdkA = IdeaTestUtil.getMockJdk17("module A JDK")
         val mockJdkB = IdeaTestUtil.getMockJdk17("module B JDK")
 
-        runWriteAction {
-            ProjectJdkTable.getInstance().addJdk(mockJdkA, testRootDisposable)
-            ProjectJdkTable.getInstance().addJdk(mockJdkB, testRootDisposable)
-        }
+      runWriteAction {
+        ProjectJdkTable.getInstance().addJdk(mockJdkA, testRootDisposable)
+        ProjectJdkTable.getInstance().addJdk(mockJdkB, testRootDisposable)
+      }
 
         val moduleA = createModule(moduleName = "a", srcContentSpec = directoryContent {})
         ModuleRootModificationUtil.modifyModel(moduleA) {
@@ -396,25 +409,25 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         createModule(
             moduleName = "buildSrc",
             srcContentSpec = directoryContent {
-                dir("main") {
-                    dir("kotlin") {
-                        file("utils.kt", "fun callMeFromKtsFile() {}")
-                    }
+              dir("main") {
+                dir("kotlin") {
+                  file("utils.kt", "fun callMeFromKtsFile() {}")
                 }
+              }
             }
         )
 
         createModule(
             moduleName = "utils",
             srcContentSpec = directoryContent {
-                file("build.gradle.kts", "callMeFromKtsFile()")
+              file("build.gradle.kts", "callMeFromKtsFile()")
             }
         )
 
         val dependency = getFile("utils.kt")
         val scriptFile = getFile("build.gradle.kts")
 
-        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
 
         assertKaModuleType<KaSourceModule>(dependency, kaModule(scriptFile))
     }
@@ -424,12 +437,12 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         createModule(
             moduleName = "buildSrc",
             srcContentSpec = directoryContent {
-                file("build.gradle.kts", "")
+              file("build.gradle.kts", "")
             }
         )
 
         val scriptFile = getFile("build.gradle.kts")
-        ScriptConfigurationManager.updateScriptDependenciesSynchronously(scriptFile)
+        ScriptConfigurationManager.Companion.updateScriptDependenciesSynchronously(scriptFile)
         assertKaModuleType<KaScriptModule>(scriptFile, kaModule(scriptFile))
     }
 
@@ -437,11 +450,11 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         createModule(
             moduleName = "a",
             srcContentSpec = directoryContent {
-                dir("one") {
-                    dir("two") {
-                        file("Main.kt", "class Main")
-                    }
+              dir("one") {
+                dir("two") {
+                  file("Main.kt", "class Main")
                 }
+              }
             }
         )
 
@@ -461,12 +474,12 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaNotUnderContentRootModule>(dummyFile)
 
         createModule(
-            moduleName = "m",
-            resourceContentSpec = directoryContent {
-                dir("wd") {
-                    file("resource.kt", "class B")
-                }
-            },
+          moduleName = "m",
+          resourceContentSpec = directoryContent {
+            dir("wd") {
+              file("resource.kt", "class B")
+            }
+          },
         )
 
         // KTIJ-26841: Should be KaNotUnderContentRootModule as well
@@ -494,12 +507,12 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
         assertKaModuleType<KaScriptModule>(dummyFile)
 
         createModule(
-            moduleName = "m",
-            resourceContentSpec = directoryContent {
-                dir("wd") {
-                    file("myScript.kts", "class B")
-                }
-            },
+          moduleName = "m",
+          resourceContentSpec = directoryContent {
+            dir("wd") {
+              file("myScript.kts", "class B")
+            }
+          },
         )
 
         assertKaModuleType<KaScriptModule>("myScript.kts")
@@ -507,21 +520,21 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
 
     fun `test element to library mapping consistency with contextual library module`() {
         val firstStdlibLibrary = projectLibrary(
-            "kotlin-stdlib-first",
-            TestKotlinArtifacts.kotlinStdlib.jarRoot,
-            TestKotlinArtifacts.kotlinStdlibSources.jarRoot
+          "kotlin-stdlib-first",
+          TestKotlinArtifacts.kotlinStdlib.jarRoot,
+          TestKotlinArtifacts.kotlinStdlibSources.jarRoot
         )
 
         val secondStdlibLibrary = projectLibrary(
-            "kotlin-stdlib-second",
-            TestKotlinArtifacts.kotlinStdlib.jarRoot,
-            TestKotlinArtifacts.kotlinStdlibSources.jarRoot
+          "kotlin-stdlib-second",
+          TestKotlinArtifacts.kotlinStdlib.jarRoot,
+          TestKotlinArtifacts.kotlinStdlibSources.jarRoot
         )
 
         val kotlinReflectLibrary = projectLibrary(
-            "kotlin-reflect",
-            TestKotlinArtifacts.kotlinReflect.jarRoot,
-            TestKotlinArtifacts.kotlinReflectSources.jarRoot
+          "kotlin-reflect",
+          TestKotlinArtifacts.kotlinReflect.jarRoot,
+          TestKotlinArtifacts.kotlinReflectSources.jarRoot
         )
 
         val firstModule = createModule("first").apply { addDependency(firstStdlibLibrary) }
@@ -541,7 +554,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             val kotlinDecompiledClass = javaLightClass.kotlinOrigin!!
             assert(kotlinDecompiledClass.containingKtFile.isCompiled)
 
-            val actualLibraryKtModule = KotlinProjectStructureProvider.getModule(
+            val actualLibraryKtModule = KotlinProjectStructureProvider.Companion.getModule(
                 project,
                 kotlinDecompiledClass,
                 useSiteModule = contextLibraryKtModule,
@@ -552,7 +565,7 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
             val kotlinSourceClass = service<KotlinDeclarationNavigationPolicy>().getNavigationElement(kotlinDecompiledClass)
             assertFalse(kotlinSourceClass.containingKtFile.isCompiled)
 
-            val actualLibrarySourceKtModule = KotlinProjectStructureProvider.getModule(
+            val actualLibrarySourceKtModule = KotlinProjectStructureProvider.Companion.getModule(
                 project,
                 kotlinSourceClass,
                 useSiteModule = contextLibrarySourceKtModule,
@@ -574,18 +587,18 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     private inline fun <reified T> assertKaModuleType(element: PsiElement, contextualModule: KaModule? = null) {
-        assertInstanceOf<T>(kaModule(element, contextualModule))
+      com.intellij.testFramework.assertInstanceOf<T>(kaModule(element, contextualModule))
     }
 
     private fun kaModule(
-        element: PsiElement,
-        contextualModule: KaModule? = null,
-    ): KaModule = KotlinProjectStructureProvider.getModule(project, element, useSiteModule = contextualModule)
+      element: PsiElement,
+      contextualModule: KaModule? = null,
+    ): KaModule = KotlinProjectStructureProvider.Companion.getModule(project, element, useSiteModule = contextualModule)
 
     private inline fun <reified T : KaModule> kaModuleWithAssertion(
-        element: PsiElement,
-        contextualModule: KaModule? = null
-    ): T = KotlinProjectStructureProvider.getModule(
+      element: PsiElement,
+      contextualModule: KaModule? = null
+    ): T = KotlinProjectStructureProvider.Companion.getModule(
         project,
         element,
         useSiteModule = contextualModule,
@@ -597,13 +610,13 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     private fun getFile(
-        name: String,
-        scope: GlobalSearchScope = GlobalSearchScope.everythingScope(project),
+      name: String,
+      scope: GlobalSearchScope = GlobalSearchScope.everythingScope(project),
     ): PsiFile = findFile(name, scope) ?: error("File $name is not found")
 
     private fun findFile(name: String, scope: GlobalSearchScope): PsiFile? {
         val fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(name)
-        val processor = object : FindProcessor<VirtualFile?>() {
+        val processor = object : CommonProcessors.FindProcessor<VirtualFile?>() {
             override fun accept(t: VirtualFile?): Boolean = t?.nameSequence == name
         }
 
@@ -612,10 +625,10 @@ class KotlinProjectStructureTest : AbstractMultiModuleTest() {
     }
 
     private fun createModule(
-        moduleName: String,
-        srcContentSpec: DirectoryContentSpec? = null,
-        testContentSpec: DirectoryContentSpec? = null,
-        resourceContentSpec: DirectoryContentSpec? = null,
+      moduleName: String,
+      srcContentSpec: DirectoryContentSpec? = null,
+      testContentSpec: DirectoryContentSpec? = null,
+      resourceContentSpec: DirectoryContentSpec? = null,
     ): Module {
         val module = createModule(moduleName)
         if (srcContentSpec != null) {
