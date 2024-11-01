@@ -606,5 +606,10 @@
     <extensionPoint name="projectTaskManagerListener" interface="com.intellij.task.impl.ProjectTaskManagerListenerExtensionPoint" dynamic="true" />
 
     <extensionPoint name="logLevelConfigurationListener" interface="com.intellij.diagnostic.logs.LogLevelConfigurationManager$Listener" dynamic="true"/>
+
+    <extensionPoint qualifiedName="com.intellij.ui.content.impl.toolWindowContentPostprocessor"
+                    interface="com.intellij.ui.content.impl.ToolWindowContentPostProcessor"
+                    dynamic="true"/>
+
   </extensionPoints>
 </idea-plugin>
