@@ -14,7 +14,6 @@ import java.awt.Rectangle
 fun Driver.hasFocus(c: Component) = utility(IJSwingUtilities::class).hasFocus(c)
 fun Driver.hasFocus(c: UiComponent) = hasFocus(c.component)
 
-
 fun Driver.requestFocusFromIde(project: Project?) {
   fileLogger().info("Requesting focus from IDE for project: $project")
   withContext(OnDispatcher.EDT) {
@@ -88,6 +87,8 @@ interface Registry {
 @Remote("com.intellij.openapi.util.registry.RegistryValue")
 interface RegistryValue {
   fun setValue(value: String)
+
+  fun setSelectedOption(option: String)
 }
 
 @Remote("org.assertj.swing.driver.CellRendererReader")
