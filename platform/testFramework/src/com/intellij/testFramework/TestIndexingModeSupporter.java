@@ -155,6 +155,8 @@ public interface TestIndexingModeSupporter {
   static void addTest(@NotNull Class<? extends TestIndexingModeSupporter> aClass,
                       @NotNull TestIndexingModeSupporter.IndexingModeTestHandler handler,
                       @NotNull TestSuite parentSuite) {
+    if (handler.getIndexingMode() == DUMB_EMPTY_INDEX &&
+        !Registry.is("ide.dumb.mode.check.awareness")) return;
     if (handler.shouldIgnore(aClass)) return;
     try {
       TestSuite suite = handler.createTestSuite();

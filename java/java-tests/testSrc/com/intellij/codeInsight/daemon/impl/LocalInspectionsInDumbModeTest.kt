@@ -170,9 +170,11 @@ class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
     """
     configureByText(JavaFileType.INSTANCE, text)
 
-    // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
-    val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
-    assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    if (Registry.`is`("ide.dumb.mode.check.awareness")) {
+      // dumb infos contain a redundant suppression because it's not removed as java suppressor does not work in dumb mode
+      val initialDumbInfos = doHighlightingInDumbMode().map { it.description }
+      assertDoesntContain(initialDumbInfos, "Redundant suppression")
+    }
 
     // smart infos contain a redundant suppression, because suppression is in fact redundant,
     // and redundant suppressor for Java works in smart mode

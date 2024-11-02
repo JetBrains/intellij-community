@@ -69,9 +69,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.util.Disposer;
@@ -1590,11 +1588,13 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
           return new EditorBoundHighlightingPass(editor, psiFile, false) {
             @Override
             public void doCollectInformation(@NotNull ProgressIndicator progress) {
+              if (DumbService.isDumb(myProject)) throw IndexNotReadyException.create();
               collected.add(SmartFac.this);
             }
 
             @Override
             public void doApplyInformationToEditor() {
+              if (DumbService.isDumb(myProject)) return;
               applied.add(SmartFac.this);
             }
           };
