@@ -16,6 +16,7 @@ class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
 
   val matchesFoundLabel = x { contains(byAccessibleName("matches in")) }
   val fileMaskCheckBox = checkBox { byAccessibleName("File mask:") }
+  val fileMaskComboBox = x { byType("com.intellij.openapi.ui.DialogPanel") }.comboBox()
   val filterSearchResultsActionButton = actionButton { byAccessibleName("Filter Search Results") }
   val pinWindowButton = actionButton { byAccessibleName("Pin Window") }
 
