@@ -5,8 +5,11 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.modcommand.ActionContext;
+import com.intellij.modcommand.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Predicates;
@@ -318,13 +321,19 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     return myWrapper.getModifiedArgument((PsiExpression)expression, myType);
   }
 
-  private static class MyMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
+  private static class MyMethodArgumentFix extends MethodArgumentFix {
 
     MyMethodArgumentFix(@NotNull PsiExpressionList list,
                         int i,
                         @NotNull PsiType toType,
                         @NotNull AbstractWrapper fixerActionFactory) {
       super(list, i, toType, fixerActionFactory);
+    }
+
+    @Override
+    protected @Nullable Presentation getPresentation(@NotNull ActionContext context, @NotNull PsiExpressionList list) {
+      Presentation presentation = super.getPresentation(context, list);
+      return presentation != null ? presentation.withPriority(PriorityAction.Priority.HIGH) : null;
     }
 
     @Nls
