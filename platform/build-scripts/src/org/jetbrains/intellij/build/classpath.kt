@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build
 import com.intellij.platform.util.putMoreLikelyPluginJarsFirst
 import com.intellij.util.lang.HashMapZipFile
 import io.opentelemetry.api.common.AttributeKey
+import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
@@ -111,6 +112,7 @@ fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path): Map<Path, 
   return sourceToNames
 }
 
+@VisibleForTesting
 fun reorderJar(jarFile: Path, orderedNames: List<String>) {
   val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
   orderedNameToIndex.defaultReturnValue(-1)
@@ -118,15 +120,21 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
     orderedNameToIndex.put(orderedName, index)
   }
 
-  val packageIndexBuilder = PackageIndexBuilder()
-  return transformZipUsingTempFile(jarFile, packageIndexBuilder.indexWriter) { zipCreator ->
-    HashMapZipFile.load(jarFile).use { sourceZip ->
+  val sourceZipFile = HashMapZipFile.loadIfNotEmpty(jarFile)
+  if (sourceZipFile == null) {
+    Span.current().addEvent("skip - file is empty")
+    return
+  }
+
+  sourceZipFile.use { sourceZip ->
+    val packageIndexBuilder = PackageIndexBuilder()
+    return transformZipUsingTempFile(jarFile, packageIndexBuilder.indexWriter) { zipCreator ->
       val entries = sourceZip.entries.filterTo(mutableListOf()) { !it.isDirectory && it.name != INDEX_FILENAME }
       // ignore the existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
-      entries.sortWith(Comparator { o1, o2 ->
+      entries.sortWith { o1, o2 ->
         val o2p = o2.name
         if ("META-INF/plugin.xml" == o2p) {
-          return@Comparator Int.MAX_VALUE
+          return@sortWith Int.MAX_VALUE
         }
 
         val o1p = o1.name
@@ -143,7 +151,7 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>) {
             if (i2 == -1) -1 else (i1 - i2)
           }
         }
-      })
+      }
 
       for (entry in entries) {
         packageIndexBuilder.addFile(entry.name)
