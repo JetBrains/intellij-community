@@ -16,6 +16,7 @@ class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
 
   val matchesFoundLabel = x { contains(byAccessibleName("matches in")) }
   val fileMaskCheckBox = checkBox { byAccessibleName("File mask:") }
+  val filterSearchResultsActionButton = actionButton { byAccessibleName("Filter Search Results") }
   val pinWindowButton = actionButton { byAccessibleName("Pin Window") }
 
   val searchTextField: JTextFieldUI = textField { and(byType(JTextComponent::class.java), byAccessibleName("Search")) }
