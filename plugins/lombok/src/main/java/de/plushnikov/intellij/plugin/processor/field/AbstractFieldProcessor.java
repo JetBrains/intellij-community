@@ -113,7 +113,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                         @NotNull ProblemSink problemSink,
                                         @NotNull String parameterName) {
     if (problemSink.deepValidation()) {
-      final @NotNull List<PsiAnnotation> copyableAnnotations = LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField);
+      final @NotNull List<PsiAnnotation> copyableAnnotations =
+        LombokCopyableAnnotations.BASE_COPYABLE.collectCopyableAnnotations(psiField, psiField.getContainingClass());
 
       if (!copyableAnnotations.isEmpty()) {
         final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
@@ -179,8 +180,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   private static boolean checkLombokParameterCount(MethodSignatureBackedByPsiMethod m, int paramCount) {
     final int methodParameterCount = m.getParameterTypes().length;
     if (methodParameterCount != paramCount) {
-      if(methodParameterCount > 0) {
-        if(m.getMethod().getParameterList().getParameters()[methodParameterCount - 1].isVarArgs()) {
+      if (methodParameterCount > 0) {
+        if (m.getMethod().getParameterList().getParameters()[methodParameterCount - 1].isVarArgs()) {
           return paramCount < (methodParameterCount - 1);
         }
       }
