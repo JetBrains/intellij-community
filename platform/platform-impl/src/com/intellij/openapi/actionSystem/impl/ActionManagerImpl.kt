@@ -408,7 +408,12 @@ open class ActionManagerImpl protected constructor(private val coroutineScope: C
   }
 
   final override fun getAction(id: String): AnAction? {
-    val action = getAction(id = id, canReturnStub = false, actionRegistrar = actionPostInitRegistrar)
+    val action = getAction(
+      id = id,
+      canReturnStub = false,
+      actionRegistrar = actionPostInitRegistrar,
+      actionSupplier = { getAction(it) }
+    )
     if (action == null && SystemProperties.getBooleanProperty("action.manager.log.available.actions.if.not.found", false)) {
       val availableActionIds = actionPostInitRegistrar.getActionIdList("")
       LOG.info("Action $id is not found. Available actions: $availableActionIds")
@@ -2178,14 +2183,19 @@ private fun registerAction(actionId: String,
   actionRegistrar.actionRegistered(actionId, action)
 }
 
-private fun getAction(id: String, canReturnStub: Boolean, actionRegistrar: ActionRegistrar): AnAction? {
+private fun getAction(
+  id: String,
+  canReturnStub: Boolean,
+  actionRegistrar: ActionRegistrar,
+  actionSupplier: (String) -> AnAction? = { actionRegistrar.getAction(it) },
+): AnAction? {
   var action = actionRegistrar.getAction(id)
   if (canReturnStub || action !is ActionStubBase) {
     return action
   }
 
   val converted = if (action is ActionStub) {
-    convertStub(action, actionSupplier = { actionRegistrar.getAction(it) })
+    convertStub(stub = action, actionSupplier = actionSupplier)
   }
   else {
     convertGroupStub(stub = action as ActionGroupStub, actionRegistrar = actionRegistrar)
