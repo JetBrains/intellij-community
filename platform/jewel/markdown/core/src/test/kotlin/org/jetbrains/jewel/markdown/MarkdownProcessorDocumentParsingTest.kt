@@ -7310,7 +7310,7 @@ class MarkdownProcessorDocumentParsingTest {
          * </ul>
          */
         parsed.assertEquals(
-            unorderedList(listItem(paragraph("a")), listItem(fencedCodeBlock("b")), listItem(paragraph("c")))
+            unorderedList(listItem(paragraph("a")), listItem(fencedCodeBlock("b\n\n")), listItem(paragraph("c")))
         )
     }
 
