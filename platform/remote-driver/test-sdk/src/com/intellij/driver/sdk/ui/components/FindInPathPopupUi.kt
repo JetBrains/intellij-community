@@ -69,6 +69,10 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     init {
       replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
     }
+
+    fun rightClickItemAtRow(row: Int) {
+      rightClickCell(row, 0)
+    }
   }
 }
 
