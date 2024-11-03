@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.openapi.util.SystemInfoRt
 import java.awt.Window
+import javax.swing.JButton
 import javax.swing.JTable
 import javax.swing.text.JTextComponent
 
@@ -11,7 +12,12 @@ fun IdeaFrameUI.findInPathPopup(block: FindInPathPopupUi.() -> Unit = {}) =
     componentWithChild(byType(Window::class.java), byType("com.intellij.find.impl.FindPopupPanel"))
   }.apply(block)
 
-class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
+fun IdeaFrameUI.replaceInPathPopup(block: ReplaceInPathPopupUi.() -> Unit = {}) =
+  x(ReplaceInPathPopupUi::class.java) {
+    componentWithChild(byType(Window::class.java), byAccessibleName("Replace"))
+  }.apply(block)
+
+open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
   private val searchTextArea = x { componentWithChild(byType("com.intellij.find.SearchTextArea"), byAccessibleName("Search")) }
 
   val matchesFoundLabel = x { contains(byAccessibleName("matches in")) }
@@ -64,4 +70,11 @@ class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
       replaceCellRendererReader(driver.new(AccessibleNameCellRendererReader::class))
     }
   }
+}
+
+class ReplaceInPathPopupUi(data: ComponentData): FindInPathPopupUi(data) {
+  val replaceTextField: JTextFieldUI = textField { and(byType(JTextComponent::class.java), byAccessibleName("Replace")) }
+  val preserveCaseActionButton = actionButton { byAccessibleName("Preserve case") }
+
+  val replaceButton = button { and(byType(JButton::class.java), byAccessibleName("Replace")) }
 }
