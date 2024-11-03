@@ -1,6 +1,7 @@
-package de.plushnikov.intellij.plugin.action.lombok;
+package de.plushnikov.intellij.plugin.handler;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import de.plushnikov.intellij.plugin.LombokClassNames;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,11 @@ public class LombokDataHandler extends BaseLombokHandler {
     removeDefaultAnnotation(psiClass, LombokClassNames.SETTER);
     removeDefaultAnnotation(psiClass, LombokClassNames.TO_STRING);
     removeDefaultAnnotation(psiClass, LombokClassNames.EQUALS_AND_HASHCODE);
+
     addAnnotation(psiClass, LombokClassNames.DATA);
+
+    final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(psiClass.getProject());
+    javaCodeStyleManager.optimizeImports(psiClass.getContainingFile());
   }
 
 }

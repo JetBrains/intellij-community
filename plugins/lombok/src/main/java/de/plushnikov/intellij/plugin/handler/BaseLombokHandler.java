@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.action.lombok;
+package de.plushnikov.intellij.plugin.handler;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;

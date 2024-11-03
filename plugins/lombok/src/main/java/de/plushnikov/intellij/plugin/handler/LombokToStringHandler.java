@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.action.lombok;
+package de.plushnikov.intellij.plugin.handler;
 
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokClassNames;
