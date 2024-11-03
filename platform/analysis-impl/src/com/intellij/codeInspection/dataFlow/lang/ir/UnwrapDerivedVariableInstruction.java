@@ -5,7 +5,10 @@ import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * Instruction to push a field qualified by the value on the stack
@@ -21,6 +24,11 @@ public class UnwrapDerivedVariableInstruction extends EvalInstruction {
   @Override
   public @NotNull DfaValue eval(@NotNull DfaValueFactory factory, @NotNull DfaMemoryState state, @NotNull DfaValue @NotNull ... arguments) {
     return myDerivedVariableDescriptor.createValue(factory, arguments[0]);
+  }
+
+  @Override
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return List.of(myDerivedVariableDescriptor);
   }
 
   @Override

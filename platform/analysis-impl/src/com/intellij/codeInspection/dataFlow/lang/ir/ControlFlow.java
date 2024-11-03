@@ -186,15 +186,14 @@ public final class ControlFlow {
     return getFactory().getVarFactory().createVariableValue(new Synthetic(getInstructionCount(), dfType));
   }
 
-  public @NotNull List<DfaVariableValue> getSynthetics(PsiElement element) {
+  public @NotNull List<VariableDescriptor> getSynthetics(PsiElement element) {
     int startOffset = getStartOffset(element).getInstructionOffset();
-    List<DfaVariableValue> synthetics = new ArrayList<>();
+    List<VariableDescriptor> synthetics = new ArrayList<>();
     for (DfaValue value : myFactory.getValues()) {
-      if (value instanceof DfaVariableValue var) {
-        VariableDescriptor descriptor = var.getDescriptor();
-        if (descriptor instanceof Synthetic && ((Synthetic)descriptor).myLocation >= startOffset) {
-          synthetics.add(var);
-        }
+      if (value instanceof DfaVariableValue var &&
+          var.getDescriptor() instanceof Synthetic synthetic &&
+          synthetic.myLocation >= startOffset) {
+        synthetics.add(synthetic);
       }
     }
     return synthetics;

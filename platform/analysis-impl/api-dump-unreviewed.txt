@@ -1921,8 +1921,9 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction
 - <init>(com.intellij.psi.PsiElement):V
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
-- getVarsToFlush():java.util.Set
-- getWrittenVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
+- flushVars(java.util.Collection):V
+- mayFlushSomething():Z
+- removeFromFlushList(java.util.function.Predicate):V
 c:com.intellij.codeInspection.dataFlow.lang.ir.FlushFieldsInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>():V
@@ -1933,7 +1934,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.FlushVariableInstruction
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - getVariable():com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-- getWrittenVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 c:com.intellij.codeInspection.dataFlow.lang.ir.GotoInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>(com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset):V
@@ -1948,9 +1948,8 @@ a:com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - a:accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - getIndex():I
-- getRequiredVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
+- getRequiredDescriptors(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 - getSuccessorIndexes():I[]
-- getWrittenVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 - isLinear():Z
 - pf:nextState(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState
 - pf:nextStates(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
@@ -1964,7 +1963,7 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.PushInstruction
 - <init>(com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
-- getRequiredVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
+- getRequiredDescriptors(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 - getValue():com.intellij.codeInspection.dataFlow.value.DfaValue
 c:com.intellij.codeInspection.dataFlow.lang.ir.PushValueInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
@@ -1988,7 +1987,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.SimpleAssignmentInstruction
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - getDestination():com.intellij.codeInspection.dataFlow.value.DfaVariableValue
-- getWrittenVariables(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 c:com.intellij.codeInspection.dataFlow.lang.ir.SpliceInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>(I,I[]):V
@@ -2001,6 +1999,7 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.UnwrapDerivedVariableInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
 - <init>(com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V
 - eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
+- getRequiredDescriptors(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 c:com.intellij.codeInspection.dataFlow.lang.ir.WrapDerivedVariableInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
 - <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V
@@ -2019,7 +2018,8 @@ com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 - a:flushFieldsQualifiedBy(java.util.Set):V
 - a:flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):V
 - a:flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,Z):V
-- a:flushVariables(java.util.function.Predicate):V
+- flushVariables(java.util.function.Predicate):V
+- a:flushVariables(java.util.function.Predicate,Z):V
 - a:getDfType(com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.types.DfType
 - a:getDfTypeIncludingDerived(com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.types.DfType
 - a:getMergeabilityKey():java.lang.Object
@@ -2061,7 +2061,7 @@ c:com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl
 - flushFieldsQualifiedBy(java.util.Set):V
 - flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue):V
 - flushVariable(com.intellij.codeInspection.dataFlow.value.DfaVariableValue,Z):V
-- flushVariables(java.util.function.Predicate):V
+- flushVariables(java.util.function.Predicate,Z):V
 - forRecordedVariableTypes(java.util.function.BiConsumer):V
 - getBinOpRange(com.intellij.codeInspection.dataFlow.value.DfaBinOpValue):com.intellij.codeInspection.dataFlow.types.DfType
 - getDfType(com.intellij.codeInspection.dataFlow.value.DfaValue):com.intellij.codeInspection.dataFlow.types.DfType

@@ -27,7 +27,6 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
@@ -198,11 +197,14 @@ public final class SuspiciousInvocationHandlerImplementationInspection extends A
       List<DfaInstructionState> result = new ArrayList<>();
       Instruction instruction = flow.getInstruction(0);
       for (Instruction inst : flow.getInstructions()) {
-        if (inst instanceof FinishElementInstruction) {
-          Set<DfaVariableValue> flush = ((FinishElementInstruction)inst).getVarsToFlush();
-          flush.remove(myDfaMethodDeclaringClass);
-          flush.remove(myDfaMethodName);
-          flush.remove(myDfaMethodName.getQualifier());
+        if (inst instanceof FinishElementInstruction finishInstruction) {
+          DfaVariableValue qualifier = myDfaMethodName.getQualifier();
+          finishInstruction.removeFromFlushList(
+            desc ->
+              desc.equals(myDfaMethodDeclaringClass.getDescriptor()) ||
+              desc.equals(myDfaMethodName.getDescriptor()) ||
+              (qualifier != null && desc.equals(qualifier.getDescriptor()))
+          );
         }
       }
       for (DfaMemoryState state : memStates) {

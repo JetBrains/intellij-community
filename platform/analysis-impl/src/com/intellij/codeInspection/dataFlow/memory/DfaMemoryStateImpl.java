@@ -1416,7 +1416,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter) {
+  public void flushVariables(@NotNull Predicate<? super @NotNull DfaVariableValue> filter, boolean canonicalize) {
     Set<DfaVariableValue> vars = new HashSet<>();
     for (EqClass aClass : myEqClasses) {
       if (aClass != null) {
@@ -1427,7 +1427,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     vars.addAll(myVariableTypes.keySet());
     vars.removeIf(filter.negate());
-    vars.forEach(this::flushVariable);
+    vars.forEach(variable -> flushVariable(variable, canonicalize));
   }
 
   @Override

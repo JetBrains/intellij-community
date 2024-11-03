@@ -380,12 +380,10 @@ public final class DfaPsiUtil {
           @Override
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
-            if (instruction instanceof FinishElementInstruction) {
-              Set<DfaVariableValue> vars = ((FinishElementInstruction)instruction).getVarsToFlush();
-              vars.removeIf(v -> {
-                PsiElement variable = v.getPsiVariable();
-                return variable instanceof PsiField && ((PsiField)variable).getContainingClass() == containingClass;
-              });
+            if (instruction instanceof FinishElementInstruction finishInstruction) {
+              finishInstruction.removeFromFlushList(desc ->
+                desc instanceof PlainDescriptor plainDescriptor && plainDescriptor.getPsiElement() instanceof PsiField field &&
+                field.getContainingClass() == containingClass);
             }
             if ((isCallExposingNonInitializedFields(instruction) || instruction instanceof ReturnInstruction)) {
               for (PsiField field : containingClass.getFields()) {

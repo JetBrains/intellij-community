@@ -19,12 +19,9 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
@@ -55,11 +52,6 @@ public class AssignInstruction extends ExpressionPushingInstruction {
   public @NotNull Instruction bindToFactory(@NotNull DfaValueFactory factory) {
     if (myAssignedValue == null) return this;
     return new AssignInstruction(myLExpression, myRExpression, myAssignedValue.bindToFactory(factory));
-  }
-
-  @Override
-  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
-    return ContainerUtil.createMaybeSingletonList(tryCast(myAssignedValue, DfaVariableValue.class));
   }
 
   @Override

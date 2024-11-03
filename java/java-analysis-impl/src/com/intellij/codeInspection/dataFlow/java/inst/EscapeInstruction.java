@@ -8,7 +8,9 @@ import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -32,8 +34,12 @@ public class EscapeInstruction extends Instruction {
   }
 
   @Override
-  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
-    return List.copyOf(myEscapedVars);
+  public List<VariableDescriptor> getRequiredDescriptors(@NotNull DfaValueFactory factory) {
+    return StreamEx.of(myEscapedVars)
+      .flatMap(v -> StreamEx.of(v.getDependentVariables()).append(v))
+      .map(DfaVariableValue::getDescriptor)
+      .distinct()
+      .toList();
   }
 
   @Override

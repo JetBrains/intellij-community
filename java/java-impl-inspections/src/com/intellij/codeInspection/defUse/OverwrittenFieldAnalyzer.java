@@ -149,9 +149,6 @@ final class OverwrittenFieldAnalyzer {
         .filter(value -> value.getPsiVariable() instanceof PsiField field &&
                          field.hasModifierProperty(PsiModifier.STATIC));
     }
-    else if (instruction instanceof FinishElementInstruction finishElementInstruction) {
-      readVariables = StreamEx.of(finishElementInstruction.getVarsToFlush());
-    }
     else {
       readVariables = getReadVariables(instruction);
     }
