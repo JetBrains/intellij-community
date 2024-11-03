@@ -17,6 +17,7 @@
 package com.jetbrains.python
 
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.getPluginDistDirByClass
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
@@ -121,22 +122,28 @@ interface PythonHelpersLocator {
   @RequiresBackgroundThread
   fun getHelpersRoot(moduleName: String, relativePath: String): Path {
     return findRootByJarPath(
-      jarPath = PathUtil.getJarPathForClass(PythonHelpersLocator::class.java),
+      aClass = PythonHelpersLocator::class.java,
       moduleName = moduleName,
       relativePath = relativePath,
     )
   }
 
   @Internal
-  fun findRootByJarPath(jarPath: String, moduleName: String, relativePath: String): Path {
-    return if (PluginManagerCore.isRunningFromSources()) {
-      Path.of(PathManager.getCommunityHomePath(), relativePath)
+  fun findRootByJarPath(aClass: Class<*>, moduleName: String, relativePath: String): Path {
+    if (PluginManagerCore.isRunningFromSources()) {
+      return Path.of(PathManager.getCommunityHomePath(), relativePath)
     }
-    else {
-      getPluginBaseDir(jarPath)?.let {
-        Path.of(it.absolutePathString(), PathUtil.getFileName(relativePath))
-      } ?: Path.of(Path.of(jarPath).parent.absolutePathString(), moduleName)
+
+    getPluginDistDirByClass(aClass)?.let {
+      return it.resolve(PathUtil.getFileName(relativePath))
     }
+
+    val jarPath = PathUtil.getJarPathForClass(aClass)
+    getPluginBaseDir(jarPath)?.let {
+      return it.resolve(PathUtil.getFileName(relativePath))
+    }
+
+    return Path.of(jarPath).parent.toAbsolutePath().resolve(moduleName)
   }
 
   private fun getPluginBaseDir(jarPath: String): Path? {
