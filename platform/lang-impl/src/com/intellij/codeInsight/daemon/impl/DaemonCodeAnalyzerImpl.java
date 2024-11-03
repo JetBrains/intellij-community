@@ -359,7 +359,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
           fileLevelInfos.add(info);
           FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(),
                                                                                   info.getGutterIconRenderer(), actionRanges,
-                                                                                  psiFile, ((TextEditor)fileEditor).getEditor(), info.getToolTip());
+                                                                                  psiFile, textEditor.getEditor(), info.getToolTip());
           fileEditorManager.addTopComponent(fileEditor, component);
           info.addFileLevelComponent(fileEditor, component);
           if (LOG.isDebugEnabled()) {
@@ -553,7 +553,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
     // previous passes can be canceled but still in flight. wait for them to avoid interference
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
-    waitForUpdateFileStatusBackgroundQueueInTests(); // update file status map before prohibiting its modifications
+    waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     FileStatusMap fileStatusMap = getFileStatusMap();
     boolean oldAllowDirt = fileStatusMap.allowDirt(canChangeDocument);
     try {
@@ -720,6 +720,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
 
   @Override
   public void settingsChanged() {
+    //noinspection SpellCheckingInspection
     restart("DCAI.settingsChanged");
   }
 
@@ -1419,7 +1420,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
-  // return true if a heavy op is running
+  // return true if heavy operation is running
   private static boolean heavyProcessIsRunning() {
     if (DumbServiceImpl.ALWAYS_SMART) return false;
     // VFS refresh is OK
@@ -1566,12 +1567,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
   }
 
   /**
-   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behaviour.
+   * This API is made {@code Internal} intentionally as it could lead to unpredictable highlighting performance behavior.
    *
    * @param flag if {@code true}: enables code insight passes serialization:
    *             Injected fragments {@link InjectedGeneralHighlightingPass} highlighting and Inspections run after
    *             completion of Syntax analysis {@link GeneralHighlightingPass}.
-   *             if {@code false} (default behaviour) code insight passes are running in parallel
+   *             if {@code false} (default behavior) code insight passes are running in parallel
    */
   @ApiStatus.Internal
   public void serializeCodeInsightPasses(boolean flag) {
