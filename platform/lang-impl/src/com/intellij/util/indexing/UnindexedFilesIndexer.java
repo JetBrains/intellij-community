@@ -25,6 +25,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
+import com.intellij.util.indexing.dependencies.IncompleteTaskToken;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
 import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken;
@@ -55,6 +56,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private final FileBasedIndexImpl myIndex;
   private final @NotNull QueuedFiles files;
   private final @NonNls @NotNull String indexingReason;
+  private final IncompleteTaskToken taskToken;
 
   UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
@@ -87,6 +89,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.files = files;
     this.indexingReason = indexingReason;
+    taskToken = myProject.getService(ProjectIndexingDependenciesService.class).newIncompleteTaskToken();
   }
 
 
@@ -226,6 +229,16 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
       ProjectIndexingDependenciesService service = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
       if (service != null) {
         service.completeToken(token, false);
+      }
+    }
+  }
+
+  @Override
+  public void dispose() {
+    if (!myProject.isDisposed()) {
+      var service = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
+      if (service != null) {
+        service.completeToken(taskToken);
       }
     }
   }
