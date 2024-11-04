@@ -109,7 +109,7 @@ internal class GHPRFileEditorComponentFactory(
           projectVm.acquireAISummaryViewModel(loadedDetails.value.id, uiDisposable),
           GHPRAISummaryExtension.singleFlow
         ) { summaryVm, extension ->
-          summaryVm?.let { extension?.createTimelineComponent(it) }
+          summaryVm?.let { extension?.createTimelineComponent(project, it) }
         }
         bindVisibilityIn(cs, summaryComponent.map { it != null })
         bindContent("${javaClass.name}.summaryComponent.content", summaryComponent)
