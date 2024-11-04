@@ -41,6 +41,13 @@ internal class ShellEditorBufferReportShellCommandListener(
     }
   }
 
+  override fun promptStateUpdated(newState: TerminalPromptState) {
+    if (isBlockClosedRecently) {
+      isBlockClosedRecently = false
+      sendCodeToReportBuffer(blockTerminalSession)
+    }
+  }
+
   private fun sendCodeToReportBuffer(
     blockTerminalSession: BlockTerminalSession
   ) {
