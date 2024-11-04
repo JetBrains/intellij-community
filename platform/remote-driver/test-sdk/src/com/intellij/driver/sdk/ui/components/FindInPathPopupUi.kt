@@ -1,5 +1,8 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.model.OnDispatcher
+import com.intellij.driver.sdk.ActionManager
+import com.intellij.driver.sdk.ActionUtils
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.openapi.util.SystemInfoRt
 import java.awt.Window
@@ -10,7 +13,7 @@ import javax.swing.text.JTextComponent
 
 fun IdeaFrameUI.findInPathPopup(block: FindInPathPopupUi.() -> Unit = {}) =
   x(FindInPathPopupUi::class.java) {
-    componentWithChild(byType(Window::class.java), byType("com.intellij.find.impl.FindPopupPanel"))
+    componentWithChild(byType(Window::class.java), byType(FindInPathPopupUi.TYPE_FIND_POPUP_PANEL))
   }.apply(block)
 
 fun IdeaFrameUI.replaceInPathPopup(block: ReplaceInPathPopupUi.() -> Unit = {}) =
@@ -54,7 +57,16 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     x { or(byAccessibleName("Find in Files"), byAccessibleName("Replace in Files")) }.click()
   }
 
-  fun showSearchHistory() {
+  fun showFilterResultsPopup() {
+    val findPopupPanel = x { byType(TYPE_FIND_POPUP_PANEL) }
+    val action = driver.utility(ActionUtils::class).getActions(findPopupPanel.component)
+      .singleOrNull { it.getTemplateText() == "Filter Search Results" } ?: error("filter search results action not found")
+    driver.withContext(OnDispatcher.EDT) {
+      service(ActionManager::class).tryToExecute(action, null, findPopupPanel.component, null, true)
+    }
+  }
+
+  fun showSearchHistoryPopup() {
     searchTextField.click()
     keyboard { hotKey(KeyEvent.VK_ALT, KeyEvent.VK_DOWN) }
   }
@@ -80,6 +92,10 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
       rightClickCell(row, 0)
     }
   }
+
+  companion object {
+    const val TYPE_FIND_POPUP_PANEL = "com.intellij.find.impl.FindPopupPanel"
+  }
 }
 
 class ReplaceInPathPopupUi(data: ComponentData): FindInPathPopupUi(data) {
@@ -89,7 +105,7 @@ class ReplaceInPathPopupUi(data: ComponentData): FindInPathPopupUi(data) {
   val replaceAllButton = button { and(byType(JButton::class.java), byAccessibleName("Replace All")) }
   val replaceButton = button { and(byType(JButton::class.java), byAccessibleName("Replace")) }
 
-  fun showReplaceHistory() {
+  fun showReplaceHistoryPopup() {
     replaceTextField.click()
     keyboard { hotKey(KeyEvent.VK_ALT, KeyEvent.VK_DOWN) }
   }
