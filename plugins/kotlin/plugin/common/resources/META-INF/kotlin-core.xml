@@ -628,23 +628,15 @@
                 id="CheckComponentsUsageSearchAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.CheckComponentsUsageSearchAction"/>
         <action
-                id="FindImplicitNothingAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.FindImplicitNothingAction"/>
-        <action
                 id="PrintOutNotPropertyMatches"
                 class="org.jetbrains.kotlin.idea.actions.internal.SearchNotPropertyCandidatesAction"/>
         <action
                 id="StoredExceptionsThrowToggleAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.StoredExceptionsThrowToggleAction"/>
-        <action
-                id="DebugTypeResolutionAction"
-                class="org.jetbrains.kotlin.idea.actions.internal.resolutionDebugging.DebugTypeResolutionAction"/>
+
         <action
                 id="LibraryToSourceDependencySupportToggleAction"
                 class="org.jetbrains.kotlin.idea.base.projectStructure.libraryToSourceAnalysis.LibraryToSourceDependencySupportToggleAction"/>
-        <action
-                id="CopyAsDiagnosticTest"
-                class="org.jetbrains.kotlin.idea.actions.internal.CopyAsDiagnosticTestAction"/>
         <action
                 id="KotlinFormattingSettingsStatusAction"
                 class="org.jetbrains.kotlin.idea.actions.internal.KotlinFormattingSettingsStatusAction"/>
