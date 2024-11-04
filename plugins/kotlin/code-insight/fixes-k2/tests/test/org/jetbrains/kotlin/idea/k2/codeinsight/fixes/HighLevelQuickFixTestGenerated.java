@@ -12788,4 +12788,58 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
     }
 
 
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument")
+    public static class ChangeSuperTypeListEntryTypeArgument extends AbstractHighLevelQuickFixTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("propertyTypeMismatchOnOverride.kt")
+        public void testPropertyTypeMismatchOnOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/propertyTypeMismatchOnOverride.kt");
+        }
+
+        @TestMetadata("propertyTypeMismatchOnOverride2.kt")
+        public void testPropertyTypeMismatchOnOverride2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/propertyTypeMismatchOnOverride2.kt");
+        }
+
+        @TestMetadata("propertyTypeMismatchWithNameAmbiguity.kt")
+        public void testPropertyTypeMismatchWithNameAmbiguity() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/propertyTypeMismatchWithNameAmbiguity.kt");
+        }
+
+        @TestMetadata("propertyTypeMismatchWithNameCollision.kt")
+        public void testPropertyTypeMismatchWithNameCollision() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/propertyTypeMismatchWithNameCollision.kt");
+        }
+
+        @TestMetadata("returnTypeMismatchOnOverride.kt")
+        public void testReturnTypeMismatchOnOverride() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/returnTypeMismatchOnOverride.kt");
+        }
+
+        @TestMetadata("returnTypeMismatchOnOverride2.kt")
+        public void testReturnTypeMismatchOnOverride2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/returnTypeMismatchOnOverride2.kt");
+        }
+
+        @TestMetadata("returnTypeMismatchWithNameAmbiguity.kt")
+        public void testReturnTypeMismatchWithNameAmbiguity() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/returnTypeMismatchWithNameAmbiguity.kt");
+        }
+
+        @TestMetadata("returnTypeMismatchWithNameCollision.kt")
+        public void testReturnTypeMismatchWithNameCollision() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/changeSuperTypeListEntryTypeArgument/returnTypeMismatchWithNameCollision.kt");
+        }
+    }
 }

@@ -273,6 +273,8 @@ class KotlinK2QuickFixRegistrar : KotlinQuickFixRegistrar() {
         registerFactory(MemberNotImplementedQuickfixFactories.manyInterfacesMemberNotImplemented)
         registerFactory(MemberNotImplementedQuickfixFactories.manyImplMemberNotImplemented)
         registerFactory(MemberNotImplementedQuickfixFactories.abstractMemberNotImplementedByEnumEntry)
+        registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentPropertyTypeFixFactory)
+        registerFactory(ChangeSuperTypeListEntryTypeArgumentFixFactory.changeSuperTypeListEntryTypeArgumentReturnTypeFixFactory)
     }
 
     private val imports = KtQuickFixesListBuilder.registerPsiQuickFix {
