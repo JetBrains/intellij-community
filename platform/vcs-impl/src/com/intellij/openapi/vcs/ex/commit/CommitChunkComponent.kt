@@ -350,8 +350,8 @@ private object Spec {
   val MINIMUM_BUTTON_SIZE: Dimension = Dimension(22, 22)
 
   object Animation {
-    const val FRAMES = 30
-    const val DURATION = 200
+    const val FRAMES = 20
+    const val DURATION = 150
   }
 }
 
