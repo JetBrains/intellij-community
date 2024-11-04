@@ -7,7 +7,8 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.components.serviceOrNull
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.getOrLogException
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.platform.util.coroutines.childScope
@@ -34,21 +35,24 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
     val seCoroutineScope = project.serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope
     previewFetchingScope = seCoroutineScope?.childScope("SearchEverywherePreviewGenerator scope")
 
-    previewFetchingScope?.launch {
-      requestSharedFlow.mapLatest { selectedValue ->
-        fetchPreview(selectedValue).ifEmpty { null }
-      }.collectLatest { usageInfos ->
-        withContext(Dispatchers.EDT) {
-          updatePreviewPanel.accept(usageInfos)
+    try {
+      previewFetchingScope?.launch {
+        requestSharedFlow.mapLatest { selectedValue ->
+          fetchPreview(selectedValue).ifEmpty { null }
+        }.collectLatest { usageInfos ->
+          withContext(Dispatchers.EDT) {
+            updatePreviewPanel.accept(usageInfos)
+          }
         }
       }
+    }
+    finally {
+      usagePreviewDisposableList.forEach { Disposer.dispose(it) }
     }
   }
 
   fun schedulePreview(selectedValue: Any) {
-    project.serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope?.launch {
-      requestSharedFlow.emit(selectedValue)
-    }
+    check(requestSharedFlow.tryEmit(selectedValue))
   }
 
   private suspend fun fetchPreview(selectedValue: Any): List<UsageInfo> {
@@ -69,14 +73,9 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
       }
     }
 
-    return try {
+    return runCatching {
       getUsageInfo(usages)
-    }
-    catch (throwable: Throwable) {
-      if (throwable is CancellationException) throw throwable
-      Logger.getInstance(SearchEverywhereUI::class.java).error(throwable)
-      emptyList()
-    }
+    }.getOrLogException(logger<SearchEverywhereUI>()) ?: emptyList()
   }
 
   private fun findFirstChild(selectedValue: Any): UsageInfo? {
@@ -102,7 +101,7 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
         val disposable = resultPair.second
 
         if (disposable != null) {
-          usagePreviewDisposableList.add(Disposable { Disposer.dispose(disposable) })
+          usagePreviewDisposableList.add(disposable)
         }
 
         return usageInfo
@@ -113,6 +112,5 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
 
   override fun dispose() {
     previewFetchingScope?.cancel("SearchEverywherePreviewGenerator disposed")
-    usagePreviewDisposableList.forEach { Disposer.dispose(it) }
   }
 }
