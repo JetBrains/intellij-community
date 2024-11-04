@@ -82,6 +82,11 @@ object TestInlineCompletionLogs {
 
     private val idToValue: Map<String, Any> = InlineCompletionLogsContainer.Phase.entries.flatMap { idToValueForPhase(it) }.associate { it }
 
+
+    fun getValue(id: String): Any? {
+      return idToValue[id]
+    }
+
     fun assert(id: String, value: Any?) {
       assertEquals(value, idToValue[id])
     }
