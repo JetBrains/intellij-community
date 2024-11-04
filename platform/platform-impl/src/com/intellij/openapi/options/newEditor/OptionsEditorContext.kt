@@ -1,186 +1,154 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.options.newEditor;
+@file:Suppress("ReplaceGetOrSet")
 
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
+package com.intellij.openapi.options.newEditor
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.CopyOnWriteArraySet;
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.options.Configurable.InnerWithModifiableParent
+import com.intellij.openapi.options.ConfigurationException
+import com.intellij.openapi.options.ex.ConfigurableWrapper
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.rejectedPromise
+import org.jetbrains.concurrency.resolvedPromise
+import java.util.*
+import java.util.concurrent.CopyOnWriteArraySet
 
-import static java.util.Collections.unmodifiableSet;
+internal class OptionsEditorContext {
+  @JvmField
+  var isHoldingFilter: Boolean = false
 
-@ApiStatus.Internal
-public final class OptionsEditorContext {
-  CopyOnWriteArraySet<OptionsEditorColleague> myColleagues = new CopyOnWriteArraySet<>();
+  private var colleagues = CopyOnWriteArraySet<OptionsEditorColleague>()
 
-  Configurable myCurrentConfigurable;
-  Set<Configurable> myModified = new CopyOnWriteArraySet<>();
-  Map<Configurable, ConfigurationException> myErrors = new HashMap<>();
-  private boolean myHoldingFilter;
-  private final Map<Configurable,  Configurable> myConfigurableToParentMap = new HashMap<>();
-  private final MultiMap<Configurable, Configurable> myParentToChildrenMap = new MultiMap<>();
+  var currentConfigurable: Configurable? = null
+  private var modified = CopyOnWriteArraySet<Configurable>()
 
-  @NotNull
-  Promise<? super Object> fireSelected(final @Nullable Configurable configurable, @NotNull OptionsEditorColleague requestor) {
-    if (myCurrentConfigurable == configurable) {
-      return Promises.resolvedPromise();
+  var errors: Map<Configurable, ConfigurationException> = emptyMap()
+    private set
+
+  private val configurableToParentMap = HashMap<Configurable, Configurable>()
+  private val parentToChildrenMap = MultiMap<Configurable, Configurable>()
+
+  fun fireSelected(configurable: Configurable?, requestor: OptionsEditorColleague): Promise<*> {
+    if (this.currentConfigurable === configurable) {
+      return resolvedPromise<Any?>()
     }
 
-    final Configurable old = myCurrentConfigurable;
-    myCurrentConfigurable = configurable;
+    val old = this.currentConfigurable
+    this.currentConfigurable = configurable
 
-    return notify(new ColleagueAction() {
-      @Override
-      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
-        return colleague.onSelected(configurable, old);
+    return notify(object : ColleagueAction {
+      override fun process(colleague: OptionsEditorColleague): Promise<Any?> {
+        return colleague.onSelected(configurable, old)
       }
-    }, requestor);
+    }, requestor)
   }
 
-  @NotNull
-  Promise<? super Object> fireModifiedAdded(final @NotNull Configurable configurable, @Nullable OptionsEditorColleague requestor) {
-    if (myModified.contains(configurable)) {
-      return Promises.rejectedPromise();
+  fun fireModifiedAdded(configurable: Configurable, requestor: OptionsEditorColleague?): Promise<*> {
+    if (modified.contains(configurable)) {
+      return rejectedPromise<Any?>()
     }
 
-    myModified.add(configurable);
+    modified.add(configurable)
 
-    return notify(new ColleagueAction() {
-      @Override
-      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
-        return colleague.onModifiedAdded(configurable);
+    return notify(object : ColleagueAction {
+      override fun process(colleague: OptionsEditorColleague): Promise<Any?> {
+        return colleague.onModifiedAdded(configurable)
       }
-    }, requestor);
-
+    }, requestor)
   }
 
-  @NotNull
-  Promise<? super Object> fireModifiedRemoved(final @NotNull Configurable configurable, @Nullable OptionsEditorColleague requestor) {
-    if (!myModified.contains(configurable)) {
-      return Promises.rejectedPromise();
+  fun fireModifiedRemoved(configurable: Configurable, requestor: OptionsEditorColleague?): Promise<*> {
+    if (!modified.contains(configurable)) {
+      return rejectedPromise<Any?>()
     }
 
-    myModified.remove(configurable);
+    modified.remove(configurable)
 
-    return notify(new ColleagueAction() {
-      @Override
-      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
-        return colleague.onModifiedRemoved(configurable);
+    return notify(object : ColleagueAction {
+      override fun process(colleague: OptionsEditorColleague): Promise<*> {
+        return colleague.onModifiedRemoved(configurable)
       }
-    }, requestor);
+    }, requestor)
   }
 
-  @NotNull
-  Promise<? super Object> fireErrorsChanged(final Map<Configurable, ConfigurationException> errors, OptionsEditorColleague requestor) {
-    if (myErrors.equals(errors)) {
-      return Promises.rejectedPromise();
+  fun fireErrorsChanged(errors: MutableMap<Configurable, ConfigurationException>?, requestor: OptionsEditorColleague?): Promise<*> {
+    if (this.errors == errors) {
+      return rejectedPromise<Any?>()
     }
 
-    myErrors = errors != null ? errors : new HashMap<>();
+    this.errors = errors ?: HashMap()
 
-    return notify(new ColleagueAction() {
-      @Override
-      public @NotNull Promise<? super Object> process(final OptionsEditorColleague colleague) {
-        return colleague.onErrorsChanged();
+    return notify(object : ColleagueAction {
+      override fun process(colleague: OptionsEditorColleague): Promise<Any?> {
+        return colleague.onErrorsChanged()
       }
-    }, requestor);
+    }, requestor)
   }
 
-  @NotNull
-  Promise<? super Object> notify(@NotNull ColleagueAction action, OptionsEditorColleague requestor) {
-    //noinspection unchecked
-    return (Promise<? super Object>)Promises.all(ContainerUtil.mapNotNull(myColleagues, it -> it == requestor ? null : action.process(it)));
+  fun notify(action: ColleagueAction, requestor: OptionsEditorColleague?): Promise<*> {
+    return colleagues.mapNotNull {
+      if (it === requestor) null else action.process(it)
+    }.all()
   }
 
-  public void fireReset(final Configurable configurable) {
-    if (myModified.contains(configurable)) {
-      fireModifiedRemoved(configurable, null);
+  fun fireReset(configurable: Configurable) {
+    if (modified.contains(configurable)) {
+      fireModifiedRemoved(configurable, null)
     }
 
-    if (myErrors.containsKey(configurable)) {
-      Map<Configurable, ConfigurationException> newErrors = new HashMap<>(myErrors);
-      newErrors.remove(configurable);
-      fireErrorsChanged(newErrors, null);
+    if (errors.containsKey(configurable)) {
+      val newErrors = HashMap(this.errors)
+      newErrors.remove(configurable)
+      fireErrorsChanged(newErrors, null)
     }
   }
 
-  public boolean isModified(final Configurable configurable) {
-    if (myModified.contains(configurable)) return true;
+  fun isModified(configurable: Configurable?): Boolean {
+    if (modified.contains(configurable)) return true
 
-    if (configurable instanceof Configurable.InnerWithModifiableParent inner) {
-      for (Configurable parent: inner.getModifiableParents()) {
-        if (myModified.contains(parent)) return true;
+    if (configurable is InnerWithModifiableParent) {
+      for (parent in configurable.getModifiableParents()) {
+        if (modified.contains(parent)) return true
 
-        for (Configurable modified: myModified) {
-          if (modified instanceof ConfigurableWrapper wrapper) {
-            UnnamedConfigurable unwrapped = wrapper.getRawConfigurable();
-            if (unwrapped != null && unwrapped.equals(parent)) return true;
+        for (modified in modified) {
+          if (modified is ConfigurableWrapper) {
+            val unwrapped = modified.rawConfigurable
+            if (unwrapped != null && unwrapped == parent) {
+              return true
+            }
           }
         }
       }
     }
 
-    return false;
+    return false
   }
 
-  public void setHoldingFilter(final boolean holding) {
-    myHoldingFilter = holding;
+  fun getParentConfigurable(configurable: Configurable?): Configurable? = configurableToParentMap.get(configurable)
+
+  fun registerKid(parent: Configurable, kid: Configurable) {
+    configurableToParentMap.put(kid, parent)
+    parentToChildrenMap.putValue(parent, kid)
   }
 
-  public boolean isHoldingFilter() {
-    return myHoldingFilter;
+  fun getChildren(parent: Configurable): Collection<Configurable> = parentToChildrenMap.get(parent)
+
+  internal interface ColleagueAction {
+    fun process(colleague: OptionsEditorColleague): Promise<*>
   }
 
-  public Configurable getParentConfigurable(final Configurable configurable) {
-    return myConfigurableToParentMap.get(configurable);
+  fun getModified(): Set<Configurable> = Collections.unmodifiableSet(modified)
+
+  fun addColleague(colleague: OptionsEditorColleague) {
+    colleagues.add(colleague)
   }
 
-  public void registerKid(final Configurable parent, final Configurable kid) {
-    myConfigurableToParentMap.put(kid, parent);
-    myParentToChildrenMap.putValue(parent, kid);
-  }
-
-  public @NotNull Collection<Configurable> getChildren(final Configurable parent) {
-    return myParentToChildrenMap.get(parent);
-  }
-
-  interface ColleagueAction {
-    @NotNull
-    Promise<? super Object> process(OptionsEditorColleague colleague);
-  }
-
-  public Configurable getCurrentConfigurable() {
-    return myCurrentConfigurable;
-  }
-
-  public Set<Configurable> getModified() {
-    return unmodifiableSet(myModified);
-  }
-
-  public Map<Configurable, ConfigurationException> getErrors() {
-    return myErrors;
-  }
-
-  public void addColleague(@NotNull OptionsEditorColleague colleague) {
-    myColleagues.add(colleague);
-  }
-
-  public void reload() {
-    myCurrentConfigurable = null;
-    myErrors.clear();
-    myConfigurableToParentMap.clear();
-    myParentToChildrenMap.clear();
+  fun reload() {
+    this.currentConfigurable = null
+    errors = emptyMap()
+    configurableToParentMap.clear()
+    parentToChildrenMap.clear()
   }
 }
