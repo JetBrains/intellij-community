@@ -194,6 +194,7 @@ object UpdateChecker {
       val result = runCatching {
         LOG.debug { "loading ${url}" }
         HttpRequests.request(url)
+          .productNameAsUserAgent()
           .connect { JDOMUtil.load(it.getReader(indicator)) }
           .let { parseUpdateData(it) }
           ?.also {
