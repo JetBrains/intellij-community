@@ -165,6 +165,12 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
             return
         }
 
+        if (expressionParent is KtDotQualifiedExpression) {
+            if (expressionParent.receiverExpression is KtSuperExpression) {
+                return // Shouldn't suggest property accessors on "super"
+            }
+        }
+
         if (propertyAccessorKind is PropertyAccessorKind.Setter) {
             if (expressionParent is KtDotQualifiedExpression) {
                 if (expressionParent.parent is KtDotQualifiedExpression) {
@@ -194,7 +200,7 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
 
             val returnType = successfulFunctionCallSymbol.returnType.lowerBoundIfFlexible()
 
-            // For extension functions, receiver type taken such way is is null
+            // For extension functions, receiver type taken such way is null
             val receiverType = resolvedFunctionCall.partiallyAppliedSymbol.dispatchReceiver?.type?.lowerBoundIfFlexible() ?: return
 
             val syntheticProperty = getSyntheticProperty(propertyNames, receiverType) ?: return
