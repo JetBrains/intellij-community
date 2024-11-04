@@ -402,7 +402,8 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
   }
 
   private suspend fun requestFocusWithProject(projectIdeFrame: JFrame, project: Project, frameName: String, silent: Boolean): Boolean {
-    LOG.info("Requesting project focus for '$frameName'")
+    val logPrefix = "Requesting project focus for '$frameName'"
+    LOG.info(logPrefix)
 
     AppIcon.getInstance().requestFocus(projectIdeFrame)
     ProjectUtil.focusProjectWindow(project, stealFocusIfAppInactive = true)
@@ -411,22 +412,24 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       projectIdeFrame.isFocusAncestor() || projectIdeFrame.isFocused
     }.also {
       if (!it && !silent) {
-        val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-        LOG.error("Couldn't wait for focus in project '$frameName'," +
+        LOG.error("$logPrefix: Couldn't wait for focus," +
                   "component isFocused=" + projectIdeFrame.isFocused + " isFocusAncestor=" + projectIdeFrame.isFocusAncestor() +
-                  "\nActual focused component: " +
-                  "\nfocusedWindow is " + keyboardFocusManager.focusedWindow +
-                  "\nfocusOwner is " + keyboardFocusManager.focusOwner +
-                  "\nactiveWindow is " + keyboardFocusManager.activeWindow +
-                  "\npermanentFocusOwner is " + keyboardFocusManager.permanentFocusOwner)
+                  "\n" + getFocusStateDescription()
+        )
+      }
+      else {
+        LOG.info("$logPrefix is successful: $it")
       }
     }
   }
 
   private suspend fun requestFocusNoProject(silent: Boolean): Boolean {
+    val logPrefix = "Request for focus (no opened project case)"
+    LOG.info(logPrefix)
+
     val visibleWindows = Window.getWindows().filter { it.isShowing }
     if (visibleWindows.size > 1) {
-      LOG.info("There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
+      LOG.info("$logPrefix There are multiple windows, will focus them all. All windows: ${visibleWindows.joinToString(", ")}")
     }
     visibleWindows.forEach {
       AppIcon.getInstance().requestFocus(it)
@@ -435,9 +438,23 @@ open class DistributedTestHost(coroutineScope: CoroutineScope) {
       KeyboardFocusManager.getCurrentKeyboardFocusManager().focusOwner != null
     }.also {
       if (!it && !silent) {
-        LOG.error("Couldn't wait for focus in case there is no project")
+        LOG.error("$logPrefix: Couldn't wait for focus" +
+                  "\n" + getFocusStateDescription())
+      }
+      else {
+        LOG.info("$logPrefix is successful: $it")
       }
     }
+  }
+
+  private fun getFocusStateDescription(): String {
+    val keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+
+    return "Actual focused component: " +
+           "\nfocusedWindow is " + keyboardFocusManager.focusedWindow +
+           "\nfocusOwner is " + keyboardFocusManager.focusOwner +
+           "\nactiveWindow is " + keyboardFocusManager.activeWindow +
+           "\npermanentFocusOwner is " + keyboardFocusManager.permanentFocusOwner
   }
 
   private fun screenshotFile(actionName: String, suffix: String, timeStamp: LocalTime): File {
