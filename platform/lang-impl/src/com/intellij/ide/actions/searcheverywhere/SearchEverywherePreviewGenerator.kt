@@ -35,18 +35,15 @@ internal class SearchEverywherePreviewGenerator(val project: Project,
     val seCoroutineScope = project.serviceOrNull<SearchEverywhereCoroutineScopeService>()?.coroutineScope
     previewFetchingScope = seCoroutineScope?.childScope("SearchEverywherePreviewGenerator scope")
 
-    try {
-      previewFetchingScope?.launch {
-        requestSharedFlow.mapLatest { selectedValue ->
-          fetchPreview(selectedValue).ifEmpty { null }
-        }.collectLatest { usageInfos ->
-          withContext(Dispatchers.EDT) {
-            updatePreviewPanel.accept(usageInfos)
-          }
+    previewFetchingScope?.launch {
+      requestSharedFlow.mapLatest { selectedValue ->
+        fetchPreview(selectedValue).ifEmpty { null }
+      }.collectLatest { usageInfos ->
+        withContext(Dispatchers.EDT) {
+          updatePreviewPanel.accept(usageInfos)
         }
       }
-    }
-    finally {
+    }?.invokeOnCompletion {
       usagePreviewDisposableList.forEach { Disposer.dispose(it) }
     }
   }
