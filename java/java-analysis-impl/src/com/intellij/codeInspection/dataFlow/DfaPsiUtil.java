@@ -14,7 +14,10 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.*;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -339,6 +342,10 @@ public final class DfaPsiUtil {
         if (flow == null) {
           return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
         }
+        flow.keepVariables(
+          desc ->
+            desc instanceof PlainDescriptor plainDescriptor && plainDescriptor.getPsiElement() instanceof PsiField field &&
+            field.getContainingClass() == containingClass);
         var interpreter = new StandardDataFlowInterpreter(flow, DfaListener.EMPTY) {
           final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
@@ -380,11 +387,6 @@ public final class DfaPsiUtil {
           @Override
           protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
             Instruction instruction = instructionState.getInstruction();
-            if (instruction instanceof FinishElementInstruction finishInstruction) {
-              finishInstruction.removeFromFlushList(desc ->
-                desc instanceof PlainDescriptor plainDescriptor && plainDescriptor.getPsiElement() instanceof PsiField field &&
-                field.getContainingClass() == containingClass);
-            }
             if ((isCallExposingNonInitializedFields(instruction) || instruction instanceof ReturnInstruction)) {
               for (PsiField field : containingClass.getFields()) {
                 DfaVariableValue value = PlainDescriptor.createVariableValue(getFactory(), field);

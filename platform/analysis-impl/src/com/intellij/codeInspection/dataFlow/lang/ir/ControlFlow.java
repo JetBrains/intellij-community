@@ -15,10 +15,12 @@ import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 /**
  * Represents code block IR (list of instructions)
@@ -164,6 +166,24 @@ public final class ControlFlow {
       }
     });
     return result;
+  }
+
+  /**
+   * Modify this control flow to ensure that given variable values are always tracked,
+   * even if they are not de-facto used.
+   * 
+   * @param predicate predicate to test whether a given variable should be kept.
+   *                  It's not specified whether the predicate is called for a particular
+   *                  variable. E.g., an implementation may keep all the variables anyway,
+   *                  and this method may do nothing in this case.
+   */
+  @Contract(mutates = "this")
+  public void keepVariables(@NotNull Predicate<@NotNull VariableDescriptor> predicate) {
+    for (Instruction inst : getInstructions()) {
+      if (inst instanceof FinishElementInstruction finishInstruction) {
+        finishInstruction.removeFromFlushList(predicate);
+      }
+    }
   }
 
   /**

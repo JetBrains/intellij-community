@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.jvm.descriptors.GetterDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.FinishElementInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
@@ -196,17 +195,11 @@ public final class SuspiciousInvocationHandlerImplementationInspection extends A
       }
       List<DfaInstructionState> result = new ArrayList<>();
       Instruction instruction = flow.getInstruction(0);
-      for (Instruction inst : flow.getInstructions()) {
-        if (inst instanceof FinishElementInstruction finishInstruction) {
-          DfaVariableValue qualifier = myDfaMethodName.getQualifier();
-          finishInstruction.removeFromFlushList(
-            desc ->
-              desc.equals(myDfaMethodDeclaringClass.getDescriptor()) ||
-              desc.equals(myDfaMethodName.getDescriptor()) ||
-              (qualifier != null && desc.equals(qualifier.getDescriptor()))
-          );
-        }
-      }
+      DfaVariableValue qualifier = myDfaMethodName.getQualifier();
+      flow.keepVariables(desc ->
+        desc.equals(myDfaMethodDeclaringClass.getDescriptor()) ||
+        desc.equals(myDfaMethodName.getDescriptor()) ||
+        (qualifier != null && desc.equals(qualifier.getDescriptor())));
       for (DfaMemoryState state : memStates) {
         state.applyCondition(myDfaMethodDeclaringClass.eq(DfTypes.constant(myObjectType, myClassType)));
         for (String methodName : Arrays.asList("hashCode", "equals", "toString")) {
