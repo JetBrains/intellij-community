@@ -8,7 +8,8 @@ import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
-import com.intellij.openapi.wm.impl.*
+import com.intellij.openapi.wm.impl.ToolbarHolder
+import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
 import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
@@ -79,7 +80,7 @@ internal class ToolbarFrameHeader(
   init {
     // color full toolbar
     isOpaque = false
-    isCompactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance())
+    isCompactHeader = isAlwaysCompact || isCompactHeader()
 
     mainMenuButton.expandableMenu = expandableMenu
     layout = object : GridBagLayout() {
@@ -129,7 +130,7 @@ internal class ToolbarFrameHeader(
             updateLayout()
           }
 
-          val compactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance(), { computeMainActionGroups() })
+          val compactHeader = isAlwaysCompact || isCompactHeader { computeMainActionGroups() }
 
           when (mode) {
             ShowMode.TOOLBAR -> doUpdateToolbar(compactHeader)

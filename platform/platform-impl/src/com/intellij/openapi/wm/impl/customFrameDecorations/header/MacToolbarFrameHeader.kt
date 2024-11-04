@@ -11,7 +11,6 @@ import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.asContextElement
 import com.intellij.openapi.wm.impl.ToolbarHolder
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isCompactHeader
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
 import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
@@ -124,11 +123,11 @@ internal class MacToolbarFrameHeader(
   }
 
   private fun isCompactHeaderFast(): Boolean {
-    return isAlwaysCompact || isCompactHeader(UISettings.getInstance())
+    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader()
   }
 
   private suspend fun isCompactHeader(): Boolean {
-    return isAlwaysCompact || isCompactHeader(UISettings.getInstance(), { computeMainActionGroups() })
+    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader { computeMainActionGroups() }
   }
 
   private fun createView(isCompactHeader: Boolean): HeaderView {
