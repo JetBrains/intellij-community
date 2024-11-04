@@ -299,7 +299,7 @@ private enum class ReusingPersistentFilterCondition(val reason: FullScanningReas
       return state.filterHolder.wasDataLoadedFromDisk(state.project)
     }
   },
-  IS_SCANNING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
+  IS_SCANNING_AND_INDEXING_COMPLETED(FilterIncompatibleAsFullScanningIsNotCompleted) {
     override fun isUpToDate(state: FilterCheckState): Boolean {
       return state.project.getService(ProjectIndexingDependenciesService::class.java).isScanningAndIndexingCompleted()
     }
