@@ -88,10 +88,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.inline.InlineRefactoringActionHandler;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.DocumentUtil;
-import com.intellij.util.TestTimeOut;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.ThreadingAssertions;
 import com.intellij.util.containers.ContainerUtil;
@@ -134,7 +131,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     myDaemonCodeAnalyzer = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject());
     UndoManager.getInstance(myProject);
     myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-    DaemonProgressIndicator.setDebug(true);
   }
 
   @Override
@@ -156,6 +152,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       myDaemonCodeAnalyzer = null;
       super.tearDown();
     }
+  }
+
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    DaemonProgressIndicator.runInDebugMode(() -> super.runTestRunnable(testRunnable));
   }
 
   @Override
@@ -918,37 +919,37 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X{ void f() {" + body + "<caret>\n} }");
 
     Project alienProject = PlatformTestUtil.loadAndOpenProject(createTempDirectory().toPath().resolve("alien.ipr"), getTestRootDisposable());
-    DaemonProgressIndicator.setDebug(true);
+    DaemonProgressIndicator.runInDebugMode(() -> {
+      try {
+        Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
+        VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
+        PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
+        OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+          VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
+          setFileText(alienFile, "class Alien { }");
+          return new OpenFileDescriptor(alienProject, alienFile);
+        });
 
-    try {
-      Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
-      VirtualFile alienRoot = createTestProjectStructure(alienModule, null, true, getTempDir());
-      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
-      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
-        VirtualFile alienFile = alienRoot.createChildData(this, "AlienFile.java");
-        setFileText(alienFile, "class Alien { }");
-        return new OpenFileDescriptor(alienProject, alienFile);
-      });
+        FileEditorManager fe = FileEditorManager.getInstance(alienProject);
+        Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
+        ((EditorImpl)alienEditor).setCaretActive();
+        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+        PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
 
-      FileEditorManager fe = FileEditorManager.getInstance(alienProject);
-      Editor alienEditor = Objects.requireNonNull(fe.openTextEditor(alienDescriptor, false));
-      ((EditorImpl)alienEditor).setCaretActive();
-      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      PsiDocumentManager.getInstance(alienProject).commitAllDocuments();
-
-      // start daemon in the main project. should check for its cancel when typing in alien
-      TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
-      AtomicBoolean checked = new AtomicBoolean();
-      Runnable callbackWhileWaiting = () -> {
-        if (checked.getAndSet(true)) return;
-        typeInAlienEditor(alienEditor, 'x');
-      };
-      myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
-    }
-    catch (ProcessCanceledException ignored) {
-      return;
-    }
-    fail("must throw PCE");
+        // start daemon in the main project. should check for its cancel when typing in alien
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+        AtomicBoolean checked = new AtomicBoolean();
+        Runnable callbackWhileWaiting = () -> {
+          if (checked.getAndSet(true)) return;
+          typeInAlienEditor(alienEditor, 'x');
+        };
+        myDaemonCodeAnalyzer.runPasses(getFile(), getEditor().getDocument(), textEditor, ArrayUtilRt.EMPTY_INT_ARRAY, true, callbackWhileWaiting);
+      }
+      catch (ProcessCanceledException ignored) {
+        return;
+      }
+      fail("must throw PCE");
+    });
   }
 
   public void testPasteInAnonymousCodeBlock() {

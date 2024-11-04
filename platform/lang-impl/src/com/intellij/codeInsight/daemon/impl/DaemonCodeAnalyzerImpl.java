@@ -529,7 +529,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       throw new IllegalStateException("Must not start highlighting from within write action, or deadlock is imminent");
     }
-    DaemonProgressIndicator.setDebug(!ApplicationManagerEx.isInStressTest());
+    boolean isDebugMode = !ApplicationManagerEx.isInStressTest();
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
     do {
       EDT.dispatchAllInvocationEvents();
@@ -560,10 +560,15 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       for (int ignoreId : passesToIgnore) {
         fileStatusMap.markFileUpToDate(document, ignoreId);
       }
-      doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
+      ThrowableRunnable<Exception> doRunPasses = () -> doRunPasses(textEditor, passesToIgnore, canChangeDocument, callbackWhileWaiting);
+      if (isDebugMode) {
+        DaemonProgressIndicator.runInDebugMode(doRunPasses);
+      }
+      else {
+        doRunPasses.run();
+      }
     }
     finally {
-      DaemonProgressIndicator.setDebug(false);
       fileStatusMap.allowDirt(oldAllowDirt);
     }
   }

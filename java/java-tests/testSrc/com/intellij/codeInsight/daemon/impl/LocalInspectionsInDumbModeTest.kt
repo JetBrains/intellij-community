@@ -21,16 +21,15 @@ import com.intellij.psi.PsiLiteralExpression
 import com.intellij.testFramework.DumbModeTestUtils
 import com.intellij.testFramework.enableInspectionTool
 import com.intellij.testFramework.enableInspectionTools
+import com.intellij.util.ThrowableRunnable
 import org.intellij.lang.annotations.Language
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @CanChangeDocumentDuringHighlighting
 class LocalInspectionsInDumbModeTest : DaemonAnalyzerTestCase() {
-  @Throws(Exception::class)
-  override fun setUp() {
-    super.setUp()
-    DaemonProgressIndicator.setDebug(true)
+  override fun runTestRunnable(testRunnable: ThrowableRunnable<Throwable?>) {
+    DaemonProgressIndicator.runInDebugMode<Exception> { -> super.runTestRunnable(testRunnable) }
   }
 
   fun testLocalInspectionInDumbMode() {
