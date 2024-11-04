@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.debugger.evaluate.compilation
 
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.idea.debugger.base.util.evaluate.ExecutionContext
-import org.jetbrains.kotlin.idea.debugger.evaluate.CompilerFailType
+import org.jetbrains.kotlin.idea.debugger.evaluate.extractExceptionCauseClass
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -27,7 +27,6 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
         executionContext: ExecutionContext
     ): CompilationResult {
         var filesToCompileExceptCodeFragment: List<KtFile> = emptyList()
-        var compilerFailType = CompilerFailType.K1_RESOLUTION_FACADE_FAIL
         return try {
             val result = strategy.stats.startAndMeasureAnalysisUnderReadAction {
                 val resolutionFacade = getResolutionFacadeForCodeFragment(codeFragment)
@@ -37,13 +36,13 @@ class CodeFragmentCompilerHandler(val strategy: CodeFragmentCompilingStrategy) {
             }
             val (newBindingContext, filesToCompile) = result.getOrThrow()
             filesToCompileExceptCodeFragment = filesToCompile.filter { it !== codeFragment }
-            compilerFailType = CompilerFailType.K1_DO_COMPILE_FAIL
             CodeFragmentCompiler(executionContext).compile(codeFragment, filesToCompile, strategy, newBindingContext, moduleDescriptor)
                 .also {
                     strategy.onSuccess()
                 }
         } catch (e: Exception) {
-            strategy.stats.compilerFailType = compilerFailType
+            strategy.stats.compilerFailExceptionClass = extractExceptionCauseClass(e)
+
             strategy.processError(e, codeFragment, filesToCompileExceptCodeFragment, executionContext)
             // This error will be recycled into an error message in the Evaluation/Watches result component,
             // and it won't be actually thrown further, so there shouldn't be duplicated error messages
