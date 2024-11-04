@@ -180,7 +180,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       for (o in anEnum) {
         if (o !is String) continue
         completionVariants.add(LookupElementBuilder.create(StringUtil.unquoteString(
-          if (!shouldWrapInQuotes(o, false)) o else StringUtil.wrapWithDoubleQuote(o)
+          if (!shouldWrapInQuotes(o, false)) o else (psiWalker?.escapeInvalidIdentifier(o) ?: StringUtil.wrapWithDoubleQuote(o))
         )))
       }
     }
@@ -400,7 +400,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
 
     fun shouldWrapInQuotes(key: String?, isValue: Boolean): Boolean {
       return wrapInQuotes && psiWalker != null &&
-             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || !psiWalker.isValidIdentifier(key,
+             (isValue && psiWalker.requiresValueQuotes() || !isValue && psiWalker.requiresNameQuotes() || key != null && !psiWalker.isValidIdentifier(key,
                                                                                                                                        myProject))
     }
 
@@ -412,7 +412,7 @@ class JsonSchemaCompletionContributor : CompletionContributor() {
       var schemaObject = jsonSchemaObject
       val variants = JsonSchemaResolver(myProject, schemaObject, JsonPointerPosition(), sourcePsiAdapter).resolve()
       schemaObject = ObjectUtils.coalesce(variants.firstOrNull(), schemaObject)
-      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else StringUtil.wrapWithDoubleQuote(propertyKey)
+      propertyKey = if (!shouldWrapInQuotes(propertyKey, false)) propertyKey else (psiWalker?.escapeInvalidIdentifier(propertyKey) ?: StringUtil.wrapWithDoubleQuote(propertyKey))
 
       val builder = LookupElementBuilder.create(propertyKey)
         .withPresentableText(completionPath?.let { it.prefix() + "." + key }
