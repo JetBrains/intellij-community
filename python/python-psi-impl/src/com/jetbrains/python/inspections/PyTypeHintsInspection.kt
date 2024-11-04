@@ -454,7 +454,7 @@ class PyTypeHintsInspection : PyInspection() {
         }
         return
       }
-      if (defaultExpression is PyReferenceExpression) {
+      if (defaultExpression is PyReferenceExpression || defaultExpression is PyStringLiteralExpression) {
         val defaultType = Ref.deref(PyTypingTypeProvider.getType(defaultExpression, myTypeEvalContext))
         if (defaultType !is PyParamSpecType) {
           registerProblem(defaultExpression, PyPsiBundle.message("INSP.type.hints.default.type.of.param.spec.must.be.param.spec.or.list.of.types"))
