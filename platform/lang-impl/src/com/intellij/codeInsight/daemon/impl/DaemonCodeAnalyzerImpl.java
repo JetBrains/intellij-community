@@ -1253,10 +1253,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         // happens e.g., when we are trying to open a directory and there's a FileEditor supporting this
         // invokeLater is required because we can't stop daemon from inside UpdateRunnable, since its future hasn't been scheduled yet
         // or when PCE happened in queuePassesCreation
-        String reason = "Couldn't create session for " + activeEditors
-                        + (pce == null ? "" : "; PCE was thrown: " + pce)
-                        + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+getUpdateProgress() : "");
-        ApplicationManager.getApplication().invokeLater(() -> stopProcess(true, reason), __->myDisposed);
+        synchronized (this) { // synchronized is to compute myUpdateProgress toString without CME
+          String reason = "Couldn't create session for " + activeEditors
+                          + (pce == null ? "" : "; PCE was thrown: " + pce)
+                          + (wasCanceledDuringSubmit ? "; was canceled during queuePassesCreation(): "+getUpdateProgress() : "");
+          ApplicationManager.getApplication().invokeLater(() -> stopProcess(true, reason), __->myDisposed);
+        }
       }
     }
   }
