@@ -7,4 +7,10 @@
                 implementationClass="com.intellij.notebooks.jupyter.core.jupyter.JupyterFileType"
                 fieldName="INSTANCE"/>
     </extensions>
+
+
+  <applicationListeners>
+    <listener class="com.intellij.notebooks.jupyter.core.jupyter.JupyterCorePluginListener"
+              topic="com.intellij.ide.plugins.DynamicPluginListener"/>
+  </applicationListeners>
 </idea-plugin>
