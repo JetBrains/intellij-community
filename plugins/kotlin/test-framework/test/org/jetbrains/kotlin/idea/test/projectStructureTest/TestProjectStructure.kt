@@ -86,6 +86,9 @@ enum class DependencyKind {
 }
 
 /**
+ * A content root may either be specified as a [JsonObject], or as a string shortcut. In the shortcut form, the content root path is derived
+ * from [TestContentRootKind.defaultDirectoryName].
+ *
  * @param path The content root path relative to the module root. If `null`, the path is equal to the module root.
  */
 data class TestContentRoot(
@@ -93,9 +96,9 @@ data class TestContentRoot(
     val kind: TestContentRootKind,
 )
 
-enum class TestContentRootKind {
-    PRODUCTION,
-    TESTS,
+enum class TestContentRootKind(val defaultDirectoryName: String) {
+    PRODUCTION("src"),
+    TESTS("test"),
 }
 
 /**
@@ -163,14 +166,18 @@ object TestProjectModuleParser {
             }
         }
 
-    private fun parseContentRoots(json: JsonArray): List<TestContentRoot> {
-        return json.map { element ->
-            require(element is JsonObject)
+    private fun parseContentRoots(json: JsonArray): List<TestContentRoot> = json.map(::parseContentRoot)
 
+    private fun parseContentRoot(element: JsonElement): TestContentRoot = when (element) {
+        is JsonObject -> {
             val path = element.getString(CONTENT_ROOT_PATH_FIELD)
-            val kind = TestContentRootKind.valueOf(element.getString(CONTENT_ROOT_KIND_FIELD))
-
+            val kind = TestContentRootKind.valueOf(element.getString(CONTENT_ROOT_KIND_FIELD).uppercase())
             TestContentRoot(path, kind)
         }
+        is JsonPrimitive -> {
+            val kind = TestContentRootKind.valueOf(element.asString.uppercase())
+            TestContentRoot(kind.defaultDirectoryName, kind)
+        }
+        else -> error("Unexpected content root JSON element type: ${element::class.java}")
     }
 }
