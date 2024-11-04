@@ -5193,8 +5193,6 @@ f:com.intellij.openapi.ui.validation.ValidationUtilKt
 - sf:validationErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationErrorIf(java.lang.String,kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
-- sf:validationFileErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function1):com.intellij.openapi.ui.validation.DialogValidation$WithParameter
 - sf:validationPathErrorFor(kotlin.jvm.functions.Function2):com.intellij.openapi.ui.validation.DialogValidation$WithTwoParameters
 c:com.intellij.openapi.util.DefaultModificationTracker

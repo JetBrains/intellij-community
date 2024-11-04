@@ -6,11 +6,11 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.ui.UIBundle
-import java.io.IOException
-import java.nio.file.Files
-import java.nio.file.InvalidPathException
-import java.nio.file.Path
-import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isWritable
+import kotlin.io.path.listDirectoryEntries
+import kotlin.io.path.name
 
 val CHECK_NON_EMPTY: DialogValidation.WithParameter<() -> String> = validationErrorIf<String>(UIBundle.message("kotlin.dsl.validation.missing.value")) { it.isEmpty() }
 
@@ -29,31 +29,20 @@ val CHECK_NAME_FORMAT: DialogValidation.WithParameter<() -> String> = validation
   !firstSymbolNamePattern.matches(it)
 }
 
-val CHECK_NON_EMPTY_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationFileErrorFor { file ->
-  val path = file.toPath()
-  val children by lazy { Files.list(path).toList() }
-  if (Files.exists(path) && children != null && children.isNotEmpty()) {
-    UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning", file.name)
+val CHECK_NON_EMPTY_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPathErrorFor { path ->
+  if (path.exists() && path.listDirectoryEntries().isNotEmpty()) {
+    UIBundle.message("label.project.wizard.new.project.directory.not.empty.warning", path.name)
   }
   else null
 }.asWarning().withOKEnabled()
 
-val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationErrorFor { text ->
-  runCatching { Path.of(text).toFile() }
-    .mapCatching { file ->
-      when {
-        !file.exists() -> null
-        !file.canWrite() -> UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", file.name)
-        !file.isDirectory -> UIBundle.message("label.project.wizard.new.project.file.not.directory.error", file.name)
-        else -> null
-      }
-    }.getOrElse { exception ->
-      when (exception) {
-        is InvalidPathException -> exception.message
-        is IOException -> exception.message
-        else -> throw exception
-      }
-    }
+val CHECK_DIRECTORY: DialogValidation.WithParameter<() -> String> = validationPathErrorFor { path ->
+  when {
+    !path.exists() -> null
+    !path.isWritable() -> UIBundle.message("label.project.wizard.new.project.directory.not.writable.error", path.name)
+    !path.isDirectory() -> UIBundle.message("label.project.wizard.new.project.file.not.directory.error", path.name)
+    else -> null
+  }
 }
 
 private val firstSymbolGroupIdPattern = "[a-zA-Z_].*".toRegex()
