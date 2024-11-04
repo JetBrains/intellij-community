@@ -2659,6 +2659,11 @@ public abstract class K2JsBasicCompletionLegacyStdlibTestGenerated extends Abstr
                 runTest("../../completion/testData/basic/common/staticMembers/CompanionObjectMembers.kt");
             }
 
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../../completion/testData/basic/common/staticMembers/EnumRendering.kt");
+            }
+
             @TestMetadata("EnumWithoutCompanionObject.kt")
             public void testEnumWithoutCompanionObject() throws Exception {
                 runTest("../../completion/testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");

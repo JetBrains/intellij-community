@@ -2659,6 +2659,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
             }
 
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumRendering.kt");
+            }
+
             @TestMetadata("EnumWithoutCompanionObject.kt")
             public void testEnumWithoutCompanionObject() throws Exception {
                 runTest("../testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");
@@ -4148,6 +4153,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             @TestMetadata("JavaStaticFieldsFromImports.kt")
             public void testJavaStaticFieldsFromImports() throws Exception {
                 runTest("../testData/basic/java/staticMembers/JavaStaticFieldsFromImports.kt");
+            }
+
+            @TestMetadata("JavaStaticMethodRendering.kt")
+            public void testJavaStaticMethodRendering() throws Exception {
+                runTest("../testData/basic/java/staticMembers/JavaStaticMethodRendering.kt");
             }
 
             @TestMetadata("JavaStaticMethods.kt")

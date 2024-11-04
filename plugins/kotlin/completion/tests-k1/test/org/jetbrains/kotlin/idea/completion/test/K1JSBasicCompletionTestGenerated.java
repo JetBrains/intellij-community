@@ -2659,6 +2659,11 @@ public abstract class K1JSBasicCompletionTestGenerated extends AbstractK1JSBasic
                 runTest("../testData/basic/common/staticMembers/CompanionObjectMembers.kt");
             }
 
+            @TestMetadata("EnumRendering.kt")
+            public void testEnumRendering() throws Exception {
+                runTest("../testData/basic/common/staticMembers/EnumRendering.kt");
+            }
+
             @TestMetadata("EnumWithoutCompanionObject.kt")
             public void testEnumWithoutCompanionObject() throws Exception {
                 runTest("../testData/basic/common/staticMembers/EnumWithoutCompanionObject.kt");

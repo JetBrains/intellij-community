@@ -9,14 +9,15 @@ import org.jetbrains.kotlin.analysis.api.components.KaScopeKind
 import org.jetbrains.kotlin.analysis.api.signatures.KaCallableSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.*
-import org.jetbrains.kotlin.analysis.api.types.KaIntersectionType
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.resolveToExpandedSymbol
 import org.jetbrains.kotlin.idea.completion.lookups.isExtensionCall
 import org.jetbrains.kotlin.idea.completion.reference
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
+import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 
 internal object CallableMetadataProvider {
@@ -174,10 +175,25 @@ internal object CallableMetadataProvider {
     context(KaSession)
     private fun getFlattenedActualReceiverTypes(context: WeighingContext): List<List<KaType>> {
         val actualExplicitReceiverTypes = context.explicitReceiver?.let { receiver ->
-            val referencedClass = getReferencedClassInCallableReferenceExpression(receiver) ?: getQualifierClassInKDocName(receiver)
-            val typesFromClass = referencedClass?.let { listOfNotNull(it, it.companionObject).map { buildClassType(it) } }
+            val expandedSymbol = receiver.reference()
+                ?.resolveToExpandedSymbol()
 
-            typesFromClass ?: (receiver as? KtExpression)?.getTypeWithCorrectedNullability()?.let { listOf(it) }
+            val referencedClass = (expandedSymbol as? KaClassLikeSymbol)
+                ?.takeIf {
+                    isInCallableReferenceExpression(receiver)
+                            || receiver is KDocName
+                }
+
+            if (referencedClass != null) {
+                listOfNotNull(
+                    referencedClass,
+                    referencedClass.companionObject,
+                ).map { buildClassType(it) }
+            } else {
+                (receiver as? KtExpression)
+                    ?.getTypeWithCorrectedNullability(expandedSymbol)
+                    ?.let { listOf(it) }
+            }
         }
 
         val actualImplicitReceiverTypes = context.implicitReceiver.map { it.type }
@@ -196,9 +212,20 @@ internal object CallableMetadataProvider {
     }
 
     context(KaSession)
-    private fun KtExpression.getTypeWithCorrectedNullability(): KaType? {
-        val isSafeCall = parent is KtSafeQualifiedExpression
-        return expressionType?.applyIf(isSafeCall) { withNullability(KaTypeNullability.NON_NULLABLE) }
+    private fun KtExpression.getTypeWithCorrectedNullability(
+        referenceClass: KaSymbol? = null,
+    ): KaType? {
+        val expressionType: KaType? = expressionType?.takeUnless { it.isUnitType }
+            ?: when (val symbol = referenceClass) {
+                is KaTypeAliasSymbol -> symbol.expandedType
+                is KaClassifierSymbol -> symbol.defaultType
+                is KaCallableSymbol -> symbol.returnType
+                else -> null
+            }
+
+        return expressionType?.applyIf(parent is KtSafeQualifiedExpression) {
+            withNullability(KaTypeNullability.NON_NULLABLE)
+        }
     }
 
     context(KaSession)
@@ -210,25 +237,16 @@ internal object CallableMetadataProvider {
         }
 
     /**
-     * Returns referenced class if this explicit receiver is a receiver in a callable reference expression. For example,
+     * Checks whether this explicit receiver is a receiver in a callable reference expression. For example,
      * in the following code, `String` is such a receiver. And this method should return the `String` class in this case.
      * ```
      * val l = String::length
      * ```
      */
     context(KaSession)
-    private fun getReferencedClassInCallableReferenceExpression(explicitReceiver: KtElement): KaClassLikeSymbol? {
-        val callableReferenceExpression = explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true) ?: return null
-        if (callableReferenceExpression.lhs != explicitReceiver) return null
-        return explicitReceiver.reference()?.resolveToExpandedSymbol() as? KaClassLikeSymbol
-    }
-
-    context(KaSession)
-    private fun getQualifierClassInKDocName(explicitReceiver: KtElement): KaClassLikeSymbol? {
-        if (explicitReceiver !is KDocName) return null
-
-        return explicitReceiver.mainReference.resolveToSymbol() as? KaClassLikeSymbol
-    }
+    private fun isInCallableReferenceExpression(explicitReceiver: KtElement): Boolean =
+        explicitReceiver.getParentOfType<KtCallableReferenceExpression>(strict = true)
+            ?.lhs == explicitReceiver
 
     context(KaSession)
     @OptIn(KaExperimentalApi::class)
