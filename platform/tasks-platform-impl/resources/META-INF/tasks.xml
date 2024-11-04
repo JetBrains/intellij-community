@@ -1,8 +1,12 @@
 <idea-plugin>
   <extensionPoints>
     <extensionPoint name="tasks.contextProvider" interface="com.intellij.tasks.context.WorkingContextProvider" dynamic="true"/>
+    <extensionPoint name="tasks.repositoryType" interface="com.intellij.tasks.TaskRepositoryType" dynamic="true"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>
+    <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerImpl$Activity"/>
+
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.ProjectViewContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.RunConfigurationsContextProvider"/>

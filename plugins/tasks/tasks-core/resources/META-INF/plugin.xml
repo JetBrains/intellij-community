@@ -92,7 +92,6 @@
   </actions>
 
   <extensionPoints>
-    <extensionPoint name="repositoryType" interface="com.intellij.tasks.TaskRepositoryType" dynamic="true"/>
     <extensionPoint name="dialogPanelProvider" interface="com.intellij.tasks.ui.TaskDialogPanelProvider"/>
     <extensionPoint name="commitPlaceholderProvider" interface="com.intellij.tasks.CommitPlaceholderProvider" dynamic="true"/>
   </extensionPoints>
@@ -111,8 +110,6 @@
 
     <editChangelistSupport implementation="com.intellij.tasks.impl.TaskChangelistSupport"/>
 
-    <projectService serviceInterface="com.intellij.tasks.TaskManager" serviceImplementation="com.intellij.tasks.impl.TaskManagerImpl"/>
-    <postStartupActivity implementation="com.intellij.tasks.impl.TaskManagerImpl$Activity"/>
     <applicationService serviceImplementation="com.intellij.tasks.config.TaskSettings"/>
     <search.optionContributor implementation="com.intellij.tasks.config.TaskSearchableOptionContributor"/>
 
