@@ -1,12 +1,16 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView
 
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.ExtensionPointName.Companion.create
 import com.intellij.openapi.extensions.KeyedFactoryEPBean
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeExtensionFactory
 import com.intellij.openapi.project.Project
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -31,6 +35,22 @@ interface StructureViewBuilder {
    * @see TreeBasedStructureViewBuilder
    */
   fun createStructureView(fileEditor: FileEditor?, project: Project): StructureView
+
+  /**
+   * Returns the structure view implementation for the specified file
+   *
+   * A coroutine-friendly version of [createStructureView].
+   * The default implementation just invokes [createStructureView]
+   * under the write intent lock on the EDT.
+   * Implementations may choose to override it if they have slow ops that need to be performed on a BGT.
+   */
+  suspend fun createStructureViewSuspend(fileEditor: FileEditor?, project: Project): StructureView {
+    return withContext(Dispatchers.EDT) {
+      writeIntentReadAction {
+        createStructureView(fileEditor, project)
+      }
+    }
+  }
 
   @ApiStatus.Internal
   companion object {
