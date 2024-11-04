@@ -5,19 +5,26 @@ import com.intellij.codeInspection.InspectionsBundle
 import com.intellij.codeInspection.ex.InspectionToolWrapper
 import com.intellij.codeInspection.reference.RefElement
 import com.intellij.codeInspection.reference.RefEntity
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.JBUI
+import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingConstants
+import javax.swing.tree.TreePath
 
 /**
  * @author Dmitry Batkovich
@@ -82,5 +89,29 @@ object InspectionResultsViewUtil {
     multipleSelectionLabel.setVerticalAlignment(SwingConstants.TOP)
     multipleSelectionLabel.setBorder(JBUI.Borders.empty(16, 12, 0, 0))
     return multipleSelectionLabel
+  }
+
+  fun updateAvailableSuppressActions(project: Project, paths: Array<TreePath>, view: InspectionResultsView) {
+    project.service<CoroutineScopeProvider>().updateAvailableSuppressActions(paths, view)
+  }
+}
+
+@Service(Service.Level.PROJECT)
+private class CoroutineScopeProvider(val scope: CoroutineScope) {
+  private var suppressActionsJob: Job? = null
+
+  fun updateAvailableSuppressActions(paths: Array<TreePath>, view: InspectionResultsView) {
+    suppressActionsJob?.cancel()
+    suppressActionsJob = scope.launch {
+      for (path in paths) {
+        val node = path.lastPathComponent
+        if (node !is SuppressableInspectionTreeNode) continue
+        readAction { node.updateAvailableSuppressActions() }
+      }
+
+      withContext(Dispatchers.EDT) {
+        view.updateAvailableSuppressActions()
+      }
+    }
   }
 }

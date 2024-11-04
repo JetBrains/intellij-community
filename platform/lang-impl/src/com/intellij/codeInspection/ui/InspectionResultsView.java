@@ -100,6 +100,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
 
   private final Executor myTreeUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
   private final Executor myRightPanelUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("Inspection-View-Right-Panel-Updater");
+  private Component myFixToolbar;
   private volatile boolean myUpdating;
   private volatile boolean myFixesAvailable;
   private ToolWindow myToolWindow;
@@ -236,6 +237,12 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
         .addToRight(createRightActionsToolbar());
     }
     add(westComponent, BorderLayout.WEST);
+  }
+
+  void updateAvailableSuppressActions() {
+    if (myFixToolbar instanceof QuickFixPreviewPanelFactory.QuickFixReadyPanel quickFixPanel) {
+      quickFixPanel.updateAvailableSuppressors(this);
+    }
   }
 
   private static DefaultActionGroup createExportActions() {
@@ -485,20 +492,19 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
     editorPanel.add(previewPanel, BorderLayout.CENTER);
     if (problemCount > 0) {
       var paths = myTree.getSelectionPaths();
-      if (paths != null) for (TreePath path: paths) {
-        var node = (InspectionTreeNode)path.getLastPathComponent();
-        if (node instanceof SuppressableInspectionTreeNode) ((SuppressableInspectionTreeNode)node).updateAvailableSuppressActions();
+      if (paths != null) {
+        InspectionResultsViewUtil.INSTANCE.updateAvailableSuppressActions(getProject(), paths, this);
       }
-      final JComponent fixToolbar = QuickFixPreviewPanelFactory.create(this);
-      if (fixToolbar != null) {
-        if (fixToolbar instanceof InspectionTreeLoadingProgressAware) {
-          myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)fixToolbar;
+      myFixToolbar = QuickFixPreviewPanelFactory.create(this);
+      if (myFixToolbar != null) {
+        if (myFixToolbar instanceof InspectionTreeLoadingProgressAware) {
+          myLoadingProgressPreview = (InspectionTreeLoadingProgressAware)myFixToolbar;
         }
         if (previewEditor != null) {
           previewPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
         }
         String borderLayout = isCustomActionPanelAlignedToLeft ? BorderLayout.EAST : BorderLayout.WEST;
-        actionsPanel.add(fixToolbar, borderLayout);
+        actionsPanel.add(myFixToolbar, borderLayout);
       }
     }
     if (previewEditor != null) {
