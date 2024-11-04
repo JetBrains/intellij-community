@@ -763,14 +763,7 @@ public final class InspectionResultsView extends JPanel implements Disposable, U
   }
 
   public @NlsContexts.TabTitle String getViewTitle() {
-    if (ExperimentalUI.isNewUI()) {
-      return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
-    }
-
-    return InspectionsBundle.message(isSingleInspectionRun() ?
-                              "inspection.results.for.inspection.toolwindow.title" :
-                              "inspection.results.for.profile.toolwindow.title",
-                              getCurrentProfileName(), myScope.getShortenName());
+    return InspectionsBundle.message("inspection.results.toolwindow.title", myScope.getShortenName());
   }
 
   void setFixesAvailable(boolean available) {
