@@ -10,6 +10,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.sun.jdi.ClassLoaderReference;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class EvaluationContextImpl implements EvaluationContext {
+public final class EvaluationContextImpl extends UserDataHolderBase implements EvaluationContext {
   private final DebuggerComputableValue myThisObject;
   private final @NotNull SuspendContextImpl mySuspendContext;
   private final StackFrameProxyImpl myFrameProxy;
