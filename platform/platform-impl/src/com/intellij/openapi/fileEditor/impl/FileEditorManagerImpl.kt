@@ -1244,15 +1244,18 @@ open class FileEditorManagerImpl(
       if (isNewEditor) {
         openFileSetModificationCount.increment()
       }
-      else {
+      else if (fileEntry != null) {
         for (editorWithProvider in composite.allEditorsWithProviders) {
-          restoreEditorState(
-            file = file,
-            fileEditorWithProvider = editorWithProvider,
-            isNewEditor = false,
-            exactState = options.isExactState,
-            project = project,
-          )
+          val state = fileEntry.providers.get(editorWithProvider.provider.editorTypeId)
+            ?.let { editorWithProvider.provider.readState(it, project, file) }
+          if (state != null && state != FileEditorState.INSTANCE) {
+            restoreEditorState(
+              fileEditorWithProvider = editorWithProvider,
+              state = state,
+              exactState = options.isExactState,
+              project = project,
+            )
+          }
         }
 
         // restore selected editor

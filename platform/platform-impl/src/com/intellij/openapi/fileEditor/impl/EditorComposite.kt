@@ -945,25 +945,6 @@ fun retrofitEditorComposite(composite: FileEditorComposite?): com.intellij.opena
 }
 
 internal fun restoreEditorState(
-  file: VirtualFile,
-  fileEditorWithProvider: FileEditorWithProvider,
-  isNewEditor: Boolean,
-  exactState: Boolean,
-  project: Project,
-) {
-  val state = if (isNewEditor) {
-    // We have to try to get state from the history only in case of the editor is not opened.
-    // Otherwise, history entry might have a state out of sync with the current editor state.
-    EditorHistoryManager.getInstance(project).getState(file, fileEditorWithProvider.provider) ?: return
-  }
-  else {
-    return
-  }
-
-  restoreEditorState(fileEditorWithProvider = fileEditorWithProvider, state = state, exactState = exactState, project = project)
-}
-
-internal fun restoreEditorState(
   fileEditorWithProvider: FileEditorWithProvider,
   state: FileEditorState,
   exactState: Boolean,
