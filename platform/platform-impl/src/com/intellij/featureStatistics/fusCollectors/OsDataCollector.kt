@@ -38,7 +38,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "opensuse-leap", "opensuse-tumbleweed", "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon",
     "slackware", "solus", "ubuntu", "void", "zorin", "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 17)
+  private val GROUP = EventLogGroup("system.os", 18)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexpReference("time_zone", "time_zone")
@@ -46,7 +46,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   private val DISTRO = String("distro", DISTROS)
   private val RELEASE = StringValidatedByRegexpReference("release", "version")
   private val UNDER_WSL = EventFields.Boolean("wsl")
-  private val GLIBC = EventFields.Double("glibc")
+  private val GLIBC = StringValidatedByRegexpReference("glibc", "version")
 
   private val OS = GROUP.registerVarargEvent("os.name", OS_NAME, Version, OS_LANG, OS_TZ, OS_SHELL)
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
@@ -69,7 +69,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
         val glibcVersion = getGlibcVersion()
         val linuxMetrics = mutableListOf<EventPair<*>>(DISTRO.with(distro), RELEASE.with(release), UNDER_WSL.with(isUnderWsl))
         if (glibcVersion != null) {
-          linuxMetrics.add(GLIBC.with(glibcVersion))
+          linuxMetrics.add(GLIBC.with(glibcVersion.toString()))
         }
         metrics += LINUX.metric(*linuxMetrics.toTypedArray())
       }
