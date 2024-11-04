@@ -3429,6 +3429,11 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
                 runTest("../testData/basic/common/LocalMultideclarationValues.kt");
             }
 
+            @TestMetadata("MapEntry.kt")
+            public void testMapEntry() throws Exception {
+                runTest("../testData/basic/common/MapEntry.kt");
+            }
+
             @TestMetadata("NamedObject.kt")
             public void testNamedObject() throws Exception {
                 runTest("../testData/basic/common/NamedObject.kt");

@@ -3613,6 +3613,11 @@ public abstract class CommonNativeJvmKotlinKmpCompletionTestGenerated extends Ab
             runTest("../../completion/testData/basic/common/LocalMultideclarationValues.kt");
         }
 
+        @TestMetadata("MapEntry.kt")
+        public void testMapEntry() throws Exception {
+            runTest("../../completion/testData/basic/common/MapEntry.kt");
+        }
+
         @TestMetadata("NamedObject.kt")
         public void testNamedObject() throws Exception {
             runTest("../../completion/testData/basic/common/NamedObject.kt");
