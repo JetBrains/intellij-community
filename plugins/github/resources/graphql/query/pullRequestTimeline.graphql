@@ -146,12 +146,6 @@ fragment baseRefForcePushedEvent on BaseRefForcePushedEvent {
     ref {
         ...gitRefName
     }
-    beforeCommit {
-        ...commitHash
-    }
-    afterCommit {
-        ...commitHash
-    }
 }
 
 fragment headRefForcePushedEvent on HeadRefForcePushedEvent {
