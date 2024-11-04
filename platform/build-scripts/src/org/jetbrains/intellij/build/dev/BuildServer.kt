@@ -66,10 +66,10 @@ suspend fun buildProductInProcess(request: BuildRequest): Path {
     try {
       buildProduct(
         request = request,
-        createProductProperties = {
+        createProductProperties = { compilationContext ->
           val configuration = createConfiguration(homePath = request.projectDir, productionClassOutput = request.productionClassOutput)
           val productConfiguration = getProductConfiguration(configuration, request.platformPrefix)
-          createProductProperties(productConfiguration = productConfiguration, request = request)
+          createProductProperties(productConfiguration = productConfiguration, compilationContext = compilationContext, request = request)
         },
       )
     }
