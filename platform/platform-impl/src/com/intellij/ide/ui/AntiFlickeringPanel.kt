@@ -7,19 +7,16 @@ import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
-import java.awt.Dimension
 import java.awt.Graphics
 import java.awt.image.BufferedImage
 import javax.swing.JComponent
 
 /** A hacky way to reduce flickering. */
-@ApiStatus.Internal
-class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
+internal class AntiFlickeringPanel(private val content: JComponent) : JBLayeredPane() {
   private var savedSelfieImage: BufferedImage? = null
 
-  inner class FreezingPaintPanel : JComponent() {
+  private inner class FreezingPaintPanel : JComponent() {
     @DirtyUI
     override fun paint(g: Graphics) {
       val image = savedSelfieImage
