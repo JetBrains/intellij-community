@@ -243,7 +243,6 @@ public class MavenServerCMDState extends CommandLineState {
 
   private void setupMainClass(SimpleJavaParameters params, MavenVersionAwareSupportExtension extension) {
     if (setupThrowMainClass && MavenUtil.isMavenUnitTestModeEnabled()) {
-      setupThrowMainClass = false;
       params.setMainClass(MAIN_CLASS_WITH_EXCEPTION_FOR_TESTS);
     }
     else {
@@ -269,14 +268,16 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   @TestOnly
-  public static void setThrowExceptionOnNextServerStart() {
+  public static void withThrowExceptionOnServerStart(Runnable runnable) {
     setupThrowMainClass = true;
+    try {
+      runnable.run();
+    }
+    finally {
+      setupThrowMainClass = false;
+    }
   }
 
-  @TestOnly
-  public static void resetThrowExceptionOnNextServerStart() {
-    setupThrowMainClass = false;
-  }
 
   @Nullable
   static String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {
