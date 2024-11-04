@@ -41,10 +41,10 @@
       <action id="Frontend.ShelveChanges.UnshelveWithDialog" class="com.intellij.vcs.impl.frontend.shelf.actions.UnshelveWithDialogAction"
               icon="AllIcons.Vcs.Unshelve">
       </action>
+      <action id="Frontend.ChangesView.Shelf.Restore" class="com.intellij.vcs.impl.frontend.shelf.actions.RestoreShelfAction"/>
       <action id="Frontend.ChangesView.ShowDiff" class="com.intellij.vcs.impl.frontend.changes.actions.ShowDiffAction"
               icon="AllIcons.Actions.Diff"
               use-shortcut-of="Diff.ShowDiff"/>
-      <action id="Frontend.ChangesView.Shelf.Restore" class="com.intellij.vcs.impl.frontend.shelf.actions.RestoreShelfAction"/>
       <action id="Frontend.Vcs.ShowStandaloneDiff.window" class="com.intellij.vcs.impl.frontend.shelf.actions.ShowDifInNewWindowAction" icon="AllIcons.Actions.Diff"/>
       <action id="Frontend.Vcs.CompareWithLocal" class="com.intellij.vcs.impl.frontend.shelf.actions.CompareWithLocalAction"/>
       <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionDialog"
@@ -52,9 +52,11 @@
       <action id="Frontend.ChangesView.Shelf.CreatePatchFromChanges.Clipboard" class="com.intellij.vcs.impl.frontend.changes.actions.CreatePatchForShelvedChangeActionClipboard"
               icon="AllIcons.Vcs.Patch"/>
       <action id="Frontend.ChangesView.Shelf.ImportFromPatches" class="com.intellij.vcs.impl.frontend.shelf.actions.ImportShelvesFromPatchesAction"/>
+      <separator/>
       <action id="Frontend.ChangesView.Shelf.Rename" class="com.intellij.vcs.impl.frontend.shelf.actions.RenameShelvedChangelistAction"/>
       <action id="Frontend.Delete.Action" class="com.intellij.vcs.impl.frontend.changes.actions.FrontendDeleteAction" use-shortcut-of="$Delete"/>
-      <action id="Frontend.EditSource" class="com.intellij.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction" use-shortcut-of="EditSource"/>
+      <separator/>
     </group>
+    <action id="Frontend.EditSource" class="com.intellij.vcs.impl.frontend.navigation.FrontendNavigateToSourceAction" use-shortcut-of="EditSource"/>
   </actions>
 </idea-plugin>
