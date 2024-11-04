@@ -489,14 +489,18 @@ internal open class FirCallableCompletionContributor(
         extensionChecker: KaCompletionExtensionCandidateChecker?,
         explicitReceiverTypes: List<KaType>? = null,
     ): Sequence<Pair<KtCallableSignatureWithContainingScopeKind, CallableInsertionOptions>> {
-        val receiversTypes = explicitReceiverTypes ?: scopeContext.implicitReceivers.map { it.type }
+        val receiverTypes = explicitReceiverTypes
+            ?: scopeContext.implicitReceivers.map { it.type }
 
         return scopeContext.scopes.asSequence().flatMap { scopeWithKind ->
-            collectSuitableExtensions(
+            val suitableExtensions = collectSuitableExtensions(
                 positionContext = positionContext,
                 scope = scopeWithKind.scope,
-                receiverTypes = receiversTypes,
                 hasSuitableExtensionReceiver = extensionChecker,
+            )
+            ShadowedCallablesFilter.sortExtensions(
+                extensions = suitableExtensions.toList(),
+                receiversFromContext = receiverTypes,
             ).map { KtCallableSignatureWithContainingScopeKind(it.signature, scopeWithKind.kind) to it.insertionOptions }
         }
     }
@@ -505,15 +509,13 @@ internal open class FirCallableCompletionContributor(
     private fun collectSuitableExtensions(
         positionContext: KotlinNameReferencePositionContext,
         scope: KaScope,
-        receiverTypes: List<KaType>,
         hasSuitableExtensionReceiver: KaCompletionExtensionCandidateChecker?,
-    ): Collection<ApplicableExtension> =
+    ): Sequence<ApplicableExtension> =
         scope.callables(scopeNameFilter)
             .filter { it.canBeUsedAsExtension() }
             .filter { visibilityChecker.isVisible(it, positionContext) }
             .filter { filter(it) }
             .mapNotNull { callable -> checkApplicabilityAndSubstitute(callable, hasSuitableExtensionReceiver) }
-            .let { ShadowedCallablesFilter.sortExtensions(it.toList(), receiverTypes) }
 
     /**
      * If [callableSymbol] is applicable returns substituted signature and insertion options, otherwise, null.
