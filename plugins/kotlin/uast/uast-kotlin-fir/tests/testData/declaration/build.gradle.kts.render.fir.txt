@@ -31,4 +31,5 @@ public final class Build_gradle {
         })
     }
     public static final fun main(args: java.lang.String[]) : void = UastEmptyExpression
+    public final fun get$$result() : error.NonExistentClass = UastEmptyExpression
 }

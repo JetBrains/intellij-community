@@ -127,7 +127,7 @@
     <gradleModelFacade implementation="org.jetbrains.kotlin.idea.gradleJava.inspections.DefaultGradleModelFacade"/>
 
     <scriptConfigurationsSource implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptConfigurationsSource"/>
-    <scriptReloadActionAvailability implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptReloadActionAvailability"/>
+    <kotlinScriptLazyResolveProhibitionCondition implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptLazyResolveProhibitionCondition"/>
 
     <scriptAdditionalIdeaDependenciesProvider implementation="org.jetbrains.kotlin.idea.gradleJava.scripting.GradleScriptAdditionalIdeaDependenciesProvider"/>
 

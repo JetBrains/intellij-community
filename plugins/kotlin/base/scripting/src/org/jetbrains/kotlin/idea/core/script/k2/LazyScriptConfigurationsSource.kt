@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.platform.backend.workspace.virtualFile
 import com.intellij.platform.backend.workspace.workspaceModel
 import com.intellij.platform.workspace.storage.MutableEntityStorage
 import com.intellij.platform.workspace.storage.url.VirtualFileUrl
@@ -42,11 +41,13 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             return currentData.configurations[virtualFile]
         }
 
+        if (KotlinScriptLazyResolveProhibitionCondition.prohibitLazyResolve(project, virtualFile)) return null
+
         coroutineScope.launch {
             updateDependenciesAndCreateModules(setOf(BaseScriptModel(virtualFile)))
         }
 
-        return null
+        return data.get().configurations[virtualFile]
     }
 
     override suspend fun resolveDependencies(scripts: Iterable<BaseScriptModel>): ScriptConfigurations {
@@ -68,7 +69,7 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             }
         }
 
-        configurations.forEach { script, result ->
+        configurations.forEach { (script, result) ->
             project.service<ScriptReportSink>().attachReports(script, result.reports)
         }
 
@@ -84,16 +85,9 @@ open class LazyScriptConfigurationsSource(override val project: Project, val cor
             project, configurationsData
         ) { KotlinCustomScriptModuleEntitySource(it) }
 
-        val scriptFiles =
-            configurationsData.configurations.keys.toSet()
-
         project.workspaceModel.update("Updating MainKts Kotlin Scripts modules") {
             it.replaceBySource(
-                { source ->
-                    (source as? KotlinCustomScriptModuleEntitySource)?.let {
-                        scriptFiles.contains(it.virtualFileUrl?.virtualFile)
-                    } == true
-                },
+                { source -> source is KotlinCustomScriptModuleEntitySource },
                 updatedStorage
             )
         }
