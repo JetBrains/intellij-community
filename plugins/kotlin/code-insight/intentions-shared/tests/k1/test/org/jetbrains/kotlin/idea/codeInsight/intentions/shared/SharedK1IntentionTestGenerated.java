@@ -1001,6 +1001,45 @@ public abstract class SharedK1IntentionTestGenerated extends AbstractSharedK1Int
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../testData/intentions/mergeElseIf")
+    public static class MergeElseIf extends AbstractSharedK1IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K1;
+        }
+
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("comments.kt")
+        public void testComments() throws Exception {
+            runTest("../testData/intentions/mergeElseIf/comments.kt");
+        }
+
+        @TestMetadata("else.kt")
+        public void testElse() throws Exception {
+            runTest("../testData/intentions/mergeElseIf/else.kt");
+        }
+
+        @TestMetadata("expression.kt")
+        public void testExpression() throws Exception {
+            runTest("../testData/intentions/mergeElseIf/expression.kt");
+        }
+
+        @TestMetadata("ifNotSingle.kt")
+        public void testIfNotSingle() throws Exception {
+            runTest("../testData/intentions/mergeElseIf/ifNotSingle.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../testData/intentions/mergeElseIf/simple.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../testData/intentions/operatorToFunction")
     public static class OperatorToFunction extends AbstractSharedK1IntentionTest {
         @java.lang.Override
