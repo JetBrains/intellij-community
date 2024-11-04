@@ -23,6 +23,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 
 @Service(Service.Level.APP)
@@ -33,13 +34,23 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
   @OptIn(ExperimentalCoroutinesApi::class)
   private val documentChangeDispatcher = Dispatchers.Default.limitedParallelism(1)
   private val allCache = Long2ObjectOpenHashMap<Object2IntOpenHashMap<VirtualFile>>()
+  private val queueSizeEstimate = AtomicInteger()
+  private var lastSearchTimeNs = -1L
 
   private val documentListener = object : DocumentListener {
     override fun documentChanged(event: DocumentEvent) {
       if (logger.isDebugEnabled) {
         logger.debug("Document changed: ${event.document}")
       }
-      onDocumentChange(event.document)
+      queueSizeEstimate.incrementAndGet()
+      coroutineScope.launch(documentChangeDispatcher) {
+        try {
+          onDocumentChange(event.document)
+        }
+        finally {
+          queueSizeEstimate.decrementAndGet()
+        }
+      }
     }
   }
 
@@ -61,8 +72,8 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
     collectors.add(collector, collector)
   }
 
-  private fun onDocumentChange(document: Document) = coroutineScope.launch(documentChangeDispatcher) {
-    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@launch
+  private suspend fun onDocumentChange(document: Document) = coroutineScope {
+    val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return@coroutineScope
     val filteredCollectors = collectors
       .map { collector -> collector to async(Dispatchers.Default) { collector.filters.all { it.isApplicable(virtualFile) } } }
       .filter { it.second.await() }
@@ -71,7 +82,7 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
       if (logger.isDebugEnabled) {
         logger.debug("Document change skipped as filtered: $document")
       }
-      return@launch
+      return@coroutineScope
     }
     if (logger.isDebugEnabled) {
       logger.debug("Document change processing: $document")
@@ -82,15 +93,30 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
     for ((timestamp, collectors) in groupedByTimeStamp) {
       val cache = allCache.computeIfAbsent(timestamp) { Object2IntOpenHashMap() }
-      val doLocalHistorySearch = collectors.none { it.hasMassiveChanges() }
+      val doLocalHistorySearch = canDoLocalHistorySearch()
+      val timeStartNs = System.nanoTime()
       val hasChanges = hasChangesSinceLastReset(virtualFile, timestamp, contentHash, doLocalHistorySearch, cache)
+      if (doLocalHistorySearch) {
+        lastSearchTimeNs = System.nanoTime() - timeStartNs
+      }
       for (collector in collectors) {
-        launch(Dispatchers.Default) {
+        coroutineScope.launch(Dispatchers.Default) {
           collector.processDocumentChange(hasChanges, virtualFile, document)
         }
       }
     }
   }
+
+  /**
+   * This check is introduced for optimization.
+   * When there are a large number of changed files, each new file has a minimal effect on the overall status,
+   * whether there are changes for HotSwap.
+   * For the sake of performance, some checks (like local history) can be skipped.
+   *
+   * With this check applied, the search time for a set of changes should be no more than 1 second.
+   */
+  private fun canDoLocalHistorySearch(): Boolean =
+    queueSizeEstimate.get() < 5 && lastSearchTimeNs < TimeUnit.MILLISECONDS.toNanos(200)
 
   private fun dropUnusedTimestamps(active: Set<Long>) {
     allCache.keys.minus(active).forEach { allCache.remove(it) }
@@ -134,14 +160,6 @@ class SourceFileChangesCollectorImpl(
     lastResetTimeStamp = System.currentTimeMillis()
     currentChanges = hashSetOf()
   }
-
-  /**
-   * This check is introduced for optimization.
-   * When there are a large number of changed files, each new file has a minimal effect on the overall status,
-   * whether there are changes for HotSwap.
-   * For the sake of performance, some checks (like local history) can be skipped.
-   */
-  internal fun hasMassiveChanges(): Boolean = currentChanges.size > 100
 
   internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile, document: Document) {
     val currentChanges = currentChanges
