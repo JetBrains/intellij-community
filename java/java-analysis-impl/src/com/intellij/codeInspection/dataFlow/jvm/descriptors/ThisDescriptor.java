@@ -4,7 +4,6 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.MutationSignature;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -26,8 +25,13 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   @NotNull
   private final PsiClass myQualifier;
 
-  private ThisDescriptor(@NotNull PsiClass qualifier) {
-    myQualifier = qualifier;
+  /**
+   * Creates a descriptor that represents accessible 'this' variable of a specific class type
+   * 
+   * @param psiClass PSI class designating the corresponding 'this' variable. In case of an inner class, may refer to an outer one.
+   */
+  public ThisDescriptor(@NotNull PsiClass psiClass) {
+    myQualifier = psiClass;
   }
 
   @NotNull

@@ -16,6 +16,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -65,11 +66,18 @@ abstract class PsiVarDescriptor extends JvmVariableDescriptor {
     DfType dfType = getDfType(thisValue.getQualifier());
     PsiModifierListOwner psi = ObjectUtils.tryCast(getPsiElement(), PsiModifierListOwner.class);
     if (psi == null) return dfType;
-    if (dfType instanceof DfIntegralType) {
-      return ((DfIntegralType)dfType).meetRange(JvmPsiRangeSetUtil.fromPsiElement(psi));
+    if (dfType instanceof DfIntegralType integralType) {
+      return integralType.meetRange(JvmPsiRangeSetUtil.fromPsiElement(psi));
     }
     if (dfType instanceof DfReferenceType) {
-      dfType = dfType.meet(Mutability.getMutability(psi).asDfType());
+      Mutability mutability = Mutability.getMutability(psi);
+      if (mutability == Mutability.MUST_NOT_MODIFY &&
+          context != null && !PsiTreeUtil.isAncestor(context.getParent(), psi, false)) {
+        // Pure method may return impure lambda, so method parameter may still be modified 
+        // in nested lambdas/anonymous classes
+        mutability = Mutability.UNKNOWN;
+      }
+      dfType = dfType.meet(mutability.asDfType());
       dfType = dfType.meet(calcCanBeNull(thisValue, context).asDfType());
     }
     return dfType;

@@ -99,7 +99,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     if (!isStatic &&
         ContainerUtil.exists(ImplicitUsageProvider.EP_NAME.getExtensionList(), p -> p.isClassWithCustomizedInitialization(psiClass))) {
-      addInstruction(new EscapeInstruction(Collections.singleton(ThisDescriptor.createThisValue(getFactory(), psiClass))));
+      addInstruction(new EscapeInstruction(List.of(new ThisDescriptor(psiClass))));
       addInstruction(new FlushFieldsInstruction());
     }
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
@@ -796,24 +796,15 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void handleClosure(PsiElement closure) {
-    Set<PsiVariable> variables = new HashSet<>();
-    Set<DfaVariableValue> escapedVars = new HashSet<>();
+    Set<VariableDescriptor> descriptors = new HashSet<>();
     closure.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement target = expression.resolve();
-        if (PsiUtil.isJvmLocalVariable(target)) {
-          variables.add((PsiVariable)target);
-        }
-        if (target instanceof PsiMember) {
-          DfaValue escapedVar = JavaDfaValueFactory.getQualifierOrThisValue(getFactory(), expression);
-          if (escapedVar == null) {
-            escapedVar = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
-          }
-          if (escapedVar instanceof DfaVariableValue dfaVar) {
-            escapedVars.add(dfaVar);
-          }
+        VariableDescriptor descriptor = JavaDfaValueFactory.getAccessedVariableOrGetter(target);
+        if (descriptor != null) {
+          descriptors.add(descriptor);
         }
       }
 
@@ -822,17 +813,12 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         super.visitThisExpression(expression);
         DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), expression);
         if (value instanceof DfaVariableValue dfaVar) {
-          escapedVars.add(dfaVar);
+          descriptors.add(dfaVar.getDescriptor());
         }
       }
     });
-    for (DfaValue value : getFactory().getValues()) {
-      if (value instanceof DfaVariableValue dfaVar && dfaVar.getPsiVariable() instanceof PsiVariable var && variables.contains(var)) {
-        escapedVars.add(dfaVar);
-      }
-    }
-    if (!escapedVars.isEmpty()) {
-      addInstruction(new EscapeInstruction(escapedVars));
+    if (!descriptors.isEmpty()) {
+      addInstruction(new EscapeInstruction(List.copyOf(descriptors)));
     }
     List<PsiElement> closures;
     if (closure instanceof PsiClass psiClass) {
