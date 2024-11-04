@@ -3970,7 +3970,6 @@ f:com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 - iterateVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor,com.intellij.openapi.vcs.VirtualFileFilter):V
 - iterateVfUnderVcsRoot(com.intellij.openapi.vfs.VirtualFile,com.intellij.util.Processor):V
 - loadState(org.jdom.Element):V
-- needAutodetectMappings():Z
 - notifyDirectoryMappingChanged():V
 - registerNewDirectMappings(java.util.Collection):V
 - registerVcs(com.intellij.openapi.vcs.AbstractVcs):V
