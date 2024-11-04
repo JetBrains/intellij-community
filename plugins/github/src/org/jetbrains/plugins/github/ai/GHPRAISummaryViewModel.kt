@@ -75,5 +75,5 @@ interface GHPRAISummaryExtension {
     dataProvider: GHPRDataProvider,
   ): GHPRAISummaryViewModel?
 
-  fun createTimelineComponent(vm: GHPRAISummaryViewModel): JComponent
+  fun createTimelineComponent(project: Project, vm: GHPRAISummaryViewModel): JComponent
 }
