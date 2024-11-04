@@ -4,6 +4,7 @@ import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.ActionManager
 import com.intellij.driver.sdk.ActionUtils
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
+import com.intellij.driver.sdk.waitFor
 import com.intellij.openapi.util.SystemInfoRt
 import java.awt.Window
 import java.awt.event.KeyEvent
@@ -90,6 +91,14 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
 
     fun rightClickItemAtRow(row: Int) {
       rightClickCell(row, 0)
+    }
+
+    fun clickItem(predicate: (String) -> Boolean) {
+      waitFor("item not found") {
+        items.singleOrNull(predicate) != null
+      }
+      val row = items.withIndex().single { predicate(it.value) }.index
+      clickCell(row, 0)
     }
   }
 

@@ -50,6 +50,8 @@ class JEditorUiComponent(data: ComponentData) : UiComponent(data) {
 
   fun isEditable() = editorComponent.isEditable()
 
+  fun isSoftWrappingEnabled() = interact { getSoftWrapModel().isSoftWrappingEnabled() }
+
   fun clickInlay(inlay: Inlay) {
     val inlayCenter = driver.withContext(OnDispatcher.EDT) { inlay.getBounds() }.center
     click(inlayCenter)

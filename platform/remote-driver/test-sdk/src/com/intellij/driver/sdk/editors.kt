@@ -23,12 +23,15 @@ interface Editor {
   fun getColorsScheme(): EditorColorsScheme
   fun logicalPositionToOffset(logicalPosition: LogicalPosition): Int
   fun getSelectionModel(): SelectionModel
+  fun getSoftWrapModel(): SoftWrapModel
 }
+
 @Remote("com.intellij.openapi.editor.VisualPosition")
 interface VisualPosition {
   fun getLine(): Int
   fun getColumn(): Int
 }
+
 @Remote("com.intellij.openapi.editor.Document")
 interface Document {
   fun getText(): String
@@ -55,24 +58,29 @@ interface Inlay {
   fun getBounds(): RectangleRef
 }
 
+@Remote("com.intellij.openapi.editor.SoftWrapModel")
+interface SoftWrapModel {
+  fun isSoftWrappingEnabled(): Boolean
+}
+
 @Remote("com.intellij.openapi.editor.EditorCustomElementRenderer")
-interface EditorCustomElementRenderer{
+interface EditorCustomElementRenderer {
   fun getText(): String?
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.DeclarativeInlayRenderer")
-interface DeclarativeInlayRenderer{
+interface DeclarativeInlayRenderer {
   fun getPresentationList(): InlayPresentationList
 }
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.InlayPresentationList")
-interface InlayPresentationList{
+interface InlayPresentationList {
   fun getEntries(): Array<TextInlayPresentationEntry>
 }
 
 
 @Remote("com.intellij.codeInsight.hints.declarative.impl.TextInlayPresentationEntry")
-interface TextInlayPresentationEntry{
+interface TextInlayPresentationEntry {
   fun getText(): String
 }
 
