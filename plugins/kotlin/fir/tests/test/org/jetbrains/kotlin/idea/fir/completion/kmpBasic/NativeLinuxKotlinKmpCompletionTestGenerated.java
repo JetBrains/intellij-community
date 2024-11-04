@@ -2337,6 +2337,11 @@ public abstract class NativeLinuxKotlinKmpCompletionTestGenerated extends Abstra
             runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValue.kt");
         }
 
+        @TestMetadata("parameterDefaultValueNotContainsUnitializedParams.kt")
+        public void testParameterDefaultValueNotContainsUnitializedParams() throws Exception {
+            runTest("../../completion/testData/basic/common/primaryConstructor/parameterDefaultValueNotContainsUnitializedParams.kt");
+        }
+
         @TestMetadata("previousParameter.kt")
         public void testPreviousParameter() throws Exception {
             runTest("../../completion/testData/basic/common/primaryConstructor/previousParameter.kt");
