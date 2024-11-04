@@ -165,6 +165,11 @@ public class MultiModuleRenameTestGenerated extends AbstractMultiModuleRenameTes
         runTest("testData/refactoring/renameMultiModule/overrideFunctionsByPlatformModule/overrideFunctionsByPlatformModule.test");
     }
 
+    @TestMetadata("overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test")
+    public void testOverrideInternalPropertyByCommonModule_OverrideFunctionsByCommonModule() throws Exception {
+        runTest("testData/refactoring/renameMultiModule/overrideInternalPropertyByCommonModule/overrideFunctionsByCommonModule.test");
+    }
+
     @TestMetadata("suspendFunImplInImplModule/suspendFunImplInImplModule.test")
     public void testSuspendFunImplInImplModule_SuspendFunImplInImplModule() throws Exception {
         runTest("testData/refactoring/renameMultiModule/suspendFunImplInImplModule/suspendFunImplInImplModule.test");
