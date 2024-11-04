@@ -885,7 +885,7 @@ class PyTypeHintsInspection : PyInspection() {
       val genericParameters = mutableSetOf<PsiElement>()
       var lastIsDefault = false
       var lastIsTypeVarTuple = false
-      val processedGenerics = mutableSetOf<PyType>()
+      val processedGenerics = mutableSetOf<PyQualifiedNameOwner>()
 
       parameters.forEach {
         if (it !is PyReferenceExpression && it !is PyStarExpression && it !is PySubscriptionExpression) {
@@ -908,20 +908,25 @@ class PyTypeHintsInspection : PyInspection() {
               else {
                 registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
                                 ProblemHighlightType.GENERIC_ERROR)
+                return@forEach
               }
 
-              if (type is PyTypeParameterType) {
-                val typeVarDeclaration = type.declarationElement
-                val defaultType = type.defaultType
-                if (hasDefault(typeVarDeclaration)) {
+              val typeParameterType = Ref.deref(PyTypingTypeProvider.getType(expression, myTypeEvalContext))
+
+              if (typeParameterType is PyTypeParameterType) {
+                val typeVarDeclaration = typeParameterType.declarationElement
+                val defaultType = typeParameterType.defaultType
+                if (defaultType != null) {
                   lastIsDefault = true
-                  if (lastIsTypeVarTuple && type is PyTypeVarType) {
+                  if (lastIsTypeVarTuple && typeParameterType is PyTypeVarType) {
                     registerProblem(it,
                                     PyPsiBundle.message("INSP.type.hints.default.type.var.cannot.follow.type.var.tuple"),
                                     ProblemHighlightType.GENERIC_ERROR)
                   }
-                  val genericTypes = PyTypeChecker.collectGenerics(Ref.deref(defaultType), myTypeEvalContext)
-                  val defaultOutOfScope = genericTypes.allTypeParameters.firstOrNull { typeVar -> typeVar !in processedGenerics }
+                  val genericTypesInDefaultExpr = PyTypeChecker.collectGenerics(Ref.deref(defaultType), myTypeEvalContext)
+                  val defaultOutOfScope = genericTypesInDefaultExpr.allTypeParameters
+                    .firstOrNull { typeVar -> typeVar.declarationElement != null && typeVar.declarationElement !in processedGenerics }
+
                   if (defaultOutOfScope != null) {
                     registerProblem(it,
                                     PyPsiBundle.message("INSP.type.hints.default.type.refers.to.type.var.out.of.scope", defaultOutOfScope.name))
@@ -932,30 +937,15 @@ class PyTypeHintsInspection : PyInspection() {
                                   PyPsiBundle.message("INSP.type.hints.non.default.type.vars.cannot.follow.defaults"),
                                   ProblemHighlightType.GENERIC_ERROR)
                 }
-                processedGenerics.add(type)
+                if (typeVarDeclaration != null) {
+                  processedGenerics.add(typeVarDeclaration)
+                }
               }
-              lastIsTypeVarTuple = type is PyTypeVarTupleType
+              lastIsTypeVarTuple = typeParameterType is PyTypeVarTupleType
             }
           }
         }
       }
-    }
-
-    private fun hasDefault(declarationElement: PyQualifiedNameOwner?): Boolean {
-      if (declarationElement is PyTargetExpression) {
-        val expression = PyTypingAliasStubType.getAssignedValueStubLike(declarationElement)
-        if (expression is PyCallExpression) {
-          expression.arguments.forEach {
-            if (it is PyKeywordArgument && it.keyword.equals("default") && it.valueExpression != null) {
-              return true
-            }
-          }
-        }
-      }
-      if (declarationElement is PyTypeParameter) {
-        return declarationElement.defaultExpressionText != null
-      }
-      return false
     }
 
     private fun checkCallableParameters(index: PyExpression) {
@@ -1093,7 +1083,7 @@ class PyTypeHintsInspection : PyInspection() {
           val genericDefinitionType = PyTypeChecker.findGenericDefinitionType(type.pyClass, myTypeEvalContext)
           if (genericDefinitionType != null) {
             val elementTypes = genericDefinitionType.elementTypes
-            val numOfDispensable = elementTypes.count { it is PyTypeParameterType && hasDefault(it.declarationElement) || it is PyTypeVarTupleType }
+            val numOfDispensable = elementTypes.count { (it is PyTypeParameterType && it.defaultType != null) || it is PyTypeVarTupleType }
 
             val mapping = PyTypeParameterMapping.mapByShape(elementTypes,
                                                             indexTypes,

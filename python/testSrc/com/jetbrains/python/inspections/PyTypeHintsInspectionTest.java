@@ -1654,10 +1654,34 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
     doTestByText("""
                    from typing import ParamSpec, Generic
                    
-                   P1 = ParamSpec("P1")
+                   P1 = ParamSpec("P1", default=[int, str])
                    P2 = ParamSpec("P2", default=P1)
                    
-                   class Clazz(Generic[P2, P1]): ...
+                   class Clazz(Generic[<warning descr="Type parameter has a default type that refers to one or more type variables that are out of scope">P2</warning>, P1]): ...
+                   """);
+  }
+
+  // PY-71002
+  public void testNonDefaultParamSpecFollowingOnesWithDefaults() {
+    doTestByText("""
+                   from typing import ParamSpec, Generic
+                   
+                   P1 = ParamSpec("P1")
+                   P2 = ParamSpec("P2", default=[int, str])
+                   
+                   class Clazz(Generic[P2, <error descr="Non-default TypeVars cannot follow ones with defaults">P1</error>]): ...
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarTupleDefaultScoping() {
+    doTestByText("""
+                   from typing import Generic, TypeVarTuple, Unpack
+                   
+                   Ts1 = TypeVarTuple("Ts1", default=Unpack[tuple[int, int]])
+                   Ts2 = TypeVarTuple("Ts2", default=Unpack[Ts1])
+                   
+                   class Clazz(Generic[<warning descr="Type parameter has a default type that refers to one or more type variables that are out of scope">*Ts2</warning>]): ...
                    """);
   }
 
@@ -1814,6 +1838,24 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                    c5 = Clazz[int, str, bool, int, str]()
                    c6 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 6">int, str, bool, int, str, int</weak_warning>]()
                    c7 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 5, got 7">int, str, bool, int, str, int, int</weak_warning>]()
+                   """);
+  }
+
+  // PY-75759
+  public void testTypeVarParameterizationExplicitAnyInDefaults() {
+    doTestByText("""
+                   from typing import Generic, TypeVar, Any
+                   
+                   T = TypeVar('T')
+                   T1 = TypeVar('T1', default=Any)
+                   T2 = TypeVar('T2', default=Any)
+                   
+                   class Clazz(Generic[T, T1, T2]): ...
+                   
+                   c = Clazz[int]()
+                   c1 = Clazz[int, str]()
+                   c2 = Clazz[int, str, bool]()
+                   c3 = Clazz[<weak_warning descr="Too many type arguments for class 'Clazz': expected no more than 3, got 4">int, str, bool, float</weak_warning>]()
                    """);
   }
 
