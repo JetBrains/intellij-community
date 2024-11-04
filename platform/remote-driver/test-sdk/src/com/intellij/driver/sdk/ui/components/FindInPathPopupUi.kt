@@ -3,6 +3,7 @@ package com.intellij.driver.sdk.ui.components
 import com.intellij.driver.sdk.ui.AccessibleNameCellRendererReader
 import com.intellij.openapi.util.SystemInfoRt
 import java.awt.Window
+import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JTable
 import javax.swing.text.JTextComponent
@@ -53,6 +54,11 @@ open class FindInPathPopupUi(data: ComponentData): DialogUiComponent(data) {
     x { or(byAccessibleName("Find in Files"), byAccessibleName("Replace in Files")) }.click()
   }
 
+  fun showSearchHistory() {
+    searchTextField.click()
+    keyboard { hotKey(KeyEvent.VK_ALT, KeyEvent.VK_DOWN) }
+  }
+
   fun previewPanel(block: UiComponent.() -> Unit = {}): UiComponent =
     x { byType("com.intellij.usages.impl.UsagePreviewPanel") }.apply(block)
 
@@ -80,5 +86,11 @@ class ReplaceInPathPopupUi(data: ComponentData): FindInPathPopupUi(data) {
   val replaceTextField: JTextFieldUI = textField { and(byType(JTextComponent::class.java), byAccessibleName("Replace")) }
   val preserveCaseActionButton = actionButton { byAccessibleName("Preserve case") }
 
+  val replaceAllButton = button { and(byType(JButton::class.java), byAccessibleName("Replace All")) }
   val replaceButton = button { and(byType(JButton::class.java), byAccessibleName("Replace")) }
+
+  fun showReplaceHistory() {
+    replaceTextField.click()
+    keyboard { hotKey(KeyEvent.VK_ALT, KeyEvent.VK_DOWN) }
+  }
 }
