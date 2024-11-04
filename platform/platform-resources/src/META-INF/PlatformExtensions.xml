@@ -1944,4 +1944,7 @@
   <xi:include href="intellij.platform.ide.progress.xml">
     <xi:fallback/>
   </xi:include>
+  <xi:include href="intellij.platform.experiment.xml">
+    <xi:fallback/>
+  </xi:include>
 </idea-plugin>
