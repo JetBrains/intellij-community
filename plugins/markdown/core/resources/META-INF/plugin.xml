@@ -615,6 +615,8 @@
     <group id="Markdown.PreviewGroup">
       <action id="Markdown.Preview.AdjustFontSize"
               class="org.intellij.plugins.markdown.ui.actions.AdjustFontSizeAction"/>
+      <action id="Markdown.Preview.Find" class="org.intellij.plugins.markdown.ui.actions.FindInPreviewAction"
+              icon="AllIcons.Actions.Find" use-shortcut-of="Find"/>
     </group>
   </actions>
 </idea-plugin>
