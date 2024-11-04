@@ -22,6 +22,7 @@ import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 
 typealias ProjectLibrariesByName = Map<String, Library>
@@ -177,8 +178,14 @@ abstract class AbstractProjectStructureTest<S : TestProjectStructure>(
 
         contentRoots.forEach { testContentRoot ->
             val contentRootPath = testContentRoot.path?.let { rootPath.resolve(it) } ?: rootPath
+
+            // Create an empty directory to allow tests to easily specify content roots without associated test data files.
+            if (!contentRootPath.exists()) {
+                contentRootPath.createDirectory()
+            }
+
             require(contentRootPath.isDirectory()) {
-                "Expected the content root directory `$contentRootPath` to exist and be a directory."
+                "Expected the content root directory `$contentRootPath` to be a directory."
             }
 
             val contentRoot = getVirtualFile(contentRootPath.toFile())
