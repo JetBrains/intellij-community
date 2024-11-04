@@ -481,6 +481,7 @@
       "siblingInheritedMethod.svg": "gutter/siblingInheritedMethod.svg",
       "suggestedRefactoring.svg": "gutter/suggestedRefactoringBulb.svg",
       "suggestedRefactoringDisabled.svg": "gutter/suggestedRefactoringBulbDisabled.svg",
+      "web.svg": "gutter/web.svg",
       "writeAccess.svg": "gutter/writeAccess.svg"
     },
     "hierarchy": {

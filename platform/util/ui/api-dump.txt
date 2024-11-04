@@ -623,6 +623,7 @@ f:com.intellij.icons.AllIcons$Gutter
 - sf:SuggestedRefactoringBulbDisabled:javax.swing.Icon
 - sf:Unfold:javax.swing.Icon
 - sf:Unique:javax.swing.Icon
+- sf:Web:javax.swing.Icon
 - sf:WriteAccess:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Hierarchy
