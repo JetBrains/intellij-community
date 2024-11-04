@@ -24,7 +24,7 @@ public class FinishElementInstruction extends Instruction {
   @Override
   public DfaInstructionState[] accept(@NotNull DataFlowInterpreter interpreter, @NotNull DfaMemoryState state) {
     if (!myVarsToFlush.isEmpty()) {
-      state.flushVariables(var -> myVarsToFlush.contains(var.getDescriptor()), false);
+      state.forgetVariables(var -> myVarsToFlush.contains(var.getDescriptor()));
     }
     return nextStates(interpreter, state);
   }
