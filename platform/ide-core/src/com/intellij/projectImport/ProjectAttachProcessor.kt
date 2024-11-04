@@ -56,5 +56,5 @@ open class ProjectAttachProcessor {
 
   open fun getDescription(project: Project): @NlsContexts.DetailedDescription String? = null
 
-  open val defaultOptionIndex: Int = 0
+  open fun defaultOptionIndex(project: Project?): Int = 0
 }

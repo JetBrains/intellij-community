@@ -74,6 +74,7 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import kotlin.Result
+import kotlin.getOrThrow
 
 private val LOG = Logger.getInstance(ProjectUtil::class.java)
 private var ourProjectPath: String? = null
@@ -411,7 +412,7 @@ object ProjectUtil {
         project?.let { processor?.getActionText(it) } ?: IdeBundle.message("prompt.open.project.or.attach.button.attach"),
         CommonBundle.getCancelButtonText()
       ),
-        processor?.defaultOptionIndex?: 0,
+        processor?.defaultOptionIndex(project) ?: 0,
         Messages.getQuestionIcon(),
         ProjectNewWindowDoNotAskOption())
       mode = if (exitCode == 0) GeneralSettings.OPEN_PROJECT_SAME_WINDOW else if (exitCode == 1) GeneralSettings.OPEN_PROJECT_NEW_WINDOW else if (exitCode == 2) GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH else -1
