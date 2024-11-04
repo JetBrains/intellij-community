@@ -4,13 +4,11 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.concurrency.JobLauncher
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.progress.ProcessCanceledException
-import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressIndicatorProvider
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -18,11 +16,17 @@ import com.intellij.psi.codeStyle.MinusculeMatcher
 import com.intellij.psi.codeStyle.NameUtil
 import com.intellij.psi.createSmartPointer
 import com.intellij.psi.util.proximity.PsiProximityComparator
-import com.intellij.util.*
+import com.intellij.util.CollectConsumer
+import com.intellij.util.Consumer
+import com.intellij.util.Processor
+import com.intellij.util.SynchronizedCollectConsumer
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.math.max
 
@@ -289,53 +293,51 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       namesList: MutableList<out MatchResult>,
       parameters: FindSymbolParameters
     ): Boolean {
-      val sameNameElements: MutableList<Pair<Any, MatchResult?>> = SmartList<Pair<Any, MatchResult?>>()
-
       val model = base.getModel()
-      val weightComparator: Comparator<Pair<Any, MatchResult?>> = object : Comparator<Pair<Any, MatchResult?>> {
-        val modelComparator: Comparator<Any> = if (model is Comparator<*>) model as Comparator<Any> else PathProximityComparator(context)
-
-        override fun compare(o1: Pair<Any, MatchResult?>, o2: Pair<Any, MatchResult?>): Int {
-          val result = modelComparator.compare(o1.first, o2.first)
-          return if (result != 0) result else o1.second!!.compareTo(o2.second!!)
-        }
-      }
+      val modelComparator: Comparator<Any> = if (model is Comparator<*>) model as Comparator<Any> else PathProximityComparator(context)
+      val weightComparator: Comparator<Pair<Any, MatchResult>> =
+         compareBy<Pair<Any, MatchResult>, Any>(modelComparator) { it.first }
+        .thenBy { it.second }
 
       val fullMatcher: MinusculeMatcher = getFullMatcher(parameters, base)
 
-      for (result in namesList) {
-        indicator.checkCanceled()
-        val name = result.elementName
+      val shouldProcess = AtomicBoolean(true)
+      runBlockingMaybeCancellable {
+        withContext(Dispatchers.Default) {
+          namesList.forEachConcurrent { result ->
+            if (shouldProcess.get()) {
+              indicator.checkCanceled()
+              val name = result.elementName
 
-        // use interruptible call if possible
-        val elements = if (model is ContributorsBasedGotoByModel)
-          model.getElementsByName(name, parameters, indicator)
-        else
-          model.getElementsByName(name, everywhere, getNamePattern(base, parameters.getCompletePattern()))
-        if (elements.size > 1) {
-          sameNameElements.clear()
-          for (element in elements) {
-            indicator.checkCanceled()
-            val qualifiedResult: MatchResult? = matchQualifiedName(model, fullMatcher, element)
-            if (qualifiedResult != null) {
-              sameNameElements.add(Pair.create<Any, MatchResult?>(element, qualifiedResult))
-            }
-          }
-          sameNameElements.sortWith(weightComparator)
-          val processedItems = sameNameElements.map { FoundItemDescriptor<Any>(it.first, result.matchingDegree) }
-          if (!ContainerUtil.process<FoundItemDescriptor<*>?>(processedItems, consumer)) {
-            return false
-          }
-        }
-        else if (elements.size == 1) {
-          if (matchQualifiedName(model, fullMatcher, elements[0]) != null) {
-            if (!consumer.process(FoundItemDescriptor<Any>(elements[0], result.matchingDegree))) {
-              return false
+              // use interruptible call if possible
+              val elements = if (model is ContributorsBasedGotoByModel)
+                model.getElementsByName(name, parameters, indicator)
+              else
+                model.getElementsByName(name, everywhere, getNamePattern(base, parameters.getCompletePattern()))
+              if (elements.size > 1) {
+                val sameNameElements = elements.mapNotNull {
+                  indicator.checkCanceled()
+                  val result = matchQualifiedName(model, fullMatcher, it) ?: return@mapNotNull null
+                  Pair.create<Any, MatchResult>(it, result)
+                }.sortedWith(weightComparator)
+
+                val processedItems = sameNameElements.map { FoundItemDescriptor<Any>(it.first, result.matchingDegree) }
+                if (!ContainerUtil.process<FoundItemDescriptor<*>?>(processedItems, consumer)) {
+                  shouldProcess.set(false)
+                }
+              }
+              else if (elements.size == 1) {
+                if (matchQualifiedName(model, fullMatcher, elements[0]) != null) {
+                  if (!consumer.process(FoundItemDescriptor<Any>(elements[0], result.matchingDegree))) {
+                    shouldProcess.set(false)
+                  }
+                }
+              }
             }
           }
         }
       }
-      return true
+      return shouldProcess.get()
     }
 
     private fun getFullMatcher(parameters: FindSymbolParameters, base: ChooseByNameViewModel): MinusculeMatcher {
