@@ -1,12 +1,12 @@
 package com.intellij.driver.sdk.ui.components
 
+import com.intellij.driver.client.Driver
 import com.intellij.driver.client.Remote
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.model.TreePath
 import com.intellij.driver.model.TreePathToRow
 import com.intellij.driver.model.TreePathToRowList
-import com.intellij.driver.sdk.remoteDev.BeControlAdapter
-import com.intellij.driver.sdk.remoteDev.JTreeFixtureAdapter
+import com.intellij.driver.sdk.remoteDev.*
 import com.intellij.driver.sdk.ui.Finder
 import com.intellij.driver.sdk.ui.remote.Component
 import com.intellij.driver.sdk.ui.remote.REMOTE_ROBOT_MODULE_ID
@@ -33,6 +33,7 @@ open class JTreeUiComponent(data: ComponentData) : UiComponent(data) {
       clickRow(it.row)
     } ?: throw PathNotFoundException("row not found")
   }
+
   fun rightClickRow(row: Int) = fixture.rightClickRow(row)
   fun doubleClickRow(row: Int) = fixture.doubleClickRow(row)
   fun clickPath(vararg path: String, fullMatch: Boolean = true) {
@@ -174,6 +175,27 @@ interface JTreeFixtureRef : Component {
 }
 
 @Remote("javax.swing.JTree")
+@BeControlClass(JTreeComponentClassBuilder::class)
 interface JTreeComponent {
   fun expandRow(row: Int)
+}
+
+class JTreeComponentClassBuilder : BeControlBuilder {
+  override fun build(driver: Driver, frontendComponent: Component, backendComponent: Component): Component {
+    return JTreeComponentBeControl(driver, frontendComponent, backendComponent)
+  }
+}
+
+class JTreeComponentBeControl(
+  driver: Driver,
+  frontendComponent: Component,
+  backendComponent: Component,
+) : BeControlComponentBase(driver, frontendComponent, backendComponent), JTreeComponent {
+  private val frontendJTreeComponent: JTreeComponent by lazy {
+    driver.cast(onFrontend { byType(JTree::class.java) }.component, JTreeComponent::class)
+  }
+
+  override fun expandRow(row: Int) {
+    return frontendJTreeComponent.expandRow(row)
+  }
 }
