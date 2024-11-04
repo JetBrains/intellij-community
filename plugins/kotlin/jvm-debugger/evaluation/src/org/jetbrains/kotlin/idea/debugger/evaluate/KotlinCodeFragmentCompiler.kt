@@ -43,6 +43,7 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
         codeFragment: KtCodeFragment
     ): CompiledCodeFragmentData {
         val stats = CodeFragmentCompilationStats()
+        stats.origin = context.evaluationContext.origin
         fun onFinish(status: EvaluationCompilerResult) =
             KotlinDebuggerEvaluatorStatisticsCollector.logAnalysisAndCompilationResult(codeFragment.project, CompilerType.K2, status, stats)
         try {
@@ -57,9 +58,8 @@ class K2KotlinCodeFragmentCompiler : KotlinCodeFragmentCompiler {
             throw e
         } catch (e: Throwable) {
             val cause = (e as? ExecutionException)?.cause ?: e
-            if ((cause as? EvaluateException)?.cause is KaCodeCompilationException) {
-                stats.compilerFailType = CompilerFailType.K2_COMPILER_CORE_FAIL
-            }
+
+            stats.compilerFailExceptionClass = extractExceptionCauseClass(e)
 
             onFinish(if (cause is IncorrectCodeFragmentException) EvaluationCompilerResult.COMPILATION_FAILURE
                      else EvaluationCompilerResult.COMPILER_INTERNAL_ERROR)

@@ -493,9 +493,3 @@ fun evaluationException(e: Throwable): Nothing = throw EvaluateExceptionUtil.cre
 enum class CompilerType {
     OLD, IR, K2
 }
-
-enum class CompilerFailType {
-    K1_RESOLUTION_FACADE_FAIL, K1_DO_COMPILE_FAIL,
-    K2_COMPILER_CORE_FAIL,
-    OTHER
-}
