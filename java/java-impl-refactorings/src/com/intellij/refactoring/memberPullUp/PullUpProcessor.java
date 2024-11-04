@@ -7,7 +7,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -112,7 +111,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
 
       processor.updateUsage(element);
     }
-    ApplicationManager.getApplication().invokeLater(() -> processMethodsDuplicates(), ModalityState.nonModal(), myProject.getDisposed());
+    processMethodsDuplicates();
   }
 
   private void processMethodsDuplicates() {
