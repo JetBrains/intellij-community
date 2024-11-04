@@ -75,6 +75,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   private val scanningTask = MutableStateFlow<ScheduledScanningTask?>(null)
   private val scanningEnabled = MutableStateFlow(true)
 
+  private val mergeScanningParametersScope = cs.childScope("Scanning (merge parameters)")
+
   @Volatile
   private var runningTask: Job? = null
 
@@ -118,26 +120,31 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
             logInfo("Running task: $task")
             LOG.assertTrue(runningTask == null, "Task is already running (will be cancelled)")
             runningTask?.cancel() // We expect that running task is null. But it's better to be on the safe side
-            coroutineScope {
-              runningTask = async(CoroutineName("Scanning")) {
-                try {
-                  val history = runScanningTask(task.task)
-                  task.futureHistory.set(history)
-                }
-                catch (t: Throwable) {
-                  task.futureHistory.setException(t)
-                  throw t
-                } finally {
-                  // Scanning may throw exception (or error).
-                  // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
-                  val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(task.task.indexingReason)
-                  if (!indexingScheduled) {
-                    modCount.incrementAndGet()
+            val scanningParameters = task.task.getScanningParameters()
+            if (scanningParameters is ScanningIterators) {
+              coroutineScope {
+                runningTask = async(CoroutineName("Scanning")) {
+                  try {
+                    val history = runScanningTask(task.task, scanningParameters)
+                    task.futureHistory.set(history)
+                  }
+                  catch (t: Throwable) {
+                    task.futureHistory.setException(t)
+                    throw t
+                  } finally {
+                    // Scanning may throw exception (or error).
+                    // In this case, we should either clear or flush the indexing queue; otherwise, dumb mode will not end in the project.
+                    val indexingScheduled = project.service<PerProjectIndexingQueue>().flushNow(scanningParameters.indexingReason)
+                    if (!indexingScheduled) {
+                      modCount.incrementAndGet()
+                    }
                   }
                 }
               }
+              logInfo("Task finished: $task")
+            } else {
+              LOG.info("Skipping task: $task")
             }
-            logInfo("Task finished: $task")
           }
           catch (t: Throwable) {
             logInfo("Task interrupted: $task. ${t.message}")
@@ -224,7 +231,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     scanningWaitsForNonDumbModeOverride.value = newValue
   }
 
-  private suspend fun runScanningTask(task: UnindexedFilesScanner): ProjectScanningHistoryImpl {
+  private suspend fun runScanningTask(task: UnindexedFilesScanner, scanningParameters: ScanningIterators): ProjectScanningHistoryImpl {
     val shouldShowProgress: StateFlow<Boolean> = if (task.shouldHideProgressInSmartMode()) {
       project.service<DumbModeWhileScanningTrigger>().isDumbModeForScanningActive()
     }
@@ -239,12 +246,12 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
                                                                 IndexingBundle.message("progress.indexing.scanning"),
                                                                 taskIndicator.getPauseReason())
 
-      val scanningHistory = ProjectScanningHistoryImpl(project, task.indexingReason, task.scanningType)
+      val scanningHistory = ProjectScanningHistoryImpl(project, scanningParameters.indexingReason, scanningParameters.scanningType)
       (GistManager.getInstance() as GistManagerImpl).mergeDependentCacheInvalidations().use {
         task.applyDelayedPushOperations(scanningHistory)
       }
       blockingContext {
-        task.perform(taskIndicator, progressReporter, scanningHistory)
+        task.perform(taskIndicator, progressReporter, scanningHistory, scanningParameters)
       }
 
       progressScope.cancel()
@@ -279,7 +286,8 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     // A case of a full check followed by a limited change cancelling the first one and making a full check anew results
     // in endless restart of full checks on Windows with empty Maven cache.
     // So only in case the second one is a full check should the first one be cancelled.
-    if (task.isFullIndexUpdate()) {
+    val isFullIndexUpdate = task.isFullIndexUpdate()
+    if (isFullIndexUpdate != null && isFullIndexUpdate) {
       // we don't want to execute any of the existing tasks - the only task we want to execute will be submitted the few lines below
       cancelAllTasks("Full scanning is queued")
     }
@@ -305,7 +313,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
     do {
       val old = scanningTask.value
       new = if (old != null) {
-        ScheduledScanningTask(old.task.tryMergeWith(task), old.futureHistory)
+        ScheduledScanningTask(old.task.tryMergeWith(task, mergeScanningParametersScope), old.futureHistory)
       }
       else {
         ScheduledScanningTask(task, SettableFuture.create())
@@ -336,6 +344,7 @@ class UnindexedFilesScannerExecutorImpl(private val project: Project, cs: Corout
   }
 
   override fun dispose() {
+    mergeScanningParametersScope.cancel()
     scanningTask.getAndUpdate { null }?.close()
     runningTask?.cancel()
   }

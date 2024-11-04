@@ -90,7 +90,7 @@ public interface TestIndexingModeSupporter {
 
     private static void onlyAllowOwnTasks(@NotNull Project project, @NotNull Disposable testRootDisposable) {
       UnindexedFilesScannerExecutorImpl.getInstance(project)
-        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReason(), INDEXING_REASON));
+        .setTaskFilterInTest(testRootDisposable, task -> Strings.areSameInstance(task.getIndexingReasonBlocking(), INDEXING_REASON));
       ApplicationManager.getApplication().invokeAndWait(() -> {
         UnindexedFilesScannerExecutorImpl.getInstance(project).cancelAllTasksAndWait();
       });

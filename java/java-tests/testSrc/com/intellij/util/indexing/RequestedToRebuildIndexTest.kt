@@ -42,7 +42,7 @@ class RequestedToRebuildIndexTest : JavaCodeInsightFixtureTestCase() {
     assertNotNull(moduleEntity)
     val iterators = createIterators(moduleEntity, IndexingUrlRootHolder.fromUrl(fileA.toVirtualFileUrl(workspaceModel.getVirtualFileUrlManager())),
                                     storage)
-    UnindexedFilesScanner(myFixture.project, ArrayList(iterators), null,
+    UnindexedFilesScanner(myFixture.project, ArrayList(iterators),
                           "Partial reindex of one of two indexable files").queue()
   }
 
