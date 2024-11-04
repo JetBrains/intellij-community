@@ -102,7 +102,15 @@ class NavBarVmImpl(
   private suspend fun handleSelectionChange() {
     _items.collectLatest { items: List<NavBarItemVmImpl> ->
       _selectedIndex.zipWithNext { unselected, selected ->
-        if (unselected >= 0) {
+
+        // Sometimes _selectedIndex may come here before the new _items value even if the _items value was set before _selectedIndex value.
+        // This check prevents OutOfBounds exception.
+        // The _selectedIndex will be replayed here again as soon as the new _items value is collected.
+        if (selected >= items.size) {
+          return@zipWithNext
+        }
+
+        if (unselected >= 0 && unselected < items.size) {
           items[unselected].selected.value = false
         }
         if (selected >= 0) {
