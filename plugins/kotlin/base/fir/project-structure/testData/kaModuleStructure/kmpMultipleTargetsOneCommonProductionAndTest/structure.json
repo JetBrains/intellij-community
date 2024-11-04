@@ -1,7 +1,7 @@
 {
     "modules": [
-        { "name": "common", "sourceSets": ["production", "test"] , "platform": "common" },
-        { "name": "jvm", "sourceSets": ["production", "test"] , "platform": "jvm", "refinement_dependencies": ["common"] },
-        { "name": "native", "sourceSets": ["production", "test"] , "platform": "jvm", "refinement_dependencies": ["common"] }
+        { "name": "common", "content_roots": ["production", "tests"] , "platform": "common" },
+        { "name": "jvm", "content_roots": ["production", "tests"] , "platform": "jvm", "refinement_dependencies": ["common"] },
+        { "name": "native", "content_roots": ["production", "tests"] , "platform": "jvm", "refinement_dependencies": ["common"] }
     ]
 }
