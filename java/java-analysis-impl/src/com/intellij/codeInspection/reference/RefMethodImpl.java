@@ -87,10 +87,13 @@ public sealed class RefMethodImpl extends RefJavaElementImpl implements RefMetho
       }
     }
 
-    RefElement parentRef = findParentRef(sourcePsi, method, myManager);
+    WritableRefEntity parentRef = (WritableRefEntity)findParentRef(sourcePsi, method, myManager);
     if (parentRef == null) return;
-    setOwner((WritableRefEntity)parentRef);
-    if (!myManager.isDeclarationsFound()) return;
+    if (!myManager.isDeclarationsFound()) {
+      parentRef.add(this);
+      return;
+    }
+    setOwner(parentRef);
 
     PsiMethod javaPsi = method.getJavaPsi();
     if (!method.isConstructor()) {

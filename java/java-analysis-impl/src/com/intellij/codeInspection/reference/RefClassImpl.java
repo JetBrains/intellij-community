@@ -78,9 +78,14 @@ public final class RefClassImpl extends RefJavaElementImpl implements RefClass {
         }
       }
     }
-    RefElement refParent = parent != null ? manager.getReference(parent.getSourcePsi()) : null;
+    WritableRefEntity refParent = parent != null ? (WritableRefEntity)manager.getReference(parent.getSourcePsi()) : null;
     if (refParent != null) {
-      setOwner((WritableRefEntity)refParent);
+      if (!myManager.isDeclarationsFound()) {
+        refParent.add(this);
+      }
+      else {
+        setOwner(refParent);
+      }
     }
     else {
       PsiFile containingFile = getContainingFile();
