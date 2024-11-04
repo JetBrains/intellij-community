@@ -17,7 +17,9 @@ import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.PopupChooserBuilder
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.intellij.testIntegration.JavaTestFramework
 import com.intellij.testIntegration.TestFramework
 import com.intellij.testIntegration.TestIntegrationUtils.MethodKind
@@ -165,7 +167,7 @@ abstract class KotlinGenerateTestSupportActionBase(
 
         private fun findTargetClass(editor: Editor, file: PsiFile): KtClassOrObject? {
             val offset = editor.caretModel.offset
-            val elementAtCaret = file.findElementAt(offset) ?: (if (offset > 0) file.findElementAt(offset - 1) else null) ?: return null
+            val elementAtCaret = file.findElementAt(offset)?.takeUnless { it is PsiWhiteSpace } ?: (if (offset > 0) file.findElementAt(offset - 1) else null) ?: return null
             return elementAtCaret.parentsWithSelf.filterIsInstance<KtClassOrObject>().firstOrNull { !it.isLocal }
         }
 
