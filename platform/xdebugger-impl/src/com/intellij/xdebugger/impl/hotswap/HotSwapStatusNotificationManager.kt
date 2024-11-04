@@ -101,7 +101,9 @@ class HotSwapStatusNotificationManager private constructor(private val project: 
 }
 
 private const val RADIUS = 10
-internal const val NOTIFICATION_TIME_SECONDS = 3
+
+@ApiStatus.Internal
+const val NOTIFICATION_TIME_SECONDS: Int = 3
 
 private class SuccessfulHotSwapComponent : JPanel(BorderLayout()) {
   init {

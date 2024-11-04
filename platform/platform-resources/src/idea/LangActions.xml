@@ -1123,7 +1123,9 @@
       <reference ref="Debugger.AddInlineWatch"/>
       <reference ref="Debugger.EvaluateInConsole"/>
       <separator/>
-
+      <group id="EditorPopupMenuDebugHotSwap">
+        <separator/>
+      </group>
       <add-to-group group-id="EditorLangPopupMenu" relative-to-action="EditorPopupMenu.Run" anchor="before"/>
     </group>
 
