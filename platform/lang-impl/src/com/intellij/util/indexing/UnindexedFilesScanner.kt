@@ -520,7 +520,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(
     getInstance().getTracer(Indexes).spanBuilder("UnindexedFilesScanner.perform").use {
       try {
         this.scanningHistory = scanningHistory
-        // await parameters
         myFilterHandler.scanningStarted(myProject, scanningParameters.isFullIndexUpdate())
         prepareScanningHistoryAndRun(indicator) {
           waitForPreconditions()
