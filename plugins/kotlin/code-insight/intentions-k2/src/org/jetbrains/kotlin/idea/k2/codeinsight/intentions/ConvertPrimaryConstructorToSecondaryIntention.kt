@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.CONSTRUCTOR
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.parents
 
 class ConvertPrimaryConstructorToSecondaryIntention :
     KotlinApplicableModCommandAction<KtClass, List<ConvertPrimaryConstructorToSecondaryIntention.Item>>(
@@ -95,7 +93,7 @@ class ConvertPrimaryConstructorToSecondaryIntention :
         for (property in element.getProperties()) {
             val item = elementContext.firstOrNull { it.propertyName == property.name } ?: continue
             item.typeInfo?.let {
-                updateType(property, it, property.project, editor = null, updater = updater)
+                updateType(property, it, property.project, updater)
             }
             val initializer = property.initializer!!
             initializerMap[property] = initializer.text

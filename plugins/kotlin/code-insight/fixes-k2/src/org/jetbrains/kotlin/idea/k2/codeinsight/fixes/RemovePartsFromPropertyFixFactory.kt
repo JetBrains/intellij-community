@@ -102,16 +102,16 @@ internal object RemovePartsFromPropertyFixFactory {
             elementContext: ElementContext,
             updater: ModPsiUpdater,
         ) {
-            if (elementContext.removeInitializer) {
-                removeInitializer(actionContext.project, element, elementContext, updater)
-            }
-
             if (elementContext.removeGetter) {
                 element.getter?.delete()
             }
 
             if (elementContext.removeSetter) {
                 element.setter?.delete()
+            }
+
+            if (elementContext.removeInitializer) {
+                removeInitializer(actionContext.project, element, elementContext, updater)
             }
         }
 
@@ -129,7 +129,6 @@ internal object RemovePartsFromPropertyFixFactory {
                 declaration = element,
                 typeInfo = elementContext.typeInfo,
                 project = project,
-                editor = null,
                 updater = updater,
             )
         }

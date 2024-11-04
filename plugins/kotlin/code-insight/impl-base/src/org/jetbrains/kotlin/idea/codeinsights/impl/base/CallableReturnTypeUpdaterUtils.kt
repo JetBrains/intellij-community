@@ -38,10 +38,38 @@ object CallableReturnTypeUpdaterUtils {
         typeInfo: TypeInfo,
         project: Project,
         editor: Editor? = null,
+    ) = updateType(
+        declaration,
+        typeInfo,
+        project,
+        editor = editor,
+        updater = null,
+    )
+
+    fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        updater: ModPsiUpdater,
+    ) = updateType(
+        declaration,
+        typeInfo,
+        project,
+        editor = null,
+        updater = updater,
+    )
+
+    private fun updateType(
+        declaration: KtCallableDeclaration,
+        typeInfo: TypeInfo,
+        project: Project,
+        editor: Editor? = null,
         updater: ModPsiUpdater? = null
     ) {
-        if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
-            declaration.setType(typeInfo.defaultType, project, updater)
+        if (updater != null && typeInfo.useTemplate) {
+            setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, updater)
+        } else if (editor == null || !typeInfo.useTemplate || !ApplicationManager.getApplication().isWriteAccessAllowed) {
+            declaration.setAndShortenTypeReference(typeInfo.defaultType, project, updater)
         } else {
             setTypeWithTemplate(listOf(declaration to typeInfo).iterator(), project, editor)
         }
@@ -63,17 +91,28 @@ object CallableReturnTypeUpdaterUtils {
         }
     }
 
-    private fun KtCallableDeclaration.setType(type: TypeInfo.Type, project: Project, updater: ModPsiUpdater? = null) {
+    private fun KtCallableDeclaration.setAndShortenTypeReference(
+        type: TypeInfo.Type,
+        project: Project,
+        updater: ModPsiUpdater? = null,
+    ) {
+        setTypeReference(type, project)?.let {
+            shortenReferences(it)
+            updater?.moveCaretTo(it.endOffset)
+        }
+    }
+
+    private fun KtCallableDeclaration.setTypeReference(
+        type: TypeInfo.Type,
+        project: Project,
+    ): KtTypeReference? {
         val newTypeRef = if (isProcedure(type)) {
             null
         } else {
             KtPsiFactory(project).createType(type.longTypeRepresentation)
         }
         typeReference = newTypeRef
-        typeReference?.let {
-            shortenReferences(it)
-            updater?.moveCaretTo(it.endOffset)
-        }
+        return typeReference
     }
 
     private fun KtCallableDeclaration.isProcedure(type: TypeInfo.Type) =
@@ -92,7 +131,7 @@ object CallableReturnTypeUpdaterUtils {
         if (!declarationAndTypes.hasNext()) return
         val (declaration: KtCallableDeclaration, typeInfo: TypeInfo) = declarationAndTypes.next()
         // Set a placeholder type so that it can be referenced
-        declaration.setType(TypeInfo.ANY, project)
+        declaration.setAndShortenTypeReference(TypeInfo.ANY, project)
         PsiDocumentManager.getInstance(project).apply {
             commitAllDocuments()
             doPostponedOperationsAndUnblockDocument(editor.document)
@@ -111,6 +150,20 @@ object CallableReturnTypeUpdaterUtils {
             editor,
             builder.buildInlineTemplate(),
             createPostTypeUpdateProcessor(declaration, declarationAndTypes, project, editor)
+        )
+    }
+
+    private fun setTypeWithTemplate(
+        declarationAndTypes: Iterator<Pair<KtCallableDeclaration, TypeInfo>>,
+        project: Project,
+        updater: ModPsiUpdater,
+    ) {
+        if (!declarationAndTypes.hasNext()) return
+        val (declaration: KtCallableDeclaration, typeInfo: TypeInfo) = declarationAndTypes.next()
+        val newTypeRef = declaration.setTypeReference(typeInfo.defaultType, project) ?: return
+        updater.templateBuilder().field(
+            newTypeRef,
+            TypeChooseValueExpression(listOf(typeInfo.defaultType) + typeInfo.otherTypes, typeInfo.defaultType)
         )
     }
 

@@ -68,6 +68,6 @@ internal class SpecifyTypeExplicitlyIntention:
         elementContext: TypeInfo,
         updater: ModPsiUpdater,
     ) {
-        updateType(element, elementContext, element.project, updater = updater)
+        updateType(element, elementContext, element.project, updater)
     }
 }

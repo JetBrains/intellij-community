@@ -65,7 +65,7 @@ internal class RedundantUnitReturnTypeInspection :
             element: KtNamedFunction,
             updater: ModPsiUpdater,
         ) {
-            updateType(element, context, project, updater = updater)
+            updateType(element, context, project, updater)
         }
     }
 }
