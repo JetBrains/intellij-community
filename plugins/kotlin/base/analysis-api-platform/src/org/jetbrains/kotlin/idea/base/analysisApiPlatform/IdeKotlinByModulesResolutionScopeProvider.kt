@@ -39,13 +39,14 @@ internal class IdeKotlinByModulesResolutionScopeProvider(private val project: Pr
 
             else -> {
                 val allModules = buildList {
+                    add(module)
                     if (module is KaLibrarySourceModule) {
                         add(module.binaryLibrary)
-                    } else {
-                        add(module)
                     }
+
                     addAll(module.allDirectDependencies())
                 }
+
                 KotlinGlobalSearchScopeMerger.getInstance(project).union(allModules.map { it.contentScope })
             }
         }
