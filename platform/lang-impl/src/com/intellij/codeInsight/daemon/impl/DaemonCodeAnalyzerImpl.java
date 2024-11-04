@@ -555,8 +555,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     myPassExecutorService.cancelAll(false, "DaemonCodeAnalyzerImpl.runPasses");
     waitForUpdateFileStatusBackgroundQueueInTests(); // update the file status map before prohibiting its modifications
     FileStatusMap fileStatusMap = getFileStatusMap();
-    boolean oldAllowDirt = fileStatusMap.allowDirt(canChangeDocument);
-    try {
+    fileStatusMap.runAllowingDirt(canChangeDocument, () -> {
       for (int ignoreId : passesToIgnore) {
         fileStatusMap.markFileUpToDate(document, ignoreId);
       }
@@ -567,10 +566,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       else {
         doRunPasses.run();
       }
-    }
-    finally {
-      fileStatusMap.allowDirt(oldAllowDirt);
-    }
+    });
   }
 
   @TestOnly

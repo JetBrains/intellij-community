@@ -18,6 +18,7 @@ import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
@@ -314,14 +315,18 @@ public final class FileStatusMap implements Disposable {
   }
 
   /**
-   * (Dis)Allows file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
-   * @return the old value: true if modifications were allowed, false otherwise
+   * Runs {@code runnable} while (Dis)Allowing file modifications during highlighting testing. Might be useful to catch unexpected modification requests.
    */
   @TestOnly
-  boolean allowDirt(boolean allow) {
+  <E extends Exception> void runAllowingDirt(boolean allowDirt, @NotNull ThrowableRunnable<E> runnable) throws E {
     boolean old = myAllowDirt;
-    myAllowDirt = allow;
-    return old;
+    try {
+      myAllowDirt = allowDirt;
+      runnable.run();
+    }
+    finally {
+      myAllowDirt = old;
+    }
   }
 
   private static final RangeMarker WHOLE_FILE_DIRTY_MARKER =
