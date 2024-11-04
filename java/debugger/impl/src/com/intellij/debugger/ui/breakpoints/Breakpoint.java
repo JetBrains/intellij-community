@@ -474,13 +474,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
                                                                              condition,
                                                                            this::createConditionCodeFragment));
         });
+
+        XEvaluationOrigin originBackup = XEvaluationOrigin.getOrigin(context);
         boolean evaluationResult;
         try {
           if (Registry.is("debugger.retry.conditional.breakpoints", true)) {
+            XEvaluationOrigin.setOrigin(context, XEvaluationOrigin.BREAKPOINT_CONDITION);
             context.setMayRetryEvaluation(true);
           }
           evaluationResult = DebuggerUtilsEx.evaluateBoolean(evaluator, context);
         } finally {
+          XEvaluationOrigin.setOrigin(context, originBackup);
           context.setMayRetryEvaluation(false);
         }
         JavaDebuggerEvaluatorStatisticsCollector.logEvaluationResult(myProject, evaluator, true, XEvaluationOrigin.BREAKPOINT_CONDITION);
