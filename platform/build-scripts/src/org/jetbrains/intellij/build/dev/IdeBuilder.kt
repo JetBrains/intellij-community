@@ -452,6 +452,7 @@ private suspend fun createBuildContext(
           useCompiledClassesFromProjectOutput = useCompiledClassesFromProjectOutput,
           pathToCompiledClassesArchivesMetadata = buildOptionsTemplate?.pathToCompiledClassesArchivesMetadata?.takeIf { !useCompiledClassesFromProjectOutput },
           pathToCompiledClassesArchive = buildOptionsTemplate?.pathToCompiledClassesArchive?.takeIf { !useCompiledClassesFromProjectOutput },
+          unpackCompiledClassesArchives = buildOptionsTemplate?.unpackCompiledClassesArchives?.takeIf { !useCompiledClassesFromProjectOutput } ?: true,
           classOutDir = classOutDir.toString(),
 
           validateModuleStructure = false,
@@ -496,6 +497,7 @@ private suspend fun createBuildContext(
           options = options,
           customBuildPaths = result,
         )
+        .let { if (options.unpackCompiledClassesArchives) it else ArchivedCompilationContext(it) }
       }
     }
 
