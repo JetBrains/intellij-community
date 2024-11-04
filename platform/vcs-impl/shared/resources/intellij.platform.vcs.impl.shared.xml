@@ -2,5 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <platform.entityTypes implementation="com.intellij.vcs.impl.shared.rhizome.ShelfEntityTypeProvider"/>
     <platform.entityTypes implementation="com.intellij.vcs.impl.shared.rhizome.VcsEntityTypeProvider"/>
+    <registryKey key="vcs.shelves.rhizome.enabled" defaultValue="false" restartRequired="true"
+                 description="New vcs shelves split to frontend and backend using Rhizome and rpc"/>
   </extensions>
 </idea-plugin>

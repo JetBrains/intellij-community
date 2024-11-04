@@ -6,6 +6,9 @@
     <plugin id="com.intellij.platform.experimental.frontend"/>
   </dependencies>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <ui.content.impl.toolWindowContentPostprocessor implementation="com.intellij.vcs.impl.frontend.shelf.ShelveContentReplacer"/>
+  </extensions>
   <actions>
     <group id="Frontend.Shelve.KeymapGroup" searchable="false">
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

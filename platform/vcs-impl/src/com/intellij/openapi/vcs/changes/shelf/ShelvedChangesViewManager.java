@@ -419,11 +419,13 @@ public class ShelvedChangesViewManager implements Disposable {
 
     @Override
     public void initTabContent(@NotNull Content content) {
-      ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
-      content.setHelpId(HELP_ID);
-      content.setComponent(panel);
-      content.setDisposer(panel);
-      content.setPreferredFocusableComponent(panel.myTree);
+      if (!Registry.is("vcs.shelves.rhizome.enabled")) {
+        ShelfToolWindowPanel panel = getInstance(myProject).initToolWindowPanel();
+        content.setHelpId(HELP_ID);
+        content.setComponent(panel);
+        content.setDisposer(panel);
+        content.setPreferredFocusableComponent(panel.myTree);
+      }
     }
   }
 

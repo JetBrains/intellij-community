@@ -4,9 +4,11 @@ package com.intellij.vcs.impl.frontend.shelf
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Key
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.project.asEntity
 import com.intellij.platform.rpc.RemoteApiProviderService
+import com.intellij.ui.content.Content
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.impl.frontend.changes.ChangesTreeModel
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
@@ -37,13 +39,13 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     }
   }
 
+  fun initContent(content: Content) {
+    val toolWindowPanel = content.getUserData(CONTENT_PROVIDER_SUPPLIER_KEY)?.invoke() ?: return
+    content.putUserData(CONTENT_PROVIDER_SUPPLIER_KEY, null)
+    content.component = toolWindowPanel
+  }
+
   fun initToolWindowPanel(): ShelfToolWindowPanel {
-    cs.launch {
-      withKernel {
-        val rootNode = findRootEntity()?.convertToTreeNodeRecursive() as ChangesBrowserRootNode
-        tree.model = ChangesTreeModel(rootNode)
-      }
-    }
     return ShelfToolWindowPanel(project, tree, cs)
   }
 
@@ -93,5 +95,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
 
   companion object {
     fun getInstance(project: Project): ShelfTreeUpdater = project.getService(ShelfTreeUpdater::class.java)
+
+    val CONTENT_PROVIDER_SUPPLIER_KEY = Key.create<() -> ShelfToolWindowPanel?>("CONTENT_PROVIDER_SUPPLIER")
   }
 }
