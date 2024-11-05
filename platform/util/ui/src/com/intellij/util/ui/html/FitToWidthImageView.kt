@@ -11,7 +11,7 @@ import javax.swing.text.FlowView
 import javax.swing.text.View
 import kotlin.math.max
 
-internal class FitToWidthImageView(element: Element) : Base64ImageView(element) {
+internal class FitToWidthImageView(element: Element) : DataUrlImageView(element) {
   private var myAvailableWidth = 0
 
   override fun getLoadingImageIcon(): Icon =
