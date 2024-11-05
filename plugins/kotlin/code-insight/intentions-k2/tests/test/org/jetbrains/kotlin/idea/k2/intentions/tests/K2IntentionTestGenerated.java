@@ -7284,7 +7284,59 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate")
+    public static class InsertCurlyBracesToTemplate extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("dontInsertBrackets1.kt")
+        public void testDontInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/dontInsertBrackets1.kt");
+        }
+
+        @TestMetadata("insertBrackets1.kt")
+        public void testInsertBrackets1() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets1.kt");
+        }
+
+        @TestMetadata("insertBrackets2.kt")
+        public void testInsertBrackets2() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets2.kt");
+        }
+
+        @TestMetadata("insertBrackets3.kt")
+        public void testInsertBrackets3() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets3.kt");
+        }
+
+        @TestMetadata("insertBrackets4.kt")
+        public void testInsertBrackets4() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets4.kt");
+        }
+
+        @TestMetadata("insertBrackets5.kt")
+        public void testInsertBrackets5() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBrackets5.kt");
+        }
+
+        @TestMetadata("insertBracketsEnd.kt")
+        public void testInsertBracketsEnd() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsEnd.kt");
+        }
+
+        @TestMetadata("insertBracketsMiddle.kt")
+        public void testInsertBracketsMiddle() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/insertCurlyBracesToTemplate/insertBracketsMiddle.kt");
+        }
+    }
 
 
 
