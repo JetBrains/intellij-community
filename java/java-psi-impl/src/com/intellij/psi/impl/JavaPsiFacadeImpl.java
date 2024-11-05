@@ -12,6 +12,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
@@ -100,7 +101,6 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       }
       return null;
     }
-    IndexNotReadyException notReady = null;
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
     for (PsiElementFinder finder : finders) {
@@ -111,10 +111,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (notReady != null) throw notReady;
     return null;
   }
 
@@ -173,7 +172,6 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
 
-    IndexNotReadyException notReady = null;
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
       try {
@@ -184,10 +182,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (result == null && notReady != null) throw notReady;
     return result == null ? Collections.emptyList() : result;
   }
 
@@ -200,7 +197,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           filter = filter == null ? finderFilter : filter.and(finderFilter);
         }
       }
-      catch (IndexNotReadyException ignore) { }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
     }
     return filter;
   }
@@ -221,7 +220,6 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
     if (aPackage != null) {
       return aPackage;
     }
-    IndexNotReadyException notReady = null;
     for (PsiElementFinder finder : filteredFinders()) {
       try {
         aPackage = finder.findPackage(qualifiedName);
@@ -230,10 +228,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (notReady != null) throw notReady;
     return null;
   }
 
@@ -292,24 +289,21 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   public @NotNull Set<String> getClassNames(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    IndexNotReadyException notReady = null;
     Set<String> result = new HashSet<>();
     for (PsiElementFinder finder : filteredFinders()) {
       try {
         result.addAll(finder.getClassNames(psiPackage, scope));
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (result.isEmpty() && notReady != null) throw notReady;
     return result;
   }
 
   public PsiClass @NotNull [] getClasses(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
     List<PsiElementFinder> finders = filteredFinders();
     Predicate<PsiClass> classesFilter = getFilterFromFinders(scope, finders);
-    IndexNotReadyException notReady = null;
     List<PsiClass> result = null;
     for (PsiElementFinder finder : finders) {
       try {
@@ -319,10 +313,9 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         filterClassesAndAppend(finder, classesFilter, classes, result);
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (result == null && notReady != null) throw notReady;
     return result == null ? PsiClass.EMPTY_ARRAY : result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
@@ -365,16 +358,13 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
     }
-    IndexNotReadyException notReady = null;
     for (PsiElementFinder finder : filteredFinders()) {
       try {
         Collections.addAll(result, finder.getPackageFiles(psiPackage, scope));
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
       }
     }
-    if (result.isEmpty() && notReady != null) throw notReady;
     return result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
@@ -388,13 +378,14 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
           return false;
         }
       }
-      catch (IndexNotReadyException ignore) { }
+      catch (IndexNotReadyException ex) {
+        handleIndexNotReadyException(ex);
+      }
     }
     return true;
   }
 
   public PsiPackage @NotNull [] getSubPackages(@NotNull PsiPackage psiPackage, @NotNull GlobalSearchScope scope) {
-    IndexNotReadyException notReady = null;
     Map<String, PsiPackage> result = new LinkedHashMap<>();
     for (PsiElementFinder finder : filteredFinders()) {
       // Ensure uniqueness of names in the returned list of subpackages. If a plugin PsiElementFinder
@@ -407,11 +398,14 @@ public final class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
         }
       }
       catch (IndexNotReadyException ex) {
-        notReady = ex;
+        handleIndexNotReadyException(ex);
       }
     }
-    if (result.isEmpty() && notReady != null) throw notReady;
     return result.values().toArray(PsiPackage.EMPTY_ARRAY);
+  }
+
+  private static void handleIndexNotReadyException(@NotNull IndexNotReadyException ex) {
+    if (Registry.is("ide.dumb.mode.check.awareness")) throw ex;
   }
 
   @Override
