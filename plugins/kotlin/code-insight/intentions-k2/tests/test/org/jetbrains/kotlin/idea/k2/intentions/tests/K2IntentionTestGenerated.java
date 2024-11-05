@@ -11251,7 +11251,54 @@ public abstract class K2IntentionTestGenerated extends AbstractK2IntentionTest {
         }
     }
 
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment")
+    public static class ConvertBlockCommentToLineComment extends AbstractK2IntentionTest {
+        @java.lang.Override
+        @org.jetbrains.annotations.NotNull
+        public final KotlinPluginMode getPluginMode() {
+            return KotlinPluginMode.K2;
+        }
 
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("afterStatement.kt")
+        public void testAfterStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/afterStatement.kt");
+        }
+
+        @TestMetadata("beforeStatement.kt")
+        public void testBeforeStatement() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/beforeStatement.kt");
+        }
+
+        @TestMetadata("blankLine.kt")
+        public void testBlankLine() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/blankLine.kt");
+        }
+
+        @TestMetadata("docComment.kt")
+        public void testDocComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/docComment.kt");
+        }
+
+        @TestMetadata("endOflineComment.kt")
+        public void testEndOflineComment() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/endOflineComment.kt");
+        }
+
+        @TestMetadata("newLinesBetweenCommentAndDeclaration.kt")
+        public void testNewLinesBetweenCommentAndDeclaration() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/newLinesBetweenCommentAndDeclaration.kt");
+        }
+
+        @TestMetadata("simple.kt")
+        public void testSimple() throws Exception {
+            runTest("../../../idea/tests/testData/intentions/convertBlockCommentToLineComment/simple.kt");
+        }
+    }
 
 
 
