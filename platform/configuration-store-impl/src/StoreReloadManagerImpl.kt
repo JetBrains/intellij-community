@@ -20,12 +20,10 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManagerListener
-import com.intellij.platform.ide.progress.withBackgroundProgress
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SlowOperations
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -37,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.Duration.Companion.milliseconds
 
 @ApiStatus.Internal
-internal class StoreReloadManagerImpl(private val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
+internal open class StoreReloadManagerImpl(protected val project: Project, coroutineScope: CoroutineScope) : StoreReloadManager {
   private val reloadBlockCount = AtomicInteger()
   private val blockStackTrace = AtomicReference<Throwable?>()
   private val changedStorages = LinkedHashMap<ComponentStoreImpl, MutableSet<StateStorage>>()
@@ -84,15 +82,14 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
   }
 
   /**
-   * Reloads the changed schemes in [changedSchemes], changed storages in [changedSchemes] and a JPS model via [JpsProjectModelSynchronizer]
+   * Reloads the changed schemes in [changedSchemes] and changed storages in [changedSchemes]
    *
    * @return set of projects that need to be fully re-loaded to apply the changes
    */
   @RequiresEdt
-  private suspend fun doReloadChangedStorages(): Set<Project> {
+  protected open suspend fun doReloadChangedStorages(): Set<Project> {
     val projectsToReload = LinkedHashSet<Project>()
-    if (changedSchemes.isEmpty() && changedStorages.isEmpty()
-        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
+    if (changedSchemes.isEmpty() && changedStorages.isEmpty()) {
       return projectsToReload
     }
 
@@ -108,8 +105,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       changedStorages.clear()
     }
 
-    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()
-        && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
+    if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()) {
       return projectsToReload
     }
 
@@ -141,22 +137,16 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     finally {
       publisher.onBatchUpdateFinished()
     }
-
-    withContext(Dispatchers.IO) {
-      withBackgroundProgress(project, ConfigurationStoreBundle.message("progress.title.reloading.project.configuration")) {
-        JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
-      }
-    }
     return projectsToReload
   }
 
-  override fun isReloadBlocked(): Boolean {
+  final override fun isReloadBlocked(): Boolean {
     val count = reloadBlockCount.get()
     LOG.debug { "[RELOAD] reloadBlockCount = $count" }
     return count > 0
   }
 
-  override fun saveChangedProjectFile(file: VirtualFile) {
+  final override fun saveChangedProjectFile(file: VirtualFile) {
     val store = project.stateStore as ComponentStoreImpl
     val storageManager = store.storageManager as? StateStorageManagerImpl ?: return
     storageManager.getCachedFileStorages(listOf(storageManager.collapseMacro(file.path))).firstOrNull()?.let {
@@ -165,13 +155,13 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     }
   }
 
-  override fun blockReloadingProjectOnExternalChanges() {
+  final override fun blockReloadingProjectOnExternalChanges() {
     if (reloadBlockCount.getAndIncrement() == 0 && !ApplicationManagerEx.isInStressTest()) {
       blockStackTrace.set(Throwable())
     }
   }
 
-  override fun unblockReloadingProjectOnExternalChanges() {
+  final override fun unblockReloadingProjectOnExternalChanges() {
     val counter = reloadBlockCount.get()
     if (counter <= 0) {
       LOG.error("Block counter $counter must be > 0, first block stack trace: ${blockStackTrace.get()?.let { ExceptionUtil.getThrowableText(it) }}")
@@ -189,19 +179,19 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
    * Internal use only. Force reload changed project files.
    */
   @OptIn(ExperimentalCoroutinesApi::class)
-  override suspend fun reloadChangedStorageFiles() {
+  final override suspend fun reloadChangedStorageFiles() {
     changedFilesRequests.resetReplayCache()
     doReload()
   }
 
-  override fun reloadProject() {
+  final override fun reloadProject() {
     synchronized(changedStorages) {
       changedStorages.clear()
     }
     doReloadProject(project)
   }
 
-  override fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>) {
+  final override fun storageFilesChanged(store: IComponentStore, storages: Collection<StateStorage>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${storages.joinToString("\n")}", Exception())
     }
@@ -219,7 +209,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
+  final override fun storageFilesBatchProcessing(batchStorageEvents: Map<IComponentStore, Collection<StateStorage>>) {
     if (LOG.isDebugEnabled) {
       LOG.debug("[RELOAD] registering to reload: ${batchStorageEvents.entries.joinToString("\n")}", Exception())
     }
@@ -251,7 +241,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     scheduleProcessingChangedFiles()
   }
 
-  override fun scheduleProcessingChangedFiles() {
+  final override fun scheduleProcessingChangedFiles() {
     if (!isReloadBlocked()) {
       check(changedFilesRequests.tryEmit(Unit))
     }

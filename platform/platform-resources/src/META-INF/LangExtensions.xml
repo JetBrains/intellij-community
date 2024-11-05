@@ -3,6 +3,9 @@
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
                         overrides="true"/>
+    <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
+                    serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
+                    overrides="true"/>
 
     <projectServiceContainerInitializedListener
       id="moduleBridgeLoaderService"
