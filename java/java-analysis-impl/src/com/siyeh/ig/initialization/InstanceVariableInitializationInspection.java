@@ -121,8 +121,7 @@ public final class InstanceVariableInitializationInspection extends BaseInspecti
       }
     }
 
-    private static boolean isInitializedInSetup(PsiField field,
-                                                PsiClass aClass) {
+    private static boolean isInitializedInSetup(PsiField field, PsiClass aClass) {
       final PsiMethod setupMethod = TestFrameworks.getInstance().findSetUpMethod(aClass);
       return InitializationUtils.methodAssignsVariableOrFails(setupMethod, field);
     }
