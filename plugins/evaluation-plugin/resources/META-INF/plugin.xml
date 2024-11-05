@@ -6,8 +6,8 @@
   <!--suppress PluginXmlValidity -->
   <idea-version since-build="211"/>
   <description><![CDATA[
-           <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
-    ]]></description>
+    <p>The plugin deals with the quality evaluation of IDE features based on artificial queries.</p>
+  ]]></description>
 
   <extensions defaultExtensionNs="com.intellij">
     <appStarter id="ml-evaluate" implementation="com.intellij.cce.actions.CompletionEvaluationStarter"/>
@@ -17,6 +17,7 @@
     <completion.ml.featuresOverride language="" implementationClass="com.intellij.cce.interpreter.DisableUserDependentFeatures"/>
 
     <toolWindow id="Evaluation Dataset"
+                icon="AllIcons.Toolwindows.ToolWindowDataView"
                 factoryClass="com.intellij.cce.ui.EvaluationDatasetToolWindowFactory"
                 anchor="bottom"
                 canCloseContents="false"/>
