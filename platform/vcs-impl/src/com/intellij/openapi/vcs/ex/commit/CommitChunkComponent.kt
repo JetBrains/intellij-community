@@ -101,7 +101,11 @@ private class CommitChunkPanel(private val tracker: ChangelistsLocalLineStatusTr
       .addToBottom(BorderLayoutPanel().addToRight(bottomWrapper).andTransparent())
 
     // ui adjustment
-    centerPanel.andTransparent().withBackground(Spec.INPUT_BACKGROUND)
+    centerPanel
+      .andTransparent()
+      .withBackground(Spec.INPUT_BACKGROUND)
+
+    withBorder(JBUI.Borders.emptyLeft(Spec.PANEL_LEFT_GAP))
     resetPreferredHeight()
     andTransparent()
 
@@ -334,6 +338,8 @@ private fun adjustEditorSettings(editor: EditorEx) {
 }
 
 private object Spec {
+  const val PANEL_LEFT_GAP: Int = 12
+
   val DEFAULT_WIDTH: Int
     get() = JBUI.scale(255)
 
