@@ -30,7 +30,7 @@ import com.intellij.util.indexing.FilesFilterScanningHandler.UpdatingFilesFilter
 import com.intellij.util.indexing.IndexingProgressReporter.CheckPauseOnlyProgressIndicator
 import com.intellij.util.indexing.dependencies.FileIndexingStamp
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService
-import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken
+import com.intellij.util.indexing.dependencies.ScanningRequestToken
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService
 import com.intellij.util.indexing.dependenciesCache.DependenciesIndexedStatusService.StatusMark
 import com.intellij.util.indexing.diagnostic.*
@@ -298,7 +298,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
                                  private val filterHandler: FilesFilterScanningHandler,
                                  private val indicator: CheckPauseOnlyProgressIndicator,
                                  private val progressReporter: IndexingProgressReporter,
-                                 private val scanningRequest: ScanningOrIndexingRequestToken) {
+                                 private val scanningRequest: ScanningRequestToken) {
 
     fun collectIndexableFilesConcurrently(providers: List<IndexableFilesIterator>) {
       if (providers.isEmpty()) {

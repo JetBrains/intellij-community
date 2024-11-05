@@ -28,7 +28,7 @@ import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
 import com.intellij.util.indexing.dependencies.IncompleteTaskToken;
 import com.intellij.util.indexing.dependencies.IndexingRequestToken;
 import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
-import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
@@ -207,7 +207,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    ScanningOrIndexingRequestToken token = myProject.getService(ProjectIndexingDependenciesService.class).newScanningOrIndexingToken();
+    ScanningRequestToken token = myProject.getService(ProjectIndexingDependenciesService.class).newScanningOrIndexingToken();
     trackSuspends(ProgressSuspender.getSuspender(indicator), this,
                   () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
                   () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));

@@ -20,7 +20,7 @@ import com.intellij.psi.search.FileTypeIndex;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.dependencies.FileIndexingStamp;
-import com.intellij.util.indexing.dependencies.ScanningOrIndexingRequestToken;
+import com.intellij.util.indexing.dependencies.ScanningRequestToken;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +44,7 @@ final class UnindexedFilesFinder {
   private final FilesFilterScanningHandler myFilterHandler;
   private final boolean myShouldProcessUpToDateFiles;
   private final IndexingReasonExplanationLogger explanationLogger;
-  private final ScanningOrIndexingRequestToken indexingRequest;
+  private final ScanningRequestToken indexingRequest;
 
   private static final class UnindexedFileStatusBuilder {
     boolean shouldIndex = false;
@@ -140,7 +140,7 @@ final class UnindexedFilesFinder {
   UnindexedFilesFinder(@NotNull Project project,
                        IndexingReasonExplanationLogger explanationLogger,
                        @Nullable BiPredicate<? super IndexedFile, ? super FileIndexingStamp> forceReindexingTrigger,
-                       ScanningOrIndexingRequestToken indexingRequest,
+                       ScanningRequestToken indexingRequest,
                        @NotNull FilesFilterScanningHandler filterHandler) {
     this.explanationLogger = explanationLogger;
     myProject = project;

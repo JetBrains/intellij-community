@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 
 @ApiStatus.Internal
-abstract class ScanningOrIndexingRequestToken {
+abstract class ScanningRequestToken {
   @Volatile
   private var successful = true
   abstract val appIndexingRequestId: AppIndexingDependenciesToken
@@ -20,7 +20,7 @@ abstract class ScanningOrIndexingRequestToken {
   fun isSuccessful() = successful
 }
 
-internal object RequestFullHeavyScanningToken : ScanningOrIndexingRequestToken() {
+internal object RequestFullHeavyScanningToken : ScanningRequestToken() {
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     throw IllegalStateException("This token is a marker. It should not be used.")
   }
@@ -32,7 +32,7 @@ internal object RequestFullHeavyScanningToken : ScanningOrIndexingRequestToken()
 
 @ApiStatus.Internal
 @VisibleForTesting
-class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningOrIndexingRequestToken() {
+class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
@@ -49,7 +49,7 @@ class WriteOnlyScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenc
 
 @ApiStatus.Internal
 @VisibleForTesting
-class ReadWriteScanningOrIndexingRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningOrIndexingRequestToken() {
+class ReadWriteScanningRequestTokenImpl(appIndexingRequest: AppIndexingDependenciesToken, private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean) : ScanningRequestToken() {
   override val appIndexingRequestId: AppIndexingDependenciesToken = appIndexingRequest
   override fun getFileIndexingStamp(file: VirtualFile): FileIndexingStamp {
     if (file !is VirtualFileWithId) return ProjectIndexingDependenciesService.NULL_STAMP
