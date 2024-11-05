@@ -15,7 +15,7 @@ class FilePicker(
     private val convertFiles: MutableList<VirtualFile>
 ) : DialogWrapper(true) , FilePickListener{
 
-    private val fileViewer = FileViwerPanel(project, rootFile)
+    private val fileViewer = FileViewerPanel(project, rootFile)
 
     init {
         title = "Java to Kotlin"

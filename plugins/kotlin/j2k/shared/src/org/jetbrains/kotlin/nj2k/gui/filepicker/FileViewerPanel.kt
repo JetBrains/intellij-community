@@ -15,7 +15,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBPanel
 import java.awt.BorderLayout
 
-class FileViwerPanel(private val project: Project, file: VirtualFile) : JBPanel<JBPanel<*>>(BorderLayout()) {
+class FileViewerPanel(private val project: Project, file: VirtualFile) : JBPanel<JBPanel<*>>(BorderLayout()) {
 
     // エディタ
     private val editorTextField: EditorTextField
