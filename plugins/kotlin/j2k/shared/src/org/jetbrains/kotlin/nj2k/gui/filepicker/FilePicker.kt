@@ -24,7 +24,7 @@ class FilePicker(
 
     override fun createCenterPanel(): JComponent {
         // ファイルピッカー
-        val filePicker = FilePickerPanel(project, rootFile, mutableListOf())
+        val filePicker = FilePickerPanel(project, rootFile, convertFiles)
         filePicker.fileSelectionListeners.add(this)
         filePicker.preferredSize = Dimension(400, 400)
         // ビューア
@@ -43,5 +43,9 @@ class FilePicker(
 
     override fun onFocus(file: VirtualFile) {
         fileViewer.switchFile(file)
+    }
+
+    fun getPickedFiles(): List<VirtualFile> {
+        return convertFiles
     }
 }
