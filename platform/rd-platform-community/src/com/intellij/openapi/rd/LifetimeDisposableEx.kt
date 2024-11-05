@@ -3,12 +3,12 @@ package com.intellij.openapi.rd
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.WriteIntentReadAction
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.ui.EDT
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.lifetime.LifetimeDefinition
 import com.jetbrains.rd.util.lifetime.isNotAlive
+import java.util.concurrent.atomic.AtomicReference
 
 
 /**
@@ -34,6 +34,29 @@ fun Disposable.defineNestedLifetime(): LifetimeDefinition {
     lifetimeDefinition.terminate()
 
   return lifetimeDefinition
+}
+
+/**
+ * Attaches [this] disposable as a child to [lifetime] such as the disposable will be terminated when [lifetime] terminates.
+ *
+ * When the disposable is disposed of its own, there should be no leaks because the subscription to [lifetime] is also terminated on disposal of [this].
+ */
+fun Disposable.attachAsChildTo(lifetime: Lifetime) {
+  val disposableRef = AtomicReference(this)
+  val childLt = lifetime.createNested()
+  childLt.onTermination {
+    disposableRef.getAndSet(null)?.let {
+      Disposer.dispose(it)
+    }
+  }
+
+  if (!Disposer.tryRegister(this) {
+    disposableRef.getAndSet(null)?.let {
+      childLt.terminate()
+    }
+  }) {
+    childLt.terminate()
+  }
 }
 
 /**
