@@ -48,7 +48,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       "intellij.cidr.base.plugin",
       "intellij.cidr.clangConfig.plugin",
       "intellij.cidr.clangFormat.plugin",
-      "intellij.rml.dfa.plugin",
     )
 
     // EAP-only plugins are generally intended for JetBrains' products only. We always exclude them from Android Studio.
@@ -125,6 +124,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // b/358035533: plexus-utils is used by maven-resolver-provider from core, thus plexus-utils must be in core too.
       // This is consistent with the layout of IntelliJ IDEA CE 2024.2.
       layout.withProjectLibrary("plexus-utils")
+
+      // b/376902207: JetBrains apparently converted rml.dfa into a product module in CIDR commit 0f8319e82a.
+      // Note that there is an associated V2 module rml.dfa.impl referenced from AndroidStudioPlugin.xml.
+      layout.withModule("intellij.rml.dfa")
 
       layout.withPatch { patcher, context ->
         // Patch AndroidStudioProperties.xml: set the platform API version to match the 3-component
@@ -203,12 +206,6 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       plugin("intellij.cidr.clangFormat.plugin") { spec ->
         spec.withModule("intellij.cidr.clangFormat")
         spec.withModule("intellij.cidr.clangFormat.lang")
-      },
-      plugin("intellij.rml.dfa.plugin") { spec ->
-        spec.withModule("intellij.rml.dfa")
-        spec.withModule("intellij.rml.dfa.impl")
-        spec.withModule("intellij.rml.dfa.devtools")
-        spec.withModule("intellij.rml.dfa.devtools.impl")
       },
     ))
 
