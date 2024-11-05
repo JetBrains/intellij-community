@@ -569,7 +569,6 @@ c:com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator
 - isIndeterminate():Z
 - p:onCancelled(java.lang.String):V
 - p:onStop():V
-- s:setDebug(Z):V
 - f:start():V
 - f:stop():V
 f:com.intellij.codeInsight.daemon.impl.DefaultHighlightUtil
