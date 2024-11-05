@@ -36,7 +36,7 @@ class FilePicker(
 
     override fun createCenterPanel(): JComponent {
         // ファイルピッカー
-        val filePicker = FilePickerPanel(project, rootFile, convertFiles)
+        val filePicker = FilePickerPanel(rootFile, convertFiles)
         filePicker.fileSelectionListeners.add(this)
         filePicker.preferredSize = Dimension(400, 400)
         // ビューア

@@ -3,7 +3,6 @@ package org.jetbrains.kotlin.nj2k.gui.filepicker
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.isFile
 import com.intellij.ui.CheckboxTree
@@ -19,8 +18,7 @@ import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreePath
 
 class FilePickerPanel(
-    private val project: Project,
-    private val rootFile: VirtualFile,
+    rootFile: VirtualFile,
     private val selectedFiles: MutableList<VirtualFile>
 ) : JBPanel<JBPanel<*>>(BorderLayout()) {
 
