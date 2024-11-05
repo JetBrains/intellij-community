@@ -13,5 +13,5 @@ abstract class AssetsOnboardingTipsProjectWizardStep(parent: NewProjectWizardSte
   protected fun icon(allIconsId: String) = AssetsOnboardingTips.icon(allIconsId)
   protected fun shouldRenderOnboardingTips(): Boolean = AssetsOnboardingTips.shouldRenderOnboardingTips()
   protected fun prepareOnboardingTips(project: Project, templateWithoutTips: String, fileName: String, breakpointSelector: (CharSequence) -> Int?) =
-    prepareOnboardingTipsImpl(project, templateWithoutTips, fileName, breakpointSelector)
+    prepareOnboardingTipsImpl(project, fileName, breakpointSelector)
 }

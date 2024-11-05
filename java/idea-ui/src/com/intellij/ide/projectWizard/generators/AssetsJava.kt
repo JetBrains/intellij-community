@@ -97,7 +97,7 @@ fun AssetsNewProjectWizardStep.withJavaSampleCodeAsset(
 }
 
 fun AssetsNewProjectWizardStep.prepareJavaSampleOnboardingTips(project: Project) {
-  prepareOnboardingTips(project, DEFAULT_TEMPLATE_NAME, DEFAULT_FILE_NAME) { charSequence ->
+  prepareOnboardingTips(project, DEFAULT_FILE_NAME) { charSequence ->
     charSequence.indexOf("System.out.println").takeIf { it >= 0 }
   }
 }

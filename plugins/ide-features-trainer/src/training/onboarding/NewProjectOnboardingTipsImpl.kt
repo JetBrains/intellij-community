@@ -20,6 +20,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorFactoryEvent
 import com.intellij.openapi.editor.event.EditorFactoryListener
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.openapi.ui.popup.Balloon
@@ -29,8 +30,9 @@ import com.intellij.ui.GotItTooltip
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl
 import com.intellij.xdebugger.impl.actions.XDebuggerActions
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil.getAvailableLineBreakpointTypes
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
@@ -77,12 +79,15 @@ private fun installTipsInFirstEditor(editor: Editor, project: Project, info: Onb
 
   val file = editor.virtualFile ?: return
 
-  val offset = info.offsetForBreakpoint(editor.document.charsSequence)
+  val document = FileDocumentManager.getInstance().getDocument(file) ?: return
+
+  val offset = info.offsetForBreakpoint(document.charsSequence)
 
   if (offset != null) {
     val position = XDebuggerUtil.getInstance().createPositionByOffset(file, offset) ?: return
 
-    XBreakpointUtil.toggleLineBreakpoint(project, position, true, editor, false, false, true)
+    val types = getAvailableLineBreakpointTypes(project, position, null)
+    XDebuggerUtilImpl.toggleAndReturnLineBreakpoint(project, types, position, false, false, null, true)
   }
 
   val pathToRunningFile = file.path

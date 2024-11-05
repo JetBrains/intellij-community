@@ -4,7 +4,6 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.RecentProjectsManagerBase
-import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.wizard.NewProjectOnboardingTips
 import com.intellij.ide.wizard.OnboardingTipsInstallationInfo
 import com.intellij.openapi.project.Project
@@ -34,18 +33,13 @@ object AssetsOnboardingTips {
   }
 }
 
+@ApiStatus.Internal
 fun AssetsNewProjectWizardStep.prepareOnboardingTips(
   project: Project,
-  templateWithoutTips: String,
   fileName: String,
   breakpointSelector: (CharSequence) -> Int?,
 ) {
-  val templateManager = FileTemplateManager.getDefaultInstance()
-  val properties = getTemplateProperties()
-  val defaultProperties = templateManager.defaultProperties
-  val template = templateManager.getInternalTemplate(templateWithoutTips)
-  val simpleSampleText = template.getText(defaultProperties + properties)
-  val onboardingInfo = OnboardingTipsInstallationInfo(simpleSampleText, fileName, breakpointSelector)
+  val onboardingInfo = OnboardingTipsInstallationInfo(fileName, breakpointSelector)
   for (extension in NewProjectOnboardingTips.EP_NAME.extensions) {
     extension.installTips(project, onboardingInfo)
   }
