@@ -50,6 +50,9 @@ public final @NonNls class PyNames {
 
   public static final String TYPE_ENUM = "enum.Enum";
   public static final String TYPE_ENUM_META = "enum.EnumMeta";
+  public static final String TYPE_ENUM_AUTO = "enum.auto";
+  public static final String TYPE_ENUM_MEMBER = "enum.member";
+  public static final String TYPE_ENUM_NONMEMBER = "enum.nonmember";
 
   public static final String PYTHON_SDK_ID_NAME = "Python SDK";
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";

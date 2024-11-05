@@ -48,6 +48,7 @@ import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.stubs.PyLiteralKind;
 import com.jetbrains.python.psi.stubs.PySetuptoolsNamespaceIndex;
 import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.pyi.PyiStubSuppressor;
@@ -1185,6 +1186,28 @@ public final class PyUtil {
 
   private static boolean isBaseException(String name) {
     return name != null && (name.contains("BaseException") || name.startsWith("exceptions."));
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable PyType convertToType(@NotNull PyLiteralKind literalKind, @NotNull PyBuiltinCache builtinCache) {
+    switch (literalKind) {
+      case INT -> {
+        return builtinCache.getIntType();
+      }
+      case FLOAT -> {
+        return builtinCache.getFloatType();
+      }
+      case STRING -> {
+        return builtinCache.getStrType();
+      }
+      case BOOL -> {
+        return builtinCache.getBoolType();
+      }
+      case NONE -> {
+        return PyNoneType.INSTANCE;
+      }
+      default -> throw new IllegalArgumentException();
+    }
   }
 
   public static final class MethodFlags {

@@ -1606,7 +1606,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-76816
   public void testEnumDefinitionUsingEnumSubclass() {
-    doTest("Color",
+    doTest("Literal[Color.RED]",
            """
              from enum import Enum
 
@@ -1622,7 +1622,7 @@ public class Py3TypeTest extends PyTestCase {
 
   // PY-76816
   public void testEnumDefinitionUsingEnumTypeMetaclass() {
-    doTest("Color",
+    doTest("Literal[Color.RED]",
            """
              from enum import EnumType
 
@@ -1687,6 +1687,115 @@ public class Py3TypeTest extends PyTestCase {
              res = f()
              expr = res.value
              """);
+  }
+
+  public void testEnumMembers() {
+    doTest(
+      "tuple[() -> int, (x: int) -> None, Literal[Example.A], Literal[Example.B]]",
+      """
+        from enum import Enum
+        
+        def func(x: int) -> None: ...
+        
+        val = 2
+
+        class Example(Enum):
+            foo = lambda: 1
+            bar = staticmethod(func)
+            A = 1
+            B = val
+
+        expr = Example.foo, Example.bar, Example.A, Example.B
+        """);
+  }
+
+  public void testEnumMemberNonmember() {
+    doTest(
+      "tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+           """
+             from enum import Enum, member, nonmember
+             
+             def func(x: int) -> None: ...
+             
+             class Example(Enum):
+                 a = nonmember(1)
+                 A = member(lambda: 1)
+                 B = member(staticmethod(func))
+             
+                 @member
+                 def method() -> None: ...
+
+             expr = Example.a, Example.A, Example.B, Example.method
+             """);
+  }
+
+  public void testEnumMemberNonmemberMultiFile() {
+    doMultiFileTest("tuple[int, Literal[Example.A], Literal[Example.B], Literal[Example.method]]",
+                    """
+                      from enum_members import Example
+                      
+                      expr = Example.a, Example.A, Example.B, Example.method
+                      """);
+  }
+
+  public void testEnumAuto() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+           """
+             from enum import Enum, auto
+             
+             class Color(Enum):
+                 RED = auto()
+                 BLUE = auto()
+             
+             expr = Color.RED, Color.BLUE
+             """);
+  }
+
+  public void testEnumAutoMultiFile() {
+    doMultiFileTest("tuple[Literal[Color.RED], Literal[Color.BLUE]]",
+                    """
+                      from color import Color
+                      
+                      expr = Color.RED, Color.BLUE
+                      """);
+  }
+
+  public void testEnumMemberAlias() {
+    doTest("tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 RED = 1
+             
+                 R = RED
+                 r = R
+             
+             expr = Color.RED, Color.R, Color.r
+             """);
+    doTest("tuple[Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+           """
+             from enum import EnumMeta, member
+             
+             class Color(metaclass=EnumMeta):
+                 @member
+                 def foo(x: int) -> int:
+                     pass
+             
+                 bar = foo
+                 buz = bar
+             
+             expr = Color.foo, Color.bar, Color.buz
+             """);
+  }
+
+  public void testEnumMemberAliasMultiFile() {
+    doMultiFileTest(
+      "tuple[Literal[Color.RED], Literal[Color.RED], Literal[Color.RED], Literal[Color.foo], Literal[Color.foo], Literal[Color.foo]]",
+                    """
+                      from color import *
+                      expr = Color.RED, Color.R, Color.r, Color.foo, Color.bar, Color.buz
+                      """);
   }
 
   // PY-54336
@@ -2850,6 +2959,13 @@ public class Py3TypeTest extends PyTestCase {
           with open("file.csv") as f:
               reader = csv.DictReader(f)
               expr = [line for line in reader]
+      """);
+  }
+
+  public void testLiteralAssignmentInImportedFile() {
+    doMultiFileTest("int", """
+      from m import *
+      expr = foo
       """);
   }
 

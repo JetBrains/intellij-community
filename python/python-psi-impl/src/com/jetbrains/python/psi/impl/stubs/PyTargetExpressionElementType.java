@@ -67,6 +67,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
 
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
     QualifiedName initializer = null;
+    PyLiteralKind assignedLiteralKind = null;
     final Ref<QualifiedName> assignedReference = PyTargetExpressionImpl.getAssignedReferenceQualifiedName(psi);
     if (assignedReference != null) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
@@ -78,9 +79,12 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
         initializerType = PyTargetExpressionStub.InitializerType.CallExpression;
         initializer = assignedCallCalleeReference.get();
       }
+      else {
+        assignedLiteralKind = PyLiteralKind.fromExpression(assignedValue);
+      }
     }
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, psi.isQualified(), typeComment, annotation,
-                                          psi.hasAssignedValue(), parentStub, versions);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, assignedLiteralKind, psi.isQualified(),
+                                          typeComment, annotation, psi.hasAssignedValue(), parentStub, versions);
   }
 
   @Override
@@ -100,6 +104,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     else {
       QualifiedName.serialize(stub.getInitializer(), stream);
       stream.writeBoolean(stub.isQualified());
+      PyLiteralKind.serialize(stream, stub.getAssignedLiteralKind());
     }
   }
 
@@ -122,7 +127,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
     QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
-    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, isQualified, typeComment, annotation,
+    PyLiteralKind literalKind = PyLiteralKind.deserialize(stream);
+    return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, literalKind, isQualified, typeComment, annotation,
                                           hasAssignedValue, parentStub, versions);
   }
 

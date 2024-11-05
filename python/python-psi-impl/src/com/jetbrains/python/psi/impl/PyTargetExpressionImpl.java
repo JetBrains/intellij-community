@@ -34,10 +34,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.stubs.PyAnnotationOwnerStub;
-import com.jetbrains.python.psi.stubs.PyClassStub;
-import com.jetbrains.python.psi.stubs.PyFunctionStub;
-import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
+import com.jetbrains.python.psi.stubs.*;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +108,11 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
       return type;
     }
     if (!context.maySwitchToAST(this)) {
+      PyLiteralKind literalKind = getAssignedLiteralKind(this);
+      if (literalKind != null) {
+        return PyUtil.convertToType(literalKind, PyBuiltinCache.getInstance(this));
+      }
+
       final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
       final List<PyType> types = StreamEx
@@ -705,5 +707,18 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
     }
     final PyExpression value = psi.findAssignedValue();
     return value instanceof PyCallExpression ? Ref.create(PyPsiUtils.asQualifiedName(((PyCallExpression)value).getCallee())) : null;
+  }
+
+  @Nullable
+  private static PyLiteralKind getAssignedLiteralKind(@NotNull PyTargetExpression psi) {
+    final PyTargetExpressionStub stub = psi.getStub();
+    if (stub != null) {
+      if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.Other) {
+        return stub.getAssignedLiteralKind();
+      }
+      return null;
+    }
+    final PyExpression value = psi.findAssignedValue();
+    return PyLiteralKind.fromExpression(value);
   }
 }
