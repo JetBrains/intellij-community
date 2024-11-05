@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.InlayProperties
+import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.editor.markup.HighlighterLayer
@@ -18,11 +19,14 @@ import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import java.awt.Dimension
+import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import kotlin.text.lines
 
 class TextEditorCellViewComponent(
   private val editor: EditorEx,
@@ -49,6 +53,8 @@ class TextEditorCellViewComponent(
 
   private val presentationToInlay = mutableMapOf<InlayPresentation, Inlay<*>>()
 
+  private val gutterIconStickToFirstVisibleLine = Registry.`is`("jupyter.run.cell.button.sticks.first.visible.line")
+
   init {
     editor.contentComponent.addMouseListener(mouseListener)
     cell.gutterAction.afterChange(this) { action ->
@@ -63,15 +69,16 @@ class TextEditorCellViewComponent(
 
     val markupModel = editor.markupModel
     val interval = safeInterval ?: return@runInEdt
-    val startOffset = editor.document.getLineStartOffset(interval.lines.first)
+    val startOffset = editor.document.getLineStartOffset(computeFirstLineForHighlighter(interval))
     val endOffset = editor.document.getLineEndOffset(interval.lines.last)
     val highlighter = markupModel.addRangeHighlighter(
       startOffset,
       endOffset,
       HighlighterLayer.FIRST - 100,
       TextAttributes(),
-      HighlighterTargetArea.LINES_IN_RANGE
+      HighlighterTargetArea.EXACT_RANGE
     )
+
     highlighter.gutterIconRenderer = ActionToGutterRendererAdapter(gutterAction)
     this.highlighters = listOf(highlighter)
   }
@@ -87,6 +94,39 @@ class TextEditorCellViewComponent(
         it.dispose()
       }
       highlighters = null
+    }
+  }
+
+  private fun getFirstFullyVisibleLogicalLine(): Int? {
+    val visibleArea = editor.scrollingModel.visibleArea
+    val startY = visibleArea.y
+    val endY = visibleArea.y + visibleArea.height
+
+    val firstVisibleLine = editor.xyToLogicalPosition(Point(0, startY)).line
+    val lastVisibleLine = editor.xyToLogicalPosition(Point(0, endY)).line
+
+    for (line in firstVisibleLine..lastVisibleLine) {
+      val lineStartY = editor.logicalPositionToXY(LogicalPosition(line, 0)).y
+      val lineEndY = lineStartY + editor.lineHeight
+      if (lineStartY >= startY && lineEndY <= endY) {
+        return line
+      }
+    }
+    return null
+  }
+
+  private fun computeFirstLineForHighlighter(interval: NotebookCellLines.Interval): Int {
+    return if (gutterIconStickToFirstVisibleLine) {
+      val firstFullyVisibleLine = getFirstFullyVisibleLogicalLine()
+      val startLine = if (firstFullyVisibleLine != null && firstFullyVisibleLine in interval.lines) {
+        firstFullyVisibleLine
+      } else {
+        interval.lines.first
+      }
+      val fullyVisibleCell = getFirstFullyVisibleLogicalLine() == interval.lines.first
+      if (fullyVisibleCell) interval.lines.first else startLine
+    } else {
+      interval.lines.first
     }
   }
 
@@ -164,6 +204,10 @@ class TextEditorCellViewComponent(
       presentationToInlay.values.forEach { inlay -> Disposer.dispose(inlay) }
       presentations.forEach { addInlayBelow(it) }
     }
+  }
+
+  override fun doViewportChange() {
+    if (gutterIconStickToFirstVisibleLine) updateGutterIcons(cell.gutterAction.get())
   }
 
   private fun isInlaysBroken(): Boolean {
