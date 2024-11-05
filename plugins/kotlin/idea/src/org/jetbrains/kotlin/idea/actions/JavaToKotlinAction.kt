@@ -16,6 +16,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MessagesEx
@@ -48,6 +49,7 @@ import org.jetbrains.kotlin.idea.util.getAllFilesRecursively
 import org.jetbrains.kotlin.j2k.*
 import org.jetbrains.kotlin.j2k.ConverterSettings.Companion.defaultSettings
 import org.jetbrains.kotlin.j2k.J2kConverterExtension.Kind.*
+import org.jetbrains.kotlin.nj2k.gui.filepicker.FilePicker
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.psiUtil.findDescendantOfType
 import java.io.IOException
@@ -244,7 +246,7 @@ class JavaToKotlinAction : AnAction() {
     override fun actionPerformed(e: AnActionEvent) {
         val project = CommonDataKeys.PROJECT.getData(e.dataContext) ?: return
         val module = e.getData(PlatformCoreDataKeys.MODULE) ?: return
-        val javaFiles = getSelectedWritableJavaFiles(e)
+        val javaFiles = showDialogAndGetTargetFiles(e)
         if (javaFiles.isEmpty()) {
             showNothingToConvertErrorMessage(project)
             return
@@ -259,13 +261,28 @@ class JavaToKotlinAction : AnAction() {
         }
     }
 
-    private fun getSelectedWritableJavaFiles(e: AnActionEvent): List<PsiJavaFile> {
-        val virtualFilesAndDirectories = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return emptyList()
+    //private fun getSelectedWritableJavaFiles(e: AnActionEvent): List<PsiJavaFile> {
+    //    val virtualFilesAndDirectories = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: return emptyList()
+    //    val project = e.project ?: return emptyList()
+    //    val psiManager = PsiManager.getInstance(project)
+    //    return getAllFilesRecursively(virtualFilesAndDirectories)
+    //        .asSequence()
+    //        .mapNotNull { psiManager.findFile(it) as? PsiJavaFile }
+    //        .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
+    //        .filter { it.isWritable }
+    //        .toList()
+    //}
+
+    private fun showDialogAndGetTargetFiles(e: AnActionEvent): List<PsiJavaFile>{
         val project = e.project ?: return emptyList()
-        val psiManager = PsiManager.getInstance(project)
-        return getAllFilesRecursively(virtualFilesAndDirectories)
-            .asSequence()
-            .mapNotNull { psiManager.findFile(it) as? PsiJavaFile }
+        val rootFile = project.guessProjectDir() ?: return emptyList()
+        val preselectedVirtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)?.let{
+            getAllFilesRecursively(it)
+        } ?: return emptyList()
+        val dialog = FilePicker(project, rootFile, preselectedVirtualFiles.toMutableList())
+        if(!dialog.showAndGet()) return emptyList()
+        return dialog.getPickedFiles().asSequence()
+            .mapNotNull { PsiManager.getInstance(project).findFile(it) as? PsiJavaFile }
             .filter { it.fileType == JavaFileType.INSTANCE } // skip .jsp files
             .filter { it.isWritable }
             .toList()
