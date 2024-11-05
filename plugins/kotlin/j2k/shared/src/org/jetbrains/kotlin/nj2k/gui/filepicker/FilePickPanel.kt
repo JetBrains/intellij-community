@@ -39,7 +39,6 @@ class FilePickerPanel(
         val scrollpane = JBScrollPane()
         scrollpane.setViewportView(checkBoxTree)
         add(scrollpane, BorderLayout.CENTER)
-        //        preferredSize = Dimension(300, 400)
     }
 
     // 再帰的にノード作成
@@ -69,16 +68,20 @@ class FilePickerPanel(
         }
     }
 
-    // 指定したノードを展開する
+    // 指定したノードを展開する.Leafをexpandしても反映されない不具合があるため、親ディレクトリをexpandする
     private fun expandNodes(tree: JTree, node: CheckedTreeNode, files: List<VirtualFile>) {
-        if (files.contains(node.userObject)){
-            val path = TreePath(node.path)
-            tree.expandPath(path)
+        val dirs = files.mapTo(mutableSetOf()) { if (it.isFile) it.parent else it }
+        fun CheckedTreeNode.expandNodesInner(files: Set<VirtualFile>) {
+            if (files.contains(this.userObject)) {
+                tree.expandPath(TreePath(this.path))
+            }
+            children().asSequence()
+                .filterIsInstance<CheckedTreeNode>()
+                .forEach { it.expandNodesInner(files) }
         }
-        node.children().asSequence().filterIsInstance<CheckedTreeNode>().forEach {
-            expandNodes(tree, it, files)
-        }
+        node.expandNodesInner(dirs)
     }
+
 
     // イベント登録
     private fun registerEvents(checkBoxTree: CheckboxTree) {
