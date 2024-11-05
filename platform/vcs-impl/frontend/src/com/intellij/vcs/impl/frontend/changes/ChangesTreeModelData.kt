@@ -3,7 +3,9 @@ package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.util.containers.JBIterable
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ChangesTreeModelData {
   fun iterateUserObjects(): JBIterable<*> {
     return iterateRawNodes().map(ChangesBrowserNode<*>::getUserObject);
@@ -16,6 +18,7 @@ abstract class ChangesTreeModelData {
   abstract fun iterateRawNodes(): JBIterable<ChangesBrowserNode<*>>
 }
 
+@ApiStatus.Internal
 open class ExactlySelectedData(tree: ChangesTree) : ChangesTreeModelData() {
   private val selectionPaths = tree.selectionPaths
   override fun iterateRawNodes(): JBIterable<ChangesBrowserNode<*>> {
@@ -24,6 +27,7 @@ open class ExactlySelectedData(tree: ChangesTree) : ChangesTreeModelData() {
   }
 }
 
+@ApiStatus.Internal
 class SelectedData(tree: ChangesTree) : ExactlySelectedData(tree) {
   override fun iterateRawNodes(): JBIterable<ChangesBrowserNode<*>> {
     return super.iterateRawNodes().flatMap(ChangesBrowserNode<*>::traverse).unique()

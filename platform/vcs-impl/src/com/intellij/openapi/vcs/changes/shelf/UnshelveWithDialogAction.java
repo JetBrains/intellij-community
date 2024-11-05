@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,6 +58,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     }
   }
 
+  @ApiStatus.Internal
   public static void unshelveSingleChangeList(ShelvedChangeList changeList, Project project, Change[] changes) {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(changeList.getPath());
     if (virtualFile == null) {
@@ -72,6 +74,7 @@ public class UnshelveWithDialogAction extends DumbAwareAction {
     dialog.show();
   }
 
+  @ApiStatus.Internal
   public static void unshelveMultipleShelveChangeLists(@NotNull Project project,
                                                        @NotNull List<ShelvedChangeList> changeLists,
                                                        @NotNull List<ShelvedBinaryFile> binaryFiles,

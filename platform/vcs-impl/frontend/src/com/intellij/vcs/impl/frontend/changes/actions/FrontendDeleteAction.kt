@@ -2,6 +2,8 @@
 package com.intellij.vcs.impl.frontend.changes.actions
 
 import com.intellij.ide.actions.DeleteAction
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 // This class is needed only because we need this action to be declared in the frontend module, otherwise it will be called on backend.
 class FrontendDeleteAction : DeleteAction()

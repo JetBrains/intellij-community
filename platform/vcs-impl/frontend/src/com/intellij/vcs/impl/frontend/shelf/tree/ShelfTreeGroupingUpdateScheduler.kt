@@ -13,7 +13,9 @@ import com.intellij.vcs.impl.shared.rpc.UpdateStatus
 import fleet.kernel.sharedRef
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.BufferOverflow
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfTreeGroupingUpdateScheduler {
 

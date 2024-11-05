@@ -14,6 +14,7 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+@ApiStatus.Internal
 public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
 
   @NotNull private final BooleanGetter myShowFlatten;

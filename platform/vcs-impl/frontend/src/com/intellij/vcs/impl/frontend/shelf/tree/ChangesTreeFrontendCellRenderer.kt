@@ -7,11 +7,13 @@ import com.intellij.util.ui.ThreeStateCheckBox
 import com.intellij.util.ui.UpdateScaleHelper
 import com.intellij.util.ui.accessibility.AccessibleContextDelegateWithContextMenu
 import com.intellij.vcs.impl.frontend.changes.ChangesTree
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import javax.accessibility.*
 import javax.swing.JTree
 import javax.swing.tree.TreeCellRenderer
 
+@ApiStatus.Internal
 open class ChangesTreeFrontendCellRenderer(protected val textRenderer: ChangesBrowserNodeRenderer) : CellRendererPanel(), TreeCellRenderer {
   private val updateScaleHelper: UpdateScaleHelper = UpdateScaleHelper()
 

@@ -8,7 +8,9 @@ import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfActionsApi
 import fleet.kernel.SharedRef
 import fleet.rpc.remoteApiDescriptor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShelfActionsApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RemoteShelfActionsApi>()) {
@@ -17,7 +19,7 @@ class ShelfActionsApiProvider : RemoteApiProvider {
   }
 }
 
-class BackendShelfActionsApi : RemoteShelfActionsApi {
+internal class BackendShelfActionsApi : RemoteShelfActionsApi {
 
   override suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean) {
     getShelfRemoteActionExecutor(projectRef).unshelve(changeListDto, withDialog)

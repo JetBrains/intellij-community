@@ -6,8 +6,10 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import fleet.kernel.SharedRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
+import org.jetbrains.annotations.ApiStatus
 
 @Rpc
+@ApiStatus.Internal
 interface RemoteShelfActionsApi : RemoteApi<Unit> {
   suspend fun unshelve(projectRef: SharedRef<ProjectEntity>, changeListDto: List<ChangeListDto>, withDialog: Boolean)
   suspend fun delete(projectRef: SharedRef<ProjectEntity>, selectedLists: List<SharedRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>)

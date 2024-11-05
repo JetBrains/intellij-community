@@ -3,11 +3,13 @@ package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 /**
  * Representing a grouped list of changes inside a single changelist.
  */
 class ChangeList(val changeListNode: NodeEntity, val changes: List<NodeEntity>)
 
-
+@ApiStatus.Internal
 val CHANGE_LISTS_KEY: DataKey<List<ChangeList>> = DataKey.create("Frontend.VCS.Changes")

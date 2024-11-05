@@ -52,6 +52,7 @@ class ShelvedTreeModelBuilder(val project: Project, grouping: ChangesGroupingPol
   }
 }
 
+@ApiStatus.Internal
 class RecentlyDeletedNode(userObject: Tag, attributes: SimpleTextAttributes, expandByDefault: Boolean) :
   TagChangesBrowserNode(userObject, attributes, expandByDefault) {
   override fun getSortWeight(): Int {

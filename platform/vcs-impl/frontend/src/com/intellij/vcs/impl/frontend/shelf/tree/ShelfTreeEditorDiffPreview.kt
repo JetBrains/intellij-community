@@ -19,8 +19,10 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 
+@ApiStatus.Internal
 class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope, private val project: Project) : ChangesTreeEditorDiffPreview<ShelfTree>(tree) {
 
   init {

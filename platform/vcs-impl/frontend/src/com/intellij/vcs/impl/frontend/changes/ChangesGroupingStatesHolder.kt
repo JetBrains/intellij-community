@@ -11,9 +11,11 @@ import fleet.kernel.onDispose
 import fleet.kernel.rete.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.set
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ChangesGroupingStatesHolder(private val project: Project, private val cs: CoroutineScope) {
   private val states: MutableMap<String, MutableSet<String>> = ConcurrentHashMap()

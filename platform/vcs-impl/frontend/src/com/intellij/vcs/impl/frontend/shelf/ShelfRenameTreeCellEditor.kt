@@ -3,6 +3,7 @@ package com.intellij.vcs.impl.frontend.shelf
 
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelvedChangeListNode
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.event.CellEditorListener
@@ -10,6 +11,7 @@ import javax.swing.event.ChangeEvent
 import javax.swing.tree.DefaultTreeCellEditor
 import javax.swing.tree.TreeCellEditor
 
+@ApiStatus.Internal
 class ShelfRenameTreeCellEditor(private val shelfTree: ShelfTree) : DefaultTreeCellEditor(shelfTree, null), CellEditorListener {
   init {
     addCellEditorListener(this)

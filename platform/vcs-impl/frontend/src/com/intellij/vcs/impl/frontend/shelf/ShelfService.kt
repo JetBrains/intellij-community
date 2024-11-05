@@ -1,4 +1,6 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
+
 package com.intellij.vcs.impl.frontend.shelf
 
 import com.intellij.openapi.components.Service
@@ -25,7 +27,9 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfService(private val project: Project, private val cs: CoroutineScope) {
   fun unshelve(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withDialog: Boolean) {

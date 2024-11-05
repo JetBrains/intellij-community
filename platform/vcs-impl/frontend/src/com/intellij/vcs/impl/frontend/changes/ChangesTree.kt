@@ -19,6 +19,7 @@ import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserRootNode
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesTreeFrontendCellRenderer
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.awt.event.KeyEvent.VK_ENTER
@@ -28,6 +29,7 @@ import java.util.*
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultTreeModel
 
+@ApiStatus.Internal
 @Suppress("LeakingThis")
 open class ChangesTree(val project: Project, private val cs: CoroutineScope, private val place: String, private val showCheckboxes: Boolean = false, private val highlightProblems: Boolean = false) : Tree(), UiCompatibleDataProvider {
   private var modelUpdateInProgress = false

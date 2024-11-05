@@ -16,9 +16,11 @@ import com.intellij.vcs.impl.shared.changes.GroupingUpdatePlaces
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 class ShelfTree(project: Project, cs: CoroutineScope) : ChangesTree(project, cs, GroupingUpdatePlaces.SHELF_TREE) {
 
   private val deleteProvider: DeleteProvider = ShelveDeleteProvider(project, this)

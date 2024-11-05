@@ -6,9 +6,11 @@ import com.intellij.vcs.impl.frontend.changes.withLastKnownDb
 import com.intellij.vcs.impl.shared.rhizome.NodeEntity
 import com.jetbrains.rhizomedb.exists
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JTree
 
+@ApiStatus.Internal
 @Suppress("SSBasedInspection")
 abstract class EntityChangesBrowserNode<T : NodeEntity>(entity: T) : ChangesBrowserNode<T>(entity) {
   override fun render(tree: JTree, renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

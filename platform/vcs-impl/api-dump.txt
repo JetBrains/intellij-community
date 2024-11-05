@@ -758,7 +758,7 @@ f:com.intellij.openapi.vcs.changes.ChangeListUtil
 - sf:onChangeListAvailabilityChanged(com.intellij.util.messages.MessageBusConnection,java.lang.Runnable):V
 a:com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 - com.intellij.diff.impl.CacheDiffRequestProcessor$Simple
-- com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
+- com.intellij.vcs.impl.shared.changes.DiffPreviewUpdateProcessor
 - <init>(com.intellij.openapi.project.Project,java.lang.String):V
 - clear():V
 - collectDiffProducers(Z):com.intellij.openapi.ListSelection
@@ -935,10 +935,6 @@ com.intellij.openapi.vcs.changes.DiffPreviewProvider
 - a:createDiffRequestProcessor():com.intellij.diff.impl.DiffRequestProcessor
 - a:getEditorTabName(com.intellij.diff.impl.DiffRequestProcessor):java.lang.String
 - a:getOwner():java.lang.Object
-com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor
-- a:clear():V
-- a:getComponent():javax.swing.JComponent
-- a:refresh(Z):V
 f:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 - sf:Companion:com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager$Companion
 - sf:EDITOR_TAB_DIFF_PREVIEW:com.intellij.openapi.actionSystem.DataKey
@@ -1003,15 +999,6 @@ c:com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setDefault(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setId(java.lang.String):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
 - setReadOnly(Z):com.intellij.openapi.vcs.changes.LocalChangeListImpl$Builder
-f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponent
-- com.intellij.ui.OnePixelSplitter
-- com.intellij.openapi.vcs.changes.DiffPreview
-- <init>(com.intellij.openapi.vcs.changes.DiffPreviewUpdateProcessor,java.lang.String):V
-- closePreview():V
-- openPreview(Z):Z
-- f:updatePreview(Z):V
-f:com.intellij.openapi.vcs.changes.PreviewDiffSplitterComponentKt
-- sf:shouldHaveSplitterDiffPreview(com.intellij.openapi.project.Project,Z):Z
 c:com.intellij.openapi.vcs.changes.PreviewDiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFile
 - com.intellij.diff.editor.DiffVirtualFileWithTabName
@@ -1159,6 +1146,7 @@ a:com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction
 - com.intellij.openapi.project.DumbAware
 - s:createPatch(com.intellij.openapi.project.Project,java.lang.String,java.util.List):V
 - s:createPatch(com.intellij.openapi.project.Project,java.lang.String,java.util.List,Z):V
+- s:createPatch(com.intellij.openapi.project.Project,java.lang.String,java.util.List,Z,com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor$PatchBuilder):V
 - defaultActionPerformed(com.intellij.openapi.actionSystem.AnActionEvent):V
 - defaultUpdate(com.intellij.openapi.actionSystem.AnActionEvent):V
 c:com.intellij.openapi.vcs.changes.actions.CreatePatchFromChangesAction$Clipboard
@@ -2180,6 +2168,7 @@ f:com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList
 - s:writeExternal(com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList,org.jdom.Element,com.intellij.openapi.components.PathMacroSubstitutor):V
 c:com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager
 - com.intellij.openapi.Disposable
+- sf:HELP_ID:java.lang.String
 - sf:SHELVED_BINARY_FILE_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SHELVED_CHANGELIST_KEY:com.intellij.openapi.actionSystem.DataKey
 - sf:SHELVED_CHANGES_TREE:com.intellij.openapi.actionSystem.DataKey
@@ -2226,6 +2215,8 @@ a:com.intellij.openapi.vcs.changes.ui.AbstractChangesBrowserFilePathNode
 - compareUserObjects(java.lang.Object):I
 - pa:filePath(java.lang.Object):com.intellij.openapi.vcs.FilePath
 - getBackgroundColor(com.intellij.openapi.project.Project):java.awt.Color
+- f:getOriginText():java.lang.String
+- f:getRelativeFilePath(com.intellij.openapi.project.Project,com.intellij.openapi.vcs.FilePath):java.lang.String
 - p:getRelativePath(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer,com.intellij.openapi.vcs.FilePath):java.lang.String
 - getSortWeight():I
 - f:getStatus():com.intellij.openapi.vcs.FileStatus
@@ -2261,7 +2252,7 @@ a:com.intellij.openapi.vcs.changes.ui.AsyncChangesTree
 - rebuildTree():V
 - rebuildTree(com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy):V
 - f:requestRefresh():V
-- f:requestRefresh(com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy):V
+- requestRefresh(com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy):V
 - f:requestRefresh(com.intellij.openapi.vcs.changes.ui.ChangesTree$TreeStateStrategy,java.lang.Runnable):V
 - f:requestRefresh(java.lang.Runnable):V
 - f:setShouldShowBusyIconIfNeeded(Z):V
@@ -2511,6 +2502,7 @@ a:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - psf:CONFLICTS_SORT_WEIGHT:I
 - psf:DEFAULT_CHANGE_LIST_SORT_WEIGHT:I
 - psf:DEFAULT_SORT_WEIGHT:I
+- psf:DELETED_SORT_WEIGHT:I
 - psf:DIRECTORY_PATH_SORT_WEIGHT:I
 - psf:FILE_PATH_SORT_WEIGHT:I
 - sf:IGNORED_FILES_TAG:com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode$Tag
@@ -3343,6 +3335,7 @@ c:com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - insertFilesIntoNode(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):V
 - insertSubtreeRoot(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - insertSubtreeRoot(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode,com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+- insertTagNode(com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode):com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 - isEmpty():Z
 - setChangeLists(java.util.Collection,Z,java.util.function.Function):com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 - setChanges(java.util.Collection,com.intellij.openapi.vcs.changes.ui.ChangeNodeDecorator):com.intellij.openapi.vcs.changes.ui.TreeModelBuilder

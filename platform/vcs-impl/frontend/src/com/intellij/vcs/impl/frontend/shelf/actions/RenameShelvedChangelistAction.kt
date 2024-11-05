@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.vcs.impl.frontend.shelf.ShelfTreeUpdater
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree.Companion.SELECTED_CHANGELISTS_KEY
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RenameShelvedChangelistAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

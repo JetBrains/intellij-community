@@ -9,8 +9,10 @@ import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import kotlinx.coroutines.Deferred
 import kotlinx.serialization.Serializable
+import org.jetbrains.annotations.ApiStatus
 
 @Rpc
+@ApiStatus.Internal
 interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>)
   suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto)
@@ -19,9 +21,11 @@ interface RemoteShelfApi : RemoteApi<Unit> {
   suspend fun renameShelvedChangeList(projectRef: SharedRef<ProjectEntity>, changeList: SharedRef<ShelvedChangeListEntity>, newName: String)
 }
 
+@ApiStatus.Internal
 @Serializable
 class ChangeListDto(val changeList: SharedRef<ShelvedChangeListEntity>, val changes: List<SharedRef<ShelvedChangeEntity>>)
 
+@ApiStatus.Internal
 @Serializable
 enum class UpdateStatus {
   OK,

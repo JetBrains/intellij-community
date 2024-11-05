@@ -4,7 +4,9 @@ package com.intellij.vcs.impl.frontend.shelf.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.vcs.impl.frontend.shelf.ShelfService
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ImportShelvesFromPatchesAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

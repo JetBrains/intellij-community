@@ -7,8 +7,10 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.vcs.impl.shared.rhizome.ModuleNodeEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class ModuleTreeNode(entity: ModuleNodeEntity) : EntityChangesBrowserNode<ModuleNodeEntity>(entity) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     val module = getUserObject()

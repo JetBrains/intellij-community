@@ -6,7 +6,9 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
 import com.intellij.vcs.impl.frontend.changes.EDITOR_TAB_DIFF_PREVIEW
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShowDiffAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val diffPreview = EDITOR_TAB_DIFF_PREVIEW.getData(e.dataContext)
@@ -23,4 +25,5 @@ class ShowDiffAction : AnAction() {
   }
 }
 
+@ApiStatus.Internal
 const val SHOW_DIFF_ACTION_ID: String = "Frontend.ChangesView.ShowDiff"

@@ -9,10 +9,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
 
+@ApiStatus.Internal
 open class ChangesGroupingSupport(val project: Project, private val source: String, private val cs: CoroutineScope) {
   private val changeSupport = PropertyChangeSupport(source)
   private val groupingUpdateScheduler = ShelfTreeGroupingUpdateScheduler.getInstance(project)

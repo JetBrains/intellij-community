@@ -13,8 +13,10 @@ import com.intellij.vcs.impl.shared.rhizome.*
 import com.intellij.vcsUtil.VcsUtil
 import fleet.kernel.change
 import fleet.kernel.shared
+import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KClass
 
+@ApiStatus.Internal
 suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
   val converter = NodeToEntityConverter.getConverter(this)
   if (converter == null) {
@@ -25,7 +27,7 @@ suspend fun <T : ChangesBrowserNode<*>> T.convertToEntity(tree: ShelfTree, order
   return (converter as NodeToEntityConverter<T, NodeEntity>).convert(this@convertToEntity, tree, orderInParent, project)
 }
 
-
+@ApiStatus.Internal
 abstract class NodeToEntityConverter<N : ChangesBrowserNode<*>, E : NodeEntity>(private val nodeClass: KClass<N>) {
   abstract suspend fun convert(node: N, tree: ShelfTree, orderInParent: Int, project: Project): E
 

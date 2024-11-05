@@ -1,4 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:ApiStatus.Internal
 package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.openapi.vcs.FileStatus
@@ -9,6 +10,7 @@ import com.intellij.ui.JBColor.namedColor
 import com.jetbrains.rhizomedb.asOf
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Color
 import javax.swing.UIManager
 

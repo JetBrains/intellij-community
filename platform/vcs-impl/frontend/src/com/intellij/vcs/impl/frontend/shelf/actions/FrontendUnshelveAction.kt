@@ -8,7 +8,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree.Companion.GROUPED_CHANGES_KEY
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 open class FrontendUnshelveAction(private val withDialog: Boolean) : AnAction(), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
@@ -25,6 +27,7 @@ open class FrontendUnshelveAction(private val withDialog: Boolean) : AnAction(),
     return ActionUpdateThread.BGT
   }
 }
-
+@ApiStatus.Internal
 class UnshelveWithDialogAction() : FrontendUnshelveAction(true)
+@ApiStatus.Internal
 class UnshelveSilentlyAction() : FrontendUnshelveAction(false)

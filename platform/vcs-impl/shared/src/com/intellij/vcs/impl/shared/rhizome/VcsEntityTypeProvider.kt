@@ -9,15 +9,19 @@ import com.jetbrains.rhizomedb.EntityType
 import com.jetbrains.rhizomedb.RefFlags
 import fleet.kernel.DurableEntityType
 import kotlinx.serialization.builtins.serializer
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class VcsEntityTypeProvider : EntityTypeProvider {
   override fun entityTypes(): List<EntityType<*>> = listOf(RepositoryCountEntity)
 }
 
+@ApiStatus.Internal
 data class RepositoryCountEntity(override val eid: EID) : Entity {
   val project: ProjectEntity by Project
   val count: Int by Count
 
+  @ApiStatus.Internal
   companion object : DurableEntityType<RepositoryCountEntity>(RepositoryCountEntity::class.java.name, "com.intellij", ::RepositoryCountEntity) {
     val Project = requiredRef<ProjectEntity>("project", RefFlags.UNIQUE)
     val Count = requiredValue("count", Int.serializer())

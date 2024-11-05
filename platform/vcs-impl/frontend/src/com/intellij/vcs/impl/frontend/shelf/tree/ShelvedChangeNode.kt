@@ -11,8 +11,10 @@ import com.intellij.util.FontUtil
 import com.intellij.util.PathUtil
 import com.intellij.vcs.impl.frontend.changes.findFileStatusById
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class ShelvedChangeNode(val entity: ShelvedChangeEntity) : EntityChangesBrowserNode<ShelvedChangeEntity>(entity) {
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
     val path = entity.filePath

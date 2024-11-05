@@ -4,9 +4,11 @@ package com.intellij.vcs.impl.frontend.changes
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.util.EditSourceOnDoubleClickHandler
+import org.jetbrains.annotations.ApiStatus
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 
+@ApiStatus.Internal
 abstract class ChangesTreeEditorDiffPreview<T : ChangesTree>(protected val tree: T) {
   init {
     tree.setEnterKeyHandler { handleEnterKey(it) }
@@ -46,4 +48,5 @@ abstract class ChangesTreeEditorDiffPreview<T : ChangesTree>(protected val tree:
   abstract fun performDiffAction(): Boolean
 }
 
+@ApiStatus.Internal
 val EDITOR_TAB_DIFF_PREVIEW: DataKey<ChangesTreeEditorDiffPreview<*>> = DataKey.create("EditorTabDiffPreview")

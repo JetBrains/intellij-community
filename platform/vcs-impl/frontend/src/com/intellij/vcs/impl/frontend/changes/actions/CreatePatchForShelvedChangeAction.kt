@@ -10,7 +10,9 @@ import com.intellij.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
 import com.intellij.vcs.impl.frontend.changes.ChangeList
 import com.intellij.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class CreatePatchForShelvedChangeAction(private val silentClipboard: Boolean) : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
@@ -48,6 +50,8 @@ abstract class CreatePatchForShelvedChangeAction(private val silentClipboard: Bo
   }
 }
 
+@ApiStatus.Internal
 class CreatePatchForShelvedChangeActionClipboard : CreatePatchForShelvedChangeAction(true)
 
+@ApiStatus.Internal
 class CreatePatchForShelvedChangeActionDialog : CreatePatchForShelvedChangeAction(false)

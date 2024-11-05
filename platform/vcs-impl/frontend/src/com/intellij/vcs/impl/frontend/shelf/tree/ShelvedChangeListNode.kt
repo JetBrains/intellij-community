@@ -9,8 +9,10 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.jetbrains.rhizomedb.asOf
 import fleet.kernel.rete.Rete
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class ShelvedChangeListNode(private val changeList: ShelvedChangeListEntity) : EntityChangesBrowserNode<ShelvedChangeListEntity>(changeList) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

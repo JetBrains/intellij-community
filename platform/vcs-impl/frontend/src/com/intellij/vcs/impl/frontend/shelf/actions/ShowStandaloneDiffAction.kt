@@ -7,7 +7,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.vcs.impl.frontend.changes.CHANGE_LISTS_KEY
 import com.intellij.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.vcs.impl.frontend.shelf.tree.ShelfTree.Companion.GROUPED_CHANGES_KEY
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 abstract class ShowStandaloneDiffAction(private val withLocal: Boolean) : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = getEventProject(e) ?: return
@@ -26,5 +28,7 @@ abstract class ShowStandaloneDiffAction(private val withLocal: Boolean) : AnActi
   }
 }
 
+@ApiStatus.Internal
 class CompareWithLocalAction : ShowStandaloneDiffAction(true)
+@ApiStatus.Internal
 class ShowDifInNewWindowAction : ShowStandaloneDiffAction(false)

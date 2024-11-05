@@ -27,9 +27,11 @@ import com.intellij.vcs.impl.shared.changes.PreviewDiffSplitterComponent
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import javax.swing.JScrollPane
 
+@ApiStatus.Internal
 class ShelfToolWindowPanel(private val project: Project, tree: ShelfTree, cs: CoroutineScope) : SimpleToolWindowPanel(true) {
   private val mainPanelContent = Wrapper()
   private val scrollPane: JScrollPane = ScrollPaneFactory.createScrollPane(tree, true)

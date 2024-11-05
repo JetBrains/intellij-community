@@ -12,7 +12,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.TreeHandlerEditorDiffPreview
 import com.intellij.vcs.impl.backend.shelf.ShelfTree
 import kotlinx.coroutines.CoroutineScope
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class BackendShelveEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope, project: Project)
   : TreeHandlerEditorDiffPreview(tree, tree, ShelveTreeDiffPreviewHandler(project, cs)) {
   override fun createViewer(): DiffEditorViewer {

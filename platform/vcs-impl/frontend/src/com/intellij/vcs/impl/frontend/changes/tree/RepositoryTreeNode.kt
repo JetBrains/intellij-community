@@ -15,9 +15,11 @@ import com.intellij.vcs.impl.frontend.changes.getBranchPresentationBackground
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.vcs.impl.shared.rhizome.RepositoryNodeEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 
+@ApiStatus.Internal
 class RepositoryTreeNode(entity: RepositoryNodeEntity) : EntityChangesBrowserNode<RepositoryNodeEntity>(entity) {
 
   override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {

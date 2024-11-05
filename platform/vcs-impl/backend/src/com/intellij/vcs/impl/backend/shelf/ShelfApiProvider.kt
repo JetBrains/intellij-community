@@ -17,7 +17,9 @@ import fleet.kernel.shared
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShelfApiProvider : RemoteApiProvider {
   override fun RemoteApiProvider.Sink.remoteApis() {
     remoteApi(remoteApiDescriptor<RemoteShelfApi>()) {
@@ -26,7 +28,7 @@ class ShelfApiProvider : RemoteApiProvider {
   }
 }
 
-class BackendShelfApi : RemoteShelfApi {
+internal class BackendShelfApi : RemoteShelfApi {
   override suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>) {
     val project = projectRef.asProject()
     ShelveChangesManager.getInstance(project).allLists.forEach {
@@ -63,7 +65,7 @@ class BackendShelfApi : RemoteShelfApi {
 
 }
 
-suspend fun SharedRef<ProjectEntity>.asProject(): Project {
+internal suspend fun SharedRef<ProjectEntity>.asProject(): Project {
   return withKernel {
     change {
       shared {

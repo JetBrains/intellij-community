@@ -8,8 +8,10 @@ import com.intellij.vcs.impl.frontend.changes.findFileStatusById
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNodeRenderer
 import com.intellij.vcs.impl.frontend.shelf.tree.EntityChangesBrowserNode
 import com.intellij.vcs.impl.shared.rhizome.FilePathNodeEntity
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
+@ApiStatus.Internal
 class FilePathTreeNode(entity: FilePathNodeEntity) : EntityChangesBrowserNode<FilePathNodeEntity>(entity) {
 
   private val textAttributes: SimpleTextAttributes by lazy {

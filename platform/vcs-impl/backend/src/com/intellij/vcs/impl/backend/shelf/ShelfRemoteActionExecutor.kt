@@ -19,8 +19,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfRemoteActionExecutor(private val project: Project, private val cs: CoroutineScope) {
   private val shelfTreeHolder = ShelfTreeHolder.getInstance(project)

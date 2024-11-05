@@ -2,10 +2,12 @@
 package com.intellij.vcs.impl.frontend.changes
 
 import com.intellij.vcs.impl.frontend.shelf.tree.ChangesBrowserNode
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 class ChangesTreeModel(rootNode: ChangesBrowserNode<*>) : DefaultTreeModel(rootNode) {
   override fun valueForPathChanged(path: TreePath, newValue: Any?) {
     nodeChanged(path.lastPathComponent as TreeNode)

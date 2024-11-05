@@ -11,7 +11,9 @@ import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.intellij.ui.content.impl.ToolWindowContentPostProcessor
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class ShelveContentReplacer() : ToolWindowContentPostProcessor {
   override fun isEnabled(project: Project, content: Content, toolWindow: ToolWindow): Boolean {
     return Registry.`is`("vcs.shelves.rhizome.enabled") && toolWindow.id == ToolWindowId.COMMIT && content.tabName == SHELF_CONTENT_NAME

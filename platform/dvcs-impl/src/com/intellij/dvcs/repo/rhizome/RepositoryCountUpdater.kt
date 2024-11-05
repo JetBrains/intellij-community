@@ -11,7 +11,9 @@ import fleet.kernel.change
 import fleet.kernel.shared
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class RepositoryCountUpdater(private val project: Project, private val cs: CoroutineScope) : VcsRepositoryMappingListener {
 
   override fun mappingChanged() {

@@ -6,7 +6,9 @@ import com.intellij.pom.NavigatableAdapter
 import com.intellij.vcs.impl.frontend.shelf.ShelfService
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class FrontendShelfNavigatable(private val project: Project, private val lists: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) : NavigatableAdapter() {
   override fun navigate(requestFocus: Boolean) {
     ShelfService.getInstance(project).navigateToSource(lists, requestFocus)

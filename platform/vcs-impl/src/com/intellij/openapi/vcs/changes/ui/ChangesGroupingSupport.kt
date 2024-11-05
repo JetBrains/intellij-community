@@ -5,6 +5,7 @@ import com.intellij.concurrency.ConcurrentCollectionFactory
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import java.beans.PropertyChangeListener
 import java.beans.PropertyChangeSupport
@@ -48,6 +49,7 @@ open class ChangesGroupingSupport(val project: Project, source: Any, val showCon
     _groupingKeys += newGroupingKeys.filter { groupingKey -> isAvailable(groupingKey) }
   }
 
+  @ApiStatus.Internal
   @RequiresEdt
   fun setGroupingKeys(groupingKeys: Collection<String>) {
     val oldGroupingKeys = _groupingKeys.toSet()

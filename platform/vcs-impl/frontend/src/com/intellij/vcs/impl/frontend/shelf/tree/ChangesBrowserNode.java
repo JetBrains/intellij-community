@@ -38,6 +38,7 @@ import java.util.function.ToIntFunction;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
+@ApiStatus.Internal
 //copy-paste of com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.  We can't move it to shared code as it is used by external plugins.
 public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
 

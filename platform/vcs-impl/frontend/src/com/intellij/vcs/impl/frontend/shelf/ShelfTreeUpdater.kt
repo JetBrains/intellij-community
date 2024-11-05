@@ -24,8 +24,10 @@ import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.DefaultMutableTreeNode
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineScope) {
   private val tree = ShelfTree(project, cs)

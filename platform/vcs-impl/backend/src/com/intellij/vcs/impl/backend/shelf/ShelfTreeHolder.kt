@@ -30,8 +30,10 @@ import fleet.kernel.rete.Rete
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.tree.TreePath
 
+@ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable {
 

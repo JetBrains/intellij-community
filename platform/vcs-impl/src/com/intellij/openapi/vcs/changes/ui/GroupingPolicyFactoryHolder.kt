@@ -15,8 +15,10 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.jetbrains.annotations.ApiStatus
 
 @OptIn(FlowPreview::class)
+@ApiStatus.Internal
 @Service
 class GroupingPolicyFactoryHolder(private val cs: CoroutineScope) {
   var factories: AvailableFactories = buildFactories()
@@ -78,6 +80,7 @@ class GroupingPolicyFactoryHolder(private val cs: CoroutineScope) {
   }
 }
 
+@ApiStatus.Internal
 class AvailableFactories(
   val keyToFactory: Map<String, ChangesGroupingPolicyFactory>,
   val keyToWeight: Map<String, Int>,

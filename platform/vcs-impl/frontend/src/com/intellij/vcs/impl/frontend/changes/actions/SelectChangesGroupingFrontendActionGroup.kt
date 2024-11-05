@@ -14,7 +14,9 @@ import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
 import com.jetbrains.rhizomedb.asOf
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.rete.Rete
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class SelectChangesGroupingFrontendActionGroup : DefaultActionGroup(), DumbAware {
 
   override fun update(e: AnActionEvent) {
@@ -28,6 +30,7 @@ class SelectChangesGroupingFrontendActionGroup : DefaultActionGroup(), DumbAware
   }
 }
 
+@ApiStatus.Internal
 abstract class SelectChangesGroupingAction(private val key: String) : ToggleAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -46,10 +49,13 @@ abstract class SelectChangesGroupingAction(private val key: String) : ToggleActi
   override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.BGT
 }
 
+@ApiStatus.Internal
 class GroupByDirectoryAction() : SelectChangesGroupingAction("directory")
 
+@ApiStatus.Internal
 class GroupByModuleAction() : SelectChangesGroupingAction("module")
 
+@ApiStatus.Internal
 class GroupByRepositoryAction : SelectChangesGroupingAction("repository") {
   override fun update(e: AnActionEvent) {
     super.update(e)
