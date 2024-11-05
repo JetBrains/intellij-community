@@ -95,7 +95,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesByRepository = manager.repositoryManager.packagesByRepository().map { (repository, packages) ->
-        val shownPackages = packages.asSequence().limitDisplayableResult(repository)
+        val shownPackages = packages.asSequence().limitResultAndFilterOutInstalled(repository)
         PyPackagesViewData(repository, shownPackages, moreItems = packages.size - PACKAGES_LIMIT)
       }.toList()
 
@@ -269,7 +269,7 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
 
     val shownPackages = packageNames.asSequence()
       .sortedWith(comparator)
-      .limitDisplayableResult(repository, skipItems)
+      .limitResultAndFilterOutInstalled(repository, skipItems)
     val exactMatch = shownPackages.indexOfFirst { StringUtil.equalsIgnoreCase(it.name, query) }
     return PyPackagesViewData(repository, shownPackages, exactMatch, packageNames.size - shownPackages.size)
   }
@@ -326,15 +326,16 @@ class PyPackagingToolWindowService(val project: Project, val serviceScope: Corou
     }
     else {
       val packagesFromRepo = manager.repositoryManager.packagesFromRepository(repository)
-      val page = packagesFromRepo.asSequence().limitDisplayableResult(repository, skipItems)
+      val page = packagesFromRepo.asSequence().limitResultAndFilterOutInstalled(repository, skipItems)
       return PyPackagesViewData(repository, page, moreItems = packagesFromRepo.size - (PACKAGES_LIMIT + skipItems))
     }
   }
 
-  private fun Sequence<String>.limitDisplayableResult(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
+  private fun Sequence<String>.limitResultAndFilterOutInstalled(repository: PyPackageRepository, skipItems: Int = 0): List<DisplayablePackage> {
     return drop(skipItems)
       .take(PACKAGES_LIMIT)
-      .map { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } ?: InstallablePackage(pkg, repository) }
+      .filter { pkg -> installedPackages.values.find { it.name.lowercase() == pkg.lowercase() } == null }
+      .map { pkg -> InstallablePackage(pkg, repository) }
       .toList()
   }
 
