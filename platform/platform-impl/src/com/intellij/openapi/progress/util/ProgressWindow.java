@@ -1,10 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util;
 
-import com.intellij.concurrency.ThreadContext;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.InstantShutdown;
 import com.intellij.openapi.application.ex.ApplicationEx;
@@ -224,13 +222,11 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
           initializeOnEdtIfNeeded();
           // guarantee AWT event after the future is done will be pumped and loop exited
           stopCondition.thenRun(() -> SwingUtilities.invokeLater(EmptyRunnable.INSTANCE));
-          try (AccessToken ignored = ThreadContext.resetThreadContext()) {
-            IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
-              if (isCancellationEvent(event)) {
-                cancel();
-              }
-            });
-          }
+          IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.getPanel(), stopCondition, event -> {
+            if (isCancellationEvent(event)) {
+              cancel();
+            }
+          });
           return null;
         });
       });
