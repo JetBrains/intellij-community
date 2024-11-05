@@ -4,6 +4,7 @@ package com.intellij.ui.codeFloatingToolbar
 import com.intellij.lang.IdeLanguageCustomization
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
+import com.intellij.lang.LanguageUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginAware
@@ -23,32 +24,42 @@ private fun forLanguage(language: Language): FloatingToolbarLanguageBean? {
 }
 
 internal fun findActionGroupFor(language: Language): String? {
-  val bean = forLanguage(language)
-  if (bean != null) {
-    if (bean.isMinimal) {
-      // check if any of the primary languages have full toolbar available
-      val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages.any {
-        val bean = forLanguage(it)
-        bean != null && !bean.isMinimal
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    val bean = forLanguage(lang)
+    if (bean != null) {
+      if (bean.isMinimal) {
+        // check if any of the primary languages have full toolbar available
+        val hasPrimaryToolbar = IdeLanguageCustomization.getInstance().primaryIdeLanguages.any {
+          val bean = forLanguage(it)
+          bean != null && !bean.isMinimal
+        }
+
+        if (!hasPrimaryToolbar) return null
       }
 
-      if (!hasPrimaryToolbar) return null
+      val customization = bean.getCustomization()
+      if (customization != null && !customization.isToolbarAvailable()) {
+        return null
+      }
+
+      return FLOATING_CODE_TOOLBAR_GROUP_ID
     }
 
-    val customization = bean.getCustomization()
-    if (customization != null && !customization.isToolbarAvailable()) {
-      return null
-    }
-
-    return FLOATING_CODE_TOOLBAR_GROUP_ID
+    DEPRECATED_EP.allForLanguage(lang)
+      .firstNotNullOfOrNull { it.getActionGroup() }
+      ?.let { return it }
   }
 
-  return DEPRECATED_EP.allForLanguage(language)
-    .firstNotNullOfOrNull { it.getActionGroup() }
+  return null
 }
 
 internal fun hasMinimalFloatingToolbar(language: Language): Boolean {
-  return forLanguage(language)?.isMinimal == true
+  for (lang in LanguageUtil.getBaseLanguages(language)) {
+    forLanguage(lang)
+      ?.let { return it.isMinimal }
+  }
+
+  return false
 }
 
 @ApiStatus.Experimental
@@ -56,6 +67,7 @@ interface FloatingToolbarCustomization {
   fun isToolbarAvailable(): Boolean
 }
 
+@ApiStatus.Experimental
 internal class FloatingToolbarLanguageBean : PluginAware {
   private var pluginDescriptor: PluginDescriptor? = null
 
@@ -74,8 +86,12 @@ internal class FloatingToolbarLanguageBean : PluginAware {
   var customizationClass: String? = null
 
   fun getCustomization(): FloatingToolbarCustomization? {
-    if (customizationClass == null) return null
-    return ApplicationManager.getApplication().instantiateClass(customizationClass!!, pluginDescriptor!!)
+    return customizationImpl
+  }
+
+  private val customizationImpl: FloatingToolbarCustomization? by lazy {
+    if (customizationClass == null) return@lazy null
+    ApplicationManager.getApplication().instantiateClass(customizationClass!!, pluginDescriptor!!)
   }
 }
 
