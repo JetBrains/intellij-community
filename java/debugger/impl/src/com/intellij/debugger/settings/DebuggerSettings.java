@@ -183,6 +183,7 @@ public final class DebuggerSettings implements Cloneable, PersistentStateCompone
       HIDE_STACK_FRAMES_USING_STEPPING_FILTER == secondSettings.HIDE_STACK_FRAMES_USING_STEPPING_FILTER &&
       COMPILE_BEFORE_HOTSWAP == secondSettings.COMPILE_BEFORE_HOTSWAP &&
       HOTSWAP_HANG_WARNING_ENABLED == secondSettings.HOTSWAP_HANG_WARNING_ENABLED &&
+      HOTSWAP_SHOW_FLOATING_BUTTON == secondSettings.HOTSWAP_SHOW_FLOATING_BUTTON &&
       Objects.equals(RUN_HOTSWAP_AFTER_COMPILE, secondSettings.RUN_HOTSWAP_AFTER_COMPILE) &&
       DebuggerUtilsEx.filterEquals(mySteppingFilters, secondSettings.mySteppingFilters) &&
       myCapturePoints.equals(secondSettings.myCapturePoints);
