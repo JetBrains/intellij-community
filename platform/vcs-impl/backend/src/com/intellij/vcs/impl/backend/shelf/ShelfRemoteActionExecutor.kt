@@ -14,7 +14,7 @@ import com.intellij.pom.NavigatableAdapter
 import com.intellij.util.OpenSourceUtil
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
-import fleet.kernel.SharedRef
+import fleet.kernel.DurableRef
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -91,7 +91,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     return ShelvedChanges(changeLists, changes, files)
   }
 
-  fun delete(selectedLists: List<SharedRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
+  fun delete(selectedLists: List<DurableRef<ShelvedChangeListEntity>>, selectedChanges: List<ChangeListDto>) {
     cs.launch {
       val nodes = selectedChanges.flatMap {
         shelfTreeHolder.findChangesInTree(it)
@@ -138,7 +138,7 @@ class ShelfRemoteActionExecutor(private val project: Project, private val cs: Co
     }
   }
 
-  fun restoreShelves(selectedLists: List<SharedRef<ShelvedChangeListEntity>>) {
+  fun restoreShelves(selectedLists: List<DurableRef<ShelvedChangeListEntity>>) {
     val currentDate = Date(System.currentTimeMillis())
     selectedLists.mapNotNull { shelfTreeHolder.findChangeListNode(it) as? ShelvedListNode }.forEach {
       shelveChangesManager.restoreList(it.changeList, currentDate)

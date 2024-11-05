@@ -10,7 +10,7 @@ import com.intellij.platform.rpc.RemoteApiProviderService
 import com.intellij.platform.util.coroutines.sync.OverflowSemaphore
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
-import fleet.kernel.sharedRef
+import fleet.kernel.ref
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.channels.BufferOverflow
 import org.jetbrains.annotations.ApiStatus
@@ -25,7 +25,7 @@ class ShelfTreeGroupingUpdateScheduler {
     return try {
       updateSemaphore.withPermit {
         val projectRef = withKernel {
-          project.asEntity().sharedRef()
+          project.asEntity().ref()
         }
         return@withPermit RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).applyTreeGrouping(projectRef, groupingKeys).await()
       }

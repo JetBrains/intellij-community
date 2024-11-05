@@ -11,7 +11,7 @@ import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.intellij.vcs.impl.shared.rpc.UpdateStatus
-import fleet.kernel.SharedRef
+import fleet.kernel.DurableRef
 import fleet.kernel.change
 import fleet.kernel.shared
 import fleet.rpc.remoteApiDescriptor
@@ -29,7 +29,7 @@ class ShelfApiProvider : RemoteApiProvider {
 }
 
 internal class BackendShelfApi : RemoteShelfApi {
-  override suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>) {
+  override suspend fun loadChangesAsync(projectRef: DurableRef<ProjectEntity>) {
     val project = projectRef.asProject()
     ShelveChangesManager.getInstance(project).allLists.forEach {
       it.loadChangesIfNeeded(project)
@@ -40,24 +40,24 @@ internal class BackendShelfApi : RemoteShelfApi {
     shelfTreeHolder.saveGroupings()
   }
 
-  override suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
+  override suspend fun showDiffForChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto) {
     val project = projectRef.asProject()
     ShelfTreeHolder.getInstance(project).showDiff(changeListDto)
   }
 
-  override suspend fun notifyNodeSelected(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto) {
+  override suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto) {
     val project = projectRef.asProject()
     ShelfTreeHolder.getInstance(project).updateSelection(changeListDto)
   }
 
-  override suspend fun applyTreeGrouping(projectRef: SharedRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
+  override suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus> {
     val project = projectRef.asProject()
 
     ShelfTreeHolder.getInstance(project).changeGrouping(groupingKeys)
     return CompletableDeferred(UpdateStatus.OK)
   }
 
-  override suspend fun renameShelvedChangeList(projectRef: SharedRef<ProjectEntity>, changeList: SharedRef<ShelvedChangeListEntity>, newName: String) {
+  override suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String) {
     val project = projectRef.asProject()
 
     ShelfTreeHolder.getInstance(project).renameChangeList(changeList, newName)
@@ -65,7 +65,7 @@ internal class BackendShelfApi : RemoteShelfApi {
 
 }
 
-internal suspend fun SharedRef<ProjectEntity>.asProject(): Project {
+internal suspend fun DurableRef<ProjectEntity>.asProject(): Project {
   return withKernel {
     change {
       shared {

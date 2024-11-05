@@ -8,6 +8,7 @@ import com.intellij.ui.ColorUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.JBColor.namedColor
 import com.jetbrains.rhizomedb.asOf
+import fleet.kernel.DbSource
 import fleet.kernel.rete.Rete
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.jetbrains.annotations.ApiStatus
@@ -42,7 +43,7 @@ private val BACKGROUND_BASE_COLOR = namedColor("VersionControl.RefLabel.backgrou
 
 @OptIn(ExperimentalCoroutinesApi::class)
 internal fun <T> withLastKnownDb(body: () -> T): T {
-  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value) {
+  return asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[DbSource.ContextElement]!!.dbSource.latest) {
     body()
   }
 }

@@ -113,7 +113,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   private suspend fun ChangesBrowserNode<*>.save(tree: ShelfTree, orderInParent: Int, project: Project): NodeEntity? {
     val entity = this.convertToEntity(tree, orderInParent, project) ?: return null
-    putUserData(ENTITY_ID_KEY, entity.sharedRef())
+    putUserData(ENTITY_ID_KEY, entity.ref())
     return entity
   }
 
@@ -121,19 +121,19 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
     val changeListNode = findChangeListNode(changeListDto.changeList)
                          ?: return emptyList()
     val selectedChanges = changeListNode.traverse().filter(ShelvedChangeNode::class.java).filter {
-      val changeRef = it.getUserData(ENTITY_ID_KEY) as? SharedRef<*> ?: return@filter false
+      val changeRef = it.getUserData(ENTITY_ID_KEY) as? DurableRef<*> ?: return@filter false
       return@filter changeListDto.changes.isEmpty() || changeListDto.changes.contains(changeRef)
     }
     return selectedChanges.toList()
   }
 
-  internal fun findChangeListNode(changeList: SharedRef<ShelvedChangeListEntity>): ChangesBrowserNode<*>? {
+  internal fun findChangeListNode(changeList: DurableRef<ShelvedChangeListEntity>): ChangesBrowserNode<*>? {
     return TreeUtil.treeTraverser(tree)
       .bfsTraversal()
       .find { (it as ChangesBrowserNode<*>).getUserData(ENTITY_ID_KEY) == changeList } as? ChangesBrowserNode<*>
   }
 
-  fun renameChangeList(changeList: SharedRef<ShelvedChangeListEntity>, newName: String) {
+  fun renameChangeList(changeList: DurableRef<ShelvedChangeListEntity>, newName: String) {
     val changeListNode = findChangeListNode(changeList) as? ShelvedListNode ?: return
     changeListNode.changeList.description = newName
   }
@@ -208,7 +208,7 @@ class ShelfTreeHolder(val project: Project, val cs: CoroutineScope) : Disposable
 
   companion object {
     private const val SHELVE_PREVIEW_SPLITTER_PROPORTION = "ShelvedChangesViewManager.DETAILS_SPLITTER_PROPORTION"
-    val ENTITY_ID_KEY = Key<SharedRef<NodeEntity>>("persistentId")
+    val ENTITY_ID_KEY = Key<DurableRef<NodeEntity>>("persistentId")
     const val REPOSITORY_GROUPING_KEY = "repository"
 
     fun getInstance(project: Project) = project.service<ShelfTreeHolder>()

@@ -19,7 +19,8 @@ import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
 import com.jetbrains.rhizomedb.entity
 import fleet.kernel.rete.collectLatest
 import fleet.kernel.rete.each
-import fleet.kernel.sharedRef
+import fleet.kernel.DurableRef
+import fleet.kernel.ref
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -36,7 +37,7 @@ class ShelfTreeUpdater(private val project: Project, private val cs: CoroutineSc
     subscribeToTreeChanges()
     cs.launch(Dispatchers.IO) {
       withKernel {
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).loadChangesAsync(project.asEntity().sharedRef())
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).loadChangesAsync(project.asEntity().ref())
       }
     }
   }

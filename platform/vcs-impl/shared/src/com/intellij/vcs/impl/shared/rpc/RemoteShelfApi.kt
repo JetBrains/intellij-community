@@ -4,7 +4,7 @@ package com.intellij.vcs.impl.shared.rpc
 import com.intellij.platform.project.ProjectEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeListEntity
-import fleet.kernel.SharedRef
+import fleet.kernel.DurableRef
 import fleet.rpc.RemoteApi
 import fleet.rpc.Rpc
 import kotlinx.coroutines.Deferred
@@ -14,16 +14,16 @@ import org.jetbrains.annotations.ApiStatus
 @Rpc
 @ApiStatus.Internal
 interface RemoteShelfApi : RemoteApi<Unit> {
-  suspend fun loadChangesAsync(projectRef: SharedRef<ProjectEntity>)
-  suspend fun showDiffForChanges(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto)
-  suspend fun notifyNodeSelected(projectRef: SharedRef<ProjectEntity>, changeListDto: ChangeListDto)
-  suspend fun applyTreeGrouping(projectRef: SharedRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
-  suspend fun renameShelvedChangeList(projectRef: SharedRef<ProjectEntity>, changeList: SharedRef<ShelvedChangeListEntity>, newName: String)
+  suspend fun loadChangesAsync(projectRef: DurableRef<ProjectEntity>)
+  suspend fun showDiffForChanges(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto)
+  suspend fun notifyNodeSelected(projectRef: DurableRef<ProjectEntity>, changeListDto: ChangeListDto)
+  suspend fun applyTreeGrouping(projectRef: DurableRef<ProjectEntity>, groupingKeys: Set<String>): Deferred<UpdateStatus>
+  suspend fun renameShelvedChangeList(projectRef: DurableRef<ProjectEntity>, changeList: DurableRef<ShelvedChangeListEntity>, newName: String)
 }
 
 @ApiStatus.Internal
 @Serializable
-class ChangeListDto(val changeList: SharedRef<ShelvedChangeListEntity>, val changes: List<SharedRef<ShelvedChangeEntity>>)
+class ChangeListDto(val changeList: DurableRef<ShelvedChangeListEntity>, val changes: List<DurableRef<ShelvedChangeEntity>>)
 
 @ApiStatus.Internal
 @Serializable

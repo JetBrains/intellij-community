@@ -13,6 +13,7 @@ import com.intellij.vcs.impl.frontend.changes.ChangesTree
 import com.intellij.vcs.impl.shared.rhizome.RepositoryCountEntity
 import com.jetbrains.rhizomedb.asOf
 import com.jetbrains.rhizomedb.entity
+import fleet.kernel.DbSource
 import fleet.kernel.rete.Rete
 import org.jetbrains.annotations.ApiStatus
 
@@ -59,7 +60,7 @@ class GroupByModuleAction() : SelectChangesGroupingAction("module")
 class GroupByRepositoryAction : SelectChangesGroupingAction("repository") {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[Rete]!!.lastKnownDb.value) {
+    asOf(KernelService.instance.kernelCoroutineScope.getCompleted().coroutineContext[DbSource.ContextElement]!!.dbSource.latest) {
       val projectEntity = e.project?.asEntity() ?: return@asOf
       val repositoryCount = entity(RepositoryCountEntity.Project, projectEntity)?.count ?: 0
       e.presentation.isEnabledAndVisible = repositoryCount > 1

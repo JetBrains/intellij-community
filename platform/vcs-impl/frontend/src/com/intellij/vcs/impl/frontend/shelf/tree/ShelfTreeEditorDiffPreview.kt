@@ -14,7 +14,8 @@ import com.intellij.vcs.impl.shared.rhizome.SelectShelveChangeEntity
 import com.intellij.vcs.impl.shared.rhizome.ShelvedChangeEntity
 import com.intellij.vcs.impl.shared.rpc.ChangeListDto
 import com.intellij.vcs.impl.shared.rpc.RemoteShelfApi
-import fleet.kernel.sharedRef
+import fleet.kernel.DurableRef
+import fleet.kernel.ref
 import fleet.rpc.remoteApiDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -35,7 +36,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
       cs.launch {
         withKernel {
           val changeListDto = creteSelectedListsDto() ?: return@withKernel
-          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().sharedRef(), changeListDto)
+          RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), changeListDto)
         }
       }
     }
@@ -45,7 +46,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
     cs.launch {
       withKernel {
         val changeListDto = creteSelectedListsDto() ?: return@withKernel
-        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).showDiffForChanges(project.asEntity().sharedRef(), changeListDto)
+        RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).showDiffForChanges(project.asEntity().ref(), changeListDto)
       }
     }
     return true
@@ -54,8 +55,8 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
   private fun creteSelectedListsDto(): ChangeListDto? {
     val selectedLists = tree.getSelectedLists()
     if (selectedLists.size != 1) return null
-    val selectedShelvedChanges = SelectedData(tree).iterateUserObjects(ShelvedChangeEntity::class.java).map { it.sharedRef() }
-    return ChangeListDto(selectedLists.first().sharedRef(), selectedShelvedChanges.toList())
+    val selectedShelvedChanges = SelectedData(tree).iterateUserObjects(ShelvedChangeEntity::class.java).map { it.ref() }
+    return ChangeListDto(selectedLists.first().ref(), selectedShelvedChanges.toList())
   }
 
   private fun selectNodeInTree(it: SelectShelveChangeEntity) {
