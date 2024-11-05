@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
@@ -329,6 +330,7 @@ private fun adjustEditorSettings(editor: EditorEx) {
   editor.scrollPane.border = JBUI.Borders.empty()
   editor.backgroundColor = Spec.INPUT_BACKGROUND
   editor.settings.isShowIntentionBulb = false
+  editor.putUserData(IncrementalFindAction.SEARCH_DISABLED, true)
 }
 
 private object Spec {

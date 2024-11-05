@@ -32,7 +32,7 @@ internal class CommitInputBorder(
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val r = Rectangle(x, y, width, height)
-    JBInsets.removeFrom(r, JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()))
+    JBInsets.removeFrom(r, JBInsets.create(1, 1))
 
     DarculaNewUIUtil.fillInsideComponentBorder(g, r, c.background)
     val enabled = c.isEnabled
@@ -40,7 +40,7 @@ internal class CommitInputBorder(
     DarculaNewUIUtil.paintComponentBorder(g, r, DarculaUIUtil.getOutline(c as JComponent), hasFocus, enabled)
   }
 
-  override fun getBorderInsets(c: Component): Insets = JBInsets.create(JBInsets(3, 8, 3, 3))
+  override fun getBorderInsets(c: Component): Insets = JBInsets.create(Insets(3, 8, 3, 3)).asUIResource()
   override fun isBorderOpaque(): Boolean = true
 }
 
