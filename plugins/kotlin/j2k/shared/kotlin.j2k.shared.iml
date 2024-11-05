@@ -44,5 +44,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="kotlin.project-configuration" />
+    <!-- GUIを作成するために追加 -->
+    <orderEntry type="module" module-name="intellij.platform.core.ui" />
   </component>
 </module>
