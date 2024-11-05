@@ -61,7 +61,6 @@ final class ServiceViewTreeUi implements ServiceViewUi {
     mySplitter.setFirstComponent(myMasterPanelWrapper);
 
     myDetailsPanel = new JPanel(new BorderLayout());
-    myDetailsPanel.putClientProperty("Name", "myDetailsPanel");
     myContentComponentPanel = new JPanel(new BorderLayout());
     myMessagePanel.setFocusable(true);
     myContentComponentPanel.add(myMessagePanel, BorderLayout.CENTER);
