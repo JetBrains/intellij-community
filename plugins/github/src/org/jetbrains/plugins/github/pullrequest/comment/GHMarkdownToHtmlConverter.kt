@@ -15,9 +15,11 @@ import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.findChildOfType
 import org.intellij.markdown.ast.getTextInNode
+import org.intellij.markdown.flavours.gfm.GFMElementTypes
 import org.intellij.markdown.flavours.gfm.GFMFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.markdown.html.SimpleInlineTagProvider
 import org.intellij.markdown.parser.LinkMap
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
@@ -60,6 +62,7 @@ class GHMarkdownToHtmlConverter(private val project: Project?) {
     override fun createHtmlGeneratingProviders(linkMap: LinkMap, baseURI: URI?): Map<IElementType, GeneratingProvider> {
       val map = super.createHtmlGeneratingProviders(linkMap, baseURI)
       return map + mapOf(
+        GFMElementTypes.STRIKETHROUGH to SimpleInlineTagProvider("strike", 2, -2),
         MarkdownElementTypes.CODE_FENCE to CodeFenceSyntaxHighlighterGeneratingProvider(htmlSyntaxHighlighter),
         MarkdownElementTypes.INLINE_LINK to GHLinkGeneratingProvider(map[MarkdownElementTypes.INLINE_LINK])
       )
