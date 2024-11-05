@@ -34,6 +34,10 @@ open class RegistryValue @Internal constructor(
   private var doubleCachedValue = Double.NaN
   private var booleanCachedValue: Boolean? = null
 
+  fun getSource(): RegistryValueSource? {
+    return registry.getStoredProperties().get(key)?.source
+  }
+
   open fun asString(): @NlsSafe String {
     var result = stringCachedValue
     if (result == null) {
@@ -97,16 +101,20 @@ open class RegistryValue @Internal constructor(
       return null
     }
     set(selected) {
-      val options = asOptions().toMutableList()
-      for ((i, option) in options.withIndex()) {
-        val v = option.trimEnd('*')
-        options.set(i, v)
-        if (v == selected) {
-          options.set(i, v.plus("*"))
-        }
-      }
-      setValue("[" + options.joinToString(separator = "|") + "]")
+      setSelectedOption(selected, RegistryValueSource.SYSTEM)
     }
+
+  fun setSelectedOption(selected: String?, source: RegistryValueSource) {
+    val options = asOptions().toMutableList()
+    for ((i, option) in options.withIndex()) {
+      val v = option.trimEnd('*')
+      options.set(i, v)
+      if (v == selected) {
+        options.set(i, v.plus("*"))
+      }
+    }
+    setValue("[" + options.joinToString(separator = "|") + "]", source)
+  }
 
   fun isOptionEnabled(option: String): Boolean = selectedOption == option
 
@@ -172,8 +180,8 @@ open class RegistryValue @Internal constructor(
 
   @Internal
   fun resolveNotRequiredValue(key: @NonNls String): String? {
-    registry.getUserProperties().get(key)?.let {
-      return it
+    registry.getStoredProperties().get(key)?.let {
+      return it.value
     }
 
     System.getProperty(key)?.let {
@@ -186,8 +194,8 @@ open class RegistryValue @Internal constructor(
 
   @Throws(MissingResourceException::class)
   private fun resolveRequiredValue(key: @NonNls String): String {
-    registry.getUserProperties().get(key)?.let {
-      return it
+    registry.getStoredProperties().get(key)?.let {
+      return it.value
     }
 
     System.getProperty(key)?.let {
@@ -221,14 +229,18 @@ open class RegistryValue @Internal constructor(
     setValue(value.toString())
   }
 
-  open fun setValue(value: String) {
+  fun setValue(value: String) {
+    setValue(value, RegistryValueSource.SYSTEM)
+  }
+
+  open fun setValue(value: String, source: RegistryValueSource) {
     val globalValueChangeListener = registry.valueChangeListener
     globalValueChangeListener.beforeValueChanged(this)
     for (each in listeners) {
       each.beforeValueChanged(this)
     }
     resetCache()
-    registry.getUserProperties().put(key, value)
+    registry.getStoredProperties().put(key, ValueWithSource(value, source))
     LOG.info("Registry value '$key' has changed to '$value'")
 
     globalValueChangeListener.afterValueChanged(this)
@@ -237,7 +249,7 @@ open class RegistryValue @Internal constructor(
     }
 
     if (!isRestartRequired() && resolveNotRequiredValue(key) == registry.getBundleValueOrNull(key)) {
-      registry.getUserProperties().remove(key)
+      registry.getStoredProperties().remove(key)
     }
 
     isChangedSinceAppStart = true
@@ -265,7 +277,7 @@ open class RegistryValue @Internal constructor(
   fun resetToDefault() {
     val value = registry.getBundleValueOrNull(key)
     if (value == null) {
-      registry.getUserProperties().remove(key)
+      registry.getStoredProperties().remove(key)
     }
     else {
       setValue(value)

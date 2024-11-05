@@ -1,5 +1,5 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment", "KDocUnresolvedReference")
 
 package com.intellij.openapi.util.registry
 
@@ -19,17 +19,21 @@ import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Function
-import kotlin.concurrent.Volatile
+
+@Internal
+data class ValueWithSource(
+  val value: String,
+  val source: RegistryValueSource,
+)
 
 /**
  * Provides a UI to configure internal settings of the IDE.
- *
  *
  * Plugins can provide their own registry keys using the
  * `com.intellij.registryKey` extension point (see [com.intellij.openapi.util.registry.RegistryKeyBean] for more details).
  */
 class Registry {
-  private val userProperties = LinkedHashMap<String, String>()
+  private val userProperties = LinkedHashMap<String, ValueWithSource>()
   private val values = ConcurrentHashMap<String, RegistryValue>()
   private var contributedKeys = emptyMap<String, RegistryKeyDescriptor>()
 
@@ -69,7 +73,7 @@ class Registry {
         try {
           valueHandle.asBoolean()
         }
-        catch (e: MissingResourceException) {
+        catch (_: MissingResourceException) {
           defaultValue
         }
       }
@@ -127,7 +131,7 @@ class Registry {
       try {
         return registry.resolveValue(key).asDouble()
       }
-      catch (ignore: MissingResourceException) {
+      catch (_: MissingResourceException) {
         return defaultValue
       }
     }
@@ -187,17 +191,22 @@ class Registry {
       return intValue(key, defaultValue).coerceIn(minValue, maxValue)
     }
 
-    private fun fromState(state: Element): Map<String, String> {
-      val map = LinkedHashMap<String, String>()
+    private fun fromState(state: Element): Map<String, ValueWithSource> {
+      val map = LinkedHashMap<String, ValueWithSource>()
       for (entry in state.getChildren("entry")) {
         val key = entry.getAttributeValue("key") ?: continue
         val value = entry.getAttributeValue("value") ?: continue
-        map.put(key, value)
+        val source = when (entry.getAttributeValue("source")) {
+          RegistryValueSource.USER.name -> RegistryValueSource.USER
+          RegistryValueSource.MANAGER.name -> RegistryValueSource.MANAGER
+          else -> RegistryValueSource.SYSTEM
+        }
+        map.put(key, ValueWithSource(value, source))
       }
       return map
     }
 
-    private fun updateStateInternal(registry: Registry, state: Element?): Map<String, String> {
+    private fun updateStateInternal(registry: Registry, state: Element?): Map<String, ValueWithSource> {
       val userProperties = registry.userProperties
       if (state == null) {
         userProperties.clear()
@@ -210,8 +219,8 @@ class Registry {
         val registryValue = registry.resolveValue(key)
         val currentValue = registryValue.resolveNotRequiredValue(key)
         // currentValue == null means value is not in the bundle. Ignore it
-        if (currentValue != null && currentValue != value) {
-          registryValue.setValue(value)
+        if (currentValue != null && currentValue != value.value) {
+          registryValue.setValue(value.value)
         }
         keysToProcess.remove(key)
       }
@@ -225,7 +234,7 @@ class Registry {
     }
 
     @Internal
-    fun loadState(state: Element?, earlyAccess: Map<String, String>?): Map<String, String> {
+    fun loadState(state: Element?, earlyAccess: Map<String, String>?): Map<String, ValueWithSource> {
       val registry = registry
       if (registry.isLoaded) {
         return updateStateInternal(registry, state)
@@ -254,7 +263,7 @@ class Registry {
       try {
         bundle = loadFromBundledConfig()
       }
-      catch (ignored: IOException) {
+      catch (_: IOException) {
       }
       val keys = bundle?.keys ?: emptySet()
       val result = ArrayList<RegistryValue>()
@@ -275,7 +284,7 @@ class Registry {
       return result
     }
 
-    private fun isRestartNeeded(map: Map<String, String>): Boolean {
+    private fun isRestartNeeded(map: Map<String, ValueWithSource>): Boolean {
       val instance = getInstance()
       for (s in map.keys) {
         val eachValue = instance.resolveValue(s)
@@ -310,14 +319,14 @@ class Registry {
       registry: Registry,
       state: Element?,
       earlyAccess: Map<String, String>?
-    ): Map<String, String> {
+    ): Map<String, ValueWithSource> {
       val userProperties = registry.userProperties
       userProperties.clear()
       if (state != null) {
         val map = fromState(state)
         for ((key, value) in map) {
           val registryValue = registry.resolveValue(key)
-          if (value != registry.getBundleValueOrNull(registryValue.key)) {
+          if (value.value != registry.getBundleValueOrNull(registryValue.key)) {
             userProperties.put(key, value)
             registryValue.resetCache()
           }
@@ -326,7 +335,7 @@ class Registry {
 
       if (earlyAccess != null) {
         // yes, earlyAccess overrides user properties
-        userProperties.putAll(earlyAccess)
+        userProperties.putAll(earlyAccess.mapValues { ValueWithSource(it.value, RegistryValueSource.SYSTEM) })
       }
 
       registry.isLoaded = true
@@ -371,7 +380,8 @@ class Registry {
       if (registryValue.isChangedFromDefault()) {
         val entryElement = Element("entry")
         entryElement.setAttribute("key", key)
-        entryElement.setAttribute("value", value)
+        entryElement.setAttribute("value", value.value)
+        entryElement.setAttribute("source", value.source.name)
         state.addContent(entryElement)
       }
     }
@@ -379,7 +389,15 @@ class Registry {
   }
 
   @Internal
-  fun getUserProperties(): MutableMap<String, String> = userProperties
+  fun getStoredProperties(): MutableMap<String, ValueWithSource> = userProperties
+
+  @Deprecated("Use `getStoredProperties`, changes to this map no longer have any effect", ReplaceWith("getStoredProperties()"))
+  @Internal
+  fun getUserProperties(): MutableMap<String, String> {
+    val copy = mutableMapOf<String, String>()
+    copy.putAll(userProperties.mapValues { it.value.value })
+    return copy
+  }
 
   @Internal
   fun restoreDefaults() {

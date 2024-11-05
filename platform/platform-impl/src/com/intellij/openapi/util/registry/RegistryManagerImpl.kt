@@ -83,7 +83,7 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
     log(Registry.loadState(state = state, earlyAccess = EarlyAccessRegistryManager.getOrLoadMap()))
   }
 
-  private fun log(userProperties: Map<String, String>) {
+  private fun log(userProperties: Map<String, ValueWithSource>) {
     if (userProperties.size <= (if (userProperties.containsKey("ide.firstStartup")) 1 else 0)) {
       return
     }
@@ -93,7 +93,7 @@ internal class RegistryManagerImpl(coroutineScope: CoroutineScope) : PersistentS
     val builder = StringBuilder("Registry values changed by user: ")
     for (key in keys) {
       if ("ide.firstStartup" != key) {
-        builder.append(key).append(" = ").append(userProperties[key]).append(", ")
+        builder.append(key).append(" = ").append(userProperties[key]?.value).append(", ")
       }
     }
     logger<RegistryManager>().info(builder.substring(0, builder.length - 2))

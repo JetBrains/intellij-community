@@ -23,14 +23,14 @@ suspend fun migrateRegistryToAdvSettings() {
     return
   }
 
-  val userProperties = Registry.getInstance().getUserProperties()
+  val userProperties = Registry.getInstance().getStoredProperties()
   for (setting in AdvancedSettingBean.EP_NAME.extensionList) {
     when (setting.id) {
       "editor.tab.painting" -> migrateEditorTabPainting(userProperties, setting)
       "vcs.process.ignored" -> migrateVcsIgnoreProcessing(userProperties, setting)
       "ide.ui.native.file.chooser" -> migrateNativeChooser(userProperties, setting)
       else -> {
-        val userProperty = userProperties[setting.id] ?: continue
+        val userProperty = userProperties[setting.id]?.value ?: continue
         try {
           AdvancedSettings.getInstance().setSetting(setting.id, setting.valueFromString(userProperty), setting.type())
           userProperties.remove(setting.id)
@@ -42,12 +42,12 @@ suspend fun migrateRegistryToAdvSettings() {
   propertyManager.setValue(propertyName, currentVersion)
 }
 
-private fun migrateEditorTabPainting(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
-  val mode = if (userProperties["editor.old.tab.painting"] == "true") {
+private fun migrateEditorTabPainting(userProperties: MutableMap<String, ValueWithSource>, setting: AdvancedSettingBean) {
+  val mode = if (userProperties["editor.old.tab.painting"]?.value == "true") {
     userProperties.remove("editor.old.tab.painting")
     TabCharacterPaintMode.LONG_ARROW
   }
-  else if (userProperties["editor.arrow.tab.painting"] == "true") {
+  else if (userProperties["editor.arrow.tab.painting"]?.value == "true") {
     userProperties.remove("editor.arrow.tab.painting")
     TabCharacterPaintMode.ARROW
   }
@@ -57,14 +57,14 @@ private fun migrateEditorTabPainting(userProperties: MutableMap<String, String>,
   AdvancedSettings.getInstance().setSetting(setting.id, mode, setting.type())
 }
 
-private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
-  if (userProperties["git.process.ignored"] == "false") {
+private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, ValueWithSource>, setting: AdvancedSettingBean) {
+  if (userProperties["git.process.ignored"]?.value == "false") {
     userProperties.remove("git.process.ignored")
   }
-  else if (userProperties["hg4idea.process.ignored"] == "false") {
+  else if (userProperties["hg4idea.process.ignored"]?.value == "false") {
     userProperties.remove("hg4idea.process.ignored")
   }
-  else if (userProperties["p4.process.ignored"] == "false") {
+  else if (userProperties["p4.process.ignored"]?.value == "false") {
     userProperties.remove("p4.process.ignored")
   }
   else {
@@ -73,10 +73,10 @@ private fun migrateVcsIgnoreProcessing(userProperties: MutableMap<String, String
   AdvancedSettings.getInstance().setSetting(setting.id, false, setting.type())
 }
 
-private fun migrateNativeChooser(userProperties: MutableMap<String, String>, setting: AdvancedSettingBean) {
+private fun migrateNativeChooser(userProperties: MutableMap<String, ValueWithSource>, setting: AdvancedSettingBean) {
   val enabled = when {
-    SystemInfo.isWindows -> userProperties.get("ide.win.file.chooser.native") ?: System.getProperty("ide.win.file.chooser.native")
-    SystemInfo.isMac -> userProperties.get("ide.mac.file.chooser.native") ?: System.getProperty("ide.mac.file.chooser.native") ?: "true"
+    SystemInfo.isWindows -> userProperties.get("ide.win.file.chooser.native")?.value ?: System.getProperty("ide.win.file.chooser.native")
+    SystemInfo.isMac -> userProperties.get("ide.mac.file.chooser.native")?.value ?: System.getProperty("ide.mac.file.chooser.native") ?: "true"
     else -> null
   } ?: return
   userProperties.remove("ide.win.file.chooser.native")
