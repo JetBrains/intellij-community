@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager
 import com.intellij.platform.ide.progress.*
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import com.intellij.platform.kernel.withKernel
 import com.intellij.platform.util.coroutines.flow.throttle
 import com.intellij.platform.util.progress.ProgressPipe
@@ -84,6 +85,7 @@ class PlatformTaskSupport(private val cs: CoroutineScope) : TaskSupport {
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
+    suspender: TaskSuspender?,
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     if (!isRhizomeProgressEnabled) {

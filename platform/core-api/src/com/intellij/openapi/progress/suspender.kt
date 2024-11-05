@@ -62,7 +62,8 @@ private sealed class CoroutineSuspenderState {
  */
 internal object CoroutineSuspenderElementKey : CoroutineContext.Key<CoroutineSuspenderElement>
 
-internal class CoroutineSuspenderElement(active: Boolean)
+@ApiStatus.Internal
+class CoroutineSuspenderElement(active: Boolean)
   : AbstractCoroutineContextElement(CoroutineSuspenderElementKey),
     CoroutineSuspender {
 

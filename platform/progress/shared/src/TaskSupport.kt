@@ -3,6 +3,7 @@ package com.intellij.platform.ide.progress
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts.ProgressTitle
+import com.intellij.platform.ide.progress.suspender.TaskSuspender
 import kotlinx.coroutines.CoroutineScope
 import org.jetbrains.annotations.ApiStatus.Internal
 
@@ -13,6 +14,7 @@ interface TaskSupport {
     project: Project,
     title: @ProgressTitle String,
     cancellation: TaskCancellation,
+    suspender: TaskSuspender?,
     action: suspend CoroutineScope.() -> T
   ): T
 
