@@ -278,17 +278,17 @@ class UnindexedFilesScanner @JvmOverloads constructor(
 
   @TestOnly
   fun getIndexingReasonBlocking(): String {
-    return runBlockingCancellable { scanningParameters.await() as ScanningIterators }.indexingReason
+    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.indexingReason
   }
 
   @TestOnly
   fun getPredefinedIndexableFileIteratorsBlocking(): List<IndexableFilesIterator>? {
-    return runBlockingCancellable { scanningParameters.await() as ScanningIterators }.predefinedIndexableFilesIterators
+    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.predefinedIndexableFilesIterators
   }
 
   @TestOnly
   fun getScanningTypeBlocking(): ScanningType {
-    return runBlockingCancellable { scanningParameters.await() as ScanningIterators }.scanningType
+    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.scanningType
   }
 
   private fun tryGetPredefinedIndexableFileIterators(): List<IndexableFilesIterator>? {
