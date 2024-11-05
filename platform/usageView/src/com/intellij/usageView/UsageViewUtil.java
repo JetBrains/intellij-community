@@ -15,7 +15,10 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
@@ -27,8 +30,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 import static com.intellij.openapi.project.Project.JOURNEY_CURRENT_NODE;
 
@@ -136,20 +141,20 @@ public final class UsageViewUtil {
   }
 
   public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {
-    System.out.println("NAVIGATION_FROM_POPUP_USAGES");
-    BiConsumer<PsiElement, PsiElement> userData = info.getProject().getUserData(Project.JOURNEY_ADD_EDGE);
+    int offset = info.getNavigationOffset();
     VirtualFile file = info.getVirtualFile();
     Project project = info.getProject();
-
-    if (userData != null) {
-      PsiElement parent = info.getElement().getParent();
-      // Traverse up the parent hierarchy until we find a PsiMethod
-      while (parent != null && !(parent instanceof PsiMethod)) {
-        parent = parent.getParent();
+    { // TODO Journey Hack
+      System.out.println("NAVIGATION_FROM_POPUP_USAGES");
+      var navigationInterceptor = info.getProject().getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR);
+      if (navigationInterceptor != null) {
+        boolean stopNavigation = navigationInterceptor.apply(project.getUserData(JOURNEY_CURRENT_NODE), info.getElement());
+        if (stopNavigation) {
+          return;
+        }
       }
-      userData.accept(project.getUserData(JOURNEY_CURRENT_NODE), parent);
-    } else if (file != null) {
-      int offset = info.getNavigationOffset();
+    }
+    if (file != null) {
       UsageViewStatisticsCollector.logUsageNavigate(project, info);
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
     }

@@ -409,9 +409,6 @@
     <fileEditorProvider implementation="com.intellij.ide.plugins.UIComponentEditorProvider"/>
     <fileIconProvider implementation="com.intellij.ide.plugins.UIComponentVirtualFile$UIComponentVirtualFileIconProvider"/>
 
-    <!--TODO: сейчас не работает на стартапе идеи, чтобы JourneyEditor запустился, нужно переоткрыть файл .journey-->
-    <fileEditorProvider implementation="com.intellij.openapi.editor.journey.JourneyFileEditorProvider"/>
-
     <diff.editor.diffRequestProcessorEditorCustomizer implementation="com.intellij.diff.editor.DefaultDiffFileEditorCustomizer"/>
 
     <fileIconProvider implementation="com.intellij.diff.editor.DiffFileIconProvider"/>

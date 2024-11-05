@@ -1,0 +1,36 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude" package="org.jetbrains.intellij.plugins.journey">
+  <name>Journey</name>
+  <category>Other Tools</category>
+  <id>org.jetbrains.plugins.journey</id>
+  <vendor>JetBrains</vendor>
+  <description><![CDATA[
+<p>Provides a new way of code discovery and debugging
+]]></description>
+
+  <dependencies>
+    <plugin id="com.intellij.java"/>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="com.intellij.modules.platform"/>
+    <plugin id="com.intellij.diagram"/>
+  </dependencies>
+
+  <resource-bundle>messages.JourneyBundle</resource-bundle>
+  <!--<xi:include href="/META-INF/journey.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
+
+  <actions>
+    <group id="JourneyAction" searchable="false">
+      <action id="JourneyToggleAction" class="org.jetbrains.intellij.plugins.journey.JourneyToggleAction"/>
+    </group>
+  </actions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <diagram.Provider implementation="org.jetbrains.intellij.plugins.journey.diagram.JourneyDiagramProvider"/>
+
+    <intentionAction>
+      <language>UAST</language>
+      <className>org.jetbrains.intellij.plugins.journey.StartJourneyIntentionAction</className>
+      <skipBeforeAfter>true</skipBeforeAfter>
+    </intentionAction>
+  </extensions>
+
+</idea-plugin>

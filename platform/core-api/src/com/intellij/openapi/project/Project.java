@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.*;
 
-import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 
 /**
  * An object representing an IntelliJ project.
@@ -23,8 +23,9 @@ import java.util.function.BiConsumer;
  */
 public interface Project extends ComponentManager, AreaInstance {
   String DIRECTORY_STORE_FOLDER = ".idea";
-  public static final Key<BiConsumer<PsiElement, PsiElement>> JOURNEY_ADD_EDGE = Key.create("journey.add.edge");
-  public static final Key<PsiElement> JOURNEY_CURRENT_NODE = Key.create("journey.current.node");
+  /** (From element, To element) -> Boolean: Stop navigation here */
+  Key<BiFunction<@Nullable Object, @Nullable Object, @NotNull Boolean>> JOURNEY_NAVIGATION_INTERCEPTOR = Key.create("journey.navigation.handler");
+  Key<PsiElement> JOURNEY_CURRENT_NODE = Key.create("journey.current.node");
 
   /**
    * Returns a name ot the project. For a directory-based project it's an arbitrary string specified by user at project creation

@@ -7,26 +7,19 @@ import com.intellij.codeInsight.navigation.CtrlMouseData
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
 import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
-import com.intellij.find.actions.EditorToPsiMethod
-import com.intellij.find.actions.addEdgeToJourney
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.backgroundWriteAction
-import com.intellij.openapi.components.ComponentManagerEx
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbModeBlockedFunctionality
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.findPsiFile
+import com.intellij.openapi.util.Computable
 import com.intellij.platform.backend.navigation.impl.SourceNavigationRequest
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.list.createTargetPopup
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclarationReporter?) : CodeInsightActionHandler {
 
@@ -51,20 +44,6 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
       // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
       val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
 
-      fun getPsiElement(navigationRequest: SourceNavigationRequest): PsiElement? {
-        val psiFile = navigationRequest.file.findPsiFile(project)!!
-        val offset = navigationRequest.offsetMarker?.startOffset ?: return psiFile
-        val result: PsiElement = psiFile.findElementAt(offset) ?: return psiFile
-        return result
-      }
-
-      fun addToDiagram(navigationRequest: SourceNavigationRequest) {
-        val psiMethodTo: PsiElement = getPsiElement(navigationRequest) ?: return
-        val psiMethodFrom = EditorToPsiMethod(project, editor)
-        // Reverse the arrow because go to declaration is many to one navigation - required for layout
-        addEdgeToJourney(project, psiMethodTo, psiMethodFrom)
-      }
-
       when (actionResult) {
         is SingleTarget -> {
           reporter?.reportDeclarationSearchFinished(GotoDeclarationReporter.DeclarationsFound.SINGLE)
@@ -72,13 +51,15 @@ internal class GotoDeclarationOnlyHandler2(private val reporter: GotoDeclaration
             GTDUCollector.recordNavigated(eventData, it.javaClass)
           }
           navigateRequestLazy(project, actionResult.requestor)
-          (project as ComponentManagerEx).getCoroutineScope().launch(Dispatchers.EDT) {
-            val navigationRequest = backgroundWriteAction {
+
+          ApplicationManager.getApplication().executeOnPooledThread {
+            val navigationRequest = ApplicationManager.getApplication().runReadAction(Computable {
               actionResult.requestor.navigationRequest()
-            }
-            if (navigationRequest is SourceNavigationRequest) {
-              addToDiagram(navigationRequest)
-            }
+            })
+
+            project.getUserData(Project.JOURNEY_NAVIGATION_INTERCEPTOR)
+              ?.apply(navigationRequest, editor)
+            return@executeOnPooledThread
           }
 
           // Ascend the tree to find the enclosing PsiMethod
