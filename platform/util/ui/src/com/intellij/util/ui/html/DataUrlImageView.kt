@@ -10,11 +10,11 @@ import javax.swing.text.Element
 import javax.swing.text.html.HTML
 import javax.swing.text.html.ImageView
 
-internal open class Base64ImageView(elem: Element?) : ImageView(elem) {
+internal open class DataUrlImageView(elem: Element?) : ImageView(elem) {
 
   override fun getImageURL(): URL? =
     element.attributes.getAttribute(HTML.Attribute.SRC).asSafely<String>()?.let {
-      JBImageToolkit.tryBuildBase64Url(it)
+      JBImageToolkit.tryBuildDataImageUrl(it)
     } ?: super.getImageURL()
 
 }

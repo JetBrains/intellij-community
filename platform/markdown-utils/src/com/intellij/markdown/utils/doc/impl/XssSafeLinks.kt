@@ -6,7 +6,7 @@ import org.intellij.markdown.html.LinkGeneratingProvider
 
 private val UNSAFE_LINK_REGEX = Regex("^(vbscript|javascript|file|data):", RegexOption.IGNORE_CASE)
 /* We need to support svg for documentation rendering */
-private val ALLOWED_DATA_LINK_REGEX = Regex("^data:image/(gif|png|jpeg|webp|svg)(\\+[a-z0-9A-Z]*)?;", RegexOption.IGNORE_CASE)
+private val ALLOWED_DATA_LINK_REGEX = Regex("^data:image/(gif|png|jpeg|webp|svg)[+;=a-z0-9A-Z]*,", RegexOption.IGNORE_CASE)
 
 fun makeXssSafeDestination(s: CharSequence): CharSequence = s.takeIf {
   !UNSAFE_LINK_REGEX.containsMatchIn(s.trim()) || ALLOWED_DATA_LINK_REGEX.containsMatchIn(s.trim())
