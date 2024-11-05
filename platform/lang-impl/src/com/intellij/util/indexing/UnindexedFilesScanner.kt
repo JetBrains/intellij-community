@@ -215,7 +215,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
     markStage(ProjectScanningHistoryImpl.Stage.CollectingIndexableFiles) {
       val projectIndexingDependenciesService = myProject.getService(ProjectIndexingDependenciesService::class.java)
       val scanningRequest = if (myOnProjectOpen) projectIndexingDependenciesService.newScanningTokenOnProjectOpen(allowCheckingForOutdatedIndexesUsingFileModCount)
-      else projectIndexingDependenciesService.newScanningOrIndexingToken()
+      else projectIndexingDependenciesService.newScanningToken()
 
       try {
         ScanningSession(myProject, scanningHistory, forceReindexingTrigger, myFilterHandler, indicator, progressReporter, scanningRequest)

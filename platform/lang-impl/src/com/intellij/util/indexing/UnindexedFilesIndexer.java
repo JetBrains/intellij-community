@@ -207,7 +207,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    ScanningRequestToken token = myProject.getService(ProjectIndexingDependenciesService.class).newScanningOrIndexingToken();
+    ScanningRequestToken token = myProject.getService(ProjectIndexingDependenciesService.class).newScanningToken();
     trackSuspends(ProgressSuspender.getSuspender(indicator), this,
                   () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
                   () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));

@@ -131,7 +131,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   fun getAppIndexingRequestIdOfLastScanning(): Int = storage.readAppIndexingRequestIdOfLastScanning()
 
   @RequiresBackgroundThread
-  fun newScanningOrIndexingToken(): ScanningRequestToken {
+  fun newScanningToken(): ScanningRequestToken {
     val appCurrent = appIndexingDependenciesService.getCurrent()
     val token = WriteOnlyScanningRequestTokenImpl(appCurrent, false)
     registerIssuedToken(token)
