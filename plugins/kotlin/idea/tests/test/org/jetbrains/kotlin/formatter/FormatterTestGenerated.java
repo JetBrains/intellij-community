@@ -604,6 +604,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.kt");
                 }
+
+                @TestMetadata("WhenEntryWithGuards.after.kt")
+                public void testWhenEntryWithGuards() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.kt");
+                }
             }
         }
 
@@ -2000,6 +2005,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 @TestMetadata("WhenEntryNoIndentBeforeArrow.after.inv.kt")
                 public void testWhenEntryNoIndentBeforeArrow() throws Exception {
                     runTest("testData/formatter/trailingComma/whenEntry/WhenEntryNoIndentBeforeArrow.after.inv.kt");
+                }
+
+                @TestMetadata("WhenEntryWithGuards.after.inv.kt")
+                public void testWhenEntryWithGuards() throws Exception {
+                    runTest("testData/formatter/trailingComma/whenEntry/WhenEntryWithGuards.after.inv.kt");
                 }
             }
         }
