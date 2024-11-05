@@ -25,6 +25,6 @@ public final class BekSorter {
     List<Integer> result = bekBranchMerger.getResult();
 
     LOG.assertTrue(result.size() == permanentGraph.nodesCount());
-    return SortIndexMap.createFromSortedList(result);
+    return new SortIndexMap(result);
   }
 }
