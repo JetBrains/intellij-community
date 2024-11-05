@@ -159,10 +159,10 @@ internal class InlineCompletionLogsListener(private val editor: Editor) : Inline
 }
 
 private object StartingLogs : PhasedLogs(Phase.INLINE_API_STARTING) {
-  val REQUEST_ID = registerBasic(EventFields.Long("request_id"))
-  val REQUEST_EVENT = register(EventFields.Class("request_event"))
-  val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider"))
-  val FILE_LANGUAGE = register(EventFields.Language("file_language"))
+  val REQUEST_ID = registerBasic(EventFields.Long("request_id", "Unique request id for the inline completion session"))
+  val REQUEST_EVENT = register(EventFields.Class("request_event", "Type of the event that caused the request for the inline completion session"))
+  val INLINE_API_PROVIDER = registerBasic(EventFields.Class("inline_api_provider", "Type of the inline completion provider that was used for the request"))
+  val FILE_LANGUAGE = register(EventFields.Language("file_language", "Language of the file that was opened for the request"))
 }
 
 private object FinishingLogs : PhasedLogs(Phase.INLINE_API_FINISHING) {
