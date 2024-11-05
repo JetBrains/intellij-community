@@ -398,10 +398,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     activity = null
   }
 
-  suspend fun loadProject(project: Project) {
-    applyLoadedStorage(loadProjectToEmptyStorage(project))
-  }
-
   @OptIn(EntityStorageInstrumentationApi::class)
   private fun addUnloadedModuleEntities(diff: MutableEntityStorage) {
     if ((diff as MutableEntityStorageInstrumentation).hasChanges()) {
