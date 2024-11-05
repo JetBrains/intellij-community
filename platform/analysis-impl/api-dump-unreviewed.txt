@@ -261,6 +261,7 @@ pc:com.intellij.codeInsight.completion.BaseCompletionService$BaseCompletionResul
 - addElement(com.intellij.codeInsight.lookup.LookupElement):V
 - addLookupAdvertisement(java.lang.String):V
 - caseInsensitive():com.intellij.codeInsight.completion.CompletionResultSet
+- passResult(com.intellij.codeInsight.completion.CompletionResult):V
 - restartCompletionOnPrefixChange(com.intellij.patterns.ElementPattern):V
 - restartCompletionWhenNothingMatches():V
 - stopHere():V
