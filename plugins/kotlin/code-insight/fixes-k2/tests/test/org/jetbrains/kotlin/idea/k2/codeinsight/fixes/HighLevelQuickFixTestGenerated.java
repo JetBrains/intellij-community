@@ -10742,39 +10742,7 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../../idea/tests/testData/quickfix/removeAtFromAnnotationArgument")
-    public static class RemoveAtFromAnnotationArgument extends AbstractHighLevelQuickFixTest {
-        @java.lang.Override
-        @org.jetbrains.annotations.NotNull
-        public final KotlinPluginMode getPluginMode() {
-            return KotlinPluginMode.K2;
-        }
 
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("arrayParam.kt")
-        public void testArrayParam() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/removeAtFromAnnotationArgument/arrayParam.kt");
-        }
-
-        @TestMetadata("brokenCode.kt")
-        public void testBrokenCode() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/removeAtFromAnnotationArgument/brokenCode.kt");
-        }
-
-        @TestMetadata("namedParam.kt")
-        public void testNamedParam() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/removeAtFromAnnotationArgument/namedParam.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/removeAtFromAnnotationArgument/simple.kt");
-        }
-    }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../../idea/tests/testData/quickfix/removeDefaultParameterValue")
