@@ -353,6 +353,7 @@ public final class SameParameterValueInspection extends GlobalJavaBatchInspectio
     }
   }
 
+  @SuppressWarnings("InspectionDescriptionNotFoundInspection") // TODO IJPL-166089
   private static final class LocalSameParameterValueInspection extends AbstractBaseUastLocalInspectionTool {
     private final SameParameterValueInspection myGlobal;
 
