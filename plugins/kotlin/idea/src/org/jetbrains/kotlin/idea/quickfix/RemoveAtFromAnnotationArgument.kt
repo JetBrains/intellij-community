@@ -2,34 +2,35 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.project.Project
+import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.modcommand.ActionContext
+import com.intellij.modcommand.ModPsiUpdater
+import com.intellij.modcommand.PsiUpdateModCommandAction
+import com.intellij.psi.util.firstLeaf
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.idea.base.resources.KotlinBundle
-import org.jetbrains.kotlin.idea.codeinsight.api.classic.quickfixes.KotlinQuickFixAction
-import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtAnnotationEntry
-import org.jetbrains.kotlin.psi.KtFile
 
-class RemoveAtFromAnnotationArgument(constructor: KtAnnotationEntry) : KotlinQuickFixAction<KtAnnotationEntry>(constructor) {
+class RemoveAtFromAnnotationArgument(
+    element: KtAnnotationEntry,
+) : PsiUpdateModCommandAction<KtAnnotationEntry>(element) {
 
-    override fun getText() = KotlinBundle.message("remove.from.annotation.argument")
+    override fun getFamilyName(): String = KotlinBundle.message("remove.from.annotation.argument")
 
-    override fun getFamilyName() = text
-
-    override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val elementToReplace = (element?.parent as? KtAnnotatedExpression) ?: return
-
-        val document = file.viewProvider.document
-        val pos = elementToReplace.textRange.startOffset
-        if (document.charsSequence[pos] == '@') {
-            document.deleteString(pos, pos + 1)
+    override fun invoke(
+        context: ActionContext,
+        element: KtAnnotationEntry,
+        updater: ModPsiUpdater,
+    ) {
+        val firstLeaf = element.firstLeaf()
+        assert(firstLeaf.text == "@") {
+            "Expected '@' at the beginning of the annotation argument, but found '${firstLeaf.text}'"
         }
+        firstLeaf.delete()
     }
 
     companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtAnnotationEntry>? =
-            (diagnostic.psiElement as? KtAnnotationEntry)?.let { RemoveAtFromAnnotationArgument(it) }
+        override fun createAction(diagnostic: Diagnostic): IntentionAction? =
+            RemoveAtFromAnnotationArgument(diagnostic.psiElement as KtAnnotationEntry).asIntention()
     }
-
 }
