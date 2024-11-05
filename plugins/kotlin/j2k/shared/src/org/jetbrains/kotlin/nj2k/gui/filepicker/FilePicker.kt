@@ -49,7 +49,7 @@ class FilePicker(
     }
 
     override fun onFilePick(selectedFiles: List<VirtualFile>) {
-        // on toggle state
+        isOKActionEnabled = selectedFiles.isNotEmpty()
     }
 
     override fun onFocus(file: VirtualFile) {
