@@ -3,7 +3,7 @@ package com.intellij.openapi.util.registry
 
 import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Internal
+@ApiStatus.Experimental
 enum class RegistryValueSource {
   /**
    * Values set by user via Registry UI.

@@ -527,10 +527,15 @@ private val excludedPaths = java.util.Set.of(
   "/META-INF/codeWithMeFrontend.xml",
 )
 
+private val COMMUNITY_IMPL_EXTENSIONS = setOf(
+  "/META-INF/community-extensions.xml"
+)
+
 fun createXIncludePathResolver(includedPlatformModulesPartialList: List<String>, context: BuildContext): XIncludePathResolver {
   return object : XIncludePathResolver {
     override fun resolvePath(relativePath: String, base: Path?, isOptional: Boolean, isDynamic: Boolean): Path? {
-      if (isOptional || isDynamic || excludedPaths.contains(relativePath)) {
+      if ((isOptional || isDynamic || excludedPaths.contains(relativePath))
+           && !COMMUNITY_IMPL_EXTENSIONS.contains(relativePath)) {
         // It isn't safe to resolve includes at build time if they're optional.
         // This could lead to issues when running another product using this distribution.
         // E.g., if the corresponding module is somehow being excluded on runtime.

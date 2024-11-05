@@ -19,7 +19,13 @@
     <module name="intellij.idea.customization.base"/>
     <module name="intellij.platform.tips"/>
   </content>
+
   <xi:include href="/META-INF/common-ide-modules.xml"/>
+
+  <!--suppress XmlPathReference -->
+  <xi:include href="/META-INF/community-extensions.xml">
+    <xi:fallback/>
+  </xi:include>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.UpdateStrategyCustomization"

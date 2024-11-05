@@ -23,6 +23,18 @@ c:com.intellij.openapi.util.UserDataHolderBase
 f:com.intellij.openapi.util.io.NioFiles
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path):V
 - *s:copyRecursively(java.nio.file.Path,java.nio.file.Path,java.util.function.Consumer):V
+c:com.intellij.openapi.util.registry.RegistryValue
+- *f:getSource():com.intellij.openapi.util.registry.RegistryValueSource
+- *f:setSelectedOption(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V
+- *:setValue(java.lang.String,com.intellij.openapi.util.registry.RegistryValueSource):V
+*e:com.intellij.openapi.util.registry.RegistryValueSource
+- java.lang.Enum
+- sf:MANAGER:com.intellij.openapi.util.registry.RegistryValueSource
+- sf:SYSTEM:com.intellij.openapi.util.registry.RegistryValueSource
+- sf:USER:com.intellij.openapi.util.registry.RegistryValueSource
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.util.registry.RegistryValueSource
+- s:values():com.intellij.openapi.util.registry.RegistryValueSource[]
 f:com.intellij.openapi.util.text.HtmlChunkUtilKt
 - *sf:buildChildren(com.intellij.openapi.util.text.HtmlChunk$Element,kotlin.jvm.functions.Function1):com.intellij.openapi.util.text.HtmlChunk$Element
 - *sf:buildHtml(kotlin.jvm.functions.Function1):java.lang.String

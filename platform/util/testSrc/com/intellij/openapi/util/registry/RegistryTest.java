@@ -264,6 +264,7 @@ public class RegistryTest {
       Element entryElement = new Element("entry");
       entryElement.setAttribute("key", entry.getKey());
       entryElement.setAttribute("value", entry.getValue());
+      entryElement.setAttribute("source", "SYSTEM");
       registryElement.addContent(entryElement);
     }
     return registryElement;
