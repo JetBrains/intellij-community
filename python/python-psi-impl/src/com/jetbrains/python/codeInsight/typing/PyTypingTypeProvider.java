@@ -615,7 +615,7 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
         }
       }
     }
-    if (referenceTarget instanceof PyClass pyClass && anchor instanceof PyExpression) {
+    if (anchor instanceof PyExpression && referenceTarget instanceof PyClass pyClass && isGeneric(pyClass, context.myContext)) {
       PyCollectionType parameterizedType = parameterizeClassDefaultAware(pyClass, List.of(), context);
       if (parameterizedType != null) {
         return Ref.create(parameterizedType.toClass());
@@ -1905,17 +1905,15 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
   private static PyCollectionType parameterizeClassDefaultAware(@NotNull PyClass pyClass,
                                                                 @NotNull List<PyType> actualTypeParams,
                                                                 @NotNull Context context) {
-    if (isGeneric(pyClass, context.getTypeContext())) {
-      PyCollectionType genericDefinitionType =
-        doPreventingRecursion(pyClass, false, () -> PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext()));
-      if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
-                                                                t -> t instanceof PyTypeParameterType typeParameterType &&
-                                                                     typeParameterType.getDefaultType() != null)) {
+    PyCollectionType genericDefinitionType =
+      doPreventingRecursion(pyClass, false, () -> PyTypeChecker.findGenericDefinitionType(pyClass, context.getTypeContext()));
+    if (genericDefinitionType != null && ContainerUtil.exists(genericDefinitionType.getElementTypes(),
+                                                              t -> t instanceof PyTypeParameterType typeParameterType &&
+                                                                   typeParameterType.getDefaultType() != null)) {
 
-        PyType parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, actualTypeParams, context.myContext);
-        if (parameterizedType instanceof PyCollectionType collectionType) {
-          return collectionType;
-        }
+      PyType parameterizedType = PyTypeChecker.parameterizeType(genericDefinitionType, actualTypeParams, context.myContext);
+      if (parameterizedType instanceof PyCollectionType collectionType) {
+        return collectionType;
       }
     }
     return null;
@@ -1993,21 +1991,26 @@ public final class PyTypingTypeProvider extends PyTypeProviderWithCustomContext<
       if (indexExpr != null) {
         final PyType operandType = Ref.deref(getType(operand, context));
         final List<PyType> indexTypes = getIndexTypes(subscriptionExpr, context);
-        if (operandType instanceof PyClassType && !(operandType instanceof PyTupleType) &&
-            PyNames.TUPLE.equals(((PyClassType)operandType).getPyClass().getQualifiedName())) {
-          if (indexExpr instanceof PyTupleExpression) {
-            final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
-            if (elements.length == 2 && isEllipsis(elements[1])) {
-              return PyTupleType.createHomogeneous(element, indexTypes.get(0));
-            }
-          }
-          return PyTupleType.create(element, indexTypes);
-        }
         if (operandType != null) {
           if (operandType instanceof PyClassType classType) {
-            PyCollectionType parameterizedType = parameterizeClassDefaultAware(classType.getPyClass(), indexTypes, context);
-            if (parameterizedType != null) {
-              return parameterizedType.toInstance();
+            if (!(operandType instanceof PyTupleType) && PyNames.TUPLE.equals(classType.getPyClass().getQualifiedName())) {
+              if (indexExpr instanceof PyTupleExpression) {
+                final PyExpression[] elements = ((PyTupleExpression)indexExpr).getElements();
+                if (elements.length == 2 && isEllipsis(elements[1])) {
+                  return PyTupleType.createHomogeneous(element, indexTypes.get(0));
+                }
+              }
+              return PyTupleType.create(element, indexTypes);
+            }
+
+            if (isGeneric(classType, context.myContext)) {
+              PyCollectionType parameterizedType = parameterizeClassDefaultAware(classType.getPyClass(), indexTypes, context);
+              if (parameterizedType != null) {
+                return parameterizedType.toInstance();
+              }
+            }
+            else {
+              return null;
             }
           }
           return PyTypeChecker.parameterizeType(operandType, indexTypes, context.getTypeContext());

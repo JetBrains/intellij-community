@@ -6004,6 +6004,18 @@ public class PyTypingTest extends PyTestCase {
              """);
   }
 
+  // PY-77074
+  public void testEnumIndexer() {
+    doTest("Color", """
+      from enum import Enum
+      
+      class Color(Enum):
+        RED = 1
+      
+      expr = Color["RED"]
+      """);
+  }
+
   // PY-76149
   public void testDataclassTransformConstructorSignatureWithFieldsAnnotatedWithDescriptor() {
     doTestExpressionUnderCaret("(id: int, name: str) -> MyClass", """
