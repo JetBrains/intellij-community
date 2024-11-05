@@ -48,7 +48,9 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
           onDocumentChange(event.document)
         }
         finally {
-          queueSizeEstimate.decrementAndGet()
+          if (queueSizeEstimate.decrementAndGet() == 0) {
+            lastSearchTimeNs = -1L
+          }
         }
       }
     }
@@ -100,9 +102,7 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
         lastSearchTimeNs = System.nanoTime() - timeStartNs
       }
       for (collector in collectors) {
-        coroutineScope.launch(Dispatchers.Default) {
-          collector.processDocumentChange(hasChanges, virtualFile, document)
-        }
+        collector.processDocumentChange(hasChanges, virtualFile, document)
       }
     }
   }
@@ -139,10 +139,12 @@ private val logger = logger<SourceFileChangesCollectorImpl>()
  */
 @ApiStatus.Internal
 class SourceFileChangesCollectorImpl(
-  coroutineScope: CoroutineScope,
+  private val coroutineScope: CoroutineScope,
   internal val listener: SourceFileChangesListener,
   internal vararg val filters: SourceFileChangeFilter<VirtualFile>,
 ) : SourceFileChangesCollector<VirtualFile>, Disposable.Default {
+  @OptIn(ExperimentalCoroutinesApi::class)
+  private val limitedDispatcher = Dispatchers.Default.limitedParallelism(1)
 
   @Volatile
   private var currentChanges: MutableSet<VirtualFile> = hashSetOf()
@@ -161,7 +163,10 @@ class SourceFileChangesCollectorImpl(
     currentChanges = hashSetOf()
   }
 
-  internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile, document: Document) {
+  internal fun processDocumentChange(
+    hasChangesSinceLastReset: Boolean,
+    file: VirtualFile, document: Document,
+  ) = coroutineScope.launch(limitedDispatcher) {
     val currentChanges = currentChanges
     if (hasChangesSinceLastReset) {
       currentChanges.add(file)
