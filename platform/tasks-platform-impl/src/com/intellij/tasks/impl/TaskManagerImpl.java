@@ -13,9 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -42,12 +40,15 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import kotlin.Unit;
+import kotlin.coroutines.Continuation;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -133,15 +134,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
         }
       }
     };
-
-    project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      @Override
-      public void projectOpened(@NotNull Project project) {
-        if (myProject == project) {
-          TaskManagerImpl.this.projectOpened();
-        }
-      }
-    });
 
     // remove repositories pertaining to non-existent types
     TaskRepositoryType.addEPListChangeListener(this, () -> {
@@ -1067,10 +1059,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     }
   }
 
-  private static final class Activity implements StartupActivity.DumbAware {
+  private static final class Activity implements ProjectActivity {
     @Override
-    public void runActivity(@NotNull Project project) {
-      ((TaskManagerImpl)TaskManager.getManager(project)).projectOpened();
+    public @Nullable Object execute(@NotNull Project project, @NotNull Continuation<? super @NotNull Unit> $completion) {
+      ((TaskManagerImpl)getManager(project)).projectOpened();
+      return null;
     }
   }
 }
