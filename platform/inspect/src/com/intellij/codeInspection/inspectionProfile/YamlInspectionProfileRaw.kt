@@ -64,7 +64,11 @@ private val FIELDS_TO_MERGE = setOf("groups", "inspections")
 private fun readRaw(reader: Reader, includeReaders: (Path) -> Reader): Map<String, *> {
   val yamlReader = Yaml()
   val rawConfig: Map<String, *> = yamlReader.load(reader)
-  val includedConfigs = (rawConfig["include"] as? List<*>)?.filterIsInstance(String::class.java).orEmpty().map { Paths.get(it) }
+  val includedConfigs = (rawConfig["include"] as? List<*>)
+    ?.filterIsInstance<String>()
+    .orEmpty()
+    .map { Paths.get(it) }
+    .asReversed() // Values from included placed at the beginning of config. So the first in the list should be added last to keep order.
 
   return includedConfigs.fold(rawConfig) { accumulator, path ->
     val includedYaml = includeReaders.invoke(path).use { includeReader ->
