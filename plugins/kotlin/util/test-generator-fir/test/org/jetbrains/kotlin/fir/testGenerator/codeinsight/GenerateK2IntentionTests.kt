@@ -97,7 +97,7 @@ internal fun MutableTWorkspace.generateK2IntentionTests() {
             model("${idea}intentions/toInfixCall", pattern = pattern, isIgnored = true)
             model("${idea}intentions/convertArrayParameterToVararg", pattern = pattern, isIgnored = true)
             model("${idea}intentions/branched", pattern = pattern, isIgnored = true)
-            model("${idea}intentions/convertVariableAssignmentToExpression", pattern = pattern, isIgnored = true)
+            model("${idea}intentions/convertVariableAssignmentToExpression", pattern = pattern)
             model("${idea}intentions/convertNullablePropertyToLateinit", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceSizeCheckWithIsNotEmpty", pattern = pattern, isIgnored = true)
             model("${idea}intentions/replaceTypeArgumentWithUnderscore", pattern = pattern, isIgnored = true)
