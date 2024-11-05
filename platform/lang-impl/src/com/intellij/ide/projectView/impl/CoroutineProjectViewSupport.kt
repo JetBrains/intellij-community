@@ -18,10 +18,12 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.ui.tree.RestoreSelectionListener
 import com.intellij.ui.tree.TreeCollector
+import com.intellij.ui.tree.TreeStructureDomainModelAdapter
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.ui.tree.project.ProjectFileNode.findArea
 import com.intellij.ui.tree.project.ProjectFileNodeUpdater
 import com.intellij.ui.treeStructure.TreeDomainModel
+import com.intellij.ui.treeStructure.TreeNodeViewModel
 import com.intellij.ui.treeStructure.TreeSwingModel
 import com.intellij.ui.treeStructure.TreeViewModel
 import com.intellij.util.SmartList
@@ -39,7 +41,7 @@ internal class CoroutineProjectViewSupport(
   comparator: Comparator<NodeDescriptor<*>>,
 ) : ProjectViewPaneSupport() {
 
-  private val domainModel = TreeDomainModel(treeStructure, true, 1)
+  private val domainModel = TreeStructureDomainModelAdapter(treeStructure, true, 1)
   private val viewModel = TreeViewModel(coroutineScope, domainModel)
   private val swingModel = TreeSwingModel(coroutineScope, viewModel)
 
@@ -64,14 +66,7 @@ internal class CoroutineProjectViewSupport(
   }
 
   override fun setComparator(comparator: Comparator<in NodeDescriptor<*>>?) {
-    if (comparator == null) {
-      viewModel.comparator = null
-      return
-    }
-    viewModel.comparator = Comparator.comparing(
-      { viewModel -> viewModel.getUserObject() as? NodeDescriptor<*> },
-      comparator::compare,
-    )
+    domainModel.comparator = comparator
   }
 
   override fun updateAll(afterUpdate: Runnable?) {
@@ -84,7 +79,7 @@ internal class CoroutineProjectViewSupport(
 
   private fun updateImpl(element: TreePath?, updateStructure: Boolean, onDone: Runnable? = null) {
     val job = coroutineScope.launch(CoroutineName("Updating $element, structure=$updateStructure")) {
-      viewModel.invalidate(element, updateStructure)
+      viewModel.invalidate(element?.lastPathComponent as TreeNodeViewModel?, updateStructure)
     }
     job.invokeOnCompletion {
       onDone?.let { SwingUtilities.invokeLater(it) }

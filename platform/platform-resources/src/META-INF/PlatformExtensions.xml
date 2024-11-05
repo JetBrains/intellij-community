@@ -309,8 +309,6 @@
                         serviceImplementation="com.intellij.ui.content.ContentFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.TreeUIHelper"
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
-    <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeDomainModelFactory"
-                        serviceImplementation="com.intellij.ui.tree.TreeDomainModelFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeViewModelFactory"
                         serviceImplementation="com.intellij.ui.tree.TreeViewModelFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.ui.treeStructure.TreeSwingModelFactory"
