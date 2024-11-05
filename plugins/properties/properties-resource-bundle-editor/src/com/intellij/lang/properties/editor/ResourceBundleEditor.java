@@ -74,8 +74,8 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 public final class ResourceBundleEditor extends UserDataHolderBase implements DocumentsEditor {
@@ -96,7 +96,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   private final DataProviderPanel myDataProviderPanel;
   // user pressed backslash in the corresponding editor.
   // we cannot store it back to properties file right now, so just append the backslash to the editor and wait for the subsequent chars
-  private final Set<VirtualFile> myBackSlashPressed     = new HashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm();
 
   private final JPanel              myValuesPanel;
@@ -508,7 +507,7 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
       final Document document = editor.getDocument();
       CommandProcessor.getInstance().executeCommand(null, () -> ApplicationManager.getApplication().runWriteAction(() -> {
         if (!checkIsUnderUndoRedoAction || !undoManager.isActive() || !undoManager.isUndoOrRedoInProgress()) {
-          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document,  propertiesFile.getVirtualFile());
+          updateDocumentFromPropertyValue(getPropertyEditorValue(property), document);
         }
       }), "", this);
       JPanel titledPanel = myTitledPanels.get(propertiesFile.getVirtualFile());
@@ -558,7 +557,6 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
   }
 
   private void selectionChanged() {
-    myBackSlashPressed.clear();
     UIUtil.invokeLaterIfNeeded(() -> {
       updateEditorsFromProperties(true);
       final StatusBar statusBar = WindowManager.getInstance().getStatusBar(myProject);
@@ -568,11 +566,8 @@ public final class ResourceBundleEditor extends UserDataHolderBase implements Do
     });
   }
 
-  private void updateDocumentFromPropertyValue(final String value,
-                                               final Document document,
-                                               final VirtualFile propertiesFile) {
-    @NonNls String text = myBackSlashPressed.contains(propertiesFile) ? value + "\\" : value;
-    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), text));
+  private static void updateDocumentFromPropertyValue(final String value, final Document document) {
+    UndoUtil.disableUndoIn(document, () -> document.replaceString(0, document.getTextLength(), value));
   }
 
   @NotNull

@@ -166,9 +166,9 @@ public final class LocalFsFinder implements Finder {
 
     @Override
     public boolean isAccepted(LookupFile file) {
-      if (file instanceof VfsFile) {
-        VirtualFile vFile = ((VfsFile)file).getFile();
-        return vFile != null && myDescriptor.isFileVisible(vFile, myShowHidden);
+      if (file instanceof VfsFile vfsFile) {
+        VirtualFile vFile = vfsFile.getFile();
+        return myDescriptor.isFileVisible(vFile, myShowHidden);
       }
       else {
         return false;

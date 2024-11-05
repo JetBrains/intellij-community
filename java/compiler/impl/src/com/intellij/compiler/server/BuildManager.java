@@ -122,8 +122,7 @@ import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -137,8 +136,8 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -2240,8 +2239,6 @@ public final class BuildManager implements Disposable {
   }
 
   private final class ProjectWatcher implements ProjectCloseListener {
-    private final Map<Project, MessageBusConnection> myConnections = new HashMap<>();
-
     @Override
     public void projectClosingBeforeSave(@NotNull Project project) {
       myAutoMakeTask.cancelPendingExecution();
@@ -2280,10 +2277,6 @@ public final class BuildManager implements Disposable {
         if (myProjectDataMap.isEmpty()) {
           InternedPath.clearCache();
         }
-      }
-      MessageBusConnection connection = myConnections.remove(project);
-      if (connection != null) {
-        connection.disconnect();
       }
     }
   }
