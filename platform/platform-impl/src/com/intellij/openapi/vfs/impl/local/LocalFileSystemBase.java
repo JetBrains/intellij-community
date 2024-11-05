@@ -9,7 +9,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.limits.FileSizeLimit;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -20,6 +19,7 @@ import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
@@ -41,6 +41,8 @@ import java.util.List;
 @ApiStatus.Internal
 @Deprecated(forRemoval = true)
 public abstract class LocalFileSystemBase extends LocalFileSystem {
+  private static final Boolean EXTRACT_ROOTS_USING_NIO = SystemProperties.getBooleanProperty("vfs.extract.roots.using.nio", true);
+
   private static final ExtensionPointName<LocalFileOperationsHandler> FILE_OPERATIONS_HANDLER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.fileOperationsHandler");
 
@@ -491,7 +493,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   protected @NotNull String extractRootPath(@NotNull String normalizedPath) {
-    if (Registry.is("vfs.extract.roots.using.nio")) {
+    if (EXTRACT_ROOTS_USING_NIO) {
       final var normalizedPathRootString = Path.of(normalizedPath).getRoot().toString();
 
       for (Path root : FileSystems.getDefault().getRootDirectories()) {
