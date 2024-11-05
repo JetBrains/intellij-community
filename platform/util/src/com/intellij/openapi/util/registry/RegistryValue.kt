@@ -11,6 +11,7 @@ import com.intellij.ui.ColorHexUtil
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
@@ -34,6 +35,7 @@ open class RegistryValue @Internal constructor(
   private var doubleCachedValue = Double.NaN
   private var booleanCachedValue: Boolean? = null
 
+  @ApiStatus.Experimental
   fun getSource(): RegistryValueSource? {
     return registry.getStoredProperties().get(key)?.source
   }
@@ -104,6 +106,7 @@ open class RegistryValue @Internal constructor(
       setSelectedOption(selected, RegistryValueSource.SYSTEM)
     }
 
+  @ApiStatus.Experimental
   fun setSelectedOption(selected: String?, source: RegistryValueSource) {
     val options = asOptions().toMutableList()
     for ((i, option) in options.withIndex()) {
@@ -229,10 +232,11 @@ open class RegistryValue @Internal constructor(
     setValue(value.toString())
   }
 
-  fun setValue(value: String) {
+  open fun setValue(value: String) {
     setValue(value, RegistryValueSource.SYSTEM)
   }
 
+  @ApiStatus.Experimental
   open fun setValue(value: String, source: RegistryValueSource) {
     val globalValueChangeListener = registry.valueChangeListener
     globalValueChangeListener.beforeValueChanged(this)
