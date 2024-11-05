@@ -25,10 +25,7 @@ import com.intellij.util.gist.GistManagerImpl;
 import com.intellij.util.indexing.PerProjectIndexingQueue.QueuedFiles;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.contentQueue.IndexingProgressReporter2;
-import com.intellij.util.indexing.dependencies.IncompleteTaskToken;
-import com.intellij.util.indexing.dependencies.IndexingRequestToken;
-import com.intellij.util.indexing.dependencies.ProjectIndexingDependenciesService;
-import com.intellij.util.indexing.dependencies.ScanningRequestToken;
+import com.intellij.util.indexing.dependencies.*;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.diagnostic.ProjectDumbIndexingHistoryImpl;
 import com.intellij.util.indexing.events.FileIndexingRequest;
@@ -56,7 +53,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
   private final FileBasedIndexImpl myIndex;
   private final @NotNull QueuedFiles files;
   private final @NonNls @NotNull String indexingReason;
-  private final IncompleteTaskToken taskToken;
+  private final IncompleteIndexingToken taskToken;
 
   UnindexedFilesIndexer(@NotNull Project project,
                         @NonNls @NotNull String indexingReason) {
@@ -89,7 +86,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     myIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     this.files = files;
     this.indexingReason = indexingReason;
-    taskToken = myProject.getService(ProjectIndexingDependenciesService.class).newIncompleteTaskToken();
+    taskToken = myProject.getService(ProjectIndexingDependenciesService.class).newIncompleteIndexingToken();
   }
 
 
@@ -207,7 +204,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     ProjectDumbIndexingHistoryImpl projectDumbIndexingHistory = new ProjectDumbIndexingHistoryImpl(myProject);
     IndexDiagnosticDumper.getInstance().onDumbIndexingStarted(projectDumbIndexingHistory);
-    ScanningRequestToken token = myProject.getService(ProjectIndexingDependenciesService.class).newScanningToken();
     trackSuspends(ProgressSuspender.getSuspender(indicator), this,
                   () -> projectDumbIndexingHistory.suspendStages(Instant.now()),
                   () -> projectDumbIndexingHistory.stopSuspendingStages(Instant.now()));
@@ -217,7 +213,7 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
         runWithMergingDependentCacheInvalidations(() -> indexFiles(projectDumbIndexingHistory, indicator));
     }
     catch (Throwable e) {
-      token.markUnsuccessful();
+      taskToken.markUnsuccessful();
       projectDumbIndexingHistory.setWasInterrupted();
       if (e instanceof ControlFlowException) {
         LOG.info("Cancelled indexing of " + myProject.getName());
@@ -226,10 +222,6 @@ public final class UnindexedFilesIndexer extends DumbModeTask {
     }
     finally {
       IndexDiagnosticDumper.getInstance().onDumbIndexingFinished(projectDumbIndexingHistory);
-      ProjectIndexingDependenciesService service = myProject.getServiceIfCreated(ProjectIndexingDependenciesService.class);
-      if (service != null) {
-        service.completeToken(token, false);
-      }
     }
   }
 

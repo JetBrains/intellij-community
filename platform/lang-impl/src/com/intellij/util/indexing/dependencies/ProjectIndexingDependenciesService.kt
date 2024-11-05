@@ -159,14 +159,23 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
     return IncompleteTaskToken().also { registerIssuedToken(it) }
   }
 
+  fun newIncompleteIndexingToken(): IncompleteIndexingToken {
+    return IncompleteIndexingToken().also { registerIssuedToken(it) }
+  }
+
   private fun registerIssuedToken(token: Any) {
+    thisLogger().info("Register issued token: $token")
     synchronized(issuedScanningTokens) {
       if (issuedScanningTokens.isEmpty() && storage.isOpen) {
-        thisLogger().info("Register issued token: ${token}")
+        thisLogger().info("Write incomplete scanning mark=true for token: $token")
         storage.writeIncompleteScanningMark(true)
       }
       issuedScanningTokens.add(token)
     }
+  }
+
+  fun completeToken(token: IncompleteIndexingToken) {
+    completeTokenOrFutureToken(token, null, token.isSuccessful())
   }
 
   fun completeToken(token: IncompleteTaskToken) {
@@ -181,6 +190,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
   }
 
   private fun completeTokenOrFutureToken(token: Any, lastAppIndexingRequestId: AppIndexingDependenciesToken?, successful: Boolean) {
+    thisLogger().info("Complete token: ${token}, successful: $successful")
     if (!successful) {
       registerIssuedToken(RequestFullHeavyScanningToken)
     }
@@ -188,7 +198,7 @@ class ProjectIndexingDependenciesService @NonInjectable @VisibleForTesting const
       // ignore repeated "complete" calls
       val removed = issuedScanningTokens.remove(token)
       if (removed && issuedScanningTokens.isEmpty() && storage.isOpen) {
-        thisLogger().info("Complete token: ${token}")
+        thisLogger().info("Write incomplete scanning mark=false for token: $token")
         storage.writeIncompleteScanningMark(false)
       }
       if (lastAppIndexingRequestId != null && storage.isOpen) {
