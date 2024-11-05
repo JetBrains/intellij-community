@@ -4,12 +4,8 @@ package com.intellij.configurationStore
 import com.intellij.configurationStore.schemeManager.SchemeChangeApplicator
 import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
 import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
-import com.intellij.openapi.application.EDT
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationManagerEx
-import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
@@ -75,10 +71,9 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
       return
     }
 
-    val projectsToReload = LinkedHashSet<Project>()
     withContext(Dispatchers.EDT) {
       LOG.debug("Dispatch to EDT")
-      applyProjectChanges(projectsToReload)
+      val projectsToReload = doReloadChangedStorages()
 
       if (projectsToReload.isNotEmpty()) {
         for (project in projectsToReload) {
@@ -88,11 +83,17 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
     }
   }
 
+  /**
+   * Reloads the changed schemes in [changedSchemes], changed storages in [changedSchemes] and a JPS model via [JpsProjectModelSynchronizer]
+   *
+   * @return set of projects that need to be fully re-loaded to apply the changes
+   */
   @RequiresEdt
-  private suspend fun applyProjectChanges(projectsToReload: LinkedHashSet<Project>) {
+  private suspend fun doReloadChangedStorages(): Set<Project> {
+    val projectsToReload = LinkedHashSet<Project>()
     if (changedSchemes.isEmpty() && changedStorages.isEmpty()
         && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
-      return
+      return projectsToReload
     }
 
     val changedSchemesCopy: LinkedHashMap<SchemeChangeApplicator<*, *>, MutableSet<SchemeChangeEvent<*, *>>>
@@ -109,7 +110,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
 
     if (changedSchemesCopy.isEmpty() && changedStoragesCopy.isEmpty()
         && !JpsProjectModelSynchronizer.getInstance(project).needToReloadProjectEntities()) {
-      return
+      return projectsToReload
     }
 
     val publisher = project.messageBus.syncPublisher(BatchUpdateListener.TOPIC)
@@ -146,6 +147,7 @@ internal class StoreReloadManagerImpl(private val project: Project, coroutineSco
         JpsProjectModelSynchronizer.getInstance(project).reloadProjectEntities()
       }
     }
+    return projectsToReload
   }
 
   override fun isReloadBlocked(): Boolean {
@@ -268,7 +270,7 @@ fun reloadAppStore(changes: Set<StateStorage>): Boolean {
   }
 }
 
-internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
+private fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentStoreImpl): ReloadComponentStoreStatus {
   val notReloadableComponents: Collection<String>?
   var willBeReloaded = false
   try {
