@@ -191,6 +191,8 @@
 
     <search.optionContributor implementation="org.jetbrains.plugins.gradle.config.GradleSearchableOptionContributor"/>
 
+    <registryKey key="gradle.daemon.jvm.criteria" defaultValue="true"
+                 description="Enable the Gradle Daemon JVM criteria allowing to detect provisioning required toolchain for the build"/>
     <registryKey key="gradle.phased.sync.enabled" defaultValue="true"
                  description="Enable the phased Gradle sync execution"/>
     <registryKey defaultValue="https://download.jetbrains.com/resources/intellij/plugins/gradle/v1/compatibility.json"
