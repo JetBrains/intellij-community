@@ -89,10 +89,14 @@ class NavBarVmImpl(
     }
   }
 
-  override fun selectTail() {
+  override fun selectTail(withPopupOpen: Boolean) {
+    val shiftToLeft = if (withPopupOpen) 1 else 0
+
     val items = items.value
-    val i = (items.size - 2).coerceAtLeast(0)
+    val i = (items.size - 1 - shiftToLeft).coerceAtLeast(0)
     items[i].select()
+
+    if (withPopupOpen) showPopup()
   }
 
   override fun showPopup() {
