@@ -38,7 +38,7 @@ class NavBarVmImpl(
 
   init {
     cs.launch {
-      contextItems.collectLatest { items ->
+      contextItems.distinctUntilChanged().collectLatest { items ->
         if (items.isNotEmpty()) {
           _items.value = items.mapIndexed(::NavBarItemVmImpl)
           _selectedIndex.value = -1
