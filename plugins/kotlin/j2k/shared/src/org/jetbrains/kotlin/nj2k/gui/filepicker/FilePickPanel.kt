@@ -16,6 +16,7 @@ import java.awt.BorderLayout
 import java.awt.event.MouseAdapter
 import javax.swing.JTree
 import javax.swing.tree.DefaultMutableTreeNode
+import javax.swing.tree.TreePath
 
 class FilePickerPanel(
     private val project: Project,
@@ -31,6 +32,7 @@ class FilePickerPanel(
         val checkBoxTree = CheckboxTree(CheckBoxTreeCellRenderer(), rootNode)
         uncheckAllNodes(rootNode)
         checkNodes(rootNode, selectedFiles)
+        expandNodes(checkBoxTree, rootNode, selectedFiles)
         // イベント登録
         registerEvents(checkBoxTree)
         // スクロールパネルを追加
@@ -62,7 +64,20 @@ class FilePickerPanel(
         if (files.contains(node.userObject)) {
             node.isChecked = true
         }
-        node.children().asSequence().filterIsInstance<CheckedTreeNode>().forEach { checkNodes(it, files) }
+        node.children().asSequence().filterIsInstance<CheckedTreeNode>().forEach {
+            checkNodes(it, files)
+        }
+    }
+
+    // 指定したノードを展開する
+    private fun expandNodes(tree: JTree, node: CheckedTreeNode, files: List<VirtualFile>) {
+        if (files.contains(node.userObject)){
+            val path = TreePath(node.path)
+            tree.expandPath(path)
+        }
+        node.children().asSequence().filterIsInstance<CheckedTreeNode>().forEach {
+            expandNodes(tree, it, files)
+        }
     }
 
     // イベント登録
