@@ -1,0 +1,4 @@
+3 enum class ABC(<bold>x: Int</bold>) { (in ABC(Int))
+4 	A(<bold>1</bold>), (in ABC.A)
+6 	constructor(s: String): this(<bold>s.length</bold>) (in ABC(String))
+LIB 		@kotlin.internal.IntrinsicConstEvaluation public open <bold>val length: kotlin.Int</bold> (/* compiled code */) (in String)
