@@ -9,9 +9,10 @@ kt_jvm_library(
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@libraries//:kotlin-stdlib",
     "@libraries//:annotations",
     "@libraries//:kotlinx-coroutines-core-jvm",
+    "@libraries//:kotlin-reflect",
+    "@libraries//:kotlin-stdlib",
     "@community//platform/util/base:util-base",
     "@community//platform/extensions",
     "@community//platform/util",
@@ -21,6 +22,7 @@ kt_jvm_library(
     "@community//platform/core-api:core",
     "@libraries//:jna-platform",
     "@libraries//:pty4j",
+    "@community//platform/ide-core",
   ]
 )
 ### auto-generated section `build` end

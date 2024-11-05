@@ -13,6 +13,7 @@ kt_jvm_library(
     "@community//platform/ui.jcef:ui-jcef",
     "@community//platform/platform-impl/bootstrap:ide-bootstrap",
     "@community//platform/platform-impl:ide-impl",
+    "@community//platform/platform-impl/ui:ide-ui",
     "@community//platform/core-ui",
     "@community//platform/statistics",
     "@community//platform/editor-ui-ex:editor-ex",

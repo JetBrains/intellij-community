@@ -40,8 +40,13 @@ kt_jvm_library(
     "@community//platform/diagnostic",
     "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
     "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+    "@libraries//:guava",
   ],
-  exports = ["@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters"],
+  exports = [
+    "@community//platform/diagnostic/telemetry.exporters:diagnostic-telemetry-exporters",
+    "@community//platform/diagnostic/telemetry/rt:diagnostic-telemetry-rt",
+  ],
   runtime_deps = [":resources"]
 )
 ### auto-generated section `build` end

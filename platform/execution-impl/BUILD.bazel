@@ -44,6 +44,7 @@ kt_jvm_library(
     "@libraries//:rd-core",
     "@community//platform/rd-platform-community:rd-community",
     "@community//platform/util/coroutines:util-coroutines",
+    "@community//platform/eelProvider:eel-provider",
   ],
   exports = ["@community//platform/macro"]
 )

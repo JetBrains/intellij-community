@@ -15,8 +15,9 @@ kt_jvm_library(
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   deps = [
-    "@community//platform/core-api:core",
+    "@community//xml/xml-frontback-impl",
     "@community//xml/xml-psi-api:xml-psi",
+    "@community//platform/core-api:core",
     "@community//platform/core-impl",
     "@community//platform/analysis-impl",
     "@community//platform/projectModel-impl",
@@ -38,6 +39,7 @@ kt_jvm_library(
     "@community//platform/markdown-utils",
   ],
   exports = [
+    "@community//xml/xml-frontback-impl",
     "@community//xml/xml-psi-api:xml-psi",
     "@community//RegExpSupport:regexp",
   ],

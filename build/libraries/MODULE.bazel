@@ -1,8 +1,8 @@
 module(name = "libraries")
 
 bazel_dep(name = "rules_kotlin", version = "2.0.0")
-bazel_dep(name = "rules_java", version = "7.11.1")
-bazel_dep(name = "rules_jvm_external", version = "6.4")
+bazel_dep(name = "rules_java", version = "8.3.0")
+bazel_dep(name = "rules_jvm_external", version = "6.5")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
@@ -23,10 +23,10 @@ maven.install(
   ### auto-generated section `artifacts` start
   artifacts = [
     "org.jetbrains.kotlin:kotlin-serialization-compiler-plugin:2.0.10",
-    "ai.grazie.nlp:nlp-detect-jvm:0.3.132",
-    "ai.grazie.spell:gec-spell-engine-local-jvm:0.3.132",
+    "ai.grazie.nlp:nlp-detect-jvm:0.3.143",
+    "ai.grazie.spell:gec-spell-engine-local-jvm:0.3.143",
     "ai.grazie.spell:hunspell-en-jvm:0.2.141",
-    "ai.grazie.utils:utils-lucene-lt-compatibility-jvm:0.3.132",
+    "ai.grazie.utils:utils-lucene-lt-compatibility:0.3.143",
     "com.amazon.ion:ion-java:1.11.9",
     "com.dynatrace.hash4j:hash4j:0.18.0",
     "com.esotericsoftware:kryo5:5.6.0",
@@ -56,10 +56,10 @@ maven.install(
     "com.jetbrains.fus.reporting:ap-validation:76",
     "com.jetbrains.intellij.devkit:devkit-runtime-module-repository-jps:241.12019",
     "com.jetbrains.mlapi:extension:34",
-    "com.jetbrains.rd:rd-core:2024.3-pre2",
-    "com.jetbrains.rd:rd-framework:2024.3-pre2",
-    "com.jetbrains.rd:rd-swing:2024.3-pre2",
-    "com.jetbrains.rd:rd-text:2024.3-pre2",
+    "com.jetbrains.rd:rd-core:2024.3.1",
+    "com.jetbrains.rd:rd-framework:2024.3.1",
+    "com.jetbrains.rd:rd-swing:2024.3.1",
+    "com.jetbrains.rd:rd-text:2024.3.1",
     "com.jetbrains:jbr-api:1.0.0",
     "com.jgoodies:forms:1.1-preview",
     "com.jgoodies:jgoodies-common:1.4.0",
@@ -106,8 +106,8 @@ maven.install(
     "org.apache.commons:commons-compress:1.26.1",
     "org.apache.commons:commons-lang3:3.17.0",
     "org.apache.httpcomponents:httpmime:4.5.14",
-    "org.apache.lucene:lucene-analysis-common:9.10.0",
-    "org.apache.lucene:lucene-core:9.10.0",
+    "org.apache.lucene:lucene-analysis-common:9.12.0",
+    "org.apache.lucene:lucene-core:9.12.0",
     "org.apache.maven.resolver:maven-resolver-connector-basic:1.9.22",
     "org.apache.maven.resolver:maven-resolver-transport-file:1.9.22",
     "org.apache.maven.resolver:maven-resolver-transport-http:1.9.22",
@@ -136,9 +136,9 @@ maven.install(
     "org.jetbrains.jediterm:jediterm-core:3.47",
     "org.jetbrains.jediterm:jediterm-ui:3.47",
     "org.jetbrains.jps:jps-javac-extension:10",
-    "org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.0.20-release-360",
-    "org.jetbrains.kotlin:kotlin-reflect:2.0.21-RC",
-    "org.jetbrains.kotlin:kotlin-stdlib:2.0.21-RC",
+    "org.jetbrains.kotlin:kotlin-jps-plugin-classpath:2.0.21-release-482",
+    "org.jetbrains.kotlin:kotlin-reflect:2.0.21-488",
+    "org.jetbrains.kotlin:kotlin-stdlib:2.0.21-488",
     "org.jetbrains.kotlinx:kotlinx-collections-immutable-jvm:0.3.8",
     "org.jetbrains.kotlinx:kotlinx-datetime-jvm:0.6.1",
     "org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0",
@@ -148,7 +148,7 @@ maven.install(
     "org.jetbrains.kotlinx:kotlinx-serialization-json-jvm:1.6.3",
     "org.jetbrains.kotlinx:kotlinx-serialization-protobuf-jvm:1.6.3",
     "org.jetbrains.nativecerts:jvm-native-trusted-roots:1.0.21",
-    "org.jetbrains.pty4j:pty4j:0.12.35",
+    "org.jetbrains.pty4j:pty4j:0.13.1",
     "org.jetbrains.teamcity:serviceMessages:2024.07",
     "org.jetbrains:annotations-java5:24.0.0",
     "org.jetbrains:annotations:24.0.0",

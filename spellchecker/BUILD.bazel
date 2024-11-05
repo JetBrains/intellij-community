@@ -33,7 +33,7 @@ kt_jvm_library(
     "@libraries//:gec-spell-engine-local-jvm",
     "@libraries//:nlp-detect-jvm",
     "@libraries//:hunspell-en-jvm",
-    "@libraries//:utils-lucene-lt-compatibility-jvm",
+    "@libraries//:utils-lucene-lt-compatibility",
     "@libraries//:java-string-similarity",
     "@libraries//:lucene-core",
     "@libraries//:lucene-analysis-common",

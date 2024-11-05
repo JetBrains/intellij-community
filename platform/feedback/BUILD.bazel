@@ -28,6 +28,8 @@ kt_jvm_library(
     "@community//platform/util/xmlDom:util-xmlDom",
     "@community//platform/statistics",
     "@community//platform/core-ui",
+    "@community//platform/platform-impl/internal:ide-internal",
+    "@libraries//:jna-platform",
   ],
   runtime_deps = [":resources"]
 )

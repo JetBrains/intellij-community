@@ -102,6 +102,9 @@ kt_jvm_library(
     "@community//platform/util/storages:util-io-storages",
     "@community//platform/platform-impl/internal:ide-internal",
     "@community//platform/util/concurrency",
+    "@community//platform/platform-impl/ui:ide-ui",
+    "@community//platform/eel",
+    "@community//platform/eelProvider:eel-provider",
   ],
   exports = [
     "@community//platform/lang-api:lang",

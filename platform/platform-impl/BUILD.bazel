@@ -127,6 +127,7 @@ kt_jvm_library(
     "@community//platform/ui.jcef:ui-jcef",
     "@community//fleet/util/core:fleet-util-core",
     "@community//platform/eelProvider:eel-provider",
+    "@community//platform/platform-impl/ui:ide-ui",
   ],
   exports = [
     "@community//platform/platform-api:ide",

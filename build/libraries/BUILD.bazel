@@ -944,8 +944,8 @@ java_library(
 )
 
 java_library(
-  name = "utils-lucene-lt-compatibility-jvm",
-  exports = ["@maven//:ai_grazie_utils_utils_lucene_lt_compatibility_jvm"],
+  name = "utils-lucene-lt-compatibility",
+  exports = ["@maven//:ai_grazie_utils_utils_lucene_lt_compatibility"],
   visibility = ["//visibility:public"]
 )
 

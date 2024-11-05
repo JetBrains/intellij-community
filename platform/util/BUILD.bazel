@@ -35,6 +35,7 @@ kt_jvm_library(
     "@libraries//:kotlinx-serialization-json-jvm",
     "@libraries//:caffeine",
     "@community//platform/util/troveCompileOnly:util-troveCompileOnly",
+    "@community//platform/util/coroutines:util-coroutines",
   ],
   exports = [
     "@libraries//:annotations",

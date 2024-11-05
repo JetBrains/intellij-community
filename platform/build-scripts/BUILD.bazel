@@ -36,7 +36,6 @@ kt_jvm_library(
     "@community//platform/testFramework/core:testFramework-core",
     "@community//platform/util-class-loader:util-classLoader",
     "@libraries//:jackson-jr-objects",
-    "@community//plugins/groovy/jps-plugin:groovy-jps",
     "@community//platform/statistics/config:statistics-config",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:gson",
@@ -88,7 +87,6 @@ kt_jvm_library(
   ],
   runtime_deps = [
     "@libraries//:commons-cli",
-    "@community//plugins/groovy/rt:groovy-rt",
     "@community//plugins/devkit/jps-plugin:devkit-jps",
     "@community//plugins/ui-designer/jps-plugin:java-guiForms-jps",
     "@libraries//:jaxb-api",

@@ -28,6 +28,7 @@ kt_jvm_library(
     "@community//platform/lvcs-api:lvcs",
     "@community//platform/util/coroutines:util-coroutines",
     "@community//platform/indexing-api:indexing",
+    "@community//platform/platform-impl/ui:ide-ui",
     "@libraries//:jna-platform",
     "@libraries//:hash4j",
     "@libraries//:jbr-api",

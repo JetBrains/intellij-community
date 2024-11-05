@@ -18,7 +18,6 @@ kt_jvm_library(
   deps = [
     "@community//fleet/util/core:fleet-util-core",
     "@libraries//:kotlin-stdlib",
-    "@libraries//:kotlin-reflect",
     "@libraries//:intellij-deps-fastutil",
     "@libraries//:kotlinx-collections-immutable-jvm",
     "@libraries//:annotations",
