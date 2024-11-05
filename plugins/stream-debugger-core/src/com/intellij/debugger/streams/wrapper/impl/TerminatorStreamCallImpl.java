@@ -16,15 +16,19 @@ import java.util.List;
 public class TerminatorStreamCallImpl extends StreamCallImpl implements TerminatorStreamCall {
   private final GenericType myTypeBefore;
   private final GenericType myReturnType;
+  private final Boolean myReturnsVoid;
 
   public TerminatorStreamCallImpl(@NotNull String name,
                                   @NotNull List<CallArgument> args,
                                   @NotNull GenericType typeBefore,
                                   @NotNull GenericType resultType,
-                                  @NotNull TextRange range) {
+                                  @NotNull TextRange range,
+                                  @NotNull Boolean returnsVoid
+                                  ) {
     super(name, args, StreamCallType.TERMINATOR, range);
     myTypeBefore = typeBefore;
     myReturnType = resultType;
+    myReturnsVoid = returnsVoid;
   }
 
   @Override
@@ -35,5 +39,10 @@ public class TerminatorStreamCallImpl extends StreamCallImpl implements Terminat
   @Override
   public @NotNull GenericType getResultType() {
     return myReturnType;
+  }
+
+  @Override
+  public Boolean returnsVoid() {
+    return myReturnsVoid;
   }
 }

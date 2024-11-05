@@ -38,7 +38,7 @@ import java.util.stream.Stream;
 /**
  * @author Vitaliy.Bibaev
  */
-public final class TraceStreamAction extends AnAction {
+public class TraceStreamAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(TraceStreamAction.class);
 
   private static final ChainResolver CHAIN_RESOLVER = new ChainResolver();

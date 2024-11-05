@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.debugger.sequence.psi.impl
 
 import com.intellij.debugger.streams.psi.ChainTransformer
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -12,10 +13,10 @@ import com.intellij.debugger.streams.wrapper.impl.*
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.CallTypeExtractor
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.KotlinPsiUtil
 import org.jetbrains.kotlin.idea.debugger.sequence.psi.callName
-import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtValueArgument
@@ -39,7 +40,7 @@ class KotlinChainTransformerImpl(private val typeExtractor: CallTypeExtractor) :
         val terminationCall = TerminatorStreamCallImpl(
             terminationsPsiCall.callName(),
             terminationsPsiCall.valueArguments.map { createCallArgument(terminationsPsiCall, it) },
-            typeBeforeTerminator, resultType, terminationsPsiCall.textRange
+            typeBeforeTerminator, resultType, terminationsPsiCall.textRange, resultType == JavaTypes.VOID
         )
 
         val typeAfterQualifier =

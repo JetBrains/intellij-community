@@ -10,4 +10,6 @@ import org.jetbrains.annotations.NotNull;
 public interface TerminatorStreamCall extends StreamCall, TypeBeforeAware {
   @NotNull
   GenericType getResultType();
+
+  Boolean returnsVoid();
 }

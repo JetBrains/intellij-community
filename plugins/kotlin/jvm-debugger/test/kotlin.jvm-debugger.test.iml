@@ -62,5 +62,6 @@
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.ui" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.jdom" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.impl.shared" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.debugger.streams" scope="TEST" />
   </component>
 </module>

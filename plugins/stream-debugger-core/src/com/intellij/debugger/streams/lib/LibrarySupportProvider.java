@@ -16,7 +16,7 @@ import java.util.List;
  * @author Vitaliy.Bibaev
  */
 public interface LibrarySupportProvider {
-  ExtensionPointName<LibrarySupportProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.debugger.streams.librarySupport");
+  ExtensionPointName<LibrarySupportProvider> EP_NAME = ExtensionPointName.create("org.jetbrains.platform.debugger.streams.librarySupport");
 
   static @NotNull List<LibrarySupportProvider> getList() {
     return EP_NAME.getExtensionList();

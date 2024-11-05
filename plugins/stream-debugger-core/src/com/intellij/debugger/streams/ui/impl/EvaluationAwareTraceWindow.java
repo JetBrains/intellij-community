@@ -6,7 +6,6 @@ import com.intellij.debugger.streams.StreamDebuggerBundle;
 import com.intellij.debugger.streams.resolve.ResolvedStreamCall;
 import com.intellij.debugger.streams.resolve.ResolvedStreamChain;
 import com.intellij.debugger.streams.trace.*;
-import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes;
 import com.intellij.debugger.streams.ui.TraceController;
 import com.intellij.debugger.streams.wrapper.QualifierExpression;
 import com.intellij.debugger.streams.wrapper.StreamCall;
@@ -120,7 +119,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
     for (int i = 1; i < myTabContents.size(); i++) {
       if (i == myTabContents.size() - 1 &&
           (resolvedTrace.exceptionThrown() ||
-           resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID()))) {
+           resolvedTrace.getSourceChain().getTerminationCall().returnsVoid())) {
         break;
       }
 
@@ -144,7 +143,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
       myTabsPane.insertTab(StreamDebuggerBundle.message("exception.tab.name"), AllIcons.Nodes.ErrorIntroduction, exceptionView, "", 0);
       myTabsPane.setSelectedIndex(0);
     }
-    else if (resolvedTrace.getSourceChain().getTerminationCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
+    else if (resolvedTrace.getSourceChain().getTerminationCall().returnsVoid()) {
       JBLabel label = new JBLabel(StreamDebuggerBundle.message("tab.content.no.result"), SwingConstants.CENTER);
       resultTab.setContent(label, BorderLayout.CENTER);
     }
@@ -200,7 +199,7 @@ public class EvaluationAwareTraceWindow extends DialogWrapper {
 
     final ResolvedStreamCall.Terminator terminator = chain.getTerminator();
     final IntermediateState afterTerminationState = terminator.getStateAfter();
-    if (afterTerminationState != null && !terminator.getCall().getResultType().equals(JavaTypes.INSTANCE.getVOID())) {
+    if (afterTerminationState != null && !terminator.getCall().returnsVoid()) {
 
       final TraceControllerImpl terminationController = new TraceControllerImpl(afterTerminationState);
 

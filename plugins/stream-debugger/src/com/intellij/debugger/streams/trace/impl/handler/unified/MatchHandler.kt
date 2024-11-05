@@ -6,6 +6,7 @@ import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.Expression
 import com.intellij.debugger.streams.trace.dsl.VariableDeclaration
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
+import com.intellij.debugger.streams.trace.dsl.impl.java.JavaTypes
 import com.intellij.debugger.streams.trace.impl.handler.type.ClassTypeImpl
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -69,5 +70,5 @@ class MatchHandler(private val call: TerminatorStreamCall, dsl: Dsl) : HandlerBa
   }
 
   private fun TerminatorStreamCall.transformArgs(args: List<CallArgument>): TerminatorStreamCall =
-    TerminatorStreamCallImpl(name, args, typeBefore, resultType, textRange)
+    TerminatorStreamCallImpl(name, args, typeBefore, resultType, textRange, resultType == JavaTypes.VOID)
 }
