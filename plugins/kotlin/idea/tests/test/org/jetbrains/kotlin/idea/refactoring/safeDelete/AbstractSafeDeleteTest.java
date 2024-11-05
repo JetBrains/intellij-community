@@ -13,7 +13,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
+import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.kotlin.idea.base.test.IgnoreTests;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.*;
@@ -123,25 +125,33 @@ public abstract class AbstractSafeDeleteTest extends KotlinLightCodeInsightFixtu
 
         T element = PsiTreeUtil.getParentOfType(elementAtCaret, elementClass, false);
 
-        try {
-            SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
-            for (int j = 0; j < filePaths.length; j++) {
-                File file = new File(filePaths[j] + ".after");
-                if (isFirPlugin()) {
-                    File firSpecific = new File(filePaths[j] + ".fir.after");
-                    if (firSpecific.exists()) {
-                        file = firSpecific;
-                    }
-                }
-                assertSameLinesWithFile(file.getAbsolutePath(), editors[j].getDocument().getText());
-            }
-        }
-        catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-            List<String> messages = new ArrayList<String>(e.getMessages());
-            Collections.sort(messages);
+        IgnoreTests.INSTANCE.runTestIfNotDisabledByFileDirective(
+          dataFile().toPath(),
+          IgnoreTests.DIRECTIVES.of(getPluginMode()),
+          __ -> Collections.emptyList(),
+          IgnoreTests.DirectivePosition.LAST_LINE_IN_FILE,
+          __ -> {
+              try {
+                  SafeDeleteHandler.invoke(getProject(), new PsiElement[] {element}, null, true, null);
+                  for (int j = 0; j < filePaths.length; j++) {
+                      File file = new File(filePaths[j] + ".after");
+                      if (isFirPlugin()) {
+                          File firSpecific = new File(filePaths[j] + ".fir.after");
+                          if (firSpecific.exists()) {
+                              file = firSpecific;
+                          }
+                      }
+                      assertSameLinesWithFile(file.getAbsolutePath(), editors[j].getDocument().getText());
+                  }
+              } catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+                  List<String> messages = new ArrayList<String>(e.getMessages());
+                  Collections.sort(messages);
 
-            File messageFile = new File(path + ".messages");
-            assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
-        }
+                  File messageFile = new File(path + ".messages");
+                  assertSameLinesWithFile(messageFile.getAbsolutePath(), StringUtil.join(messages, "\n"));
+              }
+              return Unit.INSTANCE;
+          }
+        );
     }
 }
