@@ -4,11 +4,12 @@ package com.intellij.debugger.streams.trace.impl
 import com.intellij.debugger.engine.JavaValue
 import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
+import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
 
 
 class JavaValueInterpreter : XValueInterpreter {
-  override fun tryExtractResult(result: XValue): XValueInterpreter.Result? {
+  override fun tryExtractResult(session: XDebugSession, result: XValue): XValueInterpreter.Result? {
     if (result is JavaValue) {
       val reference = result.descriptor.getValue()
       if (reference is com.sun.jdi.ArrayReference) {

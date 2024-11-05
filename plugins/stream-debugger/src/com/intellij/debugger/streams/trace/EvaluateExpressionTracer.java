@@ -41,7 +41,7 @@ public class EvaluateExpressionTracer implements StreamTracer {
       evaluator.evaluate(XExpressionImpl.fromText(streamTraceExpression, EvaluationMode.CODE_FRAGMENT), new XEvaluationCallbackBase() {
         @Override
         public void evaluated(@NotNull XValue evaluationResult) {
-          var result = myXValueInterpreter.tryExtractResult(evaluationResult);
+          var result = myXValueInterpreter.tryExtractResult(mySession, evaluationResult);
           if (result != null) {
             final TracingResult interpretedResult;
             try {
