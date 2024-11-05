@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.ComponentUtil
-import com.intellij.util.concurrency.createChildContext
+import com.intellij.util.concurrency.createChildContextIgnoreStructuredConcurrency
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.update.UiNotifyConnector.Companion.doWhenFirstShown
 import com.intellij.util.ui.update.UiNotifyConnector.ContextActivatable.Companion.wrapIfNeeded
@@ -67,7 +67,7 @@ open class UiNotifyConnector : Disposable, HierarchyListener {
       fun Activatable.wrapIfNeeded(): ContextActivatable = this as? ContextActivatable ?: ContextActivatable(this)
     }
 
-    private val childContext = createChildContext(ContextActivatable::class.qualifiedName ?: "<unknown>")
+    private val childContext = createChildContextIgnoreStructuredConcurrency(ContextActivatable::class.java.name)
 
     override fun showNotify() {
       resetThreadContext().use {

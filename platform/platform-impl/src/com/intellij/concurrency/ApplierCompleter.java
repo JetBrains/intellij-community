@@ -95,10 +95,7 @@ final class ApplierCompleter<T> extends ForkJoinTask<Void> {
     this.lo = lo;
     this.hi = hi;
     this.failedSubTasks = failedSubTasks;
-    CoroutineContext nonStructuredContext = ThreadContext.currentThreadContext().minusKey(BlockingJob.Companion);
-    try (AccessToken ignored = ThreadContext.installThreadContext(nonStructuredContext, true)) {
-      this.childContext = Propagation.createChildContext("ApplierCompleter");
-    }
+    this.childContext = Propagation.createChildContextIgnoreStructuredConcurrency("ApplierCompleter");
   }
 
   @Override
