@@ -31,32 +31,31 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public final void stop() {
-    boolean cancelled = false;
-    synchronized (getLock()) {
-      super.stop();
-      if (tryCancel(null)) {
-        cancelled = true;
-      }
+    if(mySpan != null) {
+      mySpan.end();
     }
-    if (cancelled) {
+    if (tryStop()) {
       onStop();
     }
   }
 
-  // return true if was stopped
-  void stopIfRunning() {
+  // return true if stopped successfully
+  private boolean tryStop() {
+    boolean wasRunning;
     synchronized (getLock()) {
-      if(mySpan != null) {
-        mySpan.end();
+      wasRunning = isRunning();
+      if (wasRunning) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("stop(" + this + ")");
+        }
+        super.stop();
       }
-      if (isRunning()) {
-        stop();
-        return;
-      }
-      cancel();
+      tryCancel(null); // do not call onCancelled in stop()
     }
+    return wasRunning;
   }
 
+  // must be called under getLock()
   private boolean tryCancel(@Nullable Throwable cause) {
     if (!isCanceled()) {
       // save before cancel to avoid data race with "checkCanceled(); catch(PCE) { check saved Exception }" elsewhere
@@ -92,16 +91,19 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
     doCancel(cause, reason);
   }
 
+  // true if canceled successfully
   private void doCancel(@Nullable Throwable cause, @NotNull String reason) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("doCancel(" + this +
+                (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
+                (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
+    }
+    boolean wasCanceled;
     synchronized (getLock()) {
-      if (tryCancel(cause)) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("doCancel(" + this +
-                    (reason.isEmpty() ? "" : ", reason: '" + reason + "'") +
-                    (cause == null ? "" : ", cause: " + ExceptionUtil.getThrowableText(cause)) + ")");
-        }
-        ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
-      }
+      wasCanceled = tryCancel(cause);
+    }
+    if (wasCanceled) { // call outside synchronized to avoid deadlock
+      ProgressManager.getInstance().executeNonCancelableSection(() -> onCancelled(reason));
     }
   }
 
@@ -161,7 +163,7 @@ public class DaemonProgressIndicator extends AbstractProgressIndicatorBase imple
 
   @Override
   public String toString() {
-    return System.identityHashCode(this) + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + " "+(isCanceled() ? "X" : "V");
+    return System.identityHashCode(this) + (debug.get()>0 ? "; " + myTraceableDisposable.getStackTrace() + "\n;" : "") + (isCanceled() ? "X" : "V");
   }
 
   @Override

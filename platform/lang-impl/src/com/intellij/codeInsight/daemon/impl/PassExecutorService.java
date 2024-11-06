@@ -23,7 +23,10 @@ import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.ClientFileEditorManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -36,6 +39,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.diagnostic.telemetry.helpers.TraceKt;
@@ -56,10 +60,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -134,7 +135,7 @@ final class PassExecutorService implements Disposable {
                     HighlightingPass @NotNull [] passes,
                     @NotNull DaemonProgressIndicator updateProgress) {
     if (isDisposed()) {
-      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(fileEditor, updateProgress, null, "PES is disposed");
+      ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(updateProgress, null, "PES is disposed");
       return;
     }
     ApplicationManager.getApplication().assertIsNonDispatchThread();
@@ -449,7 +450,7 @@ final class PassExecutorService implements Disposable {
             log(myUpdateProgress, myPass, "Canceled ");
             if (!myUpdateProgress.isCanceled()) {
               //in case some smart asses throw PCE just for fun
-              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myFileEditor, myUpdateProgress,
+              ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).stopAndRestartMyProcess(myUpdateProgress,
                                                                                                           ObjectUtils.notNull(e.getCause(), e), "PCE was thrown by pass");
               if (LOG.isDebugEnabled()) {
                 LOG.debug("PCE was thrown by " + myPass.getClass(), e);
@@ -528,16 +529,23 @@ final class PassExecutorService implements Disposable {
           throw e;
         }
         catch (RuntimeException e) {
-          VirtualFile file = fileEditor.getFile();
-          FileType fileType = file == null ? null : file.getFileType();
+          VirtualFile virtualFile = fileEditor.getFile();
+          FileType fileType = virtualFile == null ? null : virtualFile.getFileType();
           String message = "Exception while applying information to " + fileEditor + "(" + fileType + ")";
           log(updateProgress, pass, message + e);
           throw new RuntimeException(message, e);
         }
         if (threadsToStartCountdown.decrementAndGet() == 0) {
           HighlightingSessionImpl.waitForAllSessionsHighlightInfosApplied(updateProgress);
-          log(updateProgress, pass, "Stopping ");
-          updateProgress.stopIfRunning();
+          if (LOG.isTraceEnabled()) {
+            VirtualFile virtualFile = fileEditor.getFile();
+            Document document = FileDocumentManager.getInstance().getDocument(virtualFile);
+            RangeHighlighter[] highlighters = document == null ? RangeHighlighter.EMPTY_ARRAY : DocumentMarkupModel.forDocument(document, myProject, true).getAllHighlighters();
+            List<RangeHighlighter> sorted = ContainerUtil.sorted(Arrays.asList(highlighters), Segment.BY_START_OFFSET_THEN_END_OFFSET);
+            log(updateProgress, pass, "result markup=" + StringUtil.join(sorted, h -> h.toString(), "\n   "));
+          }
+          log(updateProgress, pass, "Stopping. ");
+          updateProgress.stop();
           clearStaleEntries();
         }
         else {
@@ -587,7 +595,7 @@ final class PassExecutorService implements Disposable {
                          + StringUtil.join(info, Functions.TO_STRING(), " ")
                          + "; progress=" + (progressIndicator == null ? null : System.identityHashCode(progressIndicator))
                          + (progressIndicator == null ? "?" : progressIndicator.isCanceled() ? "X" : "V")
-                         + " " + docText;
+                         + (docText.isEmpty() ? "": " " + docText);
         LOG.debug(message);
       }
     }

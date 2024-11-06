@@ -70,6 +70,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * test light bulb behaviour, intention action update and application
@@ -229,6 +230,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
   }
 
   public void testLightBulbDoesNotUpdateIntentionsInEDT() {
+    AtomicInteger updateCount = new AtomicInteger();
     IntentionAction longLongUpdate = new AbstractIntentionAction() {
       @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
@@ -243,6 +245,7 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
 
       @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+        updateCount.incrementAndGet();
         ApplicationManager.getApplication().assertIsNonDispatchThread();
         return true;
       }
@@ -252,24 +255,31 @@ public class LightBulbTest extends DaemonAnalyzerTestCase {
     configureByText(JavaFileType.INSTANCE, "class X { <caret>  }");
     DaemonRespondToChangesTest.makeEditorWindowVisible(new Point(0, 0), myEditor);
     doHighlighting();
+    assertTrue("updateCount:"+updateCount, updateCount.get() > 0);
     myDaemonCodeAnalyzer.restart(getTestName(false));
     DaemonRespondToChangesTest.runWithReparseDelay(0, () -> {
       for (int i = 0; i < 1000; i++) {
+        LOG.debug("i = " + i);
+        int updateCount0 = updateCount.get();
         caretRight();
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
-        Object updateProgress = new HashMap<>(myDaemonCodeAnalyzer.getUpdateProgress());
-        long waitForDaemonStart = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress) && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until the daemon started
+        myDaemonCodeAnalyzer.restart();
+        assertFalse(myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()));
+        long daemonStartDeadline = System.currentTimeMillis() + 5000;
+        while (!myDaemonCodeAnalyzer.isRunning() && !myDaemonCodeAnalyzer.getFileStatusMap().allDirtyScopesAreNull(myEditor.getDocument()) && System.currentTimeMillis() < daemonStartDeadline) { // wait until the daemon started
           UIUtil.dispatchAllInvocationEvents();
         }
-        if (myDaemonCodeAnalyzer.getUpdateProgress().equals(updateProgress)) {
+        if (System.currentTimeMillis() > daemonStartDeadline) {
           throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
-        while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
+        while (myDaemonCodeAnalyzer.isRunning()) {
           UIUtil.dispatchAllInvocationEvents(); // wait for a bit more until ShowIntentionsPass.doApplyInformationToEditor() called
         }
+        long finish = System.currentTimeMillis();
+        LOG.debug("start: "+(daemonStartDeadline-5000)+"; started: "+start+"; finished: "+finish+"; updateCount:"+updateCount);
+        assertTrue("updateCount0: "+updateCount0+"; updateCount:"+updateCount, updateCount.get() > updateCount0);
       }
     });
   }
