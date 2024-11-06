@@ -17,7 +17,7 @@ fun TreeViewModel(coroutineScope: CoroutineScope, domainModel: TreeDomainModel):
 interface TreeViewModel {
   val domainModel: TreeDomainModel
   val root: Flow<TreeNodeViewModel?>
-  suspend fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
+  fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
   suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
 }
 
