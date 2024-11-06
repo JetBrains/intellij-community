@@ -154,6 +154,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.InspectionDescriptionNotFoundInspection"
                      key="inspection.inspection.description.not.found.inspection.display.name"/>
+    <localInspection language="JVM" shortName="checkReturnValue"
+                     key="inspections.check.return.value"
+                     groupKey="inspections.group.code"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.CheckReturnValueInspection"/>
     <localInspection language="UAST" shortName="InspectionUsingGrayColors"
                      projectType="INTELLIJ_PLUGIN"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
