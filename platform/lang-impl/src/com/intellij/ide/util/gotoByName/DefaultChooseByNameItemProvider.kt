@@ -25,18 +25,9 @@ import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
-import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
-import kotlin.collections.MutableList
-import kotlin.collections.MutableSet
-import kotlin.collections.listOf
-import kotlin.collections.map
-import kotlin.collections.mapNotNull
-import kotlin.collections.mutableListOf
-import kotlin.collections.sortWith
-import kotlin.collections.sortedWith
 import kotlin.math.max
 
 open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameInScopeItemProvider {
@@ -84,16 +75,16 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
     return ProgressManager.getInstance().computePrioritized<Boolean?, RuntimeException?>(
       ThrowableComputable {
         filterElements(base,
-                       indicator,
-                       myContext?.getElement(),
-                       Supplier { base.getModel().getNames(parameters.isSearchInLibraries) },
-                       consumer,
-                       parameters)
+                                 indicator,
+                                 myContext?.getElement(),
+                                 Supplier { base.getModel().getNames(parameters.isSearchInLibraries()) },
+                                 consumer,
+                                 parameters)
       })
   }
 
   protected val pathProximityComparator: PathProximityComparator
-    get() = PathProximityComparator(myContext?.getElement())
+    get() = PathProximityComparator(if (myContext == null) null else myContext.getElement())
 
   override fun filterNames(base: ChooseByNameViewModel, names: Array<String?>, pattern: String): MutableList<String?> {
     var pattern = pattern
@@ -165,8 +156,8 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       consumer: Processor<in FoundItemDescriptor<*>>,
       parameters: FindSymbolParameters
     ): Boolean {
-      val everywhere = parameters.isSearchInLibraries
-      val pattern = parameters.completePattern
+      val everywhere = parameters.isSearchInLibraries()
+      val pattern = parameters.getCompletePattern()
       if (base.getProject() != null) {
         base.getProject().putUserData<String?>(ChooseByNamePopup.CURRENT_SEARCH_PATTERN, pattern)
       }
@@ -199,7 +190,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
 
       val allNames: MutableSet<String> = HashSet<String>(result.map { it.elementName })
       for (i in 1..<namePattern.length - 1) {
-        if (namePattern[i] == '*') {
+        if (namePattern.get(i) == '*') {
           val namesForSuffix: MutableList<MatchResult> = getSortedNames(base, parameters, indicator, allNamesProducer,
                                                                         convertToMatchingPattern(base, namePattern.substring(i + 1)),
                                                                         preferStartMatches)
@@ -223,7 +214,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       val namesList: MutableList<MatchResult> = getAllNames(base, parameters, indicator, allNamesProducer, namePattern, preferStartMatches)
 
       indicator.checkCanceled()
-      val pattern = parameters.completePattern
+      val pattern = parameters.getCompletePattern()
 
       val started = System.currentTimeMillis()
       namesList.sortWith(Comparator.comparing<MatchResult?, Boolean?>(java.util.function.Function { mr: MatchResult? ->
@@ -255,7 +246,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       if (model is ChooseByNameModelEx) {
         indicator.checkCanceled()
         val started = System.currentTimeMillis()
-        val fullPattern = parameters.completePattern
+        val fullPattern = parameters.getCompletePattern()
         val matcher: MinusculeMatcher = buildPatternMatcher(namePattern, preferStartMatches)
         model.processNames(Processor { sequence: String? ->
           indicator.checkCanceled()
@@ -287,10 +278,9 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
     private fun createParameters(base: ChooseByNameViewModel, pattern: String, everywhere: Boolean): FindSymbolParameters {
       val model = base.getModel()
       val idFilter = if (model is ContributorsBasedGotoByModel) IdFilter.getProjectIdFilter(
-        model.project, everywhere)
+        model.getProject(), everywhere)
       else null
       val searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere)
-      @Suppress("DEPRECATION")
       return FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter)
     }
 
@@ -304,8 +294,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       parameters: FindSymbolParameters
     ): Boolean {
       val model = base.getModel()
-      @Suppress(
-        "UNCHECKED_CAST") val modelComparator: Comparator<Any> = if (model is Comparator<*>) model as Comparator<Any> else PathProximityComparator(context)
+      val modelComparator: Comparator<Any> = if (model is Comparator<*>) model as Comparator<Any> else PathProximityComparator(context)
       val weightComparator: Comparator<Pair<Any, MatchResult>> =
          compareBy<Pair<Any, MatchResult>, Any>(modelComparator) { it.first }
         .thenBy { it.second }
@@ -324,7 +313,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
               val elements = if (model is ContributorsBasedGotoByModel)
                 model.getElementsByName(name, parameters, indicator)
               else
-                model.getElementsByName(name, everywhere, getNamePattern(base, parameters.completePattern))
+                model.getElementsByName(name, everywhere, getNamePattern(base, parameters.getCompletePattern()))
               if (elements.size > 1) {
                 val sameNameElements = elements.mapNotNull {
                   indicator.checkCanceled()
@@ -352,8 +341,8 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
     }
 
     private fun getFullMatcher(parameters: FindSymbolParameters, base: ChooseByNameViewModel): MinusculeMatcher {
-      val fullRawPattern: String = buildFullPattern(base, parameters.completePattern)
-      val fullNamePattern: String = buildFullPattern(base, base.transformPattern(parameters.completePattern))
+      val fullRawPattern: String = buildFullPattern(base, parameters.getCompletePattern())
+      val fullNamePattern: String = buildFullPattern(base, base.transformPattern(parameters.getCompletePattern()))
 
       return NameUtil.buildMatcherWithFallback(fullRawPattern, fullNamePattern, NameUtil.MatchingCaseSensitivity.NONE)
     }
@@ -361,7 +350,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
     private fun buildFullPattern(base: ChooseByNameViewModel, pattern: String): String {
       var fullPattern = "*" + removeModelSpecificMarkup(base.getModel(), pattern)
       for (separator in base.getModel().getSeparators()) {
-        fullPattern = StringUtil.replace(fullPattern, separator, "*$UNIVERSAL_SEPARATOR*")
+        fullPattern = StringUtil.replace(fullPattern, separator, "*" + UNIVERSAL_SEPARATOR + "*")
       }
       return fullPattern
     }
@@ -413,7 +402,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
         }
         true
       }
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress<String?>(listOf(*names), indicator, processor)) {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress<String?>(Arrays.asList<String?>(*names), indicator, processor)) {
         throw ProcessCanceledException()
       }
     }
@@ -426,7 +415,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       var pattern = pattern
       var trimmedPattern: String? = null
       if (base.isSearchInAnyPlace() && !(pattern.trim { it <= ' ' }.also { trimmedPattern = it }).isEmpty() && trimmedPattern!!.length > 1) {
-        pattern = "*$pattern"
+        pattern = "*" + pattern
       }
       return pattern
     }
@@ -455,7 +444,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
         }
         catch (e: Exception) {
           LOG.info(e)
-          return null // no matches appear valid result for "bad" pattern
+          return null // no matches appears valid result for "bad" pattern
         }
       }
       return matchName(matcher, name)
