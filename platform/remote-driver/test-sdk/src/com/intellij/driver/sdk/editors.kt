@@ -5,8 +5,8 @@ import com.intellij.driver.client.Remote
 import com.intellij.driver.client.service
 import com.intellij.driver.model.OnDispatcher
 import com.intellij.driver.sdk.remoteDev.GuestNavigationService
-import com.intellij.driver.sdk.ui.RectangleRef
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.time.Duration.Companion.seconds
 
 @Remote("com.intellij.openapi.editor.Editor")
@@ -55,7 +55,7 @@ interface InlayModel {
 interface Inlay {
   fun getRenderer(): EditorCustomElementRenderer
   fun getOffset(): Int
-  fun getBounds(): RectangleRef
+  fun getBounds(): Rectangle
 }
 
 @Remote("com.intellij.openapi.editor.SoftWrapModel")

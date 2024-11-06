@@ -50,17 +50,7 @@ interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
 
-@Remote("java.awt.Rectangle")
-interface RectangleRef {
-  fun contains(p: Point): Boolean
-  fun getX(): Double
-  fun getY(): Double
-  fun getWidth(): Double
-  fun getCenterX(): Double
-  fun getCenterY(): Double
-}
-
-val RectangleRef.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
+val Rectangle.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
 
 fun printableString(toPrint: String): String {
   val resultString = toPrint.let {
