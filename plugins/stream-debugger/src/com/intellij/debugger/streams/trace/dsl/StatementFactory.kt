@@ -64,6 +64,8 @@ interface StatementFactory {
 
   fun updateCurrentTimeExpression(): Expression
 
+  fun currentNanosecondsExpression(): Expression
+
   fun createNewArrayExpression(elementType: GenericType, args: Array<out Expression>): Expression
 
   fun createNewSizedArray(elementType: GenericType, size: Expression): Expression

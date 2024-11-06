@@ -64,6 +64,8 @@ class DslImpl(private val statementFactory: StatementFactory) : Dsl {
 
   override fun updateTime(): Expression = statementFactory.updateCurrentTimeExpression()
 
+  override fun currentNanoseconds(): Expression = statementFactory.currentNanosecondsExpression()
+
   override fun createPeekCall(elementType: GenericType, lambda: Lambda): IntermediateStreamCall =
     statementFactory.createPeekCall(elementType, lambda)
 

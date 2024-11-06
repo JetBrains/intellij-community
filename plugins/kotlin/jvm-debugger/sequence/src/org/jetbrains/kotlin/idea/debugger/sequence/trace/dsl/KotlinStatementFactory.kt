@@ -83,6 +83,8 @@ class KotlinStatementFactory(private val peekCallFactory: PeekCallFactory) : Sta
 
     override fun updateCurrentTimeExpression(): Expression = TextExpression("time.incrementAndGet()")
 
+    override fun currentNanosecondsExpression(): Expression = TextExpression("java.lang.System.nanoTime()")
+
     override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
         val arguments = args.joinToString { it.toCode() }
 

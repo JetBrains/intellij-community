@@ -7,11 +7,13 @@ import com.intellij.debugger.streams.psi.impl.InheritanceBasedChainDetector
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.debugger.streams.trace.dsl.Lambda
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.TextExpression
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
+import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.CallArgument
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
@@ -32,6 +34,8 @@ internal class JBIterableSupportProvider : LibrarySupportProvider {
 
   private val librarySupport = JBIterableSupport()
   private val dsl = DslImpl(JBIterableJavaStatementFactory())
+  private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
+
   override fun getLanguageId(): String = "JAVA"
 
   override fun getChainBuilder(): StreamChainBuilder {
@@ -41,6 +45,8 @@ internal class JBIterableSupportProvider : LibrarySupportProvider {
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder {
     return JavaTraceExpressionBuilder(project, librarySupport.createHandlerFactory(dsl), dsl)
   }
+
+  override fun getXValueInterpreter(): XValueInterpreter = interpreter
 
   override fun getLibrarySupport(): LibrarySupport = librarySupport
 

@@ -112,7 +112,8 @@ public final class TraceStreamAction extends AnAction {
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = provider.getExpressionBuilder(project);
     final TraceResultInterpreterImpl resultInterpreter = new TraceResultInterpreterImpl(provider.getLibrarySupport().getInterpreterFactory());
-    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter);
+    final XValueInterpreter xValueInterpreter = provider.getXValueInterpreter();
+    final StreamTracer tracer = new EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter);
     tracer.trace(chain, new TracingCallback() {
       @Override
       public void evaluated(@NotNull TracingResult result, @NotNull EvaluationContextImpl context) {

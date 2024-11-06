@@ -7,10 +7,12 @@ import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder
 import com.intellij.debugger.streams.psi.impl.PackageChainDetector
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.debugger.streams.trace.dsl.Dsl
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder
+import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 
@@ -25,6 +27,8 @@ internal class StandardLibrarySupportProvider : LibrarySupportProvider {
     val dsl: Dsl = DslImpl(JavaStatementFactory())
   }
 
+  private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
+
   override fun getLanguageId(): String = "JAVA"
 
   override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
@@ -33,4 +37,6 @@ internal class StandardLibrarySupportProvider : LibrarySupportProvider {
   override fun getChainBuilder(): StreamChainBuilder = builder
 
   override fun getLibrarySupport(): LibrarySupport = support
+
+  override fun getXValueInterpreter(): XValueInterpreter = interpreter
 }

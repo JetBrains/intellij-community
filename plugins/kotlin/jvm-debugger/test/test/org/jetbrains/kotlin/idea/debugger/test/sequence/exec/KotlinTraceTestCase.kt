@@ -47,6 +47,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
         val chainBuilder = getChainBuilder()
         val resultInterpreter = getResultInterpreter()
         val expressionBuilder = getExpressionBuilder()
+        val xValueInterpreter = getXValueInterpreter()
 
         val chainSelector = DEFAULT_CHAIN_SELECTOR
 
@@ -81,7 +82,7 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
                     return
                 }
 
-                EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter).trace(chain, object : TracingCallback {
+                EvaluateExpressionTracer(session, expressionBuilder, resultInterpreter, xValueInterpreter).trace(chain, object : TracingCallback {
                     override fun evaluated(result: TracingResult, context: EvaluationContextImpl) {
                         complete(chain, result, null, null)
                     }
@@ -138,6 +139,10 @@ abstract class KotlinTraceTestCase : KotlinDescriptorTestCaseWithStepping() {
 
     private fun getResultInterpreter(): TraceResultInterpreter {
         return TraceResultInterpreterImpl(librarySupportProvider.librarySupport.interpreterFactory)
+    }
+
+    private fun getXValueInterpreter(): XValueInterpreter {
+        return librarySupportProvider.xValueInterpreter
     }
 
     private fun getChainBuilder(): StreamChainBuilder {

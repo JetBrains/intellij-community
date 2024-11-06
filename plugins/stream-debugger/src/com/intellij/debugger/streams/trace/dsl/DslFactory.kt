@@ -48,5 +48,7 @@ interface DslFactory {
 
   fun updateTime(): Expression
 
+  fun currentNanoseconds() : Expression
+
   fun createPeekCall(elementType: GenericType, lambda: Lambda): IntermediateStreamCall
 }

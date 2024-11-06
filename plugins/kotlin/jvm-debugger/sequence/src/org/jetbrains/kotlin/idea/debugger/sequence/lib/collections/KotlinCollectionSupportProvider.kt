@@ -5,7 +5,9 @@ package org.jetbrains.kotlin.idea.debugger.sequence.lib.collections
 import com.intellij.debugger.streams.lib.LibrarySupport
 import com.intellij.debugger.streams.lib.LibrarySupportProvider
 import com.intellij.debugger.streams.trace.TraceExpressionBuilder
+import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl
+import com.intellij.debugger.streams.trace.impl.JavaValueInterpreter
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -18,6 +20,7 @@ class KotlinCollectionSupportProvider : LibrarySupportProvider {
     private val builder: StreamChainBuilder = KotlinCollectionChainBuilder()
     private val support: LibrarySupport by lazy { KotlinCollectionLibrarySupport() }
     private val dsl by lazy { DslImpl(KotlinStatementFactory(KotlinCollectionsPeekCallFactory())) }
+    private val interpreter : XValueInterpreter by lazy { JavaValueInterpreter() }
 
     override fun getLanguageId(): String = KotlinLanguage.INSTANCE.id
 
@@ -27,4 +30,6 @@ class KotlinCollectionSupportProvider : LibrarySupportProvider {
 
     override fun getExpressionBuilder(project: Project): TraceExpressionBuilder =
         KotlinTraceExpressionBuilder(dsl, support.createHandlerFactory(dsl))
+
+    override fun getXValueInterpreter(): XValueInterpreter = interpreter
 }

@@ -15,7 +15,6 @@ import com.intellij.debugger.streams.trace.impl.handler.type.GenericType
 import com.intellij.debugger.streams.wrapper.IntermediateStreamCall
 import com.intellij.debugger.streams.wrapper.StreamChain
 import com.intellij.debugger.streams.wrapper.impl.StreamChainImpl
-import java.util.*
 
 /**
  * @author Vitaliy.Bibaev
@@ -44,7 +43,7 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
     return dsl.code {
       scope {
         // TODO: avoid language dependent code
-        val startTime = declare(variable(types.LONG, "startTime"), "java.lang.System.nanoTime()".expr, false)
+        val startTime = declare(variable(types.LONG, "startTime"), currentNanoseconds(), false)
         declare(info, newSizedArray(types.ANY, infoArraySize), false)
         declare(timeDeclaration())
         add(declarations)
@@ -52,7 +51,7 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
         add(fillingInfoArray)
 
         val elapsedTime = declare(array(types.LONG, "elapsedTime"),
-                                  newArray(types.LONG, "java.lang.System.nanoTime() - ${startTime.toCode()}".expr), false)
+                                  newArray(types.LONG, "${currentNanoseconds()} - ${startTime.toCode()}".expr), false)
         result assign newArray(types.ANY, info, streamResult, elapsedTime)
       }
     }

@@ -77,6 +77,8 @@ open class JavaStatementFactory : StatementFactory {
 
   override fun updateCurrentTimeExpression(): Expression = TextExpression("time").call("incrementAndGet")
 
+  override fun currentNanosecondsExpression(): Expression = TextExpression("java.lang.System.nanoTime()")
+
   override fun createNewArrayExpression(elementType: GenericType, vararg args: Expression): Expression {
     val elements = args.joinToString(separator = ", ") { it.toCode() }
     return TextExpression("new ${elementType.variableTypeName}[] { $elements }")
