@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext
 import com.intellij.platform.util.progress.RawProgressReporter
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.TestOnly
@@ -17,7 +18,6 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenConsole
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.idea.maven.telemetry.scheduleExportTelemetryTrace
 import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -362,12 +362,11 @@ abstract class MavenEmbedderWrapper internal constructor(private val project: Pr
         withContext(Dispatchers.IO) {
           tracer.spanBuilder("runMavenExecution").useWithScope { span ->
             blockingContext {
-              val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, span.spanContext.traceId, span.spanContext.spanId)
+              val longRunningTaskInput = LongRunningTaskInput(longRunningTaskId, TelemetryContext.current())
               val response = task.run(embedder, longRunningTaskInput)
               val status = response.status
               eventHandler.handleConsoleEvents(status.consoleEvents())
               eventHandler.handleDownloadEvents(status.downloadEvents())
-              scheduleExportTelemetryTrace(project, response.telemetryTrace)
               response.result
             }
           }

@@ -266,7 +266,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                                     MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
-    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.of(longRunningTaskInput);
+    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
     PomHashMap pomHashMap = request.getPomHashMap();
     List<String> activeProfiles = request.getActiveProfiles();
     List<String> inactiveProfiles = request.getInactiveProfiles();
@@ -291,8 +291,8 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
         customizeComponents(workspaceMap);
         ArrayList<MavenServerExecutionResult> result = telemetry.callWithSpan(
           "projectResolver.resolveProjects", () -> projectResolver.resolveProjects());
-        byte[] telemetryTrace = telemetry.shutdown();
-        return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
+        telemetry.shutdown();
+        return new MavenServerResponse(result, getLongRunningTaskStatus(longRunningTaskId, token));
       }
       finally {
         resetComponents();
@@ -726,7 +726,7 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                                  MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
-    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.of(longRunningTaskInput);
+    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
 
 
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, pluginResolutionRequests.size(), myConsoleWrapper)) {
@@ -742,10 +742,10 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                         session.getRepositorySession())));
       });
 
-      byte[] telemetryTrace = telemetry.shutdown();
+      telemetry.shutdown();
       // IDEA-341451: Parallel plugin resolution hangs in Maven 4.0.0-alpha-9
       // It worked fine up until Maven 4.0.0-alpha-8
-      return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
+      return new MavenServerResponse<>(new ArrayList<>(results), getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 
@@ -878,11 +878,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                               MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
-    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.of(longRunningTaskInput);
+    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       ArrayList<MavenGoalExecutionResult> results = executeGoal(task, requests, goal);
-      byte[] telemetryTrace = telemetry.shutdown();
-      return new MavenServerResponse<>(results, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
+      telemetry.shutdown();
+      return new MavenServerResponse<>(results, getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 
@@ -1022,11 +1022,11 @@ public class Maven40ServerEmbedderImpl extends MavenServerEmbeddedBase {
                                                                         MavenToken token) {
     MavenServerUtil.checkToken(token);
     String longRunningTaskId = longRunningTaskInput.getLongRunningTaskId();
-    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.of(longRunningTaskInput);
+    MavenServerOpenTelemetry telemetry = MavenServerOpenTelemetry.from(longRunningTaskInput.getTelemetryContext());
     try (LongRunningTask task = newLongRunningTask(longRunningTaskId, requests.size(), myConsoleWrapper)) {
       ArrayList<MavenArtifact> artifacts = doResolveArtifacts(task, requests);
-      byte[] telemetryTrace = telemetry.shutdown();
-      return new MavenServerResponse<>(artifacts, getLongRunningTaskStatus(longRunningTaskId, token), telemetryTrace);
+      telemetry.shutdown();
+      return new MavenServerResponse<>(artifacts, getLongRunningTaskStatus(longRunningTaskId, token));
     }
   }
 

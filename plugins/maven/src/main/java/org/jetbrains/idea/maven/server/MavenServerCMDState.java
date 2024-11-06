@@ -20,6 +20,11 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
+import com.intellij.platform.diagnostic.telemetry.OtlpConfiguration;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.AgentConfiguration;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentProvider;
+import com.intellij.platform.diagnostic.telemetry.impl.agent.TelemetryAgentResolver;
+import com.intellij.platform.diagnostic.telemetry.rt.context.TelemetryContext;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -35,6 +40,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.jul.JDK14LoggerFactory;
 
+import java.net.URI;
+import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -190,6 +197,10 @@ public class MavenServerCMDState extends CommandLineState {
     //workaround for JDK-4716483
     params.getVMParametersList().addProperty("sun.rmi.server.exceptionTrace", "true");
 
+    if (Registry.is("maven.server.opentelemetry.agent.enabled", false)) {
+      attachTelemetryAgent(params);
+    }
+
     setupMainExt(params);
     return params;
   }
@@ -217,6 +228,27 @@ public class MavenServerCMDState extends CommandLineState {
         defs.put((String)key, (String)value);
       }
     }
+  }
+
+  private static void attachTelemetryAgent(@NotNull SimpleJavaParameters params) {
+    URI traceEndpoint = OtlpConfiguration.getTraceEndpointURI();
+    if (traceEndpoint == null) {
+      return;
+    }
+    Path agentLocation = TelemetryAgentResolver.getAgentLocation();
+    if (agentLocation == null) {
+      return;
+    }
+    AgentConfiguration configuration = AgentConfiguration.forService(
+      "MavenServer",
+      TelemetryContext.current(),
+      traceEndpoint,
+      agentLocation,
+      AgentConfiguration.Settings.withoutMetrics()
+    );
+    List<String> args = TelemetryAgentProvider.getJvmArgs(configuration);
+    ParametersList parametersList = params.getVMParametersList();
+    parametersList.addAll(args);
   }
 
   protected Map<String, String> getMavenOpts() {

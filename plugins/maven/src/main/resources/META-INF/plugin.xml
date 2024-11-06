@@ -405,6 +405,9 @@
     <registryKey key="maven.build.additional.jars" defaultValue="true"
                  description="Build additional jars with classifier"/>
 
+    <registryKey key="maven.server.opentelemetry.agent.enabled" defaultValue="false"
+                 description="Enable performance trace collection from the Maven server side collected by OTLP java agent"/>
+
     <intentionAction>
       <language>XML</language>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
