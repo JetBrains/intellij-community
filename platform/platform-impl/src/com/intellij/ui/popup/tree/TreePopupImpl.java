@@ -290,7 +290,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     }
   }
 
-  private void handleSelect(boolean handleFinalChoices, MouseEvent e) {
+  protected void handleSelect(boolean handleFinalChoices, MouseEvent e) {
     final boolean pathIsAlreadySelected = myShowingChildPath != null && myShowingChildPath.equals(myWizardTree.getSelectionPath());
     if (pathIsAlreadySelected) return;
 
@@ -361,7 +361,7 @@ public class TreePopupImpl extends WizardPopup implements TreePopup, NextStepHan
     myWizardTree.processKeyEvent(aEvent);
   }
 
-  private Object extractUserObject(Object aNode) {
+  protected Object extractUserObject(Object aNode) {
     Object object = ((DefaultMutableTreeNode) aNode).getUserObject();
     if (object instanceof FilteringTreeStructure.FilteringNode) {
       return ((FilteringTreeStructure.FilteringNode) object).getDelegate();
