@@ -27,6 +27,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
+import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
+import kotlin.collections.MutableList
+import kotlin.collections.MutableSet
+import kotlin.collections.listOf
+import kotlin.collections.map
+import kotlin.collections.mapNotNull
+import kotlin.collections.mutableListOf
+import kotlin.collections.sortWith
+import kotlin.collections.sortedWith
 import kotlin.math.max
 
 open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameInScopeItemProvider {
@@ -237,7 +247,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       namePattern: String,
       preferStartMatches: Boolean
     ): MutableList<MatchResult> {
-      val namesList: MutableList<MatchResult> = ArrayList<MatchResult>()
+      val namesList: MutableList<MatchResult?> = ArrayList<MatchResult?>()
 
       val collect: CollectConsumer<MatchResult?> = SynchronizedCollectConsumer<MatchResult?>(namesList)
 
