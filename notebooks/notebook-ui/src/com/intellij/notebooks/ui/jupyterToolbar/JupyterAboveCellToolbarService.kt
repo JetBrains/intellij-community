@@ -28,8 +28,8 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
   private var currentAdditionalToolbar: JupyterAdditionalToolbar? = null
 
   private val hideToolbarTimer = Timer(TOOLBAR_HIDE_DELAY) { conditionallyHideAllToolbars() }
-  private val actionGroup: ActionGroup? = createActionGroup()
-  private val additionalActionGroup: ActionGroup? = createAdditionalActionGroup()
+  private val actionGroup: ActionGroup? = getActionGroup()
+  private val additionalActionGroup: ActionGroup? = getAdditionalActionGroup()
   private var editorComponentListener: ComponentAdapter? = null
   private var editorKeyListener: KeyAdapter? = null
   private var showToolbarJob: Job? = null
@@ -167,8 +167,8 @@ class JupyterAboveCellToolbarService(private val scope: CoroutineScope): Disposa
     }
   }
   
-  private fun createActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
-  private fun createAdditionalActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
+  private fun getActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ACTION_GROUP_ID) as? ActionGroup
+  private fun getAdditionalActionGroup(): ActionGroup? = CustomActionsSchema.getInstance().getCorrectedAction(ADDITIONAL_ACTION_GROUP_ID) as? ActionGroup
 
   override fun dispose() {
     showToolbarJob?.cancel()
