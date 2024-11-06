@@ -30,9 +30,18 @@ internal class CompletionVisibilityChecker(
         val originalFile = parameters.originalFile
         if (originalFile is KtCodeFragment) return false
 
+        // todo should be > 2
         if (parameters.invocationCount >= 2) return false
 
         val declarationContainingFile = declaration.containingKtFile
+        // todo
+        //   class Outer {
+        //     private class Inner {
+        //       fun member() {}
+        //     }
+        //   }
+        //  in this example the member itself if neither private or internal,
+        //  but the parent is.
         if (declaration.isPrivate()
             && declarationContainingFile != originalFile
             && declarationContainingFile != parameters.completionFile

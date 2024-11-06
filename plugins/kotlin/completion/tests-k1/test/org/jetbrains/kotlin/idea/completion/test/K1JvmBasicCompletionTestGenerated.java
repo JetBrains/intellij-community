@@ -708,6 +708,26 @@ public abstract class K1JvmBasicCompletionTestGenerated extends AbstractK1JvmBas
             public void testEnumEntryEmptyCompletion() throws Exception {
                 runTest("../testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
             }
+
+            @TestMetadata("ExpectedEnumEntryCompletion.kt")
+            public void testExpectedEnumEntryCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
+            }
+
+            @TestMetadata("InvisibleEnumEntryCompletion.kt")
+            public void testInvisibleEnumEntryCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/InvisibleEnumEntryCompletion.kt");
+            }
+
+            @TestMetadata("NoExpectedEnumEntryCompletion.kt")
+            public void testNoExpectedEnumEntryCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/NoExpectedEnumEntryCompletion.kt");
+            }
+
+            @TestMetadata("NoInvisibleEnumEntryCompletion.kt")
+            public void testNoInvisibleEnumEntryCompletion() throws Exception {
+                runTest("../testData/basic/common/enums/NoInvisibleEnumEntryCompletion.kt");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)

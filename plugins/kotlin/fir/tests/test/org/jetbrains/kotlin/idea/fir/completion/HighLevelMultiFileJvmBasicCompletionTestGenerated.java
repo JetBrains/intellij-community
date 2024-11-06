@@ -130,6 +130,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/ExcludedJavaClass/");
     }
 
+    @TestMetadata("ExpectedJavaEnumEntryCompletion")
+    public void testExpectedJavaEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/ExpectedJavaEnumEntryCompletion/");
+    }
+
     @TestMetadata("ExtensionFunction")
     public void testExtensionFunction() throws Exception {
         runTest("../../completion/testData/basic/multifile/ExtensionFunction/");
@@ -265,6 +270,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("../../completion/testData/basic/multifile/IncorrectGetters/");
     }
 
+    @TestMetadata("InvisibleEnumEntryCompletion")
+    public void testInvisibleEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/InvisibleEnumEntryCompletion/");
+    }
+
     @TestMetadata("JavaCallableReference")
     public void testJavaCallableReference() throws Exception {
         runTest("../../completion/testData/basic/multifile/JavaCallableReference/");
@@ -313,6 +323,11 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
     @TestMetadata("NoAutoInsertionOfNotImported")
     public void testNoAutoInsertionOfNotImported() throws Exception {
         runTest("../../completion/testData/basic/multifile/NoAutoInsertionOfNotImported/");
+    }
+
+    @TestMetadata("NoExpectedEnumEntryCompletion")
+    public void testNoExpectedEnumEntryCompletion() throws Exception {
+        runTest("../../completion/testData/basic/multifile/NoExpectedEnumEntryCompletion/");
     }
 
     @TestMetadata("NoExtForOuterFromNested")

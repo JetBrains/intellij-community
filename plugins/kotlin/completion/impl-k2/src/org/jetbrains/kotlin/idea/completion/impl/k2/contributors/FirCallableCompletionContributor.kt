@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.signatures.KaFunctionSignature
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.types.KaErrorType
 import org.jetbrains.kotlin.analysis.api.types.KaType
+import org.jetbrains.kotlin.analysis.api.types.KaTypeNullability
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.collectReceiverTypesForExplicitReceiverExpression
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isJavaSourceOrLibrary
 import org.jetbrains.kotlin.idea.base.analysis.api.utils.isPossiblySubTypeOf
@@ -148,12 +149,13 @@ internal open class FirCallableCompletionContributor(
         } else null
 
         val receiver = positionContext.explicitReceiver
+        val expectedType = weighingContext.expectedType
         when (receiver) {
-            null -> completeWithoutReceiver(positionContext, scopesContext, extensionChecker)
+            null -> completeWithoutReceiver(positionContext, scopesContext, expectedType, extensionChecker)
 
             else -> collectDotCompletion(positionContext, scopesContext, receiver, extensionChecker)
-        }.filterIfInsideAnnotationEntryArgument(positionContext.position, weighingContext.expectedType)
-            .filterOutShadowedCallables(weighingContext.expectedType)
+        }.filterIfInsideAnnotationEntryArgument(positionContext.position, expectedType)
+            .filterOutShadowedCallables(expectedType)
             .filterNot(isUninitializedCallable(positionContext.position))
             .flatMap { callableWithMetadata ->
                 createCallableLookupElements(
@@ -191,6 +193,7 @@ internal open class FirCallableCompletionContributor(
     private fun completeWithoutReceiver(
         positionContext: KotlinNameReferencePositionContext,
         scopeContext: KaScopeContext,
+        expectedType: KaType?,
         extensionChecker: KaCompletionExtensionCandidateChecker?,
     ): Sequence<CallableWithMetadataForCompletion> = sequence {
         val availableLocalAndMemberNonExtensions = collectLocalAndMemberNonExtensionsFromScopeContext(
@@ -237,38 +240,66 @@ internal open class FirCallableCompletionContributor(
         }
         availableStaticAndTopLevelNonExtensions.forEach { yield(createCallableWithMetadata(it.signature, it.scopeKind)) }
 
-        if (prefixMatcher.prefix.isNotEmpty()) {
-            val members = if (parameters.invocationCount > 1)
-                symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) { declaration ->
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(declaration)
-                } + symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(scopeNameFilter) {
-                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
-                } + symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
+        val members = sequence<KaCallableSymbol> {
+            val prefix = prefixMatcher.prefix
+            val invocationCount = parameters.invocationCount
+
+            val expectedType = expectedType?.withNullability(KaTypeNullability.NON_NULLABLE)
+
+            yieldAll(symbolFromIndexProvider.getKotlinEnumEntriesByNameFilter(scopeNameFilter) { enumEntry ->
+                if (invocationCount > 2) true
+                else if (visibilityChecker.isDefinitelyInvisibleByPsi(enumEntry)) false
+                else if (invocationCount > 1) prefix.isNotEmpty()
+                else expectedType != null && runCatchingNSEE { enumEntry.returnType }
+                    ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                    ?.semanticallyEquals(expectedType) == true
+            })
+
+            yieldAll(
+                symbolFromIndexProvider.getJavaFieldsByNameFilter(scopeNameFilter) {
                     it is PsiEnumConstant
+                }.filterIsInstance<KaEnumEntrySymbol>()
+                    .filter { enumEntrySymbol ->
+                        if (invocationCount > 2) true
+                        //else if (visibilityChecker.isDefinitelyInvisibleByPsi(enumEntrySymbol)) false // todo KtCodeFragments
+                        else if (invocationCount > 1) prefix.isNotEmpty()
+                        else expectedType != null && runCatchingNSEE { enumEntrySymbol.returnType }
+                            ?.withNullability(KaTypeNullability.NON_NULLABLE)
+                            ?.semanticallyEquals(expectedType) == true
+                    })
+
+            if (prefixMatcher.prefix.isEmpty()) return@sequence
+
+            val callables = if (invocationCount > 1) {
+                symbolFromIndexProvider.getKotlinCallableSymbolsByNameFilter(scopeNameFilter) {
+                    !visibilityChecker.isDefinitelyInvisibleByPsi(it)
                 }
-            else
+            } else {
                 symbolFromIndexProvider.getTopLevelCallableSymbolsByNameFilter(scopeNameFilter) {
                     !visibilityChecker.isDefinitelyInvisibleByPsi(it)
                 }
-
-            members.filter { filter(it) }
-                .filter { visibilityChecker.isVisible(it, positionContext) }
-                .map { it.asSignature() }
-                .map { signature ->
-                    val itemText = signature.callableId?.let { id ->
-                        id.className?.let { className ->
-                            className.asString() + "." + id.callableName.asString()
-                        }
-                    }
-
-                    CallableWithMetadataForCompletion(
-                        _signature = signature,
-                        options = getOptions(signature),
-                        symbolOrigin = CompletionSymbolOrigin.Index,
-                        itemText = itemText,
-                    )
-                }.forEach { yield(it) }
+            }
+            yieldAll(callables)
         }
+
+        val memberDescriptors = members.filter { filter(it) }
+            .filter { runCatchingNSEE { visibilityChecker.isVisible(it, positionContext) } == true }
+            .map { it.asSignature() }
+            .map { signature ->
+                val itemText = signature.callableId?.let { id ->
+                    id.className?.let { className ->
+                        className.asString() + "." + id.callableName.asString()
+                    }
+                }
+
+                CallableWithMetadataForCompletion(
+                    _signature = signature,
+                    options = getOptions(signature),
+                    symbolOrigin = CompletionSymbolOrigin.Index,
+                    itemText = itemText, // todo should be only for enums
+                )
+            }
+        yieldAll(memberDescriptors)
 
         val extensionDescriptors = collectExtensionsFromIndexAndResolveExtensionScope(
             positionContext = positionContext,
@@ -905,3 +936,13 @@ private fun LookupElementBuilder.withExplicitItemText(
         presentation.itemText = itemText
     }
 })
+
+context(KaSession)
+private fun <T> runCatchingNSEE(
+    action: () -> T,
+): T? = try {
+    action()
+} catch (e: NoSuchElementException) {
+    logger<FirCallableCompletionContributor>().debug("Temporal wrapping for KT-72988", e)
+    null
+}

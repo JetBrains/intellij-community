@@ -742,6 +742,26 @@ public abstract class JsKotlinKmpCompletionTestGenerated extends AbstractKotlinK
         public void testEnumEntryEmptyCompletion() throws Exception {
             runTest("../../completion/testData/basic/common/enums/EnumEntryEmptyCompletion.kt");
         }
+
+        @TestMetadata("ExpectedEnumEntryCompletion.kt")
+        public void testExpectedEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/ExpectedEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("InvisibleEnumEntryCompletion.kt")
+        public void testInvisibleEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/InvisibleEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("NoExpectedEnumEntryCompletion.kt")
+        public void testNoExpectedEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/NoExpectedEnumEntryCompletion.kt");
+        }
+
+        @TestMetadata("NoInvisibleEnumEntryCompletion.kt")
+        public void testNoInvisibleEnumEntryCompletion() throws Exception {
+            runTest("../../completion/testData/basic/common/enums/NoInvisibleEnumEntryCompletion.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
