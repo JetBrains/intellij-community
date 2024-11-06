@@ -9,43 +9,48 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.toolbarLayout.ToolbarLayoutStrategy
-import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.components.DropDownLink
-import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.components.panels.Wrapper
+import com.intellij.ui.dsl.builder.AlignX
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.UnscaledGaps
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.FocusUtil
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
-import com.intellij.util.ui.components.BorderLayoutPanel
-import java.awt.FlowLayout
 import java.awt.Font
 import javax.swing.JComponent
-import javax.swing.JPanel
-import javax.swing.SwingConstants
 
-internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLayoutPanel() {
-  init {
-    setBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
-    val mainPanel: JPanel = NonOpaquePanel(VerticalFlowLayout())
-    mainPanel.setBorder(JBUI.Borders.emptyTop(103))
 
-    mainPanel.add(createTitle())
-    mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")))
-    mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.open.comment")))
-
-    val (actionsToolbar: ActionToolbarImpl, moreToolbar) = createActionToolbars(parentDisposable)
-
-    mainPanel.add(Wrapper(FlowLayout(), actionsToolbar.component))
-    mainPanel.add(Wrapper(FlowLayout(), moreToolbar.component))
-    addToCenter(mainPanel)
+@RequiresEdt
+internal fun emptyStateProjectPanel(disposable: Disposable): JComponent = panel {
+  row {
+    label(WelcomeScreenComponentFactory.getApplicationTitle()).applyToComponent {
+      font = font.deriveFont(font.getSize() + scale(13).toFloat()).deriveFont(Font.BOLD)
+    }.customize(UnscaledGaps(top = 103, bottom = 17))
+      .align(AlignX.CENTER)
   }
+  for (text in arrayOf(
+    IdeBundle.message("welcome.screen.empty.projects.create.comment"),
+    IdeBundle.message("welcome.screen.empty.projects.open.comment"))) {
+    row {
+      comment(text).align(AlignX.CENTER).customize(UnscaledGaps(2))
+    }
+  }
+  val (mainActions, moreActions) = createActionToolbars(disposable)
+  panel {
+    row {
+      cell(mainActions).align(AlignX.FILL)
+    }
+  }.align(AlignX.CENTER).customize(UnscaledGaps(27))
+  row {
+    cell(moreActions).align(AlignX.CENTER)
+  }
+}.apply {
+  background = WelcomeScreenUIManager.getMainAssociatedComponentBackground()
 }
+
 
 // Returns main actions, more actions
 private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
@@ -126,7 +131,6 @@ private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolb
     }
   })
   val moreToolbar = ActionToolbarImpl(ActionPlaces.WELCOME_SCREEN, DefaultActionGroup(moreActionGroup), true)
-  moreToolbar.setBorder(JBUI.Borders.emptyTop(5))
   moreToolbar.targetComponent = moreToolbar.component
   moreToolbar.isOpaque = false
   return Pair(actionsToolbar, moreToolbar)
@@ -151,25 +155,8 @@ private fun createActionsToolbar(actionGroup: ActionGroup): ActionToolbarImpl {
       }
     }
   }
-  actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.NOWRAP_STRATEGY)
+  actionToolbar.setLayoutStrategy(ToolbarLayoutStrategy.WRAP_STRATEGY)
   actionToolbar.setTargetComponent(actionToolbar.component)
-  actionToolbar.setBorder(JBUI.Borders.emptyTop(27))
   actionToolbar.setOpaque(false)
   return actionToolbar
-}
-
-private fun createTitle(): JBLabel {
-  val titleLabel = JBLabel(WelcomeScreenComponentFactory.getApplicationTitle(), SwingConstants.CENTER)
-  titleLabel.setOpaque(false)
-  val componentFont = titleLabel.getFont()
-  titleLabel.setFont(componentFont.deriveFont(componentFont.getSize() + scale(13).toFloat()).deriveFont(Font.BOLD))
-  titleLabel.setBorder(JBUI.Borders.emptyBottom(17))
-  return titleLabel
-}
-
-fun createCommentLabel(text: @NlsContexts.HintText String): JBLabel {
-  val commentFirstLabel = JBLabel(text, SwingConstants.CENTER)
-  commentFirstLabel.setOpaque(false)
-  commentFirstLabel.setForeground(UIUtil.getContextHelpForeground())
-  return commentFirstLabel
 }
