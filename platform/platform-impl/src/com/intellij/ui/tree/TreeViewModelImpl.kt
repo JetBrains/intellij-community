@@ -124,78 +124,6 @@ private class TreeViewModelImpl(private val treeScope: CoroutineScope, override 
   }
 }
 
-internal class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {
-  // these "Value" suffixes to avoid signature clashes with the setters
-  private var iconValue: Icon? = null
-  private var mainTextValue: String? = null
-  private var fullTextValue: MutableList<TreeNodeTextFragment>? = null
-  private var toolTipValue: String? = null
-
-  override fun setIcon(icon: Icon?) {
-    this.iconValue = icon
-  }
-
-  override fun setMainText(text: String) {
-    this.mainTextValue = text
-  }
-
-  override fun appendTextFragment(text: String, attributes: SimpleTextAttributes) {
-    val coloredText = this.fullTextValue ?: mutableListOf()
-    coloredText.add(TreeNodeTextFragment(text, attributes))
-    this.fullTextValue = coloredText
-  }
-
-  override fun setToolTipText(toolTip: String?) {
-    this.toolTipValue = toolTip
-  }
-
-  override fun build(): TreeNodePresentation {
-    val specifiedMainText = this.mainTextValue
-    val specifiedFullText = this.fullTextValue
-    val mainText: String
-    val fullText: List<TreeNodeTextFragment>
-    if (specifiedMainText != null) {
-      if (specifiedFullText != null) {
-        mainText = specifiedMainText
-        fullText = specifiedFullText
-      }
-      else {
-        mainText = specifiedMainText
-        fullText = buildColoredText(mainText)
-      }
-    }
-    else {
-      if (specifiedFullText != null) {
-        mainText = buildMainText(specifiedFullText)
-        fullText = specifiedFullText
-      }
-      else {
-        throw IllegalStateException("Either the main text or the full text must be specified")
-      }
-    }
-    return TreeNodePresentationImpl(
-      isLeaf = isLeaf,
-      icon = iconValue,
-      mainText = mainText,
-      fullText = fullText,
-      toolTip = toolTipValue,
-    )
-  }
-
-  private fun buildColoredText(mainText: String): List<TreeNodeTextFragment> =
-    listOf(TreeNodeTextFragment(mainText, SimpleTextAttributes.REGULAR_ATTRIBUTES))
-
-  private fun buildMainText(fullText: List<TreeNodeTextFragment>): String {
-    val builder = StringBuilder()
-    for (fragment in fullText) {
-      val attributes = fragment.attributes
-      if (attributes.fgColor == SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor) break
-      builder.append(fragment.text)
-    }
-    return builder.toString()
-  }
-}
-
 private class TreeNodeViewModelImpl(
   override val parent: TreeNodeViewModel?,
   val nodeScope: CoroutineScope,
@@ -337,3 +265,75 @@ private class TreeNodeViewModelImpl(
 
 private suspend inline fun <T> getFlowValue(flow: MutableSharedFlow<T>, allowLoading: Boolean = false): T? =
   if (allowLoading || flow.replayCache.isNotEmpty()) flow.first() else null
+
+internal class TreeNodePresentationBuilderImpl(val isLeaf: Boolean) : TreeNodePresentationBuilder {
+  // these "Value" suffixes to avoid signature clashes with the setters
+  private var iconValue: Icon? = null
+  private var mainTextValue: String? = null
+  private var fullTextValue: MutableList<TreeNodeTextFragment>? = null
+  private var toolTipValue: String? = null
+
+  override fun setIcon(icon: Icon?) {
+    this.iconValue = icon
+  }
+
+  override fun setMainText(text: String) {
+    this.mainTextValue = text
+  }
+
+  override fun appendTextFragment(text: String, attributes: SimpleTextAttributes) {
+    val coloredText = this.fullTextValue ?: mutableListOf()
+    coloredText.add(TreeNodeTextFragment(text, attributes))
+    this.fullTextValue = coloredText
+  }
+
+  override fun setToolTipText(toolTip: String?) {
+    this.toolTipValue = toolTip
+  }
+
+  override fun build(): TreeNodePresentation {
+    val specifiedMainText = this.mainTextValue
+    val specifiedFullText = this.fullTextValue
+    val mainText: String
+    val fullText: List<TreeNodeTextFragment>
+    if (specifiedMainText != null) {
+      if (specifiedFullText != null) {
+        mainText = specifiedMainText
+        fullText = specifiedFullText
+      }
+      else {
+        mainText = specifiedMainText
+        fullText = buildColoredText(mainText)
+      }
+    }
+    else {
+      if (specifiedFullText != null) {
+        mainText = buildMainText(specifiedFullText)
+        fullText = specifiedFullText
+      }
+      else {
+        throw IllegalStateException("Either the main text or the full text must be specified")
+      }
+    }
+    return TreeNodePresentationImpl(
+      isLeaf = isLeaf,
+      icon = iconValue,
+      mainText = mainText,
+      fullText = fullText,
+      toolTip = toolTipValue,
+    )
+  }
+
+  private fun buildColoredText(mainText: String): List<TreeNodeTextFragment> =
+    listOf(TreeNodeTextFragment(mainText, SimpleTextAttributes.REGULAR_ATTRIBUTES))
+
+  private fun buildMainText(fullText: List<TreeNodeTextFragment>): String {
+    val builder = StringBuilder()
+    for (fragment in fullText) {
+      val attributes = fragment.attributes
+      if (attributes.fgColor == SimpleTextAttributes.GRAYED_ATTRIBUTES.fgColor) break
+      builder.append(fragment.text)
+    }
+    return builder.toString()
+  }
+}
