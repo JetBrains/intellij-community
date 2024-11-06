@@ -30,8 +30,8 @@ class GradleDaemonJvmCriteriaViewFactoryTest : LightPlatformTestCase() {
     """.trimIndent())
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("19", selectedVersion)
-      assertEquals("AZUL", selectedVendor)
+      assertEquals("19", selectedCriteria.version)
+      assertEquals("AZUL", selectedCriteria.vendor)
     }
   }
 
@@ -42,16 +42,16 @@ class GradleDaemonJvmCriteriaViewFactoryTest : LightPlatformTestCase() {
     """.trimIndent())
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("string version", selectedVersion)
-      assertEquals("any other vendor", selectedVendor)
+      assertEquals("string version", selectedCriteria.version)
+      assertEquals("any other vendor", selectedCriteria.vendor)
     }
   }
 
   fun `test Given empty gradle jvm properties When create view Then expected values are displayed`() {
     createDaemonJvmPropertiesFile("")
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("UNDEFINED", selectedVersion)
-      assertEquals("<ANY_VENDOR>", selectedVendor)
+      assertEquals("UNDEFINED", selectedCriteria.version)
+      assertEquals(null, selectedCriteria.vendor)
     }
   }
 
@@ -63,7 +63,7 @@ class GradleDaemonJvmCriteriaViewFactoryTest : LightPlatformTestCase() {
   }
 
   private fun createDaemonJvmCriteriaView(gradleVersion: GradleVersion) =
-    GradleDaemonJvmCriteriaViewFactory.createView(Path.of(project.basePath!!), gradleVersion)
+    GradleDaemonJvmCriteriaViewFactory.createView(Path.of(project.basePath!!), gradleVersion, testRootDisposable)
 
   private fun createDaemonJvmPropertiesFile(content: String) {
     VfsTestUtil.createFile(project.baseDir, "gradle/gradle-daemon-jvm.properties", content)
@@ -77,13 +77,13 @@ class GradleDaemonJvmCriteriaViewFactoryTest : LightPlatformTestCase() {
 
   private fun GradleDaemonJvmCriteriaView.assertVersionDropdownItems() {
     val expectedVersionList = LanguageLevel.HIGHEST.toJavaVersion().feature.downTo(8)
-    expectedVersionList.forEachIndexed { index, expectedVendor ->
-      assertEquals(expectedVendor, versionComboBox.model.getElementAt(index))
+    expectedVersionList.forEachIndexed { index, expectedVersion ->
+      assertEquals(expectedVersion.toString(), versionComboBox.model.getElementAt(index))
     }
   }
 
   private fun GradleDaemonJvmCriteriaView.assertVendorDropdownItems() {
-    val expectedVendorList = listOf("<ANY_VENDOR>", "ADOPTIUM", "ADOPTOPENJDK", "AMAZON", "APPLE", "AZUL", "BELLSOFT", "GRAAL_VM",
+    val expectedVendorList = listOf("<ANY_VENDOR>", "<CUSTOM_VENDOR>", "ADOPTIUM", "ADOPTOPENJDK", "AMAZON", "APPLE", "AZUL", "BELLSOFT", "GRAAL_VM",
                                     "HEWLETT_PACKARD", "IBM", "JETBRAINS", "MICROSOFT", "ORACLE", "SAP", "TENCENT")
     expectedVendorList.forEachIndexed { index, expectedVendor ->
       assertEquals(expectedVendor, vendorComboBox.model.getElementAt(index))

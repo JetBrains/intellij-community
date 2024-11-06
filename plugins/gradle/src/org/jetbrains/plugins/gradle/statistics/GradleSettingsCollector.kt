@@ -123,7 +123,7 @@ internal class GradleSettingsCollector : ProjectUsagesCollector() {
     return Version.parseVersion(version.version)?.toCompactString() ?: "unknown"
   }
 
-  private val GROUP = EventLogGroup("build.gradle.state", 8)
+  private val GROUP = EventLogGroup("build.gradle.state", 9)
   private val HAS_GRADLE_PROJECT = GROUP.registerEvent("hasGradleProject", EventFields.Enabled)
   private val OFFLINE_WORK = GROUP.registerEvent("offlineWork", EventFields.Enabled)
   private val HAS_CUSTOM_SERVICE_DIRECTORY_PATH = GROUP.registerEvent("hasCustomServiceDirectoryPath", EventFields.Enabled)

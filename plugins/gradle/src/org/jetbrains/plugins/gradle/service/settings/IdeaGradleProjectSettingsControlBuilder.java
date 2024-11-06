@@ -42,6 +42,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.target.GradleRuntimeTargetUI;
 import org.jetbrains.plugins.gradle.execution.target.TargetPathFieldWithBrowseButton;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria;
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmHelper;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -527,8 +528,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleDaemonJvmCriteriaView.applySelection();
         settings.resolveGradleVersion().getBaseVersion();
 
-        applyDaemonJvmCriteria(myProjectRef.get(), settings.getExternalProjectPath(),
-                               myGradleDaemonJvmCriteriaView.getSelectedVersion(), myGradleDaemonJvmCriteriaView.getSelectedVendor());
+        applyDaemonJvmCriteria(myProjectRef.get(), settings.getExternalProjectPath(), myGradleDaemonJvmCriteriaView.getSelectedCriteria());
       }
     }
 
@@ -564,8 +564,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   @Override
-  public void applyDaemonJvmCriteria(Project project, String externalProjectPath, String version, String vendor) {
-    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, version, vendor);
+  public void applyDaemonJvmCriteria(Project project, String externalProjectPath, GradleDaemonJvmCriteria daemonJvmCriteria) {
+    GradleDaemonJvmHelper.updateProjectDaemonJvmCriteria(project, externalProjectPath, daemonJvmCriteria);
   }
 
   @Override
@@ -741,7 +741,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       }
 
       myGradleDaemonJvmCriteriaView = GradleDaemonJvmCriteriaViewFactory.INSTANCE.createView(
-        Path.of(gradleProjectSettings.getExternalProjectPath()), gradleProjectSettings.resolveGradleVersion());
+        Path.of(gradleProjectSettings.getExternalProjectPath()), gradleProjectSettings.resolveGradleVersion(), myProjectRefDisposable);
       myGradleJvmWrapper.add(myGradleDaemonJvmCriteriaView, BorderLayout.CENTER);
     }
   }

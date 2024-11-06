@@ -69,7 +69,7 @@ class GradleDaemonJvmHelperTest : LightPlatformTestCase() {
   }
 
   private fun createDaemonJvmPropertiesFile(version: String?) {
-    VfsTestUtil.createFile(project.baseDir, "gradle/gradle-daemon-jvm.properties", version?.let { "toolchainVersion=$version" })
+    VfsTestUtil.createFile(project.baseDir, "gradle/gradle-daemon-jvm.properties", version?.let { "toolchainVersion=$version" }.orEmpty())
   }
 
   private fun createWrapperPropertiesFile(version: GradleVersion) {

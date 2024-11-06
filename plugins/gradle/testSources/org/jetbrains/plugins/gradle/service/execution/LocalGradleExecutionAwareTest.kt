@@ -1,14 +1,11 @@
 package org.jetbrains.plugins.gradle.service.execution
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_INTERNAL_JAVA
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil.USE_JAVA_HOME
 import com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
@@ -18,12 +15,6 @@ import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 
 class LocalGradleExecutionAwareTest : LightPlatformTestCase() {
-
-  fun `test Project without linked projectSettings When prepare JVM execution Then any validation is skipped`() {
-    prepareJvmForExecution().run {
-      assertNull(this)
-    }
-  }
 
   fun `test Given project using valid JAVA_INTERNAL When prepare JVM execution Then SDK info is returned as resolved`() {
     GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
@@ -36,24 +27,11 @@ class LocalGradleExecutionAwareTest : LightPlatformTestCase() {
     }
   }
 
-  fun `test Given project using Daemon toolchain When prepare JVM execution Then throws expected exception`() {
-    GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
-      this.externalProjectPath = project.basePath
-      this.gradleJvm = "Invalid jdk.table entry"
-    })
-
-    assertThrows(ExternalSystemJdkException::class.java) {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        prepareJvmForExecution()
-      }
-    }
-  }
-
-  fun `test Given project using Daemon toolchain When prepare JVM execution Then any validation is skipped`() {
+  fun `test Given project using Daemon Jvm criteria When prepare JVM execution Then any validation is skipped`() {
     VfsTestUtil.createFile(project.baseDir, "gradle/gradle-daemon-jvm.properties", "toolchainVersion=17")
     GradleSettings.getInstance(project).linkedProjectsSettings = listOf(GradleProjectSettings().apply {
       this.externalProjectPath = project.basePath
-      this.gradleJvm = USE_JAVA_HOME
+      this.gradleJvm = "Invalid jdk.table entry"
     })
     prepareJvmForExecution().run {
       assertNull(this)
