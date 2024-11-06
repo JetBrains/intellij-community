@@ -84,6 +84,7 @@ import org.jetbrains.jewel.ui.component.TextField
 import org.jetbrains.jewel.ui.component.Typography
 import org.jetbrains.jewel.ui.component.VerticallyScrollableContainer
 import org.jetbrains.jewel.ui.component.items
+import org.jetbrains.jewel.ui.component.rememberSplitLayoutState
 import org.jetbrains.jewel.ui.component.scrollbarContentSafePadding
 import org.jetbrains.jewel.ui.icons.AllIconsKeys
 import org.jetbrains.jewel.ui.painter.rememberResourcePainterProvider
@@ -105,6 +106,7 @@ fun ReleasesSampleCompose(project: Project) {
         modifier = Modifier.fillMaxSize(),
         firstPaneMinWidth = 300.dp,
         secondPaneMinWidth = 300.dp,
+        state = rememberSplitLayoutState(.3f),
     )
 }
 

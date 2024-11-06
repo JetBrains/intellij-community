@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -175,7 +176,7 @@ private fun SplitLayoutImpl(
     var isDragging by remember { mutableStateOf(false) }
     val resizePointerIcon = if (strategy.isHorizontal()) HorizontalResizePointerIcon else VerticalResizePointerIcon
 
-    var dragOffset by remember { mutableStateOf(0f) }
+    var dragOffset by remember { mutableFloatStateOf(0f) }
 
     val draggableState = rememberDraggableState { delta ->
         state.layoutCoordinates?.let { coordinates ->
@@ -183,10 +184,18 @@ private fun SplitLayoutImpl(
             val minFirstPositionPx = with(density) { firstPaneMinWidth.toPx() }
             val minSecondPositionPx = with(density) { secondPaneMinWidth.toPx() }
 
-            dragOffset += delta
-            val position = size * state.dividerPosition + dragOffset
-            val newPosition = position.coerceIn(minFirstPositionPx, size - minSecondPositionPx)
-            state.dividerPosition = newPosition / size
+            /**
+             * Ensures that the divider in the split layout can be dragged, but it respects the minimum sizes of both
+             * panes and adjusts the layout accordingly. The position is calculated, constrained, and then applied to
+             * the dividerPosition in the state, ensuring a smooth and safe user experience during dragging
+             * interactions.
+             */
+            if (minFirstPositionPx + minSecondPositionPx <= size) {
+                dragOffset += delta
+                val position = size * state.dividerPosition + dragOffset
+                val newPosition = position.coerceIn(minFirstPositionPx, size - minSecondPositionPx)
+                state.dividerPosition = newPosition / size
+            }
         }
     }
 
@@ -283,12 +292,9 @@ private fun MeasureScope.doLayout(
     val splitResult = strategy.calculateSplitResult(density = density, layoutDirection = layoutDirection, state = state)
 
     val gapOrientation = splitResult.gapOrientation
-    val gapBounds = splitResult.gapBounds
 
     val dividerWidth = with(density) { dividerStyle.metrics.thickness.roundToPx() }
     val handleWidth = with(density) { draggableWidth.roundToPx() }
-    val minFirstPaneSizePx = with(density) { firstPaneMinWidth.roundToPx() }
-    val minSecondPaneSizePx = with(density) { secondPaneMinWidth.roundToPx() }
 
     // The visual divider itself. It's a thin line that separates the two panes
     val dividerPlaceable =
@@ -346,47 +352,54 @@ private fun MeasureScope.doLayout(
             (constraints.maxHeight - dividerWidth).coerceAtLeast(1)
         }
 
+    val minFirstPaneSizePx = with(density) { firstPaneMinWidth.roundToPx() }
+    val minSecondPaneSizePx = with(density) { secondPaneMinWidth.roundToPx() }
+
+    // Calculate initial sizes based on divider position
+    val initialFirstSize = (availableSpace * state.dividerPosition).roundToInt()
+    val initialSecondSize = availableSpace - initialFirstSize
+
     val (adjustedFirstSize, adjustedSecondSize) =
-        calculateAdjustedSizes(availableSpace, minFirstPaneSizePx, minSecondPaneSizePx)
+        calculateAdjustedSizes(
+            availableSpace,
+            initialFirstSize,
+            initialSecondSize,
+            minFirstPaneSizePx,
+            minSecondPaneSizePx,
+        )
 
-    val firstGap =
-        when (gapOrientation) {
-            Orientation.Vertical -> gapBounds.left
-            Orientation.Horizontal -> gapBounds.top
-        }
+    // Update state.dividerPosition to match adjusted sizes
+    state.dividerPosition = adjustedFirstSize.toFloat() / availableSpace.toFloat()
 
-    val firstSize: Int = firstGap.roundToInt().coerceIn(adjustedFirstSize, availableSpace - adjustedSecondSize)
-
-    val secondSize = availableSpace - firstSize
-
+    // Use the adjusted sizes directly for constraints
     val firstConstraints =
         when (gapOrientation) {
-            Orientation.Vertical -> constraints.copy(minWidth = adjustedFirstSize, maxWidth = firstSize)
-            Orientation.Horizontal -> constraints.copy(minHeight = adjustedFirstSize, maxHeight = firstSize)
+            Orientation.Vertical -> constraints.copy(minWidth = adjustedFirstSize, maxWidth = adjustedFirstSize)
+            Orientation.Horizontal -> constraints.copy(minHeight = adjustedFirstSize, maxHeight = adjustedFirstSize)
         }
 
     val secondConstraints =
         when (gapOrientation) {
-            Orientation.Vertical -> constraints.copy(minWidth = adjustedSecondSize, maxWidth = secondSize)
-            Orientation.Horizontal -> constraints.copy(minHeight = adjustedSecondSize, maxHeight = secondSize)
+            Orientation.Vertical -> constraints.copy(minWidth = adjustedSecondSize, maxWidth = adjustedSecondSize)
+            Orientation.Horizontal -> constraints.copy(minHeight = adjustedSecondSize, maxHeight = adjustedSecondSize)
         }
 
     val firstPlaceable = firstMeasurable.measure(firstConstraints)
     val secondPlaceable = secondMeasurable.measure(secondConstraints)
 
     return layout(constraints.maxWidth, constraints.maxHeight) {
-        firstPlaceable.placeRelative(0, 0)
         when (gapOrientation) {
             Orientation.Vertical -> {
-                dividerPlaceable.placeRelative(firstSize, 0)
-                dividerHandlePlaceable.placeRelative(firstSize - handleWidth / 2, 0)
-                secondPlaceable.placeRelative(firstSize + dividerWidth, 0)
+                firstPlaceable.placeRelative(0, 0)
+                dividerPlaceable.placeRelative(adjustedFirstSize, 0)
+                dividerHandlePlaceable.placeRelative(adjustedFirstSize - handleWidth / 2, 0)
+                secondPlaceable.placeRelative(adjustedFirstSize + dividerWidth, 0)
             }
-
             Orientation.Horizontal -> {
-                dividerPlaceable.placeRelative(0, firstSize)
-                dividerHandlePlaceable.placeRelative(0, firstSize - handleWidth / 2)
-                secondPlaceable.placeRelative(0, firstSize + dividerWidth)
+                firstPlaceable.placeRelative(0, 0)
+                dividerPlaceable.placeRelative(0, adjustedFirstSize)
+                dividerHandlePlaceable.placeRelative(0, adjustedFirstSize - handleWidth / 2)
+                secondPlaceable.placeRelative(0, adjustedFirstSize + dividerWidth)
             }
         }
     }
@@ -458,13 +471,41 @@ private fun verticalTwoPaneStrategy(gapHeight: Dp = 0.dp): SplitLayoutStrategy =
         override fun isHorizontal(): Boolean = false
     }
 
-private fun calculateAdjustedSizes(availableSpace: Int, minFirstPaneSize: Int, minSecondPaneSize: Int): Pair<Int, Int> {
-    val totalMinSize = minFirstPaneSize + minSecondPaneSize
-    if (availableSpace >= totalMinSize) {
-        return minFirstPaneSize to minSecondPaneSize
+private fun calculateAdjustedSizes(
+    availableSpace: Int,
+    initialFirstSize: Int,
+    initialSecondSize: Int,
+    minFirstPaneSizePx: Int,
+    minSecondPaneSizePx: Int,
+): Pair<Int, Int> {
+    val totalMinSize = minFirstPaneSizePx + minSecondPaneSizePx
+
+    if (availableSpace <= totalMinSize) {
+        // Distribute space proportionally based on minimum sizes
+        val firstRatio = minFirstPaneSizePx.toFloat() / totalMinSize
+        val adjustedFirstSize = (availableSpace * firstRatio).roundToInt()
+        val adjustedSecondSize = availableSpace - adjustedFirstSize
+        return adjustedFirstSize to adjustedSecondSize
     }
 
-    val ratio = minFirstPaneSize.toFloat() / totalMinSize
-    val adjustedFirstSize = (availableSpace * ratio).roundToInt()
-    return adjustedFirstSize to availableSpace - adjustedFirstSize
+    var adjustedFirstSize = initialFirstSize
+    var adjustedSecondSize = initialSecondSize
+
+    // Adjust first pane size if it's below minimum
+    if (adjustedFirstSize < minFirstPaneSizePx) {
+        adjustedFirstSize = minFirstPaneSizePx
+        adjustedSecondSize = availableSpace - adjustedFirstSize
+    }
+
+    // Adjust second pane size if it's below minimum
+    if (adjustedSecondSize < minSecondPaneSizePx) {
+        adjustedSecondSize = minSecondPaneSizePx
+        adjustedFirstSize = availableSpace - adjustedSecondSize
+    }
+
+    // Ensure sizes are within constraints
+    adjustedFirstSize = adjustedFirstSize.coerceIn(minFirstPaneSizePx, availableSpace - minSecondPaneSizePx)
+    adjustedSecondSize = adjustedSecondSize.coerceIn(minSecondPaneSizePx, availableSpace - adjustedFirstSize)
+
+    return adjustedFirstSize to adjustedSecondSize
 }
