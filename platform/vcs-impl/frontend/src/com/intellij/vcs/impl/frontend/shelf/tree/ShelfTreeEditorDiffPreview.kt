@@ -33,7 +33,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
 
   private fun trackTreeSelection() {
     tree.addTreeSelectionListener {
-      cs.launch {
+      cs.launch(Dispatchers.IO) {
         withKernel {
           val changeListDto = creteSelectedListsDto() ?: return@withKernel
           RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).notifyNodeSelected(project.asEntity().ref(), changeListDto)
@@ -43,7 +43,7 @@ class ShelfTreeEditorDiffPreview(tree: ShelfTree, private val cs: CoroutineScope
   }
 
   override fun performDiffAction(): Boolean {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val changeListDto = creteSelectedListsDto() ?: return@withKernel
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).showDiffForChanges(project.asEntity().ref(), changeListDto)

@@ -32,7 +32,7 @@ open class ChangesGroupingSupport(val project: Project, private val source: Stri
     if (currentState == state) return
 
     groupingStatesHolder.setGroupingEnabled(source, groupingKey, state)
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       val newValue = groupingStatesHolder.getGroupingsForPlace(source)
       if (groupingUpdateScheduler.requestUpdateGrouping(newValue, project) == UpdateStatus.OK) {
         withContext(Dispatchers.EDT) {

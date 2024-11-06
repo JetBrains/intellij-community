@@ -34,7 +34,7 @@ import org.jetbrains.annotations.ApiStatus
 @Service(Service.Level.PROJECT)
 class ShelfService(private val project: Project, private val cs: CoroutineScope) {
   fun unshelve(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withDialog: Boolean) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().ref()
@@ -44,7 +44,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   }
 
   fun deleteChangeList(changeLists: Set<ShelvedChangeListEntity>, changes: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val exactlySelectedLists = changeLists.map {
           it.ref()
@@ -58,7 +58,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   }
 
   fun compareWithLocal(changeListsMap: Map<ShelvedChangeListEntity, List<ShelvedChangeEntity>>, withLocal: Boolean) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val changeLists = changeListsMap.toDtos()
         val projectRef = project.asEntity().ref()
@@ -72,7 +72,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   }
 
   fun renameChangeList(changeList: ShelvedChangeListEntity, newName: String) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val projectRef = project.asEntity().ref()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfApi>()).renameShelvedChangeList(projectRef, changeList.ref(), newName)
@@ -84,7 +84,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   }
 
   fun importPatches() {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val projectRef = project.asEntity().ref()
         RemoteApiProviderService.resolve(remoteApiDescriptor<RemoteShelfActionsApi>()).importShelvesFromPatches(projectRef)
@@ -105,7 +105,7 @@ class ShelfService(private val project: Project, private val cs: CoroutineScope)
   }
 
   fun createPatch(changeLists: List<ChangeList>, silentClipboard: Boolean) {
-    cs.launch {
+    cs.launch(Dispatchers.IO) {
       withKernel {
         val projectRef = project.asEntity().ref()
         val changeLists = changeLists.map {
