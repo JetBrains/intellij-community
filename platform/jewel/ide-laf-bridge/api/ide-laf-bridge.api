@@ -65,10 +65,14 @@ public final class org/jetbrains/jewel/bridge/JewelBridgeException$KeysNotFoundE
 }
 
 public final class org/jetbrains/jewel/bridge/JewelComposePanelKt {
-	public static final fun JewelComposeNoThemePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
-	public static final fun JewelComposePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
-	public static final fun JewelToolWindowComposePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
-	public static final fun JewelToolWindowNoThemeComposePanel (Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static final fun JewelComposeNoThemePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun JewelComposeNoThemePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun JewelComposePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun JewelComposePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun JewelToolWindowComposePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun JewelToolWindowComposePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
+	public static final fun JewelToolWindowNoThemeComposePanel (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;)Ljavax/swing/JComponent;
+	public static synthetic fun JewelToolWindowNoThemeComposePanel$default (Lkotlin/jvm/functions/Function1;Lkotlin/jvm/functions/Function2;ILjava/lang/Object;)Ljavax/swing/JComponent;
 	public static final fun getLocalComponent ()Landroidx/compose/runtime/ProvidableCompositionLocal;
 }
 
