@@ -86,7 +86,7 @@ public fun retrieveIntAsDp(key: String, default: Dp? = null): Dp {
 public fun retrieveIntAsDpOrUnspecified(key: String): Dp =
     try {
         retrieveIntAsDp(key)
-    } catch (ignored: JewelBridgeException) {
+    } catch (_: JewelBridgeException) {
         Dp.Unspecified
     }
 
@@ -211,12 +211,7 @@ internal fun scaleDensityWithIdeScale(sourceDensity: Density): Density {
     return Density(density, sourceDensity.fontScale)
 }
 
-internal fun isNewUiTheme(): Boolean {
-    if (!NewUI.isEnabled()) return false
-
-    val lafName = lafName()
-    return lafName == "Light" || lafName == "Dark" || lafName == "Light with Light Header"
-}
+internal fun isNewUiTheme(): Boolean = NewUI.isEnabled()
 
 @Suppress("UnstableApiUsage")
 internal fun lafName(): String {
