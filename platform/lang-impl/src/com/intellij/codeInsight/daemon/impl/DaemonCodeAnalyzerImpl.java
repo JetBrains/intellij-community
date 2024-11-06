@@ -61,11 +61,8 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueueImpl;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.PsiCompiledElement;
-import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.PsiManagerEx;
-import com.intellij.psi.impl.file.impl.FileManagerImpl;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -1231,15 +1228,13 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
         }
         else {
           VirtualFile virtualFile = getVirtualFile(fileEditor);
-          PsiFile psiFile = virtualFile == null ? null : findFileToHighlight(myProject, virtualFile);
-          HighlightingSession session = psiFile == null ? null : queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY);
+          HighlightingSession session = virtualFile == null || !virtualFile.isValid() ? null : queuePassesCreation(fileEditor, virtualFile, ArrayUtil.EMPTY_INT_ARRAY);
           submitted |= session != null;
           if (session != null) {
             createdIndicators.add(session.getProgressIndicator());
           }
-          if (PassExecutorService.LOG.isDebugEnabled()) {
-            PassExecutorService.log(session==null?null:session.getProgressIndicator(), null, "submit psiFile:", psiFile + " (" + virtualFile + "); submitted=", submitted);
-          }
+          ProgressIndicator indicator = session == null ? null : session.getProgressIndicator();
+          PassExecutorService.log(indicator, null, "submit:", virtualFile, "; submitted=", submitted);
         }
       }
     }
@@ -1284,8 +1279,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     Editor editor = textEditor == null ? null : textEditor.getEditor();
     if (highlighter == null) {
       if (PassExecutorService.LOG.isDebugEnabled()) {
-        PassExecutorService.log(null, null,
-          "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
+        PassExecutorService.log(null, null, "couldn't highlight", virtualFile, "because getBackgroundHighlighter() returned null. fileEditor=",
           fileEditor, fileEditor.getClass(),
           (textEditor == null ? "editor is null" : "editor loaded:" + textEditor.isEditorLoaded())
         );
@@ -1329,21 +1323,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
       PassExecutorService.log(progress, null, "queuePassesCreation completed. session=", session);
     }
     return session;
-  }
-
-  private static PsiFile findFileToHighlight(@NotNull Project project, @Nullable VirtualFile virtualFile) {
-    if (virtualFile == null || !virtualFile.isValid()) {
-      return null;
-    }
-
-    FileManagerImpl fileManagerImpl = (FileManagerImpl)PsiManagerEx.getInstanceEx(project).getFileManager();
-    PsiFile psiFile = fileManagerImpl.getFastCachedPsiFile(virtualFile);
-
-    if (psiFile instanceof PsiCompiledFile compiled) {
-      return compiled.getDecompiledPsiFile();
-    }
-
-    return psiFile;
   }
 
   private void submitInBackground(@NotNull FileEditor fileEditor,
