@@ -772,8 +772,16 @@ public class VfsUtilCore {
         return 1;
       }
 
-      if (v1.getParent() == null && v2.getParent() == null) {
+      boolean isOrphan1 = v1.getParent() == null;
+      boolean isOrphan2 = v2.getParent() == null;
+      if (isOrphan1 && isOrphan2) {
         return v1.getPath().compareTo(v2.getPath());
+      }
+      else if (isOrphan1) {
+        return -1;
+      }
+      else if (isOrphan2) {
+        return 1;
       }
 
       VirtualFile[] parents1 = getPathComponents(v1);
