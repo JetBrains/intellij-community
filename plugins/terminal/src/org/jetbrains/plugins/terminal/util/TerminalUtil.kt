@@ -10,13 +10,11 @@ import com.jediterm.terminal.model.TerminalModelListener
 import com.jediterm.terminal.model.TerminalTextBuffer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.future.await
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.time.withTimeout
 import org.jetbrains.plugins.terminal.ShellTerminalWidget
 import java.time.Duration
-import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.toKotlinDuration
 
 internal fun TerminalTextBuffer.addModelListener(parentDisposable: Disposable, listener: TerminalModelListener) {
   addModelListener(listener)
@@ -32,21 +30,16 @@ internal fun TtyConnector.waitFor(timeout: Duration, callback: () -> Unit) {
   }
   val processTtyConnector = ShellTerminalWidget.getProcessTtyConnector(this)
   if (processTtyConnector != null) {
-    val done = AtomicBoolean(false)
-    val onceCallback = {
-      if (done.compareAndSet(false, true)) {
+    val onExit = processTtyConnector.process.onExit()
+    service<InternalTerminalCoroutineService>().coroutineScope.launch(Dispatchers.IO) {
+      try {
+        withTimeout(timeout) {
+          onExit.await() // the future will be canceled on timeout (not affecting the process itself)
+        }
+      }
+      finally {
         callback()
       }
-    }
-    val onExit = processTtyConnector.process.onExit()
-    val job = service<InternalTerminalCoroutineService>().coroutineScope.launch(Dispatchers.IO) {
-      delay(timeout.toKotlinDuration())
-      onExit.cancel(false)
-      onceCallback()
-    }
-    onExit.whenComplete { _, _ ->
-      onceCallback()
-      job.cancel()
     }
   }
   else {
