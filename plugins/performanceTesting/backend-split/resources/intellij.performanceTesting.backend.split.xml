@@ -1,0 +1,12 @@
+<idea-plugin package="com.intellij.performanceTesting.backend.split">
+  <!-- This module is currently included into backend IDE via CWM plugin because there is no way to depend on backend.split module yet.
+  The correct setup would be to make this module a content module in the perf testing plugin and add an explicit backend.split dependency to it-->
+
+  <dependencies>
+    <plugin id="com.jetbrains.performancePlugin"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.snapshotOpener implementation="com.intellij.performanceTesting.backend.split.RemoteClientSnapshotUploader"/>
+  </extensions>
+</idea-plugin>
