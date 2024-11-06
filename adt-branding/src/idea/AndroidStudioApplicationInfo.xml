@@ -31,6 +31,7 @@
   <essential-plugin>com.android.tools.gradle.dcl</essential-plugin>
   <essential-plugin>com.android.tools.idea.smali</essential-plugin>
   <essential-plugin>com.intellij.gradle</essential-plugin>
+  <essential-plugin>com.intellij.modules.json</essential-plugin>
   <essential-plugin>com.intellij.platform.images</essential-plugin>
   <essential-plugin>com.intellij.properties</essential-plugin>
   <essential-plugin>intellij.webp</essential-plugin>
