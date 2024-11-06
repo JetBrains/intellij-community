@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -642,6 +643,9 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   DumbModeAccessType getCurrentDumbModeAccessType_NoDumbChecks() {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
+      if (!Registry.is("ide.dumb.mode.check.awareness")) {
+        return DumbModeAccessType.RELIABLE_DATA_ONLY;
+      }
       return null;
     }
 
