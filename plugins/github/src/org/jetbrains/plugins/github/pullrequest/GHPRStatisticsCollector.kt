@@ -21,14 +21,26 @@ import org.jetbrains.plugins.github.pullrequest.ui.filters.GHPRListSearchValue
 import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
+// TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
 internal object GHPRStatisticsCollector: CounterUsagesCollector() {
   private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 7)
 
   override fun getGroup() = COUNTERS_GROUP
 
+  //region: Pull Request list
   private val SELECTORS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("selectors.opened")
   private val LIST_OPENED_EVENT = COUNTERS_GROUP.registerEvent("list.opened")
 
+  fun logSelectorsOpened(project: Project) {
+    SELECTORS_OPENED_EVENT.log(project)
+  }
+
+  fun logListOpened(project: Project) {
+    LIST_OPENED_EVENT.log(project)
+  }
+  //endregion
+
+  //region: Filters
   private val FILTER_SEARCH_PRESENT = EventFields.Boolean("has_search")
   private val FILTER_STATE_PRESENT = EventFields.Boolean("has_state")
   private val FILTER_AUTHOR_PRESENT = EventFields.Boolean("has_author")
@@ -44,17 +56,37 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
                                                                          FILTER_REVIEW_PRESENT,
                                                                          FILTER_LABEL_PRESENT)
 
+  fun logListFiltersApplied(project: Project, filters: GHPRListSearchValue): Unit =
+    FILTERS_APPLIED_EVENT.log(
+      project,
+      EventPair(FILTER_SEARCH_PRESENT, filters.searchQuery != null),
+      EventPair(FILTER_STATE_PRESENT, filters.state != null),
+      EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
+      EventPair(FILTER_ASSIGNEE_PRESENT, filters.assignee != null),
+      EventPair(FILTER_REVIEW_PRESENT, filters.reviewState != null),
+      EventPair(FILTER_LABEL_PRESENT, filters.label != null)
+    )
+  //endregion
+
+  //region: Details / Create Tab
   private val DETAILS_OPENED_EVENT = COUNTERS_GROUP.registerEvent("details.opened")
   private val NEW_OPENED_EVENT = COUNTERS_GROUP.registerEvent("new.pr.view.opened")
 
+  fun logDetailsOpened(project: Project) {
+    DETAILS_OPENED_EVENT.log(project)
+  }
+
+  fun logNewPRViewOpened(project: Project) {
+    NEW_OPENED_EVENT.log(project)
+  }
+  //endregion
+
+  //region: Timeline
   private val TIMELINE_OPENED_EVENT = COUNTERS_GROUP.registerEvent("timeline.opened", EventFields.Int("count"))
   private val DIFF_OPENED_EVENT = COUNTERS_GROUP.registerEvent("diff.opened", EventFields.Int("count"))
   private val MERGED_EVENT = COUNTERS_GROUP.registerEvent("merged", EventFields.Enum<GithubPullRequestMergeMethod>("method") {
     it.name.uppercase(Locale.getDefault())
   })
-  private val anonymizedId = EventFields.AnonymizedId
-
-  private val SERVER_META_EVENT = COUNTERS_GROUP.registerEvent("server.meta.collected", anonymizedId, EventFields.Version)
 
   private val DETAILS_BRANCHES_EVENT = COUNTERS_GROUP.registerEvent("details.branches.opened")
   private val DETAILS_BRANCH_CHECKED_OUT_EVENT = COUNTERS_GROUP.registerEvent("details.branch.checked.out")
@@ -68,45 +100,6 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
   private val DETAILS_ACTION_EVENT = COUNTERS_GROUP.registerEvent("details.additional.actions.invoked",
                                                                   EventFields.Enum<GHPRAction>("action"),
                                                                   EventFields.Boolean("is_default"))
-
-  fun logSelectorsOpened(project: Project) {
-    SELECTORS_OPENED_EVENT.log(project)
-  }
-
-  fun logListOpened(project: Project) {
-    LIST_OPENED_EVENT.log(project)
-  }
-
-  fun logListFiltersApplied(project: Project, filters: GHPRListSearchValue): Unit =
-    FILTERS_APPLIED_EVENT.log(
-      project,
-      EventPair(FILTER_SEARCH_PRESENT, filters.searchQuery != null),
-      EventPair(FILTER_STATE_PRESENT, filters.state != null),
-      EventPair(FILTER_AUTHOR_PRESENT, filters.author != null),
-      EventPair(FILTER_ASSIGNEE_PRESENT, filters.assignee != null),
-      EventPair(FILTER_REVIEW_PRESENT, filters.reviewState != null),
-      EventPair(FILTER_LABEL_PRESENT, filters.label != null)
-    )
-
-  fun logDetailsOpened(project: Project) {
-    DETAILS_OPENED_EVENT.log(project)
-  }
-
-  fun logNewPRViewOpened(project: Project) {
-    NEW_OPENED_EVENT.log(project)
-  }
-
-  fun logTimelineOpened(project: Project) {
-    val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRTimelineVirtualFile }
-    TIMELINE_OPENED_EVENT.log(project, count)
-  }
-
-  fun logDiffOpened(project: Project) {
-    val count = FileEditorManager.getInstance(project).openFiles.count {
-      it is GHPRDiffVirtualFile
-    }
-    DIFF_OPENED_EVENT.log(project, count)
-  }
 
   fun logDetailsBranchesOpened(project: Project) {
     DETAILS_BRANCHES_EVENT.log(project)
@@ -136,6 +129,18 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
     DETAILS_ACTION_EVENT.log(project, action, isDefault)
   }
 
+  fun logTimelineOpened(project: Project) {
+    val count = FileEditorManager.getInstance(project).openFiles.count { it is GHPRTimelineVirtualFile }
+    TIMELINE_OPENED_EVENT.log(project, count)
+  }
+
+  fun logDiffOpened(project: Project) {
+    val count = FileEditorManager.getInstance(project).openFiles.count {
+      it is GHPRDiffVirtualFile
+    }
+    DIFF_OPENED_EVENT.log(project, count)
+  }
+
   fun logChangeSelected(project: Project) {
     DETAILS_CHANGE_EVENT.log(project)
   }
@@ -143,10 +148,17 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
   fun logMergedEvent(project: Project, method: GithubPullRequestMergeMethod) {
     MERGED_EVENT.log(project, method)
   }
+  //endregion
+
+  //region: Server Metadata
+  private val anonymizedId = EventFields.AnonymizedId
+
+  private val SERVER_META_EVENT = COUNTERS_GROUP.registerEvent("server.meta.collected", anonymizedId, EventFields.Version)
 
   fun logEnterpriseServerMeta(project: Project, server: GithubServerPath, meta: GHEnterpriseServerMeta) {
     SERVER_META_EVENT.log(project, server.toUrl(), meta.installedVersion)
   }
+  //endregion
 }
 
 enum class GHPRAction {
@@ -167,7 +179,7 @@ private class GHServerVersionsCollector(
   parentCs: CoroutineScope
 ) {
 
-  private val scope = parentCs.childScope()
+  private val scope = parentCs.childScope(javaClass.name)
 
   init {
     val accountsFlow = service<GHAccountManager>().accountsState
@@ -182,7 +194,7 @@ private class GHServerVersionsCollector(
             val metadata = service<GHEnterpriseServerMetadataLoader>().loadMetadata(server)
             GHPRStatisticsCollector.logEnterpriseServerMeta(project, server, metadata)
           }
-          catch (ignore: Exception) {
+          catch (_: Exception) {
           }
         }
       }
