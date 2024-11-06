@@ -119,9 +119,15 @@ internal fun buildPresentation(builder: TreeNodePresentationBuilder, userObject:
   val presentation = userObject.presentation
   return builder.run {
     setIcon(presentation.getIcon(false))
-    setMainText(presentation.presentableText ?: "")
-    for (fragment in presentation.coloredText) {
-      appendTextFragment(fragment.text, fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    val mainText = presentation.presentableText ?: ""
+    setMainText(mainText)
+    if (presentation.coloredText.isEmpty()) {
+      appendTextFragment(mainText, SimpleTextAttributes.REGULAR_ATTRIBUTES)
+    }
+    else {
+      for (fragment in presentation.coloredText) {
+        appendTextFragment(fragment.text, fragment.attributes ?: SimpleTextAttributes.REGULAR_ATTRIBUTES)
+      }
     }
     val location = presentation.locationString
     if (!location.isNullOrEmpty()) {
