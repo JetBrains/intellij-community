@@ -1074,10 +1074,6 @@ private fun assembleWorkspace(): TWorkspace = workspace(KotlinPluginMode.K1) {
             model("codeInsight/hints/chainCall", pattern = inlayHintsFileRegexp)
         }
 
-        testClass<AbstractKotlinCodeVisionProviderTest> {
-            model("codeInsight/codeVision")
-        }
-
         testClass<AbstractKotlinNavBarTest> {
             model("navigationToolbar", pattern = KT_OR_KTS, isRecursive = false)
         }

@@ -1,9 +1,7 @@
 // MODE: usages
 
-/*<# block [ 1 Usage] #>*/
-interface SomeInterface {
-/*<# block [     2 Usages] #>*/
-    val someProperty = "initialized"
+interface SomeInterface {/*<# [1 Usage] #>*/
+val someProperty = "initialized"/*<# [2 Usages] #>*/
     fun someFun() = "it's " + someProperty // <== (1):
 }
 

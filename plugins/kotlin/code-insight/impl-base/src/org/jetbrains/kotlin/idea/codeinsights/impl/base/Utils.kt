@@ -2,18 +2,28 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.psi.ElementManipulators
+import com.intellij.psi.PsiNamedElement
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.LocalSearchScope
+import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.searches.ReferencesSearch
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.base.codeInsight.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.base.psi.appendDotQualifiedSelector
 import org.jetbrains.kotlin.idea.base.psi.getSingleUnwrappedStatementOrThis
 import org.jetbrains.kotlin.idea.base.psi.isOneLiner
 import org.jetbrains.kotlin.idea.base.psi.replaced
+import org.jetbrains.kotlin.idea.core.script.configuration.DefaultScriptingSupport
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
+import org.jetbrains.kotlin.idea.search.isCheapEnoughToSearchConsideringOperators
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForReceiver
 
 fun KtExpression.isComplexInitializer(): Boolean {
@@ -36,6 +46,93 @@ fun KtCallableDeclaration.hasUsages(inElement: KtElement): Boolean {
 fun KtCallableDeclaration.hasUsages(inElements: Collection<KtElement>): Boolean {
     assert(this.isPhysical)
     return ReferencesSearch.search(this, LocalSearchScope(inElements.toTypedArray())).any()
+}
+
+fun isCheapEnoughToSearchUsages(declaration: KtNamedDeclaration): PsiSearchHelper.SearchCostResult {
+    val project = declaration.project
+    val psiSearchHelper = PsiSearchHelper.getInstance(project)
+
+    if (!KotlinSearchUsagesSupport.getInstance(project).findScriptsWithUsages(declaration) { DefaultScriptingSupport.getInstance(project).isLoadedFromCache(it) }) {
+        // Not all script configurations are loaded; behave like it is used
+        return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES
+    }
+
+    val useScope = psiSearchHelper.getUseScope(declaration)
+    if (useScope is GlobalSearchScope) {
+        var zeroOccurrences = true
+        val list = listOf(declaration.name) + declarationAccessorNames(declaration) +
+                listOfNotNull(declaration.getClassNameForCompanionObject())
+        for (name in list) {
+            if (name == null) continue
+            when (psiSearchHelper.isCheapEnoughToSearchConsideringOperators(name, useScope)) {
+                PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES -> {
+                } // go on, check other names
+                PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES -> zeroOccurrences = false
+                PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES -> return PsiSearchHelper.SearchCostResult.TOO_MANY_OCCURRENCES // searching usages is too expensive; behave like it is used
+            }
+        }
+
+        if (zeroOccurrences) return PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES
+    }
+    return PsiSearchHelper.SearchCostResult.FEW_OCCURRENCES
+}
+
+private fun PsiNamedElement.getClassNameForCompanionObject(): String? {
+    return if (this is KtObjectDeclaration && this.isCompanion()) {
+        getNonStrictParentOfType<KtClass>()?.name
+    } else {
+        null
+    }
+}
+
+
+/**
+ * returns list of declaration accessor names, e.g., a pair of getter/setter for property declaration
+ *
+ * note: could be more than declaration.getAccessorNames()
+ * as declaration.getAccessorNames() relies on LightClasses and therefore some of them could be not available
+ * (as not accessible outside class)
+ *
+ * e.g.: private setter w/o body is not visible outside class and could not be used
+ */
+private fun declarationAccessorNames(declaration: KtNamedDeclaration): List<String> =
+    when (declaration) {
+        is KtProperty -> listOfPropertyAccessorNames(declaration)
+        is KtParameter -> listOfParameterAccessorNames(declaration)
+        else -> emptyList()
+    }
+
+private fun listOfParameterAccessorNames(parameter: KtParameter): List<String> {
+    val accessors = mutableListOf<String>()
+    if (parameter.hasValOrVar()) {
+        parameter.name?.let {
+            accessors.add(JvmAbi.getterName(it))
+            if (parameter.isVarArg)
+                accessors.add(JvmAbi.setterName(it))
+        }
+    }
+    return accessors
+}
+
+private fun listOfPropertyAccessorNames(property: KtProperty): List<String> {
+    val accessors = mutableListOf<String>()
+    val propertyName = property.name ?: return accessors
+    accessors.add(property.getCustomGetterName() ?: JvmAbi.getterName(propertyName))
+    if (property.isVar) accessors.add(property.getCustomSetterName() ?: JvmAbi.setterName(propertyName))
+    return accessors
+}
+
+
+private fun KtProperty.getCustomGetterName(): String? = getter?.annotationEntries?.getCustomAccessorName()
+    ?: annotationEntries.filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_GETTER }.getCustomAccessorName()
+
+private fun KtProperty.getCustomSetterName(): String? = setter?.annotationEntries?.getCustomAccessorName()
+    ?: annotationEntries.filter { it.useSiteTarget?.getAnnotationUseSiteTarget() == AnnotationUseSiteTarget.PROPERTY_SETTER }.getCustomAccessorName()
+
+// If the property or its accessor has 'JvmName' annotation, it should be used instead
+private fun List<KtAnnotationEntry>.getCustomAccessorName(): String? {
+    val customJvmNameAnnotation = firstOrNull { it.shortName?.asString() == "JvmName" } ?: return null
+    return customJvmNameAnnotation.valueArguments.firstOrNull()?.getArgumentExpression()?.let { ElementManipulators.getValueText(it) }
 }
 
 fun KtExpression.isExitStatement(): Boolean =
