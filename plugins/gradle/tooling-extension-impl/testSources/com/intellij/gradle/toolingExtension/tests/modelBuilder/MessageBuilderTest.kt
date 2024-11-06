@@ -5,6 +5,7 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException
 import com.intellij.util.ExceptionUtil
 import org.junit.jupiter.api.Test
 
+@Suppress("checkReturnValue")
 class MessageBuilderTest : MessageBuilderTestCase() {
 
   @Test
