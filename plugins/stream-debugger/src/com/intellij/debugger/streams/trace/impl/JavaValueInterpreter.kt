@@ -6,7 +6,7 @@ import com.intellij.debugger.streams.trace.XValueInterpreter
 import com.intellij.psi.CommonClassNames
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.frame.XValue
-
+import com.intellij.debugger.engine.DebuggerUtils
 
 class JavaValueInterpreter : XValueInterpreter {
   override fun tryExtractResult(session: XDebugSession, result: XValue): XValueInterpreter.Result? {
