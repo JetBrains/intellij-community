@@ -39,6 +39,15 @@ internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLay
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.create.comment")))
     mainPanel.add(createCommentLabel(IdeBundle.message("welcome.screen.empty.projects.open.comment")))
 
+    val (actionsToolbar: ActionToolbarImpl, moreToolbar) = createActionToolbars(parentDisposable)
+
+    mainPanel.add(Wrapper(FlowLayout(), actionsToolbar.component))
+    mainPanel.add(Wrapper(FlowLayout(), moreToolbar.component))
+    addToCenter(mainPanel)
+  }
+
+  // Returns main actions, more actions
+  private fun createActionToolbars(parentDisposable: Disposable): Pair<ActionToolbarImpl, ActionToolbarImpl> {
     val actionManager = ActionManager.getInstance()
     val baseGroup = actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART_EMPTY_STATE) as ActionGroup
     val moreActionGroup = DefaultActionGroup(IdeBundle.message("welcome.screen.more.actions.link.text"), true)
@@ -77,17 +86,16 @@ internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLay
       }
     }
     val actionsToolbar: ActionToolbarImpl = createActionsToolbar(toolbarGroup)
-    mainPanel.add(Wrapper(FlowLayout(), actionsToolbar.component))
 
     moreActionGroup.templatePresentation.putClientProperty(ActionUtil.COMPONENT_PROVIDER, object : CustomComponentAction {
       val ENABLED = Key.create<Boolean>("ENABLED")
       var alienUpdateScheduled = false
       override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
         return object : DropDownLink<String>(presentation.text, { link: DropDownLink<String> ->
-            JBPopupFactory.getInstance().createActionGroupPopup(
-              null, moreActionGroup, DataManager.getInstance().getDataContext(link),
-              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
-          }) {
+          JBPopupFactory.getInstance().createActionGroupPopup(
+            null, moreActionGroup, DataManager.getInstance().getDataContext(link),
+            JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+        }) {
           override fun performAction() {
             if (moreActionGroup.childrenCount == 1) {
               WelcomeScreenActionsUtil.performAnActionForComponent(moreActionGroup.getChildren(actionManager)[0], this)
@@ -120,8 +128,7 @@ internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLay
     moreToolbar.setBorder(JBUI.Borders.emptyTop(5))
     moreToolbar.targetComponent = moreToolbar.component
     moreToolbar.isOpaque = false
-    mainPanel.add(Wrapper(FlowLayout(), moreToolbar.component))
-    addToCenter(mainPanel)
+    return Pair(actionsToolbar, moreToolbar)
   }
 
   private fun createActionsToolbar(actionGroup: ActionGroup): ActionToolbarImpl {
