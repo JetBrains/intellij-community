@@ -2,6 +2,7 @@
 package com.intellij.platform.ijent.community.impl.nio
 
 import com.intellij.platform.eel.fs.EelFileSystemApi
+import com.intellij.platform.eel.getOrThrow
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.ijent.fs.IjentFileSystemApi
 import java.nio.file.Files
@@ -24,13 +25,8 @@ internal open class IjentNioBasicFileAttributeView(val api: IjentFileSystemApi, 
     if (lastAccessTime != null) {
       builder.updateTime(EelFileSystemApi.ChangeAttributesOptions.Builder::accessTime, lastAccessTime)
     }
-    try {
-      fsBlocking {
-        api.changeAttributes(path, builder.build())
-      }
-    }
-    catch (e: EelFileSystemApi.ChangeAttributesException) {
-      e.throwFileSystemException()
+    fsBlocking {
+      api.changeAttributes(path, builder.build()).getOrThrow()
     }
   }
 }

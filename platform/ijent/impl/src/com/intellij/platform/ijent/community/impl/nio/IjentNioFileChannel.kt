@@ -17,7 +17,6 @@ import java.nio.file.FileSystemException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
-import kotlin.Throws
 
 internal class IjentNioFileChannel private constructor(
   private val ijentOpenedFile: EelOpenedFile,
@@ -159,12 +158,7 @@ internal class IjentNioFileChannel private constructor(
     val currentSize = this.size()
     fsBlocking {
       if (size < currentSize) {
-        try {
-          file.truncate(size)
-        }
-        catch (e: EelOpenedFile.Writer.TruncateException) {
-          e.throwFileSystemException()
-        }
+        file.truncate(size).getOrThrowFileSystemException()
       }
       val currentPosition = file.tell().getOrThrowFileSystemException()
       file.seek(currentPosition.coerceIn(0, size), EelOpenedFile.SeekWhence.START)

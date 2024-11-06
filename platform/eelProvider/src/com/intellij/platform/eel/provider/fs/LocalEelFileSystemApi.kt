@@ -6,10 +6,7 @@ import com.intellij.platform.eel.EelResult
 import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.*
-import com.intellij.platform.eel.fs.EelFileSystemApi.ChangeAttributesException
 import com.intellij.platform.eel.fs.EelFileSystemApi.FileWriterCreationMode.*
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.path.EelPathException
 import com.intellij.platform.eel.provider.EelFsResultImpl
@@ -25,8 +22,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 import kotlin.io.path.exists
 import kotlin.io.path.fileStore
-import kotlin.reflect.full.isSubclassOf
-import kotlin.reflect.full.primaryConstructor
 import kotlin.streams.asSequence
 
 abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) : EelFileSystemApi {
@@ -67,43 +62,8 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         is AtomicMoveNotSupportedException -> EelFsResultImpl.Other(path, err.message!!)
         else -> EelFsResultImpl.Other(path, err.message!!)
       }
-      EelFsResultImpl.Error(err as? E ?: EelFsResultImpl.Other(path, err.message!!) as E)
+      EelFsResultImpl.Error(err as? E ?: EelFsResultImpl.Other(path, err.message) as E)
     }
-
-  internal inline fun <reified E> wrapIntoEelException(body: () -> Unit) where E : EelFsIOException {
-    try {
-      body()
-    }
-    catch (err: FileSystemException) {
-      val path =
-        try {
-          EelPath.Absolute.parse(err.file.toString(), pathOs)
-        }
-        catch (_: EelPathException) {
-          EelPath.Absolute.parse(fs.rootDirectories.first().toString(), pathOs)
-        }
-      val cl = E::class
-      val subclasses = cl.sealedSubclasses
-
-      val iface = when (err) {
-        is AccessDeniedException -> EelFsError.PermissionDenied::class
-        is NoSuchFileException -> EelFsError.DoesNotExist::class
-        is FileAlreadyExistsException -> EelFsError.AlreadyExists::class
-        is NotDirectoryException -> EelFsError.NotDirectory::class
-
-        is NotLinkException -> EelFsError.Other::class
-        is FileSystemLoopException -> EelFsError.Other::class
-        is DirectoryNotEmptyException -> EelFsError.Other::class
-        is AtomicMoveNotSupportedException -> EelFsError.Other::class
-        else -> EelFsError.Other::class
-      }
-
-      // would be more correct to use 'single' here, but some kinds of exceptions have multiple children -- like the wildcard "Other"
-      val appropriateSubclass = subclasses.first { it.isSubclassOf(iface) }
-
-      throw appropriateSubclass.primaryConstructor!!.call(path, err.message!!)
-    }
-  }
 
   override suspend fun listDirectory(path: EelPath.Absolute): EelResult<Collection<String>, EelFileSystemApi.ListDirectoryError> =
     wrapIntoEelResult {
@@ -208,14 +168,13 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
       }
     }
 
-  override suspend fun delete(path: EelPath.Absolute, removeContent: Boolean) {
-    wrapIntoEelException<EelFileSystemApi.DeleteException> {
+  override suspend fun delete(path: EelPath.Absolute, removeContent: Boolean): EelResult<Unit, EelFileSystemApi.DeleteError> =
+    wrapIntoEelResult {
       Files.delete(path.toNioPath())
     }
-  }
 
-  override suspend fun copy(options: EelFileSystemApi.CopyOptions) {
-    wrapIntoEelException<EelFileSystemApi.CopyException> {
+  override suspend fun copy(options: EelFileSystemApi.CopyOptions): EelResult<Unit, EelFileSystemApi.CopyError> =
+    wrapIntoEelResult {
       Files.copy(
         options.source.toNioPath(),
         options.target.toNioPath(),
@@ -225,24 +184,22 @@ abstract class NioBasedEelFileSystemApi(@VisibleForTesting val fs: FileSystem) :
         ).toTypedArray(),
       )
     }
-  }
 
   override suspend fun move(
     source: EelPath.Absolute,
     target: EelPath.Absolute,
     replaceExisting: EelFileSystemApi.ReplaceExistingDuringMove,
     followLinks: Boolean,
-  ) {
-    wrapIntoEelException<EelFileSystemApi.MoveException> {
+  ): EelResult<Unit, EelFileSystemApi.MoveError> =
+    wrapIntoEelResult {
       val sourceNioPath = source.toNioPath()
       val targetNioPath = target.toNioPath()
       if (targetNioPath.exists() && replaceExisting == EelFileSystemApi.ReplaceExistingDuringMove.DO_NOT_REPLACE) {
-        throw EelFileSystemApi.MoveException.TargetAlreadyExists(target)
+        return EelFsResultImpl.Error(EelFsResultImpl.TargetAlreadyExists(target, "Target already exists"))
       }
       EelPathUtils.walkingTransfer(sourceNioPath, targetNioPath, true)
     }
   }
-}
 
 private class LocalEelOpenedFileReader(
   private val eelFs: NioBasedEelFileSystemApi,
@@ -260,9 +217,8 @@ private class LocalEelOpenedFileReader(
 
   override val path: EelPath.Absolute = path_
 
-  override suspend fun close() {
+  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> =
     doClose(eelFs, byteChannel, path_)
-  }
 
   override suspend fun tell(): EelResult<Long, EelOpenedFile.TellError> =
     doTell(eelFs, byteChannel, path_)
@@ -293,21 +249,19 @@ private class LocalEelOpenedFileWriter(
       written
     }
 
-  override suspend fun flush() {
-    // Nothing.
+  override suspend fun flush(): EelResult<Unit, EelOpenedFile.Writer.FlushError> {
+    return EelFsResultImpl.Ok(Unit)
   }
 
-  override suspend fun truncate(size: Long) {
-    eelFs.wrapIntoEelException<EelOpenedFile.Writer.TruncateException> {
+  override suspend fun truncate(size: Long): EelResult<Unit, EelOpenedFile.Writer.TruncateError> =
+    eelFs.wrapIntoEelResult {
       byteChannel.truncate(size)
     }
-  }
 
   override val path: EelPath.Absolute = path_
 
-  override suspend fun close() {
+  override suspend fun close(): EelResult<Unit, EelOpenedFile.CloseError> =
     doClose(eelFs, byteChannel, path_)
-  }
 
   override suspend fun tell(): EelResult<Long, EelOpenedFile.TellError> =
     doTell(eelFs, byteChannel, path_)
@@ -368,21 +322,26 @@ private fun doTell(eelFs: NioBasedEelFileSystemApi, byteChannel: SeekableByteCha
     byteChannel.position().toLong()
   }
 
-private fun doClose(eelFs: NioBasedEelFileSystemApi, byteChannel: SeekableByteChannel, path: EelPath.Absolute) {
-  eelFs.wrapIntoEelException<EelOpenedFile.CloseException> {
+private fun doClose(
+  eelFs: NioBasedEelFileSystemApi,
+  byteChannel: SeekableByteChannel,
+  path: EelPath.Absolute,
+): EelResult<Unit, EelOpenedFile.CloseError> =
+  eelFs.wrapIntoEelResult {
     byteChannel.close()
   }
-}
 
 abstract class PosixNioBasedEelFileSystemApi(
   fs: FileSystem,
   override val user: EelUserPosixInfo,
 ) : NioBasedEelFileSystemApi(fs), EelFileSystemPosixApi {
-  override suspend fun createDirectory(path: EelPath.Absolute, attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>) {
-    wrapIntoEelException<CreateDirectoryException> {
+  override suspend fun createDirectory(
+    path: EelPath.Absolute,
+    attributes: List<EelFileSystemPosixApi.CreateDirAttributePosix>,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateDirectoryError> =
+    wrapIntoEelResult {
       Files.createDirectory(path.toNioPath())
     }
-  }
 
   override suspend fun listDirectoryWithAttrs(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     Collection<Pair<String, EelPosixFileInfo>>,
@@ -394,18 +353,22 @@ abstract class PosixNioBasedEelFileSystemApi(
     EelFileSystemApi.StatError> =
     super.stat(path, symlinkPolicy) as EelResult<EelPosixFileInfo, EelFileSystemApi.StatError>
 
-  override suspend fun changeAttributes(path: EelPath.Absolute, options: EelFileSystemApi.ChangeAttributesOptions) {
-    wrapIntoEelException<ChangeAttributesException> {
+  override suspend fun changeAttributes(
+    path: EelPath.Absolute,
+    options: EelFileSystemApi.ChangeAttributesOptions,
+  ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
+    wrapIntoEelResult {
       TODO("Not yet implemented")
       //Files.setAttribute(path.toNioPath(), )
     }
-  }
 
-  override suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) {
-    wrapIntoEelException<CreateSymbolicLinkException> {
+  override suspend fun createSymbolicLink(
+    target: EelPath,
+    linkPath: EelPath.Absolute,
+  ): EelResult<Unit, EelFileSystemPosixApi.CreateSymbolicLinkError> =
+    wrapIntoEelResult {
       Files.createSymbolicLink(linkPath.toNioPath(), target.toNioPath())
     }
-  }
 }
 
 abstract class WindowsNioBasedEelFileSystemApi(
@@ -429,12 +392,14 @@ abstract class WindowsNioBasedEelFileSystemApi(
     EelFileSystemApi.StatError> =
     super.stat(path, symlinkPolicy) as EelResult<EelWindowsFileInfo, EelFileSystemApi.StatError>
 
-  override suspend fun changeAttributes(path: EelPath.Absolute, options: EelFileSystemApi.ChangeAttributesOptions) {
-    wrapIntoEelException<ChangeAttributesException> {
+  override suspend fun changeAttributes(
+    path: EelPath.Absolute,
+    options: EelFileSystemApi.ChangeAttributesOptions,
+  ): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> =
+    wrapIntoEelResult {
       TODO("Not yet implemented")
       //Files.setAttribute(path.toNioPath(), )
     }
-  }
 }
 
 private fun getFileAttributes(child: Path, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelFileInfo =

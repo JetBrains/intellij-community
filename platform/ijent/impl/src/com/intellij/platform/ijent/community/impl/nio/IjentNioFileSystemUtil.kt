@@ -36,11 +36,11 @@ internal fun EelFsError.throwFileSystemException(): Nothing {
     is EelFsError.ReadOnlyFileSystem -> ReadOnlyFileSystemException()
     is EelOpenedFile.SeekError.InvalidValue -> IllegalArgumentException(message)
     is EelOpenedFile.Reader.ReadError.InvalidValue -> IllegalArgumentException(message)
-    is EelOpenedFile.Writer.TruncateException.NegativeOffset,
-    is EelOpenedFile.Writer.TruncateException.OffsetTooBig,
+    is EelOpenedFile.Writer.TruncateError.NegativeOffset,
+    is EelOpenedFile.Writer.TruncateError.OffsetTooBig,
       -> throw IllegalArgumentException(message)
     is EelOpenedFile.Writer.WriteError.InvalidValue -> throw IllegalArgumentException(message)
-    is EelFileSystemApi.DeleteException.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
+    is EelFileSystemApi.DeleteError.UnresolvedLink -> throw FileSystemException(where.toString(), null, message)
     is EelFsError.Other -> FileSystemException(where.toString(), null, message.nullize())
   }
 }
@@ -63,8 +63,10 @@ internal fun Path.toEelPath(): EelPath =
  * In addition, we suppress work stealing in this `runBlocking`, as it should return as fast as it can on its own.
  */
 @Suppress("SSBasedInspection")
-internal fun <T> fsBlocking(body: suspend () -> T): T = runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
-  body()
+internal fun <T> fsBlocking(body: suspend () -> T): T {
+  return runBlocking(NestedBlockingEventLoop(Thread.currentThread())) {
+    body()
+  }
 }
 
 @Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE", "CANNOT_OVERRIDE_INVISIBLE_MEMBER", "ERROR_SUPPRESSION")

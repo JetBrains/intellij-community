@@ -9,7 +9,6 @@ import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
 import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
-import kotlin.Throws
 
 val EelFileSystemApi.pathOs: EelPath.Absolute.OS
   get() = when (this) {
@@ -216,32 +215,23 @@ interface EelFileSystemApi {
   @CheckReturnValue
   suspend fun openForReadingAndWriting(options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
 
-  @Throws(DeleteException::class)
-  suspend fun delete(path: EelPath.Absolute, removeContent: Boolean)
+  @CheckReturnValue
+  suspend fun delete(path: EelPath.Absolute, removeContent: Boolean): EelResult<Unit, DeleteError>
 
-  sealed class DeleteException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                             additionalMessage), EelFsError.DoesNotExist
-
-    class DirNotEmpty(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                            additionalMessage), EelFsError.DirNotEmpty
-
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : DeleteException(where,
-                                                                                                 additionalMessage), EelFsError.PermissionDenied
+  sealed interface DeleteError : EelFsError {
+    interface DoesNotExist : DeleteError, EelFsError.DoesNotExist
+    interface DirNotEmpty : DeleteError, EelFsError.DirNotEmpty
+    interface PermissionDenied : DeleteError, EelFsError.PermissionDenied
 
     /**
      * Thrown only when `followLinks` is specified for [delete]
      */
-    class UnresolvedLink(where: EelPath.Absolute) : DeleteException(where, "Attempted to delete a file referenced by an unresolvable link")
-    class Other(where: EelPath.Absolute, additionalMessage: String)
-      : DeleteException(where, additionalMessage), EelFsError.Other
+    interface UnresolvedLink : DeleteError
+    interface Other : DeleteError, EelFsError.Other
   }
 
-  @Throws(CopyException::class)
-  suspend fun copy(options: CopyOptions)
+  @CheckReturnValue
+  suspend fun copy(options: CopyOptions) : EelResult<Unit, CopyError>
 
   sealed interface CopyOptions {
     val source: EelPath.Absolute
@@ -276,16 +266,16 @@ interface EelFileSystemApi {
     }
   }
 
-  sealed class CopyException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : CopyException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class TargetAlreadyExists(where: EelPath.Absolute) : CopyException(where, "Target already exists"), EelFsError.AlreadyExists
-    class PermissionDenied(where: EelPath.Absolute) : CopyException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NotEnoughSpace(where: EelPath.Absolute) : CopyException(where, "Not enough space"), EelFsError.NotEnoughSpace
-    class NameTooLong(where: EelPath.Absolute) : CopyException(where, "Name too long"), EelFsError.NameTooLong
-    class ReadOnlyFileSystem(where: EelPath.Absolute) : CopyException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-    class FileSystemError(where: EelPath.Absolute, additionalMessage: String) : CopyException(where, additionalMessage), EelFsError.Other
-    class TargetDirNotEmpty(where: EelPath.Absolute) : CopyException(where, "Target directory is not empty"), EelFsError.DirNotEmpty
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CopyException(where, additionalMessage), EelFsError.Other
+  sealed interface CopyError : EelFsError {
+    interface SourceDoesNotExist : CopyError, EelFsError.DoesNotExist
+    interface TargetAlreadyExists : CopyError, EelFsError.AlreadyExists
+    interface PermissionDenied : CopyError, EelFsError.PermissionDenied
+    interface NotEnoughSpace : CopyError, EelFsError.NotEnoughSpace
+    interface NameTooLong : CopyError, EelFsError.NameTooLong
+    interface ReadOnlyFileSystem : CopyError, EelFsError.ReadOnlyFileSystem
+    interface FileSystemError : CopyError, EelFsError.Other
+    interface TargetDirNotEmpty : CopyError, EelFsError.DirNotEmpty
+    interface Other : CopyError, EelFsError.Other
   }
 
   enum class ReplaceExistingDuringMove {
@@ -297,18 +287,23 @@ interface EelFileSystemApi {
     DO_NOT_REPLACE,
   }
 
-  @Throws(MoveException::class)
-  suspend fun move(source: EelPath.Absolute, target: EelPath.Absolute, replaceExisting: ReplaceExistingDuringMove, followLinks: Boolean)
+  @CheckReturnValue
+  suspend fun move(
+    source: EelPath.Absolute,
+    target: EelPath.Absolute,
+    replaceExisting: ReplaceExistingDuringMove,
+    followLinks: Boolean,
+  ) : EelResult<Unit, MoveError>
 
-  sealed class MoveException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : MoveException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class TargetAlreadyExists(where: EelPath.Absolute) : MoveException(where, "Target already exists"), EelFsError.AlreadyExists
-    class TargetIsDirectory(where: EelPath.Absolute) : MoveException(where, "Target already exists and it is a directory"), EelFsError.AlreadyExists
-    class PermissionDenied(where: EelPath.Absolute) : MoveException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NameTooLong(where: EelPath.Absolute) : MoveException(where, "Name too long"), EelFsError.NameTooLong
-    class ReadOnlyFileSystem(where: EelPath.Absolute) : MoveException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-    class FileSystemError(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
-    class Other(where: EelPath.Absolute, additionalMessage: String) : MoveException(where, additionalMessage), EelFsError.Other
+  sealed interface MoveError : EelFsError {
+    interface SourceDoesNotExist : MoveError, EelFsError.DoesNotExist
+    interface TargetAlreadyExists : MoveError, EelFsError.AlreadyExists
+    interface TargetIsDirectory : MoveError, EelFsError.AlreadyExists
+    interface PermissionDenied : MoveError, EelFsError.PermissionDenied
+    interface NameTooLong : MoveError, EelFsError.NameTooLong
+    interface ReadOnlyFileSystem : MoveError, EelFsError.ReadOnlyFileSystem
+    interface FileSystemError : MoveError, EelFsError.Other
+    interface Other : MoveError, EelFsError.Other
   }
 
   /**
@@ -338,15 +333,15 @@ interface EelFileSystemApi {
     }
   }
 
-  sealed class ChangeAttributesException(where: EelPath.Absolute, additionalMessage: String) : EelFsIOException(where, additionalMessage) {
-    class SourceDoesNotExist(where: EelPath.Absolute) : ChangeAttributesException(where, "Source does not exist"), EelFsError.DoesNotExist
-    class PermissionDenied(where: EelPath.Absolute) : ChangeAttributesException(where, "Permission denied"), EelFsError.PermissionDenied
-    class NameTooLong(where: EelPath.Absolute) : ChangeAttributesException(where, "Name too long"), EelFsError.NameTooLong
-    class Other(where: EelPath.Absolute, additionalMessage: String) : ChangeAttributesException(where, additionalMessage), EelFsError.Other
+  sealed interface ChangeAttributesError : EelFsError {
+    interface SourceDoesNotExist : ChangeAttributesError, EelFsError.DoesNotExist
+    interface PermissionDenied : ChangeAttributesError, EelFsError.PermissionDenied
+    interface NameTooLong : ChangeAttributesError, EelFsError.NameTooLong
+    interface Other : ChangeAttributesError, EelFsError.Other
   }
 
-  @Throws(ChangeAttributesException::class)
-  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions)
+  @CheckReturnValue
+  suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions) : EelResult<Unit, ChangeAttributesError>
 
   @CheckReturnValue
   suspend fun createTemporaryDirectory(options: CreateTemporaryDirectoryOptions): EelResult<
@@ -414,15 +409,11 @@ interface EelFileSystemApi {
 sealed interface EelOpenedFile {
   val path: EelPath.Absolute
 
-  @Throws(CloseException::class)
-  suspend fun close()
+  @CheckReturnValue
+  suspend fun close() : EelResult<Unit, CloseError>
 
-  sealed class CloseException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class Other(where: EelPath.Absolute, additionalMessage: String)
-      : CloseException(where, additionalMessage), EelFsError.Other
+  sealed interface CloseError : EelFsError {
+    interface Other : CloseError, EelFsError.Other
   }
 
   @CheckReturnValue
@@ -532,30 +523,22 @@ sealed interface EelOpenedFile {
       interface Other : WriteError, EelFsError.Other
     }
 
-    @Throws(FlushException::class)
-    suspend fun flush()
+    @CheckReturnValue
+    suspend fun flush() : EelResult<Unit, FlushError>
 
-    sealed class FlushException(
-      where: EelPath.Absolute,
-      additionalMessage: String,
-    ) : EelFsIOException(where, additionalMessage) {
-      class Other(where: EelPath.Absolute, additionalMessage: String)
-        : FlushException(where, additionalMessage), EelFsError.Other
+    sealed interface FlushError : EelFsError {
+      interface Other : FlushError, EelFsError.Other
     }
 
-    @Throws(TruncateException::class)
-    suspend fun truncate(size: Long)
+    @CheckReturnValue
+    suspend fun truncate(size: Long) : EelResult<Unit, TruncateError>
 
-    sealed class TruncateException(
-      where: EelPath.Absolute,
-      additionalMessage: String,
-    ) : EelFsIOException(where, additionalMessage) {
-      class UnknownFile(where: EelPath.Absolute) : TruncateException(where, "Could not find opened file"), EelFsError.UnknownFile
-      class NegativeOffset(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is negative")
-      class OffsetTooBig(where: EelPath.Absolute, offset: Long) : TruncateException(where, "Offset $offset is too big for truncation")
-      class ReadOnlyFs(where: EelPath.Absolute) : TruncateException(where, "File system is read-only"), EelFsError.ReadOnlyFileSystem
-      class Other(where: EelPath.Absolute, additionalMessage: String)
-        : TruncateException(where, additionalMessage), EelFsError.Other
+    sealed interface TruncateError : EelFsError {
+      interface UnknownFile : TruncateError, EelFsError.UnknownFile
+      interface NegativeOffset : TruncateError
+      interface OffsetTooBig : TruncateError
+      interface ReadOnlyFs : TruncateError, EelFsError.ReadOnlyFileSystem
+      interface Other : TruncateError, EelFsError.Other
     }
   }
 
@@ -569,26 +552,15 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     // todo
   }
 
-  @Throws(CreateDirectoryException::class)
-  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>)
+  @CheckReturnValue
+  suspend fun createDirectory(path: EelPath.Absolute, attributes: List<CreateDirAttributePosix>) : EelResult<Unit, CreateDirectoryError>
 
-  sealed class CreateDirectoryException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
-    class DirAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                          additionalMessage), EelFsError.AlreadyExists
-
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                           additionalMessage), EelFsError.AlreadyExists
-
-    class ParentNotFound(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                        additionalMessage), EelFsError.DoesNotExist
-
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where,
-                                                                                                          additionalMessage), EelFsError.PermissionDenied
-
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.Other
+  sealed interface CreateDirectoryError : EelFsError {
+    interface DirAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateDirectoryError, EelFsError.AlreadyExists
+    interface ParentNotFound : CreateDirectoryError, EelFsError.DoesNotExist
+    interface PermissionDenied : CreateDirectoryError, EelFsError.PermissionDenied
+    interface Other : CreateDirectoryError, EelFsError.Other
   }
 
   @CheckReturnValue
@@ -609,39 +581,32 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
    * Notice that the first argument is the target of the symlink,
    * like in `ln -s` tool, like in `symlink(2)` from LibC, but opposite to `java.nio.file.spi.FileSystemProvider.createSymbolicLink`.
    */
-  @Throws(CreateSymbolicLinkException::class)
-  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute)
+  @CheckReturnValue
+  suspend fun createSymbolicLink(target: EelPath, linkPath: EelPath.Absolute) : EelResult<Unit, CreateSymbolicLinkError>
 
-  sealed class CreateSymbolicLinkException(
-    where: EelPath.Absolute,
-    additionalMessage: String,
-  ) : EelFsIOException(where, additionalMessage) {
+  sealed interface CreateSymbolicLinkError : EelFsError {
     /**
      * Example: `createSymbolicLink("anywhere", "/directory_that_does_not_exist")`
      */
-    class DoesNotExist(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                         additionalMessage), EelFsError.DoesNotExist
+    interface DoesNotExist : CreateSymbolicLinkError, EelFsError.DoesNotExist
 
     /**
      * Examples:
      * * `createSymbolicLink("anywhere", "/etc/passwd")`
      * * `createSymbolicLink("anywhere", "/home")`
      */
-    class FileAlreadyExists(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                              additionalMessage), EelFsError.AlreadyExists
+    interface FileAlreadyExists : CreateSymbolicLinkError, EelFsError.AlreadyExists
 
     /**
      * Example: `createSymbolicLink("anywhere", "/etc/passwd/oops")`
      */
-    class NotDirectory(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                         additionalMessage), EelFsError.NotDirectory
+    interface NotDirectory : CreateSymbolicLinkError, EelFsError.NotDirectory
 
     /**
      * Example:
      * * With non-root permissions: `createSymbolicLink("anywhere", "/root/oops")`
      */
-    class PermissionDenied(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                             additionalMessage), EelFsError.PermissionDenied
+    interface PermissionDenied : CreateSymbolicLinkError, EelFsError.PermissionDenied
 
     /**
      * Everything else, including `ELOOP`.
@@ -652,8 +617,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
      * createSymbolicLink("anywhere", "/tmp/foobar/oops") // Other("something about ELOOP")
      * ```
      */
-    class Other(where: EelPath.Absolute, additionalMessage: String) : CreateSymbolicLinkException(where,
-                                                                                                  additionalMessage), EelFsError.Other
+    interface Other : CreateSymbolicLinkError, EelFsError.Other
   }
 }
 
@@ -676,21 +640,32 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
     StatError>
 }
 
-suspend fun EelFileSystemApi.changeAttributes(path: EelPath.Absolute, setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit) {
+@CheckReturnValue
+suspend fun EelFileSystemApi.changeAttributes(
+  path: EelPath.Absolute,
+  setup: (EelFileSystemApi.ChangeAttributesOptions.Builder).() -> Unit,
+): EelResult<Unit, EelFileSystemApi.ChangeAttributesError> {
   val options = EelFileSystemApi.ChangeAttributesOptions.Builder().apply(setup).build()
   return changeAttributes(path, options)
 }
 
+@CheckReturnValue
 suspend fun EelFileSystemApi.openForWriting(path: EelPath.Absolute, setup: (EelFileSystemApi.WriteOptions.Builder).() -> Unit): EelResult<EelOpenedFile.Writer, EelFileSystemApi.FileWriterError> {
   val options = EelFileSystemApi.WriteOptions.Builder(path).apply(setup).build()
   return openForWriting(options)
 }
 
-suspend fun EelFileSystemApi.copy(source: EelPath.Absolute, target: EelPath.Absolute, setup: (EelFileSystemApi.CopyOptions.Builder).() -> Unit) {
+@CheckReturnValue
+suspend fun EelFileSystemApi.copy(
+  source: EelPath.Absolute,
+  target: EelPath.Absolute,
+  setup: (EelFileSystemApi.CopyOptions.Builder).() -> Unit,
+): EelResult<Unit, EelFileSystemApi.CopyError> {
   val options = EelFileSystemApi.CopyOptions.Builder(source, target).apply(setup).build()
   return copy(options)
 }
 
+@CheckReturnValue
 suspend fun EelFileSystemApi.createTemporaryDirectory(setup: (EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder).() -> Unit): EelResult<EelPath.Absolute, EelFileSystemApi.CreateTemporaryDirectoryError> {
   val options = EelFileSystemApi.CreateTemporaryDirectoryOptions.Builder().apply(setup).build()
   return createTemporaryDirectory(options)

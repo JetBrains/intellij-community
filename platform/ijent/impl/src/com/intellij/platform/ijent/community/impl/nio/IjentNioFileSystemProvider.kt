@@ -6,8 +6,6 @@ import com.intellij.platform.core.nio.fs.BasicFileAttributesHolder2.FetchAttribu
 import com.intellij.platform.eel.fs.*
 import com.intellij.platform.eel.fs.EelFileInfo.Type.*
 import com.intellij.platform.eel.fs.EelFileSystemApi.ReplaceExistingDuringMove.*
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateDirectoryException
-import com.intellij.platform.eel.fs.EelFileSystemPosixApi.CreateSymbolicLinkException
 import com.intellij.platform.eel.fs.EelPosixFileInfo.Type.Symlink
 import com.intellij.platform.eel.path.EelPath
 import com.intellij.platform.eel.provider.EelFsResultImpl
@@ -245,21 +243,10 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     catch (e: IllegalArgumentException) {
       throw IOException(e)
     }
-    try {
-      fsBlocking {
-        when (val fsApi = dir.nioFs.ijentFs) {
-          is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList())
-          is IjentFileSystemWindowsApi -> TODO()
-        }
-      }
-    }
-    catch (e: CreateDirectoryException) {
-      when (e) {
-        is CreateDirectoryException.DirAlreadyExists,
-        is CreateDirectoryException.FileAlreadyExists,
-          -> throw FileAlreadyExistsException(dir.toString())
-        is CreateDirectoryException.ParentNotFound -> throw NoSuchFileException(dir.toString(), null, "Parent directory not found")
-        else -> throw IOException(e)
+    fsBlocking {
+      when (val fsApi = dir.nioFs.ijentFs) {
+        is IjentFileSystemPosixApi -> fsApi.createDirectory(path, emptyList()).getOrThrowFileSystemException()
+        is IjentFileSystemWindowsApi -> TODO()
       }
     }
   }
@@ -270,12 +257,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       throw FileSystemException(path.toString(), null, "Path is not absolute")
     }
     fsBlocking {
-      try {
-        path.nioFs.ijentFs.delete(path.eelPath, false)
-      }
-      catch (e: EelFileSystemApi.DeleteException) {
-        e.throwFileSystemException()
-      }
+      path.nioFs.ijentFs.delete(path.eelPath, false).getOrThrowFileSystemException()
     }
   }
 
@@ -308,12 +290,7 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     }
 
     fsBlocking {
-      try {
-        fs.copy(copyOptions.build())
-      }
-      catch (e: EelFileSystemApi.CopyException) {
-        e.throwFileSystemException()
-      }
+      fs.copy(copyOptions.build()).getOrThrowFileSystemException()
     }
   }
 
@@ -325,25 +302,21 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
     ensurePathIsAbsolute(sourcePath)
     ensurePathIsAbsolute(targetPath)
     return fsBlocking {
-      try {
-        source.nioFs.ijentFs.move(
-          sourcePath,
-          targetPath,
-          replaceExisting = run {
-            // This code may change when implementing Windows support.
-            when {
-              StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
-              StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
-              else -> DO_NOT_REPLACE
-            }
-          },
-          // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
-          // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
-          followLinks = false)
-      }
-      catch (e: EelFileSystemApi.MoveException) {
-        e.throwFileSystemException()
-      }
+      source.nioFs.ijentFs.move(
+        sourcePath,
+        targetPath,
+        replaceExisting = run {
+          // This code may change when implementing Windows support.
+          when {
+            StandardCopyOption.ATOMIC_MOVE in options -> DO_NOT_REPLACE_DIRECTORIES
+            StandardCopyOption.REPLACE_EXISTING in options -> REPLACE_EVERYTHING
+            else -> DO_NOT_REPLACE
+          }
+        },
+        // In NIO, `move` does not follow links. This behavior is not influenced by the presense of NOFOLLOW_LINKS in CopyOptions
+        // See java.nio.file.CopyMoveHelper.convertMoveToCopyOptions
+        followLinks = false,
+      ).getOrThrowFileSystemException()
     }
   }
 
@@ -539,13 +512,8 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       }
       else -> throw java.lang.IllegalArgumentException("Unrecognized attribute: $attribute")
     }
-    try {
-      fsBlocking {
-        nioFs.ijentFs.changeAttributes(eelPath, builder.build())
-      }
-    }
-    catch (e: EelFileSystemApi.ChangeAttributesException) {
-      e.throwFileSystemException()
+    fsBlocking {
+      nioFs.ijentFs.changeAttributes(eelPath, builder.build()).getOrThrowFileSystemException()
     }
   }
 
@@ -570,16 +538,11 @@ class IjentNioFileSystemProvider : FileSystemProvider() {
       "Can't create symlinks between different file systems"
     }
 
-    try {
-      fsBlocking {
-        when (val ijentFs = fs.ijentFs) {
-          is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(target.eelPath, linkPath)
-          is IjentFileSystemWindowsApi -> TODO("Symbolic links are not supported on Windows")
-        }
+    fsBlocking {
+      when (val ijentFs = fs.ijentFs) {
+        is IjentFileSystemPosixApi -> ijentFs.createSymbolicLink(target.eelPath, linkPath).getOrThrowFileSystemException()
+        is IjentFileSystemWindowsApi -> TODO("Symbolic links are not supported on Windows")
       }
-    }
-    catch (e: CreateSymbolicLinkException) {
-      e.throwFileSystemException()
     }
   }
 

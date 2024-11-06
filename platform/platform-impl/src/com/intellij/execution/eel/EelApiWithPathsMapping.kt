@@ -1,6 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.eel
 
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.EelExecApi.ExecuteProcessError
@@ -59,7 +60,10 @@ private class EelEphemeralRootAwareMapper(
     EelPathUtils.walkingTransfer(path, toNioPath(referencedPath), false)
 
     scope.awaitCancellationAndInvoke {
-      eelApi.fs.delete(tmpDir, true)
+      when (val result = eelApi.fs.delete(tmpDir, true)) {
+        is EelResult.Ok -> Unit
+        is EelResult.Error -> thisLogger().warn("Failed to delete temporary directory $tmpDir: ${result.error}")
+      }
     }
 
     return referencedPath
