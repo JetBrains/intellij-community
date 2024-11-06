@@ -5,5 +5,8 @@ enum class MyEnum {
 
     companion object {
         val firstEntry = ENTRY
+        val myEntries = entries
+        val myValueOf = valueOf("ENTRY")
+        val myValues = values()
     }
 }

@@ -316,9 +316,14 @@ public abstract class K2JsOptimizeImportsTestGenerated extends AbstractK2JsOptim
                 runTest("../../idea/tests/testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
-            @TestMetadata("EnumEntryUsedInsideEnum.kt")
-            public void testEnumEntryUsedInsideEnum() throws Exception {
-                runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumEntryUsedInsideEnum.kt");
+            @TestMetadata("EnumStaticMembersUsedInsideEnum.kt")
+            public void testEnumStaticMembersUsedInsideEnum() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideEnum.kt");
+            }
+
+            @TestMetadata("EnumStaticMembersUsedInsideUnrelatedClass.kt")
+            public void testEnumStaticMembersUsedInsideUnrelatedClass() throws Exception {
+                runTest("../../idea/tests/testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideUnrelatedClass.kt");
             }
 
             @TestMetadata("Enums.kt")
