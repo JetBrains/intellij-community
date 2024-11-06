@@ -16766,10 +16766,12 @@ c:com.intellij.ui.popup.tree.TreePopupImpl
 - p:createContent():javax.swing.JComponent
 - dispose():V
 - expandAll():V
+- p:extractUserObject(java.lang.Object):java.lang.Object
 - p:getActionMap():javax.swing.ActionMap
 - p:getInputMap():javax.swing.InputMap
 - p:getPreferredFocusableComponent():javax.swing.JComponent
 - handleNextStep(com.intellij.openapi.ui.popup.PopupStep,java.lang.Object):V
+- p:handleSelect(Z,java.awt.event.MouseEvent):V
 - isModalContext():Z
 - p:onAutoSelectionTimer():V
 - p:onChildSelectedFor(java.lang.Object):V
