@@ -81,12 +81,13 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.util.List;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.REPOSITORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
 import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
 import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
@@ -249,7 +250,7 @@ public class ChangesViewManager implements ChangesViewEx,
     public boolean myShowFlatten = true;
 
     @XCollection
-    public TreeSet<String> groupingKeys = new TreeSet<>();
+    public TreeSet<String> groupingKeys = new TreeSet<>(List.of(REPOSITORY_GROUPING));
 
     @Attribute("show_ignored")
     public boolean myShowIgnored;
