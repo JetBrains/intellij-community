@@ -64,7 +64,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.redundant.constructs"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.can.unescape.dollar.literal.inspection.display.name" bundle="messages.KotlinBundle"/>
 
@@ -72,7 +72,7 @@
                      groupPath="Kotlin"
                      groupBundle="messages.KotlinBundle" groupKey="group.names.code.migration"
                      enabledByDefault="true"
-                     level="WARNING"
+                     level="WEAK WARNING"
                      language="kotlin"
                      key="inspection.can.convert.to.multi.dollar.string.display.name" bundle="messages.KotlinBundle"/>
 
