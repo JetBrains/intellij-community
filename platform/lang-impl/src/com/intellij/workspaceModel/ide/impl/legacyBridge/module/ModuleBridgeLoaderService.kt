@@ -8,7 +8,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectServiceContainerInitializedListener
+import com.intellij.openapi.project.impl.ProjectServiceInitializer
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
@@ -53,8 +53,8 @@ private fun setupOpenTelemetryReporting(meter: Meter) {
   )
 }
 
-private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedListener {
-  override suspend fun execute(project: Project, workspaceIndexReady: () -> Unit) {
+private class ModuleBridgeLoaderService : ProjectServiceInitializer {
+  override suspend fun execute(project: Project) {
     coroutineScope {
       val projectModelSynchronizer = project.serviceAsync<JpsProjectModelSynchronizer>()
       val workspaceModel = project.serviceAsync<WorkspaceModel>() as WorkspaceModelImpl
@@ -122,9 +122,6 @@ private class ModuleBridgeLoaderService : ProjectServiceContainerInitializedList
           // IDEA-345082 There is a chance that the index was not initialized due to the broken cache.
           WorkspaceModelCacheImpl.invalidateCaches()
           throw RuntimeException(e)
-        }
-        finally {
-          workspaceIndexReady()
         }
       }
 

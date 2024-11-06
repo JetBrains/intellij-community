@@ -1315,19 +1315,15 @@ private suspend fun initProject(
       val isTrusted = async { !isTrustCheckNeeded || checkOldTrustedStateAndMigrate(project, file) }
 
       val preInitJob = projectInitHelper?.launchPreInit(project)
-      val workspaceIndexReady = CompletableDeferred<Unit>()
-      launch {
-        workspaceIndexReady.join()
-        projectInitHelper?.notifyInit(project)
-        if (preloadServices) {
-          schedulePreloadServices(project)
-        }
-      }
-      projectInitListeners {
-        it.execute(project = project, workspaceIndexReady = { workspaceIndexReady.complete(Unit) })
+
+      ProjectServiceInitializer.initEssential(project)
+      projectInitHelper?.notifyInit(project)
+
+      if (preloadServices) {
+        schedulePreloadServices(project)
       }
 
-      workspaceIndexReady.complete(Unit)
+      ProjectServiceInitializer.initNonEssential(project)
 
       launch {
         preInitJob?.join()
@@ -1352,20 +1348,6 @@ private suspend fun initProject(
       initThrowable.addSuppressed(disposeThrowable)
     }
     throw initThrowable
-  }
-}
-
-internal suspend inline fun projectInitListeners(crossinline executor: suspend (ProjectServiceContainerInitializedListener) -> Unit) {
-  val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
-    .getExtensionPoint<ProjectServiceContainerInitializedListener>("com.intellij.projectServiceContainerInitializedListener")
-  for (adapter in ep.sortedAdapters) {
-    val pluginDescriptor = adapter.pluginDescriptor
-    if (!isCorePlugin(pluginDescriptor)) {
-      LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
-      continue
-    }
-
-    executor(adapter.createInstance(ep.componentManager) ?: continue)
   }
 }
 
@@ -1425,14 +1407,39 @@ internal fun isCorePlugin(descriptor: PluginDescriptor): Boolean {
 }
 
 /**
+ * Initializes project services as part of project init after service container is configured
+ * Can be marked essential to be executed as part of project init before component creation
+ *
  * Usage requires IJ Platform team approval (including plugin into allowlist).
  */
 @Internal
-interface ProjectServiceContainerInitializedListener {
-  /**
-   * Invoked after container configured.
-   */
-  suspend fun execute(project: Project, workspaceIndexReady: () -> Unit)
+interface ProjectServiceInitializer {
+  suspend fun execute(project: Project)
+
+  companion object {
+    private suspend fun runApprovedExtensions(project: Project, epName: String) {
+      val ep = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+        .getExtensionPoint<ProjectServiceInitializer>(epName)
+      for (adapter in ep.sortedAdapters) {
+        val pluginDescriptor = adapter.pluginDescriptor
+        if (!isCorePlugin(pluginDescriptor)) {
+          LOG.error(PluginException("Plugin $pluginDescriptor is not approved to add ${ep.name}", pluginDescriptor.pluginId))
+          continue
+        }
+        else {
+          adapter.createInstance<ProjectServiceInitializer>(ep.componentManager)?.execute(project)
+        }
+      }
+    }
+
+    suspend fun initEssential(project: Project) {
+      runApprovedExtensions(project, "com.intellij.projectServiceInitializer.essential")
+    }
+
+    suspend fun initNonEssential(project: Project) {
+      runApprovedExtensions(project, "com.intellij.projectServiceInitializer")
+    }
+  }
 }
 
 @Internal

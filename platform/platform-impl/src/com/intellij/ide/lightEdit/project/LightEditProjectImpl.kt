@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.impl.ProjectImpl
-import com.intellij.openapi.project.impl.projectInitListeners
+import com.intellij.openapi.project.impl.ProjectServiceInitializer
 import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.impl.DirectoryIndex
@@ -35,14 +35,14 @@ internal class LightEditProjectImpl private constructor(projectPath: Path) :
     customizeRegisteredComponents()
     componentStore.setPath(projectPath, false, null)
     runUnderModalProgressIfIsEdt {
-      ProjectEntitiesStorage.getInstance().createEntity(this@LightEditProjectImpl)
-      schedulePreloadServices(this@LightEditProjectImpl)
+      val project = this@LightEditProjectImpl
+      ProjectServiceInitializer.initEssential(project)
+      ProjectEntitiesStorage.getInstance().createEntity(project)
+      schedulePreloadServices(project)
       launch {
-        this@LightEditProjectImpl.createComponentsNonBlocking()
+        project.createComponentsNonBlocking()
       }
-      projectInitListeners {
-        it.execute(this@LightEditProjectImpl, workspaceIndexReady = {})
-      }
+      ProjectServiceInitializer.initNonEssential(project)
     }
   }
 

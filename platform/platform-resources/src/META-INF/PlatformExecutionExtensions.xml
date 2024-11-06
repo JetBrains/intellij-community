@@ -2,7 +2,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.execution.RunManager"
                     serviceImplementation="com.intellij.execution.impl.RunManagerImpl"/>
-    <projectServiceContainerInitializedListener implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer"/>
+    <projectServiceInitializer implementation="com.intellij.execution.impl.ProjectRunConfigurationInitializer"/>
     <projectFileScanner implementation="com.intellij.execution.impl.RunConfigurationInArbitraryFileScanner"/>
     <vfs.asyncListener implementation="com.intellij.execution.impl.RCInArbitraryFileListener"/>
     <editorNotificationProvider implementation="com.intellij.execution.impl.RunConfigEditorNotificationProvider"/>

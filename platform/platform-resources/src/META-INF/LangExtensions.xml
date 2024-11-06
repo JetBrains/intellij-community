@@ -7,9 +7,9 @@
                     serviceImplementation="com.intellij.configurationStore.ProjectWithModulesStoreReloadManagerImpl"
                     overrides="true"/>
 
-    <projectServiceContainerInitializedListener
+    <projectServiceInitializer.essential
       id="moduleBridgeLoaderService"
-      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" order="first"/>
+      implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
     <projectService serviceInterface="com.intellij.openapi.module.AutomaticModuleUnloader"
                     serviceImplementation="com.intellij.openapi.module.impl.AutomaticModuleUnloaderImpl" overrides="true"/>
