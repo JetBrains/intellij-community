@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -146,7 +147,8 @@ public abstract class StubIndexEx extends StubIndex {
       if (dumb) {
         if (project instanceof LightEditCompatible) return false;
         DumbModeAccessType accessType = FileBasedIndex.getInstance().getCurrentDumbModeAccessType();
-        if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE) {
+        if (accessType == DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE &&
+            Registry.is("ide.dumb.mode.check.awareness")) {
           throw new AssertionError("raw index data access is not available for StubIndex");
         }
       }

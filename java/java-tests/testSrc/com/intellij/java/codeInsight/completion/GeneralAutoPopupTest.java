@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.testFramework.DumbModeTestUtils;
@@ -118,7 +119,12 @@ public class GeneralAutoPopupTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText("a.java", "class C { int abc; { getClass().getDeclaredField(\"<caret>x\"); }}");
     DumbModeTestUtils.runInDumbModeSynchronously(getProject(), () -> {
       type("a");
-      assertNull(getLookup());
+      if (Registry.is("ide.dumb.mode.check.awareness")) {
+        assertNull(getLookup());
+      }
+      else {
+        myFixture.assertPreferredCompletionItems(0, "abc");
+      }
     });
     myFixture.completeBasic();
     myFixture.assertPreferredCompletionItems(0, "abc");

@@ -644,7 +644,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
     if (dumbModeAccessTypeStack.isEmpty()) {
       if (!Registry.is("ide.dumb.mode.check.awareness")) {
-        return DumbModeAccessType.RELIABLE_DATA_ONLY;
+        return DumbModeAccessType.RAW_INDEX_DATA_ACCEPTABLE;
       }
       return null;
     }
