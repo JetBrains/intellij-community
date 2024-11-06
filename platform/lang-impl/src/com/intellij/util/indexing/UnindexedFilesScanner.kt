@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.platform.diagnostic.telemetry.Indexes
 import com.intellij.platform.diagnostic.telemetry.TelemetryManager.Companion.getInstance
 import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.util.coroutines.forEachConcurrent
 import com.intellij.util.gist.GistManager
 import com.intellij.util.gist.GistManagerImpl
 import com.intellij.util.indexing.FilesFilterScanningHandler.IdleFilesFilterScanningHandler
@@ -43,8 +44,6 @@ import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import com.intellij.util.indexing.roots.kind.SdkOrigin
 import com.intellij.util.indexing.roots.origin.GenericContentEntityOrigin
 import kotlinx.coroutines.*
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.channels.Channel.Factory.RENDEZVOUS
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
@@ -52,7 +51,6 @@ import java.io.Closeable
 import java.time.Instant
 import java.util.concurrent.Future
 import java.util.function.BiPredicate
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.coroutineContext
 
 @ApiStatus.Internal
@@ -335,21 +333,21 @@ class UnindexedFilesScanner @JvmOverloads constructor(
       indexableFilesDeduplicateFilter: IndexableFilesDeduplicateFilter,
       sharedExplanationLogger: IndexingReasonExplanationLogger,
     ) {
-      val providersToCheck = Channel<IndexableFilesIterator>(capacity = RENDEZVOUS)
-
       runBlockingCancellable {
-        async {
-          for (provider in providers) {
-            providersToCheck.send(provider)
+        withContext(SCANNING_DISPATCHER) {
+          providers.forEachConcurrent(SCANNING_PARALLELISM) { provider ->
+            try {
+              scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
+            } catch (t: Throwable) {
+              checkCanceled()
+              if (t is ControlFlowException) {
+                LOG.warn("Unexpected exception during scanning: ${t.message}")
+              }
+              else {
+                LOG.error("Unexpected exception during scanning (ignored)", t)
+              }
+            }
           }
-          providersToCheck.close()
-        }
-
-        repeatTaskConcurrently(continueOnException = true, SCANNING_DISPATCHER, SCANNING_PARALLELISM) {
-          val provider = providersToCheck.receiveCatching().getOrNull() ?: return@repeatTaskConcurrently false
-          scanSingleProvider(provider, sessions, indexableFilesDeduplicateFilter, sharedExplanationLogger)
-
-          return@repeatTaskConcurrently true
         }
       }
     }
@@ -454,38 +452,6 @@ class UnindexedFilesScanner @JvmOverloads constructor(
         scanningStatistics.tryFinishVfsIterationAndScanningApplication()
       }
       return files
-    }
-
-    private suspend fun repeatTaskConcurrently(continueOnException: Boolean,
-                                               context: CoroutineContext,
-                                               parallelism: Int,
-                                               block: suspend () -> Boolean) {
-      withContext(context) {
-        repeat(parallelism) {
-          async {
-            var shouldContinue: Boolean
-            do {
-              checkCanceled()
-              try {
-                shouldContinue = block.invoke()
-              }
-              catch (t: Throwable) {
-                // Exception from the task should not finish coroutine execution. Coroutine should proceed with the following task.
-                // We ignore all the exceptions. If the task is indeed canceled, checkCanceled will throw.
-                shouldContinue = continueOnException
-                checkCanceled()
-                if (t is ControlFlowException) {
-                  LOG.warn("Unexpected exception during scanning: ${t.message}")
-                }
-                else {
-                  LOG.error("Unexpected exception during scanning (ignored)", t)
-                }
-              }
-            }
-            while (shouldContinue)
-          }
-        }
-      }
     }
   }
 
