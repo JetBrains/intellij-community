@@ -180,7 +180,7 @@ internal fun portableJpsCacheUsageStatus(availableCommitDepth: Int): String {
 /**
  * Compiled bytecode of project module
  *
- * Note: cannot be used for incremental compilation without [org.jetbrains.intellij.build.impl.JpsCompilationData.dataStorageRoot]
+ * Note: cannot be used for incremental compilation without [org.jetbrains.intellij.build.JpsCompilationData.dataStorageRoot]
  */
 internal class CompilationOutput(
   @JvmField val remotePath: String,

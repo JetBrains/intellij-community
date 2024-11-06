@@ -20,11 +20,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.ApiStatus.Obsolete
-import org.jetbrains.intellij.build.BuildMessages
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.BuildPaths.Companion.COMMUNITY_ROOT
-import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.dependencies.DependenciesProperties
 import org.jetbrains.intellij.build.dependencies.JdkDownloader
 import org.jetbrains.intellij.build.impl.JdkUtils.defineJdk
@@ -277,7 +274,7 @@ class CompilationContextImpl private constructor(
         dataStorageRoot = paths.buildOutputDir.resolve("jps-build-data"),
         classesOutputDirectory = classesOutputDirectory,
         buildLogFile = logDir.resolve("compilation.log"),
-        categoriesWithDebugLevelNullable = System.getProperty("intellij.build.debug.logging.categories", "")
+        categoriesWithDebugLevel = System.getProperty("intellij.build.debug.logging.categories", "") ?: "",
       )
     }
     for (artifact in JpsArtifactService.getInstance().getArtifacts(project)) {
