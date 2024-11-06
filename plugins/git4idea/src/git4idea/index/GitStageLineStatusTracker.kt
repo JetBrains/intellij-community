@@ -14,10 +14,7 @@ import com.intellij.diff.util.DiffDrawUtil.InlineHighlighterBuilder
 import com.intellij.diff.util.DiffDrawUtil.LineHighlighterBuilder
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.diff.LineStatusMarkerColorScheme
@@ -792,9 +789,16 @@ class GitStageLineStatusTracker(
       actions.add(RollbackLineStatusRangeAction(editor, range))
       actions.add(StageShowDiffAction(editor, range))
       actions.add(LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range))
-      actions.add(LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this))
       return actions
     }
+
+    override fun createEditorContextMenuActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> = listOf(
+      LineStatusMarkerPopupActions.CopyLineStatusRangeAction(editor, tracker, range),
+      Separator.getInstance(),
+      LineStatusMarkerPopupActions.ToggleByWordDiffAction(editor, tracker, range, mousePosition, this).apply {
+        templatePresentation.keepPopupOnPerform = KeepPopupOnPerform.Never
+      },
+    )
 
     override fun toString(): String = "GitStageLineStatusTracker.MyLineStatusMarkerPopupRenderer(tracker=$tracker)"
 
