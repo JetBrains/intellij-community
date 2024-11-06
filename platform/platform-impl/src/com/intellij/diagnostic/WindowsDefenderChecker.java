@@ -42,7 +42,7 @@ import java.util.stream.Stream;
  * <a href="https://learn.microsoft.com/en-us/microsoft-365/security/defender-endpoint/configure-extension-file-exclusions-microsoft-defender-antivirus">Defender Settings</a>,
  * <a href="https://learn.microsoft.com/en-us/powershell/module/defender/">Defender PowerShell Module</a>.
  */
-@SuppressWarnings({"MethodMayBeStatic", "DuplicatedCode"})
+@SuppressWarnings("MethodMayBeStatic")
 public class WindowsDefenderChecker {
   private static final Logger LOG = Logger.getInstance(WindowsDefenderChecker.class);
 
@@ -65,9 +65,10 @@ public class WindowsDefenderChecker {
   private final Map<Path, @Nullable Boolean> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
 
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
-    return !Registry.is("ide.check.windows.defender.rules") ||
-           PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
-           (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK));
+    return
+      !Registry.is("ide.check.windows.defender.rules") ||
+      PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
+      (project != null && PropertiesComponent.getInstance(project).isTrueValue(IGNORE_STATUS_CHECK));
   }
 
   public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {

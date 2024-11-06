@@ -10,7 +10,6 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
@@ -23,7 +22,6 @@ import com.intellij.ui.util.width
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.NonNls
 import java.awt.Point
 import java.awt.event.ActionEvent
 import java.awt.event.MouseAdapter
@@ -67,7 +65,9 @@ internal class TrustedProjectStartupDialog(
         Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
       }
     }
+
     init()
+
     if (myIsTitleComponent) {
       setUndecorated(true)
       rootPane.windowDecorationStyle = JRootPane.NONE
@@ -76,17 +76,17 @@ internal class TrustedProjectStartupDialog(
       object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
         var myLocation: Point? = null
 
-        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
-          val target = dragComponent.findComponentAt(dragComponentPoint)
-          return target == null || target == dragComponent || target is JPanel
-        }
+        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean =
+          dragComponent.findComponentAt(dragComponentPoint).let { target -> target == null || target == dragComponent || target is JPanel }
 
         override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
           if (myLocation == null) {
             myLocation = window.location
           }
-          window.location = Point(myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
-                                  myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y)
+          window.location = Point(
+            myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
+            myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y
+          )
         }
 
         override fun processDragCancel() {
@@ -126,6 +126,7 @@ internal class TrustedProjectStartupDialog(
         icon(AllIcons.General.WarningDialog).align(AlignY.TOP)
         panel {
           row {
+            @Suppress("DialogTitleCapitalization")
             text(myTitle).apply {
               component.font = JBFont.h4()
             }
@@ -211,7 +212,6 @@ internal class TrustedProjectStartupDialog(
     }
   }
 
-  @NlsSafe
   private fun getTrustFolder(isTrustAll: Boolean): Path = if (isTrustAll) getParentFolder() else projectPath
 
   private fun getParentFolder(): Path = projectPath.parent
@@ -225,15 +225,9 @@ internal class TrustedProjectStartupDialog(
       val action: Action = object : AbstractAction(UIUtil.replaceMnemonicAmpersand(option)) {
         override fun actionPerformed(e: ActionEvent) {
           userChoice = when (option) {
-            trustButtonText -> {
-              OpenUntrustedProjectChoice.TRUST_AND_OPEN
-            }
-            distrustButtonText -> {
-              OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
-            }
-            cancelButtonText -> {
-              OpenUntrustedProjectChoice.CANCEL
-            }
+            trustButtonText -> OpenUntrustedProjectChoice.TRUST_AND_OPEN
+            distrustButtonText -> OpenUntrustedProjectChoice.OPEN_IN_SAFE_MODE
+            cancelButtonText -> OpenUntrustedProjectChoice.CANCEL
             else -> {
               logger<TrustedProjects>().error("Illegal choice $option")
               close(i, false)
@@ -263,9 +257,7 @@ internal class TrustedProjectStartupDialog(
     actions.reverse()
   }
 
-  override fun getHelpId(): @NonNls String? {
-    return TRUSTED_PROJECTS_HELP_TOPIC
-  }
+  override fun getHelpId(): String? = TRUSTED_PROJECTS_HELP_TOPIC
 
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
 

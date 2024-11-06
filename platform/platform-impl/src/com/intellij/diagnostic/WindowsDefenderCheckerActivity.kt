@@ -98,7 +98,7 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
       return
     }
 
-    val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
+    val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;")
     val auto = DiagnosticBundle.message("exclude.folders")
     val manual = DiagnosticBundle.message("defender.config.manual")
     val content = DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual)
