@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.Project
@@ -38,17 +37,19 @@ import kotlin.io.path.pathString
 import kotlin.math.ceil
 
 internal class TrustedProjectStartupDialog(
-  private val project: Project?, @NonNls private val projectPath: Path, val isWinDefenderEnabled: Boolean = true, val idePaths: List<Path>,
-  @NlsContexts.DialogTitle private val myTitle: String = IdeBundle.message("untrusted.project.general.dialog.title"),
-  @NlsContexts.DialogMessage private val message: String = IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfo.getInstance().fullApplicationName),
-  @NlsContexts.Button private val trustButtonText: String = IdeBundle.message("untrusted.project.dialog.trust.button"),
-  @NlsContexts.Button private val distrustButtonText: String = IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
-  @NlsContexts.Button private val cancelButtonText: String = IdeBundle.message("untrusted.project.open.dialog.cancel.button"),
+  project: Project?,
+  private val projectPath: Path,
+  private val pathsToExclude: List<Path>,
+  private val myTitle: @NlsContexts.DialogTitle String,
+  private val message: @NlsContexts.DialogMessage String,
+  private val trustButtonText: @NlsContexts.Button String,
+  private val distrustButtonText: @NlsContexts.Button String,
+  private val cancelButtonText: @NlsContexts.Button String,
 ) : DialogWrapper(project) {
   private val myDefaultOptionIndex = 0
   private val myFocusedOptionIndex = 1
   private val propGraph = PropertyGraph("Trust project dialog")
-  private val windowsDefender = propGraph.property(true)
+  private val windowsDefender = propGraph.property(pathsToExclude.isNotEmpty())
   private val trustAll = propGraph.property(false)
   private var windowsDefenderCheckBox: Cell<JBCheckBox>? = null
   private var userChoice: OpenUntrustedProjectChoice = OpenUntrustedProjectChoice.CANCEL
@@ -163,9 +164,11 @@ internal class TrustedProjectStartupDialog(
               .bindSelected(windowsDefender)
               .apply {
                 component.toolTipText = null
-                component.addMouseMotionListener(TooltipMouseAdapter { listOf(idePaths.joinToString(separator = "<br>"), getTrustFolder(trustAll.get()).pathString) })
+                component.addMouseMotionListener(TooltipMouseAdapter {
+                  listOf(pathsToExclude.joinToString(separator = "<br>"), getTrustFolder(isTrustAll()).pathString)
+                })
                 comment(IdeBundle.message("untrusted.project.location.comment"))
-                visible(isWinDefenderEnabled)
+                visible(pathsToExclude.isNotEmpty())
               }
           }
         }.align(AlignX.FILL + AlignY.FILL)
@@ -264,14 +267,9 @@ internal class TrustedProjectStartupDialog(
     return TRUSTED_PROJECTS_HELP_TOPIC
   }
 
-  fun getWidowsDefenderPathsToExclude(): List<Path> {
-    return if (windowsDefender.get()) {
-      listOf(*idePaths.toTypedArray(), getTrustFolder(trustAll.get()))
-    }
-    else emptyList()
-  }
-
   fun getOpenChoice(): OpenUntrustedProjectChoice = userChoice
 
   fun isTrustAll(): Boolean = trustAll.get()
+
+  fun getDefenderTrustFolder(): Path? = if (windowsDefender.get()) getTrustFolder(isTrustAll()) else null
 }

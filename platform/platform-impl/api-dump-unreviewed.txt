@@ -1424,14 +1424,17 @@ e:com.intellij.diagnostic.VMOptions$MemoryKind
 - s:values():com.intellij.diagnostic.VMOptions$MemoryKind[]
 c:com.intellij.diagnostic.WindowsDefenderChecker
 - <init>():V
+- f:excludeProjectPaths(com.intellij.openapi.project.Project,java.nio.file.Path,java.util.List):Z
 - f:excludeProjectPaths(com.intellij.openapi.project.Project,java.util.List):Z
 - f:filterDevDrivePaths(java.util.List):java.util.List
 - getConfigurationInstructionsUrl():java.lang.String
 - s:getInstance():com.intellij.diagnostic.WindowsDefenderChecker
 - f:getPathsToExclude(com.intellij.openapi.project.Project):java.util.List
+- f:getPathsToExclude(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.List
 - f:ignoreStatusCheck(com.intellij.openapi.project.Project,Z):V
 - f:isRealTimeProtectionEnabled():java.lang.Boolean
 - f:isStatusCheckIgnored(com.intellij.openapi.project.Project):Z
+- f:isUnderDownloads(java.nio.file.Path):Z
 com.intellij.diagnostic.WindowsDefenderChecker$Extension
 - a:getPaths(com.intellij.openapi.project.Project,java.nio.file.Path):java.util.Collection
 f:com.intellij.diagnostic.WindowsDefenderChecker$FILE_FS_PERSISTENT_VOLUME_INFORMATION

@@ -16,13 +16,15 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.sun.jna.Memory;
 import com.sun.jna.Structure;
 import com.sun.jna.platform.win32.COM.COMException;
 import com.sun.jna.platform.win32.COM.Wbemcli;
 import com.sun.jna.platform.win32.COM.WbemcliUtil;
 import com.sun.jna.platform.win32.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +62,8 @@ public class WindowsDefenderChecker {
     return ApplicationManager.getApplication().getService(WindowsDefenderChecker.class);
   }
 
+  private final Map<Path, @Nullable Boolean> myProjectPaths = Collections.synchronizedMap(new HashMap<>());
+
   public final boolean isStatusCheckIgnored(@Nullable Project project) {
     return !Registry.is("ide.check.windows.defender.rules") ||
            PropertiesComponent.getInstance().isTrueValue(IGNORE_STATUS_CHECK) ||
@@ -67,14 +71,39 @@ public class WindowsDefenderChecker {
   }
 
   public final void ignoreStatusCheck(@Nullable Project project, boolean ignore) {
+    logCaller("ignore=" + ignore + " scope=" + (project == null ? "global" : project));
     var component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
     if (ignore) {
-      logCaller("scope=" + (project == null ? "global" : project));
       component.setValue(IGNORE_STATUS_CHECK, true);
     }
     else {
       component.unsetValue(IGNORE_STATUS_CHECK);
     }
+  }
+
+  @ApiStatus.Internal
+  public final void markProjectPath(@NotNull Path projectPath) {
+    myProjectPaths.put(projectPath, null);
+  }
+
+  @ApiStatus.Internal
+  @RequiresBackgroundThread
+  final boolean isAlreadyProcessed(@NotNull Project project) {
+    var projectPath = getProjectPath(project);
+    if (projectPath != null && myProjectPaths.containsKey(projectPath)) {
+      while (!project.isDisposed() && myProjectPaths.get(projectPath) == null) TimeoutUtil.sleep(100);
+      if (myProjectPaths.remove(projectPath) == Boolean.TRUE) {
+        PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
+      }
+      return true;
+    }
+
+    return false;
+  }
+
+  private static @Nullable Path getProjectPath(Project project) {
+    var projectDir = ProjectUtil.guessProjectDir(project);
+    return projectDir != null && projectDir.isInLocalFileSystem() ? projectDir.toNioPath() : null;
   }
 
   /**
@@ -133,20 +162,52 @@ public class WindowsDefenderChecker {
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
-  public final @NotNull List<Path> getPathsToExclude(@NotNull Project project) {
-    var paths = new TreeSet<Path>();
-
-    var projectDir = ProjectUtil.guessProjectDir(project);
-    if (projectDir != null && projectDir.getFileSystem() instanceof LocalFileSystem) {
-      paths.add(projectDir.toNioPath());
+  public final boolean isUnderDownloads(@NotNull Path path) {
+    var downloadDir = (Path)null;
+    if (JnaLoader.isLoaded()) {
+      try {
+        downloadDir = Path.of(Shell32Util.getKnownFolderPath(KnownFolders.FOLDERID_Downloads));
+      }
+      catch (Exception e) {
+        LOG.warn("download dir detection failed", e);
+      }
     }
+    if (downloadDir == null) {
+      downloadDir = Path.of(System.getProperty("user.home"), "Downloads");
+    }
+    return path.startsWith(downloadDir);
+  }
 
-    paths.addAll(WindowsDefenderExcludeUtil.INSTANCE.getPathsToExclude(project, projectDir != null ? projectDir.toNioPath() : null));
-
+  public final @NotNull List<Path> getPathsToExclude(@NotNull Project project) {
+    var paths = doGetPathsToExclude(project, null);
+    var projectPath = getProjectPath(project);
+    if (projectPath != null) {
+      paths.add(projectPath);
+    }
     return new ArrayList<>(paths);
   }
 
+  public final @NotNull List<Path> getPathsToExclude(@Nullable Project project, @NotNull Path projectPath) {
+    var paths = doGetPathsToExclude(project, projectPath);
+    paths.add(projectPath);
+    return new ArrayList<>(paths);
+  }
+
+  private Set<Path> doGetPathsToExclude(@Nullable Project project, @Nullable Path projectPath) {
+    var paths = new TreeSet<Path>();
+    paths.add(PathManager.getSystemDir());
+    if (projectPath != null) {
+      paths.add(projectPath);
+    }
+    EP_NAME.forEachExtensionSafe(ext -> {
+      paths.addAll(ext.getPaths(project, projectPath));
+    });
+    return paths;
+  }
+
   public final @NotNull List<Path> filterDevDrivePaths(@NotNull List<Path> paths) {
+    if (paths.isEmpty()) return paths;
+
     if (!JnaLoader.isLoaded()) {
       LOG.debug("filterDevDrivePaths: JNA is not loaded");
       return paths;
@@ -218,9 +279,18 @@ public class WindowsDefenderChecker {
     }
   }
 
-  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull List<Path> paths) {
-    logCaller("paths=" + paths);
+  public final boolean excludeProjectPaths(@NotNull Project project, @NotNull List<Path> paths) {
+    return doExcludeProjectPaths(project, null, paths);
+  }
 
+  public final boolean excludeProjectPaths(@Nullable Project project, @NotNull Path projectPath, @NotNull List<Path> paths) {
+    return doExcludeProjectPaths(project, projectPath, paths);
+  }
+
+  private boolean doExcludeProjectPaths(@Nullable Project project, @Nullable Path projectPath, List<Path> paths) {
+    logCaller("paths=" + paths + " project=" + (project != null ? project : projectPath));
+
+    var result = Boolean.FALSE;
     try {
       var script = PathManager.findBinFile(HELPER_SCRIPT_NAME);
       if (script == null) {
@@ -273,15 +343,19 @@ public class WindowsDefenderChecker {
         LOG.info("OK; script output:\n" + output.getStdout().trim());
         if (project != null) {
           PropertiesComponent.getInstance(project).setValue(IGNORE_STATUS_CHECK, true);
-        } else {
-          WindowsDefenderExcludeUtil.INSTANCE.addPathsToExcluded(paths);
         }
+        result = Boolean.TRUE;
         return true;
       }
     }
     catch (Exception e) {
       LOG.warn(e);
       return false;
+    }
+    finally {
+      if (project == null) {
+        myProjectPaths.put(projectPath, result);
+      }
     }
   }
 
