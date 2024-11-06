@@ -36,6 +36,7 @@ import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.state.SelectableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.component.styling.ChipStyle
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.theme.chipStyle
@@ -175,7 +176,12 @@ private fun ChipImpl(
     ) {
         val resolvedContentColor = colors.contentFor(state = chipState).value.takeOrElse { LocalContentColor.current }
 
-        CompositionLocalProvider(LocalContentColor provides resolvedContentColor) { content() }
+        CompositionLocalProvider(
+            LocalContentColor provides resolvedContentColor,
+            LocalTextStyle provides LocalTextStyle.current.copy(color = colors.contentFor(chipState).value),
+        ) {
+            content()
+        }
     }
 }
 
