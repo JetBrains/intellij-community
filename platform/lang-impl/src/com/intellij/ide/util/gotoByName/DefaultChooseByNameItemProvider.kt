@@ -25,7 +25,6 @@ import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
 import kotlin.math.max
@@ -83,7 +82,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       })
   }
 
-  protected val pathProximityComparator: Comparator<Any>
+  protected val pathProximityComparator: PathProximityComparator
     get() = PathProximityComparator(myContext?.getElement())
 
   override fun filterNames(base: ChooseByNameViewModel, names: Array<String?>, pattern: String): MutableList<String?> {
@@ -104,7 +103,7 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
     }
   }
 
-  private class PathProximityComparator(context: PsiElement?) : Comparator<Any> {
+  class PathProximityComparator internal constructor(context: PsiElement?) : Comparator<Any> {
     private val myProximityComparator: PsiProximityComparator = PsiProximityComparator(context)
 
     override fun compare(o1: Any, o2: Any): Int {
@@ -116,15 +115,37 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       return o1Weight - o2Weight
     }
 
-    fun isCompiledWithoutSource(o: Any): Boolean {
-      return o is PsiCompiledElement && o.getNavigationElement() === o
+    companion object {
+      private fun isCompiledWithoutSource(o: Any): Boolean {
+        return o is PsiCompiledElement && o.getNavigationElement() === o
+      }
     }
   }
 
-  @ApiStatus.Internal
   companion object {
     private val LOG = Logger.getInstance(DefaultChooseByNameItemProvider::class.java)
     private const val UNIVERSAL_SEPARATOR = "\u0000"
+
+    /**
+     * Filters and sorts elements in the given choose by name popup according to the given pattern.
+     *
+     * @param indicator Progress indicator which can be used to cancel the operation
+     * @param context The PSI element currently open in the editor (used for proximity ordering of returned results)
+     * @param consumer The consumer to which the results (normally NavigationItem instances) are passed
+     * @return true if the operation completed normally, false if it was interrupted
+     */
+    fun filterElements(
+      base: ChooseByNameViewModel,
+      pattern: String,
+      everywhere: Boolean,
+      indicator: ProgressIndicator,
+      context: PsiElement?,
+      consumer: Processor<Any>
+    ): Boolean {
+      return filterElements(base, indicator, context, null,
+                            Processor { res: FoundItemDescriptor<*>? -> consumer.process(res!!.getItem()) },
+                            createParameters(base, pattern, everywhere))
+    }
 
     private fun filterElements(
       base: ChooseByNameViewModel,

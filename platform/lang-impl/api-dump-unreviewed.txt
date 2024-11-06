@@ -12397,13 +12397,19 @@ com.intellij.ide.util.gotoByName.CustomMatcherModel
 c:com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider
 - com.intellij.ide.util.gotoByName.ChooseByNameInScopeItemProvider
 - <init>(com.intellij.psi.PsiElement):V
+- ps:buildPatternMatcher(java.lang.String,Z):com.intellij.psi.codeStyle.MinusculeMatcher
 - filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,com.intellij.util.indexing.FindSymbolParameters,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
+- s:filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.psi.PsiElement,com.intellij.util.Processor):Z
 - filterElements(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,com.intellij.util.indexing.FindSymbolParameters,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - filterElementsWithWeights(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.util.Processor):Z
 - filterNames(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String[],java.lang.String):java.util.List
-- pf:getPathProximityComparator():java.util.Comparator
-- psf:matches(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher,java.lang.String):com.intellij.ide.util.gotoByName.MatchResult
+- p:getPathProximityComparator():com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider$PathProximityComparator
+- ps:matches(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,java.lang.String,com.intellij.psi.codeStyle.MinusculeMatcher,java.lang.String):com.intellij.ide.util.gotoByName.MatchResult
+- ps:processByNames(com.intellij.ide.util.gotoByName.ChooseByNameViewModel,Z,com.intellij.openapi.progress.ProgressIndicator,com.intellij.psi.PsiElement,com.intellij.util.Processor,java.util.List,com.intellij.util.indexing.FindSymbolParameters):Z
+pf:com.intellij.ide.util.gotoByName.DefaultChooseByNameItemProvider$PathProximityComparator
+- java.util.Comparator
+- compare(java.lang.Object,java.lang.Object):I
 f:com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor
 - com.intellij.navigation.ChooseByNameContributorEx
 - com.intellij.openapi.project.DumbAware
