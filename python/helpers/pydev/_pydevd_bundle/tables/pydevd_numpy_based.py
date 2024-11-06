@@ -276,6 +276,13 @@ def _compute_data(arr, fun, format=None):
     is_sort_command = type(arr) is dict
     data = arr['data'] if is_sort_command else arr
 
+    try:
+        import tensorflow as tf
+        if data.dtype == tf.bfloat16:
+            data = tf.convert_to_tensor(data.numpy().astype(np.float32))
+    except (ImportError, AttributeError):
+        pass
+
     jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = None, None, None, None
     if is_pd:
         jb_max_cols, jb_max_colwidth, jb_max_rows, jb_float_options = _set_pd_options(format)
