@@ -14,6 +14,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ComponentUtil
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
@@ -21,8 +22,11 @@ import com.intellij.util.ui.ComponentWithEmptyText
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NonNls
-import java.awt.*
-import java.awt.event.*
+import java.awt.Component
+import java.awt.MouseInfo
+import java.awt.Rectangle
+import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import java.io.File
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -54,6 +58,10 @@ inline fun <reified T> JComponent.getUserData(key: Key<T>): T? {
 
 inline fun <reified T> JComponent.getOrPutUserData(key: Key<T>, block: () -> T): T {
   return getUserData(key) ?: block().also { putUserData(key, it) }
+}
+
+inline fun <reified T> Component.getParentOfType(): T? {
+  return ComponentUtil.getParentOfType(T::class.java, this)
 }
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {

@@ -18,9 +18,9 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actions.CaretStop;
 import com.intellij.openapi.editor.actions.CaretStopPolicy;
@@ -161,16 +161,10 @@ public final class EditorComponentImpl extends JTextComponent implements Scrolla
   @Override
   public void uiDataSnapshot(@NotNull DataSink sink) {
     if (editor.isDisposed()) return;
-
-    sink.set(PlatformDataKeys.COPY_PROVIDER, editor.getCopyProvider());
-
     if (editor.isRendererMode()) return;
 
     sink.set(CommonDataKeys.EDITOR, editor);
     sink.set(CommonDataKeys.CARET, editor.getCaretModel().getCurrentCaret());
-    sink.set(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, editor.getDeleteProvider());
-    sink.set(PlatformDataKeys.CUT_PROVIDER, editor.getCutProvider());
-    sink.set(PlatformDataKeys.PASTE_PROVIDER, editor.getPasteProvider());
 
     LogicalPosition location = editor.myLastMousePressedLocation;
     if (location == null) {

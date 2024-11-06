@@ -6,20 +6,25 @@ import com.intellij.openapi.actionSystem.DataSnapshot
 import com.intellij.openapi.actionSystem.PlatformDataKeys.*
 import com.intellij.openapi.actionSystem.UiDataRule
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.ui.getParentOfType
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.ui.EditorTextField
 
 internal class BasicUiDataRule : UiDataRule {
   override fun uiDataSnapshot(sink: DataSink, snapshot: DataSnapshot) {
+    val component = snapshot[CONTEXT_COMPONENT]
     // editor
     val editor = snapshot[EDITOR]
-    if (editor is EditorEx) {
+    ((editor ?: component?.getParentOfType<EditorComponentImpl>()?.editor) as? EditorEx)?.let { editor ->
       sink[COPY_PROVIDER] = editor.getCopyProvider()
-      sink[PASTE_PROVIDER] = editor.getPasteProvider()
-      sink[CUT_PROVIDER] = editor.getCutProvider()
-      sink[DELETE_ELEMENT_PROVIDER] = editor.getDeleteProvider()
+      if (!editor.isViewer()) {
+        sink[PASTE_PROVIDER] = editor.getPasteProvider()
+        sink[CUT_PROVIDER] = editor.getCutProvider()
+        sink[DELETE_ELEMENT_PROVIDER] = editor.getDeleteProvider()
+      }
     }
     if (editor != null && editor.getUserData(EditorTextField.SUPPLEMENTARY_KEY) != true) {
       val fileEditor = snapshot[FILE_EDITOR]
