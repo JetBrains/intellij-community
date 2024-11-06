@@ -100,7 +100,7 @@ class ChangeToCustomInlineCompletionAction : AnAction(
 }
 
 @ApiStatus.Internal
-class InlineCompletionPopupActionGroup(private val actions: Array<AnAction>) : ActionGroup(), DumbAware {
+class InlineCompletionPopupActionGroup(@ApiStatus.Internal val actions: Array<AnAction>) : ActionGroup(), DumbAware {
   init {
     isPopup = true
     templatePresentation.isPerformGroup = true

@@ -174,9 +174,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
             CloneDvcsValidationUtils.checkDirectory(it.text, it.textField)
           }
       }
-      if (Registry.`is`("git.clone.shallow")) {
-        GitShallowCloneComponentFactory.appendShallowCloneRow(this, shallowCloneModel)
-      }
+      GitShallowCloneComponentFactory.appendShallowCloneRow(this, shallowCloneModel)
     }
     repositoriesPanel.border = JBEmptyBorder(UIUtil.getRegularPanelInsets())
     setupAccountsListeners()

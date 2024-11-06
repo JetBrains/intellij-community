@@ -12,8 +12,8 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @Service(Service.Level.PROJECT)
 class HuggingFacePluginManager(val project: Project) : Disposable {
-  private var libraryStatusChecker: HuggingFaceImportedLibrariesManager = project.getService(HuggingFaceImportedLibrariesManager::class.java)
+  private var libraryStatusChecker: HuggingFaceLibrariesTracker = project.getService(HuggingFaceLibrariesTracker::class.java)
   init { project.getService(HuggingFaceCacheUpdateHandler::class.java) }
-  fun isActive(): Boolean = libraryStatusChecker.isLibraryImported() && Registry.`is`("python.enable.hugging.face.cards")
+  fun isActive(): Boolean = libraryStatusChecker.isAnyHFLibraryInstalled() && Registry.`is`("python.enable.hugging.face.cards")
   override fun dispose() = Disposer.dispose(libraryStatusChecker)
 }

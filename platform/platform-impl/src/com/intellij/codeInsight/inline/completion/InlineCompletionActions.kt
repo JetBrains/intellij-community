@@ -128,6 +128,7 @@ class BackSpaceInlineCompletionHandler(private val originalHandler: EditorAction
 
 @ApiStatus.Internal
 class CallInlineCompletionAction : EditorAction(CallInlineCompletionHandler()), HintManagerImpl.ActionToIgnore {
+
   class CallInlineCompletionHandler : EditorWriteActionHandler() {
     override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
       val curCaret = caret ?: editor.caretModel.currentCaret

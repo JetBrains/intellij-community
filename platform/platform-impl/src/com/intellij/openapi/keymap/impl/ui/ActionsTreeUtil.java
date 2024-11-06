@@ -8,13 +8,13 @@ import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.customization.ActionUrl;
+import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.QuickList;
-import com.intellij.openapi.actionSystem.impl.ActionGroupStub;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -169,7 +169,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(getMainMenuTitle(), IdeActions.GROUP_MAIN_MENU, AllIcons.Nodes.KeymapMainMenu);
     ActionGroup mainMenuGroup = (ActionGroup)actionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
-    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered, actionManager);
+    fillGroupIgnorePopupFlag(mainMenuGroup, group, filtered);
     return group;
   }
 
@@ -209,9 +209,8 @@ public final class ActionsTreeUtil {
 
   private static void fillGroupIgnorePopupFlag(ActionGroup actionGroup,
                                                Group group,
-                                               Condition<? super AnAction> filtered,
-                                               ActionManager actionManager) {
-    AnAction[] mainMenuTopGroups = getActions(actionGroup, actionManager);
+                                               Condition<? super AnAction> filtered) {
+    AnAction[] mainMenuTopGroups = getActions(actionGroup);
     for (AnAction action : mainMenuTopGroups) {
       if (!(action instanceof ActionGroup)) continue;
       Group subGroup = createGroup((ActionGroup)action, false, filtered);
@@ -278,7 +277,7 @@ public final class ActionsTreeUtil {
                                    boolean normalizeSeparators) {
     ActionManager actionManager = ActionManager.getInstance();
     Group group = new Group(groupName, actionManager.getId(actionGroup), icon);
-    AnAction[] children = getActions(actionGroup, actionManager);
+    AnAction[] children = getActions(actionGroup);
     for (AnAction action : children) {
       if (action == null) {
         LOG.error(groupName + " contains null actions");
@@ -340,7 +339,7 @@ public final class ActionsTreeUtil {
     ActionManager actionManager = ActionManager.getInstance();
     String groupId = actionManager.getId(actionGroup);
     Group group = new Group(groupName, groupId, getTemplatePresentation(actionGroup).getIcon());
-    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup, actionManager)));
+    List<AnAction> children = new ArrayList<>(Arrays.asList(getActions(actionGroup)));
 
     for (ActionUrl actionUrl : actionUrls) {
       Object component = actionUrl.getComponent();
@@ -766,34 +765,17 @@ public final class ActionsTreeUtil {
       PluginException.logPluginError(LOG, actionGroup + " is not a group", null, group.getClass());
       return AnAction.EMPTY_ARRAY;
     }
-    return getActions((ActionGroup)group, actionManager);
+    return getActions((ActionGroup)group);
   }
 
-  private static AnAction @NotNull [] getActions(@NotNull ActionGroup group, @NotNull ActionManager actionManager) {
-    try {
-      if (group instanceof ActionGroupStub stub) {
-        AnAction[] stubChildren = stub.getChildActionsOrStubs();
-        if (stubChildren.length > 0) return stubChildren;
-        String actionId = stub.getId();
-        LOG.info("No children in '" + actionId + "' stub. Creating its instance");
-        AnAction unstubbed = actionManager.getAction(actionId);
-        if (unstubbed instanceof ActionGroup g && !(unstubbed instanceof ActionGroupStub)) {
-          return getActions(g, actionManager);
-        }
-        else {
-          PluginException.logPluginError(LOG, "'" + actionId + "' is not an action group. " +
-                                              unstubbed.getClass().getName(), null, unstubbed.getClass());
-          return AnAction.EMPTY_ARRAY;
-        }
-      }
-      else if (group instanceof DefaultActionGroup g && ActionClassMetaData.isDefaultGetChildren(g)) {
-        return g.getChildActionsOrStubs();
-      }
-      else {
-        return group.getChildren(null);
-      }
+  private static AnAction @NotNull [] getActions(@NotNull ActionGroup group) {
+    if (group instanceof DefaultActionGroup g) {
+      return g.getChildActionsOrStubs();
     }
-    catch (Throwable e) {
+    else if (group instanceof CustomisedActionGroup g) {
+      return g.getDefaultChildrenOrStubs();
+    }
+    else {
       return AnAction.EMPTY_ARRAY;
     }
   }

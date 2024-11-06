@@ -15,8 +15,10 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.ui.util.preferredHeight
 import com.intellij.util.application
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import org.jetbrains.annotations.ApiStatus
 
-internal object InlineCompletionTooltip {
+@ApiStatus.Internal
+object InlineCompletionTooltip {
   private val tooltipKey = Key<Unit>("EDITOR_HAS_INLINE_TOOLTIP")
 
   @RequiresEdt

@@ -118,6 +118,8 @@ class AsyncEditorLoader internal constructor(
       return
     }
 
+    // do not get service in invokeOnCompletion
+    val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
     coroutineScope.launch(CoroutineName("AsyncEditorLoader.wait")) {
       val editorFileName = textEditor.file.name
       val indicatorJob = showLoadingIndicator(
@@ -135,8 +137,8 @@ class AsyncEditorLoader internal constructor(
       }
 
       withContext(Dispatchers.EDT + CoroutineName("execute delayed actions")) {
-        // mark as loaded before daemonCodeAnalyzer restart
-        // do it from EDT to avoid execution of any following scroll requests before already scheduled delayedActions
+        // mark as loaded before daemonCodeAnalyzer restart,
+        // does it from EDT to avoid execution of any following scroll requests before already scheduled delayedActions
         textEditor.editor.putUserData(ASYNC_LOADER, null)
 
         val scrollingModel = textEditor.editor.scrollingModel
@@ -158,7 +160,7 @@ class AsyncEditorLoader internal constructor(
 
         // make sure the highlighting is restarted when the editor is finally loaded, because otherwise some crazy things happen,
         // for instance `FileEditor.getBackgroundHighlighter()` returning null, essentially stopping highlighting silently
-        DaemonCodeAnalyzer.getInstance(project).restart()
+        daemonCodeAnalyzer.restart()
       }
   }
 

@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |ac|       unicode:: U+0223E .. INVERTED LAZY S
 .. |acE|      unicode:: U+0223E U+00333 .. INVERTED LAZY S with double underline

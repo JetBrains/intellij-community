@@ -16,7 +16,7 @@ import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.markup.AnalyzerStatus;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -39,7 +39,6 @@ import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.vcs.commit.CommitMessageUi;
 import com.intellij.vcs.commit.message.BodyLimitSettings;
 import com.intellij.vcs.commit.message.CommitMessageInspectionProfile;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -326,13 +325,13 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     }
   }
 
-  private static class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
+  private static final class ConditionalTrafficLightRenderer extends TrafficLightRenderer {
     ConditionalTrafficLightRenderer(@NotNull Project project, @NotNull Document document) {
       super(project, document);
     }
 
     @Override
-    protected void refresh(@Nullable EditorMarkupModelImpl editorMarkupModel) {
+    public void refresh(@Nullable EditorMarkupModel editorMarkupModel) {
       super.refresh(editorMarkupModel);
       if (editorMarkupModel != null) {
         editorMarkupModel.setTrafficLightIconVisible(hasHighSeverities(getErrorCounts()));
@@ -356,8 +355,7 @@ public class CommitMessage extends JPanel implements Disposable, UiCompatibleDat
     }
   }
 
-  @ApiStatus.Internal
-  public static class CommitMessageTrafficLightRendererContributor implements TrafficLightRendererContributor {
+  static final class CommitMessageTrafficLightRendererContributor implements TrafficLightRendererContributor {
     @Override
     public @Nullable TrafficLightRenderer createRenderer(@NotNull Editor editor, @Nullable PsiFile file) {
       Project project = editor.getProject();

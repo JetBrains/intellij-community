@@ -50,7 +50,7 @@ import kotlin.io.path.relativeTo
  * an instance of [IjentWslNioFileSystem] can be obtained with a URL like "ijent://wsl/distribution-name".
  */
 class IjentWslNioFileSystemProvider(
-  wslDistribution: WSLDistribution,
+  private val wslDistribution: WSLDistribution,
   private val ijentFsProvider: FileSystemProvider,
   internal val originalFsProvider: FileSystemProvider,
 ) : FileSystemProvider(), RoutingAwareFileSystemProvider {
@@ -253,8 +253,37 @@ class IjentWslNioFileSystemProvider(
     }
   }
 
-  override fun isSameFile(path: Path, path2: Path): Boolean =
-    originalFsProvider.isSameFile(path.toOriginalPath(), path2.toOriginalPath())
+  override fun isSameFile(path: Path, path2: Path): Boolean {
+    val conversionResult1 = tryConvertToWindowsPaths(path, path2)
+    if (conversionResult1 != null) {
+      return conversionResult1
+    }
+    val conversionResult2 = tryConvertToWindowsPaths(path2, path)
+    if (conversionResult2 != null) {
+      return conversionResult2
+    }
+    // so both paths are now located in WSL
+    if (path.root != path2.root) {
+      // the paths could be in different distributions
+      return false
+    }
+    return ijentFsProvider.isSameFile(path.toIjentPath(), path2.toIjentPath())
+  }
+
+  private fun tryConvertToWindowsPaths(path1: Path, path2: Path): Boolean? {
+    if (!WslPath.isWslUncPath(path1.root.toString())) {
+      // then the second path is in WSL, but it may be mounted Windows dir
+      val resolvedPath2 = path2.toRealPath().toString() // protection against symlinks
+      val parsed = WslPath.parseWindowsUncPath(resolvedPath2)
+      if (parsed != null) {
+        val windowsRepresentation = wslDistribution.getWindowsPath(parsed.linuxPath)
+        if (windowsRepresentation == resolvedPath2) return false
+        return Files.isSameFile(path1.toOriginalPath(), Path.of(windowsRepresentation))
+      }
+      return false
+    }
+    return null
+  }
 
   override fun isHidden(path: Path): Boolean =
     originalFsProvider.isHidden(path.toOriginalPath())
@@ -263,7 +292,7 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.getFileStore(path.toIjentPath())
 
   override fun <V : FileAttributeView?> getFileAttributeView(path: Path, type: Class<V>, vararg options: LinkOption): V =
-    originalFsProvider.getFileAttributeView(path.toOriginalPath(), type, *options)
+    ijentFsProvider.getFileAttributeView(path.toIjentPath(), type, *options)
 
   override fun <A : BasicFileAttributes> readAttributes(path: Path, type: Class<A>, vararg options: LinkOption): A {
     // There's some contract violation at least in com.intellij.openapi.util.io.FileAttributes.fromNio:
@@ -294,7 +323,7 @@ class IjentWslNioFileSystemProvider(
     ijentFsProvider.readAttributes(path.toIjentPath(), attributes, *options)
 
   override fun setAttribute(path: Path, attribute: String?, value: Any?, vararg options: LinkOption?) {
-    originalFsProvider.setAttribute(path.toOriginalPath(), attribute, value, *options)
+    ijentFsProvider.setAttribute(path.toIjentPath(), attribute, value, *options)
   }
 
   companion object {

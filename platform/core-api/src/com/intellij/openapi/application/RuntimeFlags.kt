@@ -26,3 +26,11 @@ val isCoroutineWILEnabled: Boolean =
 @get:ApiStatus.Internal
 val isMessageBusErrorPropagationEnabled: Boolean =
   System.getProperty("ijpl.message.bus.rethrows.errors.from.subscribers", "false").toBoolean()
+
+/**
+ * - `false` means lock permits are bound only to threads
+ * - `true` means lock permits also stored in coroutine contexts.
+ */
+@get:ApiStatus.Internal
+val isLockStoredInContext: Boolean =
+  System.getProperty("ide.store.lock.in.context", "true").toBoolean()

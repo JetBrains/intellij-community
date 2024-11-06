@@ -83,6 +83,10 @@
       interface="com.intellij.codeInsight.inline.completion.elements.InlineCompletionElementManipulator"
       dynamic="true"/>
     <extensionPoint
+      name="inline.completion.handlerInitializer"
+      interface="com.intellij.codeInsight.inline.completion.InlineCompletionHandlerInitializer"
+      dynamic="true"/>
+    <extensionPoint
       name="inline.completion.usage.data"
       interface="com.intellij.codeInsight.inline.completion.logs.InlineCompletionProviderSpecificUsageData"
       dynamic="true"/>

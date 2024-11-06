@@ -11,5 +11,5 @@ interface GenericAuthService {
   companion object {
     fun getInstance(session: ClientSession): GenericAuthService = session.service()
   }
-  suspend fun getAuthData(providerId: String, request: String): String
+  suspend fun getAuthData(providerId: String, request: String): String?
 }

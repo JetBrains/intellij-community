@@ -1,15 +1,15 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.paint.LinePainter2D
-import com.intellij.ui.paint.RectanglePainter2D
-import org.jetbrains.annotations.ApiStatus
 import com.intellij.notebooks.ui.visualization.NotebookEditorAppearanceUtils.isOrdinaryNotebookEditor
 import com.intellij.notebooks.ui.visualization.notebookAppearance
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeHandler
 import com.intellij.notebooks.visualization.inlay.JupyterBoundsChangeListener
 import com.intellij.notebooks.visualization.use
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.ui.ExperimentalUI
+import com.intellij.ui.paint.LinePainter2D
+import com.intellij.ui.paint.RectanglePainter2D
+import org.jetbrains.annotations.ApiStatus
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
@@ -75,7 +75,9 @@ class EditorCellFoldingBar(
     panel.setBounds(editor.gutterComponentEx.extraLineMarkerFreePaintersAreaOffset + 1, yAndHeight.first, 6, yAndHeight.second)
   }
 
-  private fun createFoldingBar() = object : JComponent() {
+  private fun createFoldingBar() = EditorCellFoldingBarComponent()
+
+  inner class EditorCellFoldingBarComponent : JComponent() {
     private var mouseOver = false
 
     init {

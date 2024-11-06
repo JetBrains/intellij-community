@@ -3,10 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.LightEditService;
-import com.intellij.openapi.actionSystem.ActionUpdateThread;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -50,6 +47,7 @@ public final class ProjectWindowAction extends ToggleAction implements DumbAware
       myNext = this;
     }
     getTemplatePresentation().setText(projectName, false);
+    getTemplatePresentation().setKeepPopupOnPerform(KeepPopupOnPerform.Never);
   }
 
   public void dispose() {

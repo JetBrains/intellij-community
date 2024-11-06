@@ -254,6 +254,12 @@ class PyDataclassTypeProvider : PyTypeProviderBase() {
       if (type is PyCollectionType && type.classQName == Dataclasses.DATACLASSES_INITVAR) {
         return type.elementTypes.firstOrNull()
       }
+      if (type is PyClassLikeType) {
+        val expectedConstructorArgumentTypeRef = PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet(field, type, context)
+        if (expectedConstructorArgumentTypeRef != null) {
+          return Ref.deref(expectedConstructorArgumentTypeRef)
+        }
+      }
 
       if (type == null && dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
         methodDecoratedAsAttributeDefault(cls, field.name)

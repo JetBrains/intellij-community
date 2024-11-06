@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |gnap|     unicode:: U+02A8A .. GREATER-THAN AND NOT APPROXIMATE
 .. |gnE|      unicode:: U+02269 .. GREATER-THAN BUT NOT EQUAL TO

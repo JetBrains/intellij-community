@@ -48,7 +48,7 @@ internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLay
         moreActionGroup.removeAll()
         val mapped = visibleChildren.mapIndexedNotNull { index, action ->
           when {
-            index >= ProjectsTabFactory.PRIMARY_BUTTONS_NUM -> {
+            index >= ProjectsTab.PRIMARY_BUTTONS_NUM -> {
               moreActionGroup.add(action)
               null
             }
@@ -129,7 +129,7 @@ internal class EmptyStateProjectsPanel(parentDisposable: Disposable) : BorderLay
       private var wasFocusRequested = false
 
       override fun isSecondaryAction(action: AnAction, actionIndex: Int): Boolean {
-        return actionIndex >= ProjectsTabFactory.PRIMARY_BUTTONS_NUM
+        return actionIndex >= ProjectsTab.PRIMARY_BUTTONS_NUM
       }
 
       override fun actionsUpdated(forced: Boolean, newVisibleActions: MutableList<out AnAction>) {

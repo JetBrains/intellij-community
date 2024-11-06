@@ -141,9 +141,14 @@ public class LineStatusMarkerPopupPanel extends JPanel {
       // Space for horizontal scrollbar
       size.height += JBUI.scale(20);
     }
-    if (size.height > maxSize.height) {
-      size.height = maxSize.height;
+
+    Rectangle panelRect = new Rectangle(new Point(0, 0), size);
+    Rectangle rectangle = SwingUtilities.convertRectangle(this, panelRect, window);
+
+    if (rectangle.y + size.height > maxSize.height) {
+      size.height = maxSize.height - rectangle.y;
     }
+
     return size;
   }
 

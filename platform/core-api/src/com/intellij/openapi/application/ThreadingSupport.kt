@@ -15,6 +15,7 @@ import java.util.concurrent.Future
 import java.util.function.BooleanSupplier
 import java.util.function.Consumer
 import javax.swing.JComponent
+import kotlin.coroutines.CoroutineContext
 
 interface ThreadingSupport {
   @ApiStatus.Internal
@@ -348,4 +349,10 @@ interface ThreadingSupport {
    */
   @ApiStatus.Internal
   fun isInsideUnlockedWriteIntentLock(): Boolean
+
+  @ApiStatus.Internal
+  fun getPermitAsContextElement(): CoroutineContext
+
+  @ApiStatus.Internal
+  fun hasPermitAsContextElement(context: CoroutineContext): Boolean
 }

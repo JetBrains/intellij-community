@@ -30,8 +30,8 @@ private val FORCE_UPDATE: Update = object : Update("FORCE_UPDATE") {
 }
 
 internal class ResourceBundleEditorFileListener(private val editor: ResourceBundleEditor) : VirtualFileListener {
-  private val eventProcessor = MyVfsEventsProcessor()
   private val project = editor.resourceBundle.project
+  private val eventProcessor = MyVfsEventsProcessor()
 
   fun flush() {
     FileDocumentManager.getInstance().saveAllDocuments()

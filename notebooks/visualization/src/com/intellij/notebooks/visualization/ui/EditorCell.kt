@@ -1,6 +1,5 @@
 package com.intellij.notebooks.visualization.ui
 
-import com.intellij.notebooks.ui.editor.actions.command.mode.NotebookEditorMode
 import com.intellij.notebooks.visualization.NotebookCellInlayController
 import com.intellij.notebooks.visualization.NotebookCellInlayManager
 import com.intellij.notebooks.visualization.NotebookIntervalPointer
@@ -44,14 +43,7 @@ class EditorCell(
 
   val executionStatus = AtomicProperty<ExecutionStatus>(ExecutionStatus())
 
-  // ToDo we should remove or rework this. Mode does not really reflects the state of markdown cells.
-  val mode = AtomicProperty<NotebookEditorMode>(NotebookEditorMode.COMMAND)
-
   val outputs = AtomicProperty<List<NotebookOutputDataKey>>(getOutputs())
-
-  init {
-    CELL_EXTENSION_CONTAINER_KEY.set(this, mutableMapOf())
-  }
 
   private fun getSource(): String {
     val document = editor.document
@@ -151,29 +143,27 @@ class EditorCell(
     }
   }
 
-  fun switchToEditMode() = runInEdt {
-    mode.set(NotebookEditorMode.EDIT)
-  }
-
-  fun switchToCommandMode() = runInEdt {
-    mode.set(NotebookEditorMode.COMMAND)
-  }
-
   fun requestCaret() {
     view?.requestCaret()
   }
 
-  inline fun <reified T : EditorCellExtension> getExtension(): T {
+  inline fun <reified T : EditorCellExtension> getExtension(): T? {
     return getExtension(T::class)
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun <T : EditorCellExtension> getExtension(cls: KClass<T>): T {
-    return CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] as T
+  fun <T : EditorCellExtension> getExtension(cls: KClass<T>): T? {
+    val extensions = CELL_EXTENSION_CONTAINER_KEY.get(this) ?: return null
+    return extensions[cls] as? T
   }
 
   fun <T : EditorCellExtension> addExtension(cls: KClass<T>, extension: T) {
-    CELL_EXTENSION_CONTAINER_KEY.get(this)!![cls] = extension
+    var map = CELL_EXTENSION_CONTAINER_KEY.get(this)
+    if (map == null) {
+      map = mutableMapOf<KClass<*>, EditorCellExtension>()
+      CELL_EXTENSION_CONTAINER_KEY.set(this, map)
+    }
+    map[cls] = extension
   }
 
   fun onBeforeRemove() {

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi;
 
+import com.intellij.model.psi.PsiExternalReferenceHost;
 import com.intellij.psi.*;
 import com.jetbrains.python.ast.PyAstTargetExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -11,7 +12,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 
-public interface PyTargetExpression extends PyAstTargetExpression, PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, PyDocStringOwner,
+public interface PyTargetExpression extends PyAstTargetExpression, PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner,
+                                            PsiExternalReferenceHost, PyDocStringOwner,
                                             PyQualifiedNameOwner, PyReferenceOwner, StubBasedPsiElement<PyTargetExpressionStub>,
                                             PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
@@ -43,7 +45,7 @@ public interface PyTargetExpression extends PyAstTargetExpression, PyQualifiedEx
   /**
    * Find the value that maps to this target expression in an enclosing assignment expression.
    * Does not work with other expressions (e.g. if the target is in a 'for' loop).
-   *
+   * <p>
    * Operates at the AST level.
    *
    * @return the expression assigned to target via an enclosing assignment expression, or null.
@@ -56,7 +58,7 @@ public interface PyTargetExpression extends PyAstTargetExpression, PyQualifiedEx
 
   /**
    * Multi-resolves the value that maps to this target expression in an enclosing assignment expression.
-   *
+   * <p>
    * This method does not access AST if underlying PSI is stub based and the context doesn't allow switching to AST.
    *
    * @param resolveContext resolve context

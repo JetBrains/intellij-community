@@ -5,6 +5,7 @@ c:com.intellij.icons.AllIcons
 - sf:Stub:javax.swing.Icon
 - <init>():V
 f:com.intellij.icons.AllIcons$Actions
+- sf:AddDirectory:javax.swing.Icon
 - sf:AddFile:javax.swing.Icon
 - sf:AddList:javax.swing.Icon
 - sf:AddMulticaret:javax.swing.Icon

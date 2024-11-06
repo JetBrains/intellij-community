@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: fi.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: fi.py 9452 2023-09-27 00:11:54Z milde $
 # Author: Asko Soukka <asko.soukka@iki.fi>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Finnish-language mappings for language-dependent features of
@@ -24,11 +23,11 @@ directives = {
       'vaara': 'danger',
       'virhe': 'error',
       'vihje': 'hint',
-      't\u00e4rke\u00e4\u00e4': 'important',
+      'tärkeää': 'important',
       'huomautus': 'note',
       'neuvo': 'tip',
       'varoitus': 'warning',
-      'kehotus': 'admonition',
+      'kehotus': 'admonition',  # sic! advice/advisory/remark, not reprimand
       'sivupalkki': 'sidebar',
       'aihe': 'topic',
       'rivi': 'line-block',
@@ -42,27 +41,27 @@ directives = {
       'list-table (translation required)': 'list-table',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #u'kysymykset': u'questions',
+      # 'kysymykset': 'questions',
       'meta': 'meta',
       'math (translation required)': 'math',
-      #u'kuvakartta': u'imagemap',
+      # 'kuvakartta': 'imagemap',
       'kuva': 'image',
       'kaavio': 'figure',
-      'sis\u00e4llyt\u00e4': 'include',
+      'sisällytä': 'include',
       'raaka': 'raw',
       'korvaa': 'replace',
       'unicode': 'unicode',
-      'p\u00e4iv\u00e4ys': 'date',
+      'päiväys': 'date',
       'luokka': 'class',
       'rooli': 'role',
       'default-role (translation required)': 'default-role',
       'title (translation required)': 'title',
-      'sis\u00e4llys': 'contents',
+      'sisällys': 'contents',
       'kappale': 'sectnum',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      #u'alaviitteet': u'footnotes',
-      #u'viitaukset': u'citations',
+      # 'alaviitteet': 'footnotes',
+      # 'viitaukset': 'citations',
       'target-notes (translation required)': 'target-notes'}
 """Finnish name to registered (in directives/__init__.py) directive name
 mapping."""
@@ -77,7 +76,7 @@ roles = {
     'luettelo': 'index',
     'alaindeksi': 'subscript',
     'indeksi': 'subscript',
-    'yl\u00e4indeksi': 'superscript',
+    'yläindeksi': 'superscript',
     'title-reference (translation required)': 'title-reference',
     'title (translation required)': 'title-reference',
     'pep-reference (translation required)': 'pep-reference',
@@ -93,6 +92,7 @@ roles = {
     'substitution-reference (translation required)': 'substitution-reference',
     'kohde': 'target',
     'uri-reference (translation required)': 'uri-reference',
-    'raw (translation required)': 'raw',}
+    'raw (translation required)': 'raw',
+    }
 """Mapping of Finnish role names to canonical role names for interpreted text.
 """

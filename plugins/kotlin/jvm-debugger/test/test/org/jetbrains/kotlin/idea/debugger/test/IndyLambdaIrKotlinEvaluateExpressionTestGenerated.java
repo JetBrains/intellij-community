@@ -318,48 +318,55 @@ public abstract class IndyLambdaIrKotlinEvaluateExpressionTestGenerated extends 
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
-            public abstract static class StepInto extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto")
-                public static class Uncategorized extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K1;
-                    }
-
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                    }
-
-                    @TestMetadata("stepIntoMethodWithAndWithoutSwitcher.kt")
-                    public void testStepIntoMethodWithAndWithoutSwitcher() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoMethodWithAndWithoutSwitcher.kt");
-                    }
-
-                    @TestMetadata("stepIntoSuspendLambda.kt")
-                    public void testStepIntoSuspendLambda() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoSuspendLambda.kt");
-                    }
+            public static class StepInto extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
+                @java.lang.Override
+                @org.jetbrains.annotations.NotNull
+                public final KotlinPluginMode getPluginMode() {
+                    return KotlinPluginMode.K1;
                 }
 
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported")
-                public static class Unsupported extends AbstractIndyLambdaIrKotlinEvaluateExpressionTest {
-                    @java.lang.Override
-                    @org.jetbrains.annotations.NotNull
-                    public final KotlinPluginMode getPluginMode() {
-                        return KotlinPluginMode.K1;
-                    }
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
 
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                    }
+                @TestMetadata("smartStepIntoAsyncBasic.kt")
+                public void testSmartStepIntoAsyncBasic() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoAsyncBasic.kt");
+                }
 
-                    @TestMetadata("stepIntoCoroutineScope.kt")
-                    public void testStepIntoCoroutineScope() throws Exception {
-                        runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/unsupported/stepIntoCoroutineScope.kt");
-                    }
+                @TestMetadata("smartStepIntoCoroutineScope.kt")
+                public void testSmartStepIntoCoroutineScope() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoCoroutineScope.kt");
+                }
+
+                @TestMetadata("smartStepIntoInlineSuspendLambda.kt")
+                public void testSmartStepIntoInlineSuspendLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoInlineSuspendLambda.kt");
+                }
+
+                @TestMetadata("smartStepIntoLaunchBasic.kt")
+                public void testSmartStepIntoLaunchBasic() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoLaunchBasic.kt");
+                }
+
+                @TestMetadata("smartStepIntoSuspendLambda.kt")
+                public void testSmartStepIntoSuspendLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoSuspendLambda.kt");
+                }
+
+                @TestMetadata("smartStepIntoWithContextBasic.kt")
+                public void testSmartStepIntoWithContextBasic() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/smartStepIntoWithContextBasic.kt");
+                }
+
+                @TestMetadata("stepIntoMethodWithAndWithoutSwitcher.kt")
+                public void testStepIntoMethodWithAndWithoutSwitcher() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoMethodWithAndWithoutSwitcher.kt");
+                }
+
+                @TestMetadata("stepIntoSuspendLambda.kt")
+                public void testStepIntoSuspendLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/coroutines/stepInto/stepIntoSuspendLambda.kt");
                 }
             }
 

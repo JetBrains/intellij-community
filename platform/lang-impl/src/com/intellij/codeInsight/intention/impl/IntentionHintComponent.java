@@ -456,7 +456,9 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
 
       int iconWidth = EmptyIcon.ICON_16.getIconWidth();
       int iconHeight = EmptyIcon.ICON_16.getIconHeight();
-      int panelWidth = NORMAL_BORDER_SIZE + iconWidth + iconWidth + NORMAL_BORDER_SIZE;
+
+      // only takes into account the bulb itself, the borders are invisible until hovered
+      int bulbSafePanelWidth = NORMAL_BORDER_SIZE + iconWidth + NORMAL_BORDER_SIZE;
       int panelHeight = NORMAL_BORDER_SIZE + iconHeight + NORMAL_BORDER_SIZE;
 
       Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
@@ -470,7 +472,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
         x += anotherLineWithShift;
       }
       int y;
-      if (anotherLineWithShift == 0 && lineHeight >= iconHeight && fitsInCaretLine(editor, x + panelWidth)) {
+      if (anotherLineWithShift == 0 && lineHeight >= iconHeight && fitsInCaretLine(editor, x + bulbSafePanelWidth)) {
         // Center the light bulb icon in the caret line.
         // The (usually invisible) border may be outside the caret line.
         y = lineY + (lineHeight - panelHeight) / 2;
@@ -500,7 +502,7 @@ public final class IntentionHintComponent implements Disposable, ScrollAwareHint
       int textColumn = EditorActionUtil.findFirstNonSpaceColumnOnTheLine(editor, visualCaretLine);
       if (textColumn == -1) return false;
 
-      int safetyColumn = Math.max(0, textColumn - 2); // 2 characters safety margin, for IDEA-313840.
+      int safetyColumn = Math.max(0, textColumn); // no safety margin, only icon is visible without hover, width includes borders
       int textX = editor.visualPositionToXY(new VisualPosition(visualCaretLine, safetyColumn)).x;
       return textX > windowRight;
     }

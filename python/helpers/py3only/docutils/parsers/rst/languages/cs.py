@@ -1,11 +1,11 @@
-# $Id: cs.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: cs.py 9452 2023-09-27 00:11:54Z milde $
 # Author: Marek Blaha <mb@dat.cz>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Czech-language mappings for language-dependent features of
@@ -18,43 +18,44 @@ __docformat__ = 'reStructuredText'
 directives = {
       # language-dependent: fixed
       'pozor': 'attention',
-      'caution (translation required)': 'caution', # jak rozlisit caution a warning?
+      # jak rozlisit caution a warning?
+      'caution (translation required)': 'caution',
       'code (translation required)': 'code',
-      'nebezpe\u010D\u00ED': 'danger',
+      'nebezpečí': 'danger',
       'chyba': 'error',
       'rada': 'hint',
-      'd\u016Fle\u017Eit\u00E9': 'important',
-      'pozn\u00E1mka': 'note',
+      'důležité': 'important',
+      'poznámka': 'note',
       'tip (translation required)': 'tip',
-      'varov\u00E1n\u00ED': 'warning',
+      'varování': 'warning',
       'admonition (translation required)': 'admonition',
       'sidebar (translation required)': 'sidebar',
-      't\u00E9ma': 'topic',
+      'téma': 'topic',
       'line-block (translation required)': 'line-block',
       'parsed-literal (translation required)': 'parsed-literal',
-      'odd\u00EDl': 'rubric',
+      'oddíl': 'rubric',
       'moto': 'epigraph',
       'highlights (translation required)': 'highlights',
       'pull-quote (translation required)': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #'questions': 'questions',
-      #'qa': 'questions',
-      #'faq': 'questions',
+      # 'questions': 'questions',
+      # 'qa': 'questions',
+      # 'faq': 'questions',
       'table (translation required)': 'table',
       'csv-table (translation required)': 'csv-table',
       'list-table (translation required)': 'list-table',
       'math (translation required)': 'math',
       'meta (translation required)': 'meta',
-      #'imagemap': 'imagemap',
-      'image (translation required)': 'image',   # obrazek
-      'figure (translation required)': 'figure', # a tady?
+      # 'imagemap': 'imagemap',
+      'image (translation required)': 'image',    # obrazek
+      'figure (translation required)': 'figure',  # a tady?
       'include (translation required)': 'include',
       'raw (translation required)': 'raw',
       'replace (translation required)': 'replace',
       'unicode (translation required)': 'unicode',
       'datum': 'date',
-      't\u0159\u00EDda': 'class',
+      'třída': 'class',
       'role (translation required)': 'role',
       'default-role (translation required)': 'default-role',
       'title (translation required)': 'title',
@@ -63,8 +64,8 @@ directives = {
       'section-numbering (translation required)': 'sectnum',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      #'footnotes': 'footnotes',
-      #'citations': 'citations',
+      # 'footnotes': 'footnotes',
+      # 'citations': 'citations',
       'target-notes (translation required)': 'target-notes',
       'restructuredtext-test-directive': 'restructuredtext-test-directive'}
 """Czech name to registered (in directives/__init__.py) directive name
@@ -103,6 +104,7 @@ roles = {
     'uri-reference (translation required)': 'uri-reference',
     'uri (translation required)': 'uri-reference',
     'url (translation required)': 'uri-reference',
-    'raw (translation required)': 'raw',}
+    'raw (translation required)': 'raw',
+    }
 """Mapping of Czech role names to canonical role names for interpreted text.
 """

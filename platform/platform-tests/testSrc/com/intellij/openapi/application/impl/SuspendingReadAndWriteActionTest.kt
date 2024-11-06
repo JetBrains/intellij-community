@@ -69,6 +69,14 @@ class SuspendingReadAndWriteActionTest {
         Assertions.assertFalse(application.isReadAccessAllowed)
       }
 
+      fun assertNestedContext() {
+        Assertions.assertFalse(EDT.isCurrentThreadEdt())
+        Assertions.assertNotNull(Cancellation.currentJob())
+        Assertions.assertNull(ProgressManager.getGlobalProgressIndicator())
+        Assertions.assertFalse(application.isWriteAccessAllowed)
+        Assertions.assertTrue(application.isReadAccessAllowed)
+      }
+
       fun assertReadButNoWriteActionWithCurrentJob() {
         Assertions.assertFalse(EDT.isCurrentThreadEdt())
         Assertions.assertNotNull(Cancellation.currentJob())
@@ -106,7 +114,7 @@ class SuspendingReadAndWriteActionTest {
         runBlockingCancellable {
           assertReadButNoWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
           withContext(Dispatchers.Default) {
-            assertEmptyContext()
+            assertNestedContext()
           }
           assertReadButNoWriteActionWithoutCurrentJob()
         }
@@ -116,7 +124,7 @@ class SuspendingReadAndWriteActionTest {
           runBlockingCancellable {
             assertWriteActionWithoutCurrentJob() // TODO consider explicitly turning off RA inside runBlockingCancellable
             withContext(Dispatchers.Default) {
-              assertEmptyContext()
+              assertNestedContext()
             }
             assertWriteActionWithoutCurrentJob()
           }

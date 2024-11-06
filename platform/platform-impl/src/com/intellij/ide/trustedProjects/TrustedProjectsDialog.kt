@@ -5,6 +5,7 @@ package com.intellij.ide.trustedProjects
 
 import com.intellij.diagnostic.WindowsDefenderChecker
 import com.intellij.diagnostic.WindowsDefenderExcludeUtil
+import com.intellij.diagnostic.WindowsDefenderStatisticsCollector
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.OpenUntrustedProjectChoice
 import com.intellij.ide.impl.TRUSTED_PROJECTS_HELP_TOPIC
@@ -13,6 +14,7 @@ import com.intellij.ide.impl.TrustedProjectsStatistics
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.project.Project
@@ -53,8 +55,23 @@ object TrustedProjectsDialog {
       return true
     }
     val isWinDefenderEnabled = isWinDefenderEnabled(project, projectRoot)
+    val idePaths = WindowsDefenderExcludeUtil.getPathsToExclude(project, projectRoot)
     val dialog = withContext(Dispatchers.EDT) {
-      TrustedProjectStartupDialog(project, projectRoot, isWinDefenderEnabled, title, message, trustButtonText, distrustButtonText, cancelButtonText).apply { show() }
+      val dialog = TrustedProjectStartupDialog(
+        project = project,
+        projectPath = projectRoot,
+        isWinDefenderEnabled = isWinDefenderEnabled,
+        idePaths = idePaths,
+        myTitle = title,
+        message = message,
+        trustButtonText = trustButtonText,
+        distrustButtonText = distrustButtonText,
+        cancelButtonText = cancelButtonText,
+      )
+      writeIntentReadAction {
+        dialog.show()
+      }
+      dialog
     }
     val openChoice = dialog.getOpenChoice()
     val windowDefenderPathsToExclude = dialog.getWidowsDefenderPathsToExclude()
@@ -73,9 +90,18 @@ object TrustedProjectsDialog {
 
     TrustedProjectsStatistics.NEW_PROJECT_OPEN_OR_IMPORT_CHOICE.log(openChoice)
 
-    if (isWinDefenderEnabled && project != null && windowDefenderPathsToExclude.isNotEmpty()) {
-      val checker = serviceAsync<WindowsDefenderChecker>()
-      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
+    if (isWinDefenderEnabled && openChoice == OpenUntrustedProjectChoice.TRUST_AND_OPEN) {
+      WindowsDefenderExcludeUtil.markPathAsShownDefender(projectRoot)
+      if (windowDefenderPathsToExclude.isNotEmpty()) {
+        WindowsDefenderStatisticsCollector.excludedFromTrustDialog(dialog.isTrustAll())
+        if (project != null) {
+          val checker = serviceAsync<WindowsDefenderChecker>()
+          WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, windowDefenderPathsToExclude)
+        }
+        else {
+          WindowsDefenderExcludeUtil.addPathsToExclude(windowDefenderPathsToExclude)
+        }
+      }
     }
     return openChoice != OpenUntrustedProjectChoice.CANCEL
   }
@@ -84,7 +110,7 @@ object TrustedProjectsDialog {
   private fun isWinDefenderEnabled(project: Project?, projectPath: Path): Boolean {
     if (!SystemInfo.isWindows || Path(System.getProperty("user.home")).resolve("Downloads").equals(projectPath.parent)) return false
     val defenderChecker = WindowsDefenderChecker.getInstance()
-    return project?.let { defenderChecker.isStatusCheckIgnored(it) } != false && defenderChecker.isRealTimeProtectionEnabled == true
+    return !defenderChecker.isStatusCheckIgnored(project) && defenderChecker.isRealTimeProtectionEnabled == true
   }
   
   suspend fun confirmLoadingUntrustedProjectAsync(

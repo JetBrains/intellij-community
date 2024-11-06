@@ -4,6 +4,7 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActualActionUiKind;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
@@ -12,6 +13,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -38,7 +40,7 @@ final class WelcomeScreenActionsUtil {
           }
         });
         List<AnAction> actions = presentation.getClientProperty(ActionUtil.INLINE_ACTIONS);
-        if (actions != null && actions.size() > 1) {
+        if (!ContainerUtil.isEmpty(actions)) {
           button.setOptions(actions);
         }
         else {
@@ -67,9 +69,11 @@ final class WelcomeScreenActionsUtil {
 
 
   static void performAnActionForComponent(@NotNull AnAction action, @NotNull Component component) {
+    ActionToolbar toolbar = ActionToolbar.findToolbarBy(component);
+    ActionUiKind uiKind = toolbar == null ? ActionUiKind.NONE : new ActualActionUiKind.Toolbar(toolbar);
     DataContext context = ActionToolbar.getDataContextFor(component);
     AnActionEvent actionEvent = AnActionEvent.createEvent(
-      action, context, null, ActionPlaces.WELCOME_SCREEN, ActionUiKind.NONE, null);
+      action, context, null, ActionPlaces.WELCOME_SCREEN, uiKind, null);
     ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
   }
 

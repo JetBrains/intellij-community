@@ -30,6 +30,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
   private var mySearchUI: SearchEverywhereUI? = null
 
   private lateinit var mixingResultsFlag: SEParam
+  private lateinit var waitForEssentialFlag: SEParam
 
   override fun setUp() {
     super.setUp()
@@ -37,6 +38,10 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
       { Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results") },
       { Experiments.getInstance().setFeatureEnabled("search.everywhere.mixed.results", it) }
     )
+
+    waitForEssentialFlag = SEParam(
+      { AdvancedSettings.getBoolean("search.everywhere.wait.for.contributors") },
+      { AdvancedSettings.setBoolean("search.everywhere.wait.for.contributors", it) })
   }
 
   override fun tearDown() {
@@ -46,6 +51,7 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
         mySearchUI = null
       }
       mixingResultsFlag.reset()
+      waitForEssentialFlag.reset()
     }
     catch (e: Throwable) {
       addSuppressedException(e)
@@ -108,9 +114,9 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     assertEquals(listOf("item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"), waitForFuture(future, SEARCH_TIMEOUT))
   }
 
-  @IJIgnore(issue = "IDEA-336674")
   fun `test priority for actions with space in pattern`() {
     mixingResultsFlag.set(true)
+    waitForEssentialFlag.set(false)
 
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")
@@ -140,9 +146,9 @@ class SearchEverywhereTest : LightJavaCodeInsightFixtureTestCase() {
     }
   }
 
-  @IJIgnore(issue = "IDEA-336671")
   fun `test top hit priority`() {
     mixingResultsFlag.set(true)
+    waitForEssentialFlag.set(false)
 
     val action1 = StubAction("Bravo Charlie")
     val action2 = StubAction("Alpha Bravo Charlie")

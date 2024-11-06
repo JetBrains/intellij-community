@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.branch
 
 import com.intellij.dvcs.branch.BranchType
@@ -14,10 +14,10 @@ import org.jetbrains.annotations.Nls
 sealed interface GitRefType : BranchType, PathElementIdProvider {
   companion object {
     fun of(reference: GitReference, recent: Boolean = false): GitRefType {
-      if (recent) GitBranchType.RECENT
-      return when (reference) {
-        is GitBranch -> if (reference.isRemote) REMOTE else LOCAL
-        is GitTag -> return GitTagType
+      return when {
+        recent -> GitBranchType.RECENT
+        reference is GitBranch -> if (reference.isRemote) REMOTE else LOCAL
+        reference is GitTag -> return GitTagType
         else -> throw IllegalArgumentException()
       }
     }

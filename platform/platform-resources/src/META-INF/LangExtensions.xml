@@ -1813,8 +1813,6 @@
               topic="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer$DaemonListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionLookupManagerListener"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
-    <listener class="com.intellij.codeInsight.inline.completion.InlineCompletionNoSuggestionListenerInstaller"
-              topic="com.intellij.codeInsight.inline.completion.InlineCompletionInstallListener"/>
     <listener class="com.intellij.codeInsight.inline.completion.TabEnterUsageDetector"
               topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
     <listener class="com.intellij.lang.documentation.ide.impl.DocumentationAutoPopupListener"

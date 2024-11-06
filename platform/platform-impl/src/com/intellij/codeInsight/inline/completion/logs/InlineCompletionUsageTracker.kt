@@ -1,8 +1,8 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.inline.completion.logs
 
-import com.intellij.codeInsight.inline.completion.InlineCompletionEventAdapter
 import com.intellij.codeInsight.inline.completion.InlineCompletionEventType
+import com.intellij.codeInsight.inline.completion.logs.InlineCompletionLogsUtils.isLoggable
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -14,6 +14,7 @@ import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.util.application
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -90,6 +91,7 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
     val EXPLICIT_SWITCHING_VARIANTS_TIMES = EventFields.Int("explicit_switching_variants_times", "How many times the user was switching between completion variants (we only have 1 at the moment)")
     val SELECTED_INDEX = EventFields.Int("selected_index")
 
+    @Serializable
     enum class FinishType {
       SELECTED,
       TYPED,
@@ -151,10 +153,14 @@ object InlineCompletionUsageTracker : CounterUsagesCollector() {
 
   override fun getGroup() = GROUP
 
-  class Listener : InlineCompletionEventAdapter {
+  internal class Listener : InlineCompletionFilteringEventListener() {
     private val lock = ReentrantLock()
     private var invocationTracker: InlineCompletionInvocationTracker? = null
     private var showTracker: InlineCompletionShowTracker? = null
+
+    override fun isApplicable(requestEvent: InlineCompletionEventType.Request): Boolean {
+      return requestEvent.provider.isLoggable()
+    }
 
     override fun onRequest(event: InlineCompletionEventType.Request) = lock.withLock {
       invocationTracker = InlineCompletionInvocationTracker(event).also {

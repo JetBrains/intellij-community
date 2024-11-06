@@ -717,7 +717,7 @@ class KotlinBuildScriptManipulator(
         parameterValue: String,
         forTests: Boolean,
         kotlinVersion: IdeKotlinVersion? = null,
-        replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
+        replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
     ): PsiElement? {
         val taskName = if (forTests) "compileTestKotlin" else "compileKotlin"
         val kotlinOptionsBlock = findScriptInitializer("$taskName.kotlinOptions")?.getBlock()
@@ -726,7 +726,7 @@ class KotlinBuildScriptManipulator(
             val assignment = kotlinOptionsBlock.statements.find {
                 (it as? KtBinaryExpression)?.left?.text == parameterName
             }
-            assignment?.replaceIt(/* precompiledReplacement = */ null, /* preserveAssignmentWhenReplacing = */ true)
+            assignment?.replaceIt(/* precomputedReplacement = */ null, /* preserveAssignmentWhenReplacing = */ true)
                 ?: kotlinOptionsBlock.addExpressionIfMissing("$parameterName = $parameterValue")
         } else {
             if (projectSupportsCompilerOptions(this, kotlinVersion)) {
@@ -744,7 +744,7 @@ class KotlinBuildScriptManipulator(
         taskName: String,
         parameterName: String,
         parameterValue: String,
-        replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
+        replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
     ): PsiElement? {
         val compilerOption = getCompilerOption(parameterName, parameterValue)
         compilerOption.classToImport?.let {
@@ -767,9 +767,9 @@ class KotlinBuildScriptManipulator(
 
     private fun replaceOrAddCompilerOption(
         compilerOptionsBlock: KtBlockExpression, parameterName: String, compilerOption: CompilerOption,
-        replaceIt: KtExpression.(/* precompiledReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
+        replaceIt: KtExpression.(/* precomputedReplacement */ String?, /* preserveAssignmentWhenReplacing = */ Boolean) -> PsiElement
     ): PsiElement {
-        var precompiledReplacement = compilerOption.expression
+        var precomputedReplacement = compilerOption.expression
         var preserveAssignmentWhenReplacing = true
         var assignment: KtExpression? = compilerOptionsBlock.statements.find { stmt ->
             when (stmt) {
@@ -781,7 +781,7 @@ class KotlinBuildScriptManipulator(
                 is KtBinaryExpression -> {
                     if (stmt.left?.text == parameterName) {
                         compilerOption.compilerOptionValue?.let {
-                            precompiledReplacement = "$parameterName = $it"
+                            precomputedReplacement = "$parameterName = $it"
                         }
                         true
                     } else {
@@ -795,7 +795,7 @@ class KotlinBuildScriptManipulator(
             }
         }
         return if (assignment != null) {
-            assignment.replaceIt(precompiledReplacement, preserveAssignmentWhenReplacing)
+            assignment.replaceIt(precomputedReplacement, preserveAssignmentWhenReplacing)
         } else {
             compilerOptionsBlock.addExpressionIfMissing(compilerOption.expression)
         }

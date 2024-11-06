@@ -17,8 +17,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.NamedColorUtil
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.Deferred
-import java.awt.BorderLayout
 import java.awt.Component
+import java.awt.Dimension
 import javax.swing.*
 
 internal class PsiElementBackgroundListCellRenderer(
@@ -68,13 +68,12 @@ internal class PsiElementBackgroundListCellRenderer(
 
     myComponent.selectionColor = bg
 
-    val locationText = presentation.locationText
-    if (locationText != null) {
-      val spacer = JPanel()
-      spacer.isOpaque = false
-      spacer.border = BorderFactory.createEmptyBorder(0, 2, 0, 2)
-      myComponent.add(spacer, BorderLayout.CENTER)
+    val spacer = JPanel().apply {
+      isOpaque = false
+      border = BorderFactory.createEmptyBorder(0, 2, 0, 2)
+    }
 
+    val rightComponent = presentation.locationText?.let {
       val rightRenderer: ListCellRenderer<Any> = object : DefaultListCellRenderer() {
         override fun getListCellRendererComponent(list: JList<*>,
                                                   value: Any?,
@@ -85,17 +84,24 @@ internal class PsiElementBackgroundListCellRenderer(
           foreground = if (isSelected) NamedColorUtil.getListSelectionForeground(cellHasFocus) else NamedColorUtil.getInactiveTextColor()
           isOpaque = false
           icon = presentation.locationIcon
-          text = locationText
+          text = it
           if (!usedInPopup || !ExperimentalUI.isNewUI()) {
             border = BorderFactory.createEmptyBorder(0, 0, 0, UIUtil.getListCellHPadding())
           }
           horizontalTextPosition = LEFT
           horizontalAlignment = RIGHT
+
+          var minWidth = 0
+          minWidth += insets.left + insets.right
+          minWidth += icon.iconWidth
+          minWidth += iconTextGap
+          minWidth += getFontMetrics(font).stringWidth("...")
+          minimumSize = JBUI.size(minWidth, minimumSize.height)
+
           return component
         }
       }
-      val rightRendererComponent = rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-      myComponent.add(rightRendererComponent, BorderLayout.EAST)
+      rightRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }
 
     val leftRenderer: ListCellRenderer<PsiElement> = object : ColoredListCellRenderer<PsiElement>() {
@@ -120,6 +126,8 @@ internal class PsiElementBackgroundListCellRenderer(
           presentation.presentableText, this, nameAttributes, itemMatchers.nameMatcher, bg, selected
         )
 
+        minimumSize = Dimension(preferredSize.width, minimumSize.height)
+
         val containerText = presentation.containerText
         if (containerText != null) {
           val containerTextAttributes = presentation.containerTextAttributes?.let {
@@ -134,8 +142,12 @@ internal class PsiElementBackgroundListCellRenderer(
       }
     }
 
-    val leftRendererComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-    myComponent.add(leftRendererComponent, BorderLayout.WEST)
+    val leftComponent = leftRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+    myComponent.add(leftComponent)
+    rightComponent?.let {
+      myComponent.add(spacer)
+      myComponent.add(it)
+    }
 
     return myComponent
   }

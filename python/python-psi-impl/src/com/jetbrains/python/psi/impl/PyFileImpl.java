@@ -17,7 +17,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -71,7 +70,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       myModificationStamp = modificationStamp;
 
       final StubElement<?> stub = getStub();
-      LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(PyFileImpl.this);
+      LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(PyFileImpl.this);
       processDeclarations(PyFileImpl.this, stub, languageLevel, element -> {
         if (element instanceof PsiNamedElement namedElement &&
             !(element instanceof PyKeywordArgument) &&
@@ -254,22 +253,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    if (myOriginalFile != null) {
-      PsiFile originalPythonFile = myOriginalFile;
-      // myOriginalFile could be an instance of base language
-      // see PostfixLiveTemplate#copyFile
-      if (myOriginalFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
-        originalPythonFile = myOriginalFile.getViewProvider().getPsi(PythonLanguage.getInstance());
-      }
-      if (originalPythonFile instanceof PyFile) {
-        return ((PyFile)originalPythonFile).getLanguageLevel();
-      }
-    }
-    VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile == null) {
-      virtualFile = getViewProvider().getVirtualFile();
-    }
-    return PythonLanguageLevelPusher.getLanguageLevelForVirtualFile(getProject(), virtualFile);
+    return PythonLanguageLevelPusher.getLanguageLevelForFile(this);
   }
 
   @Override
@@ -854,7 +838,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @NotNull
   private <T extends PyElement> List<T> collectChildren(Class<T> type) {
     @Nullable StubElement<?> stub = getGreenStub();
-    @NotNull LanguageLevel languageLevel = PyiUtil.getOriginalLanguageLevel(this);
+    @NotNull LanguageLevel languageLevel = PythonLanguageLevelPusher.getLanguageLevelForFile(this);
     final List<T> result = new ArrayList<>();
     if (stub != null) {
       for (StubElement<?> child : PyVersionSpecificStubBaseKt.getChildrenStubs(stub, languageLevel)) {

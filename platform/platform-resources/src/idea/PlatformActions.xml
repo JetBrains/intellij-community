@@ -1267,7 +1267,6 @@
         <action id="DropAnOutOfMemoryError" internal="true" class="com.intellij.diagnostic.DropAnOutOfMemoryErrorAction"
                 text="Drop an OutOfMemoryError" description="Hold down SHIFT for OOME in Metaspace"/>
       </group>
-      <action id="SimulateFreeze" internal="true" class="com.intellij.diagnostic.SimulateFreeze" text="Simulate a Freeze"/>
       <separator/>
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <group id="Internal.Trust" popup="true">

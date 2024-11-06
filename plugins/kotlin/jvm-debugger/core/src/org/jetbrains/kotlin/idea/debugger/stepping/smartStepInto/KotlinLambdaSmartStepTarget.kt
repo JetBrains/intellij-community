@@ -26,8 +26,7 @@ class KotlinLambdaSmartStepTarget(
             lambdaInfo
         )
 
-        if (!lambdaInfo.isSuspend
-            && !lambdaInfo.callerMethodInfo.isInline
+        if (!lambdaInfo.callerMethodInfo.isInline
             && !lambdaInfo.isSamSuspendMethod
             && Registry.get("debugger.async.smart.step.into").asBoolean()
         ) {

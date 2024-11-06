@@ -2,9 +2,11 @@
 package com.intellij.codeInsight.inline.completion.session
 
 import com.intellij.codeInsight.inline.completion.InlineCompletionEvent
+import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-internal interface InlineCompletionInvalidationListener : EventListener {
+@ApiStatus.Internal
+interface InlineCompletionInvalidationListener : EventListener {
   fun onInvalidatedByEvent(event: InlineCompletionEvent)
 
   fun onInvalidatedByUnclassifiedDocumentChange()

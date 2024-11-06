@@ -10,7 +10,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject
 
 class SettingsHistoryLogUiFactory : VcsLogManager.VcsLogUiFactory<SettingsHistoryLogUi> {
   override fun createLogUi(project: Project, logData: VcsLogData): SettingsHistoryLogUi {
-    val logId = "Settings Sync History"
+    val logId = "Backup and Sync History"
 
     val filters = VcsLogFilterObject.EMPTY_COLLECTION
     val filterer = VcsLogFiltererImpl(logData)

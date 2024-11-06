@@ -39,6 +39,7 @@ import com.intellij.vcs.log.data.VcsLogData
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.impl.VcsLogManager.BaseVcsLogUiFactory
 import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToBranch
+import com.intellij.vcs.log.impl.VcsLogNavigationUtil.jumpToRefOrHash
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys
 import com.intellij.vcs.log.ui.VcsLogUiImpl
@@ -101,15 +102,15 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
   private val treeSelectionListener = TreeSelectionListener {
     if (!branchesPanelExpandableController.isExpanded()) return@TreeSelectionListener
 
-    val ui = logUi
-
-    val properties = ui.properties
+    val properties = logUi.properties
 
     if (properties[CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY]) {
       updateLogBranchFilter()
     }
     else if (properties[NAVIGATE_LOG_TO_BRANCH_ON_BRANCH_SELECTION_PROPERTY]) {
-      navigateToSelectedBranch(false)
+      getSelection().logNavigatableNodeDescriptor?.let { logNavigatableSelection ->
+        navigateToSelection(logNavigatableSelection, false)
+      }
     }
   }
 
@@ -126,10 +127,13 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     ui.filterUi.filters = newFilters
   }
 
-  internal fun navigateToSelectedBranch(focus: Boolean) {
-    val selectedReference = getSelection().selectedBranchFilters.singleOrNull() ?: return
-
-    logUi.jumpToBranch(selectedReference, false, focus)
+  internal fun navigateToSelection(selection: BranchNodeDescriptor.LogNavigatable, focus: Boolean) {
+    val navigateSilently = false
+    when (selection) {
+      BranchNodeDescriptor.Head -> logUi.jumpToBranch(VcsLogUtil.HEAD, navigateSilently, focus)
+      is BranchNodeDescriptor.Branch -> logUi.jumpToBranch(selection.branchInfo.branchName, navigateSilently, focus)
+      is BranchNodeDescriptor.Ref -> logUi.jumpToRefOrHash(selection.refInfo.refName, navigateSilently, focus)
+    }
   }
 
   internal fun toggleGrouping(key: GroupingKey, state: Boolean) {

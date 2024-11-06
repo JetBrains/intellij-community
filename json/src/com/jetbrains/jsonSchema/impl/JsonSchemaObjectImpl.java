@@ -121,12 +121,12 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   public final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   @Override
-  public @Nullable String readChildNodeValue(@NotNull String @NotNull ... childNodeName) {
+  public @Nullable String readChildNodeValue(@NotNull String childNodeName) {
     return null;
   }
 
   @Override
-  public boolean hasChildNode(@NotNull String @NotNull ... childNodeName) {
+  public boolean hasChildNode(@NotNull String childNodeName) {
     return false;
   }
 
@@ -136,7 +136,7 @@ public class JsonSchemaObjectImpl extends JsonSchemaObject {
   }
 
   @Override
-  public boolean hasChildFieldsExcept(@NotNull String @NotNull ... namesToSkip) {
+  public boolean hasChildFieldsExcept(@NotNull List<@NotNull String> namesToSkip) {
     return false;
   }
 

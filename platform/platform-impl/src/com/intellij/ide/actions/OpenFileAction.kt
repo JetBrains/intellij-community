@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.remoting.ActionRemoteBehaviorSpecification
 import com.intellij.openapi.application.EDT
 import com.intellij.openapi.application.readAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.fileChooser.PathChooserDialog
@@ -32,11 +33,11 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen
 import com.intellij.platform.PlatformProjectOpenProcessor
-import com.intellij.platform.ide.progress.ModalTaskOwner
-import com.intellij.platform.ide.progress.runWithModalProgressBlocking
+import com.intellij.platform.ide.CoreUiCoroutineScopeHolder
 import com.intellij.projectImport.ProjectOpenProcessor.Companion.getImportProvider
 import com.intellij.util.SlowOperations
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.nio.file.Files
@@ -88,9 +89,7 @@ open class OpenFileAction : AnAction(), DumbAware, LightEditCompatible, ActionRe
           return@chooseFiles
         }
       }
-      @Suppress("DialogTitleCapitalization")
-      runWithModalProgressBlocking(owner = if (project == null) ModalTaskOwner.guess() else ModalTaskOwner.project(project),
-                                   title = IdeBundle.message("title.open.project")) {
+      service<CoreUiCoroutineScopeHolder>().coroutineScope.launch {
         for (file in files) {
           doOpenFile(project, file)
         }

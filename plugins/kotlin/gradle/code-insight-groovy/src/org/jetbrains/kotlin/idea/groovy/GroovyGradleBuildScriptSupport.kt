@@ -278,7 +278,7 @@ class GroovyBuildScriptManipulator(
             parameterName,
             "[\"$featureArgumentString\"]",
             forTests
-        ) { insideKotlinOptions, /* precompiledReplacement = */ _, insideCompilerOptions ->
+        ) { insideKotlinOptions, /* precomputedReplacement = */ _, insideCompilerOptions ->
             val prefix = if (insideKotlinOptions) {
                 "kotlinOptions."
             } else if (insideCompilerOptions) {
@@ -416,13 +416,13 @@ class GroovyBuildScriptManipulator(
         parameterName: String,
         parameterValue: String,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ) {
         statements.firstOrNull { stmt ->
             (stmt as? GrAssignmentExpression)?.lValue?.text == parameterName
-        }?.replaceIt(/* insideKotlinOptions = */ false, /* precompiledReplacement = */ null, /* insideCompilerOptions = */ false)
+        }?.replaceIt(/* insideKotlinOptions = */ false, /* precomputedReplacement = */ null, /* insideCompilerOptions = */ false)
             ?: addLastExpressionInBlockIfNeeded("$parameterName = $parameterValue")
     }
 
@@ -441,7 +441,7 @@ class GroovyBuildScriptManipulator(
         parameterValue: String,
         forTests: Boolean,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ): PsiElement? {
@@ -473,7 +473,7 @@ class GroovyBuildScriptManipulator(
         forTests: Boolean,
         kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ): PsiElement? {
@@ -523,7 +523,7 @@ class GroovyBuildScriptManipulator(
 
         for (stmt in kotlinBlock.statements) {
             if ((stmt as? GrAssignmentExpression)?.lValue?.text == "kotlinOptions.$parameterName") {
-                return stmt.replaceIt(/* insideKotlinOptions = */ true, /* precompiledReplacement = */ null,
+                return stmt.replaceIt(/* insideKotlinOptions = */ true, /* precomputedReplacement = */ null,
                                       /* insideCompilerOptions = */ false
                 )
             }
@@ -551,12 +551,12 @@ class GroovyBuildScriptManipulator(
         hasAndroidModule: Boolean,
         kotlinVersion: IdeKotlinVersion? = null,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ) {
         val kotlinOptionsBlock = if (hasAndroidModule || !projectSupportsCompilerOptions(gradleFile, kotlinVersion)) {
-            // no `compilerOptions` for android
+            // No `compilerOptions` can be used in `android`, so we can create new `kotlinOptions` block
             outerDslBlock.getBlockOrCreate("kotlinOptions")
         } else {
             outerDslBlock.getBlockByName("kotlinOptions")
@@ -576,7 +576,7 @@ class GroovyBuildScriptManipulator(
         outerDslBlock: GrClosableBlock,
         gradleFile: GroovyFile,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ) {
@@ -626,15 +626,15 @@ class GroovyBuildScriptManipulator(
         compilerOption: CompilerOption,
         insideCompilerOptions: Boolean,
         replaceIt: GrStatement.(/* insideKotlinOptions = */ Boolean,
-                                /* precompiledReplacement = */ String?,
+                                /* precomputedReplacement = */ String?,
                                 /* insideCompilerOptions = */ Boolean
         ) -> GrStatement
     ): Boolean {
-        var precompiledReplacement = compilerOption.expression
+        var precomputedReplacement = compilerOption.expression
         val replaced = statements.firstOrNull { stmt ->
             val statementLeftPartText = when (stmt) {
                 is GrAssignmentExpression -> {
-                    precompiledReplacement = "$parameterName = ${compilerOption.compilerOptionValue}"
+                    precomputedReplacement = "$parameterName = ${compilerOption.compilerOptionValue}"
                     stmt.lValue.text
                 }
 
@@ -643,11 +643,11 @@ class GroovyBuildScriptManipulator(
                 }
 
                 else -> {
-                    return false
+                    return@firstOrNull false
                 }
             }
             statementLeftPartText.contains(parameterName)
-        }?.replaceIt(/* insideKotlinOptions = */ false, precompiledReplacement, insideCompilerOptions)
+        }?.replaceIt(/* insideKotlinOptions = */ false, precomputedReplacement, insideCompilerOptions)
         return replaced != null
     }
 
@@ -697,7 +697,7 @@ class GroovyBuildScriptManipulator(
             "\"$parameterValue\"",
             forTests,
             kotlinVersion
-        ) { insideKotlinOptions, /* precompiledReplacement = */ replacement, insideCompilerOptions ->
+        ) { insideKotlinOptions, /* precomputedReplacement = */ replacement, insideCompilerOptions ->
             replaceStatement(parameterName, parameterValue, insideKotlinOptions, replacement, insideCompilerOptions)
         }
     }
@@ -709,7 +709,7 @@ class GroovyBuildScriptManipulator(
     ): PsiElement? {
         return addOrReplaceLanguageSettingParameter(
             scriptFile, parameterName, "\"$parameterValue\"", forTests
-        ) { insideKotlinOptions, /* precompiledReplacement = */ replacement, insideCompilerOptions ->
+        ) { insideKotlinOptions, /* precomputedReplacement = */ replacement, insideCompilerOptions ->
             replaceStatement(parameterName, parameterValue, insideKotlinOptions, replacement, insideCompilerOptions)
         }
     }

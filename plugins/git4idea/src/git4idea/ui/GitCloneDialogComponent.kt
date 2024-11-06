@@ -161,9 +161,7 @@ private class GitCloneDialogMainPanelCustomizer : DvcsCloneDialogComponent.MainP
   private val vm = GitShallowCloneViewModel()
 
   override fun configure(panel: Panel) {
-    if (Registry.`is`("git.clone.shallow")) {
-      GitShallowCloneComponentFactory.appendShallowCloneRow(panel, vm).bottomGap(BottomGap.SMALL)
-    }
+    GitShallowCloneComponentFactory.appendShallowCloneRow(panel, vm).bottomGap(BottomGap.SMALL)
   }
 
   fun getShallowCloneOptions() = vm.getShallowCloneOptions()

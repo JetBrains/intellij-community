@@ -677,7 +677,7 @@ public class CustomizableActionsPanel {
                 if (path.isEmpty()) {
                   path = actionId;
                 }
-                Icon icon = CustomActionsSchemaKt.getIconForPath(ActionManager.getInstance(), path);
+                Icon icon = CustomActionsSchemaKt.getIconForPath(s -> ActionManager.getInstance().getAction(s), path);
                 newNode.setUserObject(new Pair<>(actionId, icon));
               }
             }

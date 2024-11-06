@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: es.py 4572 2006-05-25 20:48:37Z richieadler $
+# $Id: es.py 9452 2023-09-27 00:11:54Z milde $
 # Author: Marcelo Huerta San Martín <richieadler@users.sourceforge.net>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Spanish-language mappings for language-dependent features of Docutils.
@@ -17,19 +16,19 @@ __docformat__ = 'reStructuredText'
 labels = {
       'author': 'Autor',
       'authors': 'Autores',
-      'organization': 'Organizaci\u00f3n',
-      'address': 'Direcci\u00f3n',
+      'organization': 'Organización',
+      'address': 'Dirección',
       'contact': 'Contacto',
-      'version': 'Versi\u00f3n',
-      'revision': 'Revisi\u00f3n',
+      'version': 'Versión',
+      'revision': 'Revisión',
       'status': 'Estado',
       'date': 'Fecha',
       'copyright': 'Copyright',
       'dedication': 'Dedicatoria',
       'abstract': 'Resumen',
-      'attention': '\u00a1Atenci\u00f3n!',
-      'caution': '\u00a1Precauci\u00f3n!',
-      'danger': '\u00a1PELIGRO!',
+      'attention': '¡Atención!',
+      'caution': '¡Precaución!',
+      'danger': '¡PELIGRO!',
       'error': 'Error',
       'hint': 'Sugerencia',
       'important': 'Importante',
@@ -42,11 +41,11 @@ labels = {
 bibliographic_fields = {
       'autor': 'author',
       'autores': 'authors',
-      'organizaci\u00f3n': 'organization',
-      'direcci\u00f3n': 'address',
+      'organización': 'organization',
+      'dirección': 'address',
       'contacto': 'contact',
-      'versi\u00f3n': 'version',
-      'revisi\u00f3n': 'revision',
+      'versión': 'version',
+      'revisión': 'revision',
       'estado': 'status',
       'fecha': 'date',
       'copyright': 'copyright',

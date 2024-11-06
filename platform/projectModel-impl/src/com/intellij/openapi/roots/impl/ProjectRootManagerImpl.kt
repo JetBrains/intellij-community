@@ -23,7 +23,9 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.io.URLUtil
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
@@ -36,8 +38,11 @@ private const val PROJECT_JDK_TYPE_ATTR = "project-jdk-type"
 private const val ATTRIBUTE_VERSION = "version"
 
 @State(name = "ProjectRootManager")
-open class ProjectRootManagerImpl(val project: Project,
-                                  private val coroutineScope: CoroutineScope) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
+@ApiStatus.Internal
+open class ProjectRootManagerImpl(
+  @JvmField val project: Project,
+  @JvmField protected val coroutineScope: CoroutineScope,
+) : ProjectRootManagerEx(), PersistentStateComponent<Element> {
   private val projectJdkEventDispatcher = EventDispatcher.create(ProjectJdkListener::class.java)
   private var projectSdkName: String? = null
   private var projectSdkType: String? = null
@@ -338,7 +343,10 @@ open class ProjectRootManagerImpl(val project: Project,
     if (app != null) {
       val isStateLoaded = isStateLoaded
       if (stateChanged) {
-        coroutineScope.launch(ModalityState.nonModal().asContextElement()) {
+        coroutineScope.launch {
+          // make sure we execute it only after any current modality dialog
+          withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
+          }
           applyState(isStateLoaded)
         }
       }
@@ -349,7 +357,7 @@ open class ProjectRootManagerImpl(val project: Project,
   private suspend fun applyState(isStateLoaded: Boolean) {
     if (isStateLoaded) {
       LOG.debug("Run write action for projectJdkChanged()")
-      writeAction {
+      backgroundWriteAction {
         projectJdkChanged()
       }
       return

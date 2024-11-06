@@ -7,6 +7,7 @@ import com.intellij.ide.actions.Switcher
 import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -48,7 +49,11 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task("GotoDeclaration") {
       text(LessonsBundle.message("recent.files.first.transition", code(transitionMethodName), action(it)))
-      stateCheck { virtualFile.name.contains(transitionFileName) }
+      stateCheck {
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return@stateCheck false
+        val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return@stateCheck false
+        file.name.contains(transitionFileName)
+      }
       restoreIfModifiedOrMoved()
       test { actions(it) }
     }

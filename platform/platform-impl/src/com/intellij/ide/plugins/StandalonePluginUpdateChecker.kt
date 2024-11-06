@@ -1,4 +1,4 @@
-// Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.ide.IdeBundle
@@ -191,7 +191,7 @@ open class StandalonePluginUpdateChecker(
       "https://plugins.jetbrains.com/plugins/list?pluginId=$pluginId&build=$buildNumber&pluginVersion=$currentVersion&os=$os&uuid=$uid"
 
     if (!PropertiesComponent.getInstance().getBoolean(UpdateChecker.MACHINE_ID_DISABLED_PROPERTY, false)) {
-      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates")
       if (machineId != null) {
         url += "&${UpdateChecker.MACHINE_ID_PARAMETER}=$machineId"
       }

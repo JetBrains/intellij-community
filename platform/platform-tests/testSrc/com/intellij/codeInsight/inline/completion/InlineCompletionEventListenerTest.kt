@@ -494,7 +494,9 @@ internal class InlineCompletionEventListenerTest : InlineCompletionTestCase() {
 
     override fun on(event: InlineCompletionEventType) {
       ThreadingAssertions.assertEventDispatchThread()
-      lastEvents += event
+      if (event !is InlineCompletionEventType.SuggestionInitialized) { // Will do that later :)
+        lastEvents += event
+      }
     }
 
     suspend fun expect(vararg asserters: EventAsserter) {

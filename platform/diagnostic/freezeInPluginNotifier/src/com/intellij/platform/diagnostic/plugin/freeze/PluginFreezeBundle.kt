@@ -5,8 +5,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 
-@ApiStatus.Internal
-object PluginFreezeBundle {
+internal object PluginFreezeBundle {
 
   private const val BUNDLE: String = "messages.PluginFreezeBundle"
   private val INSTANCE: DynamicBundle = DynamicBundle(PluginFreezeBundle::class.java, BUNDLE)

@@ -32,6 +32,9 @@ sealed class InlineCompletionEventType {
       get() = request.requestId
   }
 
+  @ApiStatus.Internal
+  class SuggestionInitialized @ApiStatus.Internal constructor(val variantsNumber: Int) : InlineCompletionEventType()
+
   /**
    * This event is triggered when a provider either returned no variants, either all the returned variants are empty.
    */
@@ -171,6 +174,7 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
       is InlineCompletionEventType.Empty -> onEmpty(event)
       is InlineCompletionEventType.VariantComputed -> onVariantComputed(event)
       is InlineCompletionEventType.VariantSwitched -> onVariantSwitched(event)
+      is InlineCompletionEventType.SuggestionInitialized -> onSuggestionInitialized(event)
     }
   }
 
@@ -187,4 +191,8 @@ interface InlineCompletionEventAdapter : InlineCompletionEventListener {
   fun onEmpty(event: InlineCompletionEventType.Empty) {}
   fun onVariantComputed(event: InlineCompletionEventType.VariantComputed) {}
   fun onVariantSwitched(event: InlineCompletionEventType.VariantSwitched) {}
+
+  @ApiStatus.Internal
+  @ApiStatus.NonExtendable
+  fun onSuggestionInitialized(event: InlineCompletionEventType.SuggestionInitialized) {}
 }

@@ -402,8 +402,8 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         propertyName: String
     ): Boolean {
         val allOverriddenSymbols = symbol.allOverriddenSymbolsWithSelf.toList()
+        if (functionOrItsAncestorIsInNotPropertiesList(allOverriddenSymbols, callExpression)) return false
         if (functionOriginateNotFromJava(allOverriddenSymbols)) return false
-        if (functionNameIsInNotPropertiesList(symbol, callExpression)) return false
 
         // Check that the receiver or its ancestors don't have public fields with the same name as the probable synthetic property
         if (receiverOrItsAncestorsContainVisibleFieldWithSameName(receiverType, propertyName)) return false
@@ -554,11 +554,18 @@ class UsePropertyAccessSyntaxInspection : LocalInspectionTool(), CleanupLocalIns
         return replacementReceiverType.semanticallyEquals(expectedReceiverType)
     }
 
-    private fun functionNameIsInNotPropertiesList(symbol: KaCallableSymbol, callExpression: KtExpression): Boolean {
-        val symbolUnsafeName = symbol.callableId?.asSingleFqName()?.toUnsafe()
-
+    private fun functionOrItsAncestorIsInNotPropertiesList(
+        allOverriddenSymbols: List<KaCallableSymbol>,
+        callExpression: KtExpression
+    ): Boolean {
         val notProperties = NotPropertiesService.getNotProperties(callExpression)
-        return symbolUnsafeName in notProperties
+
+        for (overriddenSymbol in allOverriddenSymbols) {
+            val symbolUnsafeName = overriddenSymbol.callableId?.asSingleFqName()?.toUnsafe()
+                ?: continue
+            if (symbolUnsafeName in notProperties) return true
+        }
+        return false
     }
 
     context(KaSession)
@@ -685,10 +692,22 @@ class NotPropertiesServiceImpl(private val project: Project) : NotPropertiesServ
     override fun getNotProperties(element: PsiElement): Set<FqNameUnsafe> {
         val profile = InspectionProjectProfileManager.getInstance(project).currentProfile
         val tool = profile.getUnwrappedTool(USE_PROPERTY_ACCESS_INSPECTION, element)
-        return (tool?.propertiesNotToReplace ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
+        val notProperties = (tool?.propertiesNotToReplace ?: NotPropertiesService.DEFAULT.map(::FqNameUnsafe)).toSet()
+        return notProperties + K2_EXTRA_NOT_PROPERTIES
     }
 
     companion object {
         val USE_PROPERTY_ACCESS_INSPECTION: Key<UsePropertyAccessSyntaxInspection> = Key.create("UsePropertyAccessSyntax")
+
+        /**
+         * Properties excluded due to different problems in K2 Mode.
+         *
+         * Intentionally not saved into [UsePropertyAccessSyntaxInspection.propertiesNotToReplace],
+         * because they are not supposed to be possible to disable or modify.
+         */
+        val K2_EXTRA_NOT_PROPERTIES: List<FqNameUnsafe> = listOf(
+            "java.util.AbstractCollection.isEmpty", // KTIJ-31157, KT-72305
+            "java.util.AbstractMap.isEmpty",        // KTIJ-31157, KT-72305
+        ).map(::FqNameUnsafe)
     }
 }

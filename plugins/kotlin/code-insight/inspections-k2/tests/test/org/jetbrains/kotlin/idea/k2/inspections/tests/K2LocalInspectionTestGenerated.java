@@ -6380,6 +6380,16 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIfPropertyHasLambdaAndSetterInsideIsLast.kt");
             }
 
+            @TestMetadata("dontReplaceIsEmptyOfAbstractCollectionInheritor.kt")
+            public void testDontReplaceIsEmptyOfAbstractCollectionInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsEmptyOfAbstractCollectionInheritor.kt");
+            }
+
+            @TestMetadata("dontReplaceIsEmptyOfAbstractMapInheritor.kt")
+            public void testDontReplaceIsEmptyOfAbstractMapInheritor() throws Exception {
+                runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsEmptyOfAbstractMapInheritor.kt");
+            }
+
             @TestMetadata("dontReplaceIsGetterWithNonBooleanReturnType.kt")
             public void testDontReplaceIsGetterWithNonBooleanReturnType() throws Exception {
                 runTest("../../../idea/tests/testData/inspectionsLocal/usePropertyAccessSyntax/dotQualifiedExpressions/dontReplaceIsGetterWithNonBooleanReturnType.kt");

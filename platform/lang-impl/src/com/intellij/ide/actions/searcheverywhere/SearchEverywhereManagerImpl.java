@@ -110,6 +110,7 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
       .setCancelKeyEnabled(false)
       .setCancelCallback(() -> {
         saveSearchText();
+        savePrevSelection(mySearchEverywhereUI.getSelectedTabID(), mySearchEverywhereUI.getSelectionIdentity());
         DIALOG_CLOSED.log(myProject);
         return true;
       })
@@ -338,11 +339,14 @@ public final class SearchEverywhereManagerImpl implements SearchEverywhereManage
     if (!searchText.isEmpty()) {
       myHistoryList.saveText(searchText, mySearchEverywhereUI.getSelectedTabID());
     }
-    myPrevSelections.put(mySearchEverywhereUI.getSelectedTabID(), mySearchEverywhereUI.getSelectionIdentity());
   }
 
   public @Nullable Object getPrevSelection(String contributorID) {
-    return myPrevSelections.remove(contributorID);
+    return myPrevSelections.get(contributorID);
+  }
+
+  public void savePrevSelection(@NotNull String contributorID, @Nullable Object selection) {
+    myPrevSelections.put(contributorID, selection);
   }
 
   private void saveSize() {

@@ -41,7 +41,7 @@ sealed interface TypingEvent {
 
   val range: TextRange
 
-  class OneSymbol internal constructor(symbol: Char, offset: Int) : TypingEvent {
+  class OneSymbol @ApiStatus.Internal constructor(symbol: Char, offset: Int) : TypingEvent {
     override val typed: String = symbol.toString()
 
     override val range: TextRange = TextRange(offset, offset + 1)
@@ -49,7 +49,7 @@ sealed interface TypingEvent {
 
   class NewLine @ApiStatus.Internal constructor(override val typed: String, override val range: TextRange) : TypingEvent
 
-  class PairedEnclosureInsertion internal constructor(override val typed: String, offset: Int) : TypingEvent {
+  class PairedEnclosureInsertion @ApiStatus.Internal constructor(override val typed: String, offset: Int) : TypingEvent {
     override val range: TextRange = TextRange(offset, offset) // caret does not move
   }
 }
@@ -71,13 +71,17 @@ interface InlineCompletionEvent {
 
   fun toRequest(): InlineCompletionRequest?
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  sealed interface Builtin : InlineCompletionEvent
+
   /**
    * Indicates that this event can trigger only a provider with [providerId].
    * Other providers will not be asked for this event.
    */
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  sealed interface WithSpecificProvider {
+  sealed interface WithSpecificProvider : InlineCompletionEvent {
     // Inheritors should not leak this to the public API as the way we 'filter' providers may change in the future.
     @get:ApiStatus.Internal
     val providerId: InlineCompletionProviderID
@@ -92,11 +96,14 @@ interface InlineCompletionEvent {
    *
    * Use [ManualCall] instead as it guarantees that exactly your provider is going to be called.
    */
-  class DirectCall @ApiStatus.Internal constructor(
+  class DirectCall
+  @Deprecated("This constructor is going to be internal. It should not be created outside of the platform.")
+  @ApiStatus.ScheduledForRemoval
+  constructor(
     val editor: Editor,
     val caret: Caret,
     val context: DataContext? = null,
-  ) : InlineCompletionEvent {
+  ) : InlineCompletionEvent, Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor, specificCaret = caret)
     }
@@ -119,10 +126,10 @@ interface InlineCompletionEvent {
    * @param additionalData The data context for the call (not stable).
    */
   @ApiStatus.Experimental
-  class ManualCall(
+  class ManualCall @ApiStatus.Experimental constructor(
     val editor: Editor,
 
-    @ApiStatus.Internal
+    @get:ApiStatus.Internal
     override val providerId: InlineCompletionProviderID,
 
     @ApiStatus.Experimental
@@ -142,7 +149,10 @@ interface InlineCompletionEvent {
    *
    * Since document changes are hard to correctly track, it's forbidden to create them outside this module.
    */
-  class DocumentChange @ApiStatus.Internal constructor(val typing: TypingEvent, val editor: Editor) : InlineCompletionEvent {
+  class DocumentChange @ApiStatus.Internal constructor(
+    val typing: TypingEvent,
+    val editor: Editor
+  ) : InlineCompletionEvent, Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(
         event = this,
@@ -166,7 +176,7 @@ interface InlineCompletionEvent {
    * **Note**: for now, it's impossible to update a session with this event. Inline Completion will be hidden once a backspace is pressed.
    */
   @ApiStatus.Experimental
-  class Backspace internal constructor(val editor: Editor) : InlineCompletionEvent {
+  class Backspace @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent, Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       // TODO offset?
       return getRequest(event = this, editor = editor)
@@ -181,7 +191,19 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event.
    */
-  class LookupChange @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent {
+  class LookupChange @ApiStatus.Internal constructor(
+    @get:ApiStatus.Experimental
+    override val editor: Editor,
+    override val event: LookupEvent,
+  ) : InlineLookupEvent, Builtin {
+
+    @Deprecated("It should not be created outside of the platform.")
+    @ApiStatus.ScheduledForRemoval
+    constructor(event: LookupEvent) : this(
+      runReadAction { event.lookup!!.editor },
+      event
+    )
+
     override fun toRequest(): InlineCompletionRequest? {
       return super.toRequest()?.takeIf { it.lookupElement != null }
     }
@@ -192,9 +214,28 @@ interface InlineCompletionEvent {
    *
    * @param event The lookup event associated with the cancellation.
    */
-  class LookupCancelled @ApiStatus.Internal constructor(override val event: LookupEvent) : InlineLookupEvent
+  @Deprecated(
+    message = "This event is not supported in RemDev, so it's going to be removed or replaced.",
+    level = DeprecationLevel.WARNING
+  )
+  class LookupCancelled @ApiStatus.Internal constructor(
+    @ApiStatus.Experimental
+    override val editor: Editor,
+    override val event: LookupEvent
+  ) : InlineLookupEvent, Builtin {
 
-  sealed interface InlineLookupEvent : InlineCompletionEvent {
+    @Deprecated("It should not be created outside of the platform.")
+    @ApiStatus.ScheduledForRemoval
+    constructor(event: LookupEvent) : this(
+      runReadAction { event.lookup!!.editor },
+      event
+    )
+  }
+
+  sealed interface InlineLookupEvent : InlineCompletionEvent, Builtin {
+
+    @get:ApiStatus.Experimental
+    val editor: Editor
 
     val event: LookupEvent
 
@@ -220,12 +261,12 @@ interface InlineCompletionEvent {
    * @param providerId the provider whose completion is inserted.
    */
   @ApiStatus.Experimental
-  class SuggestionInserted internal constructor(
+  class SuggestionInserted @ApiStatus.Internal constructor(
     val editor: Editor,
 
     @ApiStatus.Internal
     override val providerId: InlineCompletionProviderID,
-  ) : InlineCompletionEvent, WithSpecificProvider {
+  ) : InlineCompletionEvent, WithSpecificProvider, Builtin {
 
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor)
@@ -236,7 +277,7 @@ interface InlineCompletionEvent {
    * Triggered by insertion of templates, like Live Templates.
    */
   @ApiStatus.Experimental
-  class TemplateInserted internal constructor(val editor: Editor) : InlineCompletionEvent {
+  class TemplateInserted @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent, Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       return getRequest(event = this, editor = editor)
     }
@@ -244,7 +285,7 @@ interface InlineCompletionEvent {
 
   @ApiStatus.Internal
   @ApiStatus.Experimental
-  sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent {
+  sealed class PartialAccept @ApiStatus.Internal constructor(val editor: Editor) : InlineCompletionEvent, Builtin {
     override fun toRequest(): InlineCompletionRequest? {
       val session = InlineCompletionSession.getOrNull(editor) ?: return null
       // Offset depends on specific insertion implementation, so no way to guess it here
@@ -259,7 +300,7 @@ interface InlineCompletionEvent {
    * It inserts the first word from the suggestion to the editor.
    */
   @ApiStatus.Experimental
-  class InsertNextWord @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
+  class InsertNextWord @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor), Builtin
 
   /**
    * **This event is not intended to be a start of the inline completion.**
@@ -268,7 +309,7 @@ interface InlineCompletionEvent {
    * It inserts the first line from the suggestion to the editor.
    */
   @ApiStatus.Experimental
-  class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor)
+  class InsertNextLine @ApiStatus.Internal constructor(editor: Editor) : PartialAccept(editor), Builtin
 }
 
 private fun getPsiFile(caret: Caret, project: Project): PsiFile? {

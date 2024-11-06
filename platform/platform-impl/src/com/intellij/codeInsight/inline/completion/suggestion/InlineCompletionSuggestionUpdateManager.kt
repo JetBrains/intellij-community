@@ -20,6 +20,18 @@ import org.jetbrains.annotations.ApiStatus
  * Some rules:
  * * If the currently displayed variant was emptied (it contains no elements after update), then the current session would be cleared.
  * * If the variant, that's not currently displayed, was emptied, then the variant would be invalidated but session would not.
+ *
+ * **Remote Development (Split/Code With Me) policy**
+ *
+ * The following applies if a provider is registered on the Split host or the Code With Me host and provides
+ * suggestions for the frontend.
+ *
+ * * On the frontend side, [Default] implementation is used.
+ * * [InlineCompletionEvent.Backspace], [InlineCompletionEvent.InsertNextLine],
+ *   [InlineCompletionEvent.InsertNextWord] **cannot be overridden**, because they depend on the editor state.
+ * * If the [Default] implementation on the frontend decides to invalidate a session, your provider cannot change this decision.
+ * * The only way to change the [UpdateResult] is to return [UpdateResult.Invalidated] instead of the default implementation.
+ *   Then a session is going to be invalidated on the frontend as well. Other results will be discarded.
  */
 interface InlineCompletionSuggestionUpdateManager {
 
@@ -231,7 +243,8 @@ interface InlineCompletionSuggestionUpdateManager {
     }
 
     companion object {
-      internal val INSTANCE = Default()
+      @get:ApiStatus.Internal
+      val INSTANCE: Default = Default()
     }
   }
 }

@@ -143,7 +143,7 @@ final class PsiUpdateImpl {
       }
       myManager.commitDocument(myDocument);
       unblock();
-      String newText = myTargetFile.getText();
+      String newText = myTargetFile.getFileDocument().getText();
       return myOrigText.equals(newText) ? new ModNothing() :
              new ModUpdateFileText(origVirtualFile, myOrigText, newText, myFragments);
     }
@@ -303,7 +303,7 @@ final class PsiUpdateImpl {
         return tracker;
       });
     }
-    
+
     @Override
     public @NotNull PsiFile getOriginalFile(@NotNull PsiFile copyFile) throws IllegalArgumentException {
       Map.Entry<PsiFile, FileTracker> entry = ContainerUtil.find(myChangedFiles.entrySet(), e -> e.getValue().myCopyFile == copyFile);
@@ -644,7 +644,7 @@ final class PsiUpdateImpl {
 
     private @NotNull ModCommand getNavigateCommand() {
       if (!myPositionUpdated || myRenameSymbol != null) return nop();
-      int length = myTracker.myTargetFile.getTextLength();
+      int length = myTracker.myTargetFile.getFileDocument().getTextLength();
       int start = -1, end = -1, caret = -1;
       if (mySelection.getEndOffset() <= length) {
         start = mySelection.getStartOffset();

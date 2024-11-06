@@ -3,6 +3,9 @@ package com.intellij.codeInsight.inline.hint
 
 import com.intellij.codeInsight.daemon.impl.HintRenderer
 import com.intellij.codeInsight.inline.completion.InlineCompletionFontUtils
+import com.intellij.codeWithMe.ClientId
+import com.intellij.codeWithMe.ClientId.Companion.isLocal
+import com.intellij.idea.AppMode
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -72,6 +75,9 @@ abstract class InlineShortcutHintRendererBase(text: String?) : HintRenderer(text
   companion object {
     @JvmStatic
     fun isAvailableForLine(editor: Editor, lineNumber: Int): Boolean {
+      if (!ClientId.currentOrNull.isLocal || AppMode.isRemoteDevHost()) {
+        return false
+      }
       // Debugger may suggest something on the right, so inlays will mix up
       val inlaysAfterLine = editor.inlayModel.getAfterLineEndElementsForLogicalLine(lineNumber)
       return inlaysAfterLine.all { it.renderer is InlineShortcutHintRendererBase }

@@ -4,6 +4,11 @@
     <diff.DiffTool implementation="com.intellij.diff.tools.combined.CombinedUnifiedDiffTool"/>
 
     <writingAccessProvider implementation="com.intellij.diff.DiffLightVirtualFileWritingAccessProvider"/>
+
+    <editorActionHandler action="EditorEscape"
+                         implementationClass="com.intellij.openapi.vcs.ex.LineStatusMakerEscEditorHandler"
+                         id="LineStatusTrackerMarkerPopup"
+                         order="before hide-hints"/>
   </extensions>
 
   <applicationListeners>

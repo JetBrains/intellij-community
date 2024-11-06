@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.SearchScope
 import com.intellij.util.containers.DisposableWrapperList
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
-import it.unimi.dsi.fastutil.objects.Object2IntFunction
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
 import kotlinx.coroutines.*
 import org.jetbrains.annotations.ApiStatus
@@ -83,7 +82,8 @@ private class ChangesProcessingService(private val coroutineScope: CoroutineScop
 
     for ((timestamp, collectors) in groupedByTimeStamp) {
       val cache = allCache.computeIfAbsent(timestamp) { Object2IntOpenHashMap() }
-      val hasChanges = hasChangesSinceLastReset(virtualFile, timestamp, contentHash, cache)
+      val doLocalHistorySearch = collectors.none { it.hasMassiveChanges() }
+      val hasChanges = hasChangesSinceLastReset(virtualFile, timestamp, contentHash, doLocalHistorySearch, cache)
       for (collector in collectors) {
         launch(Dispatchers.Default) {
           collector.processDocumentChange(hasChanges, virtualFile, document)
@@ -135,6 +135,14 @@ class SourceFileChangesCollectorImpl(
     currentChanges = hashSetOf()
   }
 
+  /**
+   * This check is introduced for optimization.
+   * When there are a large number of changed files, each new file has a minimal effect on the overall status,
+   * whether there are changes for HotSwap.
+   * For the sake of performance, some checks (like local history) can be skipped.
+   */
+  internal fun hasMassiveChanges(): Boolean = currentChanges.size > 100
+
   internal fun processDocumentChange(hasChangesSinceLastReset: Boolean, file: VirtualFile, document: Document) {
     val currentChanges = currentChanges
     if (hasChangesSinceLastReset) {
@@ -165,8 +173,21 @@ class SourceFileChangesCollectorImpl(
   }
 }
 
-private fun hasChangesSinceLastReset(file: VirtualFile, lastTimestamp: Long, contentHash: Int, cache: Object2IntOpenHashMap<VirtualFile>): Boolean {
-  val oldHash = cache.computeIfAbsent(file) { getContentHashBeforeLastReset(file, lastTimestamp) }
+private fun hasChangesSinceLastReset(
+  file: VirtualFile, lastTimestamp: Long, contentHash: Int,
+  doLocalHistorySearch: Boolean,
+  cache: Object2IntOpenHashMap<VirtualFile>,
+): Boolean {
+  val oldHash = run {
+    if (file in cache) return@run cache.getInt(file)
+    // com.intellij.history.integration.LocalHistoryImpl.getByteContent is a heavyweight operation with blocking read lock access.
+    // When there are massive changes in a project (e.g., a git branch switch), such workload becomes critical for the UI.
+    // To avoid this, the local history check is skipped when the number of modified files is too large.
+    // As a consequence, reverting these changes may be incorrectly detected by this filter (they will still be shown as available),
+    // but this is a minor issue.
+    if (!doLocalHistorySearch) return true
+    getContentHashBeforeLastReset(file, lastTimestamp).also { cache.put(file, it) }
+  }
   if (oldHash == -1) return true
   return contentHash != oldHash
 }

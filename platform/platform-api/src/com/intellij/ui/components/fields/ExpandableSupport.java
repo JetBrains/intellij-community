@@ -3,6 +3,7 @@ package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -15,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -212,7 +214,10 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
       @Override
       public void mouseClicked(MouseEvent event) {
         Runnable action = extension.getActionOnClick();
-        if (action != null) action.run();
+        if (action == null) return;
+        try (AccessToken ignore = SlowOperations.startSection(SlowOperations.ACTION_PERFORM)) {
+          action.run();
+        }
       }
     });
     return label;

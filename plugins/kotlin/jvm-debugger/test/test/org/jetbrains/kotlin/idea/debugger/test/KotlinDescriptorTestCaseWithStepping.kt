@@ -399,7 +399,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
         for (agent in agentList) {
             val dependencies = loadDependencies(agent)
             for (dependency in dependencies) {
-                params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
+                if (dependency.type == OrderRootType.CLASSES) {
+                    params.vmParametersList.add("-javaagent:${dependency.file.presentableUrl}")
+                }
             }
         }
         return params
@@ -451,7 +453,7 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
     ): MutableList<OrderRoot> {
 
         return JarRepositoryManager.loadDependenciesSync(
-            project, description, setOf(ArtifactKind.ARTIFACT),
+            project, description, setOf(ArtifactKind.ARTIFACT, ArtifactKind.SOURCES),
             jarRepositories(), null
         ) ?: throw AssertionError("Maven Dependency not found: $description")
     }

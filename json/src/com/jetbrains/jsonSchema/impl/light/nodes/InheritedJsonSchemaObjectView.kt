@@ -35,15 +35,15 @@ internal class InheritedJsonSchemaObjectView(
     return other.ref
   }
 
-  override fun readChildNodeValue(vararg childNodeName: String): String? {
+  override fun readChildNodeValue(childNodeName: String): String? {
     return baseIfConditionOrOtherWithArgument(JsonSchemaObject::readChildNodeValue, childNodeName, String?::isNotBlank)
   }
 
-  override fun hasChildNode(vararg childNodeName: String): Boolean {
-    return other.hasChildNode(*childNodeName)
+  override fun hasChildNode(childNodeName: String): Boolean {
+    return other.hasChildNode(childNodeName)
   }
 
-  override fun hasChildFieldsExcept(namesToSkip: Array<String>): Boolean {
+  override fun hasChildFieldsExcept(namesToSkip: List<String>): Boolean {
     return booleanOrWithArgument(JsonSchemaObject::hasChildFieldsExcept, namesToSkip)
   }
 

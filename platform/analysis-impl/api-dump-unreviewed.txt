@@ -3549,6 +3549,7 @@ a:com.intellij.psi.FilePropertyKeyImpl
 - com.intellij.psi.FilePropertyKey
 - sf:Companion:com.intellij.psi.FilePropertyKeyImpl$Companion
 - p:<init>(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):V
+- sf:createPersistentBooleanKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - sf:createPersistentEnumKey(java.lang.String,java.lang.String,I,java.lang.Class):com.intellij.psi.FilePropertyKey
 - sf:createPersistentIntKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - sf:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):com.intellij.psi.FilePropertyKey
@@ -3563,6 +3564,7 @@ a:com.intellij.psi.FilePropertyKeyImpl
 - pf:writeValue(com.intellij.openapi.vfs.VirtualFile,java.lang.Object):V
 - pa:writeValue(com.intellij.openapi.vfs.newvfs.AttributeOutputStream,java.lang.Object):V
 f:com.intellij.psi.FilePropertyKeyImpl$Companion
+- f:createPersistentBooleanKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - f:createPersistentEnumKey(java.lang.String,java.lang.String,I,java.lang.Class):com.intellij.psi.FilePropertyKey
 - f:createPersistentIntKey(java.lang.String,java.lang.String,I):com.intellij.psi.FilePropertyKey
 - f:createPersistentStringKey(java.lang.String,com.intellij.openapi.vfs.newvfs.FileAttribute):com.intellij.psi.FilePropertyKey

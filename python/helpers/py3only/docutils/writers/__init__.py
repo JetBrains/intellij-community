@@ -1,4 +1,4 @@
-# $Id: __init__.py 7648 2013-04-18 07:36:22Z milde $
+# $Id: __init__.py 9368 2023-04-28 21:26:36Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
@@ -8,13 +8,11 @@ This package contains Docutils Writer modules.
 
 __docformat__ = 'reStructuredText'
 
-import sys
+from importlib import import_module
 
 import docutils
 from docutils import languages, Component
 from docutils.transforms import universal
-if sys.version_info < (2,5):
-    from docutils._compat import __import__
 
 
 class Writer(Component):
@@ -33,32 +31,35 @@ class Writer(Component):
     config_section = 'writers'
 
     def get_transforms(self):
-        return Component.get_transforms(self) + [
-            universal.Messages,
-            universal.FilterMessages,
-            universal.StripClassesAndElements,]
+        return super().get_transforms() + [universal.Messages,
+                                           universal.FilterMessages,
+                                           universal.StripClassesAndElements]
 
     document = None
-    """The document to write (Docutils doctree); set by `write`."""
+    """The document to write (Docutils doctree); set by `write()`."""
 
     output = None
-    """Final translated form of `document` (Unicode string for text, binary
-    string for other forms); set by `translate`."""
+    """Final translated form of `document`
+
+    (`str` for text, `bytes` for binary formats); set by `translate()`.
+    """
 
     language = None
-    """Language module for the document; set by `write`."""
+    """Language module for the document; set by `write()`."""
 
     destination = None
     """`docutils.io` Output object; where to write the document.
-    Set by `write`."""
+
+    Set by `write()`.
+    """
 
     def __init__(self):
 
-        # Used by HTML and LaTeX writer for output fragments:
         self.parts = {}
         """Mapping of document part names to fragments of `self.output`.
-        Values are Unicode strings; encoding is up to the client.  The 'whole'
-        key should contain the entire document output.
+
+        See `Writer.assemble_parts()` below and
+        <https://docutils.sourceforge.io/docs/api/publisher.html>.
         """
 
     def write(self, document, destination):
@@ -77,8 +78,7 @@ class Writer(Component):
             document.reporter)
         self.destination = destination
         self.translate()
-        output = self.destination.write(self.output)
-        return output
+        return self.destination.write(self.output)
 
     def translate(self):
         """
@@ -95,9 +95,14 @@ class Writer(Component):
         raise NotImplementedError('subclass must override this method')
 
     def assemble_parts(self):
-        """Assemble the `self.parts` dictionary.  Extend in subclasses."""
+        """Assemble the `self.parts` dictionary.  Extend in subclasses.
+
+        See <https://docutils.sourceforge.io/docs/api/publisher.html>.
+        """
         self.parts['whole'] = self.output
         self.parts['encoding'] = self.document.settings.output_encoding
+        self.parts['errors'] = (
+            self.document.settings.output_encoding_error_handler)
         self.parts['version'] = docutils.__version__
 
 
@@ -119,21 +124,36 @@ class UnfilteredWriter(Writer):
 
 
 _writer_aliases = {
-      'html': 'html4css1',
+      'html': 'html4css1',  # may change to html5 some day
+      'html4': 'html4css1',
+      'xhtml10': 'html4css1',
+      'html5': 'html5_polyglot',
+      'xhtml': 'html5_polyglot',
+      's5': 's5_html',
       'latex': 'latex2e',
+      'xelatex': 'xetex',
+      'luatex': 'xetex',
+      'lualatex': 'xetex',
+      'odf': 'odf_odt',
+      'odt': 'odf_odt',
+      'ooffice': 'odf_odt',
+      'openoffice': 'odf_odt',
+      'libreoffice': 'odf_odt',
       'pprint': 'pseudoxml',
       'pformat': 'pseudoxml',
       'pdf': 'rlpdf',
-      'xml': 'docutils_xml',
-      's5': 's5_html'}
+      'xml': 'docutils_xml'}
+
 
 def get_writer_class(writer_name):
     """Return the Writer class from the `writer_name` module."""
-    writer_name = writer_name.lower()
-    if writer_name in _writer_aliases:
-        writer_name = _writer_aliases[writer_name]
+    name = writer_name.lower()
+    name = _writer_aliases.get(name, name)
     try:
-        module = __import__(writer_name, globals(), locals(), level=1)
+        module = import_module('docutils.writers.'+name)
     except ImportError:
-        module = __import__(writer_name, globals(), locals(), level=0)
+        try:
+            module = import_module(name)
+        except ImportError as err:
+            raise ImportError(f'Writer "{writer_name}" not found. {err}')
     return module.Writer

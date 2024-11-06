@@ -68,7 +68,7 @@ import javax.swing.event.DocumentEvent
 import javax.swing.event.HyperlinkEvent
 import javax.swing.text.JTextComponent
 
-open class IdeErrorsDialog internal constructor(
+open class IdeErrorsDialog @ApiStatus.Internal constructor(
   private val myMessagePool: MessagePool,
   private val myProject: Project?,
   defaultMessage: LogMessage?

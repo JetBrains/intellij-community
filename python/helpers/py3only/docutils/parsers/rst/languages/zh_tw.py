@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: zh_tw.py 7119 2011-09-02 13:00:23Z milde $
+# $Id: zh_tw.py 9030 2022-03-05 23:28:32Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Traditional Chinese language mappings for language-dependent features of
@@ -39,15 +38,15 @@ directives = {
       'pull-quote (translation required)': 'pull-quote',
       'compound (translation required)': 'compound',
       'container (translation required)': 'container',
-      #'questions (translation required)': 'questions',
+      # 'questions (translation required)': 'questions',
       'table (translation required)': 'table',
       'csv-table (translation required)': 'csv-table',
       'list-table (translation required)': 'list-table',
-      #'qa (translation required)': 'questions',
-      #'faq (translation required)': 'questions',
+      # 'qa (translation required)': 'questions',
+      # 'faq (translation required)': 'questions',
       'meta (translation required)': 'meta',
       'math (translation required)': 'math',
-      #'imagemap (translation required)': 'imagemap',
+      # 'imagemap (translation required)': 'imagemap',
       'image (translation required)': 'image',
       'figure (translation required)': 'figure',
       'include (translation required)': 'include',
@@ -64,8 +63,8 @@ directives = {
       'section-numbering (translation required)': 'sectnum',
       'header (translation required)': 'header',
       'footer (translation required)': 'footer',
-      #'footnotes (translation required)': 'footnotes',
-      #'citations (translation required)': 'citations',
+      # 'footnotes (translation required)': 'footnotes',
+      # 'citations (translation required)': 'citations',
       'target-notes (translation required)': 'target-notes',
       'restructuredtext-test-directive': 'restructuredtext-test-directive'}
 """Traditional Chinese name to registered (in directives/__init__.py)
@@ -104,6 +103,7 @@ roles = {
     'uri-reference (translation required)': 'uri-reference',
     'uri (translation required)': 'uri-reference',
     'url (translation required)': 'uri-reference',
-    'raw (translation required)': 'raw',}
+    'raw (translation required)': 'raw',
+    }
 """Mapping of Traditional Chinese role names to canonical role names for
 interpreted text."""

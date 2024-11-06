@@ -6,7 +6,11 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.java.analysis.JavaAnalysisBundle
 import com.intellij.java.ift.JavaLessonsBundle
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorComponentImpl
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.UIBundle
@@ -17,6 +21,12 @@ import training.learn.course.KLesson
 class JavaInheritanceHierarchyLesson
   : KLesson("java.inheritance.hierarchy.lesson", JavaLessonsBundle.message("java.inheritance.hierarchy.lesson.name")) {
   override val sampleFilePath: String = "src/InheritanceHierarchySample.java"
+
+  private val TaskRuntimeContext.editorOrNull: Editor?
+    get() = FileEditorManager.getInstance(project).selectedTextEditor
+
+  private val TaskRuntimeContext.virtualFileOrNull: VirtualFile?
+    get() = editorOrNull?.document?.let { FileDocumentManager.getInstance().getFile(it) }
 
   override val lessonContent: LessonContext.() -> Unit = {
     sdkConfigurationTasks()
@@ -32,7 +42,9 @@ class JavaInheritanceHierarchyLesson
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.choose.any.implementation", LessonUtil.rawEnter()))
 
       stateCheck {
-        (virtualFile.name == "DerivedClass1.java" || virtualFile.name == "DerivedClass2.java") && atDeclarationPosition()
+        val editor = editorOrNull ?: return@stateCheck false
+        val file = virtualFileOrNull ?: return@stateCheck false
+        (file.name == "DerivedClass1.java" || file.name == "DerivedClass2.java") && editor.atDeclarationPosition()
       }
 
       restoreState(delayMillis = defaultRestoreDelay) {
@@ -48,7 +60,9 @@ class JavaInheritanceHierarchyLesson
     task("GotoSuperMethod") {
       text(JavaLessonsBundle.message("java.inheritance.hierarchy.navigate.to.base", action(it), icon(AllIcons.Gutter.ImplementingMethod)))
       stateCheck {
-        virtualFile.name == "SomeInterface.java" && atDeclarationPosition()
+        val editor = editorOrNull ?: return@stateCheck false
+        val file = virtualFileOrNull ?: return@stateCheck false
+        file.name == "SomeInterface.java" && editor.atDeclarationPosition()
       }
       restoreIfModifiedOrMoved()
 
@@ -122,9 +136,9 @@ class JavaInheritanceHierarchyLesson
                                    strong("hierarchy")))
   }
 
-  private fun TaskRuntimeContext.atDeclarationPosition(): Boolean {
-    return editor.document.charsSequence.let {
-      it.subSequence(editor.caretModel.currentCaret.offset, it.length).startsWith("foo(FileStructureDemo demo)")
+  private fun Editor.atDeclarationPosition(): Boolean {
+    return document.charsSequence.let {
+      it.subSequence(caretModel.currentCaret.offset, it.length).startsWith("foo(FileStructureDemo demo)")
     }
   }
 

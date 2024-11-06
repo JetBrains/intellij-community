@@ -23,7 +23,7 @@ public record ModUpdateFileText(@NotNull VirtualFile file, @NotNull String oldTe
     for (int i = 0; i < updatedRanges.size(); i++) {
       Fragment prev = updatedRanges.get(i);
       if (prev.offset() + prev.newLength > newText.length()) {
-        throw new IllegalArgumentException("Range out of bounds: " + prev);
+        throw new IllegalArgumentException("Range out of bounds: " + prev + "; newText.length()=" + newText.length());
       }
       if (i < updatedRanges.size() - 1) {
         Fragment next = updatedRanges.get(i + 1);

@@ -258,6 +258,11 @@ class KotlinStepIntoRequestHint(
 private fun needTechnicalStepInto(context: SuspendContextImpl): Boolean {
     val location = context.location ?: return false
 
+    // TODO: This is a hack for all coroutine builders declared in kotlinx.coroutines.Builders.common.kt
+    if (context.location?.declaringType()?.name() == "kotlinx.coroutines.BuildersKt") {
+        return true
+    }
+
     if (!location.isInKotlinSources()) {
         return false
     }

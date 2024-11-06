@@ -39,6 +39,7 @@ import com.intellij.util.PathMappingSettings;
 import com.intellij.util.Processor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonPluginDisposable;
+import com.jetbrains.python.codeInsight.typing.PyBundledStubs;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
@@ -502,6 +503,7 @@ public final class PythonSdkUpdater {
       .addAll(getSkeletonsPaths(sdk))
       .addAll(userAddedRoots)
       .addAll(PyTypeShed.INSTANCE.findRootsForSdk(sdk))
+      .addAll(PyBundledStubs.INSTANCE.getRoots())
       .build();
   }
 

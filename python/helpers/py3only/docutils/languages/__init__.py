@@ -1,9 +1,9 @@
-# $Id: __init__.py 7648 2013-04-18 07:36:22Z milde $
+# $Id: __init__.py 9030 2022-03-05 23:28:32Z milde $
 # Author: David Goodger <goodger@python.org>
 # Copyright: This module has been placed in the public domain.
 
 # Internationalization details are documented in
-# <http://docutils.sf.net/docs/howto/i18n.html>.
+# <https://docutils.sourceforge.io/docs/howto/i18n.html>.
 
 """
 This package contains modules for language-dependent features of Docutils.
@@ -11,38 +11,73 @@ This package contains modules for language-dependent features of Docutils.
 
 __docformat__ = 'reStructuredText'
 
-import sys
+from importlib import import_module
 
 from docutils.utils import normalize_language_tag
-if sys.version_info < (2,5):
-    from docutils._compat import __import__
 
-_languages = {}
 
-def get_language(language_code, reporter=None):
-    """Return module with language localizations.
+class LanguageImporter:
+    """Import language modules.
 
-    `language_code` is a "BCP 47" language tag.
-    If there is no matching module, warn and fall back to English.
+    When called with a BCP 47 language tag, instances return a module
+    with localisations from `docutils.languages` or the PYTHONPATH.
+
+    If there is no matching module, warn (if a `reporter` is passed)
+    and fall back to English.
     """
-    # TODO: use a dummy module returning emtpy strings?, configurable?
-    for tag in normalize_language_tag(language_code):
-        tag = tag.replace('-','_') # '-' not valid in module names
-        if tag in _languages:
-            return _languages[tag]
-        try:
-            module = __import__(tag, globals(), locals(), level=1)
-        except ImportError:
+    packages = ('docutils.languages.', '')
+    warn_msg = ('Language "%s" not supported: '
+                'Docutils-generated text will be in English.')
+    fallback = 'en'
+    # TODO: use a dummy module returning empty strings?, configurable?
+
+    def __init__(self):
+        self.cache = {}
+
+    def import_from_packages(self, name, reporter=None):
+        """Try loading module `name` from `self.packages`."""
+        module = None
+        for package in self.packages:
             try:
-                module = __import__(tag, globals(), locals(), level=0)
-            except ImportError:
+                module = import_module(package+name)
+                self.check_content(module)
+            except (ImportError, AttributeError):
+                if reporter and module:
+                    reporter.info(f'{module} is no complete '
+                                  'Docutils language module.')
+                elif reporter:
+                    reporter.info(f'Module "{package+name}" not found.')
                 continue
-        _languages[tag] = module
+            break
         return module
-    if reporter is not None:
-        reporter.warning(
-            'language "%s" not supported: ' % language_code +
-            'Docutils-generated text will be in English.')
-    module = __import__('en', globals(), locals(), level=1)
-    _languages[tag] = module # warn only one time!
-    return module
+
+    def check_content(self, module):
+        """Check if we got a Docutils language module."""
+        if not (isinstance(module.labels, dict)
+                and isinstance(module.bibliographic_fields, dict)
+                and isinstance(module.author_separators, list)):
+            raise ImportError
+
+    def __call__(self, language_code, reporter=None):
+        try:
+            return self.cache[language_code]
+        except KeyError:
+            pass
+        for tag in normalize_language_tag(language_code):
+            tag = tag.replace('-', '_')  # '-' not valid in module names
+            module = self.import_from_packages(tag, reporter)
+            if module is not None:
+                break
+        else:
+            if reporter:
+                reporter.warning(self.warn_msg % language_code)
+            if self.fallback:
+                module = self.import_from_packages(self.fallback)
+        if reporter and (language_code != 'en'):
+            reporter.info('Using %s for language "%s".'
+                          % (module, language_code))
+        self.cache[language_code] = module
+        return module
+
+
+get_language = LanguageImporter()

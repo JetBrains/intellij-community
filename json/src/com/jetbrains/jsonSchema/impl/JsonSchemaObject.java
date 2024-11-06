@@ -30,7 +30,7 @@ public abstract class JsonSchemaObject {
   public abstract @Nullable Boolean getConstantSchema();
 
   @ApiStatus.Experimental
-  public abstract boolean hasChildFieldsExcept(@NotNull String @NotNull ... namesToSkip);
+  public abstract boolean hasChildFieldsExcept(@NotNull List<@NotNull String> namesToSkip);
 
   public abstract @NotNull Iterable<JsonSchemaValidation> getValidations(@Nullable JsonSchemaType type, @NotNull JsonValueAdapter value);
 
@@ -154,9 +154,9 @@ public abstract class JsonSchemaObject {
 
   public abstract @NotNull Iterator<String> getDefinitionNames();
 
-  public abstract @Nullable String readChildNodeValue(@NotNull String @NotNull ... childNodeName);
+  public abstract @Nullable String readChildNodeValue(@NotNull String childNodeName);
 
-  public abstract boolean hasChildNode(@NotNull String @NotNull ... childNodeName);
+  public abstract boolean hasChildNode(@NotNull String childNodeName);
 
   public abstract @NotNull Iterator<String> getPropertyNames();
 

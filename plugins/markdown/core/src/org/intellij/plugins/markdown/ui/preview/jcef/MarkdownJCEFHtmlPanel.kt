@@ -16,8 +16,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.components.JBViewport
 import com.intellij.ui.components.Magnificator
+import com.intellij.ui.components.ZoomableViewport
 import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JBCefClient
 import com.intellij.ui.jcef.JCEFHtmlPanel
@@ -49,6 +49,7 @@ import java.awt.BorderLayout
 import java.awt.Point
 import java.net.URL
 import javax.swing.JComponent
+import javax.swing.JPanel
 import kotlin.math.round
 
 class MarkdownJCEFHtmlPanel(
@@ -280,37 +281,55 @@ class MarkdownJCEFHtmlPanel(
     executeJavaScript("window.scrollController?.scrollBy($horizontal, $vertical)")
   }
 
-  private var previewInnerComponent: JComponent? = null
+  private val previewInnerComponent by lazy { super.getComponent() }
   private val TEMPORARY_FONT_SIZE = Key.create<Int>("Markdown.Preview.FontSize")
 
-  private fun createComponent(): JComponent {
-    previewInnerComponent = super.getComponent()
-    if (project == null || virtualFile == null) return previewInnerComponent!!
+  private inner class ViewPort : JPanel(BorderLayout()), ZoomableViewport {
+    private var myMagnificationPoint: Point? = null
 
-    val panel = JBLoadingPanel(BorderLayout(), this)
-
-    previewInnerComponent!!.putClientProperty(Magnificator.CLIENT_PROPERTY_KEY, object: Magnificator {
-      override fun magnify(scale: Double, at: Point): Point {
+    override fun getMagnificator(): Magnificator {
+      return Magnificator { scale, at ->
         val currentSize = this@MarkdownJCEFHtmlPanel.getTemporaryFontSize() ?: PreviewLAFThemeStyles.defaultFontSize
         var fontSize = round(currentSize * scale).toInt()
         fontSize = maxOf(fontSize, fontSizeOptions.first())
         fontSize = minOf(fontSize, fontSizeOptions.last())
         changeFontSize(fontSize, temporary = true)
 
-        return at
+        at
       }
-    })
+    }
 
-    previewInnerComponent!!.addPropertyChangeListener(TEMPORARY_FONT_SIZE.toString()) {
+    override fun magnificationStarted(at: Point) {
+      myMagnificationPoint = at
+    }
+
+    override fun magnificationFinished(magnification: Double) {
+      myMagnificationPoint = null
+    }
+
+    override fun magnify(magnification: Double) {
+      if (magnification.compareTo(0.0) != 0 && myMagnificationPoint != null) {
+        val magnificator = magnificator
+        val step = magnification * 0.1
+        val scale = if (magnification < 0) 1 / (1 - step) else 1 + step
+        magnificator.magnify(scale, myMagnificationPoint)
+      }
+    }
+  }
+
+  private fun createComponent(): JComponent {
+    if (project == null || virtualFile == null) return previewInnerComponent
+
+    val panel = JBLoadingPanel(BorderLayout(), this)
+
+    previewInnerComponent.addPropertyChangeListener(TEMPORARY_FONT_SIZE.toString()) {
       val balloon = project.service<PreviewZoomIndicatorManager>().createOrGetBalloon(this@MarkdownJCEFHtmlPanel)
-      balloon?.show(RelativePoint.getSouthOf(previewInnerComponent!!), Balloon.Position.below)
+      balloon?.show(RelativePoint.getSouthOf(previewInnerComponent), Balloon.Position.below)
     }
 
     coroutineScope.async(context = Dispatchers.Default, start = CoroutineStart.UNDISPATCHED) {
       panel.startLoading()
-      val viewPort = JBViewport().apply {
-        layout = BorderLayout()
-      }
+      val viewPort = ViewPort()
       viewPort.add(previewInnerComponent, BorderLayout.CENTER)
       panel.add(viewPort)
       projectRoot.await()
@@ -328,7 +347,7 @@ class MarkdownJCEFHtmlPanel(
     if (temporary) {
       val previousSize = getUserData(TEMPORARY_FONT_SIZE) ?: PreviewLAFThemeStyles.defaultFontSize
       putUserData(TEMPORARY_FONT_SIZE, size)
-      previewInnerComponent?.firePropertyChange(TEMPORARY_FONT_SIZE.toString(), previousSize, size)
+      previewInnerComponent.firePropertyChange(TEMPORARY_FONT_SIZE.toString(), previousSize, size)
     } else {
       putUserData(TEMPORARY_FONT_SIZE, null)
     }

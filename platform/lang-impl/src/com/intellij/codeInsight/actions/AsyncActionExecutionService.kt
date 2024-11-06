@@ -3,10 +3,14 @@ package com.intellij.codeInsight.actions
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 
 /**
  *  Uses to schedule execution on after specific action, if action executes asynchronously
  */
+@ApiStatus.Internal
+@ApiStatus.ScheduledForRemoval
+@Deprecated("Use `AnActionListener` instead")
 open class AsyncActionExecutionService {
   companion object {
     fun getInstance(project: Project): AsyncActionExecutionService = project.service<AsyncActionExecutionService>()

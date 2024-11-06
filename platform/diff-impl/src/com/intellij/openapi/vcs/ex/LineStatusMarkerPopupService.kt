@@ -4,11 +4,14 @@ package com.intellij.openapi.vcs.ex
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.LogicalPosition
+import com.intellij.openapi.editor.actionSystem.EditorActionHandler
 import com.intellij.openapi.editor.event.*
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -19,6 +22,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.Point
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
+import java.awt.event.MouseAdapter
 
 @Service(Service.Level.APP)
 internal class LineStatusMarkerPopupService {
@@ -40,6 +44,9 @@ internal class LineStatusMarkerPopupService {
     })
     hint.addHintListener(HintListener { Disposer.dispose(popupDisposable) })
     hint.setForceLightweightPopup(true)
+
+    // if there are no listeners, events are passed to the top level
+    panel.addMouseListener(object : MouseAdapter() {})
 
 
     val line = editor.getCaretModel().logicalPosition.line
@@ -63,6 +70,10 @@ internal class LineStatusMarkerPopupService {
     }
   }
 
+  internal fun hidePopup() {
+    lastKnownHint?.hide()
+  }
+
   private fun beforeShowNewHint(newHint: LightweightHint) {
     if (lastKnownHint != null) {
       lastKnownHint!!.hide()
@@ -76,9 +87,7 @@ internal class LineStatusMarkerPopupService {
   }
 
   private fun showHint(hint: LightweightHint, editor: Editor, point: Point) {
-    val parent = editor.getComponent().rootPane
-    val hintHint = HintHint(editor, point)
-    hint.show(parent, point.x, point.y, editor.getComponent(), hintHint)
+    HintManagerImpl.doShowInGivenLocation(hint, editor, point, HintHint(editor, point), true)
   }
 
   companion object {
@@ -98,7 +107,7 @@ internal class LineStatusMarkerPopupService {
       UIUtil.forEachComponentInHierarchy(panel) { c ->
         if (c is EditorTextComponent) {
           componentsWithListener.add(c)
-          c.component.addComponentListener(adapter)
+           c.component.addComponentListener(adapter)
         }
       }
 
@@ -179,5 +188,16 @@ internal class LineStatusMarkerPopupService {
     val instance: LineStatusMarkerPopupService
       get() = ApplicationManager.getApplication()
         .getService<LineStatusMarkerPopupService>(LineStatusMarkerPopupService::class.java)
+  }
+}
+
+private class LineStatusMakerEscEditorHandler(private val delegate: EditorActionHandler) : EditorActionHandler() {
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean {
+    return delegate.isEnabled(editor, caret, dataContext)
+  }
+
+  override fun doExecute(editor: Editor, caret: Caret?, dataContext: DataContext?) {
+    LineStatusMarkerPopupService.instance.hidePopup()
+    delegate.execute(editor, caret, dataContext)
   }
 }

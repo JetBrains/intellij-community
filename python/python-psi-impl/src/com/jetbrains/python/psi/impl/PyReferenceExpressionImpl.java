@@ -202,7 +202,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if (qualified && typeFromTargets instanceof PyNoneType) {
       return null;
     }
-    final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDescriptorType(this, typeFromTargets, context);
+    final Ref<PyType> descriptorType = PyDescriptorTypeUtil.getDunderGetReturnType(this, typeFromTargets, context);
     if (descriptorType != null) {
       return descriptorType.get();
     }

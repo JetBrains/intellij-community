@@ -1,12 +1,13 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
+import com.intellij.diagnostic.WindowsDefenderExcludeUtil.NOTIFICATION_GROUP
 import com.intellij.ide.BrowserUtil
-import com.intellij.idea.ActionsBundle
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction.createSimple
 import com.intellij.notification.NotificationAction.createSimpleExpiring
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.diagnostic.logger
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.IntellijInternalApi
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.io.computeDetached
 import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlin.io.path.Path
 
 private val LOG = logger<WindowsDefenderCheckerActivity>()
 
@@ -30,8 +32,12 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   override suspend fun execute(project: Project) {
     val checker = serviceAsync<WindowsDefenderChecker>()
-
-    if (checker.isStatusCheckIgnored(project)) {
+    val pathsToExclude = WindowsDefenderExcludeUtil.getPathsToExclude()
+    if (pathsToExclude.isNotEmpty()) {
+      WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, pathsToExclude) { WindowsDefenderExcludeUtil.clearPathsToExclude() }
+    }
+    val projectPath = project.basePath
+    if (checker.isStatusCheckIgnored(project) || (projectPath != null && WindowsDefenderExcludeUtil.isDefenderShown(Path(projectPath)))) {
       LOG.info("status check is disabled")
       WindowsDefenderStatisticsCollector.protectionCheckSkipped(project)
       return
@@ -60,11 +66,12 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     val pathList = paths.joinToString(separator = "<br>&nbsp;&nbsp;", prefix = "<br>&nbsp;&nbsp;") { it.toString() }
     val auto = DiagnosticBundle.message("exclude.folders")
     val manual = DiagnosticBundle.message("defender.config.manual")
-    WindowsDefenderExcludeUtil.notification(DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
-      .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths) })
-      .addAction(createSimple(manual) { showInstructions(checker, project) })
+    Notification(NOTIFICATION_GROUP, DiagnosticBundle.message("notification.group.defender.config"), DiagnosticBundle.message("defender.config.prompt", pathList, auto, manual), NotificationType.INFORMATION)
+      .addAction(createSimpleExpiring(auto) { WindowsDefenderExcludeUtil.updateDefenderConfig(checker, project, paths, true) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress1")) { suppressCheck(checker, project, globally = false) })
       .addAction(createSimpleExpiring(DiagnosticBundle.message("defender.config.suppress2")) { suppressCheck(checker, project, globally = true) })
+      .addAction(Separator.getInstance())
+      .addAction(createSimple(manual) { showInstructions(checker, project) })
       .setSuggestionType(true)
       .setImportantSuggestion(true)
       .apply { collapseDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST }
@@ -78,9 +85,6 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
 
   private fun suppressCheck(checker: WindowsDefenderChecker, project: Project, globally: Boolean) {
     checker.ignoreStatusCheck(if (globally) null else project, true)
-    val action = ActionsBundle.message("action.ResetWindowsDefenderNotification.text")
-    WindowsDefenderExcludeUtil.notification(DiagnosticBundle.message("defender.config.restore", action), NotificationType.INFORMATION)
-      .notify(project)
     WindowsDefenderStatisticsCollector.suppressed(project, globally)
   }
 }

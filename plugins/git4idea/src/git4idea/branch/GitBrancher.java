@@ -254,6 +254,8 @@ public interface GitBrancher {
    */
   void deleteTag(@NotNull String name, @NotNull List<? extends @NotNull GitRepository> repositories);
 
+  void deleteTags(@NotNull Map<String, List<? extends GitRepository>> tagsToContainingRepositories);
+
   /**
    * Deletes tag on all remotes
    *

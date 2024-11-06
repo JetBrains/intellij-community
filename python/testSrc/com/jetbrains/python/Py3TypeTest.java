@@ -2637,6 +2637,28 @@ public class Py3TypeTest extends PyTestCase {
   }
 
   // PY-26184
+  public void testGenericDescriptorAccessViaInstanceNoMatchingOverloads() {
+    doTest("Any", """
+      from typing import Any, overload, Union
+      
+      class MyDescriptor[T]:
+          @overload
+          def __get__(self, instance: None, owner: Any) -> T: # access via class
+              ...
+          def __get__(self, instance: "Bar", owner: Any) -> Union[str, T]:
+              ...
+      
+      class Foo():
+          x = MyDescriptor[int]()
+      
+      class Bar(Foo):
+          x = MyDescriptor[int]()
+      
+      expr = Foo().x
+      """);
+  }
+
+  // PY-26184
   public void testGenericDescriptorAccessViaInstanceReturnsExplicitAny() {
     doTest("Any", """
       from typing import Optional, Any, overload, Union

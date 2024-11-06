@@ -1,15 +1,15 @@
 /*
 :Author: David Goodger
 :Contact: goodger@python.org
-:date: $Date: 2006-05-21 22:44:42 +0200 (Son, 21. Mai 2006) $
-:version: $Revision: 4564 $
+:date: $Date: 2022-01-29 23:26:10 +0100 (Sa, 29. Jän 2022) $
+:version: $Revision: 8995 $
 :copyright: This stylesheet has been placed in the public domain.
 
 Default cascading style sheet for the PEP HTML output of Docutils.
 */
 
 /* "! important" is used here to override other ``margin-top`` and
-   ``margin-bottom`` styles that are later in the stylesheet or 
+   ``margin-bottom`` styles that are later in the stylesheet or
    more specific.  See http://www.w3.org/TR/CSS1#the-cascade */
 .first {
   margin-top: 0 ! important }

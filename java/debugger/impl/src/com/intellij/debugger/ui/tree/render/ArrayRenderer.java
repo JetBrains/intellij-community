@@ -65,7 +65,6 @@ public class ArrayRenderer extends NodeRendererImpl implements FullValueEvaluato
   private static final Logger LOG = Logger.getInstance(ArrayRenderer.class);
 
   public static final @NonNls String UNIQUE_ID = "ArrayRenderer";
-  public static final @NonNls String VISUALIZER_ID = "%Array%";
 
   public int START_INDEX = 0;
   public int END_INDEX = Integer.MAX_VALUE;
@@ -100,11 +99,7 @@ public class ArrayRenderer extends NodeRendererImpl implements FullValueEvaluato
   @Override
   public @Nullable XFullValueEvaluator getFullValueEvaluator(@NotNull EvaluationContextImpl evaluationContext,
                                                              @NotNull ValueDescriptorImpl valueDescriptor) {
-    CollectionVisualizerEvaluator evaluator = CollectionVisualizerEvaluator.createFor(VISUALIZER_ID);
-    if (evaluator == null) {
-      return null;
-    }
-    return evaluator.getFullValueEvaluator(evaluationContext, valueDescriptor);
+    return CollectionVisualizerEvaluator.createFor(evaluationContext, valueDescriptor);
   }
 
   @Override

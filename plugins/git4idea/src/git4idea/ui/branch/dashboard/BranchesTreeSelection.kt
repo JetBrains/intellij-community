@@ -3,6 +3,7 @@ package git4idea.ui.branch.dashboard
 
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.dashboard.BranchNodeDescriptor.Ref
 import javax.swing.tree.TreePath
 
 internal class BranchesTreeSelection(selectionPaths: Array<TreePath>?) {
@@ -43,14 +44,17 @@ internal class BranchesTreeSelection(selectionPaths: Array<TreePath>?) {
   val repositoriesOfSelectedBranches: Set<GitRepository>
     get() = selectedBranches.flatMapTo(mutableSetOf()) { getSelectedRepositories(it) }
 
-  val selectedBranchesToRepositories: List<Pair<BranchInfo, List<GitRepository>>>
+  val selectedRefsToRepositories: List<Pair<RefInfo, List<GitRepository>>>
     get() = selectedNodes.mapNotNull { node ->
       val nodeDescriptor = node.getNodeDescriptor()
-      if (nodeDescriptor is BranchNodeDescriptor.Branch) {
-        nodeDescriptor.branchInfo to getSelectedRepositories(node)
+      if (nodeDescriptor is BranchNodeDescriptor.Ref) {
+        nodeDescriptor.refInfo to getSelectedRepositories(node)
       }
       else null
     }
+
+  val logNavigatableNodeDescriptor: BranchNodeDescriptor.LogNavigatable?
+    get() = selectedNodeDescriptors.singleOrNull() as? BranchNodeDescriptor.LogNavigatable
 
   fun getSelectedRepositories(branchInfo: BranchInfo): List<GitRepository> {
     val branchNode = selectedNodes.find { node ->

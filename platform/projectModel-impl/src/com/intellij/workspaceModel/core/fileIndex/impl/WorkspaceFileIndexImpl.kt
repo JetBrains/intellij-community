@@ -226,8 +226,11 @@ class WorkspaceFileIndexImpl(private val project: Project) : WorkspaceFileIndexE
   }
 
   override suspend fun initialize() {
-    readAction {
-      initializeBlocking()
+    if (indexData is EmptyWorkspaceFileIndexData) {
+      val contributors = EP_NAME.extensionList
+      readAction {
+        indexData = WorkspaceFileIndexDataImpl(contributorList = contributors, project = project, parentDisposable = this)
+      }
     }
   }
 

@@ -174,8 +174,8 @@ sealed class ChannelOutputStream<T>(private val channel: SendChannel<T>) : Outpu
   override fun write(b: ByteArray, off: Int, len: Int) {
     var offset = off
 
-    while (offset < len) {
-      val nextOffset = minOf(offset + MAX_ARRAY_SIZE_SENT, len)
+    while (offset < off + len) {
+      val nextOffset = minOf(offset + MAX_ARRAY_SIZE_SENT, off + len)
       val result = channel.trySendBlocking(range(b, offset, nextOffset))
 
       when {

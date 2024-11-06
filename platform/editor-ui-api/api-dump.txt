@@ -510,6 +510,7 @@ f:com.intellij.ide.ui.UISettings$Companion
 - f:setupFractionalMetrics(javax.swing.JComponent):V
 com.intellij.ide.ui.UISettingsListener
 - java.util.EventListener
+- sf:TOPIC:com.intellij.util.messages.Topic
 - a:uiSettingsChanged(com.intellij.ide.ui.UISettings):V
 f:com.intellij.ide.ui.UISettingsState
 - com.intellij.openapi.components.BaseState

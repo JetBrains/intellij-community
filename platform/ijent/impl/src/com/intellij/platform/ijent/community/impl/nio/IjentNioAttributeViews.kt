@@ -45,7 +45,10 @@ internal class IjentNioPosixFileAttributeView(api: IjentFileSystemApi, path: Eel
   }
 
   override fun setPermissions(perms: Set<PosixFilePermission?>?) {
-    TODO("Not yet implemented")
+    if (perms == null) {
+      return
+    }
+    nioPath.nioFs.provider().setAttribute(nioPath, "posix:permissions", perms)
   }
 
   override fun setGroup(group: GroupPrincipal?) {

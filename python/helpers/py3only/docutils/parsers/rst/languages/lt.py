@@ -1,12 +1,11 @@
-# -*- coding: utf-8 -*-
-# $Id: lt.py 7668 2013-06-04 12:46:30Z milde $
+# $Id: lt.py 9030 2022-03-05 23:28:32Z milde $
 # Author: Dalius Dobravolskas <dalius.do...@gmail.com>
 # Copyright: This module has been placed in the public domain.
 
 # New language mappings are welcome.  Before doing a new translation, please
-# read <http://docutils.sf.net/docs/howto/i18n.html>.  Two files must be
-# translated for each language: one in docutils/languages, the other in
-# docutils/parsers/rst/languages.
+# read <https://docutils.sourceforge.io/docs/howto/i18n.html>.
+# Two files must be translated for each language: one in docutils/languages,
+# the other in docutils/parsers/rst/languages.
 
 """
 Lithuanian-language mappings for language-dependent features of
@@ -39,15 +38,15 @@ directives = {
       'atitraukta-citata': 'pull-quote',
       'sudėtinis-darinys': 'compound',
       'konteineris': 'container',
-      #'questions': 'questions',
+      # 'questions': 'questions',
       'lentelė': 'table',
       'csv-lentelė': 'csv-table',
       'sąrašo-lentelė': 'list-table',
-      #'qa': 'questions',
-      #'faq': 'questions',
+      # 'qa': 'questions',
+      # 'faq': 'questions',
       'meta': 'meta',
       'matematika': 'math',
-      #'imagemap': 'imagemap',
+      # 'imagemap': 'imagemap',
       'paveiksliukas': 'image',
       'iliustracija': 'figure',
       'pridėti': 'include',
@@ -64,8 +63,8 @@ directives = {
       'sekcijos-numeravimas': 'sectnum',
       'antraštė': 'header',
       'poraštė': 'footer',
-      #'footnotes': 'footnotes',
-      #'citations': 'citations',
+      # 'footnotes': 'footnotes',
+      # 'citations': 'citations',
       'nutaikytos-pastaba': 'target-notes',
       'restructuredtext-testinė-direktyva': 'restructuredtext-test-directive'}
 """Lithuanian name to registered (in directives/__init__.py) directive name
@@ -104,6 +103,7 @@ roles = {
     'uri-nuoroda': 'uri-reference',
     'uri': 'uri-reference',
     'url': 'uri-reference',
-    'žalia': 'raw',}
+    'žalia': 'raw',
+    }
 """Mapping of English role names to canonical role names for interpreted text.
 """

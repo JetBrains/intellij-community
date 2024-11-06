@@ -2,7 +2,7 @@
 .. Derived from the Unicode character mappings available from
    <http://www.w3.org/2003/entities/xml/>.
    Processed by unicode2rstsubs.py, part of Docutils:
-   <http://docutils.sourceforge.net>.
+   <https://docutils.sourceforge.io>.
 
 .. |bdquo|  unicode:: U+0201E .. DOUBLE LOW-9 QUOTATION MARK
 .. |circ|   unicode:: U+002C6 .. MODIFIER LETTER CIRCUMFLEX ACCENT

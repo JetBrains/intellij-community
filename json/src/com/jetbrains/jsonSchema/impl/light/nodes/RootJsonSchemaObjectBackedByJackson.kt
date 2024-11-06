@@ -16,6 +16,7 @@ import org.jetbrains.annotations.ApiStatus
 private val IDS_MAP_KEY = Key<Map<String, String>>("ids")
 private val DYNAMIC_ANCHORS_MAP_KEY = Key<Map<String, String>>("dynamicAnchors")
 private val INJECTIONS_MAP_KEY = Key<Boolean>("injections")
+private val DEPRECATIONS_MAP_KEY = Key<Boolean>("deprecations")
 
 @ApiStatus.Internal
 class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: VirtualFile?)
@@ -36,6 +37,18 @@ class RootJsonSchemaObjectBackedByJackson(rootNode: JsonNode, val schemaFile: Vi
     return getOrComputeValue(INJECTIONS_MAP_KEY) {
       indexSchema(rawSchemaNode) { _, parentPointer ->
         if (parentPointer.lastOrNull() == X_INTELLIJ_LANGUAGE_INJECTION)
+          true
+        else
+          null
+      }.any { it }
+    }
+  }
+
+  fun checkHasDeprecations(): Boolean {
+    val deprecationMarker = schemaInterpretationStrategy.deprecationKeyword ?: return false
+    return getOrComputeValue(DEPRECATIONS_MAP_KEY) {
+      indexSchema(rawSchemaNode) { _, parentPointer ->
+        if (parentPointer.lastOrNull() == deprecationMarker)
           true
         else
           null

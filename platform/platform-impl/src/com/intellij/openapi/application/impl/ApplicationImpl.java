@@ -48,6 +48,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.context.Scope;
+import kotlin.coroutines.CoroutineContext;
 import kotlin.jvm.functions.Function0;
 import kotlinx.coroutines.CoroutineScope;
 import kotlinx.coroutines.GlobalScope;
@@ -1205,6 +1206,16 @@ public final class ApplicationImpl extends ClientAwareComponentManager implement
   public void afterWriteActionFinished(@NotNull Class<?> action) {
     fireAfterWriteActionFinished(action);
     otelMonitor.get().writeActionExecuted();
+  }
+
+  @Override
+  public CoroutineContext getLockStateAsCoroutineContext() {
+    return getThreadingSupport().getPermitAsContextElement();
+  }
+
+  @Override
+  public boolean hasLockStateInContext(CoroutineContext context) {
+    return getThreadingSupport().hasPermitAsContextElement(context);
   }
 
   @NotNull

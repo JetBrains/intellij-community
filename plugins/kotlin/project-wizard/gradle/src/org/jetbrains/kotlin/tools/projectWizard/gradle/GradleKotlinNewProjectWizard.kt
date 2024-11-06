@@ -18,9 +18,11 @@ import com.intellij.ide.wizard.NewProjectWizardStep.Companion.ADD_SAMPLE_CODE_PR
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.observable.util.and
 import com.intellij.openapi.observable.util.bindBooleanStorage
 import com.intellij.openapi.observable.util.equalsTo
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.project.modules
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -28,6 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.findDocument
 import com.intellij.openapi.vfs.findPsiFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.util.childrenOfType
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindSelected
@@ -37,9 +40,11 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootGroup
 import org.jetbrains.kotlin.idea.base.projectStructure.ModuleSourceRootMap
 import org.jetbrains.kotlin.idea.compiler.configuration.IdeKotlinVersion
-import org.jetbrains.kotlin.idea.configuration.getGradleKotlinVersion
+import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.GradleBuildScriptSupport
 import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.KotlinWithGradleConfigurator
+import org.jetbrains.kotlin.idea.gradleCodeInsightCommon.getBuildScriptPsiFile
+import org.jetbrains.kotlin.idea.gradleJava.kotlinGradlePluginVersion
 import org.jetbrains.kotlin.tools.projectWizard.*
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizard.Companion.DEFAULT_KOTLIN_VERSION
 import org.jetbrains.kotlin.tools.projectWizard.BuildSystemKotlinNewProjectWizardData.Companion.SRC_MAIN_KOTLIN_PATH
@@ -63,8 +68,15 @@ import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleB
 import org.jetbrains.plugins.gradle.service.project.wizard.GradleNewProjectWizardStep
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIPT_NAME
 import org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME
+import org.toml.lang.psi.TomlFile
+import org.toml.lang.psi.TomlInlineTable
+import org.toml.lang.psi.TomlTable
 
 private const val GENERATE_SINGLE_MODULE_PROPERTY_NAME: String = "NewProjectWizard.generateSingleModule"
+
+private const val KOTLIN_GRADLE_PLUGIN_ID = "org.jetbrains.kotlin:kotlin-gradle-plugin"
+
+private val MIN_GRADLE_VERSION_BUILD_SRC = GradleVersion.version("8.2")
 
 private class GradleKotlinModuleBuilder : AbstractGradleModuleBuilder()
 
@@ -102,8 +114,18 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
 
         override var generateSingleModule by generateSingleModuleProperty
 
+        private val gradleVersionSupportsConventionPlugins = propertyGraph.property(false)
+
+        init {
+            propertyGraph.dependsOn(gradleVersionSupportsConventionPlugins, gradleVersionProperty) {
+                val selectedGradleVersion = runCatching { GradleVersion.version(gradleVersion) }.getOrNull() ?: return@dependsOn false
+                selectedGradleVersion >= MIN_GRADLE_VERSION_BUILD_SRC
+            }
+        }
+
         internal val shouldGenerateMultipleModules
-            get() = !generateSingleModule && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject
+            get() = !generateSingleModule && gradleDsl == GradleDsl.KOTLIN && context.isCreatingNewProject &&
+                    gradleVersionSupportsConventionPlugins.get()
 
         private fun setupSampleCodeUI(builder: Panel) {
             builder.row {
@@ -134,7 +156,7 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
                     .onApply { logGenerateSingleModuleBuildFinished(generateSingleModule) }
 
                 contextHelp(KotlinNewProjectWizardUIBundle.message("tooltip.project.wizard.new.project.generate.single.module"))
-            }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN))
+            }.visibleIf(gradleDslProperty.equalsTo(GradleDsl.KOTLIN).and(gradleVersionSupportsConventionPlugins))
         }
 
         override fun setupSettingsUI(builder: Panel) {
@@ -282,6 +304,31 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             return KotlinWithGradleConfigurator.getPluginManagementVersion(parentModule)?.parsedVersion
         }
 
+        /**
+         * Returns if there is a Kotlin Gradle Plugin version defined in the Gradle version catalog
+         * and that version is used in the build script of the buildSrc folder.
+         */
+        private fun usesVersionCatalogVersionInBuildSrc(project: Project): Boolean {
+            if (isCreatingNewRootModule()) return false
+            val buildSrcModule = project.modules.firstOrNull { it.name.endsWith(".buildSrc") } ?: return false
+            val buildSrcBuildFile = buildSrcModule.getBuildScriptPsiFile() ?: return false
+
+            val gradleFolder = project.guessProjectDir()?.findChild("gradle") ?: return false
+            val tomlFile = gradleFolder.findChild("libs.versions.toml")?.toPsiFile(project) as? TomlFile ?: return false
+
+            val libraryTable = tomlFile.childrenOfType<TomlTable>().firstOrNull {
+                it.header.key?.text == "libraries"
+            } ?: return false
+
+            val gradlePluginKey = libraryTable.entries.firstOrNull { entry ->
+                val entryValue = entry.value as? TomlInlineTable ?: return@firstOrNull false
+                val moduleEntry = entryValue.entries.firstOrNull { it.key.text == "module" } ?: return@firstOrNull false
+                moduleEntry.value?.text?.contains(KOTLIN_GRADLE_PLUGIN_ID) == true
+            }?.key?.text ?: return false
+
+            return buildSrcBuildFile.text.contains(gradlePluginKey)
+        }
+
         override fun setupProject(project: Project) {
             initializeProjectValues(project)
 
@@ -294,13 +341,16 @@ internal class GradleKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard 
             moduleBuilder.setCreateEmptyContentRoots(false)
 
             val parentKotlinVersion = project.findParentModule()?.sourceRootModules?.firstNotNullOfOrNull {
-                it.getGradleKotlinVersion()
+                it.kotlinGradlePluginVersion?.versionString
             }
             val pluginManagementVersion = getPluginManagementKotlinVersion(project)
-
             setupBuilder(moduleBuilder)
             setupBuildScript(moduleBuilder) {
-                withKotlinJvmPlugin(kotlinVersionToUse.takeIf { pluginManagementVersion == null && parentKotlinVersion == null })
+                withKotlinJvmPlugin(kotlinVersionToUse.takeUnless {
+                    pluginManagementVersion != null || // uses the version from pluginManagement
+                            parentKotlinVersion != null || // uses the version from parent
+                            usesVersionCatalogVersionInBuildSrc(project) // uses the version from the version catalog
+                })
                 withKotlinTest()
 
                 selectedJdkJvmTarget?.takeIf { canUseFoojay }?.let {

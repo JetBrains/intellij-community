@@ -91,10 +91,7 @@ object PyDataclassNames {
   }
 
   object DataclassTransform {
-    val DATACLASS_TRANSFORM_NAMES = setOf(
-      "typing.dataclass_transform",
-      "typing_extensions.dataclass_transform",
-    )
+    const val DATACLASS_TRANSFORM_NAME = "dataclass_transform"
 
     val DECORATOR_OR_CLASS_PARAMETERS = setOf(
       "init",
@@ -569,7 +566,7 @@ private fun resolveDataclassParameters(
         
         if (dataclassTransformStub != null) {
           val resolvedFieldSpecifiers = dataclassTransformStub.fieldSpecifiers
-            .flatMap { PyResolveUtil.resolveQualifiedNameInScope(it, ScopeUtil.getScopeOwner(dataclassTransformDecorator)!!, context) }
+            .flatMap { PyResolveUtil.resolveQualifiedNameInScope(it, ScopeUtil.getScopeOwner(pyClass)!!, context) }
             .filterIsInstance<PyQualifiedNameOwner>()
             .mapNotNull { it.qualifiedName }
             .map { QualifiedName.fromDottedString(it) }

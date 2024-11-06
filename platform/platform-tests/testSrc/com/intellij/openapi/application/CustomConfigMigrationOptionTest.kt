@@ -26,6 +26,17 @@ class CustomConfigMigrationOptionTest : ConfigImportHelperBaseTest() {
     assertThat(option).isInstanceOf(CustomConfigMigrationOption.MigrateFromCustomPlace::class.java)
     assertEquals("Import path parsed incorrectly", path, (option as CustomConfigMigrationOption.MigrateFromCustomPlace).location.toString())
   }
+  
+  @Test
+  fun `marker file with migrate plugins path`() {
+    val path = PathManager.getDefaultConfigPathFor("IntelliJIdea2019.3")
+    Files.createDirectories(memoryFs.fs.getPath(path))
+    val configDir = createMarkerFile("migrate-plugins $path")
+
+    val option = readOption(configDir)
+    assertThat(option).isInstanceOf(CustomConfigMigrationOption.MigratePluginsFromCustomPlace::class.java)
+    assertEquals(path, (option as CustomConfigMigrationOption.MigratePluginsFromCustomPlace).configLocation.toString())
+  }
 
   @Test
   fun `marker file with properties to set`() {

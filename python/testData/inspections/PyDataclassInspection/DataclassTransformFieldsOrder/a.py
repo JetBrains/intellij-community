@@ -1,8 +1,9 @@
 import dataclasses
 from typing import ClassVar
 
-from decorator import my_dataclass, my_field, MyField
+from decorator import my_dataclass, my_field, MyField, registry
 
+reg = registry()
 
 @my_dataclass()
 class A1:
@@ -106,3 +107,9 @@ class D1:
 class E1:
     foo = "bar"  # <- has no type annotation, so doesn't count.
     baz: str
+
+# see https://docs.sqlalchemy.org/en/20/orm/dataclasses.html
+@reg.mapped_as_dataclass
+class B5:
+    <error descr="Fields with a default value must come after any fields without a default.">a</error>: int = MyField(default_factory=int)
+    b: int = MyField()

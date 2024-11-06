@@ -9,9 +9,9 @@ Directives for references and targets.
 __docformat__ = 'reStructuredText'
 
 from docutils import nodes
+from docutils.transforms import references
 from docutils.parsers.rst import Directive
 from docutils.parsers.rst import directives
-from docutils.transforms import references
 
 
 class TargetNotes(Directive):

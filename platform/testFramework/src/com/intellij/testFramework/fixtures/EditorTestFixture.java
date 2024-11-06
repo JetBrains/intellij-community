@@ -228,7 +228,8 @@ public class EditorTestFixture {
   }
 
   @NotNull
-  public final List<LookupElement> completeBasicAllCarets(@Nullable final Character charToTypeAfterCompletion) {
+  public final List<LookupElement> completeBasicAllCarets(@Nullable final Character charToTypeIfOnlyOneOrNoCompletion,
+                                                          @Nullable final Character charToTypeIfMultipleCompletions) {
     final CaretModel caretModel = myEditor.getCaretModel();
     final List<Caret> carets = caretModel.getAllCarets();
 
@@ -246,8 +247,10 @@ public class EditorTestFixture {
     for (final int originalOffset : originalOffsets) {
       caretModel.moveToOffset(originalOffset);
       final LookupElement[] lookupElements = completeBasic();
-      if (charToTypeAfterCompletion != null) {
-        type(charToTypeAfterCompletion);
+      if ((lookupElements == null || lookupElements.length == 0) && charToTypeIfOnlyOneOrNoCompletion != null) {
+        type(charToTypeIfOnlyOneOrNoCompletion);
+      } else if (lookupElements != null && lookupElements.length > 0 && charToTypeIfMultipleCompletions != null) {
+        type(charToTypeIfMultipleCompletions);
       }
       if (lookupElements != null) {
         result.addAll(Arrays.asList(lookupElements));

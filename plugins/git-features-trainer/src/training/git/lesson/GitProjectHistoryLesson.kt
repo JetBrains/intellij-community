@@ -78,7 +78,7 @@ class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle
     task {
       var selectionCleared = false
       triggerAndBorderHighlight().treeItem { tree, path ->
-        (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD_NODE").also {
+        (path.pathCount > 1 && path.getPathComponent(1).toString() == "HEAD").also {
           if (!selectionCleared) {
             tree.clearSelection()
             selectionCleared = true

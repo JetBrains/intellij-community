@@ -50,11 +50,9 @@ class ABExperiment {
   companion object {
     private val AB_EXPERIMENTAL_OPTION_EP = ExtensionPointName<ABExperimentOptionBean>("com.intellij.experiment.abExperimentOption")
     private val LOG = logger<ABExperiment>()
-
-    private const val DEVICE_ID_PURPOSE = "A/B Experiment"
+    private val DEVICE_ID_PURPOSE = "A/B Experiment" + ApplicationInfo.getInstance().shortVersion
     private const val TOTAL_NUMBER_OF_BUCKETS = 1024
     internal const val TOTAL_NUMBER_OF_GROUPS = 256
-    private val DEVICE_ID_SALT = ApplicationInfo.getInstance().shortVersion
 
     internal val OPTION_ID_FREE_GROUP = ABExperimentOptionId("free.option")
 
@@ -129,7 +127,7 @@ class ABExperiment {
 
   private fun getUserBucketNumber(): Int {
     val deviceId = LOG.runAndLogException {
-      MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE, DEVICE_ID_SALT)
+      MachineIdManager.getAnonymizedMachineId(DEVICE_ID_PURPOSE)
     }
 
     val bucketNumber = MathUtil.nonNegativeAbs(deviceId.hashCode()) % TOTAL_NUMBER_OF_BUCKETS

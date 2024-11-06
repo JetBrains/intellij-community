@@ -19,7 +19,7 @@ internal class StructureViewFloatingToolbar(
   parentDisposable
 ) {
 
-  override val autoHideable: Boolean = true
+  override val autoHideable: Boolean = false
 
   private var boundsWithoutScrolling: Rectangle? = null
 

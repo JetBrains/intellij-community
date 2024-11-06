@@ -1,4 +1,4 @@
-# $Id: writer_aux.py 7320 2012-01-19 22:33:02Z milde $
+# $Id: writer_aux.py 9037 2022-03-05 23:31:10Z milde $
 # Author: Lea Wiemann <LeWiemann@gmail.com>
 # Copyright: This module has been placed in the public domain.
 
@@ -14,6 +14,8 @@ conflicting imports like this one::
 
 __docformat__ = 'reStructuredText'
 
+import warnings
+
 from docutils import nodes, languages
 from docutils.transforms import Transform
 
@@ -21,6 +23,9 @@ from docutils.transforms import Transform
 class Compound(Transform):
 
     """
+    .. warning:: This transform is not used by Docutils since Dec 2010
+                 and will be removed in Docutils 0.21 or later.
+
     Flatten all compound paragraphs.  For example, transform ::
 
         <compound>
@@ -37,8 +42,14 @@ class Compound(Transform):
 
     default_priority = 910
 
+    def __init__(self, document, startnode=None):
+        warnings.warn('docutils.transforms.writer_aux.Compound is deprecated'
+                      ' and will be removed in Docutils 0.21 or later.',
+                      DeprecationWarning, stacklevel=2)
+        super().__init__(document, startnode)
+
     def apply(self):
-        for compound in self.document.traverse(nodes.compound):
+        for compound in self.document.findall(nodes.compound):
             first_child = True
             for child in compound:
                 if first_child:
@@ -75,7 +86,7 @@ class Admonitions(Transform):
     def apply(self):
         language = languages.get_language(self.document.settings.language_code,
                                           self.document.reporter)
-        for node in self.document.traverse(nodes.Admonition):
+        for node in self.document.findall(nodes.Admonition):
             node_name = node.__class__.__name__
             # Set class, so that we know what node this admonition came from.
             node['classes'].append(node_name)

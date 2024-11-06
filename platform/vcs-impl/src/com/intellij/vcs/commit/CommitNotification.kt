@@ -5,10 +5,12 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.NlsContexts.NotificationTitle
 import com.intellij.openapi.util.NlsContexts.NotificationContent
+import com.intellij.openapi.util.NlsContexts.NotificationTitle
+import org.jetbrains.annotations.ApiStatus
 
-internal class CommitNotification(
+@ApiStatus.Internal
+class CommitNotification(
   groupId: String,
   title: @NotificationTitle String,
   content: @NotificationContent String,

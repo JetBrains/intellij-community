@@ -19,49 +19,43 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
     return rootNode.at(compiledPointer)?.takeIf { it !is MissingNode }
   }
 
-  override fun resolveRelativeNode(node: JsonNode, vararg relativeChildPath: String): JsonNode? {
-    return relativeChildPath.asSequence().map(::escapeForbiddenJsonPointerSymbols).fold(node) { currentNode, childName ->
-      val childByName = currentNode.get(childName)
-      if (childByName != null) return@fold childByName
-
-      val maybeIndex = childName.toIntOrNull() ?: return@fold MissingNode.getInstance()
-      return currentNode.get(maybeIndex)
-    }.takeIf { it !is MissingNode }
+  override fun resolveRelativeNode(node: JsonNode, relativeChildPath: String?): JsonNode? {
+    return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
   }
 
-  override fun hasChildNode(node: JsonNode, vararg relativeChildPath: String): Boolean {
+  override fun hasChildNode(node: JsonNode, relativeChildPath: String): Boolean {
     if (!node.isObject) return false
-    return !getChild(node, *relativeChildPath).isMissingNode
+    return !getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath).isMissingNode
   }
 
-  override fun readUntypedNodeValueAsText(node: JsonNode, vararg relativeChildPath: String): String? {
+  override fun readUntypedNodeValueAsText(node: JsonNode, relativeChildPath: String?): String? {
     if (!node.isObject) return null
-    return getChild(node, *relativeChildPath)
+    return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it !is MissingNode }
       ?.toPrettyString()
   }
 
-  override fun readTextNodeValue(node: JsonNode, vararg relativeChildPath: String): String? {
+  override fun readTextNodeValue(node: JsonNode, relativeChildPath: String?): String? {
     if (!node.isObject) return null
-    val maybeString = getChild(node, *relativeChildPath)
+    val maybeString = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return if (maybeString.isTextual)
       maybeString.asText()
     else
       null
   }
 
-  override fun readBooleanNodeValue(node: JsonNode, vararg relativeChildPath: String): Boolean? {
-    if (!(node.isObject || (node.isBoolean && relativeChildPath.isEmpty()))) return null
-    val maybeBoolean = getChild(node, *relativeChildPath)
+  override fun readBooleanNodeValue(node: JsonNode, relativeChildPath: String?): Boolean? {
+    if (!(node.isObject || (node.isBoolean && relativeChildPath == null))) return null
+    val maybeBoolean = if (relativeChildPath == null) node else getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return if (maybeBoolean.isBoolean)
       maybeBoolean.asBoolean()
     else
       null
   }
 
-  override fun readNumberNodeValue(node: JsonNode, vararg relativeChildPath: String): Number? {
+  override fun readNumberNodeValue(node: JsonNode, relativeChildPath: String?): Number? {
     if (!node.isObject) return null
-    val maybeNumber = getChild(node, *relativeChildPath)
+    val maybeNumber = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return when {
       maybeNumber.isInt -> maybeNumber.asInt()
       maybeNumber.isDouble -> maybeNumber.asDouble()
@@ -70,45 +64,43 @@ internal object JacksonSchemaNodeAccessor : RawJsonSchemaNodeAccessor<JsonNode> 
     }
   }
 
-  override fun readUntypedNodesCollection(node: JsonNode, vararg relativeChildPath: String): Sequence<Any>? {
-    return getChildArrayItems(node, *relativeChildPath)
+  override fun readUntypedNodesCollection(node: JsonNode, relativeChildPath: String?): Sequence<Any>? {
+    return getChildArrayItems(node, relativeChildPath)
       ?.mapNotNull(JacksonSchemaNodeAccessor::readAnything)
   }
 
-  override fun readNodeAsMapEntries(node: JsonNode, vararg relativeChildPath: String): Sequence<Pair<String, JsonNode>>? {
+  override fun readNodeAsMapEntries(node: JsonNode, relativeChildPath: String?): Sequence<Pair<String, JsonNode>>? {
     if (!node.isObject) return null
-    return getChild(node, *relativeChildPath)
+    return getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
       .takeIf { it.isObject }
       ?.fields()
       ?.asSequence()
       ?.map { it.key to it.value }
   }
 
-  override fun readNodeAsMultiMapEntries(node: JsonNode, vararg relativeChildPath: String): Sequence<Pair<String, List<String>>>? {
-    return readNodeAsMapEntries(node, *relativeChildPath)
+  override fun readNodeAsMultiMapEntries(node: JsonNode, relativeChildPath: String?): Sequence<Pair<String, List<String>>>? {
+    return readNodeAsMapEntries(node, relativeChildPath)
       ?.mapNotNull { (stringKey, arrayValue) ->
         if (!arrayValue.isArray) return@mapNotNull null
         stringKey to arrayValue.elements().asSequence().mapNotNull { if (it.isTextual) it.asText() else null }.toList()
       }
   }
 
-  override fun readNodeKeys(node: JsonNode, vararg relativeChildPath: String): Sequence<String>? {
-    val expandedNode = if (relativeChildPath.isEmpty())
-      node
-    else
-      getChild(node, *relativeChildPath)
+  override fun readNodeKeys(node: JsonNode, relativeChildPath: String?): Sequence<String>? {
+    val expandedNode = getExistingChildByNonEmptyPathOrSelf(node, relativeChildPath)
     return expandedNode.fieldNames().takeIf(Iterator<String>::hasNext)?.asSequence()
   }
 
-  private fun getChild(node: JsonNode, vararg relativePath: String): JsonNode {
-    return relativePath.fold(node) { parentNode, childName ->
-      parentNode.get(childName) ?: return MissingNode.getInstance()
-    }
+  private fun getExistingChildByNonEmptyPathOrSelf(node: JsonNode, directChildName: String? = null): JsonNode {
+    return if (directChildName == null)
+      node
+    else
+      node.get(directChildName) ?: MissingNode.getInstance()
   }
 
-  private fun getChildArrayItems(node: JsonNode, vararg name: String): Sequence<JsonNode>? {
+  private fun getChildArrayItems(node: JsonNode, name: String?): Sequence<JsonNode>? {
     if (!node.isObject) return null
-    return getChild(node, *name)
+    return getExistingChildByNonEmptyPathOrSelf(node, name)
       .takeIf { it.isArray }
       ?.asSafely<ArrayNode>()
       ?.elements()

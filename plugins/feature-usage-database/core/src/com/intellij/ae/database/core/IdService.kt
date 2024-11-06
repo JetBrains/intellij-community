@@ -28,7 +28,7 @@ class IdService : PersistentStateComponentWithModificationTracker<IdService.Stat
     "undefined"
   }
 
-  val machineId by lazy { MachineIdManager.getAnonymizedMachineId("com.intellij.platform.ae.database", "salty") ?: "undefined" }
+  val machineId by lazy { MachineIdManager.getAnonymizedMachineId("com.intellij.platform.ae.database") ?: "undefined" }
 
   fun getDatabaseId(metadata: SqliteDatabaseMetadata) = metadata.ideId
 

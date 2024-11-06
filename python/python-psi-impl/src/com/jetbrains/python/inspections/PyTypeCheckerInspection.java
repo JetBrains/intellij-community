@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
@@ -18,6 +19,7 @@ import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +65,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
       // so this case is covered by PyTypedDictInspection
       if (myTypeEvalContext.getType(node.getOperand()) instanceof PyTypedDictType) return;
+      // Don't type check __class_getitem__ calls inside type hints. Normally these are not type hinted as a construct 
+      // special-cased by type checkers
+      if (PyTypingTypeProvider.isInsideTypeHint(node, myTypeEvalContext)) return;
       checkCallSite(node);
     }
 
@@ -129,9 +134,19 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (owner instanceof PyClass) return;
       final PyExpression value = node.findAssignedValue();
       if (value == null) return;
-      final PyType expected = myTypeEvalContext.getType(node);
-      final PyType actual = tryPromotingType(value, expected);
 
+      boolean descriptor = false;
+      PyType expected = myTypeEvalContext.getType(node);
+      Ref<PyType> classAttrType = getClassAttributeType(node);
+      if (classAttrType != null) {
+        Ref<PyType> dunderSetValueType = PyDescriptorTypeUtil.getExpectedValueTypeForDunderSet(node, classAttrType.get(), myTypeEvalContext);
+        if (dunderSetValueType != null) {
+          expected = dunderSetValueType.get();
+          descriptor = true;
+        }
+      }
+
+      final PyType actual = tryPromotingType(value, expected);
       if (expected != null && actual instanceof PyTypedDictType) {
         if (reportTypedDictProblems(expected, (PyTypedDictType)actual, value)) return;
       }
@@ -139,8 +154,17 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
         String expectedName = PythonDocumentationProvider.getVerboseTypeName(expected, myTypeEvalContext);
         String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
-        registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
+        registerProblem(value, descriptor ?
+                               PyPsiBundle.message("INSP.type.checker.expected.type.from.dunder.set.got.type.instead", actualName, expectedName) :
+                               PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
+    }
+
+    private @Nullable Ref<PyType> getClassAttributeType(@NotNull PyTargetExpression attribute) {
+      if (!attribute.isQualified()) return null;
+      PsiElement definition = attribute.getReference(PyResolveContext.defaultContext(myTypeEvalContext)).resolve();
+      if (!(definition instanceof PyTargetExpression attrDefinition && PyUtil.isAttribute(attrDefinition))) return null;
+      return Ref.create(myTypeEvalContext.getType(attrDefinition));
     }
 
     private boolean reportTypedDictProblems(@NotNull PyType expected, @NotNull PyTypedDictType actual, @NotNull PyExpression value) {

@@ -1,7 +1,10 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.browsers.actions
 
-import com.intellij.openapi.application.*
+import com.intellij.openapi.application.EDT
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.asContextElement
+import com.intellij.openapi.application.writeIntentReadAction
 import com.intellij.openapi.components.serviceAsync
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.AsyncFileEditorProvider
@@ -27,7 +30,9 @@ private class WebPreviewEditorProvider : AsyncFileEditorProvider {
   ): FileEditor {
     val fileDocumentManager = serviceAsync<FileDocumentManager>()
     val editor = withContext(Dispatchers.EDT + ModalityState.nonModal().asContextElement()) {
-      fileDocumentManager.saveAllDocuments()
+      writeIntentReadAction {
+        fileDocumentManager.saveAllDocuments()
+      }
       WebPreviewFileEditor(file as WebPreviewVirtualFile)
     }
     editor.reloadPage()

@@ -142,22 +142,6 @@ fun createPsiExtendedInfo(): ExtendedInfo {
   return createPsiExtendedInfo(project = null, file = null, psiElement)
 }
 
-@ApiStatus.Internal
-fun tryGetPsiElementFromEntry(entry: Any): PsiElement? =
-  when (entry) {
-    is PsiElementNavigationItem -> entry.targetElement
-    is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> entry.item
-    is PSIPresentationBgRendererWrapper.ItemWithPresentation<*> -> when (val presUnwrapped = entry.item) {
-      is PsiItemWithSimilarity<*> -> when (val semUnwrapped = presUnwrapped.value) {
-        is PSIPresentationBgRendererWrapper.PsiItemWithPresentation -> semUnwrapped.item
-        is PsiElement -> semUnwrapped
-        else -> null
-      }
-      else -> null
-    }
-    else -> null
-  }
-
 fun createPsiExtendedInfo(project: ((Any) -> Project?)? = null,
                           file: ((Any) -> VirtualFile?)? = null,
                           psiElement: (Any) -> PsiElement?): ExtendedInfo {

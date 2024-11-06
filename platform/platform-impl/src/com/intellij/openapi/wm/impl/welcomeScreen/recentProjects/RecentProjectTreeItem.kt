@@ -49,7 +49,7 @@ internal sealed interface RecentProjectTreeItem {
 }
 
 internal data class RecentProjectItem(
-  val projectPath: @SystemIndependent String,
+  @JvmField val projectPath: @SystemIndependent String,
   @NlsSafe val projectName: String,
   @NlsSafe val displayName: String,
   @NlsSafe val branchName: String? = null,

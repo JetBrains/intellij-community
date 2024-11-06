@@ -24,6 +24,7 @@ import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.popup.PopupFactoryImpl
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogExtensionList
+import com.intellij.vcs.commit.CommitNotification
 import git4idea.actions.branch.GitNewBranchAction
 import git4idea.i18n.GitBundle
 import training.dsl.*
@@ -288,7 +289,7 @@ class GitQuickStartLesson : GitLesson("Git.QuickStart", GitLessonsBundle.message
         ui.focus()
         true
       }
-      triggerOnNotification { it.displayId == COMMIT_FINISHED }
+      triggerOnNotification { it is CommitNotification }
       showWarningIfCommitWindowClosed()
       test {
         type("Edit eyes color of puss in boots")

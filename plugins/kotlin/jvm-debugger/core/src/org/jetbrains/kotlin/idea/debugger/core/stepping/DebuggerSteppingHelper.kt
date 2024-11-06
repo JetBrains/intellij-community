@@ -62,7 +62,7 @@ object DebuggerSteppingHelper {
                 if (context.frameProxy?.isOnSuspensionPoint() == true && nextLocationAfterResume != null) {
                     val filterThread = context.debugProcess.requestsManager.filterThread
                     // step till the next instruction after the resume location
-                    thisLogger().debug("Stepping to the resumeLocation in method ${context.location?.method()?.name()}, filterThread = $filterThread, resumeLocationCodeIndex = ${nextLocationAfterResume.codeIndex()}, currentIndex = ${context.location?.codeIndex()}")
+                    thisLogger().debug("Stepping to the resumeLocation in method ${context.location}, filterThread = $filterThread, resumeLocationCodeIndex = ${nextLocationAfterResume.codeIndex()}, currentIndex = ${context.location?.codeIndex()}")
                     val currentLocation = context.location ?: return super.getNextStepDepth(context)
                     // Make sure that we are stepping to the nextLocationAfterResume in the correct method.
                     if (nextLocationAfterResume.safeMethod() != currentLocation.safeMethod()) {

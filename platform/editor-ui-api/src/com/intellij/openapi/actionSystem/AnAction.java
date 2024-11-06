@@ -10,6 +10,7 @@ import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.SmartList;
@@ -60,6 +61,8 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
 public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadAware {
   private static final Logger LOG = Logger.getInstance(AnAction.class);
 
+  @ApiStatus.Internal
+  public static final Key<Integer> ACTIONS_MOD_COUNT = Key.create("AnAction.ACTIONS_MOD_COUNT");
   public static final Key<List<AnAction>> ACTIONS_KEY = Key.create("AnAction.shortcutSet");
   public static final AnAction[] EMPTY_ARRAY = new AnAction[0];
 
@@ -252,6 +255,7 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
     }
     if (!actionList.contains(this)) {
       actionList.add(this);
+      updateCustomActionsModCount(component);
     }
 
     if (parentDisposable != null) {
@@ -262,8 +266,19 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
   public final void unregisterCustomShortcutSet(@NotNull JComponent component) {
     List<AnAction> actionList = ComponentUtil.getClientProperty(component, ACTIONS_KEY);
     if (actionList != null) {
-      actionList.remove(this);
+      if (actionList.remove(this)) {
+        updateCustomActionsModCount(component);
+      }
     }
+  }
+
+  /**
+   * Update component's "actions mod count" on actions' update.
+   * Allows subscribing on addition/removing of custom shortcut actions.
+   */
+  private static void updateCustomActionsModCount(@NotNull JComponent component) {
+    int oldCounter = Objects.requireNonNullElse(ClientProperty.get(component, ACTIONS_MOD_COUNT), 0);
+    ClientProperty.put(component, ACTIONS_MOD_COUNT, oldCounter + 1);
   }
 
   /**
@@ -398,9 +413,19 @@ public abstract class AnAction implements PossiblyDumbAware, ActionUpdateThreadA
    * It is called on the UI thread with all data in the provided {@link DataContext} instance.
    * <p>
    * The data context of {@link AnActionEvent#getData(DataKey)} MAY occasionally NOT HAVE the necessary data.
-   * The implementors shoud not assume that {@link #update(AnActionEvent)} or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
+   * <p>
+   * The implementors should not assume that {@link #update(AnActionEvent)}
+   * or {@link #beforeActionPerformedUpdate(AnActionEvent)} have been called before,
    * and MUST to re-check that context is suitable, and do nothing if it is not.
+   * <p>
+   * The method must not be called directly.
+   * Use {@link com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks} or
+   * (when delegating) {@link ActionWrapperUtil#actionPerformed}
+   *
+   * @see com.intellij.openapi.actionSystem.ex.ActionUtil#performActionDumbAwareWithCallbacks
+   * @see ActionWrapperUtil#actionPerformed
    */
+  @ApiStatus.OverrideOnly
   public abstract void actionPerformed(@NotNull AnActionEvent e);
 
   @ApiStatus.Internal

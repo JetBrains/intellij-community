@@ -8,15 +8,20 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 @ApiStatus.Experimental
 class LocalGenericAuthService : GenericAuthService {
-  override suspend fun getAuthData(providerId: String, request: String): String {
+  override suspend fun getAuthData(providerId: String, request: String): String? {
     val relevantProviders = GenericAuthProvider.EP_NAME.extensionList.flatMap { it.authProviders }.filter { it.id == providerId }
-    when (relevantProviders.size) {
-      0 -> throw IllegalStateException("No provider with id '$providerId'")
-      1 -> return relevantProviders.single().getAuthData(request)
-      else -> {
-        LOG.error { "Multiple providers with id '$providerId'. Using one of them." }
-        return relevantProviders.single().getAuthData(request)
-      }
+    if (relevantProviders.isEmpty()) {
+      LOG.error { "No provider with id '$providerId'. Returning null." }
+      return null
+    }
+    if (relevantProviders.size > 1) {
+      LOG.error { "Multiple providers with id '$providerId'. Using one of them." }
+    }
+    return try {
+      relevantProviders.first().getAuthData(request)
+    } catch (e: Throwable) {
+      LOG.error("Provider with id '$providerId' threw an exception. Returning null.", e)
+      null
     }
   }
 }

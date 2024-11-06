@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewBuilderProvider;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.ide.structureView.logical.PhysicalAndLogicalStructureViewBuilder;
+import com.intellij.idea.AppMode;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.PsiStructureViewFactory;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +33,9 @@ class LanguageFileTypeStructureViewBuilderProvider implements StructureViewBuild
     if (factory == null) return null;
     StructureViewBuilder physicalBuilder = factory.getStructureViewBuilder(psiFile);
     if (!(physicalBuilder instanceof TreeBasedStructureViewBuilder treeBasedStructureViewBuilder)) return physicalBuilder;
-    if (ApplicationManager.getApplication().isUnitTestMode() || !Registry.is("logical.structure.enabled", true)) {
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || !Registry.is("logical.structure.enabled", true)
+        || AppMode.isRemoteDevHost()) {
       return physicalBuilder;
     }
 

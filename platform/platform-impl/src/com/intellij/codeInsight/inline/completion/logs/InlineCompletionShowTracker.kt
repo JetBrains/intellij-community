@@ -127,7 +127,7 @@ internal class InlineCompletionShowTracker(
       }
     }
 
-    InlineCompletionUsageTracker.SHOWN_EVENT.log(data)
+    InlineCompletionUsageTracker.SHOWN_EVENT.log(request.editor.project, data)
   }
 
   private fun getDurations(): List<Duration> =

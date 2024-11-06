@@ -2,6 +2,7 @@
 package git4idea.scope
 
 import git4idea.index.vfs.filePath
+import git4idea.repo.GitRepositoryFiles.GITIGNORE
 import git4idea.search.GitTrackedSearchScope
 import git4idea.test.GitSingleRepoTest
 import git4idea.test.add
@@ -34,6 +35,13 @@ class GitTrackedSearchScopeTest : GitSingleRepoTest() {
     val file = repo.root.parent.createFile("next-to-repo")
     val scope = getGitUntrackedSearchScope()
     assertFalse(scope.isTracked(file))
+  }
+
+  fun `test ignored files are not in scope`() {
+    val ignoredFile = repo.root.createFile("ignored")
+    repo.root.createFile(GITIGNORE, ignoredFile.name)
+
+    assertFalse(getGitUntrackedSearchScope().isTracked(ignoredFile))
   }
 
   private fun getGitUntrackedSearchScope(): GitTrackedSearchScope {
