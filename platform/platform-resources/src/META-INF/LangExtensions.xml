@@ -63,7 +63,8 @@
     <applicationService serviceImplementation="com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper" preload="notLightEdit"/>
 
     <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
-                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"/>
+                        serviceImplementation="com.intellij.ide.macro.IdePathMacros"
+                        overrides="true"/>
 
     <applicationService serviceInterface="com.intellij.psi.stubs.StubIndex"
                         serviceImplementation="com.intellij.psi.stubs.StubIndexImpl" preload="notLightEdit"/>

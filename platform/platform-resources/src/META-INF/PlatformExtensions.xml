@@ -215,6 +215,8 @@
     <applicationService serviceInterface="com.intellij.ide.ui.IdeUiService"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.IdeUiServiceImpl"/>
 
+    <applicationService serviceInterface="com.intellij.openapi.application.PathMacros"
+                        serviceImplementation="com.intellij.application.options.PathMacrosImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformProjectStoreFactory"/>
     <projectService serviceInterface="com.intellij.configurationStore.StoreReloadManager"
