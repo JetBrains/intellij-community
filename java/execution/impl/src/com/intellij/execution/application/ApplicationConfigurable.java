@@ -13,6 +13,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.PsiMethodUtil;
@@ -33,7 +34,7 @@ public class ApplicationConfigurable extends SettingsEditor<ApplicationConfigura
   private JPanel myWholePanel;
   private LabeledComponent<EditorTextFieldWithBrowseButton> myMainClass;
   private CommonJavaParametersPanel myCommonProgramParameters;
-  private LabeledComponent<ModuleDescriptionsComboBox> myModule;
+  private LabeledComponentNoThrow<ModuleDescriptionsComboBox> myModule;
   private LabeledComponent<JBCheckBox> myIncludeProvidedDeps;
   private JrePathEditor myJrePathEditor;
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;

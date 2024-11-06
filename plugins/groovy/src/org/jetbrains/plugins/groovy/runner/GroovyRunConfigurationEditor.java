@@ -13,7 +13,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
@@ -30,10 +30,10 @@ import javax.swing.event.DocumentEvent;
 public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRunConfiguration> implements PanelWithAnchor {
   private JPanel myMainPanel;
 
-  private LabeledComponent<TextFieldWithBrowseButton> myScriptPathComponent;
+  private LabeledComponentNoThrow<TextFieldWithBrowseButton> myScriptPathComponent;
   private CommonJavaParametersPanel myCommonJavaParametersPanel;
 
-  private LabeledComponent<ModulesComboBox> myModulesComboBoxComponent;
+  private LabeledComponentNoThrow<ModulesComboBox> myModulesComboBoxComponent;
   private JrePathEditor myJrePathEditor;
 
   private JCheckBox myDebugCB;

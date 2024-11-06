@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.LabeledComponentNoThrow;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.PanelWithAnchor;
@@ -24,7 +25,7 @@ import javax.swing.*;
 public class JarApplicationConfigurable extends SettingsEditor<JarApplicationConfiguration> implements PanelWithAnchor {
   private CommonJavaParametersPanel myCommonProgramParameters;
   private LabeledComponent<TextFieldWithBrowseButton> myJarPathComponent;
-  private LabeledComponent<ModulesComboBox> myModuleComponent;
+  private LabeledComponentNoThrow<ModulesComboBox> myModuleComponent;
   private JPanel myWholePanel;
 
   private JrePathEditor myJrePathEditor;
