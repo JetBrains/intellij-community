@@ -26,7 +26,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
@@ -41,8 +43,10 @@ import org.jetbrains.jewel.foundation.state.CommonStateBitMask.Pressed
 import org.jetbrains.jewel.foundation.state.FocusableComponentState
 import org.jetbrains.jewel.foundation.theme.JewelTheme
 import org.jetbrains.jewel.foundation.theme.LocalContentColor
+import org.jetbrains.jewel.foundation.theme.LocalTextStyle
 import org.jetbrains.jewel.ui.Outline
 import org.jetbrains.jewel.ui.component.styling.DropdownStyle
+import org.jetbrains.jewel.ui.disabled
 import org.jetbrains.jewel.ui.focusOutline
 import org.jetbrains.jewel.ui.outline
 import org.jetbrains.jewel.ui.painter.hints.Stateful
@@ -115,7 +119,10 @@ public fun Dropdown(
                 .onSizeChanged { componentWidth = it.width },
         contentAlignment = Alignment.CenterStart,
     ) {
-        CompositionLocalProvider(LocalContentColor provides colors.contentFor(dropdownState).value) {
+        CompositionLocalProvider(
+            LocalContentColor provides colors.contentFor(dropdownState).value,
+            LocalTextStyle provides LocalTextStyle.current.copy(color = colors.contentFor(dropdownState).value),
+        ) {
             Box(
                 modifier =
                     Modifier.fillMaxWidth().padding(style.metrics.contentPadding).padding(end = arrowMinSize.width),
@@ -127,10 +134,13 @@ public fun Dropdown(
                 modifier = Modifier.size(arrowMinSize).align(Alignment.CenterEnd),
                 contentAlignment = Alignment.Center,
             ) {
+                val alpha = if (dropdownState.isEnabled) 1f else 0.5f
+                val colorFilter = if (dropdownState.isEnabled) null else ColorFilter.disabled()
                 Icon(
+                    modifier = Modifier.alpha(alpha),
                     key = style.icons.chevronDown,
-                    contentDescription = null,
-                    tint = colors.iconTintFor(dropdownState).value,
+                    contentDescription = "Dropdown Chevron",
+                    colorFilter = colorFilter,
                     hint = Stateful(dropdownState),
                 )
             }

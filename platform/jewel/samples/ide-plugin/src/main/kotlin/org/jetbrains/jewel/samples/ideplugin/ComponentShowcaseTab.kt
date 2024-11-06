@@ -113,6 +113,18 @@ private fun RowScope.ColumnOne() {
         ) {
             Text("Selected item $selectedItem")
         }
+        Dropdown(
+            enabled = false,
+            menuContent = {
+                selectableItem(selectedItem == 0, onClick = { selectedItem = 0 }) { Text("Hello") }
+
+                separator()
+
+                selectableItem(selectedItem == 1, onClick = { selectedItem = 1 }) { Text("World") }
+            },
+        ) {
+            Text("Selected item $selectedItem")
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             var clicks1 by remember { mutableIntStateOf(0) }
