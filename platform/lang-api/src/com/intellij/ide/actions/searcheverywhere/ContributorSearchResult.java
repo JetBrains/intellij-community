@@ -37,7 +37,7 @@ public class ContributorSearchResult<T> {
   }
 
   public static class Builder<T> {
-    private final Set<T> items = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<T> items = new LinkedHashSet<>();
     private boolean hasMore;
 
     public void addItem(T item) {

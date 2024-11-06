@@ -3,7 +3,6 @@ package com.intellij.ide.util.gotoByName
 
 import com.intellij.concurrency.JobLauncher
 import com.intellij.ide.actions.searcheverywhere.FoundItemDescriptor
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.*
 import com.intellij.openapi.util.Pair
@@ -25,12 +24,10 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.FindSymbolParameters
 import com.intellij.util.indexing.IdFilter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.function.Supplier
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 
 open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameInScopeItemProvider {
@@ -285,57 +282,40 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
       val fullMatcher: MinusculeMatcher = getFullMatcher(parameters, base)
 
       val shouldProcess = AtomicBoolean(true)
-      try {
-        runBlockingMaybeCancellable {
-          withContext(Dispatchers.Default) {
-            val action: (MatchResult) -> Unit = { result ->
-              if (shouldProcess.get()) {
-                indicator.checkCanceled()
-                val name = result.elementName
+      runBlockingMaybeCancellable {
+        withContext(Dispatchers.Default) {
+          namesList.forEachConcurrent { result ->
+            if (shouldProcess.get()) {
+              indicator.checkCanceled()
+              val name = result.elementName
 
-                // use interruptible call if possible
-                val elements = if (model is ContributorsBasedGotoByModel)
-                  model.getElementsByName(name, parameters, indicator)
-                else
-                  model.getElementsByName(name, everywhere, getNamePattern(base, parameters.completePattern))
-                if (elements.size > 1) {
-                  val sameNameElements = elements.mapNotNull {
-                    indicator.checkCanceled()
-                    val result = matchQualifiedName(model, fullMatcher, it) ?: return@mapNotNull null
-                    Pair.create<Any, MatchResult>(it, result)
-                  }.sortedWith(weightComparator)
+              // use interruptible call if possible
+              val elements = if (model is ContributorsBasedGotoByModel)
+                model.getElementsByName(name, parameters, indicator)
+              else
+                model.getElementsByName(name, everywhere, getNamePattern(base, parameters.completePattern))
+              if (elements.size > 1) {
+                val sameNameElements = elements.mapNotNull {
+                  indicator.checkCanceled()
+                  val result = matchQualifiedName(model, fullMatcher, it) ?: return@mapNotNull null
+                  Pair.create<Any, MatchResult>(it, result)
+                }.sortedWith(weightComparator)
 
-                  val processedItems = sameNameElements.map { FoundItemDescriptor<Any>(it.first, result.matchingDegree) }
-                  if (!ContainerUtil.process<FoundItemDescriptor<*>?>(processedItems, consumer)) {
-                    if (shouldProcess.compareAndSet(true, false)) {
-                      cancel()
-                    }
-                  }
+                val processedItems = sameNameElements.map { FoundItemDescriptor<Any>(it.first, result.matchingDegree) }
+                if (!ContainerUtil.process<FoundItemDescriptor<*>?>(processedItems, consumer)) {
+                  shouldProcess.set(false)
                 }
-                else if (elements.size == 1) {
-                  if (matchQualifiedName(model, fullMatcher, elements[0]) != null) {
-                    if (!consumer.process(FoundItemDescriptor<Any>(elements[0], result.matchingDegree))) {
-                      if (shouldProcess.compareAndSet(true, false)) {
-                        cancel()
-                      }
-                    }
+              }
+              else if (elements.size == 1) {
+                if (matchQualifiedName(model, fullMatcher, elements[0]) != null) {
+                  if (!consumer.process(FoundItemDescriptor<Any>(elements[0], result.matchingDegree))) {
+                    shouldProcess.set(false)
                   }
                 }
               }
-              else {
-                cancel()
-              }
-            }
-            if (ApplicationManager.getApplication().isUnitTestMode) {
-              namesList.forEach(action = action)
-            }
-            else {
-              namesList.forEachConcurrent(action = action)
             }
           }
         }
-      }
-      catch (_: CancellationException) {
       }
       return shouldProcess.get()
     }
