@@ -1,16 +1,15 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notebooks.ui.visualization
 
+import com.intellij.notebooks.ui.isFoldingEnabledKey
+import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.notebooks.ui.isFoldingEnabledKey
-import com.intellij.notebooks.ui.visualization.NotebookEditorAppearance.Companion.NOTEBOOK_APPEARANCE_KEY
 import java.awt.Color
 import java.awt.Graphics
 import java.awt.Rectangle
-
 
 val Editor.notebookAppearance: NotebookEditorAppearance
   get() = NOTEBOOK_APPEARANCE_KEY.get(this)!!
@@ -23,7 +22,7 @@ inline fun paintNotebookCellBackgroundGutter(
   top: Int,
   height: Int,
   presentationModeMasking: Boolean = false,  // PY-74597
-  crossinline actionBetweenBackgroundAndStripe: () -> Unit = {}
+  crossinline actionBetweenBackgroundAndStripe: () -> Unit = {},
 ) {
   val diffViewOffset = 6  // randomly picked a number that fits well
   val appearance = editor.notebookAppearance
@@ -73,11 +72,13 @@ fun paintCellStripe(
 /**
  * Paints green or blue stripe depending on a cell type
  */
-fun paintCellGutter(inlayBounds: Rectangle,
-                    lines: IntRange,
-                    editor: EditorImpl,
-                    g: Graphics,
-                    r: Rectangle) {
+fun paintCellGutter(
+  inlayBounds: Rectangle,
+  lines: IntRange,
+  editor: EditorImpl,
+  g: Graphics,
+  r: Rectangle,
+) {
   val appearance = editor.notebookAppearance
   appearance.getCellStripeColor(editor, lines)?.let { stripeColor ->
     paintCellStripe(appearance, g, r, stripeColor, inlayBounds.y, inlayBounds.height, editor)
