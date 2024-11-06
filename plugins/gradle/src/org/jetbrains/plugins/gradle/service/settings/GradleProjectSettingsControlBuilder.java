@@ -20,6 +20,7 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 
 import javax.swing.*;
@@ -59,7 +60,7 @@ public interface GradleProjectSettingsControlBuilder {
 
   void apply(GradleProjectSettings settings);
 
-  void applyDaemonJvmCriteria(Project project, String externalProjectPath, String version, String vendor);
+  void applyDaemonJvmCriteria(Project project, String externalProjectPath, GradleDaemonJvmCriteria daemonJvmCriteria);
 
   /**
    * check if something was changed against initial settings

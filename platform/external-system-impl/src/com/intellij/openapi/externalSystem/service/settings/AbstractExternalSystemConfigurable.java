@@ -82,7 +82,7 @@ public abstract class AbstractExternalSystemConfigurable<
       prepareSystemSettings(settings);
       prepareProjectSettings(settings);
     }
-    return new JBScrollPane(myComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    return ScrollPaneFactory.createScrollPane(myComponent, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER, true);
   }
 
   @SuppressWarnings("unchecked")

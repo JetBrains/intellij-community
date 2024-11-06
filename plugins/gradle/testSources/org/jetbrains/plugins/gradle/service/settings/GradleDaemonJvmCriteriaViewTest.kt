@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.testFramework.LightPlatformTestCase
-import com.intellij.ui.JBColor
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.plugins.gradle.properties.models.Property
@@ -15,13 +14,15 @@ class GradleDaemonJvmCriteriaViewTest : LightPlatformTestCase() {
       assertFalse(isModified)
 
       assertFalse(isValidVersion)
-      assertEquals("UNDEFINED", selectedVersion)
+      assertEquals("UNDEFINED", selectedCriteria.version)
       assertEquals(0, versionComboBox.itemCount)
 
       assertTrue(isValidVendor)
-      assertEquals("<ANY_VENDOR>", selectedVendor)
-      assertEquals(1, vendorComboBox.itemCount)
+      assertNull(selectedCriteria.vendor)
+
+      assertEquals(2, vendorComboBox.itemCount)
       assertEquals("<ANY_VENDOR>", vendorComboBox.model.getElementAt(0))
+      assertEquals("<CUSTOM_VENDOR>", vendorComboBox.model.getElementAt(1))
     }
   }
 
@@ -29,26 +30,22 @@ class GradleDaemonJvmCriteriaViewTest : LightPlatformTestCase() {
     val versions = 1..10
     val vendors = listOf("a", "d", "b", "c")
     createGradleDaemonJvmCriteriaView("17", "IBM", versions, vendors, false).run {
-      assertEquals("17", selectedVersion)
+      assertEquals("17", selectedCriteria.version)
       assertVersionDropdownList(versions, versionComboBox.model)
-      assertEquals(JBColor.black, versionComboBox.editor.editorComponent.foreground)
       assertTrue(isValidVersion)
 
-      assertEquals("IBM", selectedVendor)
+      assertEquals("IBM", selectedCriteria.vendor)
       assertVendorDropdownList(vendors, vendorComboBox.model)
-      assertEquals(JBColor.black, vendorComboBox.editor.editorComponent.foreground)
       assertTrue(isValidVendor)
     }
   }
 
   fun `test Given invalid version and vendor When creating view Then expected values are displayed`() {
     createGradleDaemonJvmCriteriaView("Invalid version", " ", IntRange.EMPTY, emptyList(), false).run {
-      assertEquals("Invalid version", selectedVersion)
-      assertEquals(JBColor.red, versionComboBox.editor.editorComponent.foreground)
+      assertEquals("Invalid version", selectedCriteria.version)
       assertFalse(isValidVersion)
 
-      assertEquals(" ", selectedVendor)
-      assertEquals(JBColor.red, vendorComboBox.editor.editorComponent.foreground)
+      assertEquals(null, selectedCriteria.vendor)
       assertFalse(isValidVendor)
     }
   }
@@ -70,29 +67,29 @@ class GradleDaemonJvmCriteriaViewTest : LightPlatformTestCase() {
   }
 
   fun `test Given created view When selecting different dropdown items Then selection got updated`() {
-    createGradleDaemonJvmCriteriaView("version", "vendor", IntRange.EMPTY, emptyList(), true).run {
-      versionComboBox.selectedItem = "new version"
+    createGradleDaemonJvmCriteriaView("1", "vendor", 1..2, listOf("new vendor"), true).run {
+      versionComboBox.selectedItem = "2"
       vendorComboBox.selectedItem = "new vendor"
       assertTrue(isModified)
-      assertEquals("new version", selectedVersion)
-      assertEquals("new vendor", selectedVendor)
+      assertEquals("2", selectedCriteria.version)
+      assertEquals("new vendor", selectedCriteria.vendor)
     }
   }
 
   fun `test Given created view When apply and reset selection Then initial values got overridden`() {
-    createGradleDaemonJvmCriteriaView("version", "vendor", IntRange.EMPTY, emptyList(), true).run {
-      versionComboBox.selectedItem = "new version"
+    createGradleDaemonJvmCriteriaView("1", "vendor", 1..3, listOf("new vendor", "other vendor"), true).run {
+      versionComboBox.selectedItem = "2"
       vendorComboBox.selectedItem = "new vendor"
       applySelection().run {
         assertFalse(isModified)
       }
 
-      versionComboBox.selectedItem = "other version"
+      versionComboBox.selectedItem = "3"
       vendorComboBox.selectedItem = "other vendor"
       resetSelection().run {
         assertFalse(isModified)
-        assertEquals("new version", selectedVersion)
-        assertEquals("new vendor", selectedVendor)
+        assertEquals("2", selectedCriteria.version)
+        assertEquals("new vendor", selectedCriteria.vendor)
       }
     }
   }
@@ -108,17 +105,18 @@ class GradleDaemonJvmCriteriaViewTest : LightPlatformTestCase() {
     vendor?.let { Property(it, "test/location") },
     versionsDropdownList,
     vendorDropdownList,
-    displayAdvancedSettings
+    displayAdvancedSettings,
+    testRootDisposable
   )
 
-  private fun assertVersionDropdownList(versions: IntRange, model: ComboBoxModel<Int>) {
+  private fun assertVersionDropdownList(versions: IntRange, model: ComboBoxModel<String>) {
     versions.reversed().forEachIndexed { index, expectedVersion ->
-      assertEquals(expectedVersion, model.getElementAt(index))
+      assertEquals(expectedVersion.toString(), model.getElementAt(index))
     }
   }
 
   private fun assertVendorDropdownList(vendors: List<String>, model: ComboBoxModel<String>) {
-    (listOf("<ANY_VENDOR>") + vendors).forEachIndexed { index, expectedVendor ->
+    (listOf("<ANY_VENDOR>", "<CUSTOM_VENDOR>") + vendors).forEachIndexed { index, expectedVendor ->
       assertEquals(expectedVendor, model.getElementAt(index))
     }
   }

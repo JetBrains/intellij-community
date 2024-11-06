@@ -147,15 +147,13 @@ public final class GradleManager
         result.withVmOptions(ParametersListUtil.parse(daemonVmOptions));
       }
       result.setOfflineWork(settings.isOfflineWork());
-      String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
-      if (!StringUtil.isEmpty(javaHome)) {
-        LOG.info("Instructing gradle to use java from " + javaHome);
-      }
-
       if (projectLevelSettings == null || !GradleDaemonJvmHelper.isProjectUsingDaemonJvmCriteria(projectLevelSettings)) {
+        String javaHome = gradleInstallationManager.getGradleJvmPath(project, rootProjectPath);
+        if (!StringUtil.isEmpty(javaHome)) {
+          LOG.info("Instructing gradle to use java from " + javaHome);
+        }
         result.setJavaHome(javaHome);
       }
-
       GradleSystemSettings systemSettings = GradleSystemSettings.getInstance();
       String vmOptions = Objects.requireNonNullElse(daemonVmOptions, "");
       if (vmOptions.contains("-Didea.gradle.download.sources.force=false")) {

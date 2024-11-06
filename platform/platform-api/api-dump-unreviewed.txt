@@ -7042,6 +7042,7 @@ f:com.intellij.ui.ScrollPaneFactory
 - s:createScrollPane(java.awt.Component):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,I):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,I,I):javax.swing.JScrollPane
+- s:createScrollPane(java.awt.Component,I,I,Z):javax.swing.JScrollPane
 - s:createScrollPane(java.awt.Component,Z):javax.swing.JScrollPane
 f:com.intellij.ui.ScrollingUtil
 - sf:ROW_PADDING:I

@@ -53,16 +53,15 @@ object GradleDaemonJvmHelper {
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
-    version: String? = null,
-    vendor: String? = null,
+    daemonJvmCriteria: GradleDaemonJvmCriteria?,
     executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC
   ) {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath
       externalSystemIdString = GradleConstants.SYSTEM_ID.id
       taskNames = mutableListOf(DaemonJvmPropertiesConfigurator.TASK_NAME).apply {
-        version?.let { add("$UPDATE_DAEMON_JVM_TASK_VERSION_OPTION=$it") }
-        vendor?.let { add("$UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION=$it") }
+        daemonJvmCriteria?.version?.let { add("$UPDATE_DAEMON_JVM_TASK_VERSION_OPTION=$it") }
+        daemonJvmCriteria?.vendor?.let { add("$UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION=$it") }
       }
     }
 

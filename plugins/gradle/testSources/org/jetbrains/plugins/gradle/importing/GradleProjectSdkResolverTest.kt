@@ -67,7 +67,7 @@ class GradleProjectSdkResolverTest : GradleProjectSdkResolverTestCase() {
 
   @Test
   @TargetVersions("8.8+")
-  fun `test project using Daemon toolchain`() = runBlocking {
+  fun `test project using Daemon Jvm criteria`() = runBlocking {
     val jdk = resolveRealTestSdk()
     val sdk = TestSdkGenerator.createNextSdk()
     createGradleSubProject()
