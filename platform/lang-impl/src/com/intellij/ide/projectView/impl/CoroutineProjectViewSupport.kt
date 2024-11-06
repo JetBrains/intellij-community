@@ -80,6 +80,7 @@ internal class CoroutineProjectViewSupport(
   private fun updateImpl(element: TreePath?, updateStructure: Boolean, onDone: Runnable? = null) {
     val job = coroutineScope.launch(CoroutineName("Updating $element, structure=$updateStructure")) {
       viewModel.invalidate(element?.lastPathComponent as TreeNodeViewModel?, updateStructure)
+      viewModel.awaitUpdates()
     }
     job.invokeOnCompletion {
       onDone?.let { SwingUtilities.invokeLater(it) }

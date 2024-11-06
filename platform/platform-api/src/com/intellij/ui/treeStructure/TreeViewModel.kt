@@ -19,6 +19,8 @@ interface TreeViewModel {
   val root: Flow<TreeNodeViewModel?>
   fun invalidate(node: TreeNodeViewModel?, recursive: Boolean)
   suspend fun accept(visitor: TreeViewModelVisitor, allowLoading: Boolean): TreeNodeViewModel?
+  @ApiStatus.Internal
+  suspend fun awaitUpdates()
 }
 
 @ApiStatus.Experimental
