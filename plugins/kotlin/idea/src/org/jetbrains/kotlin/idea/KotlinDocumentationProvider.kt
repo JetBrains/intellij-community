@@ -280,7 +280,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
     companion object {
         private val LOG = Logger.getInstance(KotlinDocumentationProvider::class.java)
 
-        private fun renderEnumSpecialFunction(element: KtClass, functionDescriptor: FunctionDescriptor, quickNavigation: Boolean): String {
+        private fun renderEnumSpecialFunction(element: KtClass, descriptor: DeclarationDescriptor, quickNavigation: Boolean): String {
             val kdoc = run {
                 val declarationDescriptor = element.resolveToDescriptorIfAny()
                 val enumDescriptor = declarationDescriptor?.getSuperClassNotAny() ?: return@run null
@@ -289,7 +289,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                     DescriptorToSourceUtilsIde.getAnyDeclaration(element.project, enumDescriptor) as? KtDeclaration ?: return@run null
 
                 val enumSource = SourceNavigationHelper.getNavigationElement(enumDeclaration)
-                val functionName = functionDescriptor.fqNameSafe.shortName().asString()
+                val functionName = descriptor.fqNameSafe.shortName().asString()
                 return@run enumSource.findDescendantOfType<KDoc> { doc ->
                     doc.getChildrenOfType<KDocSection>().any { it.findTagByName(functionName) != null }
                 }
@@ -298,7 +298,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
             return buildString {
                 insert(KDocTemplate()) {
                     definition {
-                        renderDefinition(functionDescriptor, Lazy.DESCRIPTOR_RENDERER
+                        renderDefinition(descriptor, Lazy.DESCRIPTOR_RENDERER
                             .withIdeOptions { highlightingManager = createHighlightingManager(element.project) }
                         )
                     }
@@ -322,7 +322,7 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                 val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 (context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     ?: context[BindingContext.REFERENCE_TARGET, referenceExpression.getChildOfType<KtReferenceExpression>()])?.let {
-                    if (it is FunctionDescriptor) // To protect from Some<caret>Enum.values()
+                    if (it is FunctionDescriptor || it is PropertyDescriptor) // To protect from Some<caret>Enum.values()
                         return renderEnumSpecialFunction(element, it, quickNavigation)
                 }
             }
