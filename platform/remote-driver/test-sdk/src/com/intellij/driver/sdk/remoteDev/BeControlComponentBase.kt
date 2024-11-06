@@ -11,6 +11,7 @@ import com.intellij.driver.sdk.ui.components.UiComponent
 import com.intellij.driver.sdk.ui.remote.*
 import org.w3c.dom.Element
 import java.awt.Point
+import java.awt.Rectangle
 import kotlin.reflect.KClass
 
 
@@ -64,6 +65,10 @@ open class BeControlComponentBase(
     get() = frontendComponent.width
   override val height: Int
     get() = frontendComponent.height
+
+  override fun getBounds(): Rectangle {
+    return frontendComponent.getBounds()
+  }
 
   override fun isVisible(): Boolean {
     return frontendComponent.isVisible()

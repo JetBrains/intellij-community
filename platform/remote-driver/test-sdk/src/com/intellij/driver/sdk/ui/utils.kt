@@ -50,6 +50,11 @@ interface IJSwingUtilities {
   fun hasFocus(c: Component): Boolean
 }
 
+@Remote("javax.swing.SwingUtilities")
+interface SwingUtilities {
+  fun computeDifference(rectA: Rectangle, rectB: Rectangle): Array<Rectangle>
+}
+
 val Rectangle.center get() = Point(getCenterX().toInt(), getCenterY().toInt())
 
 fun printableString(toPrint: String): String {
