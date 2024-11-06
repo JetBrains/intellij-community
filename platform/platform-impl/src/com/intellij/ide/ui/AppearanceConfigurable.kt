@@ -633,7 +633,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
               .onApply {
                 for (w in Window.getWindows()) {
                   for (c in UIUtil.uiTraverser(w).filter(JComponent::class.java)) {
-                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAAHintForSwingComponent())
+                    GraphicsUtil.setAntialiasingType(c, AntialiasingType.getAATextInfoForSwingComponent())
                   }
                 }
               }

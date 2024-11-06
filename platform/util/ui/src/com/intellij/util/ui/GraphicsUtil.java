@@ -129,11 +129,11 @@ public final class GraphicsUtil {
    * NB: {@link JComponent#paint(Graphics)} should be using {@link sun.swing.SwingUtilities2#drawString} to make use of this component hint.
    */
   public static void setAntialiasingType(@NotNull JComponent component, @Nullable Object type) {
-    AATextInfo.putClientProperty(type, component);
+    AATextInfo.putClientProperty((AATextInfo) type, component);
   }
 
-  public static Object createAATextInfo(@NotNull Object hint) {
-    return AATextInfo.create(hint, StartupUiUtil.getLcdContrastValue());
+  public static @NotNull AATextInfo createAATextInfo(@NotNull Object hint) {
+    return new AATextInfo(hint, StartupUiUtil.getLcdContrastValue());
   }
 
   public static boolean isRemoteEnvironment() {
