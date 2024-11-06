@@ -117,7 +117,7 @@ private fun doCreateTemporaryDirectory(
     options.parentDirectory?.let(mapper::toNioPath)?.toFile()
     ?: run {
       val path = Path.of(FileUtilRt.getTempDirectory())
-      if (mapper.getOriginalPath(path) != null) {
+      if (mapper.getOriginalPath(path) == null) {
         return Error(Other(EelPath.Absolute.parse(path.toString(), null), "Can't map this path"))
       }
       path.toFile()
