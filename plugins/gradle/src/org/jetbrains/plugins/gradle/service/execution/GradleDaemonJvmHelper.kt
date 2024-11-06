@@ -13,6 +13,7 @@ import org.gradle.util.GradleVersion
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
+import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine
 import java.nio.file.Path
 
 private val MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VERSION_CRITERIA: GradleVersion = GradleVersion.version("8.8")
@@ -49,12 +50,18 @@ object GradleDaemonJvmHelper {
     }
 
   @JvmStatic
+  fun isExecutingUpdateDaemonJvmTask(tasks: List<String>): Boolean {
+    val commandLine: GradleCommandLine = parseCommandLine(tasks, null)
+    return commandLine.tasks.tasks.any { it.name == DaemonJvmPropertiesConfigurator.TASK_NAME}
+  }
+
+  @JvmStatic
   @JvmOverloads
   fun updateProjectDaemonJvmCriteria(
     project: Project,
     externalProjectPath: String,
     daemonJvmCriteria: GradleDaemonJvmCriteria?,
-    executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC
+    executionMode: ProgressExecutionMode = ProgressExecutionMode.START_IN_FOREGROUND_ASYNC,
   ) {
     val taskSettings = ExternalSystemTaskExecutionSettings().apply {
       this.externalProjectPath = externalProjectPath

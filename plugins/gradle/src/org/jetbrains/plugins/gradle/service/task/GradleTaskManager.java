@@ -28,6 +28,7 @@ import com.intellij.openapi.externalSystem.task.TaskCallback;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
@@ -46,10 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.CompositeBuildData;
 import org.jetbrains.plugins.gradle.service.GradleFileModificationTracker;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.service.execution.GradleCommandLineUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.service.execution.GradleInitScriptUtil;
-import org.jetbrains.plugins.gradle.service.execution.GradleWrapperHelper;
+import org.jetbrains.plugins.gradle.service.execution.*;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices;
@@ -154,6 +152,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
         settings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
       }
       prepareTaskState(id, settings, listener);
+      prepareTaskRequiredJavaHome(id.findProject(), tasks, settings);
 
       if (Registry.is("gradle.report.recently.saved.paths")) {
         ApplicationManager.getApplication()
@@ -315,6 +314,18 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       throw new RuntimeException(e);
     }
     listener.onEnvironmentPrepared(id);
+  }
+
+  private static void prepareTaskRequiredJavaHome(@Nullable Project project,
+                                                  @NotNull List<String> tasks,
+                                                  @NotNull GradleExecutionSettings settings) {
+    if (project == null) return;
+    if (GradleDaemonJvmHelper.isExecutingUpdateDaemonJvmTask(tasks)) {
+      var projecSdk = ProjectRootManager.getInstance(project).getProjectSdk();
+      if (projecSdk != null && projecSdk.getHomePath() != null) {
+        settings.setJavaHome(projecSdk.getHomePath());
+      }
+    }
   }
 
   @Override
