@@ -163,7 +163,12 @@ public class WindowsDefenderChecker {
   private enum AntivirusProduct {DisplayName, ProductState}
   private enum MpComputerStatus {RealTimeProtectionEnabled}
 
-  public final boolean isUnderDownloads(@NotNull Path path) {
+  public final boolean isUntrustworthyLocation(@NotNull Path path) {
+    var tempVar = System.getenv("TEMP");
+    if (tempVar != null && path.startsWith(Path.of(tempVar))) {
+      return true;
+    }
+
     var downloadDir = (Path)null;
     if (JnaLoader.isLoaded()) {
       try {
@@ -176,7 +181,11 @@ public class WindowsDefenderChecker {
     if (downloadDir == null) {
       downloadDir = Path.of(System.getProperty("user.home"), "Downloads");
     }
-    return path.startsWith(downloadDir);
+    if (path.startsWith(downloadDir)) {
+      return true;
+    }
+
+    return false;
   }
 
   public final @NotNull List<Path> getPathsToExclude(@NotNull Project project) {

@@ -100,7 +100,7 @@ object TrustedProjectsDialog {
     if (SystemInfo.isWindows) {
       val checker = serviceAsync<WindowsDefenderChecker>()
       if (
-        !checker.isUnderDownloads(projectPath) &&
+        !checker.isUntrustworthyLocation(projectPath) &&
         !checker.isStatusCheckIgnored(project) &&
         checker.isRealTimeProtectionEnabled == true
       ) {

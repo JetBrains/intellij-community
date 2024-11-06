@@ -26,6 +26,6 @@ public class WindowsDefenderCheckerTest {
   @Test void downloadDirDetection() {
     var downloadDir = Path.of(System.getProperty("user.home"), "Downloads");
     assumeTrue(Files.isDirectory(downloadDir));
-    assertTrue(WindowsDefenderChecker.getInstance().isUnderDownloads(downloadDir.resolve("project")));
+    assertTrue(WindowsDefenderChecker.getInstance().isUntrustworthyLocation(downloadDir.resolve("project")));
   }
 }

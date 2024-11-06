@@ -87,8 +87,8 @@ internal class WindowsDefenderCheckerActivity : ProjectActivity {
     }
 
     val projectDir = project.guessProjectDir()?.let { it.fileSystem.getNioPath(it) }
-    if (projectDir != null && checker.isUnderDownloads(projectDir)) {
-      LOG.info("under downloads: ${projectDir}")
+    if (projectDir != null && checker.isUntrustworthyLocation(projectDir)) {
+      LOG.info("untrustworthy location: ${projectDir}")
       return
     }
 
