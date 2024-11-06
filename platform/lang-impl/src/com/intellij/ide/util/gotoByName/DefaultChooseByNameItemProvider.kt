@@ -330,17 +330,12 @@ open class DefaultChooseByNameItemProvider(context: PsiElement?) : ChooseByNameI
               namesList.forEach(action = action)
             }
             else {
-              namesList.forEachConcurrent {
-                blockingContext {
-                  action
-                }
-              }
+              namesList.forEachConcurrent(action = action)
             }
           }
         }
       }
       catch (_: CancellationException) {
-        indicator.cancel()
       }
       return shouldProcess.get()
     }
