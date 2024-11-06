@@ -26,6 +26,7 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y -v --default-toolchain stable -
     . "$HOME/.cargo/env"; \
     rustup target add x86_64-unknown-linux-musl; \
     rustup target add x86_64-pc-windows-gnu; \
+    cargo install --locked cargo-about; \
     rustup show;
 
 

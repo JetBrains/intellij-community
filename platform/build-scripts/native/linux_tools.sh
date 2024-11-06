@@ -145,10 +145,12 @@ declare failed_builds=""
 
   cargo build ${verbose:+-v} --release --target x86_64-unknown-linux-gnu --target-dir "$out_dir/launcher"
   cargo build ${verbose:+-v} --no-default-features --release --target x86_64-pc-windows-gnu --target-dir "$out_dir/launcher"
+  cargo about generate about.hbs > $out_dir/launcher/launcher-licenses.html
 
   verify_glibc "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher"
   cp "$out_dir/launcher/x86_64-unknown-linux-gnu/release/xplat-launcher" $dist_dir/launcher
   cp "$out_dir/launcher/x86_64-pc-windows-gnu/release/xplat-launcher.exe" $dist_dir/launcher.exe
+  cp $out_dir/launcher/launcher-licenses.html $dist_dir/.
   chmod +x $dist_dir/launcher
   ls -lha $dist_dir/launcher
   ls -lha $dist_dir/launcher.exe
