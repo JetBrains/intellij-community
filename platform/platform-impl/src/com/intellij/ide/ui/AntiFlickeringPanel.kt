@@ -2,6 +2,7 @@
 package com.intellij.ide.ui
 
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.concurrency.EdtExecutorService
@@ -44,7 +45,13 @@ internal class AntiFlickeringPanel(private val content: JComponent) : JBLayeredP
     if (savedSelfieImage != null) {
       return
     }
-    savedSelfieImage = takeSelfie(content)
+    savedSelfieImage = try {
+      takeSelfie(content)
+    }
+    catch (e: Exception) {
+      thisLogger().error(e)
+      return
+    }
     if (savedSelfieImage == null) {
       return
     }
@@ -67,7 +74,10 @@ internal class AntiFlickeringPanel(private val content: JComponent) : JBLayeredP
     @JvmStatic
     private fun takeSelfie(component: Component): BufferedImage? {
       val graphicsConfiguration = component.graphicsConfiguration ?: return null
-      val image = ImageUtil.createImage(graphicsConfiguration, component.width, component.height, BufferedImage.TYPE_INT_ARGB)
+      val width = component.width
+      val height = component.height
+      if (width <= 0 || height <= 0) return null
+      val image = ImageUtil.createImage(graphicsConfiguration, width, height, BufferedImage.TYPE_INT_ARGB)
       setupAntialiasing(image.graphics)
       component.paint(image.graphics)
       return image
