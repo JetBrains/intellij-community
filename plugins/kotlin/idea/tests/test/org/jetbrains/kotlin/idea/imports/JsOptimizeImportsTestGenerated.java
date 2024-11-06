@@ -316,9 +316,14 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                 runTest("testData/editor/optimizeImports/common/DefaultObjectReference.kt");
             }
 
-            @TestMetadata("EnumEntryUsedInsideEnum.kt")
-            public void testEnumEntryUsedInsideEnum() throws Exception {
-                runTest("testData/editor/optimizeImports/common/EnumEntryUsedInsideEnum.kt");
+            @TestMetadata("EnumStaticMembersUsedInsideEnum.kt")
+            public void testEnumStaticMembersUsedInsideEnum() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideEnum.kt");
+            }
+
+            @TestMetadata("EnumStaticMembersUsedInsideUnrelatedClass.kt")
+            public void testEnumStaticMembersUsedInsideUnrelatedClass() throws Exception {
+                runTest("testData/editor/optimizeImports/common/EnumStaticMembersUsedInsideUnrelatedClass.kt");
             }
 
             @TestMetadata("Enums.kt")
