@@ -113,6 +113,7 @@ class NotebookBelowCellDelimiterPanel(
   private fun getExecutionCountLabelText(executionCount: Int?) = when {
       !editor.isOrdinaryNotebookEditor() -> ""
       executionCount == null -> ""
+      executionCount == 0 -> ""
       else -> "[$executionCount]"
     }
 
