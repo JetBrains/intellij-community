@@ -63,6 +63,9 @@
 
     <ide.dynamicPluginVetoer implementation="com.jetbrains.performancePlugin.PlaybackRunnerExtended$PlaybackRunnerExtendedPluginUnloadVetoer"/>
   </extensions>
+  <extensions defaultExtensionNs="com.jetbrains">
+    <performancePlugin.snapshotOpener implementation="com.jetbrains.performancePlugin.profilers.LocalFileManagerSnapshotOpener"/>
+  </extensions>
 
   <applicationListeners>
     <listener class="com.jetbrains.performancePlugin.ProjectLoaded$MyAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
