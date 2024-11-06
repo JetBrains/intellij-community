@@ -23,6 +23,7 @@
   <xi:include href="/META-INF/AnalysisImpl.xml"/>
   <xi:include href="/META-INF/ProjectModel.xml"/>
   <xi:include href="/META-INF/ProjectModelImpl.xml"/>
+  <xi:include href="/META-INF/ProjectModelPlatform.xml"/>
   <xi:include href="/META-INF/Indexing.xml"/>
   <xi:include href="/META-INF/Editor.xml"/>
   <xi:include href="/META-INF/EditorEx.xml"/>

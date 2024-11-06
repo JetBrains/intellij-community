@@ -1,0 +1,12 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache"
+                        serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelCacheImpl"/>
+    <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModelCache"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
+    <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
+    <recoveryAction implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelRecoveryAction"/>
+    <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.workspaceModel.ide.impl.WorkspaceModelFusLogger"/>
+  </extensions>
+</idea-plugin>
