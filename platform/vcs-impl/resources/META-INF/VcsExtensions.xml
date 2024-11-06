@@ -348,6 +348,7 @@
 
     <diff.DiffExtension implementation="com.intellij.vcs.commit.CommitSessionCollector$MyDiffExtension"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.vcs.commit.CommitSessionCounterUsagesCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.vcs.ex.commit.CommitChunkCollector"/>
 
     <advancedSetting id="vcs.annotations.preload" default="false" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
     <advancedSetting id="vcs.process.ignored" default="true" bundle="messages.VcsBundle" groupKey="advanced.settings.vcs"/>
@@ -368,6 +369,7 @@
     <registryKey key="llm.vcs.shelve.title.generation"
                  description="Enables AI generated shelve change list title"
                  defaultValue="true"/>
+
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
