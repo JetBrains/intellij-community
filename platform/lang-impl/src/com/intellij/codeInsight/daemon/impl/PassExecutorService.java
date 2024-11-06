@@ -531,8 +531,9 @@ final class PassExecutorService implements Disposable {
         catch (RuntimeException e) {
           VirtualFile virtualFile = fileEditor.getFile();
           FileType fileType = virtualFile == null ? null : virtualFile.getFileType();
-          String message = "Exception while applying information to " + fileEditor + "(" + fileType + ")";
-          log(updateProgress, pass, message + e);
+          String message;
+
+          log(updateProgress, pass, (message = "Exception while applying information to " + fileEditor + "(" + fileType + ")") + e);
           throw new RuntimeException(message, e);
         }
         if (threadsToStartCountdown.decrementAndGet() == 0) {
