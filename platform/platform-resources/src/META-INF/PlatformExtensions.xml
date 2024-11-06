@@ -1793,6 +1793,8 @@
 
     <applicationService serviceInterface="com.intellij.ui.ExperimentalUI"
                         serviceImplementation="com.intellij.ui.ExperimentalUIImpl"/>
+    <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
+                        serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
     <notificationRouter implementation="com.intellij.notification.impl.LocalNotificationRouter" order="last"/>
     <ideEventQueueDispatcher implementation="com.intellij.ide.ui.laf.LaFMnemonicDispatcher"/>
 

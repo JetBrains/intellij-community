@@ -232,9 +232,6 @@
     <applicationService serviceInterface="com.intellij.openapi.roots.libraries.LibraryTypeService"
                         serviceImplementation="com.intellij.openapi.roots.impl.libraries.LibraryTypeServiceImpl"/>
 
-    <applicationService serviceInterface="com.intellij.ui.IconDeferrer"
-                        serviceImplementation="com.intellij.ui.IconDeferrerImpl"/>
-
     <applicationService serviceInterface="com.intellij.ui.icons.PredefinedIconOverlayService"
                         serviceImplementation="com.intellij.ui.PredefinedIconOverlayServiceImpl"/>
 

@@ -13532,6 +13532,34 @@ c:com.intellij.ui.ComboboxSpeedSearch
 - p:selectElement(java.lang.Object,java.lang.String):V
 - setupListeners():V
 com.intellij.ui.ComponentWithMnemonics
+f:com.intellij.ui.DeferredIconImpl
+- com.intellij.util.ui.JBScalableIcon
+- com.intellij.ui.DeferredIcon
+- com.intellij.ui.RetrievableIcon
+- com.intellij.ui.icons.CopyableIcon
+- com.intellij.ui.icons.IconWithToolTip
+- sf:Companion:com.intellij.ui.DeferredIconImpl$Companion
+- <init>(javax.swing.Icon,java.lang.Object,Z,com.intellij.util.Function):V
+- copy():com.intellij.ui.DeferredIconImpl
+- f:currentlyPaintedIcon():javax.swing.Icon
+- equals(java.lang.Object):Z
+- evaluate():javax.swing.Icon
+- getBaseIcon():javax.swing.Icon
+- getIconHeight():I
+- getIconWidth():I
+- getModificationCount():J
+- getToolTip(Z):java.lang.String
+- hashCode():I
+- f:isDone():Z
+- f:isNeedReadAction():Z
+- notifyPaint(java.awt.Component,I,I):V
+- paintIcon(java.awt.Component,java.awt.Graphics,I,I):V
+- replaceBy(com.intellij.ui.icons.IconReplacer):javax.swing.Icon
+- retrieveIcon():javax.swing.Icon
+- scale(F):com.intellij.ui.DeferredIconImpl
+- f:scheduleEvaluation(java.awt.Component,I,I):kotlinx.coroutines.Job
+f:com.intellij.ui.DeferredIconImpl$Companion
+- f:withoutReadAction(javax.swing.Icon,java.lang.Object,kotlin.jvm.functions.Function1):com.intellij.ui.DeferredIcon
 c:com.intellij.ui.EditorComboBox
 - com.intellij.openapi.ui.ComboBox
 - com.intellij.openapi.editor.event.DocumentListener

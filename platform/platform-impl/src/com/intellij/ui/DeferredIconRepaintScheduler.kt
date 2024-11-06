@@ -81,6 +81,7 @@ class DeferredIconRepaintScheduler {
 
 private data class RepaintSchedulerRequest(@JvmField val component: Component, @JvmField val rectangle: Rectangle?)
 
+@ApiStatus.Internal
 data class RepaintRequest(
   @JvmField internal val component: Component?,
   @JvmField internal val x: Int,
