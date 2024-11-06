@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.ProjectActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
@@ -40,8 +39,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import kotlin.Unit;
-import kotlin.coroutines.Continuation;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -663,7 +660,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     projectOpened();
   }
 
-  private void projectOpened() {
+  void projectOpened() {
     TaskProjectConfiguration projectConfiguration = getProjectConfiguration();
 
     servers:
@@ -1056,14 +1053,6 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
       if (myConnection != null) {
         myConnection.cancel();
       }
-    }
-  }
-
-  private static final class Activity implements ProjectActivity {
-    @Override
-    public @Nullable Object execute(@NotNull Project project, @NotNull Continuation<? super @NotNull Unit> $completion) {
-      ((TaskManagerImpl)getManager(project)).projectOpened();
-      return null;
     }
   }
 }
