@@ -1,5 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
+    <projectServiceInitializer.essential id="workspaceFileIndexInitializer"
+                                         implementation="com.intellij.workspaceModel.ide.impl.WorkspaceFileIndexInitializer"/>
     <applicationService serviceInterface="com.intellij.platform.backend.workspace.GlobalWorkspaceModelCache"
                         serviceImplementation="com.intellij.workspaceModel.ide.impl.GlobalWorkspaceModelCacheImpl"/>
     <projectService serviceInterface="com.intellij.platform.backend.workspace.WorkspaceModelCache"
