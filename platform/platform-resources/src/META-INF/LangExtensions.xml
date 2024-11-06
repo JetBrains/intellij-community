@@ -138,9 +138,6 @@
 
     <applicationService serviceImplementation="com.intellij.refactoring.rename.RenameHandlerRegistry"/>
 
-    <applicationService serviceInterface="com.intellij.ui.ExperimentalUI"
-                        serviceImplementation="com.intellij.ui.ExperimentalUIImpl"/>
-
     <actionConfigurationCustomizer implementation="com.intellij.tools.ToolManager$MyActionTuner"/>
 
     <projectService serviceInterface="com.intellij.ide.fileTemplates.FileTemplateManager"
@@ -1803,7 +1800,6 @@
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.ide.LanguageBundleListener" topic="com.intellij.ide.AppLifecycleListener"/>
-    <listener class="com.intellij.ui.ExperimentalUiAppLifecycleListener" topic="com.intellij.ide.AppLifecycleListener"/>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener topic="com.intellij.openapi.fileEditor.FileEditorManagerListener"
               class="com.intellij.codeInsight.daemon.impl.EditorTrackerImpl$MyAppLevelFileEditorManagerListener"/>
