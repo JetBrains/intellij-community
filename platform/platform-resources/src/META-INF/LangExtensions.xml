@@ -1807,6 +1807,8 @@
 
     <listener class="com.intellij.ide.projectView.impl.ProjectViewImpl$MyToolWindowManagerListener"
               topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener"
+              topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.openapi.fileEditor.impl.FileEditorVirtualFileAppearanceListener"

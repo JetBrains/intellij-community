@@ -234,9 +234,6 @@
     <listener class="com.intellij.internal.statistic.local.ActionsLocalSummaryListener"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
 
-    <listener class="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyProjectManagerListener"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-
     <listener class="com.intellij.notification.impl.MacEventReader" topic="com.intellij.notification.Notifications" os="mac"
               activeInHeadlessMode="false"/>
     <listener class="com.intellij.notification.impl.NotificationsBeeper" topic="com.intellij.notification.Notifications"
