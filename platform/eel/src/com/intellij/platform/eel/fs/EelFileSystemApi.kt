@@ -7,6 +7,7 @@ import com.intellij.platform.eel.EelUserPosixInfo
 import com.intellij.platform.eel.EelUserWindowsInfo
 import com.intellij.platform.eel.fs.EelFileSystemApi.StatError
 import com.intellij.platform.eel.path.EelPath
+import org.jetbrains.annotations.CheckReturnValue
 import java.nio.ByteBuffer
 import kotlin.Throws
 
@@ -41,6 +42,7 @@ interface EelFileSystemApi {
   /**
    * Returns names of files in a directory. If [path] is a symlink, it will be resolved, but no symlinks are resolved among children.
    */
+  @CheckReturnValue
   suspend fun listDirectory(path: EelPath.Absolute): EelResult<
     Collection<String>,
     ListDirectoryError>
@@ -53,6 +55,7 @@ interface EelFileSystemApi {
    * [symlinkPolicy] controls resolution of symlinks among children.
    *  TODO The behaviour is different from resolveSymlinks in [stat]. To be fixed.
    */
+  @CheckReturnValue
   suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: SymlinkPolicy,
@@ -71,6 +74,7 @@ interface EelFileSystemApi {
   /**
    * Resolves all symlinks in the path. Corresponds to realpath(3) on Unix and GetFinalPathNameByHandle on Windows.
    */
+  @CheckReturnValue
   suspend fun canonicalize(path: EelPath.Absolute): EelResult<
     EelPath.Absolute,
     CanonicalizeError>
@@ -86,6 +90,7 @@ interface EelFileSystemApi {
   /**
    * Similar to stat(2) and lstat(2). [symlinkPolicy] has an impact only on [EelFileInfo.type] if [path] points on a symlink.
    */
+  @CheckReturnValue
   suspend fun stat(path: EelPath.Absolute, symlinkPolicy: SymlinkPolicy): EelResult<EelFileInfo, StatError>
 
   /**
@@ -122,6 +127,7 @@ interface EelFileSystemApi {
    * On Unix return true if both paths have the same inode.
    * On Windows some heuristics are used, for more details see https://docs.rs/same-file/1.0.6/same_file/
    */
+  @CheckReturnValue
   suspend fun sameFile(source: EelPath.Absolute, target: EelPath.Absolute): EelResult<
     Boolean,
     SameFileError>
@@ -137,6 +143,7 @@ interface EelFileSystemApi {
   /**
    * Opens the file only for reading
    */
+  @CheckReturnValue
   suspend fun openForReading(path: EelPath.Absolute): EelResult<
     EelOpenedFile.Reader,
     FileReaderError>
@@ -153,6 +160,7 @@ interface EelFileSystemApi {
   /**
    * Opens the file only for writing
    */
+  @CheckReturnValue
   suspend fun openForWriting(
     options: WriteOptions,
   ): EelResult<
@@ -205,6 +213,7 @@ interface EelFileSystemApi {
     interface Other : FileWriterError, EelFsError.Other
   }
 
+  @CheckReturnValue
   suspend fun openForReadingAndWriting(options: WriteOptions): EelResult<EelOpenedFile.ReaderWriter, FileWriterError>
 
   @Throws(DeleteException::class)
@@ -339,6 +348,7 @@ interface EelFileSystemApi {
   @Throws(ChangeAttributesException::class)
   suspend fun changeAttributes(path: EelPath.Absolute, options: ChangeAttributesOptions)
 
+  @CheckReturnValue
   suspend fun createTemporaryDirectory(options: CreateTemporaryDirectoryOptions): EelResult<
     EelPath.Absolute,
     CreateTemporaryDirectoryError>
@@ -376,6 +386,7 @@ interface EelFileSystemApi {
   /**
    * Returns information about a logical disk that contains [path].
    */
+  @CheckReturnValue
   suspend fun getDiskInfo(path: EelPath.Absolute): EelResult<DiskInfo, DiskInfoError>
 
   interface DiskInfo {
@@ -414,6 +425,7 @@ sealed interface EelOpenedFile {
       : CloseException(where, additionalMessage), EelFsError.Other
   }
 
+  @CheckReturnValue
   suspend fun tell(): EelResult<
     Long,
     TellError>
@@ -422,6 +434,7 @@ sealed interface EelOpenedFile {
     interface Other : TellError, EelFsError.Other
   }
 
+  @CheckReturnValue
   suspend fun seek(offset: Long, whence: SeekWhence): EelResult<
     Long,
     SeekError>
@@ -442,6 +455,7 @@ sealed interface EelOpenedFile {
    * Sometimes, the files are inaccessible via [EelFileSystemApi.stat] -- for example, if they are deleted.
    * In this case, one can get the information about the opened file with the use of this function.
    */
+  @CheckReturnValue
   suspend fun stat(): EelResult<EelFileInfo, StatError>
 
 
@@ -458,6 +472,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY read less data than the capacity of the buffer even if it's possible to read the whole requested buffer.
      */
+    @CheckReturnValue
     suspend fun read(buf: ByteBuffer): EelResult<ReadResult, ReadError>
 
     /**
@@ -467,6 +482,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY read less than [offset] bytes even if it's possible to read the whole requested buffer.
      */
+    @CheckReturnValue
     suspend fun read(buf: ByteBuffer, offset: Long): EelResult<ReadResult, ReadError>
 
     sealed interface ReadResult {
@@ -489,6 +505,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
+    @CheckReturnValue
     suspend fun write(buf: ByteBuffer): EelResult<
       Int,
       WriteError>
@@ -498,6 +515,7 @@ sealed interface EelOpenedFile {
      *
      * The implementation MAY write the part of the [buf] even if it's possible to write the whole buffer.
      */
+    @CheckReturnValue
     suspend fun write(buf: ByteBuffer, pos: Long): EelResult<
       Int,
       WriteError>
@@ -573,6 +591,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     class Other(where: EelPath.Absolute, additionalMessage: String) : CreateDirectoryException(where, additionalMessage), EelFsError.Other
   }
 
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
@@ -580,6 +599,7 @@ interface EelFileSystemPosixApi : EelFileSystemApi {
     Collection<Pair<String, EelPosixFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
+  @CheckReturnValue
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelPosixFileInfo,
     StatError>
@@ -642,6 +662,7 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
 
   suspend fun getRootDirectories(): Collection<EelPath.Absolute>
 
+  @CheckReturnValue
   override suspend fun listDirectoryWithAttrs(
     path: EelPath.Absolute,
     symlinkPolicy: EelFileSystemApi.SymlinkPolicy,
@@ -649,6 +670,7 @@ interface EelFileSystemWindowsApi : EelFileSystemApi {
     Collection<Pair<String, EelWindowsFileInfo>>,
     EelFileSystemApi.ListDirectoryError>
 
+  @CheckReturnValue
   override suspend fun stat(path: EelPath.Absolute, symlinkPolicy: EelFileSystemApi.SymlinkPolicy): EelResult<
     EelWindowsFileInfo,
     StatError>

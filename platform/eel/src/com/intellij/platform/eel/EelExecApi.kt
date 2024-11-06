@@ -2,6 +2,7 @@
 package com.intellij.platform.eel
 
 import com.intellij.platform.eel.impl.ExecuteProcessBuilderImpl
+import org.jetbrains.annotations.CheckReturnValue
 
 /**
  * Methods related to process execution: start a process, collect stdin/stdout/stderr of the process, etc.
@@ -17,6 +18,7 @@ interface EelExecApi {
    *
    * See [executeProcessBuilder]
    */
+  @CheckReturnValue
   suspend fun execute(builder: ExecuteProcessOptions): EelResult<EelProcess, ExecuteProcessError>
 
   /** Docs: [executeProcessBuilder] */
@@ -73,12 +75,14 @@ interface EelExecApi {
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
+@CheckReturnValue
 suspend fun EelExecApi.execute(exe: String, setup: (EelExecApi.ExecuteProcessOptions.Builder).() -> Unit): EelResult<EelProcess, EelExecApi.ExecuteProcessError> {
   val builder = EelExecApi.ExecuteProcessOptions.Builder(exe).apply(setup).build()
   return execute(builder)
 }
 
 /** Docs: [EelExecApi.executeProcessBuilder] */
+@CheckReturnValue
 suspend fun EelExecApi.executeProcess(exe: String, vararg args: String): EelResult<EelProcess, EelExecApi.ExecuteProcessError> =
   execute(EelExecApi.ExecuteProcessOptions.Builder(exe).args(listOf(*args)).build())
 

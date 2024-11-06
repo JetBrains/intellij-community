@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ReceiveChannel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.coroutineScope
+import org.jetbrains.annotations.CheckReturnValue
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.time.Duration
@@ -39,6 +40,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @CheckReturnValue
   suspend fun getConnectionToRemotePort(address: HostAddress): EelResult<Connection, EelConnectionError>
 
 
@@ -222,6 +224,7 @@ sealed interface EelTunnelsApi {
    *
    * One should not forget to invoke [Connection.close] when the connection is not needed.
    */
+  @CheckReturnValue
   suspend fun getAcceptorForRemotePort(address: HostAddress): EelResult<ConnectionAcceptor, EelConnectionError>
 
   /**
@@ -284,6 +287,7 @@ interface EelTunnelsPosixApi : EelTunnelsApi {
    * }
    * ```
    */
+  @CheckReturnValue
   suspend fun listenOnUnixSocket(path: CreateFilePath = CreateFilePath.MkTemp()): ListenOnUnixSocketResult
 
   data class ListenOnUnixSocketResult(
