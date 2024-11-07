@@ -96,7 +96,10 @@ class AndroidStudioProperties(home: Path) : BaseIdeaProperties() {
       // Configure the feedback URL displayed for IDE startup failures. This system property should match
       // StartupErrorReporter.STARTUP_ERROR_REPORTING_URL_PROPERTY. Eventually we may want a better landing page (b/295896403).
       "-Dij.startup.error.report.url=https://issuetracker.google.com/issues/new?component=192708",
-    )
+      // Workaround for C2 crashes b/377324522
+      "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::simpleType",
+      "-XX:CompileCommand=exclude,org.jetbrains.kotlin.serialization.deserialization.TypeDeserializer::toAttributes",
+      )
 
     productLayout.productImplementationModules = listOf(
       // From IdeaCommunityProperties:
