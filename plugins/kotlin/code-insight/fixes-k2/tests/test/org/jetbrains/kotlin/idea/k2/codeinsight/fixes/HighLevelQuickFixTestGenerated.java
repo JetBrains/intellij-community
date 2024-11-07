@@ -5311,9 +5311,9 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReflectType.kt");
         }
 
-        @TestMetadata("functionReflectTypeFir.kt")
-        public void testFunctionReflectTypeFir() throws Exception {
-            runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReflectTypeFir.kt");
+        @TestMetadata("functionReflectType2.kt")
+        public void testFunctionReflectType2() throws Exception {
+            runTest("../../../idea/tests/testData/quickfix/typeMismatch/functionReflectType2.kt");
         }
 
         @TestMetadata("functionType.kt")
