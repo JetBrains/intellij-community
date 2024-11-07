@@ -1,5 +1,6 @@
 // COMPILER_ARGUMENTS: -Xmulti-dollar-interpolation
+// PROBLEM: none
 
 fun test() {
-    "\$  ${15 +<caret> 27}"
+    "\$${'$'} not a dollar<caret>"
 }
