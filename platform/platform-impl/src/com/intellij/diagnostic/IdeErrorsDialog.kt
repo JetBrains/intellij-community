@@ -769,10 +769,9 @@ open class IdeErrorsDialog @ApiStatus.Internal constructor(
 
   private fun notifySuccessReportAll() {
     val content = if (application.isInternal)
+      @Suppress("HardCodedStringLiteral")
       gratitudeMessagesInternal.random()
-    else
-      DiagnosticBundle.message("error.report.gratitude")
-
+    else DiagnosticBundle.message("error.report.gratitude")
     val title = DiagnosticBundle.message("error.reports.submitted")
     val notification = Notification("Error Report", title, content, NotificationType.INFORMATION).setImportant(false)
     notification.notify(myProject)
