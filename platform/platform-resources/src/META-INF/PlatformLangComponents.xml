@@ -21,6 +21,8 @@
       serviceImplementation="com.intellij.codeInsight.daemon.impl.WolfTheProblemSolverImpl"
       headlessImplementation="com.intellij.codeInsight.daemon.impl.MockWolfTheProblemSolver"
     />
+    <applicationService serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings"
+                        serviceImplementation="com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsImpl"/>
     <!-- no preload="await" - requested by DaemonListeners -->
     <projectService
       serviceInterface="com.intellij.codeInsight.daemon.DaemonCodeAnalyzer"
