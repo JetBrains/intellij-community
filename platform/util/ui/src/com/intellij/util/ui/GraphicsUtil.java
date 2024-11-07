@@ -3,6 +3,7 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.util.MethodInvocator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,9 @@ import java.awt.image.BufferedImage;
 import java.util.Map;
 
 public final class GraphicsUtil {
-  @SuppressWarnings("SpellCheckingInspection") private static final String DESKTOP_HINTS = "awt.font.desktophints";
+  @SuppressWarnings("SpellCheckingInspection")
+  @ApiStatus.Internal
+  public static final String DESKTOP_HINTS = "awt.font.desktophints";
 
   private static final MethodInvocator ourSafelyGetGraphicsMethod = new MethodInvocator(JComponent.class, "safelyGetGraphics", Component.class);
 

@@ -8893,8 +8893,6 @@ f:com.intellij.ui.dsl.gridLayout.VerticalGaps$Companion
 f:com.intellij.ui.dsl.listCellRenderer.BuilderKt
 - sf:listCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
 - sf:textListCellRenderer(kotlin.jvm.functions.Function1):javax.swing.ListCellRenderer
-f:com.intellij.ui.dsl.listCellRenderer.LcrUtilsKt
-- sf:stripHorizontalInsets(javax.swing.JComponent):V
 com.intellij.ui.dualView.CellWrapper
 - a:wrap(java.awt.Component,javax.swing.JTable,java.lang.Object,Z,Z,I,I,java.lang.Object):V
 com.intellij.ui.dualView.DualTreeElement
