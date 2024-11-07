@@ -31,13 +31,9 @@ import com.intellij.util.concurrency.annotations.RequiresReadLock
 import com.intellij.util.ui.EDT
 import com.intellij.util.ui.UIUtil
 import kotlinx.coroutines.*
-import java.util.Collections
-import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletionException
-import java.util.UUID
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import kotlinx.coroutines.CancellationException
+import java.util.*
+import java.util.concurrent.*
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.nanoseconds
@@ -124,7 +120,7 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
   /**
    * @throws TimeoutException when stopped due to provided [timeout]
    */
-  suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false) {
+  suspend fun waitAnalysisToFinish(timeout: Duration? = 5.minutes, throws: Boolean = false, logsError: Boolean = true) {
     LOG.info("Waiting for code analysis to finish in $timeout")
     val future = CompletableFuture<Unit>()
     if (timeout != null) {
@@ -168,7 +164,9 @@ class CodeAnalysisStateListener(val project: Project, val cs: CoroutineScope) {
       val errorText = "Waiting for highlight to finish took more than $timeout."
       printStatistic()
 
-      LOG.error(errorText)
+      if (logsError) {
+        LOG.error(errorText)
+      }
       if (throws) {
         throw TimeoutException(errorText)
       }
