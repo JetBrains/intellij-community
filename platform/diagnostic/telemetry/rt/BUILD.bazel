@@ -6,7 +6,7 @@ kt_jvm_library(
   name = "diagnostic-telemetry-rt",
   module_name = "intellij.platform.diagnostic.telemetry.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [
@@ -20,7 +20,7 @@ kt_jvm_library(
 kt_jvm_test(
   name = "diagnostic-telemetry-rt_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [

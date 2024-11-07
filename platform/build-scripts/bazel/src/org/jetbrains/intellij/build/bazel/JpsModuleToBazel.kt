@@ -363,7 +363,7 @@ private class BazelBuildFileGenerator(
         }
 
         val data = library.properties.data
-        val bazelLabel = "@maven//:" + "${data.groupId}_${data.artifactId}".replace('.', '_').replace('-', '_')
+        val bazelLabel = "@community_maven//:" + "${data.groupId}_${data.artifactId}".replace('.', '_').replace('-', '_')
         var isProvided = false
         var targetName = data.artifactId
         if (scope == JpsJavaDependencyScope.PROVIDED) {

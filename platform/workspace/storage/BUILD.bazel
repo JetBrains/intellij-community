@@ -15,7 +15,7 @@ kt_jvm_library(
   name = "workspace-storage",
   module_name = "intellij.platform.workspace.storage",
   visibility = ["//visibility:public"],
-  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["gen/**/*.kt", "gen/**/*.java", "src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   deps = [

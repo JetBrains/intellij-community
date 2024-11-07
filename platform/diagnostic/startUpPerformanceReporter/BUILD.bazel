@@ -12,7 +12,7 @@ kt_jvm_library(
   name = "diagnostic-startUpPerformanceReporter",
   module_name = "intellij.platform.diagnostic.startUpPerformanceReporter",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],

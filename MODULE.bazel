@@ -1,14 +1,9 @@
 module(name = "community")
 
+# bazel_dep(name = "rules_jps", version = "0.1")
 bazel_dep(name = "rules_kotlin", version = "2.0.0")
-git_override(
-  module_name = "rules_kotlin",
-  remote = "https://github.com/bazelbuild/rules_kotlin.git",
-  commit = "e51619c824f22180ef0ec2cf79413342db8957b8"
-)
-
 bazel_dep(name = "rules_java", version = "7.12.2")
-bazel_dep(name = "rules_jvm_external", version = "6.4")
+bazel_dep(name = "rules_jvm_external", version = "6.5")
 
 bazel_dep(name = "libraries")
 
@@ -16,7 +11,7 @@ local_path_override(
   module_name = "libraries",
   path = "build/libraries",
 )
-# local_path_override(
-#   module_name = "community",
-#   path = ".",
-# )
+local_path_override(
+  module_name = "community",
+  path = ".",
+)

@@ -4,6 +4,6 @@ load("@rules_java//java:defs.bzl", "java_library")
 java_library(
   name = "customization",
   visibility = ["//visibility:public"],
-  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 ### auto-generated section `build` end

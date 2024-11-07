@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "util-base",
   module_name = "intellij.platform.util.base",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [

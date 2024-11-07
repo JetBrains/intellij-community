@@ -6,7 +6,7 @@ kt_jvm_library(
   name = "java-aetherDependencyResolver",
   module_name = "intellij.java.aetherDependencyResolver",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [
@@ -36,7 +36,7 @@ kt_jvm_library(
 kt_jvm_test(
   name = "java-aetherDependencyResolver_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["testSrc/**/*.kt", "testSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = "//:k11",
   deps = [

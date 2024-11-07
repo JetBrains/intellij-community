@@ -5,7 +5,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 create_kotlinc_options(
@@ -18,7 +18,7 @@ kt_jvm_library(
   name = "diagnostic-telemetry-exporters",
   module_name = "intellij.platform.diagnostic.telemetry.exporters",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j11",
   kotlinc_opts = ":custom",
   plugins = ["@libraries//:serialization_plugin"],

@@ -5,7 +5,7 @@ kt_jvm_library(
   name = "objectSerializer-annotations",
   module_name = "intellij.platform.objectSerializer.annotations",
   visibility = ["//visibility:public"],
-  srcs = glob(["**/*.kt", "**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["**/*.kt", "**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8"
 )

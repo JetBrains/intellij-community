@@ -1,13 +1,14 @@
 module(name = "libraries")
 
 bazel_dep(name = "rules_kotlin", version = "2.0.0")
-bazel_dep(name = "rules_java", version = "8.3.0")
+bazel_dep(name = "rules_java", version = "7.12.2")
 bazel_dep(name = "rules_jvm_external", version = "6.5")
 bazel_dep(name = "bazel_skylib", version = "1.7.1")
 
 maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
 
 maven.install(
+  name = "community_maven",
   repositories = [
     "https://cache-redirector.jetbrains.com/repo1.maven.org/maven2",
     "https://cache-redirector.jetbrains.com/packages.jetbrains.team/maven/p/ij/intellij-dependencies",
@@ -192,4 +193,4 @@ maven.install(
 ### auto-generated section `artifacts` end
 )
 
-use_repo(maven, "maven")
+use_repo(maven, "community_maven")

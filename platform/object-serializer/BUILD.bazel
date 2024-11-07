@@ -6,7 +6,7 @@ kt_jvm_library(
   name = "objectSerializer",
   module_name = "intellij.platform.objectSerializer",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],
@@ -32,7 +32,7 @@ kt_jvm_library(
 kt_jvm_test(
   name = "objectSerializer_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["testInternalSrc/**/*.kt", "testInternalSrc/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j17",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],

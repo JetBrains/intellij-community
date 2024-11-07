@@ -5,7 +5,7 @@ load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 
 java_library(
   name = "resources",
-  resources = glob(["resources/**/*"], allow_empty=True, exclude = ["**/module-info.java"])
+  resources = glob(["resources/**/*"], allow_empty = True, exclude = ["**/module-info.java"])
 )
 
 kt_javac_options(
@@ -22,7 +22,7 @@ kt_jvm_library(
   name = "util-ui",
   module_name = "intellij.platform.util.ui",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = ":custom-javac-options",
   kotlinc_opts = "//:k17",
   plugins = ["@libraries//:serialization_plugin"],

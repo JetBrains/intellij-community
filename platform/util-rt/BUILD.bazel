@@ -1,3 +1,13 @@
+# load("@rules_jps//:rules/jps.bzl", "jps_lib")
+#
+# jps_lib(
+#   name = "util-rt",
+#   module_name = "intellij.platform.util.rt",
+#   visibility = ["//visibility:public"],
+#   srcs = glob(["src/**/*.kt", "src/**/*.java"]),
+#   deps = ["@libraries//:annotations-java5"]
+# )
+
 ### auto-generated section `build` start
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_library")
 load("@rules_kotlin//kotlin:jvm.bzl", "kt_jvm_test")
@@ -6,7 +16,7 @@ kt_jvm_library(
   name = "util-rt",
   module_name = "intellij.platform.util.rt",
   visibility = ["//visibility:public"],
-  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["src/**/*.kt", "src/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = ["@libraries//:annotations-java5"]
@@ -15,7 +25,7 @@ kt_jvm_library(
 kt_jvm_test(
   name = "util-rt_test",
   visibility = ["//visibility:public"],
-  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty=True, exclude = ["**/module-info.java"]),
+  srcs = glob(["test/**/*.kt", "test/**/*.java"], allow_empty = True, exclude = ["**/module-info.java"]),
   javac_opts = "//:j8",
   kotlinc_opts = "//:k8",
   deps = [

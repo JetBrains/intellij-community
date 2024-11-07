@@ -8,7 +8,7 @@ kt_compiler_plugin(
   name = "serialization_plugin",
   id = "org.jetbrains.kotlin.kotlin-serialization-compiler-plugin",
   deps = [
-    "@maven//:org_jetbrains_kotlin_kotlin_serialization_compiler_plugin"
+    "@community_maven//:org_jetbrains_kotlin_kotlin_serialization_compiler_plugin"
   ],
   visibility = ["//visibility:public"]
 )
@@ -23,10 +23,10 @@ java_binary(
 run_binary(
   name = "kotlinx-collections-immutable-jvm-source",
   tool = ":manifest_updater",
-  srcs = ["@maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm"],
+  srcs = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm"],
   outs = ["kotlinx.collections.immutable.jvm.jar"],
   args = [
-    "$(location @maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm)",
+    "$(location @community_maven//:org_jetbrains_kotlinx_kotlinx_collections_immutable_jvm)",
     "$(location :kotlinx.collections.immutable.jvm.jar)",
   ],
 )
@@ -34,10 +34,10 @@ run_binary(
 run_binary(
   name = "bifurcan-source",
   tool = ":manifest_updater",
-  srcs = ["@maven//:io_lacuna_bifurcan"],
+  srcs = ["@community_maven//:io_lacuna_bifurcan"],
   outs = ["bifurcan.jar"],
   args = [
-    "$(location @maven//:io_lacuna_bifurcan)",
+    "$(location @community_maven//:io_lacuna_bifurcan)",
     "$(location :bifurcan.jar)",
   ],
 )
@@ -57,1034 +57,1034 @@ kt_jvm_import(
 ### auto-generated section `maven-libraries` start
 java_library(
   name = "junit",
-  exports = ["@maven//:junit_junit"],
+  exports = ["@community_maven//:junit_junit"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-cli",
-  exports = ["@maven//:commons_cli_commons_cli"],
+  exports = ["@community_maven//:commons_cli_commons_cli"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-compress",
-  exports = ["@maven//:org_apache_commons_commons_compress"],
+  exports = ["@community_maven//:org_apache_commons_commons_compress"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-sdk",
-  exports = ["@maven//:io_opentelemetry_opentelemetry_sdk"],
+  exports = ["@community_maven//:io_opentelemetry_opentelemetry_sdk"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-semconv",
-  exports = ["@maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
+  exports = ["@community_maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlin-stdlib",
-  exports = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"],
+  exports = ["@community_maven//:org_jetbrains_kotlin_kotlin_stdlib"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-core",
-  exports = ["@maven//:com_fasterxml_jackson_core_jackson_core"],
+  exports = ["@community_maven//:com_fasterxml_jackson_core_jackson_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-jr-objects",
-  exports = ["@maven//:com_fasterxml_jackson_jr_jackson_jr_objects"],
+  exports = ["@community_maven//:com_fasterxml_jackson_jr_jackson_jr_objects"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "intellij-deps-fastutil",
-  exports = ["@maven//:org_jetbrains_intellij_deps_fastutil_intellij_deps_fastutil"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_fastutil_intellij_deps_fastutil"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "gson",
-  exports = ["@maven//:com_google_code_gson_gson"],
+  exports = ["@community_maven//:com_google_code_gson_gson"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "protobuf-java",
-  exports = ["@maven//:com_google_protobuf_protobuf_java"],
+  exports = ["@community_maven//:com_google_protobuf_protobuf_java"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "devkit-runtime-module-repository-jps",
-  exports = ["@maven//:com_jetbrains_intellij_devkit_devkit_runtime_module_repository_jps"],
+  exports = ["@community_maven//:com_jetbrains_intellij_devkit_devkit_runtime_module_repository_jps"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-databind",
-  exports = ["@maven//:com_fasterxml_jackson_core_jackson_databind"],
+  exports = ["@community_maven//:com_fasterxml_jackson_core_jackson_databind"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "json-schema-validator",
-  exports = ["@maven//:com_networknt_json_schema_validator"],
+  exports = ["@community_maven//:com_networknt_json_schema_validator"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-serialization-json-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_serialization_json_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-serialization-core-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_core_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_serialization_core_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "okhttp",
-  exports = ["@maven//:com_squareup_okhttp3_okhttp"],
+  exports = ["@community_maven//:com_squareup_okhttp3_okhttp"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "zstd-jni",
-  exports = ["@maven//:com_github_luben_zstd_jni"],
+  exports = ["@community_maven//:com_github_luben_zstd_jni"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-coroutines-core-jvm",
-  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
+  exports = ["@community_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-extension-kotlin",
-  exports = ["@maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
+  exports = ["@community_maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "blockmap",
-  exports = ["@maven//:org_jetbrains_intellij_blockmap"],
+  exports = ["@community_maven//:org_jetbrains_intellij_blockmap"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-io",
-  exports = ["@maven//:commons_io_commons_io"],
+  exports = ["@community_maven//:commons_io_commons_io"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-auth-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_auth_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_auth_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "bcpkix-jdk18on",
-  exports = ["@maven//:org_bouncycastle_bcpkix_jdk18on"],
+  exports = ["@community_maven//:org_bouncycastle_bcpkix_jdk18on"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "format-ripper",
-  exports = ["@maven//:com_jetbrains_format_ripper_format_ripper"],
+  exports = ["@community_maven//:com_jetbrains_format_ripper_format_ripper"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-datatype-joda",
-  exports = ["@maven//:com_fasterxml_jackson_datatype_jackson_datatype_joda"],
+  exports = ["@community_maven//:com_fasterxml_jackson_datatype_jackson_datatype_joda"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "httpmime",
-  exports = ["@maven//:org_apache_httpcomponents_httpmime"],
+  exports = ["@community_maven//:org_apache_httpcomponents_httpmime"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-serialization-kotlinx-json-jvm",
-  exports = ["@maven//:io_ktor_ktor_serialization_kotlinx_json_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_serialization_kotlinx_json_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-coroutines-slf4j",
-  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_slf4j"],
+  exports = ["@community_maven//:com_intellij_platform_kotlinx_coroutines_slf4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-content-negotiation-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_content_negotiation_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_content_negotiation_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "slf4j-api",
-  exports = ["@maven//:org_slf4j_slf4j_api"],
+  exports = ["@community_maven//:org_slf4j_slf4j_api"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "apple-notary-api-kotlin-client",
-  exports = ["@maven//:org_jetbrains_apple_notary_api_kotlin_client"],
+  exports = ["@community_maven//:org_jetbrains_apple_notary_api_kotlin_client"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "structure-intellij",
-  exports = ["@maven//:org_jetbrains_intellij_plugins_structure_intellij"],
+  exports = ["@community_maven//:org_jetbrains_intellij_plugins_structure_intellij"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jaxb-api",
-  exports = ["@maven//:javax_xml_bind_jaxb_api"],
+  exports = ["@community_maven//:javax_xml_bind_jaxb_api"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jaxb-runtime",
-  exports = ["@maven//:org_glassfish_jaxb_jaxb_runtime"],
+  exports = ["@community_maven//:org_glassfish_jaxb_jaxb_runtime"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "javax.activation",
-  exports = ["@maven//:com_sun_activation_javax_activation"],
+  exports = ["@community_maven//:com_sun_activation_javax_activation"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "serviceMessages",
-  exports = ["@maven//:org_jetbrains_teamcity_serviceMessages"],
+  exports = ["@community_maven//:org_jetbrains_teamcity_serviceMessages"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlin-reflect",
-  exports = ["@maven//:org_jetbrains_kotlin_kotlin_reflect"],
+  exports = ["@community_maven//:org_jetbrains_kotlin_kotlin_reflect"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jsoup",
-  exports = ["@maven//:org_jsoup_jsoup"],
+  exports = ["@community_maven//:org_jsoup_jsoup"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "asm-all",
-  exports = ["@maven//:org_jetbrains_intellij_deps_asm_all"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_asm_all"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "tools-java",
-  exports = ["@maven//:org_spdx_tools_java"],
+  exports = ["@community_maven//:org_spdx_tools_java"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "hash4j",
-  exports = ["@maven//:com_dynatrace_hash4j_hash4j"],
+  exports = ["@community_maven//:com_dynatrace_hash4j_hash4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jbr-api",
-  exports = ["@maven//:com_jetbrains_jbr_api"],
+  exports = ["@community_maven//:com_jetbrains_jbr_api"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-serialization-protobuf-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_protobuf_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_serialization_protobuf_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-module-kotlin",
-  exports = ["@maven//:com_fasterxml_jackson_module_jackson_module_kotlin"],
+  exports = ["@community_maven//:com_fasterxml_jackson_module_jackson_module_kotlin"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-dataformat-yaml",
-  exports = ["@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml"],
+  exports = ["@community_maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_yaml"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ion-java",
-  exports = ["@maven//:com_amazon_ion_ion_java"],
+  exports = ["@community_maven//:com_amazon_ion_ion_java"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-core-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_core_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_core_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "snakeyaml",
-  exports = ["@maven//:org_yaml_snakeyaml"],
+  exports = ["@community_maven//:org_yaml_snakeyaml"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "netty-all",
-  exports = ["@maven//:io_netty_netty_all"],
+  exports = ["@community_maven//:io_netty_netty_all"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "netty-tcnative-boringssl-static",
-  exports = ["@maven//:io_netty_netty_tcnative_boringssl_static"],
+  exports = ["@community_maven//:io_netty_netty_tcnative_boringssl_static"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlin-jps-plugin-classpath",
-  exports = ["@maven//:org_jetbrains_kotlin_kotlin_jps_plugin_classpath"],
+  exports = ["@community_maven//:org_jetbrains_kotlin_kotlin_jps_plugin_classpath"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-imaging",
-  exports = ["@maven//:org_jetbrains_intellij_deps_commons_imaging"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_commons_imaging"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jcef",
-  exports = ["@maven//:org_jetbrains_intellij_deps_jcef_jcef"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_jcef_jcef"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "xercesImpl",
-  exports = ["@maven//:xerces_xercesImpl"],
+  exports = ["@community_maven//:xerces_xercesImpl"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "aalto-xml",
-  exports = ["@maven//:com_fasterxml_aalto_xml"],
+  exports = ["@community_maven//:com_fasterxml_aalto_xml"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "annotations",
-  exports = ["@maven//:org_jetbrains_annotations"],
+  exports = ["@community_maven//:org_jetbrains_annotations"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "guava",
-  exports = ["@maven//:com_google_guava_guava"],
+  exports = ["@community_maven//:com_google_guava_guava"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-encoding-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_encoding_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_encoding_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-okhttp-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_okhttp_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_okhttp_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "log4j-over-slf4j",
-  exports = ["@maven//:org_slf4j_log4j_over_slf4j"],
+  exports = ["@community_maven//:org_slf4j_log4j_over_slf4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jna-platform",
-  exports = ["@maven//:net_java_dev_jna_jna_platform"],
+  exports = ["@community_maven//:net_java_dev_jna_jna_platform"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "oro",
-  exports = ["@maven//:oro_oro"],
+  exports = ["@community_maven//:oro_oro"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "lz4-java",
-  exports = ["@maven//:org_lz4_lz4_java"],
+  exports = ["@community_maven//:org_lz4_lz4_java"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-codec",
-  exports = ["@maven//:commons_codec_commons_codec"],
+  exports = ["@community_maven//:commons_codec_commons_codec"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "caffeine",
-  exports = ["@maven//:com_github_ben_manes_caffeine_caffeine"],
+  exports = ["@community_maven//:com_github_ben_manes_caffeine_caffeine"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "groovy",
-  exports = ["@maven//:org_codehaus_groovy_groovy"],
+  exports = ["@community_maven//:org_codehaus_groovy_groovy"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "cli-parser",
-  exports = ["@maven//:com_github_spullara_cli_parser_cli_parser"],
+  exports = ["@community_maven//:com_github_spullara_cli_parser_cli_parser"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-logging",
-  exports = ["@maven//:commons_logging_commons_logging"],
+  exports = ["@community_maven//:commons_logging_commons_logging"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "slf4j-jdk14",
-  exports = ["@maven//:org_slf4j_slf4j_jdk14"],
+  exports = ["@community_maven//:org_slf4j_slf4j_jdk14"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "maven-resolver-provider",
-  exports = ["@maven//:org_apache_maven_maven_resolver_provider"],
+  exports = ["@community_maven//:org_apache_maven_maven_resolver_provider"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "maven-resolver-transport-file",
-  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_transport_file"],
+  exports = ["@community_maven//:org_apache_maven_resolver_maven_resolver_transport_file"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "maven-resolver-transport-http",
-  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_transport_http"],
+  exports = ["@community_maven//:org_apache_maven_resolver_maven_resolver_transport_http"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "maven-resolver-connector-basic",
-  exports = ["@maven//:org_apache_maven_resolver_maven_resolver_connector_basic"],
+  exports = ["@community_maven//:org_apache_maven_resolver_maven_resolver_connector_basic"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "commons-lang3",
-  exports = ["@maven//:org_apache_commons_commons_lang3"],
+  exports = ["@community_maven//:org_apache_commons_commons_lang3"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "plexus-utils",
-  exports = ["@maven//:org_codehaus_plexus_plexus_utils"],
+  exports = ["@community_maven//:org_codehaus_plexus_plexus_utils"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentest4j",
-  exports = ["@maven//:org_opentest4j_opentest4j"],
+  exports = ["@community_maven//:org_opentest4j_opentest4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-api.provided",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_api"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_api"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "assertj-core",
-  exports = ["@maven//:org_assertj_assertj_core"],
+  exports = ["@community_maven//:org_assertj_assertj_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "memoryfilesystem",
-  exports = ["@maven//:com_github_marschall_memoryfilesystem"],
+  exports = ["@community_maven//:com_github_marschall_memoryfilesystem"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-api",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_api"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_api"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "netty-buffer",
-  exports = ["@maven//:io_netty_netty_buffer"],
+  exports = ["@community_maven//:io_netty_netty_buffer"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jaxen",
-  exports = ["@maven//:jaxen_jaxen"],
+  exports = ["@community_maven//:jaxen_jaxen"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jmock",
-  exports = ["@maven//:org_jmock_jmock"],
+  exports = ["@community_maven//:org_jmock_jmock"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "hamcrest",
-  exports = ["@maven//:org_hamcrest_hamcrest"],
+  exports = ["@community_maven//:org_hamcrest_hamcrest"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "imgscalr-lib",
-  exports = ["@maven//:org_imgscalr_imgscalr_lib"],
+  exports = ["@community_maven//:org_imgscalr_imgscalr_lib"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "java-compatibility",
-  exports = ["@maven//:org_jetbrains_intellij_deps_java_compatibility"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_java_compatibility"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jsvg",
-  exports = ["@maven//:com_github_weisj_jsvg"],
+  exports = ["@community_maven//:com_github_weisj_jsvg"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "h2-mvstore",
-  exports = ["@maven//:com_h2database_h2_mvstore"],
+  exports = ["@community_maven//:com_h2database_h2_mvstore"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "velocity-engine-core",
-  exports = ["@maven//:org_apache_velocity_velocity_engine_core"],
+  exports = ["@community_maven//:org_apache_velocity_velocity_engine_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "swingx-core",
-  exports = ["@maven//:org_swinglabs_swingx_core"],
+  exports = ["@community_maven//:org_swinglabs_swingx_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "xstream",
-  exports = ["@maven//:com_thoughtworks_xstream_xstream"],
+  exports = ["@community_maven//:com_thoughtworks_xstream_xstream"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "miglayout-swing",
-  exports = ["@maven//:com_miglayout_miglayout_swing"],
+  exports = ["@community_maven//:com_miglayout_miglayout_swing"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "xz",
-  exports = ["@maven//:org_tukaani_xz"],
+  exports = ["@community_maven//:org_tukaani_xz"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "streamex",
-  exports = ["@maven//:one_util_streamex"],
+  exports = ["@community_maven//:one_util_streamex"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "pty4j",
-  exports = ["@maven//:org_jetbrains_pty4j_pty4j"],
+  exports = ["@community_maven//:org_jetbrains_pty4j_pty4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-html-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_html_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_html_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "winp",
-  exports = ["@maven//:org_jetbrains_intellij_deps_winp_winp"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_winp_winp"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "netty-codec-http2",
-  exports = ["@maven//:io_netty_netty_codec_http2"],
+  exports = ["@community_maven//:io_netty_netty_codec_http2"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "groovy-jsr223",
-  exports = ["@maven//:org_codehaus_groovy_groovy_jsr223"],
+  exports = ["@community_maven//:org_codehaus_groovy_groovy_jsr223"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "groovy-json",
-  exports = ["@maven//:org_codehaus_groovy_groovy_json"],
+  exports = ["@community_maven//:org_codehaus_groovy_groovy_json"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "groovy-templates",
-  exports = ["@maven//:org_codehaus_groovy_groovy_templates"],
+  exports = ["@community_maven//:org_codehaus_groovy_groovy_templates"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "groovy-xml",
-  exports = ["@maven//:org_codehaus_groovy_groovy_xml"],
+  exports = ["@community_maven//:org_codehaus_groovy_groovy_xml"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "marketplace-zip-signer",
-  exports = ["@maven//:org_jetbrains_marketplace_zip_signer"],
+  exports = ["@community_maven//:org_jetbrains_marketplace_zip_signer"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "classgraph",
-  exports = ["@maven//:io_github_classgraph_classgraph"],
+  exports = ["@community_maven//:io_github_classgraph_classgraph"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "icu4j",
-  exports = ["@maven//:com_ibm_icu_icu4j"],
+  exports = ["@community_maven//:com_ibm_icu_icu4j"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jgoodies-common",
-  exports = ["@maven//:com_jgoodies_jgoodies_common"],
+  exports = ["@community_maven//:com_jgoodies_jgoodies_common"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "forms",
-  exports = ["@maven//:com_jgoodies_forms"],
+  exports = ["@community_maven//:com_jgoodies_forms"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jvm-native-trusted-roots",
-  exports = ["@maven//:org_jetbrains_nativecerts_jvm_native_trusted_roots"],
+  exports = ["@community_maven//:org_jetbrains_nativecerts_jvm_native_trusted_roots"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "HdrHistogram",
-  exports = ["@maven//:org_hdrhistogram_HdrHistogram"],
+  exports = ["@community_maven//:org_hdrhistogram_HdrHistogram"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rwmutex-idea",
-  exports = ["@maven//:org_jetbrains_intellij_deps_rwmutex_idea"],
+  exports = ["@community_maven//:org_jetbrains_intellij_deps_rwmutex_idea"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jetCheck",
-  exports = ["@maven//:org_jetbrains_jetCheck"],
+  exports = ["@community_maven//:org_jetbrains_jetCheck"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-platform-launcher.provided",
-  exports = ["@maven//:org_junit_platform_junit_platform_launcher"],
+  exports = ["@community_maven//:org_junit_platform_junit_platform_launcher"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-params.provided",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_params"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_params"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "mockwebserver",
-  exports = ["@maven//:com_squareup_okhttp3_mockwebserver"],
+  exports = ["@community_maven//:com_squareup_okhttp3_mockwebserver"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlin-stdlib.provided",
-  exports = ["@maven//:org_jetbrains_kotlin_kotlin_stdlib"],
+  exports = ["@community_maven//:org_jetbrains_kotlin_kotlin_stdlib"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-coroutines-core-jvm.provided",
-  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
+  exports = ["@community_maven//:com_intellij_platform_kotlinx_coroutines_core_jvm"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-sdk.provided",
-  exports = ["@maven//:io_opentelemetry_opentelemetry_sdk"],
+  exports = ["@community_maven//:io_opentelemetry_opentelemetry_sdk"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-semconv.provided",
-  exports = ["@maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
+  exports = ["@community_maven//:io_opentelemetry_semconv_opentelemetry_semconv"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-extension-kotlin.provided",
-  exports = ["@maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
+  exports = ["@community_maven//:io_opentelemetry_opentelemetry_extension_kotlin"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotest-assertions-core-jvm",
-  exports = ["@maven//:io_kotest_kotest_assertions_core_jvm"],
+  exports = ["@community_maven//:io_kotest_kotest_assertions_core_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "mockito-core",
-  exports = ["@maven//:org_mockito_mockito_core"],
+  exports = ["@community_maven//:org_mockito_mockito_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "mockito-junit-jupiter",
-  exports = ["@maven//:org_mockito_mockito_junit_jupiter"],
+  exports = ["@community_maven//:org_mockito_mockito_junit_jupiter"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-engine",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_engine"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_engine"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-params",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_params"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_params"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jediterm-core",
-  exports = ["@maven//:org_jetbrains_jediterm_jediterm_core"],
+  exports = ["@community_maven//:org_jetbrains_jediterm_jediterm_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jediterm-ui",
-  exports = ["@maven//:org_jetbrains_jediterm_jediterm_ui"],
+  exports = ["@community_maven//:org_jetbrains_jediterm_jediterm_ui"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rd-core",
-  exports = ["@maven//:com_jetbrains_rd_rd_core"],
+  exports = ["@community_maven//:com_jetbrains_rd_rd_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "xml-resolver",
-  exports = ["@maven//:xml_resolver_xml_resolver"],
+  exports = ["@community_maven//:xml_resolver_xml_resolver"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "gec-spell-engine-local-jvm",
-  exports = ["@maven//:ai_grazie_spell_gec_spell_engine_local_jvm"],
+  exports = ["@community_maven//:ai_grazie_spell_gec_spell_engine_local_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "nlp-detect-jvm",
-  exports = ["@maven//:ai_grazie_nlp_nlp_detect_jvm"],
+  exports = ["@community_maven//:ai_grazie_nlp_nlp_detect_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "hunspell-en-jvm",
-  exports = ["@maven//:ai_grazie_spell_hunspell_en_jvm"],
+  exports = ["@community_maven//:ai_grazie_spell_hunspell_en_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "utils-lucene-lt-compatibility",
-  exports = ["@maven//:ai_grazie_utils_utils_lucene_lt_compatibility"],
+  exports = ["@community_maven//:ai_grazie_utils_utils_lucene_lt_compatibility"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "java-string-similarity",
-  exports = ["@maven//:info_debatty_java_string_similarity"],
+  exports = ["@community_maven//:info_debatty_java_string_similarity"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "lucene-core",
-  exports = ["@maven//:org_apache_lucene_lucene_core"],
+  exports = ["@community_maven//:org_apache_lucene_lucene_core"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "lucene-analysis-common",
-  exports = ["@maven//:org_apache_lucene_lucene_analysis_common"],
+  exports = ["@community_maven//:org_apache_lucene_lucene_analysis_common"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "markdown-jvm",
-  exports = ["@maven//:org_jetbrains_markdown_jvm"],
+  exports = ["@community_maven//:org_jetbrains_markdown_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "proxy-vole",
-  exports = ["@maven//:org_bidib_com_github_markusbernhardt_proxy_vole"],
+  exports = ["@community_maven//:org_bidib_com_github_markusbernhardt_proxy_vole"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rhino-runtime",
-  exports = ["@maven//:org_mozilla_rhino_runtime"],
+  exports = ["@community_maven//:org_mozilla_rhino_runtime"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "annotations-java5",
-  exports = ["@maven//:org_jetbrains_annotations_java5"],
+  exports = ["@community_maven//:org_jetbrains_annotations_java5"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-coroutines-debug",
-  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_debug"],
+  exports = ["@community_maven//:com_intellij_platform_kotlinx_coroutines_debug"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "javax.annotation-api",
-  exports = ["@maven//:javax_annotation_javax_annotation_api"],
+  exports = ["@community_maven//:javax_annotation_javax_annotation_api"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "qdox",
-  exports = ["@maven//:com_thoughtworks_qdox_qdox"],
+  exports = ["@community_maven//:com_thoughtworks_qdox_qdox"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jps-javac-extension",
-  exports = ["@maven//:org_jetbrains_jps_jps_javac_extension"],
+  exports = ["@community_maven//:org_jetbrains_jps_jps_javac_extension"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-metadata-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_metadata_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "netty-codec-protobuf",
-  exports = ["@maven//:io_netty_netty_codec_protobuf"],
+  exports = ["@community_maven//:io_netty_netty_codec_protobuf"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-vintage-engine.provided",
-  exports = ["@maven//:org_junit_vintage_junit_vintage_engine"],
+  exports = ["@community_maven//:org_junit_vintage_junit_vintage_engine"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "junit-jupiter-engine.provided",
-  exports = ["@maven//:org_junit_jupiter_junit_jupiter_engine"],
+  exports = ["@community_maven//:org_junit_jupiter_junit_jupiter_engine"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ant.provided",
-  exports = ["@maven//:org_apache_ant_ant"],
+  exports = ["@community_maven//:org_apache_ant_ant"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "opentelemetry-exporter-otlp-common",
-  exports = ["@maven//:io_opentelemetry_opentelemetry_exporter_otlp_common"],
+  exports = ["@community_maven//:io_opentelemetry_opentelemetry_exporter_otlp_common"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kryo5",
-  exports = ["@maven//:com_esotericsoftware_kryo5"],
+  exports = ["@community_maven//:com_esotericsoftware_kryo5"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jcip-annotations",
-  exports = ["@maven//:net_jcip_jcip_annotations"],
+  exports = ["@community_maven//:net_jcip_jcip_annotations"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "extension",
-  exports = ["@maven//:com_jetbrains_mlapi_extension"],
+  exports = ["@community_maven//:com_jetbrains_mlapi_extension"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "automaton",
-  exports = ["@maven//:dk_brics_automaton"],
+  exports = ["@community_maven//:dk_brics_automaton"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ap-validation",
-  exports = ["@maven//:com_jetbrains_fus_reporting_ap_validation"],
+  exports = ["@community_maven//:com_jetbrains_fus_reporting_ap_validation"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rd-framework",
-  exports = ["@maven//:com_jetbrains_rd_rd_framework"],
+  exports = ["@community_maven//:com_jetbrains_rd_rd_framework"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rd-text",
-  exports = ["@maven//:com_jetbrains_rd_rd_text"],
+  exports = ["@community_maven//:com_jetbrains_rd_rd_text"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rd-swing",
-  exports = ["@maven//:com_jetbrains_rd_rd_swing"],
+  exports = ["@community_maven//:com_jetbrains_rd_rd_swing"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-datetime-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_datetime_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_datetime_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "snakeyaml-engine",
-  exports = ["@maven//:org_snakeyaml_snakeyaml_engine"],
+  exports = ["@community_maven//:org_snakeyaml_snakeyaml_engine"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-serialization-cbor-jvm",
-  exports = ["@maven//:org_jetbrains_kotlinx_kotlinx_serialization_cbor_jvm"],
+  exports = ["@community_maven//:org_jetbrains_kotlinx_kotlinx_serialization_cbor_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "jackson-dataformat-cbor",
-  exports = ["@maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_cbor"],
+  exports = ["@community_maven//:com_fasterxml_jackson_dataformat_jackson_dataformat_cbor"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlin-test",
-  exports = ["@maven//:org_jetbrains_kotlin_kotlin_test"],
+  exports = ["@community_maven//:org_jetbrains_kotlin_kotlin_test"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "kotlinx-coroutines-test-jvm",
-  exports = ["@maven//:com_intellij_platform_kotlinx_coroutines_test_jvm"],
+  exports = ["@community_maven//:com_intellij_platform_kotlinx_coroutines_test_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rhizomedb-compiler-plugin.provided",
-  exports = ["@maven//:jetbrains_fleet_rhizomedb_compiler_plugin"],
+  exports = ["@community_maven//:jetbrains_fleet_rhizomedb_compiler_plugin"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-network-tls-jvm",
-  exports = ["@maven//:io_ktor_ktor_network_tls_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_network_tls_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "ktor-client-java-jvm",
-  exports = ["@maven//:io_ktor_ktor_client_java_jvm"],
+  exports = ["@community_maven//:io_ktor_ktor_client_java_jvm"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "dd-plist",
-  exports = ["@maven//:com_googlecode_plist_dd_plist"],
+  exports = ["@community_maven//:com_googlecode_plist_dd_plist"],
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "rpc-compiler-plugin.provided",
-  exports = ["@maven//:com_jetbrains_fleet_rpc_compiler_plugin"],
+  exports = ["@community_maven//:com_jetbrains_fleet_rpc_compiler_plugin"],
   neverlink = True,
   visibility = ["//visibility:public"]
 )
 
 java_library(
   name = "cglib-nodep",
-  exports = ["@maven//:cglib_cglib_nodep"],
+  exports = ["@community_maven//:cglib_cglib_nodep"],
   visibility = ["//visibility:public"]
 )
 ### auto-generated section `maven-libraries` end
