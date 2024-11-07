@@ -1,10 +1,7 @@
 // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.actions;
 
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPromoter;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.actions.NextWordWithSelectionAction;
 import com.intellij.openapi.editor.actions.PreviousWordWithSelectionAction;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -14,11 +11,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-
-import static com.intellij.util.containers.ContainerUtil.filter;
 
 @ApiStatus.Internal
 public final class VcsActionPromoter implements ActionPromoter {
@@ -32,23 +25,30 @@ public final class VcsActionPromoter implements ActionPromoter {
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.ShowDiffChangedLines", "Diff.ShowDiff");
 
-    Set<AnAction> promoted = new HashSet<>(filter(actions, action ->
-      action instanceof CommitActionsPanel.DefaultCommitAction ||
-      isCommitMessageEditor(context) && (
+    boolean isInMessageEditor = isCommitMessageEditor(context);
+    for (AnAction action : actions) {
+      boolean isMessageAction =
         action instanceof ShowMessageHistoryAction ||
         action instanceof PreviousWordWithSelectionAction ||
-        action instanceof NextWordWithSelectionAction
-      )
-    ));
-
-    reorderedActions.removeAll(promoted);
-    reorderedActions.addAll(0, promoted);
-
+        action instanceof NextWordWithSelectionAction;
+      boolean promote =
+        isMessageAction && isInMessageEditor ||
+        action instanceof CommitActionsPanel.DefaultCommitAction;
+      if (promote) {
+        reorderedActions.remove(action);
+        reorderedActions.add(0, action);
+      }
+      else if (isMessageAction) {
+        reorderedActions.remove(action);
+        reorderedActions.add(action);
+      }
+    }
     return reorderedActions;
   }
 
   private static boolean isCommitMessageEditor(@NotNull DataContext context) {
-    return context.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) != null;
+    return context.getData(CommonDataKeys.EDITOR) != null &&
+           context.getData(VcsDataKeys.COMMIT_MESSAGE_CONTROL) != null;
   }
 
   /**
