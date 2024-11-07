@@ -3,17 +3,22 @@ package org.jetbrains.plugins.gradle.service.execution
 
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
-import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec.Companion.create
+import com.intellij.openapi.externalSystem.util.task.TaskExecutionSpec
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.registry.Registry
 import org.gradle.internal.buildconfiguration.DaemonJvmPropertiesConfigurator
 import org.gradle.util.GradleVersion
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.gradle.properties.GradleDaemonJvmPropertiesFile
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.gradle.util.cmd.node.GradleCommandLine
 import java.nio.file.Path
 
 private val MIN_VERSION_SUPPORTING_DAEMON_TOOLCHAIN_VERSION_CRITERIA: GradleVersion = GradleVersion.version("8.8")
@@ -23,6 +28,9 @@ private val MIN_VERSION_REQUIRING_DAEMON_TOOLCHAIN_CRITERIA: GradleVersion = Gra
 private const val UPDATE_DAEMON_JVM_TASK_VERSION_OPTION= "--jvm-version"
 private const val UPDATE_DAEMON_JVM_TASK_VENDOR_OPTION= "--jvm-vendor"
 
+private val UPDATE_DAEMON_JVM_TASK = Key.create<Boolean>("UPDATE_DAEMON_JVM_TASK")
+
+@ApiStatus.Internal
 object GradleDaemonJvmHelper {
 
   @JvmStatic
@@ -50,9 +58,15 @@ object GradleDaemonJvmHelper {
     }
 
   @JvmStatic
-  fun isExecutingUpdateDaemonJvmTask(tasks: List<String>): Boolean {
-    val commandLine: GradleCommandLine = parseCommandLine(tasks, null)
-    return commandLine.tasks.tasks.any { it.name == DaemonJvmPropertiesConfigurator.TASK_NAME}
+  fun isExecutingUpdateDaemonJvmTask(settings: GradleExecutionSettings): Boolean {
+    return settings.getUserData(UPDATE_DAEMON_JVM_TASK) == true
+  }
+
+  @JvmStatic
+  fun getGradleJvmForUpdateDaemonJvmTask(id: ExternalSystemTaskId): String? {
+    val project = id.findProject() ?: return null
+    val projectRootManager = ProjectRootManager.getInstance(project)
+    return projectRootManager.projectSdk?.homePath
   }
 
   @JvmStatic
@@ -72,10 +86,16 @@ object GradleDaemonJvmHelper {
       }
     }
 
-    create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
+    val taskUserData = UserDataHolderBase().apply {
+      putUserData(UPDATE_DAEMON_JVM_TASK, true)
+    }
+
+    val executionSpec = TaskExecutionSpec.create(project, GradleConstants.SYSTEM_ID, DefaultRunExecutor.EXECUTOR_ID, taskSettings)
       .withProgressExecutionMode(executionMode)
       .withActivateToolWindowBeforeRun(true)
+      .withUserData(taskUserData)
       .build()
-      .also { ExternalSystemUtil.runTask(it) }
+
+    ExternalSystemUtil.runTask(executionSpec)
   }
 }
