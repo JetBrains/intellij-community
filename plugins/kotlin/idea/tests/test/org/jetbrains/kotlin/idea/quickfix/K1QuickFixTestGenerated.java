@@ -17941,6 +17941,11 @@ public abstract class K1QuickFixTestGenerated extends AbstractK1QuickFixTest {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("castFunctionParameter.kt")
+            public void testCastFunctionParameter() throws Exception {
+                runTest("testData/quickfix/typeMismatch/casts/castFunctionParameter.kt");
+            }
+
             @TestMetadata("castQualifiedArgument.kt")
             public void testCastQualifiedArgument() throws Exception {
                 runTest("testData/quickfix/typeMismatch/casts/castQualifiedArgument.kt");
