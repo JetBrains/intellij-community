@@ -38,9 +38,9 @@ def __write_to_csv(table, null_value="null", float_precision=None):
         if value is None:
             return null_value
         elif isinstance(value, float) and float_precision is not None:
-            return f"{value:.{float_precision}f}"
+            return "{:.{}f}".format(value, float_precision)
         elif isinstance(value, dict):
-            return "{" + ", ".join(f"{k}: {serialize_nested(v, null_value, float_precision)}" for k, v in value.items()) + "}"
+            return "{" + ", ".join("{}: {}".format(k, serialize_nested(v, null_value, float_precision)) for k, v in value.items()) + "}"
         elif isinstance(value, list):
             return "[" + ", ".join(serialize_nested(v, null_value, float_precision) for v in value) + "]"
         else:

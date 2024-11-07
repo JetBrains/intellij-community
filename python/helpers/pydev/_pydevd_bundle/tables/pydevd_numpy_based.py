@@ -183,7 +183,7 @@ class _NpTable:
 
     def _collect_col_names_csv(self):
         if self.type == ONE_DIM:
-            return f'{CSV_FORMAT_SEPARATOR}0'
+            return '{}0'.format(CSV_FORMAT_SEPARATOR)
 
         # TWO_DIM
         return CSV_FORMAT_SEPARATOR + CSV_FORMAT_SEPARATOR.join(['{}'.format(i) for i in range(self.array.shape[1])])
