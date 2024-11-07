@@ -31,9 +31,11 @@ data class WslPath internal constructor(private val prefix: String = WslConstant
     fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
       val path = toSystemDependentName(windowsUncPath, '\\')
-      return parseWindowsUncPath(path, WslConstants.UNC_PREFIX)
-             ?: parseWindowsUncPath(path, "\\\\wsl.localhost\\")
-             ?: parseWindowsUncPath(path, "\\\\wsl$\\")
+
+      val legacyWslPrefix = WslConstants.UNC_PREFIX
+      val modernWslPrefix = WSLUtil.getUncPrefix()
+
+      return parseWindowsUncPath(path, legacyWslPrefix) ?: parseWindowsUncPath(path, modernWslPrefix)
     }
 
     private fun parseWindowsUncPath(path: String, prefix: String): WslPath? {
