@@ -120,6 +120,10 @@ class MPSProperties : JetBrainsProductProperties() {
         FileSet(Path.of("$communityHome/bin/mac/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/mac/"))
         FileSet(Path.of("$communityHome/bin/win/")).includeAll().copyToDir(Path.of("$targetDirectory/bin/win/"))
 
+        // copy Window restarter
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.x64), Path.of("$targetDirectory/bin/win/amd64"))
+        copyFileToDir(NativeBinaryDownloader.getRestarter(context, OsFamily.WINDOWS, JvmArchitecture.aarch64), Path.of("$targetDirectory/bin/win/aarch64"))
+
         // copy mac executable
         Files.createDirectories(Path.of("$targetDirectory/build/resources"))
         val (execPath, _) = NativeBinaryDownloader.getLauncher(context, OsFamily.MACOS, context.options.targetArch ?: JvmArchitecture.x64)
