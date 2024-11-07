@@ -12,8 +12,9 @@
     <orderEntry type="module" module-name="intellij.devkit" />
     <orderEntry type="module" module-name="intellij.devkit.core" />
     <orderEntry type="module" module-name="intellij.devkit.testFramework" />
-    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" />
+    <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.devkit" />
+    <orderEntry type="module" module-name="kotlin.base.plugin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.base.test" scope="TEST" />
   </component>
 </module>
