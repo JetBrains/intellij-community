@@ -16,32 +16,15 @@ import org.jetbrains.annotations.ApiStatus
 abstract class AbstractCommitMessagePolicy(
   protected val project: Project,
   protected val commitMessageUi: CommitMessageUi,
-): Disposable {
-  protected abstract val delayedMessagesProvidersSupport: DelayedMessageProvidersSupport?
-
+) : Disposable {
   protected val vcsConfiguration: VcsConfiguration get() = VcsConfiguration.getInstance(project)
 
-  /**
-   * Indicates whether the commit message field should be reset after the successful commit
-   *
-   * @see [onAfterCommit]
-   */
-  protected open val clearMessageAfterCommit: Boolean get() = vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE
-
-  protected val currentMessageIsDisposable: Boolean
-    get() {
-      val lastSetMessage = lastSetMessage
-      return lastSetMessage?.disposable == true && lastSetMessage.text.trim() == commitMessageUi.text.trim()
-    }
-
-  private var lastSetMessage: CommitMessage? = null
+  private var lastSetMessage: CommitMessage? = null // last message that was not a user input
 
   fun init() {
-    delayedMessagesProvidersSupport?.let { listenForDelayedProviders(commitMessageUi, it) }
+    listenForDelayedProviders(commitMessageUi, this)
     setCommitMessage(getInitialMessage() ?: CommitMessage.EMPTY)
   }
-
-  abstract fun getInitialMessage(): CommitMessage?
 
   /**
    * Called before execution of the commit session.
@@ -54,11 +37,12 @@ abstract class AbstractCommitMessagePolicy(
     }
   }
 
-  fun onAfterCommit() {
+  open fun onAfterCommit() {
     if (clearMessageAfterCommit) {
       setCommitMessage(CommitMessage.EMPTY)
       cleanupStoredMessage()
-    } else {
+    }
+    else {
       val newMessage = getNewMessageAfterCommit()
       if (newMessage != null) {
         setCommitMessage(newMessage)
@@ -66,64 +50,91 @@ abstract class AbstractCommitMessagePolicy(
     }
   }
 
+  abstract override fun dispose()
+
   /**
-   * Called only if [clearMessageAfterCommit] returned false
+   * Indicates whether the commit message field should be reset after the successful commit
    *
-   * @return null if commit field should remain as is or new value for the commit message otherwise
+   * @see [onAfterCommit]
    */
-  open fun getNewMessageAfterCommit(): CommitMessage? = null
-
-  /**
-   * Called if the commit message should be removed from the storage
-   */
-  protected abstract fun cleanupStoredMessage()
-
-  protected fun getCommitMessageFromProvider(changeList: LocalChangeList?): CommitMessage? {
-    DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
-      if (provider.enabled(project)) {
-        val message = provider.getMessage(project)
-        if (message != null) return message
-      }
-    }
-
-    CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
-      val changeListOrDefault = changeList
-                                ?: ChangeListManager.getInstance(project).defaultChangeList // always blank, required for 'CommitMessageProvider'
-      val legacyProviderMessage = provider.getCommitMessage(changeListOrDefault, project)
-      if (legacyProviderMessage != null) return CommitMessage(legacyProviderMessage)
-    }
-
-    return null
-  }
+  protected open val clearMessageAfterCommit: Boolean get() = vcsConfiguration.CLEAR_INITIAL_COMMIT_MESSAGE
 
   protected fun setCommitMessage(message: CommitMessage) {
     lastSetMessage = message
     commitMessageUi.text = message.text
   }
 
-  private fun listenForDelayedProviders(commitMessageUi: CommitMessageUi, delayedCommitMessagesProvidersSupport: DelayedMessageProvidersSupport) {
-    DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.extensionList.forEach { extension ->
-      if (extension.enabled(project)) {
-        extension.initAsyncMessageUpdate(project, object : DefaultCommitMessagePolicy.CommitMessageController {
-          override fun setCommitMessage(message: CommitMessage) {
-            if (!message.disposable) {
-              delayedMessagesProvidersSupport?.saveCurrentCommitMessage()
-            }
-            this@AbstractCommitMessagePolicy.setCommitMessage(message)
-          }
+  protected val currentMessageIsDisposable: Boolean
+    get() {
+      val lastSetMessage = lastSetMessage ?: return false
+      return lastSetMessage.disposable == true && lastSetMessage.text.trim() == commitMessageUi.text.trim()
+    }
 
-          override fun tryRestoreCommitMessage() {
-            if (currentMessageIsDisposable) {
-              this@AbstractCommitMessagePolicy.setCommitMessage(delayedCommitMessagesProvidersSupport.restoredCommitMessage() ?: CommitMessage.EMPTY)
-            }
-          }
-        }, this)
+
+  protected abstract val delayedMessagesProvidersSupport: DelayedMessageProvidersSupport?
+
+  protected abstract fun getInitialMessage(): CommitMessage?
+
+  /**
+   * Called only if [clearMessageAfterCommit] returned false
+   *
+   * @return null if commit field should remain as is or new value for the commit message otherwise
+   */
+  protected abstract fun getNewMessageAfterCommit(): CommitMessage?
+
+  /**
+   * Called if the commit message should be removed from the storage
+   */
+  protected abstract fun cleanupStoredMessage()
+
+  companion object {
+    private fun listenForDelayedProviders(
+      commitMessageUi: CommitMessageUi,
+      messagePolicy: AbstractCommitMessagePolicy,
+    ) {
+      val delayedMessageSupport = messagePolicy.delayedMessagesProvidersSupport ?: return
+
+      val controller = DelayedMessageController(messagePolicy, delayedMessageSupport)
+      DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
+        extension.initAsyncMessageUpdate(messagePolicy.project, controller, messagePolicy)
+      }
+
+      CommitMessageProvider.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
+        if (extension is DelayedCommitMessageProvider) {
+          extension.init(messagePolicy.project, commitMessageUi, messagePolicy)
+        }
       }
     }
 
-    CommitMessageProvider.EXTENSION_POINT_NAME.forEachExtensionSafe { extension ->
-      if (extension is DelayedCommitMessageProvider) {
-        extension.init(project, commitMessageUi, this)
+    fun getCommitMessageFromProvider(project: Project, changeList: LocalChangeList): CommitMessage? {
+      DefaultCommitMessagePolicy.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
+        if (provider.enabled(project)) {
+          val message = provider.getMessage(project)
+          if (message != null) return message
+        }
+      }
+
+      CommitMessageProvider.EXTENSION_POINT_NAME.extensionList.forEach { provider ->
+        val legacyProviderMessage = provider.getCommitMessage(changeList, project)
+        if (legacyProviderMessage != null) return CommitMessage(legacyProviderMessage)
+      }
+
+      return null
+    }
+  }
+
+  private class DelayedMessageController(
+    val messagePolicy: AbstractCommitMessagePolicy,
+    val delayedMessageSupport: DelayedMessageProvidersSupport,
+  ) : DefaultCommitMessagePolicy.CommitMessageController {
+    override fun setCommitMessage(message: CommitMessage) {
+      delayedMessageSupport.saveCurrentCommitMessage()
+      messagePolicy.setCommitMessage(message)
+    }
+
+    override fun tryRestoreCommitMessage() {
+      if (messagePolicy.currentMessageIsDisposable) {
+        messagePolicy.setCommitMessage(delayedMessageSupport.restoredCommitMessage() ?: CommitMessage.EMPTY)
       }
     }
   }
@@ -139,11 +150,29 @@ abstract class ChangeListCommitMessagePolicy(
   project: Project,
   commitMessageUi: CommitMessageUi,
   initialChangeList: LocalChangeList,
-): AbstractCommitMessagePolicy(project, commitMessageUi) {
+) : AbstractCommitMessagePolicy(project, commitMessageUi) {
   protected val changeListManager: ChangeListManager get() = ChangeListManager.getInstance(project)
+
   protected var currentChangeList: LocalChangeList = initialChangeList
 
-  override fun getInitialMessage(): CommitMessage? = getCommitMessageForCurrentList()
+  override fun onBeforeCommit() {
+    super.onBeforeCommit()
+    saveMessageToChangeListDescription()
+  }
+
+  override fun dispose() {
+    if (changeListManager.areChangeListsEnabled()) {
+      saveMessageToChangeListDescription()
+    }
+    else {
+      // Disposal of ChangesViewCommitWorkflowHandler on 'com.intellij.vcs.commit.CommitMode.ExternalCommitMode' enabling.
+    }
+  }
+
+
+  override fun cleanupStoredMessage() {
+    changeListManager.editComment(currentChangeList.name, "")
+  }
 
   /**
    * Called when a new changelist is selected or the current changelist is updated
@@ -152,44 +181,29 @@ abstract class ChangeListCommitMessagePolicy(
     val oldChangeList = currentChangeList
     currentChangeList = newChangeList
     if (oldChangeList.id != newChangeList.id) {
-      val commitMessage = commitMessageUi.text
-      changeListManager.editComment(oldChangeList.name, commitMessage)
-      setCommitMessage(getMessageForNewChangeList())
+      changeListManager.editComment(oldChangeList.name, commitMessageUi.text)
+
+      val newMessage = getCommitMessageForCurrentList() ?: CommitMessage.EMPTY
+      setCommitMessage(newMessage)
     }
   }
 
-  /**
-   * @return new commit message after [currentChangeList] having new [LocalChangeList.getId] was set
-   */
-  protected open fun getMessageForNewChangeList(): CommitMessage = getCommitMessageForCurrentList() ?: CommitMessage.EMPTY
-
-  override fun onBeforeCommit() {
-    super.onBeforeCommit()
-    saveMessageToChangeListDescription()
-  }
-
-  override fun cleanupStoredMessage() {
-    editCurrentChangeListComment("")
-  }
 
   protected fun saveMessageToChangeListDescription() {
     if (!currentMessageIsDisposable) {
-      editCurrentChangeListComment(commitMessageUi.text)
+      changeListManager.editComment(currentChangeList.name, commitMessageUi.text)
     }
   }
 
-  private fun editCurrentChangeListComment(newComment: String) {
-    changeListManager.editComment(currentChangeList.name, newComment)
-  }
-
   protected fun getCommitMessageForCurrentList(): CommitMessage? {
-    val providerMessage = getCommitMessageFromProvider(currentChangeList)
+    val providerMessage = getCommitMessageFromProvider(project, currentChangeList)
     if (providerMessage != null) return providerMessage
 
     val changeListDescription = currentChangeList.comment
     if (!changeListDescription.isNullOrBlank()) return CommitMessage(changeListDescription)
 
-    return if (!currentChangeList.hasDefaultName()) CommitMessage(currentChangeList.name) else null
+    if (currentChangeList.hasDefaultName()) return null
+    return CommitMessage(currentChangeList.name)
   }
 }
 

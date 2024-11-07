@@ -14,17 +14,10 @@ internal class ChangesViewCommitMessagePolicy(
       saveMessageToChangeListDescription()
     }
 
-    override fun restoredCommitMessage(): CommitMessage? = getCommitMessageForCurrentList()
+    override fun restoredCommitMessage(): CommitMessage? = getInitialMessage() // FIXME: why not getNewMessageAfterCommit ?
   }
 
-  override fun getNewMessageAfterCommit(): CommitMessage? = getCommitMessageFromProvider(currentChangeList)
+  override fun getInitialMessage(): CommitMessage? = getCommitMessageForCurrentList()
 
-  override fun dispose() {
-    if (changeListManager.areChangeListsEnabled()) {
-      saveMessageToChangeListDescription()
-    }
-    else {
-      // Disposal of ChangesViewCommitWorkflowHandler on 'com.intellij.vcs.commit.CommitMode.ExternalCommitMode' enabling.
-    }
-  }
+  override fun getNewMessageAfterCommit(): CommitMessage? = getCommitMessageFromProvider(project, currentChangeList) // FIXME: why is it not the same as initial?
 }

@@ -352,6 +352,8 @@ private class ChunkCommitMessagePolicy(
 
   override fun getInitialMessage() = CommitMessage(vcsConfiguration.tempChunkCommitMessage)
 
+  override fun getNewMessageAfterCommit(): com.intellij.vcs.commit.CommitMessage? = null
+
   override fun cleanupStoredMessage() {
     saveTempChunkCommitMessage("")
   }
