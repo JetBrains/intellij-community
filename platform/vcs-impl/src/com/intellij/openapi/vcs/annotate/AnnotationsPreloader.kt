@@ -8,6 +8,7 @@ import com.intellij.codeInsight.hints.VcsCodeVisionProvider
 import com.intellij.codeInsight.hints.codeVision.CodeVisionFusCollector
 import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.readAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.Service.Level
@@ -29,15 +30,15 @@ import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.update.DisposableUpdate
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.vcs.CacheableAnnotationProvider
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Runnable
+import kotlinx.coroutines.launch
+import kotlin.system.measureTimeMillis
 
 @Service(Level.PROJECT)
-internal class AnnotationsPreloader(private val project: Project, coroutineScope: CoroutineScope) {
+internal class AnnotationsPreloader(private val project: Project, private val coroutineScope: CoroutineScope) {
   private val updateQueue = MergingUpdateQueue.mergingUpdateQueue(
     name = "Annotations preloader queue",
     mergingTimeSpan = 1000,
@@ -54,23 +55,21 @@ internal class AnnotationsPreloader(private val project: Project, coroutineScope
     updateQueue.queue(object : DisposableUpdate(project, file) {
       override fun doRun() {
         try {
-          val start = System.currentTimeMillis()
+          val durationMs = measureTimeMillis {
+            if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
+            if (file.fileType.isBinary) return
+            val annotationProvider = getAnnotationProvider(project, file) ?: return
+            annotationProvider.populateCache(file)
+          }
 
-          if (!FileEditorManager.getInstance(project).isFileOpen(file)) return
-          if (file.fileType.isBinary) return
-          val annotationProvider = getAnnotationProvider(project, file) ?: return
-
-          annotationProvider.populateCache(file)
-          val durationMs = System.currentTimeMillis() - start
-
-          AppExecutorUtil.getAppExecutorService().submit(Runnable {
-            ApplicationManager.getApplication().runReadAction {
-              val psiFile = PsiManager.getInstance(project).findFile(file)
+          coroutineScope.launch {
+            readAction {
+              val psiFile = if (file.isValid) PsiManager.getInstance(project).findFile(file) else null
               if (psiFile != null) {
                 CodeVisionFusCollector.reportVcsAnnotationDuration(psiFile, durationMs)
               }
             }
-          })
+          }
 
           LOG.debug { "Preloaded VCS annotations for ${file.name} in $durationMs ms" }
 
