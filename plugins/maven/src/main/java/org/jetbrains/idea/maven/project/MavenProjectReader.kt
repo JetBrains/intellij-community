@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil.isAutomaticVersionFeatureEnabled
@@ -15,6 +16,7 @@ import org.jetbrains.idea.maven.internal.ReadStatisticsCollector
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper
 import org.jetbrains.idea.maven.server.MavenServerConnector
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildByPath
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil.findChildValueByPath
@@ -260,7 +262,7 @@ class MavenProjectReader(private val myProject: Project) {
 
     val fileExtension = file.extension
     if (!"pom".equals(fileExtension, ignoreCase = true) && !"xml".equals(fileExtension, ignoreCase = true)) {
-      return readProjectModelUsingMavenServer(project, file, problems, alwaysOnProfiles)
+      return tracer.spanBuilder("readProjectModelUsingMavenServer").useWithScope { readProjectModelUsingMavenServer(project, file, problems, alwaysOnProfiles) }
     }
 
     return readMavenProjectModel(file, headerOnly, problems, alwaysOnProfiles, isAutomaticVersionFeatureEnabled(file, project))
@@ -277,7 +279,7 @@ class MavenProjectReader(private val myProject: Project) {
     val manager = MavenProjectsManager.getInstance(project).embeddersManager
     val embedder = manager.getEmbedder(MavenEmbeddersManager.FOR_MODEL_READ, basedir)
     try {
-      result = embedder.readModel(VfsUtilCore.virtualToIoFile(file))
+      result = tracer.spanBuilder("readWithEmbedder").useWithScope { embedder.readModel(VfsUtilCore.virtualToIoFile(file)) }
     }
     catch (ignore: MavenProcessCanceledException) {
     }

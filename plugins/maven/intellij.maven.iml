@@ -112,6 +112,7 @@
     <orderEntry type="module" module-name="intellij.platform.eel.provider" />
     <orderEntry type="module" module-name="intellij.platform.eel" />
     <orderEntry type="module" module-name="intellij.platform.ijent" />
+    <orderEntry type="library" name="opentelemetry" level="project" />
   </component>
   <component name="copyright">
     <Base>

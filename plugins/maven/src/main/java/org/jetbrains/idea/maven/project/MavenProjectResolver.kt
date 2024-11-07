@@ -11,12 +11,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.buildtool.MavenEventHandler
 import org.jetbrains.idea.maven.buildtool.MavenLogEventHandler
@@ -102,19 +102,20 @@ class MavenProjectResolver(private val myProject: Project) {
             mavenImporter.customizeUserProperties(myProject, mavenProject, userProperties)
           }
         }
-        val projectsWithUnresolvedPluginsChunk = withContext(tracer.span("doResolve $baseDir")) {
-          doResolve(
-            pomToDependencyHash,
-            mavenProjectsInBaseDir,
-            tree,
-            generalSettings,
-            embedder,
-            progressReporter,
-            eventHandler,
-            workspaceMap,
-            updateSnapshots,
-            userProperties)
-        }
+        val projectsWithUnresolvedPluginsChunk = tracer.spanBuilder("doResolveMavenProject")
+          .useWithScope {
+            doResolve(
+              pomToDependencyHash,
+              mavenProjectsInBaseDir,
+              tree,
+              generalSettings,
+              embedder,
+              progressReporter,
+              eventHandler,
+              workspaceMap,
+              updateSnapshots,
+              userProperties)
+          }
         projectsWithUnresolvedPlugins[baseDir] = projectsWithUnresolvedPluginsChunk
       }
       catch (t: Throwable) {
@@ -335,17 +336,18 @@ class MavenProjectResolver(private val myProject: Project) {
     val resolverResults: MutableCollection<MavenProjectResolverResult> = ArrayList()
     val readingProblems = mutableListOf<MavenProjectProblem>()
     try {
-      val executionResults = withContext(tracer.span("embedder.resolveProject")) {
-        embedder.resolveProject(
-          pomToDependencyHash,
-          pomDependencies,
-          explicitProfiles,
-          progressReporter,
-          eventHandler,
-          workspaceMap,
-          updateSnapshots,
-          userProperties)
-      }
+      val executionResults = tracer.spanBuilder("resolveProjectInEmbedder")
+        .useWithScope {
+          embedder.resolveProject(
+            pomToDependencyHash,
+            pomDependencies,
+            explicitProfiles,
+            progressReporter,
+            eventHandler,
+            workspaceMap,
+            updateSnapshots,
+            userProperties)
+        }
       val filesMap = CollectionFactory.createFilePathMap<VirtualFile>()
       filesMap.putAll(files.associateBy { it.path })
       for (result in executionResults) {

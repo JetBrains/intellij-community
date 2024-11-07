@@ -16,6 +16,8 @@ import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.platform.diagnostic.telemetry.helpers.use
+import com.intellij.platform.diagnostic.telemetry.helpers.useWithScope
 import com.intellij.platform.util.progress.RawProgressReporter
 import com.intellij.util.containers.ArrayListSet
 import com.intellij.util.containers.ContainerUtil
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.idea.maven.dom.references.MavenFilteredPropertyPsiReferenceProvider
 import org.jetbrains.idea.maven.model.*
 import org.jetbrains.idea.maven.project.MavenProjectsTreeUpdater.UpdateSpec
+import org.jetbrains.idea.maven.telemetry.tracer
 import org.jetbrains.idea.maven.utils.*
 import java.io.*
 import java.nio.file.Files
@@ -40,7 +43,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import java.util.function.Consumer
 import java.util.regex.Pattern
 import java.util.zip.CRC32
-import kotlin.Throws
 
 class MavenProjectsTree(val project: Project) {
   private val myStructureLock = ReentrantReadWriteLock()
@@ -358,11 +360,14 @@ class MavenProjectsTree(val project: Project) {
     val explicitProfiles = explicitProfiles
 
     val projectReader = MavenProjectReader(project)
-    val updated = update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, progressReporter)
+    val updated = tracer.spanBuilder("updateProjectTree").useWithScope {
+      update(managedFiles, true, force, explicitProfiles, projectReader, generalSettings, progressReporter)
+    }
 
-    val obsoleteFiles = ContainerUtil.subtract(
-      rootProjectsFiles, managedFiles)
-    val deleted = delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
+    val obsoleteFiles = ContainerUtil.subtract(rootProjectsFiles, managedFiles)
+    val deleted = tracer.spanBuilder("cleanupProjectTree").useWithScope {
+      delete(projectReader, obsoleteFiles, explicitProfiles, generalSettings, progressReporter)
+    }
 
     val updateResult = updated.plus(deleted)
     MavenLog.LOG.debug("Maven tree update result: updated ${updateResult.updated}, deleted ${updateResult.deleted}")
@@ -400,7 +405,7 @@ class MavenProjectsTree(val project: Project) {
       if (null == findProject(file)) {
         filesToAddModules.add(file)
       }
-      updater.updateProjects(listOf(UpdateSpec(file, forceRead)))
+      tracer.spanBuilder("updateProjectFile").useWithScope { updater.updateProjects(listOf(UpdateSpec(file, forceRead)))  }
     }
 
     for (aggregator in projects) {
@@ -409,8 +414,10 @@ class MavenProjectsTree(val project: Project) {
           filesToAddModules.remove(moduleFile)
           val mavenProject = findProject(moduleFile)
           if (null != mavenProject) {
-            if (reconnect(aggregator, mavenProject)) {
-              updateContext.updated(mavenProject, MavenProjectChanges.NONE)
+            tracer.spanBuilder("reconnect").use {
+              if (reconnect(aggregator, mavenProject)) {
+                updateContext.updated(mavenProject, MavenProjectChanges.NONE)
+              }
             }
           }
         }
@@ -424,7 +431,9 @@ class MavenProjectsTree(val project: Project) {
       }
     }
 
-    updateExplicitProfiles()
+    tracer.spanBuilder("updateProfiles").use {
+      updateExplicitProfiles()
+    }
     updateContext.fireUpdatedIfNecessary()
 
     return updateContext.toUpdateResult()
