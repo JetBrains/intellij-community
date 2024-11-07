@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.platform.eel.*
 import com.intellij.platform.eel.fs.EelFileSystemApi
 import com.intellij.platform.eel.fs.EelFileSystemApi.CreateTemporaryDirectoryError
@@ -138,5 +139,6 @@ private fun doCreateTemporaryDirectory(
 private val LOG = Logger.getInstance(EelApi::class.java)
 
 private fun getLocalUserHome(os: EelPath.Absolute.OS): EelPath.Absolute {
-  return checkNotNull(EelPath.Absolute.parse(System.getProperty("user.home"), os)) { "" }
+  val homeDirPath = Path.of(System.getProperty("user.home")).toAbsolutePath().toString()
+  return checkNotNull(EelPath.Absolute.parse(homeDirPath, os)) { "Can't parse home dir path: $homeDirPath" }
 }
