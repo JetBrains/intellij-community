@@ -3,9 +3,42 @@
   <category>Other Tools</category>
   <id>org.jetbrains.plugins.terminal</id>
   <vendor>JetBrains</vendor>
+
   <description><![CDATA[
-<p>Provides integrated terminal (View | Tool Windows | Terminal)
-]]></description>
+    <p>
+    The Terminal in JetBrains IDEs (View | Tool Windows | Terminal) is an integrated command-line emulator that allows Developers and DevOps/SRE
+    to run shell commands directly within the IDE interface, minimizing the need to switch between windows.
+    It supports various shell types (e.g., Bash, Zsh, PowerShell) and offers a customizable experience, allowing users to
+    set prompt styles, environment variables, and more. With multiple session support, users can manage tabs, split windows,
+    and use IDE-specific commands, such as executing Git operations that automatically open relevant IDE windows like the Git log.
+
+    To access the latest features of the terminal and AI capabilities, click "Enable New Terminal" in the terminal tab’s context menu (experimental).
+
+    For more details, refer to the <a href="https://www.jetbrains.com/help/idea/terminal-emulator.html" target="_blank">documentation</a>.
+    ]]></description>
+
+  <!--suppress PluginXmlValidity -->
+  <change-notes><![CDATA[
+    2024.3
+    <ul>
+      <li>
+        Improved terminal experience with updated command processing and UI alignment.
+      </li>
+      <li>
+        Optimized prompt computation to reduce delays in command execution and enhance responsiveness.
+      </li>
+      <li>
+        Improvements in handling multiple terminal sessions, with smoother switching and consistent state preservation across tabs.
+      </li>
+      <li>
+        Enhanced autocomplete features for command names, flags, and paths, reducing time in manual entry.
+      </li>
+      <li>
+        More options for prompt styling, tab naming, and environmental variable settings for individual sessions.
+      </li>
+    </ul>
+    ]]>
+  </change-notes>
 
   <dependencies>
     <plugin id="com.intellij.modules.lang"/>
