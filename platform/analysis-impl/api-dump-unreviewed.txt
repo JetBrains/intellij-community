@@ -1936,6 +1936,12 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.FlushVariableInstruction
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
 - bindToFactory(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - getVariable():com.intellij.codeInspection.dataFlow.value.DfaVariableValue
+c:com.intellij.codeInspection.dataFlow.lang.ir.GetQualifiedValueInstruction
+- com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
+- <init>(com.intellij.codeInspection.dataFlow.value.VariableDescriptor):V
+- <init>(com.intellij.codeInspection.dataFlow.value.VariableDescriptor,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
+- eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
+- getRequiredDescriptors(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 c:com.intellij.codeInspection.dataFlow.lang.ir.GotoInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>(com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow$ControlFlowOffset):V
@@ -1997,11 +2003,6 @@ c:com.intellij.codeInspection.dataFlow.lang.ir.SwapInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>():V
 - accept(com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState[]
-c:com.intellij.codeInspection.dataFlow.lang.ir.UnwrapDerivedVariableInstruction
-- com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
-- <init>(com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V
-- eval(com.intellij.codeInspection.dataFlow.value.DfaValueFactory,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.value.DfaValue[]):com.intellij.codeInspection.dataFlow.value.DfaValue
-- getRequiredDescriptors(com.intellij.codeInspection.dataFlow.value.DfaValueFactory):java.util.List
 c:com.intellij.codeInspection.dataFlow.lang.ir.WrapDerivedVariableInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.EvalInstruction
 - <init>(com.intellij.codeInspection.dataFlow.types.DfType,com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor):V

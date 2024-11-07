@@ -65,11 +65,6 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  public boolean isImplicitReadPossible() {
-    return true;
-  }
-
-  @Override
   public int hashCode() {
     return Objects.hashCode(myQualifier.getQualifiedName());
   }

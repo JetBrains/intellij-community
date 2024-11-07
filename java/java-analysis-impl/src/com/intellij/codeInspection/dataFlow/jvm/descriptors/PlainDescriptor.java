@@ -10,10 +10,7 @@ import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -41,7 +38,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   @NotNull
   @Override
   public String toString() {
-    return String.valueOf(myVariable.getName());
+    return PsiFormatUtil.formatVariable(myVariable, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
 
   @Override
@@ -74,6 +71,12 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     if (PsiUtil.isJvmLocalVariable(myVariable) ||
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
       return factory.getVarFactory().createVariableValue(this);
+    }
+    if (qualifier instanceof DfaTypeValue typeValue) {
+      PsiField field = typeValue.getDfType().getConstantOfType(PsiField.class);
+      if (field != null) {
+        qualifier = factory.getVarFactory().createVariableValue(new PlainDescriptor(field));
+      }
     }
     return super.createValue(factory, qualifier);
   }

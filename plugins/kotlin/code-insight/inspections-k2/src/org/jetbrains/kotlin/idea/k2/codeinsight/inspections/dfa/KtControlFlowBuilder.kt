@@ -349,7 +349,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (typeReference != null) {
                 val castType = typeReference.type
                 if (castType.toDfType() is DfPrimitiveType) {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+                    addInstruction(
+                        GetQualifiedValueInstruction(SpecialField.UNBOX))
                 }
             }
         }
@@ -515,9 +516,11 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             val leftConstraint = TypeConstraint.fromDfType(leftDfType)
             val rightConstraint = TypeConstraint.fromDfType(rightDfType)
             if (leftConstraint.isEnum && rightConstraint.isEnum && leftConstraint.meet(rightConstraint) != TypeConstraints.BOTTOM) {
-                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                addInstruction(
+                    GetQualifiedValueInstruction(SpecialField.ENUM_ORDINAL))
                 processExpression(right)
-                addInstruction(UnwrapDerivedVariableInstruction(SpecialField.ENUM_ORDINAL))
+                addInstruction(
+                    GetQualifiedValueInstruction(SpecialField.ENUM_ORDINAL))
                 addInstruction(BooleanBinaryInstruction(relation, forceEqualityByContent, KotlinExpressionAnchor(expr)))
             } else if (leftConstraint.isExact(CommonClassNames.JAVA_LANG_STRING) &&
                 rightConstraint.isExact(CommonClassNames.JAVA_LANG_STRING)
@@ -854,7 +857,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (expression?.getKotlinType()?.canBeNull() == true) {
             addInstruction(CheckNotNullInstruction(NullabilityProblemKind.unboxingNullable.problem(expression, null)!!,
                                                    trapTracker.maybeTransferValue("java.lang.NullPointerException")))
-            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+            addInstruction(GetQualifiedValueInstruction(SpecialField.UNBOX))
         }
     }
 
@@ -1357,7 +1360,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (!pushJavaClassField(receiver, selector, expr)) {
                 val specialField = (selector.mainReference?.resolveToSymbol() as? KaVariableSymbol)?.toSpecialField()
                 if (specialField != null) {
-                    addInstruction(UnwrapDerivedVariableInstruction(specialField))
+                    addInstruction(
+                        GetQualifiedValueInstruction(specialField))
                     if (expr is KtSafeQualifiedExpression) {
                         addInstruction(WrapDerivedVariableInstruction(expr.getKotlinType().toDfType(), SpecialField.UNBOX))
                     }
@@ -1571,7 +1575,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             if (name == "isEmpty" || name == "isNotEmpty") {
                 val callableId = target.callableId
                 if (callableId != null && callableId.packageName.asString() == "kotlin.collections") {
-                    addInstruction(UnwrapDerivedVariableInstruction(SpecialField.COLLECTION_SIZE))
+                    addInstruction(GetQualifiedValueInstruction(
+                        SpecialField.COLLECTION_SIZE))
                     addInstruction(PushValueInstruction(DfTypes.intValue(0)))
                     addInstruction(
                         BooleanBinaryInstruction(
@@ -1817,7 +1822,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addInstruction(PushValueInstruction(actualDfType))
         }
         if (actualDfType !is DfPrimitiveType && expectedDfType is DfPrimitiveType) {
-            addInstruction(UnwrapDerivedVariableInstruction(SpecialField.UNBOX))
+            addInstruction(GetQualifiedValueInstruction(SpecialField.UNBOX))
         } else if (expectedDfType !is DfPrimitiveType && actualDfType is DfPrimitiveType) {
             val dfType = actualType.withNullability(KaTypeNullability.NULLABLE).toDfType().meet(DfTypes.NOT_NULL_OBJECT)
             addInstruction(WrapDerivedVariableInstruction(expectedType.toDfType().meet(dfType), SpecialField.UNBOX))

@@ -132,7 +132,7 @@ public class CFGBuilder {
    */
   @Contract("_ -> this")
   public @NotNull CFGBuilder unwrap(@NotNull DerivedVariableDescriptor descriptor) {
-    return add(new UnwrapDerivedVariableInstruction(descriptor));
+    return add(new GetQualifiedValueInstruction(descriptor));
   }
 
   /**

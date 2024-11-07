@@ -540,7 +540,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         length = SpecialField.COLLECTION_SIZE;
       }
       if (length != null) {
-        addInstruction(new UnwrapDerivedVariableInstruction(length));
+        addInstruction(new GetQualifiedValueInstruction(length));
         addInstruction(new ConditionalGotoInstruction(loopEndOffset, DfTypes.intValue(0)));
         hasSizeCheck = true;
       } else {
@@ -875,7 +875,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
     }
     DfaControlTransferValue transferValue = exception != null ? createTransfer(exception) : null;
     addInstruction(new DupInstruction());
-    addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.CONSUMED_STREAM));
+    addInstruction(new GetQualifiedValueInstruction(SpecialField.CONSUMED_STREAM));
     addInstruction(new EnsureInstruction(new ConsumedStreamProblem(reference), RelationType.NE, DfStreamStateType.CONSUMED, transferValue));
     addInstruction(new PopInstruction());
   }
@@ -1900,7 +1900,7 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (TypeConversionUtil.isPrimitiveAndNotNull(expectedType) &&
         TypeConversionUtil.isAssignableFromPrimitiveWrapper(toBound(actualType))) {
-      addInstruction(new UnwrapDerivedVariableInstruction(SpecialField.UNBOX));
+      addInstruction(new GetQualifiedValueInstruction(SpecialField.UNBOX));
       actualType = PsiPrimitiveType.getUnboxedType(actualType);
     }
     expectedType = toBound(expectedType);
@@ -2487,22 +2487,49 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
 
   @Override public void visitReferenceExpression(@NotNull PsiReferenceExpression expression) {
     startElement(expression);
+    pushReferenceExpression(expression);
+    addNullCheck(expression);
+    finishElement(expression);
+  }
 
+  private void pushReferenceExpression(@NotNull PsiReferenceExpression expression) {
+    JavaExpressionAnchor anchor = new JavaExpressionAnchor(expression);
+    PsiVariable var = ObjectUtils.tryCast(expression.resolve(), PsiVariable.class);
+    // complex assignments (e.g. "|=") are both reading and writing
+    boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
+    if (!writing && var != null && !PlainDescriptor.hasInitializationHacks(var)) {
+      DfaValue constValue = JavaDfaValueFactory.getConstantFromVariable(myFactory, var);
+      if (constValue != null && !JavaDfaValueFactory.maybeUninitializedConstant(constValue, expression, var)) {
+        addInstruction(new JvmPushInstruction(constValue, anchor));
+        return;
+      }
+    }
     final PsiExpression qualifierExpression = expression.getQualifierExpression();
+    if (var instanceof PsiField field && !field.hasModifierProperty(PsiModifier.STATIC) && !writing) {
+      DfaValue effectiveQualifier = JavaDfaValueFactory.getQualifierOrThisValue(myFactory, expression);
+      if (qualifierExpression == null) {
+        addInstruction(new JvmPushInstruction(effectiveQualifier == null ? myFactory.getUnknown() : effectiveQualifier, null));
+      } else {
+        qualifierExpression.accept(this);
+      }
+      VariableDescriptor descriptor = Objects.requireNonNull(JavaDfaValueFactory.getAccessedVariableOrGetter(field));
+      if (effectiveQualifier instanceof DfaVariableValue qualifierVar && 
+          JavaDfaHelpers.mayLeakFromType(descriptor.getDfType(qualifierVar)) &&
+          JavaDfaHelpers.mayLeakFromExpression(expression)) {
+        addInstruction(new EscapeInstruction(List.of(qualifierVar.getDescriptor())));
+      }
+      addInstruction(new GetQualifiedValueInstruction(descriptor, anchor));
+      return;
+    }
     if (qualifierExpression != null && !(qualifierExpression instanceof PsiReferenceExpression ref && ref.resolve() instanceof PsiClass)) {
       qualifierExpression.accept(this);
       addInstruction(new PopInstruction());
     }
 
-    // complex assignments (e.g. "|=") are both reading and writing
-    boolean writing = PsiUtil.isAccessedForWriting(expression) && !PsiUtil.isAccessedForReading(expression);
     DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(myFactory, expression);
     addInstruction(new JvmPushInstruction(value == null ? myFactory.getUnknown() : value,
-                                          writing ? null : new JavaExpressionAnchor(expression),
+                                          writing ? null : anchor,
                                           writing));
-    addNullCheck(expression);
-
-    finishElement(expression);
   }
 
   @Override public void visitLiteralExpression(@NotNull PsiLiteralExpression expression) {
