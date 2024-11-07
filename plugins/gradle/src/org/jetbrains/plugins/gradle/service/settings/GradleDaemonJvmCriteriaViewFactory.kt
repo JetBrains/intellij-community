@@ -28,6 +28,6 @@ object GradleDaemonJvmCriteriaViewFactory {
     LanguageLevel.JDK_1_8.toJavaVersion().feature..LanguageLevel.HIGHEST.toJavaVersion().feature
 
   private fun getSuggestedVendors() =
-    JvmVendor.KnownJvmVendor.entries.filter { it != JvmVendor.KnownJvmVendor.UNKNOWN }.map { it.name }
+    JvmVendor.KnownJvmVendor.entries.filter { it != JvmVendor.KnownJvmVendor.UNKNOWN }
 
 }

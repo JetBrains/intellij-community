@@ -456,11 +456,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     }
 
     if (myGradleDaemonJvmCriteriaView != null) {
-      if (!myGradleDaemonJvmCriteriaView.isValidVersion()) {
-        throw new ConfigurationException(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.error"));
-      } else if (!myGradleDaemonJvmCriteriaView.isValidVendor()) {
-        throw new ConfigurationException(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.error"));
-      }
+      myGradleDaemonJvmCriteriaView.validateSelection();
     }
 
     if (myGradleHomePathField != null && getSelectedGradleDistribution() == DistributionType.LOCAL) {
@@ -528,9 +524,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     if (myGradleDaemonJvmCriteriaView != null) {
       if (myGradleDaemonJvmCriteriaView.isModified()) {
         myGradleDaemonJvmCriteriaView.applySelection();
-        settings.resolveGradleVersion().getBaseVersion();
 
-        applyDaemonJvmCriteria(myProjectRef.get(), settings.getExternalProjectPath(), myGradleDaemonJvmCriteriaView.getSelectedCriteria());
+        applyDaemonJvmCriteria(myProjectRef.get(), settings.getExternalProjectPath(), myGradleDaemonJvmCriteriaView.getInitialCriteria());
       }
     }
 

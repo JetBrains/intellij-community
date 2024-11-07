@@ -29,8 +29,8 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
     """.trimIndent())
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("19", selectedCriteria.version)
-      assertEquals("AZUL", selectedCriteria.vendor)
+      assertEquals("19", initialCriteria.version)
+      assertEquals("AZUL", initialCriteria.vendor)
     }
   }
 
@@ -42,8 +42,8 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
     """.trimIndent())
 
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("string version", selectedCriteria.version)
-      assertEquals("any other vendor", selectedCriteria.vendor)
+      assertEquals("string version", initialCriteria.version)
+      assertEquals("any other vendor", initialCriteria.vendor)
     }
   }
 
@@ -51,8 +51,8 @@ class GradleDaemonJvmCriteriaViewFactoryTest : GradleDaemonJvmCriteriaViewFactor
   fun `test Given empty gradle jvm properties When create view Then expected values are displayed`() {
     createDaemonJvmPropertiesFile("")
     createDaemonJvmCriteriaView(GradleVersion.version("8.9")).run {
-      assertEquals("UNDEFINED", selectedCriteria.version)
-      assertEquals(null, selectedCriteria.vendor)
+      assertEquals(null, initialCriteria.version)
+      assertEquals(null, initialCriteria.vendor)
     }
   }
 

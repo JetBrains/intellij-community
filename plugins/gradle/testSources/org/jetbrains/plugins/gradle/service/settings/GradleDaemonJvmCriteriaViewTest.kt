@@ -3,6 +3,10 @@ package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.ADOPTOPENJDK
+import org.gradle.internal.jvm.inspection.JvmVendor.KnownJvmVendor.JETBRAINS
+import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
+import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 
@@ -14,29 +18,29 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
       assertFalse(isModified)
 
       assertFalse(isValidVersion)
-      assertEquals("UNDEFINED", selectedCriteria.version)
-      assertEquals(0, versionComboBox.itemCount)
+      assertNull(initialCriteria.version)
+      assertEquals(0, versionModel.size)
 
       assertTrue(isValidVendor)
-      assertNull(selectedCriteria.vendor)
+      assertNull(initialCriteria.vendor)
 
-      assertEquals(2, vendorComboBox.itemCount)
-      assertEquals("<ANY_VENDOR>", vendorComboBox.model.getElementAt(0))
-      assertEquals("<CUSTOM_VENDOR>", vendorComboBox.model.getElementAt(1))
+      assertEquals(2, vendorModel.size)
+      assertEquals(VendorItem.Any, vendorModel.getElementAt(0))
+      assertEquals(VendorItem.SelectCustom, vendorModel.getElementAt(1))
     }
   }
 
   @Test
   fun `test Given valid version and vendor When creating view Then expected values are displayed`() {
     val versions = 1..10
-    val vendors = listOf("a", "d", "b", "c")
+    val vendors = listOf(ADOPTOPENJDK, JETBRAINS)
     createGradleDaemonJvmCriteriaView("17", "IBM", versions, vendors, false).run {
-      assertEquals("17", selectedCriteria.version)
-      assertVersionDropdownList(versions, versionComboBox.model)
+      assertEquals("17", initialCriteria.version)
+      assertVersionDropdownList(versions, versionModel)
       assertTrue(isValidVersion)
 
-      assertEquals("IBM", selectedCriteria.vendor)
-      assertVendorDropdownList(vendors, vendorComboBox.model)
+      assertEquals("IBM", initialCriteria.vendor)
+      assertVendorDropdownList(vendors, vendorModel)
       assertTrue(isValidVendor)
     }
   }
@@ -44,10 +48,10 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
   @Test
   fun `test Given invalid version and vendor When creating view Then expected values are displayed`() {
     createGradleDaemonJvmCriteriaView("Invalid version", " ", IntRange.EMPTY, emptyList(), false).run {
-      assertEquals("Invalid version", selectedCriteria.version)
+      assertEquals("Invalid version", initialCriteria.version)
       assertFalse(isValidVersion)
 
-      assertEquals(null, selectedCriteria.vendor)
+      assertEquals(null, initialCriteria.vendor)
       assertFalse(isValidVendor)
     }
   }
@@ -72,31 +76,63 @@ class GradleDaemonJvmCriteriaViewTest: GradleDaemonJvmCriteriaViewTestCase() {
 
   @Test
   fun `test Given created view When selecting different dropdown items Then selection got updated`() {
-    createGradleDaemonJvmCriteriaView("1", "vendor", 1..2, listOf("new vendor"), true).run {
-      versionComboBox.selectedItem = "2"
-      vendorComboBox.selectedItem = "new vendor"
+    val vendors = listOf(ADOPTOPENJDK)
+    createGradleDaemonJvmCriteriaView("1", "vendor", 1..2, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals("1", initialCriteria.version)
+      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(1), selectedVersion)
+      assertEquals(VendorItem.Custom("vendor"), selectedVendor)
+
+      selectedVersion = VersionItem.Default(2)
+      selectedVendor = VendorItem.Default(ADOPTOPENJDK)
       assertTrue(isModified)
-      assertEquals("2", selectedCriteria.version)
-      assertEquals("new vendor", selectedCriteria.vendor)
+      assertEquals("1", initialCriteria.version)
+      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(2), selectedVersion)
+      assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
     }
   }
 
   @Test
   fun `test Given created view When apply and reset selection Then initial values got overridden`() {
-    createGradleDaemonJvmCriteriaView("1", "vendor", 1..3, listOf("new vendor", "other vendor"), true).run {
-      versionComboBox.selectedItem = "2"
-      vendorComboBox.selectedItem = "new vendor"
-      applySelection().run {
-        assertFalse(isModified)
-      }
+    val vendors = listOf(ADOPTOPENJDK, JETBRAINS)
+    createGradleDaemonJvmCriteriaView("1", "vendor", 1..3, vendors, true).run {
+      assertFalse(isModified)
+      assertEquals("1", initialCriteria.version)
+      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(1), selectedVersion)
+      assertEquals(VendorItem.Custom("vendor"), selectedVendor)
 
-      versionComboBox.selectedItem = "3"
-      vendorComboBox.selectedItem = "other vendor"
-      resetSelection().run {
-        assertFalse(isModified)
-        assertEquals("2", selectedCriteria.version)
-        assertEquals("new vendor", selectedCriteria.vendor)
-      }
+      selectedVersion = VersionItem.Default(2)
+      selectedVendor = VendorItem.Default(ADOPTOPENJDK)
+      assertTrue(isModified)
+      assertEquals("1", initialCriteria.version)
+      assertEquals("vendor", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(2), selectedVersion)
+      assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
+
+      applySelection()
+      assertFalse(isModified)
+      assertEquals("2", initialCriteria.version)
+      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(2), selectedVersion)
+      assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
+
+      selectedVersion = VersionItem.Default(3)
+      selectedVendor = VendorItem.Default(JETBRAINS)
+      assertTrue(isModified)
+      assertEquals("2", initialCriteria.version)
+      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(3), selectedVersion)
+      assertEquals(VendorItem.Default(JETBRAINS), selectedVendor)
+
+      resetSelection()
+      assertFalse(isModified)
+      assertEquals("2", initialCriteria.version)
+      assertEquals("ADOPTOPENJDK", initialCriteria.vendor)
+      assertEquals(VersionItem.Default(2), selectedVersion)
+      assertEquals(VendorItem.Default(ADOPTOPENJDK), selectedVendor)
     }
   }
 }

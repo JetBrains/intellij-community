@@ -3,55 +3,148 @@ package org.jetbrains.plugins.gradle.service.settings
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.ComboBoxWithEditableItem
+import com.intellij.openapi.ui.ComboBoxWithEditableItem.EditableItem
+import com.intellij.openapi.ui.ComboBoxWithEditableItem.SelectEditableItem
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.panels.VerticalLayout
-import com.intellij.ui.dsl.builder.COLUMNS_SHORT
-import com.intellij.ui.dsl.builder.TopGap
-import com.intellij.ui.dsl.builder.columns
-import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
+import org.gradle.internal.jvm.inspection.JvmVendor
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import javax.swing.JPanel
 
-private const val UNDEFINED_VERSION_PLACEHOLDER = "UNDEFINED"
-private const val ANY_VENDOR_PLACEHOLDER = "<ANY_VENDOR>"
-private const val CUSTOM_VENDOR_PLACEHOLDER = "<CUSTOM_VENDOR>"
-
+@ApiStatus.Internal
 class GradleDaemonJvmCriteriaView(
   version: String?,
   vendor: String?,
   private val versionsDropdownList: IntRange,
-  private val vendorDropdownList: List<String>,
+  private val vendorDropdownList: List<JvmVendor.KnownJvmVendor>,
   private val displayAdvancedSettings: Boolean,
   disposable: Disposable,
 ): JPanel(VerticalLayout(0)) {
 
-  val selectedCriteria: GradleDaemonJvmCriteria
+  private var initialVersion: VersionItem? = when (version) {
+    null -> null
+    else -> when (val knownVersion = versionsDropdownList.find { it.toString() == version }) {
+      null -> VersionItem.Custom(version)
+      else -> VersionItem.Default(knownVersion)
+    }
+  }
+
+  private var initialVendor: VendorItem? = when (vendor) {
+    null -> VendorItem.Any
+    else -> when (val knownVendor = vendorDropdownList.find { it.name == vendor }) {
+      null -> VendorItem.Custom(vendor)
+      else -> VendorItem.Default(knownVendor)
+    }
+  }
+
+  val initialCriteria: GradleDaemonJvmCriteria
     get() = GradleDaemonJvmCriteria(
-      version = selectedVersion,
-      vendor = selectedVendor.takeIf { it.isNotBlank() && it != ANY_VENDOR_PLACEHOLDER }
+      version = initialVersion.let { version ->
+        when (version) {
+          null -> null
+          is VersionItem.Default -> version.version.toString()
+          is VersionItem.Custom -> version.value.trim().nullize()
+        }
+      },
+      vendor = initialVendor.let { vendor ->
+        when (vendor) {
+          null -> null
+          VendorItem.Any -> null
+          VendorItem.SelectCustom -> null
+          is VendorItem.Default -> vendor.vendor.name
+          is VendorItem.Custom -> vendor.value.trim().nullize()
+        }
+      }
     )
-  val isModified: Boolean
-    get() = selectedVersion != initialVersion || selectedVendor != initialVendor
+
+  @get:VisibleForTesting
   val isValidVersion: Boolean
-    get() = selectedVersion.toIntOrNull() != null
+    get() = selectedVersion.let { version ->
+      when (version) {
+        null -> false
+        is VersionItem.Default -> true
+        is VersionItem.Custom -> {
+          version.value.trim().let { versionName ->
+            versionName.toIntOrNull() != null
+          }
+        }
+      }
+    }
+
+  @get:VisibleForTesting
   val isValidVendor: Boolean
-    get() = selectedVendor.isNotEmpty() && !selectedVendor.contains(" ")
+    get() = selectedVendor.let { vendor ->
+      when (vendor) {
+        null -> true
+        VendorItem.Any -> true
+        VendorItem.SelectCustom -> false
+        is VendorItem.Default -> true
+        is VendorItem.Custom -> {
+          vendor.value.trim().let { vendorName ->
+            vendorName.isNotEmpty() && " " !in vendorName
+          }
+        }
+      }
+    }
 
-  private var initialVersion: String = version ?: UNDEFINED_VERSION_PLACEHOLDER
-  private var initialVendor: String = vendor ?: ANY_VENDOR_PLACEHOLDER
-  private val selectedVersion: String
-    get() = versionComboBox.editor.item.toString()
-  private val selectedVendor: String
-    get() = vendorComboBox.editor.item.toString()
+  @VisibleForTesting
+  val versionModel = CollectionComboBoxModel<VersionItem>().apply {
+    for (version in versionsDropdownList.reversed()) {
+      add(VersionItem.Default(version))
+    }
+  }
+
+  @VisibleForTesting
+  val vendorModel = CollectionComboBoxModel<VendorItem>().apply {
+    add(VendorItem.Any)
+    add(VendorItem.SelectCustom)
+    for (vendor in vendorDropdownList) {
+      add(VendorItem.Default(vendor))
+    }
+  }
+
+  private val versionRenderer = textListCellRenderer<VersionItem?> { versionItem ->
+    when (versionItem) {
+      null -> GradleBundle.message("gradle.settings.text.daemon.toolchain.version.undefined")
+      is VersionItem.Default -> versionItem.version.toString()
+      is VersionItem.Custom -> versionItem.value
+    }
+  }
+
+  private val vendorRenderer = textListCellRenderer<VendorItem?> { vendorItem ->
+    when (vendorItem) {
+      null -> GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.any")
+      VendorItem.Any -> GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.any")
+      VendorItem.SelectCustom -> GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.custom")
+      is VendorItem.Default -> vendorItem.vendor.asJvmVendor().displayName
+      is VendorItem.Custom -> vendorItem.value
+    }
+  }
 
   @get:VisibleForTesting
-  lateinit var versionComboBox: ComboBox<String>
+  @set:VisibleForTesting
+  var selectedVersion: VersionItem?
+    get() = versionComboBox.selectedItem as? VersionItem
+    set(value) = versionComboBox.setSelectedItem(value)
+
   @get:VisibleForTesting
-  lateinit var vendorComboBox: ComboBox<String>
+  @set:VisibleForTesting
+  var selectedVendor: VendorItem?
+    get() = vendorComboBox.selectedItem as? VendorItem
+    set(value) = vendorComboBox.setSelectedItem(value)
+
+  private lateinit var versionComboBox: ComboBox<VersionItem?>
+  private lateinit var vendorComboBox: ComboBox<VendorItem?>
 
   private val component = panel {
     row {
@@ -60,37 +153,23 @@ class GradleDaemonJvmCriteriaView(
         foreground = UIUtil.getLabelFontColor(UIUtil.FontColor.BRIGHTER)
       }
     }
-    row {
-      label(GradleBundle.message("gradle.settings.text.daemon.toolchain.version"))
-      versionComboBox = comboBox(versionsDropdownList.map { it.toString() }.reversed(), textListCellRenderer { it })
+    row(GradleBundle.message("gradle.settings.text.daemon.toolchain.version")) {
+      versionComboBox = cell(ComboBoxWithEditableItem(versionModel, versionRenderer))
         .columns(COLUMNS_SHORT)
+        .bindItem(::initialVersion)
         .cellValidation {
           addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
           addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
-        }
-        .applyToComponent {
-          selectAnyValue(initialVersion)
         }.component
     }
     collapsibleGroup(ApplicationBundle.message("title.advanced.settings")) {
-      row {
-        label(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor"))
-        vendorComboBox = comboBox(listOf(ANY_VENDOR_PLACEHOLDER, CUSTOM_VENDOR_PLACEHOLDER) + vendorDropdownList, textListCellRenderer { it })
+      row(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor")) {
+        vendorComboBox = cell(ComboBoxWithEditableItem(vendorModel, vendorRenderer))
           .columns(COLUMNS_SHORT)
-          .onChanged {
-            if (it.selectedItem == CUSTOM_VENDOR_PLACEHOLDER) {
-              it.selectAnyValue("", true)
-            }
-            else {
-              it.isEditable = false
-            }
-          }
+          .bindItem(::initialVendor)
           .cellValidation {
             addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
             addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
-          }
-          .applyToComponent {
-            selectAnyValue(initialVendor)
           }.component
       }
       row {
@@ -110,19 +189,46 @@ class GradleDaemonJvmCriteriaView(
     add(component)
   }
 
+  val isModified: Boolean
+    get() = component.isModified()
+
   fun applySelection() {
-    initialVersion = selectedVersion
-    initialVendor = selectedVendor
+    component.apply()
   }
 
   fun resetSelection() {
-    versionComboBox.selectAnyValue(initialVersion)
-    vendorComboBox.selectAnyValue(initialVendor)
+    component.reset()
   }
 
-  private fun <T> ComboBox<T>.selectAnyValue(value: Any, keepEditable: Boolean = false) {
-    isEditable = true
-    selectedItem = value
-    isEditable = keepEditable
+  @Throws(ConfigurationException::class)
+  fun validateSelection() {
+    if (!isValidVersion) {
+      throw ConfigurationException(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.error"))
+    }
+    if (!isValidVendor) {
+      throw ConfigurationException(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.error"))
+    }
+  }
+
+  @VisibleForTesting
+  sealed interface VersionItem {
+    data class Default(val version: Int) : VersionItem
+    data class Custom(val value: String) : VersionItem, EditableItem {
+      override fun valueOf(value: String): Custom = Custom(value)
+      override fun toString(): String = value
+    }
+  }
+
+  @VisibleForTesting
+  sealed interface VendorItem {
+    object Any : VendorItem
+    object SelectCustom : VendorItem, SelectEditableItem {
+      override fun createItem(): Custom = Custom("")
+    }
+    data class Default(val vendor: JvmVendor.KnownJvmVendor) : VendorItem
+    data class Custom(val value: String) : VendorItem, EditableItem {
+      override fun valueOf(value: String): Custom = Custom(value)
+      override fun toString(): String = value
+    }
   }
 }

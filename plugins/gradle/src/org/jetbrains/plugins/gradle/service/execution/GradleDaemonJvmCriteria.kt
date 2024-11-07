@@ -2,6 +2,6 @@
 package org.jetbrains.plugins.gradle.service.execution
 
 data class GradleDaemonJvmCriteria(
-  val version: String,
+  val version: String?,
   val vendor: String?
 )

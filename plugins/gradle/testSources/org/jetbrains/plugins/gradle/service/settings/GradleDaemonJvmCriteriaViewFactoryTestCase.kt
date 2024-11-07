@@ -8,6 +8,8 @@ import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparatorImpl
 import com.intellij.util.ui.UIUtil
 import org.gradle.util.GradleVersion
 import org.jetbrains.jps.model.java.LanguageLevel
+import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VendorItem
+import org.jetbrains.plugins.gradle.service.settings.GradleDaemonJvmCriteriaView.VersionItem
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
@@ -39,7 +41,11 @@ abstract class GradleDaemonJvmCriteriaViewFactoryTestCase {
   fun GradleDaemonJvmCriteriaView.assertVersionDropdownItems() {
     val expectedVersionList = LanguageLevel.HIGHEST.toJavaVersion().feature.downTo(8)
     expectedVersionList.forEachIndexed { index, expectedVersion ->
-      assertEquals(expectedVersion.toString(), versionComboBox.model.getElementAt(index))
+      val actualVersion = when (val versionItem = versionModel.getElementAt(index)) {
+        is VersionItem.Default -> versionItem.version.toString()
+        is VersionItem.Custom -> throw AssertionError("Unexpected custom version item: " + versionItem.value)
+      }
+      assertEquals(expectedVersion.toString(), actualVersion)
     }
   }
 
@@ -47,7 +53,13 @@ abstract class GradleDaemonJvmCriteriaViewFactoryTestCase {
     val expectedVendorList = listOf("<ANY_VENDOR>", "<CUSTOM_VENDOR>", "ADOPTIUM", "ADOPTOPENJDK", "AMAZON", "APPLE", "AZUL", "BELLSOFT", "GRAAL_VM",
                                     "HEWLETT_PACKARD", "IBM", "JETBRAINS", "MICROSOFT", "ORACLE", "SAP", "TENCENT")
     expectedVendorList.forEachIndexed { index, expectedVendor ->
-      assertEquals(expectedVendor, vendorComboBox.model.getElementAt(index))
+      val actualVendor = when (val vendorItem = vendorModel.getElementAt(index)) {
+        VendorItem.Any -> "<ANY_VENDOR>"
+        VendorItem.SelectCustom -> "<CUSTOM_VENDOR>"
+        is VendorItem.Default -> vendorItem.vendor.name
+        is VendorItem.Custom -> throw AssertionError("Unexpected custom vendor item: " + vendorItem.value)
+      }
+      assertEquals(expectedVendor, actualVendor)
     }
   }
 }
