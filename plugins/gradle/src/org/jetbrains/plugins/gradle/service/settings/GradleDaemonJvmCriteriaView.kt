@@ -66,11 +66,9 @@ class GradleDaemonJvmCriteriaView(
         label(GradleBundle.message("gradle.settings.text.daemon.toolchain.version"))
         versionComboBox = comboBox(versionsDropdownList.map { it.toString() }.reversed(), textListCellRenderer { it })
           .columns(COLUMNS_SHORT)
-          .validationOnInput {
-            if (!isValidVersion) error(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) else null
-          }
-          .validationInfo {
-            if (!isValidVersion) error(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) else null
+          .cellValidation {
+            addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
+            addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.version.invalid")) { !isValidVersion }
           }
           .applyToComponent {
             selectAnyValue(initialVersion)
@@ -88,8 +86,9 @@ class GradleDaemonJvmCriteriaView(
                 it.isEditable = false
               }
             }
-            .validationOnInput {
-              if (!isValidVendor) error(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) else null
+            .cellValidation {
+              addInputRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
+              addApplyRule(GradleBundle.message("gradle.settings.text.daemon.toolchain.vendor.invalid")) { !isValidVendor }
             }
             .applyToComponent {
               selectAnyValue(initialVendor)
