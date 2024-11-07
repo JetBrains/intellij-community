@@ -10,6 +10,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.blockingContext
@@ -18,6 +19,7 @@ import com.intellij.openapi.progress.util.PingProgress
 import com.intellij.openapi.project.MergingQueueGuiExecutor.ExecutorStateListener
 import com.intellij.openapi.project.MergingTaskQueue.SubmissionReceipt
 import com.intellij.openapi.project.SingleTaskExecutor.AutoclosableProgressive
+import com.intellij.openapi.startup.StartupActivity.RequiredForSmartMode
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
@@ -45,11 +47,12 @@ import org.jetbrains.annotations.Async
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.annotations.VisibleForTesting
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.locks.LockSupport
 import java.util.function.BooleanSupplier
 import javax.swing.JComponent
-import kotlin.time.Duration.Companion.milliseconds
 
 @Internal
 open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
@@ -541,30 +544,27 @@ open class DumbServiceImpl @NonInjectable @VisibleForTesting constructor(
     if (waitIntolerantThread === Thread.currentThread()) {
       throw AssertionError("Don't invoke waitForSmartMode from a background startup activity")
     }
-    val switched = CompletableDeferred<Unit>()
+    val switched = CountDownLatch(1)
     val smartModeScheduler = myProject.getService(SmartModeScheduler::class.java)
-    smartModeScheduler.runWhenSmart { switched.complete(Unit) }
+    smartModeScheduler.runWhenSmart { switched.countDown() }
 
+    // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
     val startTime = System.currentTimeMillis()
-    return runBlockingMaybeCancellable {
-      // we check getCurrentMode here because of tests which may hang because runWhenSmart needs EDT for scheduling
-      while (!myProject.isDisposed && smartModeScheduler.getCurrentMode() != 0) {
-        // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
-        // without read action. Dumb mode may start immediately after the caller is unblocked, so the caller is prepared for this situation.
-        try {
-          withTimeout(50.milliseconds) {
-            switched.await()
-          }
-          break
-        } catch (_: TimeoutCancellationException) { }
-
-        ensureActive()
-        if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) {
-          return@runBlockingMaybeCancellable false
-        }
+    while (!myProject.isDisposed && smartModeScheduler.getCurrentMode() != 0) {
+      // it is fine to unblock the caller when myProject.isDisposed, even if didn't reach smart mode: we are on background thread
+      // without read action. Dumb mode may start immediately after the caller is unblocked, so the caller is prepared for this situation.
+      try {
+        if (switched.await(50, TimeUnit.MILLISECONDS)) break
       }
-      return@runBlockingMaybeCancellable true
+      catch (_: InterruptedException) {
+      }
+
+      ProgressManager.checkCanceled()
+      if (milliseconds != null && startTime + milliseconds < System.currentTimeMillis()) {
+        return false
+      }
     }
+    return true
   }
 
   override fun wrapGently(dumbUnawareContent: JComponent, parentDisposable: Disposable): JComponent {
