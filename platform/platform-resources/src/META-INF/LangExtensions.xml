@@ -271,9 +271,6 @@
 
     <rearranger.ui implementation="com.intellij.application.options.codeStyle.arrangement.component.DefaultArrangementUiComponentFactory"/>
 
-    <applicationService serviceInterface="com.intellij.ui.EditorTextFieldProvider"
-                        serviceImplementation="com.intellij.ui.EditorTextFieldProviderImpl"/>
-
     <applicationService serviceInterface="com.intellij.util.gist.GistManager"
                         serviceImplementation="com.intellij.util.gist.GistManagerImpl"/>
     <applicationService serviceInterface="com.intellij.util.gist.storage.GistStorage"

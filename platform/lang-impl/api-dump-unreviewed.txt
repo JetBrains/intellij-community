@@ -18691,10 +18691,6 @@ c:com.intellij.ui.EditorComboWithBrowseButton
 - prependItem(java.lang.String):V
 - setHistory(java.lang.String[]):V
 - setText(java.lang.String):V
-c:com.intellij.ui.EditorTextFieldProviderImpl
-- com.intellij.ui.EditorTextFieldProvider
-- <init>():V
-- getEditorField(com.intellij.lang.Language,com.intellij.openapi.project.Project,java.lang.Iterable):com.intellij.ui.EditorTextField
 com.intellij.ui.FontSizeModel
 - a:getUpdates():kotlinx.coroutines.flow.Flow
 - a:getValue():java.lang.Object

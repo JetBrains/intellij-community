@@ -13741,6 +13741,10 @@ c:com.intellij.ui.EditorTextFieldCellRenderer$SimpleWithGutterRendererComponent
 com.intellij.ui.EditorTextFieldProvider
 - a:getEditorField(com.intellij.lang.Language,com.intellij.openapi.project.Project,java.lang.Iterable):com.intellij.ui.EditorTextField
 - s:getInstance():com.intellij.ui.EditorTextFieldProvider
+c:com.intellij.ui.EditorTextFieldProviderImpl
+- com.intellij.ui.EditorTextFieldProvider
+- <init>():V
+- getEditorField(com.intellij.lang.Language,com.intellij.openapi.project.Project,java.lang.Iterable):com.intellij.ui.EditorTextField
 f:com.intellij.ui.ErrorStripeEditorCustomization
 - com.intellij.ui.SimpleEditorCustomization
 - sf:DISABLED:com.intellij.ui.ErrorStripeEditorCustomization
