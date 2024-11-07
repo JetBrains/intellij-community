@@ -1800,14 +1800,6 @@ com.intellij.codeInspection.dataFlow.lang.DfaListener
 - beforePush(com.intellij.codeInspection.dataFlow.value.DfaValue[],com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.lang.DfaAnchor,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V
 - onCondition(com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem,com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.util.ThreeState,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V
 com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem
-a:com.intellij.codeInspection.dataFlow.lang.ir.BaseVariableAnalyzer
-- pf:myBackwardMap:com.intellij.util.containers.MultiMap
-- pf:myFactory:com.intellij.codeInspection.dataFlow.value.DfaValueFactory
-- pf:myForwardMap:com.intellij.util.containers.MultiMap
-- pf:myInstructions:com.intellij.codeInspection.dataFlow.lang.ir.Instruction[]
-- <init>(com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow):V
-- pa:isInterestingInstruction(com.intellij.codeInspection.dataFlow.lang.ir.Instruction):Z
-- p:runDfa(Z,java.util.function.BiFunction):Z
 c:com.intellij.codeInspection.dataFlow.lang.ir.ClosureInstruction
 - com.intellij.codeInspection.dataFlow.lang.ir.Instruction
 - <init>(java.util.List):V
