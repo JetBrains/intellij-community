@@ -1,18 +1,21 @@
 // Copyright 2000-2023 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.github.pullrequest
 
+import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.ProjectActivity
 import com.intellij.platform.util.coroutines.childScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.jetbrains.plugins.github.api.GithubApiRequestOperation
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GHEnterpriseServerMeta
 import org.jetbrains.plugins.github.api.data.GithubPullRequestMergeMethod
@@ -22,8 +25,10 @@ import org.jetbrains.plugins.github.util.GHEnterpriseServerMetadataLoader
 import java.util.*
 
 // TODO: Fix or replace a whole bunch of these statistics as they're no longer being collected since generalizing to Collab Tools
-internal object GHPRStatisticsCollector: CounterUsagesCollector() {
-  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 7)
+internal object GHPRStatisticsCollector : CounterUsagesCollector() {
+  private val COUNTERS_GROUP = EventLogGroup("vcs.github.pullrequest.counters", 8)
+
+  private val LOG = logger<GHPRStatisticsCollector>()
 
   override fun getGroup() = COUNTERS_GROUP
 
@@ -159,6 +164,108 @@ internal object GHPRStatisticsCollector: CounterUsagesCollector() {
     SERVER_META_EVENT.log(project, server.toUrl(), meta.installedVersion)
   }
   //endregion
+
+  //region: API
+  private enum class RateLimitResource {
+    Core, Search, CodeSearch, GraphQL,
+    IntegrationManifest, DependencySnapshots, CodeScanningUpload, ActionsRunnerRegistration,
+    SourceImport,
+    Collaborators,
+    Unknown;
+
+    companion object {
+      fun fromString(name: String): RateLimitResource = when (name) {
+        "core", "rate" -> Core
+        "search" -> Search
+        "code_search" -> CodeSearch
+        "graphql" -> GraphQL
+        "integration_manifest" -> IntegrationManifest
+        "dependency_snapshots" -> DependencySnapshots
+        "code_scanning_upload" -> CodeScanningUpload
+        "actions_runner_registration" -> ActionsRunnerRegistration
+        "collaborators" -> Collaborators
+        "source_import" -> SourceImport
+        else -> Unknown
+      }
+    }
+  }
+
+  private val API_REQUEST_OPERATION_FIELD = EventFields.Enum<GithubApiRequestOperation>(
+    "operation", description = "The type of operation executed."
+  )
+
+  private val API_REQUEST_RATELIMIT_REMAINING_FIELD = EventFields.Int(
+    "rates_remaining",
+    description = "The rate limit remaining for the resource as returned by GitHub." +
+                  "This is not a good measure of rates-used-per-request, instead it's a measure of total usage for a session/user."
+  )
+
+  private val API_REQUEST_RATELIMIT_USED_FIELD = EventFields.Int(
+    "rates_used",
+    description = "The rate limit used during the request. " +
+                  "In the case of GraphQL rates, this is taken directly from the request. " +
+                  "In the case of REST rates, this defaults to 1, but may be changed in the future if GitHub changes their rate limit policy."
+  )
+
+  private val API_REQUEST_RATELIMIT_GUESSED_FIELD = EventFields.Boolean(
+    "rates_used_guessed",
+    description = "Whether the rates used during the request are guessed. " +
+                  "If `false`, the rates are pulled directly from the request."
+  )
+
+  private val API_REQUEST_RATELIMIT_RESOURCE_FIELD = EventFields.Enum<RateLimitResource>(
+    "rates_resource", description = "The resource from which rates are taken as returned by GitHub."
+  )
+
+  private val API_REQUEST_STATUS_CODE_FIELD = EventFields.Int(
+    "status", description = "The status code of the response (200 = OK, 404 = Not Found, etc.)."
+  )
+
+  private val API_REQUEST_EVENT = COUNTERS_GROUP.registerIdeActivity(
+    "api.request",
+    startEventAdditionalFields = arrayOf(API_REQUEST_OPERATION_FIELD),
+    finishEventAdditionalFields = arrayOf(API_REQUEST_RATELIMIT_REMAINING_FIELD, API_REQUEST_RATELIMIT_RESOURCE_FIELD, API_REQUEST_STATUS_CODE_FIELD)
+  )
+
+  private val API_REQUEST_RATES_EVENT = COUNTERS_GROUP.registerEvent(
+    "api.rates",
+    API_REQUEST_OPERATION_FIELD,
+    API_REQUEST_RATELIMIT_USED_FIELD,
+    API_REQUEST_RATELIMIT_GUESSED_FIELD,
+    description = "Event that happens internally after we have tried to determine the rates used for a request."
+  )
+
+  fun logApiRequestStart(operation: GithubApiRequestOperation): StructuredIdeActivity =
+    API_REQUEST_EVENT.started(null) {
+      listOf(API_REQUEST_OPERATION_FIELD.with(operation))
+    }
+
+  fun logApiResponseReceived(
+    activity: StructuredIdeActivity,
+    remaining: Int, resourceName: String,
+    statusCode: Int,
+  ) {
+    val resource = RateLimitResource.fromString(resourceName)
+
+    if (resource == RateLimitResource.Unknown) {
+      LOG.warn("Unknown rate limit resource: ${resourceName}")
+    }
+
+    activity.finished {
+      listOf(
+        API_REQUEST_RATELIMIT_REMAINING_FIELD.with(remaining),
+        API_REQUEST_RATELIMIT_RESOURCE_FIELD.with(resource),
+        API_REQUEST_STATUS_CODE_FIELD.with(statusCode)
+      )
+    }
+  }
+
+  fun logApiResponseRates(operation: GithubApiRequestOperation, used: Int, isGuessed: Boolean) {
+    LOG.debug("Rates { operation: $operation, used: $used, isGuessed: $isGuessed }")
+
+    API_REQUEST_RATES_EVENT.log(operation, used, isGuessed)
+  }
+  //endregion
 }
 
 enum class GHPRAction {
@@ -176,7 +283,7 @@ enum class GHPRAction {
 @Service(Service.Level.PROJECT)
 private class GHServerVersionsCollector(
   private val project: Project,
-  parentCs: CoroutineScope
+  parentCs: CoroutineScope,
 ) {
 
   private val scope = parentCs.childScope(javaClass.name)

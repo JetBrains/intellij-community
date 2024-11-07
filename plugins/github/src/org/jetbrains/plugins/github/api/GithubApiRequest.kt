@@ -9,6 +9,7 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import org.jetbrains.plugins.github.api.data.GithubSearchResult
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLError
+import org.jetbrains.plugins.github.api.data.graphql.GHGQLRateLimit
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import org.jetbrains.plugins.github.exceptions.GithubConfusingException
 import org.jetbrains.plugins.github.exceptions.GithubJsonException
@@ -98,8 +99,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
       url: String,
       private val clazz: Class<T>,
       acceptMimeType: String? = GithubApiContentHelper.V3_JSON_MIME_TYPE,
-    )
-      : Get<GithubResponsePage<T>>(url, acceptMimeType) {
+    ) : Get<GithubResponsePage<T>>(url, acceptMimeType) {
 
       override fun extractResult(response: GithubApiResponse): GithubResponsePage<T> {
         val page = parseJsonSearchPage(response, clazz)
@@ -161,20 +161,20 @@ sealed class GithubApiRequest<out T>(val url: String) {
         throw GithubConfusingException(errors.toString())
       }
 
+      abstract fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?>
+
+      override fun extractResult(response: GithubApiResponse): T =
+        extractResultWithCost(response).first
+
       class Parsed<out T>(
         url: String,
         requestFilePath: String,
         variablesObject: Any,
         private val clazz: Class<T>,
       ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
-        override fun extractResult(response: GithubApiResponse): T {
-          val result: GraphQLResponseDTO<out T, GHGQLError> = parseGQLResponse(response, clazz)
-          val data = result.data
-          if (data != null) return data
-
-          val errors = result.errors
-          if (errors == null) error("Undefined request state - both result and errors are null")
-          else throwException(errors)
+        override fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?> {
+          return parseResponse(response, clazz)
+                 ?: throw GithubJsonException("Non-nullable entity is null or entity path is invalid")
         }
       }
 
@@ -185,8 +185,7 @@ sealed class GithubApiRequest<out T>(val url: String) {
         private val clazz: Class<out T>,
         private vararg val pathFromData: String,
       ) : GQLQuery<T>(url, requestFilePath, variablesObject) {
-
-        override fun extractResult(response: GithubApiResponse): T {
+        override fun extractResultWithCost(response: GithubApiResponse): Pair<T, GHGQLRateLimit?> {
           return parseResponse(response, clazz, pathFromData)
                  ?: throw GithubJsonException("Non-nullable entity is null or entity path is invalid")
         }
@@ -199,8 +198,8 @@ sealed class GithubApiRequest<out T>(val url: String) {
         private val clazz: Class<T>,
         private vararg val pathFromData: String,
       ) : GQLQuery<T?>(url, requestFilePath, variablesObject) {
-        override fun extractResult(response: GithubApiResponse): T? {
-          return parseResponse(response, clazz, pathFromData)
+        override fun extractResultWithCost(response: GithubApiResponse): Pair<T?, GHGQLRateLimit?> {
+          return parseResponse(response, clazz, pathFromData) ?: (null to null)
         }
       }
 
@@ -211,17 +210,25 @@ sealed class GithubApiRequest<out T>(val url: String) {
         private val clazz: Class<T>,
         private vararg val pathFromData: String,
       ) : GQLQuery<List<T>?>(url, requestFilePath, variablesObject) {
-        override fun extractResult(response: GithubApiResponse): List<T>? =
+        override fun extractResultWithCost(response: GithubApiResponse): Pair<List<T>?, GHGQLRateLimit?> =
           parseResponse(response, pathFromData) {
             GithubApiContentHelper.readJsonList(it.toString().reader(), clazz)
-          }
+          } ?: (null to null)
       }
 
       protected fun <T> parseResponse(
         response: GithubApiResponse,
         clazz: Class<T>,
+      ): Pair<T, GHGQLRateLimit?>? =
+        parseResponse(response, arrayOf()) {
+          GithubApiContentHelper.fromJson(it.toString(), clazz, true)
+        }
+
+      protected fun <T> parseResponse(
+        response: GithubApiResponse,
+        clazz: Class<T>,
         pathFromData: Array<out String>,
-      ): T? =
+      ): Pair<T, GHGQLRateLimit?>? =
         parseResponse(response, pathFromData) {
           GithubApiContentHelper.fromJson(it.toString(), clazz, true)
         }
@@ -230,15 +237,21 @@ sealed class GithubApiRequest<out T>(val url: String) {
         response: GithubApiResponse,
         pathFromData: Array<out String>,
         deserialize: (JsonNode) -> T,
-      ): T? {
-        val result: GraphQLResponseDTO<out JsonNode, GHGQLError> = parseGQLResponse(response, JsonNode::class.java)
+      ): Pair<T, GHGQLRateLimit?>? {
+        val result = parseGQLResponse(response, JsonNode::class.java)
         val data = result.data
         if (data != null && !data.isNull) {
           var node: JsonNode = data
           for (path in pathFromData) {
             node = node[path] ?: break
           }
-          if (!node.isNull) return deserialize(node)
+          if (!node.isNull) {
+            val result = deserialize(node)
+            val rates = data["rateLimit"]
+              ?.takeIf { !it.isNull }
+              ?.let { GithubApiContentHelper.fromJson<GHGQLRateLimit?>(it.toString(), gqlNaming = true) }
+            return result to rates
+          }
         }
         val errors = result.errors
         if (errors == null) return null

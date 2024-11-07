@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.dto.GraphQLRequestDTO
 import com.intellij.collaboration.api.httpclient.HttpClientUtil
 import com.intellij.collaboration.ui.SimpleEventListener
 import com.intellij.openapi.Disposable
@@ -22,6 +23,7 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.io.IOException
 import java.io.InputStream
@@ -95,6 +97,7 @@ sealed class GithubApiRequestExecutor {
       indicator.checkCanceled()
       try {
         LOG.debug("Request: ${request.url} ${request.operationName} : Connecting")
+        val activity = GHPRStatisticsCollector.logApiRequestStart(request.operation)
         return connect {
           val connection = it.connection as HttpURLConnection
           if (request is GithubApiRequest.WithBody) {
@@ -104,10 +107,28 @@ sealed class GithubApiRequestExecutor {
           else {
             LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Connected")
           }
+
+          GHPRStatisticsCollector.logApiResponseReceived(
+            activity = activity,
+            remaining = connection.getHeaderFieldInt("x-ratelimit-remaining", -1),
+            resourceName = connection.getHeaderField("x-ratelimit-resource"),
+            statusCode = connection.responseCode,
+          )
+
           checkResponseCode(connection)
           checkServerVersion(connection)
+
           indicator.checkCanceled()
-          val result = request.extractResult(createResponse(it, indicator))
+
+          val (result, rates) = if (request is GithubApiRequest.Post.GQLQuery) {
+            request.extractResultWithCost(createResponse(it, indicator))
+          } else {
+            request.extractResult(createResponse(it, indicator)) to null
+          }
+          val cost = rates?.cost
+
+          GHPRStatisticsCollector.logApiResponseRates(request.operation, cost ?: 1, isGuessed = cost == null)
+
           LOG.debug("Request: ${connection.requestMethod} ${connection.url} : Result extracted")
           result
         }

@@ -4,4 +4,8 @@ query($repoOwner: String!, $repoName: String!, $number: Int!) {
       ...pullRequestInfo
     }
   }
+
+  rateLimit {
+    ...rates
+  }
 }

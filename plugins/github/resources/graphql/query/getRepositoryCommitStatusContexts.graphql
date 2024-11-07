@@ -35,4 +35,8 @@ query($repoOwner: String!, $repoName: String!, $oid: GitObjectID!, $pageSize: In
       }
     }
   }
+
+  rateLimit {
+    ...rates
+  }
 }

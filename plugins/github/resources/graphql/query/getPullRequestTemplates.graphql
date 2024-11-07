@@ -4,4 +4,8 @@ query($repoOwner: String!, $repoName: String!) {
       body
     }
   }
+
+  rateLimit {
+    ...rates
+  }
 }
