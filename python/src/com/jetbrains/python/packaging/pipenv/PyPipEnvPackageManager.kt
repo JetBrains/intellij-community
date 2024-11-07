@@ -5,23 +5,25 @@ import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.google.gson.annotations.SerializedName
 import com.intellij.execution.ExecutionException
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.jetbrains.python.PySdkBundle
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.PythonSdkType
 import com.jetbrains.python.sdk.associatedModuleDir
+import com.jetbrains.python.sdk.associatedModulePath
 import com.jetbrains.python.sdk.pipenv.pipFileLockRequirements
 import com.jetbrains.python.sdk.pipenv.runPipEnv
 import com.jetbrains.python.sdk.pythonSdk
+import java.nio.file.Path
 
-class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
+class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk) {
   @Volatile
   private var packages: List<PyPackage>? = null
 
@@ -29,17 +31,19 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
 
   override fun hasManagement() = true
 
+  @RequiresBackgroundThread
   override fun install(requirementString: String) {
     install(parseRequirements(requirementString), emptyList())
   }
 
+  @RequiresBackgroundThread
   override fun install(requirements: List<PyRequirement>?, extraArgs: List<String>) {
     val args = listOfNotNull(listOf("install"),
                              requirements?.flatMap { it.installOptions },
                              extraArgs)
       .flatten()
     try {
-      runPipEnv(sdk, *args.toTypedArray())
+      runBlockingCancellable { runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()) }
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -47,11 +51,12 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
     }
   }
 
+  @RequiresBackgroundThread
   override fun uninstall(packages: List<PyPackage>) {
     val args = listOf("uninstall") +
                packages.map { it.name }
     try {
-      runPipEnv(sdk, *args.toTypedArray())
+      runBlockingCancellable { runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, *args.toTypedArray()) }
     }
     finally {
       sdk.associatedModuleDir?.refresh(true, false)
@@ -77,15 +82,15 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
 
   override fun getPackages() = packages
 
+  @RequiresBackgroundThread
   override fun refreshAndGetPackages(alwaysRefresh: Boolean): List<PyPackage> {
     if (alwaysRefresh || packages == null) {
       packages = null
-      val output = try {
-        runPipEnv(sdk, "graph", "--json")
-      }
-      catch (e: ExecutionException) {
+      val output = runBlockingCancellable {
+        runPipEnv(sdk.associatedModulePath?.let { Path.of(it) }, "graph", "--json")
+      }.getOrElse {
         packages = emptyList()
-        throw e
+        throw it
       }
       packages = parsePipEnvGraph(output)
       ApplicationManager.getApplication().messageBus.syncPublisher(PyPackageManager.PACKAGE_MANAGER_TOPIC).packagesRefreshed(sdk)
@@ -93,8 +98,9 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
     return packages ?: emptyList()
   }
 
+  @RequiresBackgroundThread
   override fun getRequirements(module: Module): List<PyRequirement>? =
-    module.pythonSdk?.pipFileLockRequirements
+    runBlockingCancellable { module.pythonSdk?.let { pipFileLockRequirements(it) } }
 
   override fun parseRequirements(text: String): List<PyRequirement> =
     PyRequirementParser.fromText(text)
@@ -111,13 +117,17 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
   }
 
   companion object {
-    private data class GraphPackage(@SerializedName("key") var key: String,
-                                    @SerializedName("package_name") var packageName: String,
-                                    @SerializedName("installed_version") var installedVersion: String,
-                                    @SerializedName("required_version") var requiredVersion: String?)
+    private data class GraphPackage(
+      @SerializedName("key") var key: String,
+      @SerializedName("package_name") var packageName: String,
+      @SerializedName("installed_version") var installedVersion: String,
+      @SerializedName("required_version") var requiredVersion: String?,
+    )
 
-    private data class GraphEntry(@SerializedName("package") var pkg: GraphPackage,
-                                  @SerializedName("dependencies") var dependencies: List<GraphPackage>)
+    private data class GraphEntry(
+      @SerializedName("package") var pkg: GraphPackage,
+      @SerializedName("dependencies") var dependencies: List<GraphPackage>,
+    )
 
     /**
      * Parses the output of `pipenv graph --json` into a list of packages.
@@ -132,7 +142,6 @@ class PyPipEnvPackageManager(sdk: Sdk) : PyPackageManager(sdk ) {
       }
       return entries
         .asSequence()
-        .filterNotNull()
         .flatMap { sequenceOf(it.pkg) + it.dependencies.asSequence() }
         .map { PyPackage(it.packageName, it.installedVersion) }
         .distinct()

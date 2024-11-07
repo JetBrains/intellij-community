@@ -14,6 +14,9 @@ import com.jetbrains.python.sdk.PyInterpreterInspectionQuickFixData
 import com.jetbrains.python.sdk.PySdkProvider
 import com.jetbrains.python.sdk.PythonSdkUtil
 import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
+import com.jetbrains.python.sdk.pipenv.quickFixes.PipEnvAssociationQuickFix
+import com.jetbrains.python.sdk.pipenv.quickFixes.PipEnvInstallQuickFix
+import com.jetbrains.python.sdk.pipenv.ui.PyAddPipEnvPanel
 import org.jdom.Element
 import javax.swing.Icon
 
