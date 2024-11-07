@@ -1,0 +1,10 @@
+// COMPILER_ARGUMENTS: -Xwhen-guards
+
+fun test(a: Any) {
+    when (a) {
+        !is Int if a.toString() == "Foo" -> {
+        }
+
+        else -> {}
+    }
+}
