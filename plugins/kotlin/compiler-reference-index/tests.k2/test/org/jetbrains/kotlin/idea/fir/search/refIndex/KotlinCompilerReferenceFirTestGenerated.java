@@ -63,6 +63,44 @@ public abstract class KotlinCompilerReferenceFirTestGenerated extends AbstractKo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestEnumEntry extends AbstractKotlinCompilerReferenceFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntry")
+            public void testEnumEntry() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/enumEntry/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
+        public static class TestEnumEntryWithClassInitializer extends AbstractKotlinCompilerReferenceFirTest {
+            @java.lang.Override
+            @org.jetbrains.annotations.NotNull
+            public final KotlinPluginMode getPluginMode() {
+                return KotlinPluginMode.K2;
+            }
+
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("enumEntryWithClassInitializer")
+            public void testEnumEntryWithClassInitializer() throws Exception {
+                runTest("../tests/testData/compilerIndex/classOrObject/enumEntryWithClassInitializer/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../tests/testData/compilerIndex/classOrObject")
         public static class TestInnerClass extends AbstractKotlinCompilerReferenceFirTest {
             @java.lang.Override
             @org.jetbrains.annotations.NotNull
