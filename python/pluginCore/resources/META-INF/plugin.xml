@@ -639,6 +639,11 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
       defaultValue="[IN_EXPERIMENT*|ENABLED|DISABLED]"
       description="Enable ML ranking in quick fix for missing imports"/>
 
+    <registryKey key="disable.python.cache.update"
+                 defaultValue="false"
+                 restartRequired="false"
+                 description="Disables automatic updating of PyPI package cache and ranking on project startup."/>
+
     <feedback.idleFeedbackSurvey implementation="com.jetbrains.python.statistics.feedback.PythonJobSurvey"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.statistics.feedback.PythonJobStatisticsCollector"/>
     <backgroundPostStartupActivity implementation="com.jetbrains.python.statistics.feedback.PythonFirstLaunchChecker"/>
@@ -1019,4 +1024,5 @@ The Python plug-in provides smart editing for Python scripts. The feature set of
     <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
     <pyDebugAsyncioCustomizer implementation="com.jetbrains.python.debugger.PyDebugAsyncioCustomizerDefault"/>
   </extensions>
+
 </idea-plugin>
