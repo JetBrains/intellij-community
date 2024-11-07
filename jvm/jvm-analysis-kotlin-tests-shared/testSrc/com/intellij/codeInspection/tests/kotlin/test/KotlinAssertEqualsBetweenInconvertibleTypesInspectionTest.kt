@@ -1002,7 +1002,7 @@ abstract class KotlinAssertEqualsBetweenInconvertibleTypesInspectionTest : Asser
     myFixture.testHighlighting(JvmLanguage.KOTLIN, code)
   }
 
-  // Smoke test for IDEA-361908
+  // Test for IDEA-361908
   @Test
   fun `Kotlin Nothing type`() {
     @Language("kotlin") val code = """

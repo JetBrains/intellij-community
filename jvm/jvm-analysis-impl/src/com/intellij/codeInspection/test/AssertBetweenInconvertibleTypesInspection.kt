@@ -8,6 +8,7 @@ import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.lang.Language
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.CommonClassNames.JAVA_LANG_VOID
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastHintedVisitorAdapter
@@ -69,7 +70,7 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
 
     // Workaround for Kotlin's Nothing type becoming Void in UAST and causing false positives. See IDEA-361908.
     val isKotlin = expression.lang == Language.findLanguageByID("kotlin")
-    if (isKotlin && (type1.isVoid() || type2.isVoid())) return
+    if (isKotlin && (type1.equalsToText(JAVA_LANG_VOID) || type2.equalsToText(JAVA_LANG_VOID))) return
 
     checkMismatch(expression, type1, type2)
   }
@@ -100,7 +101,8 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
     var checkType = isEqualsCall?.valueArguments?.firstOrNull()?.getExpressionType() ?: return
     if (checkType is UastErrorType) return
     val receiverType = GenericsUtil.getVariableTypeByExpressionType(isEqualsCall.receiverType)
-    var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false)) ?: return
+    var sourceType = GenericsUtil.getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(receiverType, ASSERTJ_ASSERT, 1, false))
+                     ?: return
     sourceType = normalizeType(sourceType, receiverType)
 
     // Handle implicit unwrapping of Stream<T> into List<T>. Learn more at:
@@ -174,11 +176,4 @@ private class AssertEqualsBetweenInconvertibleTypesVisitor(private val holder: P
       "org.assertj.core.api.Assertions", "assertThat"
     ).parameterCount(1)
   }
-}
-
-private fun PsiType.isVoid(): Boolean {
-  if (this !is PsiClassType) return false
-  if (this.name != "Void") return false
-  if (this.parameters.isNotEmpty()) return false // We know that void doesn't have any type params
-  return resolve()?.qualifiedName == CommonClassNames.JAVA_LANG_VOID
 }
