@@ -1,0 +1,234 @@
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomHeader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomHeader.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomHeader.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomHeader.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomHeader.kt	(date 1730974253125)
+@@ -4,7 +4,6 @@
+ import com.intellij.CommonBundle
+ import com.intellij.accessibility.AccessibilityUtils
+ import com.intellij.icons.AllIcons
+-import com.intellij.ide.ui.UISettings
+ import com.intellij.openapi.MnemonicHelper
+ import com.intellij.openapi.application.ApplicationManager
+ import com.intellij.openapi.diagnostic.logger
+@@ -158,7 +157,7 @@
+     minimumSize = size
+   }
+ 
+-  protected open fun calcHeight(): Int = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader(UISettings.getInstance()))
++  protected open fun calcHeight(): Int = CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader())
+ 
+   protected open fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
+ 
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MacToolbarFrameHeader.kt	(date 1730974253133)
+@@ -11,7 +11,6 @@
+ import com.intellij.openapi.application.ModalityState
+ import com.intellij.openapi.application.asContextElement
+ import com.intellij.openapi.wm.impl.ToolbarHolder
+-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil.isCompactHeader
+ import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.SimpleCustomDecorationPath
+ import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+ import com.intellij.openapi.wm.impl.headertoolbar.computeMainActionGroups
+@@ -124,11 +123,11 @@
+   }
+
+   private fun isCompactHeaderFast(): Boolean {
+-    return isAlwaysCompact || isCompactHeader(UISettings.getInstance())
++    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader()
+   }
+
+   private suspend fun isCompactHeader(): Boolean {
+-    return isAlwaysCompact || isCompactHeader(UISettings.getInstance(), { computeMainActionGroups() })
++    return isAlwaysCompact || CustomWindowHeaderUtil.isCompactHeader { computeMainActionGroups() }
+   }
+
+   private fun createView(isCompactHeader: Boolean): HeaderView {
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/toolbar/ToolbarFrameHeader.kt	(date 1730974253116)
+@@ -8,7 +8,8 @@
+ import com.intellij.openapi.application.EDT
+ import com.intellij.openapi.application.ModalityState
+ import com.intellij.openapi.application.asContextElement
+-import com.intellij.openapi.wm.impl.*
++import com.intellij.openapi.wm.impl.ToolbarHolder
++import com.intellij.openapi.wm.impl.WindowButtonsConfiguration
+ import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxIconThemeConfiguration
+ import com.intellij.openapi.wm.impl.customFrameDecorations.frameButtons.LinuxResizableCustomFrameButtons
+ import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomWindowHeaderUtil
+@@ -79,7 +80,7 @@
+   init {
+     // color full toolbar
+     isOpaque = false
+-    isCompactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance())
++    isCompactHeader = isAlwaysCompact || isCompactHeader()
+
+     mainMenuButton.expandableMenu = expandableMenu
+     layout = object : GridBagLayout() {
+@@ -129,7 +130,7 @@
+             updateLayout()
+           }
+
+-          val compactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance(), { computeMainActionGroups() })
++          val compactHeader = isAlwaysCompact || isCompactHeader { computeMainActionGroups() }
+
+           when (mode) {
+             ShowMode.TOOLBAR -> doUpdateToolbar(compactHeader)
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomWindowHeaderUtil.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomWindowHeaderUtil.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomWindowHeaderUtil.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomWindowHeaderUtil.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/CustomWindowHeaderUtil.kt	(date 1730974253128)
+@@ -1,17 +1,14 @@
+ // Copyright 2000-2024 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+ package com.intellij.openapi.wm.impl.customFrameDecorations.header
+
++import com.intellij.diagnostic.LoadingState
+ import com.intellij.ide.actions.DistractionFreeModeController
+ import com.intellij.ide.ui.UISettings
+ import com.intellij.openapi.actionSystem.ActionGroup
+ import com.intellij.openapi.util.SystemInfo
+ import com.intellij.openapi.util.SystemInfoRt
+ import com.intellij.openapi.util.registry.Registry
+-import com.intellij.openapi.wm.impl.FrameInfoHelper
+-import com.intellij.openapi.wm.impl.IdeFrameDecorator
+-import com.intellij.openapi.wm.impl.IdeFrameImpl
+-import com.intellij.openapi.wm.impl.ProjectFrameHelper
+-import com.intellij.openapi.wm.impl.X11UiUtil
++import com.intellij.openapi.wm.impl.*
+ import com.intellij.openapi.wm.impl.headertoolbar.HeaderClickTransparentListener
+ import com.intellij.ui.ExperimentalUI
+ import com.intellij.ui.WindowMoveListener
+@@ -62,22 +59,25 @@
+            (isToolbarInHeader(uiSettings, false) || IdeFrameDecorator.isCustomDecorationActive())
+   }
+
+-  internal inline fun isCompactHeader(
+-    uiSettings: UISettings,
+-    mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>,
+-  ): Boolean {
+-    if (isCompactHeader(uiSettings)) return true
++  internal inline fun isCompactHeader(mainToolbarActionSupplier: () -> List<Pair<ActionGroup, HorizontalLayout.Group>>): Boolean {
++    if (isCompactHeader()) {
++      return true
++    }
++
+     val mainToolbarHasNoActions = mainToolbarActionSupplier().all { it.first.getChildren(null).isEmpty() }
+     return if (SystemInfoRt.isMac) {
+       mainToolbarHasNoActions
+     }
+     else {
+-      mainToolbarHasNoActions && !uiSettings.separateMainMenu
++      mainToolbarHasNoActions && !UISettings.getInstance().separateMainMenu
+     }
+   }
+
+-  internal fun isCompactHeader(uiSettings: UISettings): Boolean {
+-    return DistractionFreeModeController.shouldMinimizeCustomHeader() || !uiSettings.showNewMainToolbar
++  internal fun isCompactHeader(): Boolean {
++    if (!LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred) {
++      return false
++    }
++    return DistractionFreeModeController.shouldMinimizeCustomHeader() || !UISettings.getInstance().showNewMainToolbar
+   }
+
+   internal fun isToolbarInHeader(uiSettings: UISettings, isFullscreen: Boolean): Boolean {
+@@ -98,6 +98,7 @@
+   fun getPreferredWindowHeaderHeight(isCompactHeader: Boolean): Int = JBUI.scale(
+     when {
+       isCompactHeader -> HEADER_HEIGHT_DFM
++      !LoadingState.CONFIGURATION_STORE_INITIALIZED.isOccurred -> HEADER_HEIGHT_NORMAL
+       UISettings.getInstance().compactMode -> HEADER_HEIGHT_COMPACT
+       else -> HEADER_HEIGHT_NORMAL
+     }
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/customFrameDecorations/header/MenuFrameHeader.kt	(date 1730974253136)
+@@ -68,7 +68,7 @@
+   }
+
+   override fun calcHeight(): Int {
+-    val isCompactHeader = isAlwaysCompact || isCompactHeader(UISettings.getInstance()) { blockingComputeMainActionGroups() }
++    val isCompactHeader = isAlwaysCompact || isCompactHeader { blockingComputeMainActionGroups() }
+     return CustomWindowHeaderUtil.getPreferredWindowHeaderHeight(isCompactHeader)
+   }
+
+Index: platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt b/platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt
+--- a/platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt	(revision 088ed5e0512e354c4579e97f9c2f78270521dd0c)
++++ b/platform/platform-impl/src/com/intellij/openapi/wm/impl/ProjectFrameCustomHeaderHelper.kt	(date 1730974253140)
+@@ -40,13 +40,7 @@
+ import com.intellij.util.ui.JBUI
+ import com.jetbrains.WindowDecorations
+ import kotlinx.coroutines.*
+-import kotlinx.coroutines.CoroutineScope
+-import kotlinx.coroutines.Dispatchers
+-import kotlinx.coroutines.launch
+-import kotlinx.coroutines.withContext
+ import javax.swing.*
+-import javax.swing.JFrame
+-import javax.swing.JRootPane
+
+ private typealias MainToolbarActions = List<Pair<ActionGroup, HorizontalLayout.Group>>
+
+@@ -146,7 +140,7 @@
+       else {
+         val uiSettings = UISettings.shadowInstance
+         !IdeFrameDecorator.isCustomDecorationActive() && uiSettings.showMainMenu && !hideNativeLinuxTitle(uiSettings) &&
+-        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader(uiSettings) { computeMainActionGroups() }))
++        (!isMenuButtonInToolbar(uiSettings) || (ExperimentalUI.isNewUI() && isCompactHeader { computeMainActionGroups() }))
+       }
+       if (visible != menuBar.isVisible) {
+         menuBar.isVisible = visible
+@@ -235,7 +229,7 @@
+   ): Boolean {
+     return !isFullScreen ||
+            !SystemInfoRt.isMac && CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen) ||
+-           SystemInfoRt.isMac && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
++           SystemInfoRt.isMac && !isCompactHeader(mainToolbarActionSupplier)
+   }
+
+   private inline fun isToolbarVisible(
+@@ -245,12 +239,12 @@
+   ): Boolean {
+     val isNewToolbar = ExperimentalUI.isNewUI()
+     return isNewToolbar && !CustomWindowHeaderUtil.isToolbarInHeader(uiSettings, isFullScreen)
+-           && !isCompactHeader(uiSettings, mainToolbarActionSupplier)
++           && !isCompactHeader(mainToolbarActionSupplier)
+            || !isNewToolbar && uiSettings.showMainToolbar
+   }
+
+-  private inline fun isCompactHeader(uiSettings: UISettings, mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
+-    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(uiSettings, mainToolbarActionSupplier)
++  private inline fun isCompactHeader(mainToolbarActionSupplier: () -> MainToolbarActions): Boolean =
++    isLightEdit || CustomWindowHeaderUtil.isCompactHeader(mainToolbarActionSupplier)
+ }
+
+ private suspend fun createToolbar(coroutineScope: CoroutineScope, frame: JFrame, isFullScreen: () -> Boolean): JComponent {

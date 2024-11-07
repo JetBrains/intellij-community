@@ -165,6 +165,19 @@
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
 
+        <property name="RestarterMissingOnWindows"
+                  value="${basedir}/patches/MPS-37859-IJPL-165362.patch"/>
+        <echo message="Applying ${RestarterMissingOnWindows}"/>
+        <exec executable="git" dir="${community.folder}" failonerror="true">
+            <arg value="apply"/>
+            <arg value="&#45;-check"/>
+            <arg value="${RestarterMissingOnWindows}"/>
+        </exec>
+        <exec executable="git" dir="${community.folder}">
+            <arg value="apply"/>
+            <arg value="${RestarterMissingOnWindows}"/>
+        </exec>
+
         <property name="LoadModulesFromJars"
                   value="${basedir}/patches/LoadModulesFromJars.patch"/>
         <echo message="Applying ${LoadModulesFromJars}"/>
