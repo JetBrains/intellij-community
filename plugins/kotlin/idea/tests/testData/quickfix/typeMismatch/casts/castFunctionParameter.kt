@@ -1,0 +1,11 @@
+// "Cast expression 'z' to 'T & Any'" "true"
+
+fun <T> foo(x: T & Any) {}
+
+fun <T> bar(x: T & Any) {
+    val z: T = x
+    foo(<caret>z)
+}
+
+// FUS_QUICKFIX_NAME: org.jetbrains.kotlin.idea.quickfix.CastExpressionFix
+// FUS_K2_QUICKFIX_NAME: org.jetbrains.kotlin.idea.k2.codeinsight.fixes.CastExpressionFixFactories$CastExpressionModCommandAction
