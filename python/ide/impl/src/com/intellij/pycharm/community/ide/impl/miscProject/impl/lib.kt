@@ -29,6 +29,8 @@ import com.intellij.psi.PsiManager
 import com.intellij.pycharm.community.ide.impl.PyCharmCommunityCustomizationBundle
 import com.intellij.pycharm.community.ide.impl.miscProject.MiscFileType
 import com.intellij.pycharm.community.ide.impl.miscProject.TemplateFileName
+import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.FindOnSystem
+import com.intellij.pycharm.community.ide.impl.miscProject.impl.ObtainPythonStrategy.UseThesePythons
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.python.LocalizedErrorString
 import com.jetbrains.python.PythonModuleTypeBase
@@ -54,19 +56,19 @@ private val logger = fileLogger()
  * Creates project in [projectPath] in modal window. Once created, uses [scopeProvider] to get scope
  * to launch [miscFileType] generation in background, returns it as a job.
  *
- * Pythons are taken from the system (installed if needed) unless provided explicitly [pythons]
+ * Pythons are obtained with [obtainPythonStrategy]
  */
 @RequiresEdt
 fun createMiscProject(
   projectPath: Path,
   miscFileType: MiscFileType,
   scopeProvider: (Project) -> CoroutineScope,
-  pythons: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>? = null,
+  obtainPythonStrategy: ObtainPythonStrategy,
 ): Result<Job, LocalizedErrorString> =
   runWithModalProgressBlocking(ModalTaskOwner.guess(),
                                PyCharmCommunityCustomizationBundle.message("misc.project.generating.env"),
                                TaskCancellation.cancellable()) {
-    createProjectAndSdk(projectPath, pythons)
+    createProjectAndSdk(projectPath, obtainPythonStrategy)
   }.mapResult { (project, sdk) ->
     Result.Success(scopeProvider(project).launch {
       withBackgroundProgress(project, PyCharmCommunityCustomizationBundle.message("misc.project.filling.file")) {
@@ -109,27 +111,39 @@ private suspend fun generateFile(where: Path, templateFileName: TemplateFileName
 
 /**
  * Creates project with 1 module in [projectPath] and sdk using the highest python.
- * Pythons are searched in system ([findPythonsOnSystem]) or provided explicitly [pythonsToUseInsteadOfSystem].
+ * Pythons are searched in system ([findPythonsOnSystem]) or provided explicitly (depends on [obtainPythonStrategy]).
  * In former case if no python were found, we [installLatestPython] (not in a latter case, though).
  */
 private suspend fun createProjectAndSdk(
   projectPath: Path,
-  pythonsToUseInsteadOfSystem: List<Pair<PythonSdkFlavor<*>, Collection<Path>>>? = null,
+  obtainPythonStrategy: ObtainPythonStrategy,
 ): Result<Pair<Project, Sdk>, LocalizedErrorString> {
-  assert(
-    pythonsToUseInsteadOfSystem == null || pythonsToUseInsteadOfSystem.isNotEmpty()) { "When provided explicitly, pythons can't be empty" }
   val projectPathVfs = createProjectDir(projectPath).getOr { return it.convertErr() }
 
-  var pythonBinary = filterLatestPython(pythonsToUseInsteadOfSystem ?: findPythonsOnSystem())
+  // First, find the latest python according to strategy
+  var pythonBinary = filterLatestPython(
+    when (obtainPythonStrategy) {
+      is UseThesePythons -> obtainPythonStrategy.pythons
+      is FindOnSystem -> findPythonsOnSystem()
+    })
 
-  // Only install if pythons weren't provided explicitly, see fun doc
-  if (pythonBinary == null && pythonsToUseInsteadOfSystem == null) {
-    // Install
-    installLatestPython().onFailure { exception ->
-      // Failed to install python?
-      logger.warn("Python installation failed", exception)
-      return Result.Failure(LocalizedErrorString(
-        PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.localizedMessage)))
+  // No python found?
+  if (pythonBinary == null) {
+    // Only install if pythons weren't provided explicitly, see fun doc
+    when (obtainPythonStrategy) {
+      is UseThesePythons -> Unit
+      is FindOnSystem -> {
+        // User is ok with installation
+        if (obtainPythonStrategy.confirmInstallation()) {
+          // Install
+          installLatestPython().onFailure { exception ->
+            // Failed to install python?
+            logger.warn("Python installation failed", exception)
+            return Result.Failure(LocalizedErrorString(
+              PyCharmCommunityCustomizationBundle.message("misc.project.error.install.python", exception.localizedMessage)))
+          }
+        }
+      }
     }
     // Find latest python again
     pythonBinary = filterLatestPython(findPythonsOnSystem())
