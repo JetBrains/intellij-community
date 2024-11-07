@@ -86,6 +86,7 @@ public class AssignInstruction extends ExpressionPushingInstruction {
         }
       }
       stateBefore.setVarValue(var, dfaSource);
+      interpreter.getListener().afterAssignment(dfaSource, dfaDest, stateBefore, getDfaAnchor());
       if (DfaNullability.fromDfType(var.getInherentType()) == DfaNullability.NULLABLE &&
           DfaNullability.fromDfType(stateBefore.getDfType(var)) == DfaNullability.UNKNOWN && isVariableInitializer()) {
         stateBefore.meetDfType(var, DfaNullability.NULLABLE.asDfType());

@@ -1796,6 +1796,7 @@ c:com.intellij.codeInspection.dataFlow.interpreter.StateQueue
 com.intellij.codeInspection.dataFlow.lang.DfaAnchor
 com.intellij.codeInspection.dataFlow.lang.DfaListener
 - sf:EMPTY:com.intellij.codeInspection.dataFlow.lang.DfaListener
+- afterAssignment(com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
 - beforeAssignment(com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState,com.intellij.codeInspection.dataFlow.lang.DfaAnchor):V
 - beforePush(com.intellij.codeInspection.dataFlow.value.DfaValue[],com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.codeInspection.dataFlow.lang.DfaAnchor,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V
 - onCondition(com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem,com.intellij.codeInspection.dataFlow.value.DfaValue,com.intellij.util.ThreeState,com.intellij.codeInspection.dataFlow.memory.DfaMemoryState):V
