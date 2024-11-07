@@ -208,6 +208,9 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   // @Throws(E::class)
   override fun <T, E : Throwable?> runUnlockingIntendedWrite(action: ThrowableComputable<T, E>): T {
+    if (isLockStoredInContext) {
+      return action.compute()
+    }
     val ts = getThreadState()
     if (!ts.hasWriteIntent) {
       try {
@@ -541,7 +544,12 @@ internal object AnyThreadWriteThreadingSupport: ThreadingSupport {
 
   override fun isInImpatientReader(): Boolean = getThreadState().impatientReader
 
-  override fun isInsideUnlockedWriteIntentLock(): Boolean = getThreadState().writeIntentReleased
+  override fun isInsideUnlockedWriteIntentLock(): Boolean {
+    if (isLockStoredInContext) {
+      return false
+    }
+    return getThreadState().writeIntentReleased
+  }
 
   private fun measureWriteLock(acquisitor: () -> WritePermit) : WritePermit {
     val delay = ApplicationImpl.Holder.ourDumpThreadsOnLongWriteActionWaiting

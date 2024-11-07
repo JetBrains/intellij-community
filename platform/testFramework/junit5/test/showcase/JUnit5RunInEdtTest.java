@@ -2,6 +2,7 @@
 package com.intellij.testFramework.junit5.showcase;
 
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.application.RuntimeFlagsKt;
 import com.intellij.testFramework.junit5.RunInEdt;
 import com.intellij.testFramework.junit5.RunMethodInEdt;
 import com.intellij.util.ui.EDT;
@@ -121,28 +122,28 @@ final class JUnit5RunInEdtTest {
     @BeforeAll
     static void beforeAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt
     MethodLevelAnnotationTest() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt
     @BeforeEach
     void beforeEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt
     @Test
     void testMethod() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @Test
@@ -155,7 +156,7 @@ final class JUnit5RunInEdtTest {
     @ExtendWith(EmptyTestTemplateInvocationContextProvider.class)
     void testTemplate() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt
@@ -164,7 +165,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
       return List.of(DynamicTest.dynamicTest("dynamic test", () -> {
         Assertions.assertTrue(EDT.isCurrentThreadEdt());
-        Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+        assertWIUnlock();
       }));
     }
 
@@ -172,14 +173,14 @@ final class JUnit5RunInEdtTest {
     @AfterEach
     void afterEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt
     @AfterAll
     static void afterAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
   }
 
@@ -332,28 +333,28 @@ final class JUnit5RunInEdtTest {
     @BeforeAll
     static void beforeAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     MethodLevelAnnotationTestWithoutPerMethodWriteIntent() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     @BeforeEach
     void beforeEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     @Test
     void testMethod() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @Test
@@ -366,7 +367,7 @@ final class JUnit5RunInEdtTest {
     @ExtendWith(EmptyTestTemplateInvocationContextProvider.class)
     void testTemplate() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
@@ -375,7 +376,7 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
       return List.of(DynamicTest.dynamicTest("dynamic test", () -> {
         Assertions.assertTrue(EDT.isCurrentThreadEdt());
-        Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+        assertWIUnlock();
       }));
     }
 
@@ -383,14 +384,14 @@ final class JUnit5RunInEdtTest {
     @AfterEach
     void afterEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @RunMethodInEdt(writeIntent = RunMethodInEdt.WriteIntentMode.False)
     @AfterAll
     static void afterAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
   }
 
@@ -401,32 +402,32 @@ final class JUnit5RunInEdtTest {
     @BeforeAll
     static void beforeAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
     ClassLevelAnnotationTest() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @BeforeEach
     void beforeEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @Test
     void testMethod() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @TestTemplate
     @ExtendWith(EmptyTestTemplateInvocationContextProvider.class)
     void testTemplate() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @TestFactory
@@ -434,20 +435,20 @@ final class JUnit5RunInEdtTest {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
       return List.of(DynamicTest.dynamicTest("dynamic test", () -> {
         Assertions.assertTrue(EDT.isCurrentThreadEdt());
-        Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+        assertWIUnlock();
       }));
     }
 
     @AfterEach
     void afterEach() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
 
     @AfterAll
     static void afterAll() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
   }
 
@@ -518,7 +519,7 @@ final class JUnit5RunInEdtTest {
     @Test
     void testMethod() {
       Assertions.assertTrue(EDT.isCurrentThreadEdt());
-      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+      assertWIUnlock();
     }
   }
 
@@ -533,6 +534,19 @@ final class JUnit5RunInEdtTest {
     public Stream<TestTemplateInvocationContext> provideTestTemplateInvocationContexts(ExtensionContext context) {
       return Stream.of(new TestTemplateInvocationContext() {
       });
+    }
+  }
+
+  /**
+   * WI unlock is no-op when {@link RuntimeFlagsKt#isLockStoredInContext} is true
+   * => no unlock happens, WI is still held.
+   */
+  private static void assertWIUnlock() {
+    if (RuntimeFlagsKt.isLockStoredInContext()) {
+      Assertions.assertTrue(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
+    }
+    else {
+      Assertions.assertFalse(IdeEventQueue.getInstance().getThreadingSupport().isWriteIntentLocked());
     }
   }
 }
