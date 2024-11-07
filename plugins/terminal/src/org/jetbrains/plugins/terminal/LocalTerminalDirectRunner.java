@@ -115,7 +115,6 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
         LocalPtyOptions.defaults().builder()
           .initialColumns(initialTermSize != null ? initialTermSize.getColumns() : -1)
           .initialRows(initialTermSize != null ? initialTermSize.getRows() : -1)
-          .useWinConPty(LocalPtyOptions.shouldUseWinConPty())
           .build(),
         null,
         false,
