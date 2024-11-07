@@ -1566,8 +1566,8 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx
     }
   }
 
-  // tell the next restarted highlighting that it should start all inspections/external annotators/etc
-  void restartToCompleteEssentialHighlighting() {
+  // tell the next restarted highlighting that it should start in the "full mode" and run all inspections/external annotators/etc
+  void requestRestartToCompleteEssentialHighlighting() {
     restart("restartToCompleteEssentialHighlighting");
     completeEssentialHighlightingRequested = true;
   }
