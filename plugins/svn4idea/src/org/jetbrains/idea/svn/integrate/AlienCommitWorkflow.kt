@@ -7,16 +7,13 @@ import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.DIALOG_TITLE
 import com.intellij.vcs.commit.CommitChangeListDialogWorkflow
 import com.intellij.vcs.commit.CommitSessionInfo
 import com.intellij.vcs.commit.ShowNotificationCommitResultHandler
-import org.jetbrains.annotations.Nls
 
-class AlienCommitWorkflow(val vcs: AbstractVcs, @Nls changeListName: String, val changes: List<Change>, commitMessage: String?) :
-  CommitChangeListDialogWorkflow(vcs.project, initialCommitMessage = commitMessage, initiallyIncluded = changes) {
+class AlienCommitWorkflow(val vcs: AbstractVcs) :
+  CommitChangeListDialogWorkflow(vcs.project) {
 
   init {
     updateVcses(setOf(vcs))
   }
-
-  val changeList = AlienLocalChangeList(changes, changeListName)
 
   override val isDefaultCommitEnabled: Boolean = true
   override val isPartialCommitEnabled: Boolean = false

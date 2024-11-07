@@ -320,14 +320,20 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       public void onSuccess() {
         if (!caughtError.isNull()) {
           VcsBalloonProblemNotifier.showOverVersionControlView(myVcs.getProject(), caughtError.get(), MessageType.ERROR);
+          return;
         }
-        else if (!changesBuilder.getChanges().isEmpty()) {
-          AlienCommitWorkflow workflow =
-            new AlienCommitWorkflow(myVcs, myMerger.getComment(), changesBuilder.getChanges(), myMerger.getComment());
-          AlienCommitChangeListDialog dialog = new AlienCommitChangeListDialog(workflow);
 
-          new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
-        }
+        List<Change> changes = changesBuilder.getChanges();
+        if (changes.isEmpty()) return;
+
+        String comment = myMerger.getComment();
+        AlienLocalChangeList changeList = new AlienLocalChangeList(changes, comment);
+
+        AlienCommitWorkflow workflow = new AlienCommitWorkflow(myVcs);
+        AlienCommitChangeListDialog dialog = new AlienCommitChangeListDialog(workflow, changeList);
+        SingleChangeListCommitWorkflowHandler handler =
+          new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, changes);
+        handler.activate();
       }
     }.queue();
   }

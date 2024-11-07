@@ -225,12 +225,11 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     }
 
-    SingleChangeListCommitWorkflow workflow =
-      new SingleChangeListCommitWorkflow(project, affectedVcses, included, initialChangeList, executors, showVcsCommit,
-                                         comment, customResultHandler);
+    SingleChangeListCommitWorkflow workflow = new SingleChangeListCommitWorkflow(project, affectedVcses, initialChangeList,
+                                                                                 executors, showVcsCommit, customResultHandler);
     CommitChangeListDialog dialog = new DefaultCommitChangeListDialog(workflow);
 
-    return new SingleChangeListCommitWorkflowHandler(workflow, dialog).activate();
+    return new SingleChangeListCommitWorkflowHandler(workflow, dialog, comment, included).activate();
   }
 
   public static void showNothingToCommitMessage(@NotNull Project project) {
