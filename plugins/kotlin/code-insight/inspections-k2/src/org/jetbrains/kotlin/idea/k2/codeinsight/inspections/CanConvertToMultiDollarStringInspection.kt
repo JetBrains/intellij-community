@@ -7,6 +7,7 @@ import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.modcommand.ModPsiUpdater
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.analysis.api.KaSession
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.base.projectStructure.languageVersionSettings
@@ -48,6 +49,10 @@ class CanConvertToMultiDollarStringInspection :
         context: MultiDollarConversionInfo,
     ): @InspectionMessage String {
         return KotlinBundle.message("inspection.can.convert.to.multi.dollar.string.problem.description")
+    }
+
+    override fun getApplicableRanges(element: KtStringTemplateExpression): List<TextRange> {
+        return element.findTextRangesInParentForEscapedDollars()
     }
 
     override fun createQuickFix(

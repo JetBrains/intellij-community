@@ -8154,6 +8154,11 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/multipleSlashEscapedDollars.kt");
         }
 
+        @TestMetadata("noInspectionCaretOutsideDollarEntryRange.kt")
+        public void testNoInspectionCaretOutsideDollarEntryRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noInspectionCaretOutsideDollarEntryRange.kt");
+        }
+
         @TestMetadata("noPrefixSimplifiableBeforeBlockExpression.kt")
         public void testNoPrefixSimplifiableBeforeBlockExpression() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canSimplifyDollarLiteral/noPrefixSimplifiableBeforeBlockExpression.kt");
@@ -8353,14 +8358,14 @@ public abstract class K2LocalInspectionTestGenerated extends AbstractK2LocalInsp
             runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/escapedDollar.kt");
         }
 
-        @TestMetadata("escapedDollarCaretInsideBlockExpression.kt")
-        public void testEscapedDollarCaretInsideBlockExpression() throws Exception {
-            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/escapedDollarCaretInsideBlockExpression.kt");
-        }
-
         @TestMetadata("multipleSimplifiableDollars.kt")
         public void testMultipleSimplifiableDollars() throws Exception {
             runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/multipleSimplifiableDollars.kt");
+        }
+
+        @TestMetadata("noInspectionCaretOutsideDollarEntryRange.kt")
+        public void testNoInspectionCaretOutsideDollarEntryRange() throws Exception {
+            runTest("../../../idea/tests/testData/inspectionsLocal/canConvertToMultiDollarString/noInspectionCaretOutsideDollarEntryRange.kt");
         }
 
         @TestMetadata("notReplaceableAlreadyPrefixed.kt")

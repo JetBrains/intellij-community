@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeinsights.impl.base
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isSingleQuoted
@@ -258,6 +259,10 @@ fun KtStringTemplateEntry.isEscapedDollar(): Boolean = when (this) {
     is KtEscapeStringTemplateEntry -> this.isEscapedDollar()
     is KtBlockStringTemplateEntry -> this.isInterpolatedDollarLiteralExpression()
     else -> false
+}
+
+fun KtStringTemplateExpression.findTextRangesInParentForEscapedDollars(): List<TextRange> {
+    return entries.filter { it.isEscapedDollar() }.map { it.textRangeInParent }
 }
 
 /**
