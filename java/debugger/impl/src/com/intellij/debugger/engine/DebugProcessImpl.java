@@ -1563,7 +1563,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       throw new EvaluateException(e.getMessage(), e);
     }
     invokerArgs.add(arrayArgs);
-    invokerArgs.add(evaluationContext.getClassLoader()); // class loader
+    invokerArgs.add(method.declaringType().classLoader()); // method's declaring type class loader to be able to resolve parameter types
     return DebuggerUtilsImpl.invokeHelperMethod(evaluationContext, MethodInvoker.class, "invoke", invokerArgs, false);
   }
 
