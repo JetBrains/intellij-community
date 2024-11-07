@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.pom.Navigatable
 import com.intellij.psi.NavigatablePsiElement
 import com.intellij.ui.components.JBLabel
@@ -113,5 +114,6 @@ private class CoroutineScopeProvider(val scope: CoroutineScope) {
         view.updateAvailableSuppressActions()
       }
     }
+    Disposer.register(view) { suppressActionsJob?.cancel() }
   }
 }
