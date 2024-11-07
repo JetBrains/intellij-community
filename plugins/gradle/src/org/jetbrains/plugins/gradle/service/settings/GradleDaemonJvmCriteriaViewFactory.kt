@@ -15,8 +15,8 @@ object GradleDaemonJvmCriteriaViewFactory {
   fun createView(externalProjectPath: Path, gradleVersion: GradleVersion, disposable: Disposable): GradleDaemonJvmCriteriaView {
     val daemonJvmProperties = GradleDaemonJvmPropertiesFile.getProperties(externalProjectPath)
     return GradleDaemonJvmCriteriaView(
-      version = daemonJvmProperties?.version,
-      vendor = daemonJvmProperties?.vendor,
+      version = daemonJvmProperties?.version?.value,
+      vendor = daemonJvmProperties?.vendor?.value,
       versionsDropdownList = getSuggestedVersions(),
       vendorDropdownList = getSuggestedVendors(),
       displayAdvancedSettings = GradleDaemonJvmHelper.isDamonJvmVendorCriteriaSupported(gradleVersion),

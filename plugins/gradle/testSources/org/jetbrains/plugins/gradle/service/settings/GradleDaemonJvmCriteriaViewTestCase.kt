@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.service.settings
 import com.intellij.openapi.Disposable
 import com.intellij.testFramework.junit5.TestApplication
 import com.intellij.testFramework.junit5.TestDisposable
-import org.jetbrains.plugins.gradle.properties.models.Property
 import org.junit.jupiter.api.Assertions.assertEquals
 import javax.swing.ComboBoxModel
 
@@ -21,8 +20,8 @@ abstract class GradleDaemonJvmCriteriaViewTestCase {
     vendorDropdownList: List<String>,
     displayAdvancedSettings: Boolean,
   ) = GradleDaemonJvmCriteriaView(
-    version?.let { Property(it, "test/location") },
-    vendor?.let { Property(it, "test/location") },
+    version,
+    vendor,
     versionsDropdownList,
     vendorDropdownList,
     displayAdvancedSettings,

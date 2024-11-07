@@ -12,7 +12,6 @@ import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.listCellRenderer.textListCellRenderer
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.VisibleForTesting
-import org.jetbrains.plugins.gradle.properties.models.Property
 import org.jetbrains.plugins.gradle.service.execution.GradleDaemonJvmCriteria
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import javax.swing.JPanel
@@ -22,8 +21,8 @@ private const val ANY_VENDOR_PLACEHOLDER = "<ANY_VENDOR>"
 private const val CUSTOM_VENDOR_PLACEHOLDER = "<CUSTOM_VENDOR>"
 
 class GradleDaemonJvmCriteriaView(
-  version: Property<String>?,
-  vendor: Property<String>?,
+  version: String?,
+  vendor: String?,
   private val versionsDropdownList: IntRange,
   private val vendorDropdownList: List<String>,
   private val displayAdvancedSettings: Boolean,
@@ -42,8 +41,8 @@ class GradleDaemonJvmCriteriaView(
   val isValidVendor: Boolean
     get() = selectedVendor.isNotEmpty() && !selectedVendor.contains(" ")
 
-  private var initialVersion: String = version?.value ?: UNDEFINED_VERSION_PLACEHOLDER
-  private var initialVendor: String = vendor?.value ?: ANY_VENDOR_PLACEHOLDER
+  private var initialVersion: String = version ?: UNDEFINED_VERSION_PLACEHOLDER
+  private var initialVendor: String = vendor ?: ANY_VENDOR_PLACEHOLDER
   private val selectedVersion: String
     get() = versionComboBox.editor.item.toString()
   private val selectedVendor: String
