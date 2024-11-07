@@ -74,6 +74,10 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
       return true;
     }
 
+    if (myGeneralUI.myChkGenerateSourceCodeOnFormSave.isSelected() != configuration.GENERATE_SOURCES_ON_SAVE) {
+      return true;
+    }
+
     if (!Comparing.equal(configuration.DEFAULT_LAYOUT_MANAGER, myGeneralUI.myLayoutManagerCombo.getSelectedItem())) {
       return true;
     }
@@ -102,6 +106,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     configuration.DEFAULT_FIELD_ACCESSIBILITY = (String)myGeneralUI .myDefaultFieldAccessibilityCombo.getSelectedItem();
     configuration.RESIZE_HEADERS = myGeneralUI.myResizeHeaders.isSelected();
     configuration.USE_DYNAMIC_BUNDLES = myGeneralUI.myChkUseDynamicBundles.isSelected();
+    configuration.GENERATE_SOURCES_ON_SAVE = myGeneralUI.myChkGenerateSourceCodeOnFormSave.isSelected();
 
     if (configuration.INSTRUMENT_CLASSES && !myProject.isDefault()) {
       final DispatchThreadProgressWindow progressWindow = new DispatchThreadProgressWindow(false, myProject);
@@ -124,6 +129,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     }
     myGeneralUI.myChkCopyFormsRuntime.setSelected(configuration.COPY_FORMS_RUNTIME_TO_OUTPUT);
     myGeneralUI.myChkUseDynamicBundles.setSelected(configuration.USE_DYNAMIC_BUNDLES);
+    myGeneralUI.myChkGenerateSourceCodeOnFormSave.setSelected(configuration.GENERATE_SOURCES_ON_SAVE);
 
     myGeneralUI.myLayoutManagerCombo.setModel(new DefaultComboBoxModel<>(LayoutManagerRegistry.getNonDeprecatedLayoutManagerNames()));
     myGeneralUI.myLayoutManagerCombo.setRenderer(SimpleListCellRenderer.create("", LayoutManagerRegistry::getLayoutManagerDisplayName));
@@ -145,6 +151,7 @@ public final class GuiDesignerConfigurable implements SearchableConfigurable, Co
     public JRadioButton myRbInstrumentSources;
     public JCheckBox myChkCopyFormsRuntime;
     public JCheckBox myChkUseDynamicBundles;
+    public JCheckBox myChkGenerateSourceCodeOnFormSave;
     private JComboBox<String> myLayoutManagerCombo;
     private JComboBox<String> myDefaultFieldAccessibilityCombo;
     private JCheckBox myResizeHeaders;
