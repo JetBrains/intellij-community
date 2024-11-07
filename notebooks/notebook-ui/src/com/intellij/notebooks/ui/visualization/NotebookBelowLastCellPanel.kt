@@ -9,10 +9,11 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.util.ui.JBUI
 import java.awt.GridBagLayout
-import java.awt.event.ComponentAdapter
-import java.awt.event.ComponentEvent
 import javax.swing.JPanel
 
+/**
+ * Basically, this panel consists only on a single "add new cell" toolbar.
+ */
 class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout()) {
   private var toolbar: JupyterAddNewCellToolbar? = null
 
@@ -20,17 +21,10 @@ class NotebookBelowLastCellPanel(val editor: EditorImpl) : JPanel(GridBagLayout(
     if (editor.isOrdinaryNotebookEditor()) {
       isOpaque = false
       border = JBUI.Borders.empty(editor.notebookAppearance.cellBorderHeight)
-      addComponentListeners()
       toolbar = JupyterAddNewCellToolbar(getActionGroup(), toolbarTargetComponent = this)
       add(toolbar)
       adjustToolbarBounds()
     }
-  }
-
-  private fun addComponentListeners() {
-    this.addComponentListener(object : ComponentAdapter() {
-      override fun componentResized(e: ComponentEvent?) = adjustToolbarBounds()
-    })
   }
 
   private fun getActionGroup(): ActionGroup =
