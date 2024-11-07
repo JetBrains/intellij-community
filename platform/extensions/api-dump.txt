@@ -51,6 +51,17 @@ f:com.intellij.openapi.extensions.DefaultPluginDescriptor
 - isEnabled():Z
 - isLicenseOptional():Z
 - setEnabled(Z):V
+f:com.intellij.openapi.extensions.ExtensionDescriptor
+e:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- java.lang.Enum
+- sf:freebsd:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- sf:linux:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- sf:mac:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- sf:unix:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- sf:windows:com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- s:getEntries():kotlin.enums.EnumEntries
+- s:valueOf(java.lang.String):com.intellij.openapi.extensions.ExtensionDescriptor$Os
+- s:values():com.intellij.openapi.extensions.ExtensionDescriptor$Os[]
 f:com.intellij.openapi.extensions.ExtensionNotApplicableException
 - java.lang.RuntimeException
 - com.intellij.openapi.diagnostic.ControlFlowException
