@@ -349,7 +349,7 @@ public final class HighlightControlFlowUtil {
         PsiCodeBlock block;
         PsiClass aClass;
         if (parent instanceof PsiMethod constructor) {
-          if (!containingFile.getManager().areElementsEquivalent(constructor.getContainingClass(), ((PsiField)variable).getContainingClass())) return null;
+          if (!containingFile.getManager().areElementsEquivalent(constructor.getContainingClass(), field.getContainingClass())) return null;
           // static variables already initialized in class initializers
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
           // as a last chance, field may be initialized in this() call
