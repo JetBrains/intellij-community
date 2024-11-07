@@ -56,7 +56,7 @@ import kotlin.coroutines.coroutineContext
 @ApiStatus.Internal
 sealed interface ScanningParameters
 
-internal object CancelledScanning: ScanningParameters
+internal object CancelledScanning : ScanningParameters
 
 @ApiStatus.Internal
 class ScanningIterators(
@@ -64,7 +64,7 @@ class ScanningIterators(
   internal val predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null,
   internal val mark: StatusMark? = null,
   internal val scanningType: ScanningType = if (predefinedIndexableFilesIterators == null) ScanningType.FULL else ScanningType.PARTIAL,
-): ScanningParameters {
+) : ScanningParameters {
 
   init {
     UnindexedFilesScanner.LOG.assertTrue(this.predefinedIndexableFilesIterators == null || !predefinedIndexableFilesIterators.isEmpty())
@@ -84,7 +84,7 @@ class UnindexedFilesScanner @JvmOverloads constructor(
   private val shouldHideProgressInSmartMode: Boolean? = null,
   private val forceReindexingTrigger: BiPredicate<IndexedFile, FileIndexingStamp>? = null,
   private val allowCheckingForOutdatedIndexesUsingFileModCount: Boolean = false,
-  internal val scanningParameters: Deferred<ScanningParameters>,
+  val scanningParameters: Deferred<ScanningParameters>,
 ) : FilesScanningTask, Closeable {
 
   enum class TestMode {
@@ -277,18 +277,62 @@ class UnindexedFilesScanner @JvmOverloads constructor(
   }
 
   @TestOnly
-  fun getIndexingReasonBlocking(): String {
-    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.indexingReason
+  fun getIndexingReasonBlocking(): String? {
+    return if (canReadScanningParameters()) {
+      val parameters = getScanningParametersBlocking()
+      if (parameters is ScanningIterators) {
+        parameters.indexingReason
+      }
+      else {
+        null
+      }
+    }
+    else {
+      null
+    }
   }
 
   @TestOnly
   fun getPredefinedIndexableFileIteratorsBlocking(): List<IndexableFilesIterator>? {
-    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.predefinedIndexableFilesIterators
+    return if (canReadScanningParameters()) {
+      val parameters = getScanningParametersBlocking()
+      if (parameters is ScanningIterators) {
+        parameters.predefinedIndexableFilesIterators
+      }
+      else {
+        null
+      }
+    }
+    else {
+      null
+    }
   }
 
   @TestOnly
-  fun getScanningTypeBlocking(): ScanningType {
-    return runBlockingMaybeCancellable { scanningParameters.await() as ScanningIterators }.scanningType
+  fun getScanningTypeBlocking(): ScanningType? {
+    return if (canReadScanningParameters()) {
+      val parameters = getScanningParametersBlocking()
+      if (parameters is ScanningIterators) {
+        parameters.scanningType
+      }
+      else {
+        null
+      }
+    }
+    else {
+      null
+    }
+  }
+
+  @TestOnly
+  private fun canReadScanningParameters(): Boolean {
+    // If we use runBlockingMaybeCancellable right away, it can lead to a deadlock
+    return scanningParameters.isCompleted || !ApplicationManager.getApplication().isWriteAccessAllowed
+  }
+
+  @TestOnly
+  private fun getScanningParametersBlocking(): ScanningParameters {
+    return runBlockingMaybeCancellable { scanningParameters.await() }
   }
 
   private fun tryGetPredefinedIndexableFileIterators(): List<IndexableFilesIterator>? {
@@ -707,7 +751,8 @@ class UnindexedFilesScanner @JvmOverloads constructor(
 private fun <T> Deferred<T>.getCompletedSafe(): T? {
   return try {
     getCompleted()
-  } catch (_: IllegalStateException) {
+  }
+  catch (_: IllegalStateException) {
     null
   }
 }
