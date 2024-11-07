@@ -161,7 +161,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder pushForWrite(DfaVariableValue variable) {
-    return add(new JvmPushInstruction(variable, null, true));
+    return add(new JvmPushForWriteInstruction(variable));
   }
 
   /**
@@ -175,7 +175,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value) {
-    return add(new JvmPushInstruction(value, null));
+    return add(new PushInstruction(value, null));
   }
 
   /**
@@ -190,7 +190,7 @@ public class CFGBuilder {
    * @return this builder
    */
   public CFGBuilder push(DfaValue value, PsiExpression expression) {
-    return add(new JvmPushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
+    return add(new PushInstruction(value, expression == null ? null : new JavaExpressionAnchor(expression)));
   }
 
   /**
