@@ -1,6 +1,7 @@
 <idea-plugin>
   <content>
     <module name="intellij.platform.vcs.impl"/>
+    <module name="intellij.platform.vcs.impl.exec"/>
     <module name="intellij.platform.vcs.log.impl"/>
     <module name="intellij.platform.vcs.dvcs.impl"/>
     <module name="intellij.smart.update"/>
